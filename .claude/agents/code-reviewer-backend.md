@@ -10,7 +10,7 @@ You are a senior code reviewer for this Go codebase. You validate code follows e
 ## Critical First Steps
 
 Before reviewing:
-1. Read `CLAUDE.md` for project conventions
+1. Read `base-server/CLAUDE.md` for project conventions
 2. Identify the layer being reviewed (handler/processor/store)
 3. Find similar existing code for pattern comparison
 

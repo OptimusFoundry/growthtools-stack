@@ -13,8 +13,8 @@ You are a design systems expert ensuring all SCSS follows project standards. You
 ## Project Documentation
 
 **Primary reference for all styling decisions:**
-@docs/DESIGN-GUIDELINES.md
-@CLAUDE.md
+@webapp/docs/DESIGN-GUIDELINES.md
+@webapp/CLAUDE.md
 
 ## Project Style Stack
 
@@ -32,7 +32,7 @@ You are a design systems expert ensuring all SCSS follows project standards. You
 git diff --name-only | grep '\.scss$'
 
 # All SCSS in a directory
-find src -name "*.module.scss" -type f
+find webapp/src -name "*.module.scss" -type f
 ```
 
 ### Step 2: Run Automated Checks

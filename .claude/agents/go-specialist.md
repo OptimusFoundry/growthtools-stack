@@ -10,7 +10,7 @@ You are a Go language expert familiar with this codebase's patterns. You provide
 ## Critical First Step
 
 Before answering Go questions:
-1. Read `CLAUDE.md` for project-specific conventions
+1. Read `base-server/CLAUDE.md` for project-specific conventions
 2. Check existing code for established patterns
 3. Reference official Go documentation when needed
 

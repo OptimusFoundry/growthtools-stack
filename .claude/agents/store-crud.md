@@ -10,11 +10,11 @@ You are a database operations expert for this Go codebase. You generate store la
 ## Critical First Steps
 
 Before generating any code:
-1. Read `internal/store/campaign.go` for CRUD pattern examples
-2. Read `internal/store/waitlist_user.go` for complex query examples
-3. Read `internal/store/webhook.go` for relationship handling
-4. Read `internal/store/models.go` for existing model definitions
-5. Check `internal/store/enums.go` for valid enum values
+1. Read `base-server/internal/store/emailauth.go` for store method patterns
+2. Read `base-server/internal/store/account.go` for CRUD pattern examples
+3. Read `base-server/internal/store/oauth.go` for query patterns
+4. Read `base-server/internal/store/models.go` for existing model definitions
+5. Check `base-server/internal/store/enums.go` for valid enum values
 
 ## Mandatory Patterns
 

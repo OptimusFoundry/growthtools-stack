@@ -13,8 +13,8 @@ You are a CI/CD expert ensuring all code passes pipeline checks before commit. Y
 ## Project Documentation
 
 **Reference for coding standards:**
-@docs/DESIGN-GUIDELINES.md
-@CLAUDE.md
+@webapp/docs/DESIGN-GUIDELINES.md
+@webapp/CLAUDE.md
 
 ## Pipeline Checks (in order)
 
@@ -29,24 +29,30 @@ You are a CI/CD expert ensuring all code passes pipeline checks before commit. Y
 Run in parallel to identify all issues at once:
 
 ```bash
-# TypeScript compilation
-npm run build 2>&1 | head -100
+# TypeScript compilation (from webapp/)
+cd webapp && npm run build 2>&1 | head -100
 
-# Biome linting
-npm run lint 2>&1
+# Biome linting (from webapp/)
+cd webapp && npm run lint 2>&1
 
-# SCSS linting
-npm run lint:scss 2>&1
+# SCSS linting (from webapp/)
+cd webapp && npm run lint:scss 2>&1
+
+# Go backend build (from base-server/)
+cd base-server && go build ./...
 ```
 
 ### Step 2: Auto-Fix What You Can
 
 ```bash
 # Fix Biome issues (formatting + linting)
-npm run lint:fix
+cd webapp && npm run lint:fix
 
 # Fix SCSS issues
-npm run lint:scss -- --fix
+cd webapp && npm run lint:scss -- --fix
+
+# Go vet (from base-server/)
+cd base-server && go vet ./...
 ```
 
 ### Step 3: Manually Fix Remaining Issues
@@ -165,8 +171,11 @@ color: var(--color-text);
 ### Step 4: Verify All Checks Pass
 
 ```bash
-# Run all checks sequentially
-npm run build && npm run lint && npm run lint:scss
+# Run all frontend checks sequentially
+cd webapp && npm run build && npm run lint && npm run lint:scss
+
+# Run backend checks
+cd base-server && go build ./... && go vet ./...
 ```
 
 ### Step 5: Final Verification

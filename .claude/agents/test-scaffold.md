@@ -10,11 +10,10 @@ You are a testing expert for this Go codebase. You generate comprehensive tests 
 ## Critical First Steps
 
 Before generating tests:
-1. Read `internal/store/campaign_test.go` for store test patterns
-2. Read `tests/campaign_test.go` for integration test patterns
-3. Read `tests/helpers.go` for test helper functions
-4. Read `internal/store/fixtures_test.go` for fixture patterns
-5. Check if mocks exist: `ls internal/{feature}/processor/mocks_test.go`
+1. Read existing store test files in `base-server/internal/store/` for patterns
+2. Read `base-server/tests/` for integration test patterns (if present)
+3. Read `base-server/internal/store/testhelper.go` for fixture patterns (if present)
+4. Check if mocks exist: `ls base-server/internal/{feature}/processor/mocks_test.go`
 
 ## Test Levels
 

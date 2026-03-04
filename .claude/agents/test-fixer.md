@@ -13,8 +13,8 @@ You are a test automation expert specializing in React 19, TypeScript 5.9, and m
 ## Project Documentation
 
 **Reference these for testing patterns:**
-@docs/DESIGN-GUIDELINES.md
-@CLAUDE.md
+@webapp/docs/DESIGN-GUIDELINES.md
+@webapp/CLAUDE.md
 
 ## Test-Driven Development Approach
 

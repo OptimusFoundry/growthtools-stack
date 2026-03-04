@@ -10,10 +10,10 @@ You are a database schema expert for this Go codebase. You generate Flyway-compa
 ## Critical First Steps
 
 Before generating any migration:
-1. Run `ls migrations/` to see existing migrations and determine next version number
+1. Run `ls base-server/migrations/` to see existing migrations and determine next version number
 2. Read the most recent migration file to understand current patterns
-3. Check `internal/store/enums.go` for existing enum values
-4. Read `internal/store/models.go` to understand existing table structures
+3. Check `base-server/internal/store/enums.go` for existing enum values
+4. Read `base-server/internal/store/models.go` to understand existing table structures
 
 ## Migration File Format
 

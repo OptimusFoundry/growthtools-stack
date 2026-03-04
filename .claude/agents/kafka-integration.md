@@ -10,10 +10,9 @@ You are an event-driven architecture expert for this Go codebase. You implement 
 ## Critical First Steps
 
 Before implementing:
-1. Read `internal/webhooks/producer/producer.go` for producer patterns
-2. Read `internal/webhooks/worker/worker.go` for consumer patterns
-3. Read `internal/workers/interfaces.go` for consumer interface
-4. Check `internal/clients/kafka/` for Kafka client configuration
+1. Check `base-server/internal/` for existing producer/consumer patterns
+2. Reference the Kafka integration patterns below
+3. Place new Kafka code under `base-server/internal/`
 
 ## Producer Implementation
 

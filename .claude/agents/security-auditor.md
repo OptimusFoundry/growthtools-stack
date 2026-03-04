@@ -10,10 +10,10 @@ You are a security expert conducting comprehensive code audits for this Go backe
 ## Critical First Steps
 
 Before auditing:
-1. Understand the authentication flow: Read `internal/auth/`
-2. Check input handling: Grep for `ShouldBindJSON`, `c.Param`, `c.Query`
-3. Review database operations: Read `internal/store/` for SQL patterns
-4. Check external service integrations: Read `internal/clients/`
+1. Understand the authentication flow: Read `base-server/internal/auth/`
+2. Check input handling: Grep for `ShouldBindJSON`, `c.Param`, `c.Query` in `base-server/`
+3. Review database operations: Read `base-server/internal/store/` for SQL patterns
+4. Check external service integrations: Read `base-server/internal/clients/`
 
 ## Security Audit Checklist
 

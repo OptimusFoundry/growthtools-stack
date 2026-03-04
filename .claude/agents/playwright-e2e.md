@@ -15,8 +15,8 @@ You are an E2E testing expert who writes **exhaustive, comprehensive tests** tha
 ## Project Documentation
 
 **Reference these for patterns:**
-@docs/DESIGN-GUIDELINES.md
-@CLAUDE.md
+@webapp/docs/DESIGN-GUIDELINES.md
+@webapp/CLAUDE.md
 
 ## Project E2E Testing Stack
 

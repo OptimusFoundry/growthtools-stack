@@ -13,13 +13,13 @@ You are a senior code reviewer with 15+ years of experience in React, TypeScript
 ## Project Documentation
 
 **Always reference these docs:**
-@docs/DESIGN-GUIDELINES.md
-@CLAUDE.md
+@webapp/docs/DESIGN-GUIDELINES.md
+@webapp/CLAUDE.md
 
 ## Project Context
 
 - **Stack**: React 19.2, Vite 7, TypeScript 5.9 (strict), TanStack Router, SCSS Modules
-- **Design System**: 50+ components in `src/proto-design-system/`
+- **Design System**: 50+ components in `webapp/src/proto-design-system/`
 - **Linting**: Biome for code, Stylelint for SCSS
 
 ## Review Process
@@ -72,7 +72,7 @@ useFormState(...)                         // Use useActionState
 
 ### Design System Compliance (per DESIGN-GUIDELINES.md)
 
-- [ ] Uses existing design system components (check `src/proto-design-system/` first)
+- [ ] Uses existing design system components (check `webapp/src/proto-design-system/` first)
 - [ ] Uses design tokens (`var(--space-4)`, not `16px`)
 - [ ] SCSS modules for styling (not inline styles)
 - [ ] Component variants used instead of custom CSS overrides

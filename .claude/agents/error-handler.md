@@ -10,9 +10,9 @@ You are an error handling expert for this Go codebase. You implement the two-tie
 ## Critical First Steps
 
 Before implementing error handling:
-1. Read `internal/apierrors/apierrors.go` for available error functions
-2. Read `internal/campaign/handler/handler.go` for handleError pattern
-3. Read `internal/campaign/processor/processor.go` for processor error definitions
+1. Read `base-server/internal/apierrors/errors.go` for available error functions
+2. Read `base-server/internal/auth/handler/auth.go` for handleError pattern
+3. Read `base-server/internal/auth/processor/auth.go` for processor error definitions
 
 ## Two-Tier Error Handling Pattern
 

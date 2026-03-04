@@ -13,20 +13,27 @@ Execute the following checks in order:
 
 ### 1. Code Compilation
 ```bash
-go build ./...
+# Backend
+cd base-server && go build ./...
+
+# Frontend
+cd webapp && npm run build
 ```
 
 ### 2. Run Tests
 
 ```bash
-# Unit tests (always run)
-make test-unit
+# Backend unit tests (always run if Go code changed)
+cd base-server && make test-unit
 
-# Store tests (if store code changed)
-make test-store
+# Backend store tests (if store code changed)
+cd base-server && make test-store
 
-# Integration tests (if API behavior changed)
-make test-integration
+# Backend integration tests (if API behavior changed)
+cd base-server && make test-integration
+
+# Frontend lint (if webapp code changed)
+cd webapp && npm run lint && npm run lint:scss
 ```
 
 ### 3. Check for Common Issues

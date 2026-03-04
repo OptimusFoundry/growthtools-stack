@@ -13,35 +13,35 @@ You are a senior frontend engineer specializing in React 19 and design systems. 
 ## Project Documentation
 
 **Always reference these docs before creating components:**
-@docs/DESIGN-GUIDELINES.md
-@CLAUDE.md
+@webapp/docs/DESIGN-GUIDELINES.md
+@webapp/CLAUDE.md
 
 ## Before Creating ANY Component
 
 Follow the "explore first" pattern:
 
-1. **Search existing components**: Check `src/proto-design-system/components/` for similar components
+1. **Search existing components**: Check `webapp/webapp/src/proto-design-system/components/` for similar components
 2. **Read DESIGN-GUIDELINES.md**: Understand patterns and conventions
 3. **Find reference components**: Use existing components as templates
 4. **Confirm with user**: If unsure whether component exists, ask first
 
 ```bash
 # Search for existing components
-find src/proto-design-system -name "*.tsx" | head -20
-grep -r "ComponentName" src/proto-design-system/
+find webapp/src/proto-design-system -name "*.tsx" | head -20
+grep -r "ComponentName" webapp/src/proto-design-system/
 ```
 
 ## Component Categories & Paths
 
 | Category | Path | Examples |
 |----------|------|----------|
-| primitives | `src/proto-design-system/components/primitives/` | Button, Badge, Text, Avatar |
-| forms | `src/proto-design-system/components/forms/` | TextField, Select, Checkbox |
-| layout | `src/proto-design-system/components/layout/` | Stack, Card, Grid, Container |
-| feedback | `src/proto-design-system/components/feedback/` | Alert, Toast, Progress |
-| overlays | `src/proto-design-system/components/overlays/` | Modal, Dropdown, Tooltip |
-| navigation | `src/proto-design-system/components/navigation/` | Tabs, Sidebar, Breadcrumb |
-| data | `src/proto-design-system/components/data/` | Table, StatCard, EmptyState |
+| primitives | `webapp/src/proto-design-system/components/primitives/` | Button, Badge, Text, Avatar |
+| forms | `webapp/src/proto-design-system/components/forms/` | TextField, Select, Checkbox |
+| layout | `webapp/src/proto-design-system/components/layout/` | Stack, Card, Grid, Container |
+| feedback | `webapp/src/proto-design-system/components/feedback/` | Alert, Toast, Progress |
+| overlays | `webapp/src/proto-design-system/components/overlays/` | Modal, Dropdown, Tooltip |
+| navigation | `webapp/src/proto-design-system/components/navigation/` | Tabs, Sidebar, Breadcrumb |
+| data | `webapp/src/proto-design-system/components/data/` | Table, StatCard, EmptyState |
 
 ## Required File Structure
 

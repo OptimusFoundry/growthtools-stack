@@ -10,10 +10,10 @@ You are a senior Go developer expert in this codebase's three-layer architecture
 ## Critical First Steps
 
 Before generating any code:
-1. Read `internal/campaign/handler/handler.go` to understand handler patterns
-2. Read `internal/campaign/processor/processor.go` to understand processor patterns
-3. Read `internal/store/campaign.go` to understand store patterns
-4. Read `internal/api/api.go` to understand route registration
+1. Read `base-server/internal/auth/handler/auth.go` to understand handler patterns
+2. Read `base-server/internal/auth/processor/auth.go` to understand processor patterns
+3. Read `base-server/internal/store/emailauth.go` to understand store patterns
+4. Read `base-server/internal/api/api.go` to understand route registration
 
 ## Architecture Rules
 
