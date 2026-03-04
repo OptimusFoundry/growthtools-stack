@@ -5,20 +5,19 @@
  * Use scenario factories to override for specific test cases.
  */
 
-import { apikeyHandlers, apikeyScenarios } from "./apikey.handlers";
+import { analyticsHandlers, analyticsScenarios } from "./analytics.handlers";
 import { authHandlers, authScenarios } from "./auth.handlers";
 import {
 	billingHandlers,
 	billingScenarios,
 	getBillingHandlersForTier,
 } from "./billing.handlers";
-import { campaignHandlers, campaignScenarios } from "./campaign.handlers";
-import {
-	integrationHandlers,
-	integrationScenarios,
-} from "./integration.handlers";
-import { segmentHandlers, segmentScenarios } from "./segment.handlers";
-import { webhookHandlers, webhookScenarios } from "./webhook.handlers";
+import { blogHandlers, blogScenarios } from "./blog.handlers";
+import { contentHandlers, contentScenarios } from "./content.handlers";
+import { mediaHandlers, mediaScenarios } from "./media.handlers";
+import { platformsHandlers, platformsScenarios } from "./platforms.handlers";
+import { postsHandlers, postsScenarios } from "./posts.handlers";
+import { settingsHandlers, settingsScenarios } from "./settings.handlers";
 
 /**
  * Default handlers - Pro tier user with full access
@@ -26,11 +25,13 @@ import { webhookHandlers, webhookScenarios } from "./webhook.handlers";
 export const handlers = [
 	...authHandlers,
 	...billingHandlers,
-	...campaignHandlers,
-	...webhookHandlers,
-	...apikeyHandlers,
-	...segmentHandlers,
-	...integrationHandlers,
+	...postsHandlers,
+	...platformsHandlers,
+	...mediaHandlers,
+	...blogHandlers,
+	...analyticsHandlers,
+	...settingsHandlers,
+	...contentHandlers,
 ];
 
 /**
@@ -39,11 +40,13 @@ export const handlers = [
 export {
 	authHandlers,
 	billingHandlers,
-	campaignHandlers,
-	webhookHandlers,
-	apikeyHandlers,
-	segmentHandlers,
-	integrationHandlers,
+	postsHandlers,
+	platformsHandlers,
+	mediaHandlers,
+	blogHandlers,
+	analyticsHandlers,
+	settingsHandlers,
+	contentHandlers,
 };
 
 /**
@@ -52,11 +55,13 @@ export {
 export const scenarios = {
 	auth: authScenarios,
 	billing: billingScenarios,
-	campaign: campaignScenarios,
-	webhook: webhookScenarios,
-	apikey: apikeyScenarios,
-	segment: segmentScenarios,
-	integration: integrationScenarios,
+	posts: postsScenarios,
+	platforms: platformsScenarios,
+	media: mediaScenarios,
+	blog: blogScenarios,
+	analytics: analyticsScenarios,
+	settings: settingsScenarios,
+	content: contentScenarios,
 };
 
 /**

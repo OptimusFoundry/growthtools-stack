@@ -1,16 +1,18 @@
 /**
  * Mock data for E2E tests
  *
- * Uses snake_case to match API response format
+ * Uses camelCase to match frontend type format (hooks transform API responses)
  */
 
-import type { ApiAPIKey } from "../../../src/api/types/apikey";
 import type { ApiPrice, ApiSubscription } from "../../../src/api/types/billing";
-import type { ApiCampaign } from "../../../src/api/types/campaign";
-import type { ApiSegment } from "../../../src/api/types/segment";
 import type { ApiTierInfo, ApiTierName } from "../../../src/api/types/tier";
 import type { ApiUser } from "../../../src/api/types/user";
-import type { ApiWebhook } from "../../../src/api/types/webhook";
+import type { AnalyticsOverview, PlatformBreakdown, TimeSeriesDataPoint } from "../../../src/types/analytics";
+import type { BlogPost } from "../../../src/types/blog";
+import type { MediaItem } from "../../../src/types/media";
+import type { PlatformConnection } from "../../../src/types/platform";
+import type { Post } from "../../../src/types/post";
+import type { VoiceProfile } from "../../../src/types/voiceProfile";
 
 // ============================================================================
 // Tier Configurations
@@ -22,19 +24,19 @@ export const tiers: Record<ApiTierName, ApiTierInfo> = {
 		display_name: "Free",
 		price_description: "$0/month",
 		features: {
-			campaigns: true,
-			referrals: false,
-			webhooks: false,
-			api_access: false,
-			custom_branding: false,
+			posts: true,
+			platforms: true,
+			ai_chat: false,
+			media_library: false,
+			blog: false,
 			analytics: false,
-			integrations: false,
+			scheduling: false,
 		},
 		limits: {
-			campaigns: 1,
-			signups_per_campaign: 100,
-			team_members: 1,
-			email_sends: 0,
+			posts_per_month: 10,
+			platforms: 2,
+			media_storage_mb: 100,
+			ai_generations: 0,
 		},
 	},
 	pro: {
@@ -42,19 +44,19 @@ export const tiers: Record<ApiTierName, ApiTierInfo> = {
 		display_name: "Pro",
 		price_description: "$29/month",
 		features: {
-			campaigns: true,
-			referrals: true,
-			webhooks: true,
-			api_access: true,
-			custom_branding: true,
+			posts: true,
+			platforms: true,
+			ai_chat: true,
+			media_library: true,
+			blog: true,
 			analytics: true,
-			integrations: false,
+			scheduling: true,
 		},
 		limits: {
-			campaigns: 10,
-			signups_per_campaign: 10000,
-			team_members: 3,
-			email_sends: 5000,
+			posts_per_month: 100,
+			platforms: 8,
+			media_storage_mb: 5000,
+			ai_generations: 500,
 		},
 	},
 	team: {
@@ -62,19 +64,19 @@ export const tiers: Record<ApiTierName, ApiTierInfo> = {
 		display_name: "Team",
 		price_description: "$99/month",
 		features: {
-			campaigns: true,
-			referrals: true,
-			webhooks: true,
-			api_access: true,
-			custom_branding: true,
+			posts: true,
+			platforms: true,
+			ai_chat: true,
+			media_library: true,
+			blog: true,
 			analytics: true,
-			integrations: true,
+			scheduling: true,
 		},
 		limits: {
-			campaigns: null, // unlimited
-			signups_per_campaign: null,
-			team_members: null,
-			email_sends: null,
+			posts_per_month: null,
+			platforms: null,
+			media_storage_mb: null,
+			ai_generations: null,
 		},
 	},
 };
@@ -87,7 +89,7 @@ export const createUser = (tier: ApiTierName = "pro"): ApiUser => ({
 	first_name: "Test",
 	last_name: "User",
 	external_id: "user_test_123",
-	persona: "marketing",
+	persona: "content_creator",
 	tier: tiers[tier],
 });
 
@@ -148,178 +150,237 @@ export const prices: ApiPrice[] = [
 ];
 
 // ============================================================================
-// Campaign Data
+// Post Data
 // ============================================================================
 
 const now = new Date().toISOString();
 
-export const campaigns: ApiCampaign[] = [
+export const posts: Post[] = [
 	{
-		id: "camp_1",
-		account_id: "acc_123",
-		name: "Product Launch Waitlist",
-		slug: "product-launch",
-		description: "Beta access waitlist for our new product",
-		status: "active",
-		type: "waitlist",
-		launch_date: "2025-01-15T00:00:00Z",
-		total_signups: 1234,
-		total_verified: 1100,
-		total_referrals: 456,
-		created_at: now,
-		updated_at: now,
-		email_settings: {
-			id: "email_1",
-			campaign_id: "camp_1",
-			from_name: "Product Team",
-			from_email: "hello@example.com",
-			verification_required: true,
-			send_welcome_email: true,
-			created_at: now,
-			updated_at: now,
-		},
-		form_fields: [
-			{
-				id: "field_1",
-				campaign_id: "camp_1",
-				name: "email",
-				field_type: "email",
-				label: "Email Address",
-				placeholder: "you@example.com",
-				required: true,
-				display_order: 0,
-				created_at: now,
-				updated_at: now,
-			},
-		],
+		id: "post_1",
+		accountId: "acc_123",
+		title: "Announcing our new feature launch",
+		content: "We just shipped an amazing new feature that will change the way you manage social media.",
+		contentType: "text",
+		status: "published",
+		publishedAt: "2025-12-15T10:00:00Z",
+		mediaIds: [],
+		tags: ["announcement", "product"],
+		aiGenerated: false,
+		source: "manual",
+		createdAt: now,
+		updatedAt: now,
 	},
 	{
-		id: "camp_2",
-		account_id: "acc_123",
-		name: "Referral Contest",
-		slug: "referral-contest",
-		description: "Win prizes by referring friends",
+		id: "post_2",
+		accountId: "acc_123",
+		title: "AI-generated tips for developers",
+		content: "Here are 5 tips every developer should know when building social media integrations.",
+		contentType: "thread",
 		status: "draft",
-		type: "referral",
-		total_signups: 0,
-		total_verified: 0,
-		total_referrals: 0,
-		created_at: now,
-		updated_at: now,
+		mediaIds: [],
+		tags: ["tips", "development"],
+		aiGenerated: true,
+		source: "ai_generated",
+		createdAt: now,
+		updatedAt: now,
 	},
 	{
-		id: "camp_3",
-		account_id: "acc_123",
-		name: "Early Access",
-		slug: "early-access",
-		status: "paused",
-		type: "waitlist",
-		total_signups: 567,
-		total_verified: 500,
-		total_referrals: 123,
-		created_at: now,
-		updated_at: now,
+		id: "post_3",
+		accountId: "acc_123",
+		title: "Weekly community update",
+		content: "This week's community highlights including top contributors and trending topics.",
+		contentType: "image",
+		status: "scheduled",
+		scheduledAt: "2026-04-01T14:00:00Z",
+		mediaIds: ["media_1"],
+		tags: ["community", "weekly"],
+		aiGenerated: false,
+		source: "manual",
+		createdAt: now,
+		updatedAt: now,
 	},
 ];
 
-export const getCampaignById = (id: string): ApiCampaign | undefined =>
-	campaigns.find((c) => c.id === id);
+export const getPostById = (id: string): Post | undefined =>
+	posts.find((p) => p.id === id);
 
 // ============================================================================
-// Webhook Data
+// Platform Connection Data
 // ============================================================================
 
-export const webhooks: ApiWebhook[] = [
+export const platformConnections: PlatformConnection[] = [
 	{
-		id: "wh_1",
-		account_id: "acc_123",
-		url: "https://api.example.com/webhooks/waitlist",
-		events: ["user.created", "user.verified"],
+		id: "conn_1",
+		accountId: "acc_123",
+		platform: "x",
+		platformUserId: "x_user_123",
+		displayName: "@testuser",
 		status: "active",
-		retry_enabled: true,
-		max_retries: 3,
-		total_sent: 1234,
-		total_failed: 12,
-		last_success_at: now,
-		created_at: now,
-		updated_at: now,
+		connectedAt: "2025-06-01T00:00:00Z",
+		createdAt: now,
+		updatedAt: now,
 	},
 	{
-		id: "wh_2",
-		account_id: "acc_123",
-		campaign_id: "camp_1",
-		url: "https://hooks.zapier.com/hooks/catch/123/abc",
-		events: ["referral.created", "referral.verified"],
+		id: "conn_2",
+		accountId: "acc_123",
+		platform: "linkedin",
+		platformUserId: "li_user_456",
+		displayName: "Test User",
 		status: "active",
-		retry_enabled: true,
-		max_retries: 5,
-		total_sent: 456,
-		total_failed: 0,
-		created_at: now,
-		updated_at: now,
+		connectedAt: "2025-06-15T00:00:00Z",
+		createdAt: now,
+		updatedAt: now,
+	},
+	{
+		id: "conn_3",
+		accountId: "acc_123",
+		platform: "bluesky",
+		platformUserId: "bs_user_789",
+		displayName: "testuser.bsky.social",
+		status: "expired",
+		connectedAt: "2025-05-01T00:00:00Z",
+		createdAt: now,
+		updatedAt: now,
+	},
+];
+
+// ============================================================================
+// Media Data
+// ============================================================================
+
+export const mediaItems: MediaItem[] = [
+	{
+		id: "media_1",
+		accountId: "acc_123",
+		filename: "product-screenshot.png",
+		contentType: "image/png",
+		s3Url: "https://cdn.example.com/media/product-screenshot.png",
+		sizeBytes: 524288,
+		width: 1920,
+		height: 1080,
+		altText: "Product screenshot",
+		source: "upload",
+		createdAt: now,
+		updatedAt: now,
+	},
+	{
+		id: "media_2",
+		accountId: "acc_123",
+		filename: "demo-video.mp4",
+		contentType: "video/mp4",
+		s3Url: "https://cdn.example.com/media/demo-video.mp4",
+		sizeBytes: 10485760,
+		source: "upload",
+		createdAt: now,
+		updatedAt: now,
+	},
+	{
+		id: "media_3",
+		accountId: "acc_123",
+		filename: "ai-generated-banner.jpg",
+		contentType: "image/jpeg",
+		s3Url: "https://cdn.example.com/media/ai-generated-banner.jpg",
+		sizeBytes: 204800,
+		width: 1200,
+		height: 630,
+		altText: "AI-generated social media banner",
+		source: "ai_generated",
+		createdAt: now,
+		updatedAt: now,
 	},
 ];
 
 // ============================================================================
-// API Key Data
+// Blog Data
 // ============================================================================
 
-export const apiKeys: ApiAPIKey[] = [
+export const blogPosts: BlogPost[] = [
 	{
-		id: "key_1",
-		name: "Production API Key",
-		key_prefix: "wl_live_abc",
-		scopes: ["read", "write"],
-		status: "active",
-		last_used_at: now,
-		total_requests: 5678,
-		created_at: now,
+		id: "blog_1",
+		accountId: "acc_123",
+		title: "Getting Started with Growth Tools",
+		slug: "getting-started",
+		content: "A comprehensive guide to setting up your social media automation.",
+		excerpt: "Learn how to set up Growth Tools for your workflow.",
+		status: "published",
+		seoTitle: "Getting Started with Growth Tools | Guide",
+		metaDescription: "Learn how to get started with Growth Tools for social media automation.",
+		keywords: ["growth tools", "getting started", "social media"],
+		publishedAt: "2025-11-01T12:00:00Z",
+		createdAt: now,
+		updatedAt: now,
 	},
 	{
-		id: "key_2",
-		name: "Zapier Integration",
-		key_prefix: "wl_live_xyz",
-		scopes: ["zapier"],
-		status: "active",
-		total_requests: 123,
-		created_at: now,
+		id: "blog_2",
+		accountId: "acc_123",
+		title: "Top 10 Social Media Tips for Developers",
+		slug: "social-media-tips-developers",
+		content: "Developer-focused tips for building an online presence.",
+		excerpt: "Practical social media tips for software developers.",
+		status: "draft",
+		keywords: ["developers", "social media", "tips"],
+		createdAt: now,
+		updatedAt: now,
+	},
+	{
+		id: "blog_3",
+		accountId: "acc_123",
+		title: "Old Announcement Post",
+		slug: "old-announcement",
+		content: "This post has been archived.",
+		status: "archived",
+		keywords: ["archive"],
+		createdAt: "2025-01-01T00:00:00Z",
+		updatedAt: "2025-06-01T00:00:00Z",
 	},
 ];
 
-export const apiKeyScopes = ["zapier", "webhooks", "read", "write", "all"];
-
 // ============================================================================
-// Segment Data
+// Analytics Data
 // ============================================================================
 
-export const segments: ApiSegment[] = [
-	{
-		id: "seg_1",
-		campaign_id: "camp_1",
-		name: "Verified Users",
-		description: "All verified email users",
-		filter_criteria: {
-			email_verified: true,
-		},
-		cached_user_count: 1100,
-		cached_at: now,
-		status: "active",
-		created_at: now,
-		updated_at: now,
-	},
-	{
-		id: "seg_2",
-		campaign_id: "camp_1",
-		name: "Top Referrers",
-		description: "Users with 5+ referrals",
-		filter_criteria: {
-			min_referrals: 5,
-			email_verified: true,
-		},
-		cached_user_count: 45,
-		cached_at: now,
-		status: "active",
-		created_at: now,
-		updated_at: now,
-	},
+export const analyticsOverview: AnalyticsOverview = {
+	totalImpressions: 125400,
+	totalLikes: 8920,
+	totalComments: 1456,
+	totalShares: 3210,
+	totalClicks: 6780,
+	engagementRate: 4.2,
+};
+
+export const analyticsTimeseries: TimeSeriesDataPoint[] = [
+	{ date: "2025-12-01", impressions: 4200, likes: 310, comments: 45, shares: 120, clicks: 230 },
+	{ date: "2025-12-02", impressions: 3800, likes: 290, comments: 52, shares: 98, clicks: 210 },
+	{ date: "2025-12-03", impressions: 5100, likes: 420, comments: 67, shares: 145, clicks: 310 },
+	{ date: "2025-12-04", impressions: 4600, likes: 380, comments: 41, shares: 110, clicks: 260 },
+	{ date: "2025-12-05", impressions: 6200, likes: 510, comments: 78, shares: 190, clicks: 380 },
+	{ date: "2025-12-06", impressions: 3900, likes: 270, comments: 33, shares: 85, clicks: 190 },
+	{ date: "2025-12-07", impressions: 4500, likes: 350, comments: 55, shares: 130, clicks: 250 },
 ];
+
+export const platformBreakdown: PlatformBreakdown[] = [
+	{ platform: "x", impressions: 45000, likes: 3200, comments: 540, shares: 1200, clicks: 2100 },
+	{ platform: "linkedin", impressions: 38000, likes: 2800, comments: 620, shares: 1500, clicks: 2800 },
+	{ platform: "bluesky", impressions: 22000, likes: 1600, comments: 180, shares: 350, clicks: 980 },
+	{ platform: "facebook", impressions: 20400, likes: 1320, comments: 116, shares: 160, clicks: 900 },
+];
+
+// ============================================================================
+// Voice Profile Data
+// ============================================================================
+
+export const voiceProfile: VoiceProfile = {
+	id: "voice_1",
+	accountId: "acc_123",
+	tone: "professional",
+	style: "concise",
+	examplePosts: [
+		"We just shipped a major update. Here's what's new...",
+		"5 tips for developers building in public.",
+	],
+	industry: "technology",
+	targetAudience: "developers and founders",
+	createdAt: now,
+	updatedAt: now,
+};
