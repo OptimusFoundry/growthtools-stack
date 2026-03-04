@@ -41,7 +41,9 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:pkg.go.dev)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(do echo:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
