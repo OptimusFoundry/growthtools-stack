@@ -1,0 +1,170 @@
+// =============================================================================
+// INPUT COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.wrapper {
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  position: relative;
+  width: auto;
+
+  @include transition-colors;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+}
+
+.input {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--color-base-content);
+  flex: 1;
+  font-family: var(--font-family-sans);
+  min-width: 0;
+  outline: none;
+  width: 100%;
+
+  &::placeholder {
+    color: var(--color-muted);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  font-size: var(--font-size-sm);
+  height: var(--space-8);
+
+  .input {
+    padding: var(--space-1) var(--space-2-5);
+  }
+
+  .leftElement,
+  .rightElement {
+    padding: 0 var(--space-2);
+  }
+
+  &.hasLeftElement .input {
+    padding-left: 0;
+  }
+
+  &.hasRightElement .input {
+    padding-right: 0;
+  }
+}
+
+.size-md {
+  font-size: var(--font-size-base);
+  height: var(--space-10);
+
+  .input {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .leftElement,
+  .rightElement {
+    padding: 0 var(--space-3);
+  }
+
+  &.hasLeftElement .input {
+    padding-left: 0;
+  }
+
+  &.hasRightElement .input {
+    padding-right: 0;
+  }
+}
+
+.size-lg {
+  font-size: var(--font-size-lg);
+  height: var(--space-12);
+
+  .input {
+    padding: var(--space-2-5) var(--space-4);
+  }
+
+  .leftElement,
+  .rightElement {
+    padding: 0 var(--space-3-5);
+  }
+
+  &.hasLeftElement .input {
+    padding-left: 0;
+  }
+
+  &.hasRightElement .input {
+    padding-right: 0;
+  }
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  background-color: var(--color-surface);
+}
+
+.filled {
+  background-color: var(--color-base-100);
+  border-color: transparent;
+
+  &:focus-within {
+    background-color: var(--color-surface);
+    border-color: var(--color-primary);
+  }
+}
+
+// =============================================================================
+// STATES
+// =============================================================================
+
+.error {
+  border-color: var(--color-error);
+
+  &:focus-within {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px oklch(from var(--color-error) l c h / 0.2);
+  }
+}
+
+.disabled {
+  background-color: var(--color-base-100);
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+// =============================================================================
+// ELEMENTS
+// =============================================================================
+
+.leftElement,
+.rightElement {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-shrink: 0;
+  pointer-events: none;
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}

@@ -1,0 +1,121 @@
+// =============================================================================
+// BREADCRUMB COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.breadcrumb {
+  display: flex;
+}
+
+// =============================================================================
+// LIST
+// =============================================================================
+
+.list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// =============================================================================
+// ITEM
+// =============================================================================
+
+.item {
+  align-items: center;
+  display: flex;
+  gap: var(--space-1);
+}
+
+// =============================================================================
+// LINK
+// =============================================================================
+
+.link {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  gap: var(--space-1);
+  text-decoration: none;
+
+  @include transition-colors;
+
+  &:hover {
+    color: var(--color-base-content);
+  }
+}
+
+a.link {
+  @include focus-ring;
+}
+
+.current {
+  color: var(--color-base-content);
+  font-weight: var(--font-weight-medium);
+  pointer-events: none;
+}
+
+// =============================================================================
+// SEPARATOR
+// =============================================================================
+
+.separator {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+// =============================================================================
+// ELLIPSIS
+// =============================================================================
+
+.ellipsis {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+}
+
+// =============================================================================
+// ICONS
+// =============================================================================
+
+.icon {
+  align-items: center;
+  display: flex;
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+.homeIcon {
+  height: 1em;
+  width: 1em;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  font-size: var(--font-size-xs);
+}
+
+.size-md {
+  font-size: var(--font-size-sm);
+}
+
+.size-lg {
+  font-size: var(--font-size-md);
+}

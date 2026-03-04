@@ -1,0 +1,142 @@
+
+.root {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-5);
+	text-align: center;
+	background-color: var(--color-base-100);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+}
+
+.icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	font-size: var(--font-size-xl);
+	color: var(--color-base-content-secondary);
+	background-color: var(--color-base-100);
+	border-radius: var(--radius-full);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-base-content);
+}
+
+.description {
+	margin: 0;
+	font-size: var(--font-size-sm);
+	color: var(--color-base-content-secondary);
+	line-height: var(--line-height-normal);
+}
+
+.upgradeButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--space-2) var(--space-4);
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-inverse-default);
+	background-color: var(--color-bg-primary-default);
+	border: none;
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	transition: background-color var(--duration-fast) var(--ease-out);
+
+	&:hover {
+		background-color: var(--color-bg-primary-hover);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-focus-ring-default);
+		outline-offset: 2px;
+	}
+}
+
+.currentTier {
+	font-size: var(--font-size-xs);
+	color: var(--color-base-content-tertiary);
+}
+
+// ============================================================================
+// Variants
+// ============================================================================
+
+.variant_inline {
+	flex-direction: row;
+	padding: var(--space-3);
+	text-align: left;
+
+	.content {
+		flex: 1;
+	}
+
+	.icon {
+		width: 36px;
+		height: 36px;
+		font-size: var(--font-size-xl);
+	}
+
+	.currentTier {
+		display: none;
+	}
+}
+
+.variant_banner {
+	flex-flow: row wrap;
+	justify-content: center;
+	padding: var(--space-3) var(--space-4);
+	background-color: oklch(from var(--color-info) l c h / 0.15);
+	border-color: var(--color-border-info-default);
+
+	.icon {
+		width: 32px;
+		height: 32px;
+		font-size: var(--space-4);
+		background-color: transparent;
+		color: var(--color-info);
+	}
+
+	.content {
+		flex: 1;
+		min-width: 200px;
+		text-align: left;
+	}
+
+	.title {
+		font-size: var(--font-size-base);
+	}
+
+	.description {
+		font-size: var(--font-size-xs);
+	}
+
+	.upgradeButton {
+		padding: var(--space-1) var(--space-3);
+		font-size: var(--font-size-xs);
+	}
+
+	.currentTier {
+		width: 100%;
+		text-align: center;
+		margin-top: var(--space-1);
+	}
+}
+
+.variant_card {
+	max-width: 400px;
+}

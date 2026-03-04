@@ -1,0 +1,93 @@
+// =============================================================================
+// COSMOS THEME
+// =============================================================================
+// The infinite void. Deep space purples, distant stars, cosmic dust.
+// Inspired by nebulae, black holes, and the unknown universe.
+// Vast, mysterious, awe-inspiring.
+
+[data-theme="cosmos"] {
+  color-scheme: dark;
+
+  // Background
+  --color-background: oklch(5% 0.03 290deg);
+
+  // Base colors (deep space)
+  --color-base-50: oklch(5% 0.03 290deg);                               // Void
+  --color-base-100: oklch(8% 0.04 285deg);                              // Deep space
+  --color-base-200: oklch(12% 0.045 280deg);                            // Dark nebula
+  --color-base-300: oklch(18% 0.04 280deg);                             // Cosmic dust
+  --color-base-400: oklch(30% 0.035 280deg);                            // Lighter dust
+  --color-base-500: oklch(45% 0.03 280deg);                             // Muted purple
+  --color-base-600: oklch(60% 0.025 280deg);                            // Light purple
+  --color-base-700: oklch(75% 0.02 280deg);                             // Lighter
+  --color-base-800: oklch(86% 0.015 280deg);                            // Very light
+  --color-base-900: oklch(93% 0.01 280deg);                             // Near white
+  --color-base-950: oklch(98% 0.005 280deg);                            // Star white
+
+  // Content colors (bright starlight)
+  --color-base-content: oklch(96% 0.01 280deg);                         // Bright white
+  --color-base-content-secondary: oklch(80% 0.015 270deg);              // Light
+  --color-base-content-tertiary: oklch(65% 0.02 275deg);                // Medium
+
+  // Surface colors
+  --color-surface: oklch(10% 0.04 285deg);
+  --color-surface-elevated: oklch(14% 0.045 280deg);
+  --color-surface-overlay: oklch(5% 0.03 290deg / 0.9);
+
+  // Border colors (nebula edges)
+  --color-border: oklch(22% 0.05 280deg);
+  --color-border-hover: oklch(32% 0.07 270deg);
+
+  // Shadow colors (cosmic glow)
+  --shadow-color: oklch(50% 0.15 280deg / 0.2);
+  --shadow-color-strong: oklch(50% 0.15 280deg / 0.35);
+
+  // Primary (nebula purple)
+  --color-primary: oklch(60% 0.22 280deg);
+  --color-primary-hover: oklch(74% 0.26 280deg);
+  --color-primary-active: oklch(52% 0.22 280deg);
+  --color-primary-content: oklch(98% 0.01 280deg);
+
+  // Secondary (supernova orange)
+  --color-secondary: oklch(72% 0.2 50deg);
+  --color-secondary-hover: oklch(84% 0.24 50deg);
+  --color-secondary-active: oklch(64% 0.2 50deg);
+  --color-secondary-content: oklch(12% 0.04 50deg);
+
+  // Accent (cosmic teal)
+  --color-accent: oklch(70% 0.15 195deg);
+  --color-accent-hover: oklch(82% 0.19 195deg);
+  --color-accent-active: oklch(62% 0.15 195deg);
+  --color-accent-content: oklch(12% 0.03 195deg);
+
+  // Semantic colors
+  --color-success: oklch(70% 0.18 160deg);
+  --color-success-hover: oklch(82% 0.22 160deg);
+  --color-success-bg: oklch(18% 0.05 160deg);
+  --color-success-content: oklch(12% 0.03 160deg);
+  --color-warning: oklch(80% 0.18 80deg);
+  --color-warning-hover: oklch(92% 0.22 80deg);
+  --color-warning-bg: oklch(18% 0.05 80deg);
+  --color-warning-content: oklch(12% 0.05 80deg);
+  --color-error: oklch(65% 0.22 20deg);
+  --color-error-hover: oklch(78% 0.26 20deg);
+  --color-error-bg: oklch(18% 0.05 20deg);
+  --color-error-content: oklch(95% 0.02 20deg);
+  --color-info: oklch(65% 0.18 250deg);
+  --color-info-hover: oklch(78% 0.22 250deg);
+  --color-info-bg: oklch(18% 0.05 250deg);
+  --color-info-content: oklch(95% 0.02 250deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(60% 0.22 280deg / 0.5);
+
+  // Muted color
+  --color-muted: oklch(55% 0.03 275deg);
+
+  // Custom: Star glow
+  --shadow-star: 0 0 20px oklch(95% 0.02 280deg / 0.5);
+  --shadow-nebula: 0 0 60px oklch(60% 0.22 280deg / 0.3);
+
+  // Header background (more visible in cosmos theme)
+  --color-header-bg: var(--color-base-300);
+}

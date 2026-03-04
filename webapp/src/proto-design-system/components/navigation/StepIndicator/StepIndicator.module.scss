@@ -1,0 +1,283 @@
+// =============================================================================
+// STEP INDICATOR COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.stepIndicator {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// =============================================================================
+// ORIENTATION
+// =============================================================================
+
+.horizontal {
+  .list {
+    flex-direction: row;
+    gap: var(--space-2);
+  }
+
+  .step {
+    align-items: center;
+    display: flex;
+    flex: 1;
+  }
+
+  .stepContent {
+    flex-shrink: 0;
+  }
+
+  .connector {
+    background-color: var(--color-border);
+    flex: 1;
+    height: 2px;
+    margin: 0 var(--space-2);
+    min-width: var(--space-4);
+  }
+
+  .completed + .step .connector,
+  .completed .connector {
+    background-color: var(--color-success);
+  }
+}
+
+.vertical {
+  .list {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .stepContent {
+    padding-left: var(--space-10);
+    padding-bottom: var(--space-6);
+    position: relative;
+  }
+
+  .connector {
+    background-color: var(--color-border);
+    bottom: 0;
+    left: calc(var(--space-5) - 1px);
+    position: absolute;
+    top: var(--space-8);
+    width: 2px;
+  }
+
+  .completed .connector {
+    background-color: var(--color-success);
+  }
+
+  .indicator {
+    left: 0;
+    position: absolute;
+    top: 0;
+  }
+}
+
+// =============================================================================
+// STEP BUTTON
+// =============================================================================
+
+.stepButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: default;
+  display: flex;
+  gap: var(--space-3);
+  padding: 0;
+  text-align: left;
+
+  &.clickable {
+    cursor: pointer;
+
+    @include focus-ring;
+
+    &:hover .indicator {
+      border-color: var(--color-border-hover);
+    }
+  }
+}
+
+// =============================================================================
+// INDICATOR
+// =============================================================================
+
+.indicator {
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-base-content-tertiary);
+  display: flex;
+  flex-shrink: 0;
+  font-weight: var(--font-weight-medium);
+  justify-content: center;
+
+  @include transition-colors;
+}
+
+.number {
+  line-height: 1;
+}
+
+.checkIcon {
+  color: var(--color-success-content);
+}
+
+// =============================================================================
+// STEP STATES
+// =============================================================================
+
+.pending {
+  .indicator {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-base-content-tertiary);
+  }
+
+  .label {
+    color: var(--color-base-content-tertiary);
+  }
+
+  .description {
+    color: var(--color-base-content-tertiary);
+  }
+}
+
+.active {
+  .indicator {
+    background-color: var(--color-info);
+    border-color: var(--color-info);
+    color: var(--color-info-content);
+  }
+
+  .label {
+    color: var(--color-base-content);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.completed {
+  .indicator {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+  }
+
+  .label {
+    color: var(--color-base-content);
+  }
+}
+
+.error {
+  .indicator {
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+    color: var(--color-error-content);
+  }
+
+  .label {
+    color: var(--color-error);
+  }
+}
+
+// =============================================================================
+// LABELS
+// =============================================================================
+
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.label {
+  color: var(--color-base-content);
+  line-height: var(--line-height-tight);
+}
+
+.description {
+  color: var(--color-base-content-secondary);
+  line-height: var(--line-height-normal);
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.sm {
+  .indicator {
+    font-size: var(--font-size-xs);
+    height: var(--space-6);
+    width: var(--space-6);
+  }
+
+  .checkIcon {
+    height: var(--space-3);
+    width: var(--space-3);
+  }
+
+  .label {
+    font-size: var(--font-size-sm);
+  }
+
+  .description {
+    font-size: var(--font-size-xs);
+  }
+}
+
+.md {
+  .indicator {
+    font-size: var(--font-size-sm);
+    height: var(--space-8);
+    width: var(--space-8);
+  }
+
+  .checkIcon {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+
+  .label {
+    font-size: var(--font-size-base);
+  }
+
+  .description {
+    font-size: var(--font-size-sm);
+  }
+}
+
+.lg {
+  .indicator {
+    font-size: var(--font-size-base);
+    height: var(--space-10);
+    width: var(--space-10);
+  }
+
+  .checkIcon {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+
+  .label {
+    font-size: var(--font-size-lg);
+  }
+
+  .description {
+    font-size: var(--font-size-base);
+  }
+}

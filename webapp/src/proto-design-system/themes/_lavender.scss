@@ -1,0 +1,103 @@
+// =============================================================================
+// LAVENDER THEME (SOFT BUT BOLD)
+// =============================================================================
+// Dreamy purples with confident design. Soft colors, strong shapes.
+// Modern SaaS with personality. Calm yet assertive.
+
+[data-theme="lavender"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(97% 0.02 290deg);
+
+  // Base colors (soft lavender tints)
+  --color-base-50: oklch(97% 0.02 290deg);
+  --color-base-100: oklch(95% 0.025 290deg);
+  --color-base-200: oklch(92% 0.03 290deg);
+  --color-base-300: oklch(87% 0.035 290deg);
+  --color-base-400: oklch(70% 0.04 290deg);
+  --color-base-500: oklch(55% 0.04 290deg);
+  --color-base-600: oklch(42% 0.035 290deg);
+  --color-base-700: oklch(32% 0.03 290deg);
+  --color-base-800: oklch(22% 0.025 290deg);
+  --color-base-900: oklch(15% 0.02 290deg);
+  --color-base-950: oklch(10% 0.015 290deg);
+
+  // Content colors (deep purple-gray)
+  --color-base-content: oklch(18% 0.02 290deg);
+  --color-base-content-secondary: oklch(40% 0.025 290deg);
+  --color-base-content-tertiary: oklch(55% 0.02 290deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(18% 0.02 290deg / 0.5);
+
+  // Border colors (soft purple)
+  --color-border: oklch(90% 0.03 290deg);
+  --color-border-hover: oklch(82% 0.05 290deg);
+
+  // Shadow colors (purple tinted)
+  --shadow-color: oklch(50% 0.08 290deg / 0.12);
+  --shadow-color-strong: oklch(40% 0.1 290deg / 0.2);
+
+  // Primary (bold violet)
+  --color-primary: oklch(52% 0.22 290deg);
+  --color-primary-hover: oklch(47% 0.24 290deg);
+  --color-primary-active: oklch(42% 0.22 290deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (soft pink)
+  --color-secondary: oklch(75% 0.12 350deg);
+  --color-secondary-hover: oklch(70% 0.14 350deg);
+  --color-secondary-active: oklch(65% 0.12 350deg);
+  --color-secondary-content: oklch(20% 0.04 350deg);
+
+  // Accent (mint)
+  --color-accent: oklch(78% 0.12 170deg);
+  --color-accent-hover: oklch(73% 0.14 170deg);
+  --color-accent-active: oklch(68% 0.12 170deg);
+  --color-accent-content: oklch(18% 0.04 170deg);
+
+  // Semantic colors
+  --color-success: oklch(60% 0.15 160deg);
+  --color-success-hover: oklch(55% 0.17 160deg);
+  --color-success-bg: oklch(95% 0.04 160deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(80% 0.14 85deg);
+  --color-warning-hover: oklch(75% 0.16 85deg);
+  --color-warning-bg: oklch(96% 0.04 85deg);
+  --color-warning-content: oklch(22% 0.05 85deg);
+  --color-error: oklch(58% 0.2 15deg);
+  --color-error-hover: oklch(53% 0.22 15deg);
+  --color-error-bg: oklch(95% 0.04 15deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(55% 0.15 250deg);
+  --color-info-hover: oklch(50% 0.17 250deg);
+  --color-info-bg: oklch(95% 0.04 250deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(52% 0.22 290deg / 0.4);
+
+  // Muted
+  --color-muted: oklch(55% 0.02 290deg);
+
+  // ==========================================================================
+  // LAVENDER DESIGN TOKENS
+  // ==========================================================================
+
+  // Dreamy soft shadows
+  --shadow-xs: 0 1px 2px var(--shadow-color);
+  --shadow-sm: 0 2px 6px var(--shadow-color);
+  --shadow-md: 0 4px 12px var(--shadow-color);
+  --shadow-lg: 0 8px 24px var(--shadow-color-strong);
+  --shadow-xl: 0 16px 40px var(--shadow-color-strong);
+  --shadow-2xl: 0 24px 56px var(--shadow-color-strong);
+
+  // Soft rounded corners
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}

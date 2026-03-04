@@ -1,0 +1,159 @@
+// =============================================================================
+// RADIO COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.container {
+  align-items: flex-start;
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+
+  .radio,
+  .label {
+    cursor: not-allowed;
+  }
+}
+
+// =============================================================================
+// RADIO WRAPPER
+// =============================================================================
+
+.radioWrapper {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.input {
+  cursor: pointer;
+  height: 100%;
+  left: 0;
+  margin: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: var(--z-raised);
+
+  &:focus-visible + .radio {
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+
+  &:checked + .radio {
+    border-color: var(--color-primary);
+
+    .dot {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+.radio {
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+
+  @include transition-colors;
+}
+
+.dot {
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  opacity: 0;
+  transform: scale(0);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  height: var(--space-4);
+  width: var(--space-4);
+
+  .dot {
+    height: var(--space-2);
+    width: var(--space-2);
+  }
+}
+
+.size-md {
+  height: var(--space-5);
+  width: var(--space-5);
+
+  .dot {
+    height: var(--space-2-5);
+    width: var(--space-2-5);
+  }
+}
+
+.size-lg {
+  height: var(--space-6);
+  width: var(--space-6);
+
+  .dot {
+    height: var(--space-3);
+    width: var(--space-3);
+  }
+}
+
+// =============================================================================
+// ERROR STATE
+// =============================================================================
+
+.error + .radio {
+  border-color: var(--color-error);
+}
+
+// =============================================================================
+// CONTENT
+// =============================================================================
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.label {
+  color: var(--color-base-content);
+  cursor: pointer;
+  font-family: var(--font-family-sans);
+  line-height: var(--line-height-tight);
+}
+
+.label-sm {
+  font-size: var(--font-size-sm);
+}
+
+.label-md {
+  font-size: var(--font-size-base);
+}
+
+.label-lg {
+  font-size: var(--font-size-lg);
+}
+
+.description {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}

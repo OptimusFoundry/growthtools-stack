@@ -1,0 +1,45 @@
+// =============================================================================
+// ICON COMPONENT STYLES
+// =============================================================================
+
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+// =============================================================================
+// COLORS
+// =============================================================================
+
+.color-default {
+  color: var(--color-base-content);
+}
+
+.color-muted {
+  color: var(--color-muted);
+}
+
+.color-primary {
+  color: var(--color-primary);
+}
+
+.color-secondary {
+  color: var(--color-secondary);
+}
+
+.color-success {
+  color: var(--color-success);
+}
+
+.color-warning {
+  color: var(--color-warning);
+}
+
+.color-error {
+  color: var(--color-error);
+}
+
+.color-inherit {
+  color: inherit;
+}

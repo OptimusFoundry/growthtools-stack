@@ -1,0 +1,102 @@
+// =============================================================================
+// AVATAR COMPONENT STYLES
+// =============================================================================
+
+.avatar {
+  align-items: center;
+  background-color: var(--color-base-200);
+  color: var(--color-muted);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-weight: var(--font-weight-medium);
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.xs {
+  font-size: var(--font-size-xs);
+  height: var(--space-6);
+  width: var(--space-6);
+}
+
+.sm {
+  font-size: var(--font-size-xs);
+  height: var(--space-8);
+  width: var(--space-8);
+}
+
+.md {
+  font-size: var(--font-size-sm);
+  height: var(--space-10);
+  width: var(--space-10);
+}
+
+.lg {
+  font-size: var(--font-size-base);
+  height: var(--space-12);
+  width: var(--space-12);
+}
+
+.xl {
+  font-size: var(--font-size-lg);
+  height: var(--space-16);
+  width: var(--space-16);
+}
+
+.size-2xl {
+  font-size: var(--font-size-xl);
+  height: var(--space-20);
+  width: var(--space-20);
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.circle {
+  border-radius: var(--radius-full);
+}
+
+.rounded {
+  border-radius: var(--radius-lg);
+}
+
+.square {
+  border-radius: var(--radius-sm);
+}
+
+// =============================================================================
+// IMAGE
+// =============================================================================
+
+.image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+// =============================================================================
+// INITIALS
+// =============================================================================
+
+.initials {
+  font-family: var(--font-family-sans);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+// =============================================================================
+// FALLBACK ICON
+// =============================================================================
+
+.fallbackIcon {
+  height: 60%;
+  opacity: var(--opacity-placeholder);
+  width: 60%;
+}

@@ -1,0 +1,115 @@
+// =============================================================================
+// CARD COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  @include transition-colors;
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.elevated {
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-md);
+  transition:
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.outlined {
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.filled {
+  background-color: var(--color-base-100);
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+
+// =============================================================================
+// PADDING
+// =============================================================================
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-sm {
+  padding: var(--space-3);
+}
+
+.padding-md {
+  padding: var(--space-4);
+}
+
+.padding-lg {
+  padding: var(--space-6);
+}
+
+// =============================================================================
+// INTERACTIVE
+// =============================================================================
+
+.interactive {
+  cursor: pointer;
+  user-select: none;
+
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-100);
+    border-color: var(--color-border-hover);
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  @include reduced-motion {
+    &:active {
+      transform: none;
+    }
+  }
+}
+
+// =============================================================================
+// SUB-COMPONENTS
+// =============================================================================
+
+.header {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-4);
+}
+
+.body {
+  flex: 1;
+  padding: var(--space-4);
+}
+
+.footer {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-4);
+}

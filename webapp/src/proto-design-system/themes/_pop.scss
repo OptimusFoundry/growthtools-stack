@@ -1,0 +1,110 @@
+// =============================================================================
+// POP THEME (MEMPHIS DESIGN REVIVAL)
+// =============================================================================
+// Bold, playful, unapologetically fun. Primary colors, geometric shapes.
+// Offset shadows, thick borders, 90s design revival for modern SaaS.
+
+[data-theme="pop"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(99% 0.005 90deg);
+
+  // Base colors (clean white with warm hint)
+  --color-base-50: oklch(99% 0.005 90deg);
+  --color-base-100: oklch(97% 0.008 90deg);
+  --color-base-200: oklch(94% 0.012 90deg);
+  --color-base-300: oklch(90% 0.015 90deg);
+  --color-base-400: oklch(70% 0.02 90deg);
+  --color-base-500: oklch(50% 0.02 90deg);
+  --color-base-600: oklch(35% 0.015 90deg);
+  --color-base-700: oklch(25% 0.01 90deg);
+  --color-base-800: oklch(18% 0.008 90deg);
+  --color-base-900: oklch(12% 0.005 90deg);
+  --color-base-950: oklch(5% 0 0deg);
+
+  // Content colors (pure black for max pop)
+  --color-base-content: oklch(5% 0 0deg);
+  --color-base-content-secondary: oklch(30% 0 0deg);
+  --color-base-content-tertiary: oklch(50% 0 0deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(5% 0 0deg / 0.6);
+
+  // Border colors (BOLD BLACK)
+  --color-border: oklch(0% 0 0deg);
+  --color-border-hover: oklch(0% 0 0deg);
+
+  // Shadow colors
+  --shadow-color: oklch(0% 0 0deg / 1);
+  --shadow-color-strong: oklch(0% 0 0deg / 1);
+
+  // Primary (electric blue)
+  --color-primary: oklch(55% 0.28 260deg);
+  --color-primary-hover: oklch(50% 0.3 260deg);
+  --color-primary-active: oklch(45% 0.28 260deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (hot red)
+  --color-secondary: oklch(55% 0.25 25deg);
+  --color-secondary-hover: oklch(50% 0.27 25deg);
+  --color-secondary-active: oklch(45% 0.25 25deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (sunny yellow)
+  --color-accent: oklch(90% 0.18 95deg);
+  --color-accent-hover: oklch(85% 0.2 95deg);
+  --color-accent-active: oklch(80% 0.18 95deg);
+  --color-accent-content: oklch(5% 0 0deg);
+
+  // Semantic colors
+  --color-success: oklch(60% 0.2 145deg);
+  --color-success-hover: oklch(55% 0.22 145deg);
+  --color-success-bg: oklch(92% 0.08 145deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(85% 0.18 85deg);
+  --color-warning-hover: oklch(80% 0.2 85deg);
+  --color-warning-bg: oklch(95% 0.08 85deg);
+  --color-warning-content: oklch(15% 0.05 85deg);
+  --color-error: oklch(55% 0.25 25deg);
+  --color-error-hover: oklch(50% 0.27 25deg);
+  --color-error-bg: oklch(92% 0.08 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(55% 0.22 250deg);
+  --color-info-hover: oklch(50% 0.24 250deg);
+  --color-info-bg: oklch(92% 0.08 250deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(55% 0.28 260deg / 0.5);
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+
+  // Muted
+  --color-muted: oklch(50% 0 0deg);
+
+  // ==========================================================================
+  // POP DESIGN TOKENS
+  // ==========================================================================
+
+  // Playful offset shadows (colored!)
+  --shadow-xs: 2px 2px 0 0 var(--shadow-color);
+  --shadow-sm: 3px 3px 0 0 var(--shadow-color);
+  --shadow-md: 5px 5px 0 0 var(--shadow-color);
+  --shadow-lg: 8px 8px 0 0 var(--shadow-color);
+  --shadow-xl: 12px 12px 0 0 var(--shadow-color);
+  --shadow-2xl: 16px 16px 0 0 var(--shadow-color);
+
+  // Thick borders
+  --border-width: 2px;
+  --border-width-thick: 3px;
+
+  // Playful radius
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}

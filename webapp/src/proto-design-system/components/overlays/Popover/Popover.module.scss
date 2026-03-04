@@ -1,0 +1,162 @@
+// =============================================================================
+// POPOVER COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.popover {
+  display: inline-block;
+  position: relative;
+}
+
+// =============================================================================
+// TRIGGER
+// =============================================================================
+
+.triggerWrapper {
+  appearance: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+// =============================================================================
+// CONTENT
+// =============================================================================
+
+.content {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: min(24rem, calc(100vw - var(--space-8)));
+  min-width: var(--space-48);
+  position: absolute;
+  z-index: var(--z-popover);
+}
+
+// =============================================================================
+// PLACEMENT
+// =============================================================================
+
+.placement-top {
+  bottom: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.placement-bottom {
+  margin-top: var(--space-2);
+  top: 100%;
+}
+
+.placement-left {
+  margin-right: var(--space-2);
+  right: 100%;
+  top: 0;
+}
+
+.placement-right {
+  left: 100%;
+  margin-left: var(--space-2);
+  top: 0;
+}
+
+// =============================================================================
+// ALIGNMENT
+// =============================================================================
+
+.align-start {
+  &.placement-top,
+  &.placement-bottom {
+    left: 0;
+  }
+
+  &.placement-left,
+  &.placement-right {
+    top: 0;
+  }
+}
+
+.align-center {
+  &.placement-top,
+  &.placement-bottom {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  &.placement-left,
+  &.placement-right {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+.align-end {
+  &.placement-top,
+  &.placement-bottom {
+    right: 0;
+  }
+
+  &.placement-left,
+  &.placement-right {
+    bottom: 0;
+  }
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.header {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+}
+
+.title {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.closeButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  margin: calc(var(--space-1) * -1);
+  padding: var(--space-1);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-200);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+// =============================================================================
+// BODY
+// =============================================================================
+
+.body {
+  padding: var(--space-4);
+}

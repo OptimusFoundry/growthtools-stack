@@ -1,0 +1,266 @@
+// =============================================================================
+// DATEPICKER COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.datePicker {
+  display: inline-block;
+  position: relative;
+}
+
+// =============================================================================
+// TRIGGER
+// =============================================================================
+
+.trigger {
+  align-items: center;
+  appearance: none;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-base-content);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  gap: var(--space-2);
+  text-align: left;
+  width: 100%;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    border-color: var(--color-border-hover);
+  }
+
+  &.open {
+    border-color: var(--color-primary);
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+.icon {
+  color: var(--color-muted);
+  flex-shrink: 0;
+  height: 1em;
+  width: 1em;
+}
+
+.value {
+  flex: 1;
+}
+
+.placeholder {
+  color: var(--color-muted);
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  .trigger {
+    font-size: var(--font-size-xs);
+    height: var(--space-8);
+    min-width: var(--space-40);
+    padding: 0 var(--space-2-5);
+  }
+}
+
+.size-md {
+  .trigger {
+    font-size: var(--font-size-sm);
+    height: var(--space-10);
+    min-width: var(--space-48);
+    padding: 0 var(--space-3);
+  }
+}
+
+.size-lg {
+  .trigger {
+    font-size: var(--font-size-base);
+    height: var(--space-12);
+    min-width: var(--space-56);
+    padding: 0 var(--space-4);
+  }
+}
+
+// =============================================================================
+// CALENDAR
+// =============================================================================
+
+.calendar {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  margin-top: var(--space-1);
+  min-width: var(--space-72);
+  overflow: hidden;
+  padding: var(--space-4);
+  position: absolute;
+  z-index: var(--z-dropdown);
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.selectors {
+  align-items: center;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.monthSelect,
+.yearSelect {
+  appearance: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-base-content);
+  cursor: pointer;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-1) var(--space-2);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-base-100);
+    border-color: var(--color-border);
+  }
+}
+
+.monthSelect {
+  min-width: var(--space-24);
+}
+
+.yearSelect {
+  min-width: var(--space-16);
+}
+
+.navButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  height: var(--space-8);
+  justify-content: center;
+  width: var(--space-8);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+// =============================================================================
+// DAY HEADERS
+// =============================================================================
+
+.dayHeaders {
+  display: grid;
+  gap: var(--space-1);
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: var(--space-2);
+}
+
+.dayHeader {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1);
+  text-align: center;
+}
+
+// =============================================================================
+// DAYS
+// =============================================================================
+
+.days {
+  display: grid;
+  gap: var(--space-1);
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day {
+  align-items: center;
+  appearance: none;
+  aspect-ratio: 1;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-base-content);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  justify-content: center;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover:not(:disabled):not(.selected),
+  &:focus:not(:disabled):not(.selected),
+  &.focused:not(:disabled):not(.selected) {
+    background-color: var(--color-base-100);
+  }
+}
+
+.otherMonth {
+  color: var(--color-muted);
+  opacity: var(--opacity-disabled);
+}
+
+.today {
+  border: 1px solid var(--color-primary);
+}
+
+.selected {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
+}
+
+.focused {
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}

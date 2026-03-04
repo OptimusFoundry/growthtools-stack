@@ -1,0 +1,103 @@
+// =============================================================================
+// CITRUS THEME (FRESH ENERGY)
+// =============================================================================
+// Bright oranges and yellows. Fresh, energetic, optimistic.
+// Startup energy, productivity vibes, sunny disposition.
+
+[data-theme="citrus"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(98% 0.015 85deg);
+
+  // Base colors (warm sunny tint)
+  --color-base-50: oklch(98% 0.015 85deg);
+  --color-base-100: oklch(96% 0.02 80deg);
+  --color-base-200: oklch(93% 0.025 75deg);
+  --color-base-300: oklch(88% 0.03 70deg);
+  --color-base-400: oklch(70% 0.035 65deg);
+  --color-base-500: oklch(55% 0.035 60deg);
+  --color-base-600: oklch(42% 0.03 55deg);
+  --color-base-700: oklch(30% 0.025 50deg);
+  --color-base-800: oklch(22% 0.02 50deg);
+  --color-base-900: oklch(15% 0.015 50deg);
+  --color-base-950: oklch(10% 0.01 50deg);
+
+  // Content colors (warm dark)
+  --color-base-content: oklch(15% 0.015 50deg);
+  --color-base-content-secondary: oklch(38% 0.02 55deg);
+  --color-base-content-tertiary: oklch(52% 0.015 60deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(15% 0.015 50deg / 0.5);
+
+  // Border colors (sunny)
+  --color-border: oklch(92% 0.025 75deg);
+  --color-border-hover: oklch(85% 0.04 70deg);
+
+  // Shadow colors (warm orange glow)
+  --shadow-color: oklch(70% 0.1 55deg / 0.15);
+  --shadow-color-strong: oklch(60% 0.12 50deg / 0.25);
+
+  // Primary (vibrant orange)
+  --color-primary: oklch(68% 0.2 50deg);
+  --color-primary-hover: oklch(62% 0.22 50deg);
+  --color-primary-active: oklch(58% 0.2 50deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (bright yellow)
+  --color-secondary: oklch(88% 0.18 95deg);
+  --color-secondary-hover: oklch(82% 0.2 95deg);
+  --color-secondary-active: oklch(78% 0.18 95deg);
+  --color-secondary-content: oklch(18% 0.05 95deg);
+
+  // Accent (lime zest)
+  --color-accent: oklch(75% 0.18 130deg);
+  --color-accent-hover: oklch(70% 0.2 130deg);
+  --color-accent-active: oklch(65% 0.18 130deg);
+  --color-accent-content: oklch(15% 0.04 130deg);
+
+  // Semantic colors
+  --color-success: oklch(62% 0.18 145deg);
+  --color-success-hover: oklch(57% 0.2 145deg);
+  --color-success-bg: oklch(94% 0.05 145deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(82% 0.16 85deg);
+  --color-warning-hover: oklch(77% 0.18 85deg);
+  --color-warning-bg: oklch(96% 0.05 85deg);
+  --color-warning-content: oklch(22% 0.06 85deg);
+  --color-error: oklch(58% 0.22 25deg);
+  --color-error-hover: oklch(53% 0.24 25deg);
+  --color-error-bg: oklch(94% 0.05 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(55% 0.16 240deg);
+  --color-info-hover: oklch(50% 0.18 240deg);
+  --color-info-bg: oklch(94% 0.04 240deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(68% 0.2 50deg / 0.4);
+
+  // Muted
+  --color-muted: oklch(52% 0.015 60deg);
+
+  // ==========================================================================
+  // CITRUS DESIGN TOKENS
+  // ==========================================================================
+
+  // Warm glowing shadows
+  --shadow-xs: 0 1px 3px var(--shadow-color);
+  --shadow-sm: 0 2px 6px var(--shadow-color);
+  --shadow-md: 0 4px 14px var(--shadow-color);
+  --shadow-lg: 0 8px 28px var(--shadow-color-strong);
+  --shadow-xl: 0 14px 44px var(--shadow-color-strong);
+  --shadow-2xl: 0 22px 60px var(--shadow-color-strong);
+
+  // Balanced radius
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+}

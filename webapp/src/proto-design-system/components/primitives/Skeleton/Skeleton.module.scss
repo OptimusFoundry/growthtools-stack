@@ -1,0 +1,84 @@
+// =============================================================================
+// SKELETON COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.skeleton {
+  animation: shimmer 1.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-base-200) 0%,
+    var(--color-base-100) 50%,
+    var(--color-base-200) 100%
+  );
+  background-size: 200% 100%;
+  display: block;
+
+  @include reduced-motion {
+    animation: pulse var(--duration-slower) ease-in-out infinite;
+  }
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.text {
+  border-radius: var(--radius-sm);
+  height: 1em;
+  transform-origin: 0 55%;
+  width: 100%;
+
+  // Emulate text line height
+  &::before {
+    content: "\00a0";
+  }
+}
+
+.circular {
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  height: var(--space-10);
+  width: var(--space-10);
+}
+
+.rectangular {
+  border-radius: 0;
+  height: var(--space-24);
+  width: 100%;
+}
+
+.rounded {
+  border-radius: var(--radius-md);
+  height: var(--space-24);
+  width: 100%;
+}
+
+// =============================================================================
+// ANIMATION
+// =============================================================================
+
+.noAnimation {
+  animation: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: var(--opacity-disabled);
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

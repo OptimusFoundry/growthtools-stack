@@ -1,0 +1,73 @@
+// =============================================================================
+// LABEL COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.container {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.label {
+  align-items: baseline;
+  color: var(--color-base-content);
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-1);
+  line-height: var(--line-height-tight);
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  font-size: var(--font-size-xs);
+}
+
+.size-md {
+  font-size: var(--font-size-sm);
+}
+
+.size-lg {
+  font-size: var(--font-size-base);
+}
+
+// =============================================================================
+// TEXT ELEMENTS
+// =============================================================================
+
+.text {
+  display: inline-flex;
+  gap: var(--space-0-5);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.subText {
+  color: var(--color-muted);
+  font-weight: var(--font-weight-normal);
+}
+
+.badge {
+  display: inline-flex;
+}
+
+.action {
+  display: inline-flex;
+  margin-left: auto;
+}
+
+// =============================================================================
+// STATES
+// =============================================================================
+
+.disabled {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}

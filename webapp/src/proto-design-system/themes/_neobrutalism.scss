@@ -1,0 +1,110 @@
+// =============================================================================
+// NEOBRUTALISM THEME
+// =============================================================================
+// Bold, raw aesthetic with hard shadows, thick borders, and vibrant colors.
+// Intentionally harsh and unapologetic design language.
+
+[data-theme="neobrutalism"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(98% 0.02 85deg);
+
+  // Base colors (cream/off-white background)
+  --color-base-50: oklch(98% 0.02 85deg);                               // Cream white
+  --color-base-100: oklch(96% 0.025 85deg);                             // Light cream
+  --color-base-200: oklch(93% 0.03 85deg);                              // Warm cream
+  --color-base-300: oklch(88% 0.025 85deg);                             // Darker cream
+  --color-base-400: oklch(70% 0.02 85deg);                              // Tan
+  --color-base-500: oklch(50% 0.015 85deg);                             // Medium
+  --color-base-600: oklch(35% 0.01 85deg);                              // Dark
+  --color-base-700: oklch(25% 0.008 85deg);                             // Darker
+  --color-base-800: oklch(18% 0.005 85deg);                             // Very dark
+  --color-base-900: oklch(12% 0.003 85deg);                             // Near black
+  --color-base-950: oklch(8% 0 0deg);                                   // Pure black
+
+  // Content colors (high contrast black)
+  --color-base-content: oklch(10% 0 0deg);                              // Near black text
+  --color-base-content-secondary: oklch(25% 0 0deg);                    // Dark gray
+  --color-base-content-tertiary: oklch(40% 0 0deg);                     // Medium gray
+
+  // Surface colors (white with personality)
+  --color-surface: oklch(99% 0.01 85deg);                               // Off-white surface
+  --color-surface-elevated: oklch(100% 0 0deg);                         // Pure white
+  --color-surface-overlay: oklch(0% 0 0deg / 0.7);                      // Dark overlay
+
+  // Border colors (BOLD BLACK - signature neobrutalism)
+  --color-border: oklch(0% 0 0deg);                                     // Pure black borders
+  --color-border-hover: oklch(0% 0 0deg);                               // Stay black on hover
+
+  // Shadow colors (HARD SHADOWS - no blur, offset)
+  --shadow-color: oklch(0% 0 0deg / 1);                                 // Solid black
+  --shadow-color-strong: oklch(0% 0 0deg / 1);                          // Solid black
+
+  // Primary (electric blue)
+  --color-primary: oklch(55% 0.25 250deg);
+  --color-primary-hover: oklch(50% 0.27 250deg);
+  --color-primary-active: oklch(45% 0.25 250deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (hot pink)
+  --color-secondary: oklch(65% 0.25 350deg);
+  --color-secondary-hover: oklch(60% 0.27 350deg);
+  --color-secondary-active: oklch(55% 0.25 350deg);
+  --color-secondary-content: oklch(0% 0 0deg);
+
+  // Accent (bright yellow)
+  --color-accent: oklch(90% 0.2 95deg);
+  --color-accent-hover: oklch(85% 0.22 95deg);
+  --color-accent-active: oklch(80% 0.2 95deg);
+  --color-accent-content: oklch(0% 0 0deg);
+
+  // Semantic colors (bold and vibrant)
+  --color-success: oklch(65% 0.22 145deg);
+  --color-success-hover: oklch(60% 0.24 145deg);
+  --color-success-bg: oklch(85% 0.15 145deg);
+  --color-success-content: oklch(0% 0 0deg);
+  --color-warning: oklch(85% 0.18 85deg);
+  --color-warning-hover: oklch(80% 0.2 85deg);
+  --color-warning-bg: oklch(92% 0.12 85deg);
+  --color-warning-content: oklch(0% 0 0deg);
+  --color-error: oklch(60% 0.25 25deg);
+  --color-error-hover: oklch(55% 0.27 25deg);
+  --color-error-bg: oklch(85% 0.15 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(60% 0.2 240deg);
+  --color-info-hover: oklch(55% 0.22 240deg);
+  --color-info-bg: oklch(88% 0.12 240deg);
+  --color-info-content: oklch(0% 0 0deg);
+
+  // Focus ring (thick and bold)
+  --focus-ring-color: oklch(0% 0 0deg);
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+
+  // Muted color
+  --color-muted: oklch(40% 0.01 85deg);
+
+  // ==========================================================================
+  // NEOBRUTALISM SPECIFIC OVERRIDES
+  // ==========================================================================
+
+  // Hard shadows (no blur, solid offset)
+  --shadow-xs: 2px 2px 0 0 var(--shadow-color);
+  --shadow-sm: 3px 3px 0 0 var(--shadow-color);
+  --shadow-md: 4px 4px 0 0 var(--shadow-color);
+  --shadow-lg: 6px 6px 0 0 var(--shadow-color);
+  --shadow-xl: 8px 8px 0 0 var(--shadow-color);
+  --shadow-2xl: 12px 12px 0 0 var(--shadow-color);
+
+  // Thicker borders
+  --border-width: 2px;
+  --border-width-thick: 3px;
+
+  // Sharper radius (or none)
+  --radius-sm: 0;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+}

@@ -1,0 +1,371 @@
+// =============================================================================
+// MULTISELECT COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.multiSelect {
+  display: inline-block;
+  position: relative;
+}
+
+.fullWidth {
+  display: block;
+  width: 100%;
+}
+
+// =============================================================================
+// TRIGGER
+// =============================================================================
+
+.trigger {
+  align-items: center;
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-2);
+  justify-content: space-between;
+  min-width: var(--space-40);
+  text-align: left;
+  width: 100%;
+
+  @include transition-colors;
+  @include focus-ring;
+}
+
+.triggerContent {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.hiddenPlaceholder {
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+.visibleContent {
+  inset: 0;
+  position: absolute;
+}
+
+.placeholder {
+  color: var(--color-muted);
+}
+
+.label {
+  color: var(--color-base-content);
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+.clearButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  padding: var(--space-0-5);
+
+  @include transition-colors;
+
+  &:hover {
+    background-color: oklch(from var(--color-base-content) l c h / 0.1);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: 0.875em;
+    width: 0.875em;
+  }
+}
+
+.clearButtonHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chevron {
+  color: var(--color-muted);
+  flex-shrink: 0;
+  height: 1em;
+  transition: transform var(--duration-fast) var(--ease-out);
+  width: 1em;
+}
+
+.rotated {
+  transform: rotate(180deg);
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-base-content);
+
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background-color: var(--color-base-50);
+    border-color: var(--color-border-hover);
+  }
+
+  &.open {
+    border-color: var(--color-primary);
+  }
+}
+
+.outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-base-content);
+
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background-color: var(--color-base-50);
+    border-color: var(--color-border-hover);
+  }
+
+  &.open {
+    border-color: var(--color-primary);
+  }
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  .trigger {
+    font-size: var(--font-size-xs);
+    height: var(--space-8);
+    padding: 0 var(--space-2-5);
+  }
+
+  .menu {
+    font-size: var(--font-size-xs);
+  }
+
+  .item {
+    padding: var(--space-1-5) var(--space-2-5);
+  }
+
+  .checkbox {
+    height: var(--space-3-5);
+    width: var(--space-3-5);
+  }
+}
+
+.size-md {
+  .trigger {
+    font-size: var(--font-size-sm);
+    height: var(--space-10);
+    padding: 0 var(--space-3);
+  }
+
+  .menu {
+    font-size: var(--font-size-sm);
+  }
+
+  .item {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .checkbox {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+.size-lg {
+  .trigger {
+    font-size: var(--font-size-base);
+    height: var(--space-12);
+    padding: 0 var(--space-4);
+  }
+
+  .menu {
+    font-size: var(--font-size-base);
+  }
+
+  .item {
+    padding: var(--space-2-5) var(--space-4);
+  }
+
+  .checkbox {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// MENU
+// =============================================================================
+
+.menu {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+  margin: 0;
+  max-height: 280px;
+  min-width: 100%;
+  overflow-y: auto;
+  padding: var(--space-1);
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  z-index: var(--z-dropdown);
+}
+
+.align-start {
+  left: 0;
+}
+
+.align-end {
+  right: 0;
+}
+
+// =============================================================================
+// ITEM
+// =============================================================================
+
+.item {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-base-content);
+  cursor: pointer;
+  display: flex;
+  font-family: inherit;
+  font-size: inherit;
+  gap: var(--space-2);
+  text-align: left;
+  width: 100%;
+
+  @include transition-colors;
+
+  &:hover:not(.disabled),
+  &:focus:not(.disabled),
+  &.focused {
+    background-color: oklch(from var(--color-base-content) l c h / 0.08);
+  }
+}
+
+.selected {
+  background-color: oklch(from var(--color-primary) l c h / 0.08);
+
+  &:hover:not(.disabled),
+  &:focus:not(.disabled),
+  &.focused {
+    background-color: oklch(from var(--color-primary) l c h / 0.12);
+  }
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// CHECKBOX
+// =============================================================================
+
+.checkbox {
+  align-items: center;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  display: flex;
+  flex-shrink: 0;
+  height: var(--space-4);
+  justify-content: center;
+  width: var(--space-4);
+
+  @include transition-colors;
+
+  svg {
+    height: 0.75em;
+    width: 0.75em;
+  }
+
+  &.checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+// =============================================================================
+// ITEM ELEMENTS
+// =============================================================================
+
+.itemIcon {
+  align-items: center;
+  color: var(--color-base-content-secondary);
+  display: flex;
+  flex-shrink: 0;
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+.itemContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.itemLabel {
+  flex: 1;
+  line-height: var(--line-height-tight);
+}
+
+.itemDescription {
+  color: var(--color-muted);
+  font-size: 0.85em;
+  line-height: var(--line-height-tight);
+}
+
+.hasDescription {
+  align-items: flex-start;
+
+  .checkbox {
+    margin-top: var(--space-0-5);
+  }
+}
+
+// =============================================================================
+// DIVIDER
+// =============================================================================
+
+.divider {
+  background-color: var(--color-border);
+  height: 1px;
+  margin: var(--space-1) 0;
+}

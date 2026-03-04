@@ -1,0 +1,104 @@
+// =============================================================================
+// RETRO THEME (70s REVIVAL)
+// =============================================================================
+// Groovy, warm, nostalgic. Mustard, burnt orange, avocado green.
+// Heavy rounded corners, warm shadows, vintage vibes.
+
+[data-theme="retro"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(96% 0.025 75deg);
+
+  // Base colors (warm cream/beige)
+  --color-base-50: oklch(96% 0.025 75deg);
+  --color-base-100: oklch(94% 0.03 70deg);
+  --color-base-200: oklch(90% 0.035 65deg);
+  --color-base-300: oklch(85% 0.04 60deg);
+  --color-base-400: oklch(68% 0.05 55deg);
+  --color-base-500: oklch(52% 0.05 50deg);
+  --color-base-600: oklch(40% 0.04 48deg);
+  --color-base-700: oklch(30% 0.035 45deg);
+  --color-base-800: oklch(22% 0.03 45deg);
+  --color-base-900: oklch(16% 0.025 45deg);
+  --color-base-950: oklch(10% 0.02 45deg);
+
+  // Content colors (warm brown)
+  --color-base-content: oklch(18% 0.03 45deg);
+  --color-base-content-secondary: oklch(38% 0.03 50deg);
+  --color-base-content-tertiary: oklch(52% 0.025 55deg);
+
+  // Surface colors
+  --color-surface: oklch(98% 0.02 80deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(18% 0.03 45deg / 0.5);
+
+  // Border colors (warm)
+  --color-border: oklch(85% 0.04 60deg);
+  --color-border-hover: oklch(75% 0.05 55deg);
+
+  // Shadow colors (warm brown)
+  --shadow-color: oklch(40% 0.05 50deg / 0.15);
+  --shadow-color-strong: oklch(30% 0.05 45deg / 0.25);
+
+  // Primary (burnt orange)
+  --color-primary: oklch(60% 0.18 45deg);
+  --color-primary-hover: oklch(55% 0.2 45deg);
+  --color-primary-active: oklch(50% 0.18 45deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (avocado green)
+  --color-secondary: oklch(52% 0.12 130deg);
+  --color-secondary-hover: oklch(47% 0.14 130deg);
+  --color-secondary-active: oklch(42% 0.12 130deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (mustard yellow)
+  --color-accent: oklch(80% 0.15 85deg);
+  --color-accent-hover: oklch(75% 0.17 85deg);
+  --color-accent-active: oklch(70% 0.15 85deg);
+  --color-accent-content: oklch(18% 0.04 85deg);
+
+  // Semantic colors (vintage tones)
+  --color-success: oklch(55% 0.12 145deg);
+  --color-success-hover: oklch(50% 0.14 145deg);
+  --color-success-bg: oklch(94% 0.04 145deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(78% 0.14 80deg);
+  --color-warning-hover: oklch(73% 0.16 80deg);
+  --color-warning-bg: oklch(95% 0.05 80deg);
+  --color-warning-content: oklch(22% 0.05 80deg);
+  --color-error: oklch(52% 0.16 25deg);
+  --color-error-hover: oklch(47% 0.18 25deg);
+  --color-error-bg: oklch(94% 0.05 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(52% 0.12 230deg);
+  --color-info-hover: oklch(47% 0.14 230deg);
+  --color-info-bg: oklch(94% 0.04 230deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(60% 0.18 45deg / 0.4);
+
+  // Muted
+  --color-muted: oklch(52% 0.025 55deg);
+
+  // ==========================================================================
+  // RETRO DESIGN TOKENS
+  // ==========================================================================
+
+  // Soft, warm shadows
+  --shadow-xs: 0 2px 4px var(--shadow-color);
+  --shadow-sm: 0 4px 8px var(--shadow-color);
+  --shadow-md: 0 6px 16px var(--shadow-color);
+  --shadow-lg: 0 10px 24px var(--shadow-color-strong);
+  --shadow-xl: 0 16px 40px var(--shadow-color-strong);
+  --shadow-2xl: 0 24px 56px var(--shadow-color-strong);
+
+  // HEAVY rounded corners (very groovy)
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+}

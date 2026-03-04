@@ -1,0 +1,10 @@
+// =============================================================================
+// MIXINS INDEX
+// =============================================================================
+// Aggregates all mixin files for easy importing.
+
+@forward "responsive";
+@forward "typography";
+@forward "motion";
+@forward "accessibility";
+@forward "elevation";

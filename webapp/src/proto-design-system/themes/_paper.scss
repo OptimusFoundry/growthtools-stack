@@ -1,0 +1,120 @@
+// =============================================================================
+// PAPER THEME (LAYERED DEPTH)
+// =============================================================================
+// Material design evolved. Stacked paper layers, subtle elevation.
+// Physical metaphor in digital space. Tactile, tangible, touchable.
+
+[data-theme="paper"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(96% 0.005 80deg);
+
+  // Base colors (warm paper stack)
+  --color-base-50: oklch(96% 0.005 80deg);
+  --color-base-100: oklch(94% 0.008 75deg);
+  --color-base-200: oklch(91% 0.01 70deg);
+  --color-base-300: oklch(86% 0.012 65deg);
+  --color-base-400: oklch(70% 0.015 60deg);
+  --color-base-500: oklch(55% 0.015 55deg);
+  --color-base-600: oklch(42% 0.012 50deg);
+  --color-base-700: oklch(30% 0.01 45deg);
+  --color-base-800: oklch(22% 0.008 40deg);
+  --color-base-900: oklch(15% 0.006 35deg);
+  --color-base-950: oklch(10% 0.004 30deg);
+
+  // Content colors (ink on paper)
+  --color-base-content: oklch(18% 0.008 50deg);
+  --color-base-content-secondary: oklch(40% 0.01 55deg);
+  --color-base-content-tertiary: oklch(55% 0.008 60deg);
+
+  // Surface colors (paper layers)
+  --color-surface: oklch(99% 0.003 85deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(18% 0.008 50deg / 0.4);
+
+  // Border colors (paper edge shadows)
+  --color-border: oklch(90% 0.008 70deg);
+  --color-border-hover: oklch(82% 0.012 65deg);
+
+  // Shadow colors (paper shadow)
+  --shadow-color: oklch(50% 0.015 55deg / 0.08);
+  --shadow-color-strong: oklch(40% 0.02 50deg / 0.15);
+
+  // Primary (confident blue)
+  --color-primary: oklch(52% 0.16 250deg);
+  --color-primary-hover: oklch(47% 0.18 250deg);
+  --color-primary-active: oklch(42% 0.16 250deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (warm coral)
+  --color-secondary: oklch(65% 0.14 35deg);
+  --color-secondary-hover: oklch(60% 0.16 35deg);
+  --color-secondary-active: oklch(55% 0.14 35deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (fresh mint)
+  --color-accent: oklch(72% 0.12 165deg);
+  --color-accent-hover: oklch(67% 0.14 165deg);
+  --color-accent-active: oklch(62% 0.12 165deg);
+  --color-accent-content: oklch(18% 0.04 165deg);
+
+  // Semantic colors
+  --color-success: oklch(58% 0.14 155deg);
+  --color-success-hover: oklch(53% 0.16 155deg);
+  --color-success-bg: oklch(95% 0.03 155deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(78% 0.12 80deg);
+  --color-warning-hover: oklch(73% 0.14 80deg);
+  --color-warning-bg: oklch(96% 0.04 80deg);
+  --color-warning-content: oklch(22% 0.04 80deg);
+  --color-error: oklch(55% 0.18 25deg);
+  --color-error-hover: oklch(50% 0.2 25deg);
+  --color-error-bg: oklch(95% 0.03 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(52% 0.14 240deg);
+  --color-info-hover: oklch(47% 0.16 240deg);
+  --color-info-bg: oklch(95% 0.03 240deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(52% 0.16 250deg / 0.35);
+
+  // Muted
+  --color-muted: oklch(55% 0.008 60deg);
+
+  // ==========================================================================
+  // PAPER DESIGN TOKENS
+  // ==========================================================================
+
+  // Layered paper shadows (multiple stacked layers)
+  --shadow-xs:
+    0 1px 1px var(--shadow-color),
+    0 2px 2px oklch(50% 0.015 55deg / 0.04);
+  --shadow-sm:
+    0 1px 2px var(--shadow-color),
+    0 2px 4px oklch(50% 0.015 55deg / 0.05),
+    0 4px 6px oklch(50% 0.015 55deg / 0.03);
+  --shadow-md:
+    0 2px 4px var(--shadow-color),
+    0 4px 8px oklch(50% 0.015 55deg / 0.06),
+    0 8px 12px oklch(50% 0.015 55deg / 0.04);
+  --shadow-lg:
+    0 4px 6px var(--shadow-color),
+    0 8px 16px oklch(50% 0.015 55deg / 0.08),
+    0 16px 24px oklch(50% 0.015 55deg / 0.05);
+  --shadow-xl:
+    0 6px 10px var(--shadow-color-strong),
+    0 12px 24px oklch(50% 0.015 55deg / 0.1),
+    0 24px 36px oklch(50% 0.015 55deg / 0.06);
+  --shadow-2xl:
+    0 8px 14px var(--shadow-color-strong),
+    0 20px 36px oklch(50% 0.015 55deg / 0.12),
+    0 36px 50px oklch(50% 0.015 55deg / 0.08);
+
+  // Soft, friendly radius
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+}

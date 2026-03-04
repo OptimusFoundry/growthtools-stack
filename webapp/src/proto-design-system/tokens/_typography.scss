@@ -1,0 +1,56 @@
+// =============================================================================
+// TYPOGRAPHY TOKENS — 2026 TRENDS
+// =============================================================================
+// Fluid typography with generous sizing for better readability.
+// Larger base sizes, relaxed line heights, optical adjustments.
+
+:root {
+  // Font families
+  --font-family-sans: "Geist", "Inter", "SF Pro Display", -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, sans-serif;
+  --font-family-mono: "Geist Mono", "JetBrains Mono", "SF Mono", "Fira Code", consolas, "Courier New", monospace;
+  --font-family-display: "Geist", var(--font-family-sans);
+
+  // Font sizes — SaaS optimized
+  --font-size-xs: 0.75rem;                                         // 12px - metadata, captions
+  --font-size-sm: 0.8125rem;                                       // 13px - labels, secondary
+  --font-size-base: 0.875rem;                                      // 14px - body text
+  --font-size-md: 0.9375rem;                                       // 15px - emphasized body
+  --font-size-lg: 1.0625rem;                                       // 17px - subheadings
+  --font-size-xl: 1.1875rem;                                       // 19px - card titles
+  --font-size-2xl: 1.3125rem;                                      // 21px - section headers
+  --font-size-3xl: 1.5625rem;                                      // 25px - page titles
+  --font-size-4xl: 1.9375rem;                                      // 31px - large headings
+  --font-size-5xl: 2.3125rem;                                      // 37px - hero text
+  --font-size-6xl: 3.0625rem;                                      // 49px - display
+
+  // Font weights
+  --font-weight-thin: 100;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  // Line heights — 2026: More generous for readability
+  --line-height-none: 1;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.55;
+  --line-height-relaxed: 1.7;
+  --line-height-loose: 2;
+
+  // Letter spacing — 2026: Tighter for headings
+  --letter-spacing-tighter: -0.04em;
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: -0.01em;
+  --letter-spacing-wide: 0.01em;
+  --letter-spacing-wider: 0.04em;
+  --letter-spacing-widest: 0.08em;
+
+  // Text decoration
+  --text-decoration-thickness: 1px;
+  --text-underline-offset: 3px;
+}

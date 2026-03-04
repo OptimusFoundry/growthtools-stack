@@ -1,0 +1,131 @@
+// =============================================================================
+// ALERT COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.alert {
+  --_alert-bg: var(--color-base-100);
+  --_alert-border: var(--color-border);
+  --_alert-icon: var(--color-muted);
+  --_alert-title: var(--color-base-content);
+  --_alert-text: var(--color-muted);
+
+  align-items: flex-start;
+  background-color: var(--_alert-bg);
+  border: 1px solid var(--_alert-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.info {
+  --_alert-bg: var(--color-info);
+  --_alert-border: var(--color-info);
+  --_alert-icon: var(--color-info-content);
+  --_alert-title: var(--color-info-content);
+  --_alert-text: oklch(from var(--color-info-content) l c h / 0.85);
+}
+
+.success {
+  --_alert-bg: var(--color-success);
+  --_alert-border: var(--color-success);
+  --_alert-icon: var(--color-success-content);
+  --_alert-title: var(--color-success-content);
+  --_alert-text: oklch(from var(--color-success-content) l c h / 0.85);
+}
+
+.warning {
+  --_alert-bg: var(--color-warning);
+  --_alert-border: var(--color-warning);
+  --_alert-icon: var(--color-warning-content);
+  --_alert-title: var(--color-warning-content);
+  --_alert-text: oklch(from var(--color-warning-content) l c h / 0.85);
+}
+
+.error {
+  --_alert-bg: var(--color-error);
+  --_alert-border: var(--color-error);
+  --_alert-icon: var(--color-error-content);
+  --_alert-title: var(--color-error-content);
+  --_alert-text: oklch(from var(--color-error-content) l c h / 0.85);
+}
+
+// =============================================================================
+// ICON
+// =============================================================================
+
+.icon {
+  align-items: center;
+  color: var(--_alert-icon);
+  display: flex;
+  flex-shrink: 0;
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// CONTENT
+// =============================================================================
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  color: var(--_alert-title);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.message {
+  color: var(--_alert-text);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+// =============================================================================
+// DISMISS BUTTON
+// =============================================================================
+
+.dismiss {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  margin: calc(var(--space-1) * -1);
+  padding: var(--space-1);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-200);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}

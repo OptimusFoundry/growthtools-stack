@@ -1,0 +1,104 @@
+// =============================================================================
+// BUTTON GROUP STYLES
+// =============================================================================
+
+.group {
+  display: inline-flex;
+}
+
+// =============================================================================
+// ORIENTATION
+// =============================================================================
+
+.horizontal {
+  flex-direction: row;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
+// =============================================================================
+// SPACING
+// =============================================================================
+
+.spacing-sm {
+  gap: var(--space-1);
+}
+
+.spacing-md {
+  gap: var(--space-2);
+}
+
+.spacing-lg {
+  gap: var(--space-3);
+}
+
+// =============================================================================
+// ATTACHED (CONNECTED BUTTONS)
+// =============================================================================
+
+.attached {
+  gap: 0;
+
+  // Remove border radius from middle buttons
+  > :not(:first-child, :last-child) {
+    border-radius: 0;
+  }
+
+  // Horizontal attached
+  &.horizontal {
+    > :first-child:not(:last-child) {
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
+    }
+
+    > :last-child:not(:first-child) {
+      border-bottom-left-radius: 0;
+      border-top-left-radius: 0;
+    }
+
+    // Prevent double borders
+    > :not(:first-child) {
+      margin-left: -1px;
+    }
+  }
+
+  // Vertical attached
+  &.vertical {
+    > :first-child:not(:last-child) {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    > :last-child:not(:first-child) {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+
+    // Prevent double borders
+    > :not(:first-child) {
+      margin-top: -1px;
+    }
+  }
+
+  // Ensure hover/focus brings button to front
+  > :hover,
+  > :focus-visible {
+    position: relative;
+    z-index: var(--z-raised);
+  }
+}
+
+// =============================================================================
+// FULL WIDTH
+// =============================================================================
+
+.fullWidth {
+  display: flex;
+  width: 100%;
+
+  > * {
+    flex: 1;
+  }
+}

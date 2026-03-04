@@ -1,0 +1,195 @@
+// =============================================================================
+// SELECT COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  width: fit-content;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+// =============================================================================
+// LABEL
+// =============================================================================
+
+.label {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+.label-sm {
+  font-size: var(--font-size-xs);
+}
+
+.label-md {
+  font-size: var(--font-size-sm);
+}
+
+.label-lg {
+  font-size: var(--font-size-base);
+}
+
+// =============================================================================
+// WRAPPER
+// =============================================================================
+
+.wrapper {
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  position: relative;
+  width: 100%;
+
+  @include transition-colors;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+}
+
+// =============================================================================
+// SELECT
+// =============================================================================
+
+.select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--color-base-content);
+  cursor: pointer;
+  flex: 1;
+  font-family: var(--font-family-sans);
+  min-width: 0;
+  outline: none;
+  width: 100%;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// =============================================================================
+// ICON
+// =============================================================================
+
+.icon {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-shrink: 0;
+  pointer-events: none;
+  position: absolute;
+  right: var(--space-3);
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  font-size: var(--font-size-sm);
+  height: var(--space-8);
+
+  .select {
+    padding: var(--space-1) var(--space-8) var(--space-1) var(--space-2-5);
+  }
+
+  .icon {
+    right: var(--space-2);
+  }
+}
+
+.size-md {
+  font-size: var(--font-size-base);
+  height: var(--space-10);
+
+  .select {
+    padding: var(--space-2) var(--space-10) var(--space-2) var(--space-3);
+  }
+}
+
+.size-lg {
+  font-size: var(--font-size-lg);
+  height: var(--space-12);
+
+  .select {
+    padding: var(--space-2-5) var(--space-12) var(--space-2-5) var(--space-4);
+  }
+
+  .icon {
+    right: var(--space-4);
+  }
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  background-color: var(--color-surface);
+}
+
+.filled {
+  background-color: var(--color-base-100);
+  border-color: transparent;
+
+  &:focus-within {
+    background-color: var(--color-surface);
+    border-color: var(--color-primary);
+  }
+}
+
+// =============================================================================
+// STATES
+// =============================================================================
+
+.error {
+  border-color: var(--color-error);
+
+  &:focus-within {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px oklch(from var(--color-error) l c h / 0.2);
+  }
+}
+
+.disabled {
+  background-color: var(--color-base-100);
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// HELPER & ERROR TEXT
+// =============================================================================
+
+.helperText {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.errorText {
+  color: var(--color-error);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}

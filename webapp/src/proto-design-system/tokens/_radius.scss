@@ -1,0 +1,41 @@
+// =============================================================================
+// BORDER RADIUS TOKENS
+// =============================================================================
+
+:root {
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  // Component-specific
+  --radius-button: var(--radius-md);
+  --radius-input: var(--radius-md);
+  --radius-card: var(--radius-lg);
+  --radius-modal: var(--radius-xl);
+  --radius-badge: var(--radius-full);
+  --radius-avatar: var(--radius-full);
+}
+
+// =============================================================================
+// BORDER WIDTH TOKENS
+// =============================================================================
+
+:root {
+  --border-width-none: 0;
+  --border-width-sm: 1px;
+  --border-width-md: 2px;
+  --border-width-lg: 3px;
+  --border-width-xl: 4px;
+
+  // Component-specific
+  --border-width-input: var(--border-width-sm);
+  --border-width-button: var(--border-width-sm);
+  --border-width-card: var(--border-width-sm);
+  --border-width-focus: var(--border-width-md);
+}

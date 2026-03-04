@@ -1,0 +1,104 @@
+// =============================================================================
+// HOLO THEME (HOLOGRAPHIC IRIDESCENCE)
+// =============================================================================
+// Iridescent, color-shifting aesthetic. Rainbow chrome on white.
+// Like holographic stickers, credit cards, futuristic IDs.
+// The future is shiny.
+
+[data-theme="holo"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(99.5% 0.003 300deg);
+
+  // Base colors (pure white with subtle rainbow shimmer)
+  --color-base-50: oklch(99.5% 0.003 300deg);
+  --color-base-100: oklch(98% 0.008 280deg);
+  --color-base-200: oklch(95% 0.015 260deg);
+  --color-base-300: oklch(90% 0.02 240deg);
+  --color-base-400: oklch(72% 0.03 220deg);
+  --color-base-500: oklch(55% 0.03 200deg);
+  --color-base-600: oklch(40% 0.025 180deg);
+  --color-base-700: oklch(28% 0.02 160deg);
+  --color-base-800: oklch(18% 0.015 140deg);
+  --color-base-900: oklch(12% 0.01 120deg);
+  --color-base-950: oklch(6% 0.005 100deg);
+
+  // Content colors
+  --color-base-content: oklch(15% 0.01 260deg);
+  --color-base-content-secondary: oklch(40% 0.015 260deg);
+  --color-base-content-tertiary: oklch(55% 0.01 260deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(15% 0.02 260deg / 0.5);
+
+  // Border colors (iridescent hint)
+  --color-border: oklch(92% 0.02 280deg);
+  --color-border-hover: oklch(85% 0.05 260deg);
+
+  // Shadow colors (rainbow tinted)
+  --shadow-color: oklch(70% 0.1 280deg / 0.12);
+  --shadow-color-strong: oklch(60% 0.15 260deg / 0.2);
+
+  // Primary (shifting violet-blue)
+  --color-primary: oklch(58% 0.22 280deg);
+  --color-primary-hover: oklch(53% 0.25 275deg);
+  --color-primary-active: oklch(48% 0.22 270deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (shifting pink-magenta)
+  --color-secondary: oklch(65% 0.22 330deg);
+  --color-secondary-hover: oklch(60% 0.25 325deg);
+  --color-secondary-active: oklch(55% 0.22 320deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (shifting cyan-teal)
+  --color-accent: oklch(75% 0.18 195deg);
+  --color-accent-hover: oklch(70% 0.2 190deg);
+  --color-accent-active: oklch(65% 0.18 185deg);
+  --color-accent-content: oklch(15% 0.04 195deg);
+
+  // Semantic colors
+  --color-success: oklch(65% 0.18 155deg);
+  --color-success-hover: oklch(60% 0.2 155deg);
+  --color-success-bg: oklch(96% 0.04 155deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(82% 0.15 90deg);
+  --color-warning-hover: oklch(77% 0.17 90deg);
+  --color-warning-bg: oklch(97% 0.04 90deg);
+  --color-warning-content: oklch(22% 0.05 90deg);
+  --color-error: oklch(60% 0.22 20deg);
+  --color-error-hover: oklch(55% 0.24 20deg);
+  --color-error-bg: oklch(96% 0.04 20deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(60% 0.18 250deg);
+  --color-info-hover: oklch(55% 0.2 250deg);
+  --color-info-bg: oklch(96% 0.04 250deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring (iridescent)
+  --focus-ring-color: oklch(58% 0.22 280deg / 0.4);
+
+  // Muted
+  --color-muted: oklch(55% 0.015 260deg);
+
+  // ==========================================================================
+  // HOLO DESIGN TOKENS
+  // ==========================================================================
+
+  // Iridescent glow shadows
+  --shadow-xs: 0 1px 3px oklch(70% 0.1 300deg / 0.1), 0 1px 2px oklch(70% 0.1 200deg / 0.08);
+  --shadow-sm: 0 2px 6px oklch(65% 0.12 290deg / 0.12), 0 2px 4px oklch(65% 0.12 190deg / 0.1);
+  --shadow-md: 0 4px 12px oklch(60% 0.15 280deg / 0.15), 0 4px 8px oklch(60% 0.15 180deg / 0.12);
+  --shadow-lg: 0 8px 24px oklch(55% 0.18 270deg / 0.18), 0 8px 16px oklch(55% 0.18 170deg / 0.15);
+  --shadow-xl: 0 16px 40px oklch(50% 0.2 260deg / 0.2), 0 12px 24px oklch(50% 0.2 160deg / 0.18);
+  --shadow-2xl: 0 24px 56px oklch(45% 0.22 250deg / 0.22), 0 16px 32px oklch(45% 0.22 150deg / 0.2);
+
+  // Smooth radius
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}

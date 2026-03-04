@@ -1,0 +1,104 @@
+// =============================================================================
+// ACID THEME (HIGH VOLTAGE)
+// =============================================================================
+// Electric lime, shocking energy, startup hustle vibes.
+// Sharp edges, neon accents, move fast and break things aesthetic.
+
+[data-theme="acid"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(98% 0.015 120deg);
+
+  // Base colors (slight lime tint)
+  --color-base-50: oklch(98% 0.015 120deg);
+  --color-base-100: oklch(96% 0.02 120deg);
+  --color-base-200: oklch(93% 0.025 120deg);
+  --color-base-300: oklch(88% 0.03 120deg);
+  --color-base-400: oklch(70% 0.04 120deg);
+  --color-base-500: oklch(55% 0.04 120deg);
+  --color-base-600: oklch(40% 0.03 120deg);
+  --color-base-700: oklch(28% 0.025 120deg);
+  --color-base-800: oklch(18% 0.02 120deg);
+  --color-base-900: oklch(12% 0.015 120deg);
+  --color-base-950: oklch(6% 0.01 120deg);
+
+  // Content colors (near black)
+  --color-base-content: oklch(12% 0.01 120deg);
+  --color-base-content-secondary: oklch(35% 0.015 120deg);
+  --color-base-content-tertiary: oklch(52% 0.01 120deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(6% 0.01 120deg / 0.6);
+
+  // Border colors (electric)
+  --color-border: oklch(85% 0.08 120deg);
+  --color-border-hover: oklch(75% 0.15 120deg);
+
+  // Shadow colors (lime glow)
+  --shadow-color: oklch(80% 0.2 120deg / 0.25);
+  --shadow-color-strong: oklch(80% 0.2 120deg / 0.4);
+
+  // Primary (ELECTRIC LIME)
+  --color-primary: oklch(78% 0.25 125deg);
+  --color-primary-hover: oklch(72% 0.27 125deg);
+  --color-primary-active: oklch(68% 0.25 125deg);
+  --color-primary-content: oklch(10% 0.03 125deg);
+
+  // Secondary (electric purple)
+  --color-secondary: oklch(55% 0.25 300deg);
+  --color-secondary-hover: oklch(50% 0.27 300deg);
+  --color-secondary-active: oklch(45% 0.25 300deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (hot pink)
+  --color-accent: oklch(65% 0.28 350deg);
+  --color-accent-hover: oklch(60% 0.3 350deg);
+  --color-accent-active: oklch(55% 0.28 350deg);
+  --color-accent-content: oklch(100% 0 0deg);
+
+  // Semantic colors
+  --color-success: oklch(72% 0.22 145deg);
+  --color-success-hover: oklch(67% 0.24 145deg);
+  --color-success-bg: oklch(94% 0.06 145deg);
+  --color-success-content: oklch(15% 0.04 145deg);
+  --color-warning: oklch(88% 0.18 90deg);
+  --color-warning-hover: oklch(82% 0.2 90deg);
+  --color-warning-bg: oklch(96% 0.06 90deg);
+  --color-warning-content: oklch(20% 0.05 90deg);
+  --color-error: oklch(60% 0.25 25deg);
+  --color-error-hover: oklch(55% 0.27 25deg);
+  --color-error-bg: oklch(94% 0.06 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(58% 0.2 250deg);
+  --color-info-hover: oklch(53% 0.22 250deg);
+  --color-info-bg: oklch(94% 0.06 250deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring (electric)
+  --focus-ring-color: oklch(78% 0.25 125deg / 0.5);
+  --focus-ring-width: 3px;
+
+  // Muted
+  --color-muted: oklch(52% 0.02 120deg);
+
+  // ==========================================================================
+  // ACID DESIGN TOKENS
+  // ==========================================================================
+
+  // Glowing shadows
+  --shadow-xs: 0 1px 3px var(--shadow-color);
+  --shadow-sm: 0 2px 8px var(--shadow-color);
+  --shadow-md: 0 4px 16px var(--shadow-color);
+  --shadow-lg: 0 8px 32px var(--shadow-color);
+  --shadow-xl: 0 12px 48px var(--shadow-color-strong);
+  --shadow-2xl: 0 20px 64px var(--shadow-color-strong);
+
+  // Sharp corners
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+}

@@ -1,0 +1,92 @@
+// =============================================================================
+// ERROR COMPONENT STYLES
+// =============================================================================
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 32rem;
+  text-align: center;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-16);
+  height: var(--space-16);
+  margin-bottom: var(--space-6);
+  background-color: oklch(from var(--color-error) l c h / 0.15);
+  border-radius: var(--radius-full);
+}
+
+.icon {
+  font-size: var(--font-size-3xl);
+  color: var(--color-error);
+}
+
+.title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-base-content);
+}
+
+.message {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-lg);
+  color: var(--color-base-content-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.details {
+  width: 100%;
+  margin-bottom: var(--space-6);
+  text-align: left;
+}
+
+.summary {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-base-content-secondary);
+  background-color: var(--color-base-100);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    background-color: var(--color-base-200);
+  }
+}
+
+.stack {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-base-content-secondary);
+  background-color: var(--color-base-100);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}

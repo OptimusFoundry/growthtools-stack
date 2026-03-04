@@ -1,0 +1,35 @@
+
+.accessDenied {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: var(--space-5);
+}
+
+.accessDeniedContent {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-3);
+	text-align: center;
+	max-width: 400px;
+
+	i {
+		font-size: var(--font-size-4xl);
+		color: var(--color-error);
+	}
+
+	h2 {
+		font-size: var(--font-size-xl);
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-base-content);
+		margin: 0;
+	}
+
+	p {
+		font-size: var(--font-size-base);
+		color: var(--color-base-content-secondary);
+		margin: 0;
+	}
+}

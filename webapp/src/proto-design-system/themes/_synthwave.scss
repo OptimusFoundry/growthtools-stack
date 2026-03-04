@@ -1,0 +1,91 @@
+// =============================================================================
+// SYNTHWAVE THEME
+// =============================================================================
+// 80s retro-futurism. Chrome, neon grids, sunset gradients.
+// Miami Vice meets Tron. Nostalgic future that never was.
+
+[data-theme="synthwave"] {
+  color-scheme: dark;
+
+  // Background
+  --color-background: oklch(8% 0.04 280deg);
+
+  // Base colors (deep purple-blue night sky)
+  --color-base-50: oklch(8% 0.04 280deg);                               // Deep night
+  --color-base-100: oklch(12% 0.05 275deg);                             // Purple black
+  --color-base-200: oklch(16% 0.055 270deg);                            // Dark purple
+  --color-base-300: oklch(22% 0.05 270deg);                             // Mid purple
+  --color-base-400: oklch(35% 0.045 270deg);                            // Lighter purple
+  --color-base-500: oklch(48% 0.04 270deg);                             // Muted purple
+  --color-base-600: oklch(62% 0.035 270deg);                            // Light purple
+  --color-base-700: oklch(75% 0.03 270deg);                             // Very light
+  --color-base-800: oklch(85% 0.02 270deg);                             // Near white purple
+  --color-base-900: oklch(92% 0.01 270deg);                             // Almost white
+  --color-base-950: oklch(97% 0 0deg);                                  // White
+
+  // Content colors (solid readable text)
+  --color-base-content: oklch(90% 0.01 0deg);                           // Off-white
+  --color-base-content-secondary: oklch(65% 0.01 0deg);                 // Gray
+  --color-base-content-tertiary: oklch(50% 0.01 0deg);                  // Darker gray
+
+  // Surface colors
+  --color-surface: oklch(14% 0.05 275deg);
+  --color-surface-elevated: oklch(18% 0.055 270deg);
+  --color-surface-overlay: oklch(8% 0.04 280deg / 0.9);
+
+  // Border colors (neon grid lines)
+  --color-border: oklch(35% 0.1 320deg);                                // Pink grid
+  --color-border-hover: oklch(50% 0.15 320deg);                         // Bright pink
+
+  // Shadow colors (sunset glow)
+  --shadow-color: oklch(50% 0.2 320deg / 0.4);
+  --shadow-color-strong: oklch(50% 0.25 320deg / 0.6);
+
+  // Primary (sunset orange-pink)
+  --color-primary: oklch(70% 0.25 10deg);
+  --color-primary-hover: oklch(82% 0.28 10deg);
+  --color-primary-active: oklch(62% 0.25 10deg);
+  --color-primary-content: oklch(10% 0.03 10deg);
+
+  // Secondary (neon pink)
+  --color-secondary: oklch(65% 0.28 330deg);
+  --color-secondary-hover: oklch(78% 0.32 330deg);
+  --color-secondary-active: oklch(58% 0.28 330deg);
+  --color-secondary-content: oklch(10% 0.03 330deg);
+
+  // Accent (chrome cyan)
+  --color-accent: oklch(80% 0.18 200deg);
+  --color-accent-hover: oklch(92% 0.22 200deg);
+  --color-accent-active: oklch(72% 0.18 200deg);
+  --color-accent-content: oklch(10% 0.04 200deg);
+
+  // Semantic colors
+  --color-success: oklch(75% 0.2 160deg);
+  --color-success-hover: oklch(88% 0.24 160deg);
+  --color-success-bg: oklch(20% 0.06 160deg);
+  --color-success-content: oklch(10% 0.03 160deg);
+  --color-warning: oklch(85% 0.2 70deg);
+  --color-warning-hover: oklch(94% 0.24 70deg);
+  --color-warning-bg: oklch(20% 0.06 70deg);
+  --color-warning-content: oklch(10% 0.05 70deg);
+  --color-error: oklch(65% 0.25 15deg);
+  --color-error-hover: oklch(78% 0.28 15deg);
+  --color-error-bg: oklch(20% 0.06 15deg);
+  --color-error-content: oklch(95% 0.02 15deg);
+  --color-info: oklch(70% 0.18 250deg);
+  --color-info-hover: oklch(82% 0.22 250deg);
+  --color-info-bg: oklch(20% 0.06 250deg);
+  --color-info-content: oklch(95% 0.02 250deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(65% 0.28 330deg / 0.6);
+
+  // Muted color
+  --color-muted: oklch(55% 0.04 280deg);
+
+  // Custom: Grid glow
+  --shadow-grid: 0 0 30px oklch(65% 0.28 330deg / 0.3);
+
+  // Header background (more visible in synthwave theme)
+  --color-header-bg: var(--color-base-300);
+}

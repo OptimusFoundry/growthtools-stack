@@ -1,0 +1,146 @@
+// =============================================================================
+// SWITCH COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.container {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2-5);
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+
+  .track,
+  .label {
+    cursor: not-allowed;
+  }
+}
+
+// =============================================================================
+// SWITCH WRAPPER
+// =============================================================================
+
+.switchWrapper {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.input {
+  cursor: pointer;
+  height: 100%;
+  left: 0;
+  margin: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: var(--z-raised);
+
+  &:focus-visible + .track {
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+
+  &:checked + .track {
+    background-color: var(--color-primary);
+
+    .thumb {
+      transform: translateX(100%);
+    }
+  }
+}
+
+.track {
+  background-color: var(--color-base-300);
+  border-radius: var(--radius-full);
+  display: flex;
+  padding: var(--space-0-5);
+  pointer-events: none;
+
+  @include transition-colors;
+}
+
+.thumb {
+  background-color: var(--color-switch-thumb);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(0);
+  transition: transform var(--duration-fast) var(--ease-out);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  height: var(--space-4);
+  width: var(--space-7);
+
+  .thumb {
+    height: var(--space-3);
+    width: var(--space-3);
+  }
+}
+
+.size-md {
+  height: var(--space-5);
+  width: var(--space-9);
+
+  .thumb {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+.size-lg {
+  height: var(--space-6);
+  width: var(--space-11);
+
+  .thumb {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// CONTENT
+// =============================================================================
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.label {
+  color: var(--color-base-content);
+  cursor: pointer;
+  font-family: var(--font-family-sans);
+  line-height: var(--line-height-tight);
+}
+
+.label-sm {
+  font-size: var(--font-size-sm);
+}
+
+.label-md {
+  font-size: var(--font-size-base);
+}
+
+.label-lg {
+  font-size: var(--font-size-lg);
+}
+
+.description {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}

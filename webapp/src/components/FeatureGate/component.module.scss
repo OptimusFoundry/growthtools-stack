@@ -1,0 +1,11 @@
+
+.root {
+	transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.disabled {
+	opacity: 0.5;
+	pointer-events: none;
+	cursor: not-allowed;
+	user-select: none;
+}

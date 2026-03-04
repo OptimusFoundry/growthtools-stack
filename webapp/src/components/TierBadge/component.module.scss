@@ -1,0 +1,54 @@
+
+.root {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	padding: var(--space-0-5) var(--space-2);
+	font-weight: var(--font-weight-medium);
+	border-radius: var(--radius-full);
+}
+
+.icon {
+	font-size: inherit;
+}
+
+// ============================================================================
+// Sizes
+// ============================================================================
+
+.size_small {
+	padding: var(--space-0-5) var(--space-1);
+	font-size: var(--font-size-xs);
+
+	.icon {
+		font-size: var(--font-size-xs);
+	}
+}
+
+.size_medium {
+	padding: var(--space-1) var(--space-2);
+	font-size: var(--font-size-sm);
+
+	.icon {
+		font-size: var(--font-size-sm);
+	}
+}
+
+// ============================================================================
+// Tier Variants
+// ============================================================================
+
+.tier_free {
+	color: var(--color-base-content-secondary);
+	background-color: var(--color-base-200);
+}
+
+.tier_pro {
+	color: var(--color-info);
+	background-color: var(--color-bg-info-alpha);
+}
+
+.tier_team {
+	color: oklch(from var(--color-info) calc(l - 0.1) c calc(h + 60));
+	background-color: oklch(from var(--color-info) l c calc(h + 60) / 0.15);
+}

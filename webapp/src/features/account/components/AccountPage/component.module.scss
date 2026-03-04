@@ -1,0 +1,23 @@
+@use "@/proto-design-system/mixins" as *;
+
+.page {
+  padding: var(--space-6);
+}
+
+.tabContent {
+  padding-top: var(--space-6);
+}
+
+.plansGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+
+  @include breakpoint(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include breakpoint(lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

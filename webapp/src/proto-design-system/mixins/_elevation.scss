@@ -1,0 +1,77 @@
+// =============================================================================
+// ELEVATION MIXINS
+// =============================================================================
+@use "motion" as *;
+
+// Elevation levels
+@mixin elevation($level: 1) {
+  @if $level == 0 {
+    box-shadow: var(--shadow-none);
+  } @else if $level == 1 {
+    box-shadow: var(--shadow-xs);
+  } @else if $level == 2 {
+    box-shadow: var(--shadow-sm);
+  } @else if $level == 3 {
+    box-shadow: var(--shadow-md);
+  } @else if $level == 4 {
+    box-shadow: var(--shadow-lg);
+  } @else if $level == 5 {
+    box-shadow: var(--shadow-xl);
+  } @else if $level == 6 {
+    box-shadow: var(--shadow-2xl);
+  }
+}
+
+// Card elevation
+@mixin card-elevation($hoverable: false) {
+  box-shadow: var(--shadow-card);
+
+  @if $hoverable {
+    @include transition-shadow;
+
+    &:hover {
+      box-shadow: var(--shadow-card-hover);
+    }
+  }
+}
+
+// Button elevation
+@mixin button-elevation($hoverable: true) {
+  box-shadow: var(--shadow-button);
+
+  @if $hoverable {
+    @include transition-shadow;
+
+    &:hover:not(:disabled) {
+      box-shadow: var(--shadow-button-hover);
+    }
+
+    &:active:not(:disabled) {
+      box-shadow: var(--shadow-xs);
+    }
+  }
+}
+
+// Dropdown elevation
+@mixin dropdown-elevation {
+  box-shadow: var(--shadow-dropdown);
+}
+
+// Modal elevation
+@mixin modal-elevation {
+  box-shadow: var(--shadow-modal);
+}
+
+// Inner shadow (inset)
+@mixin inner-shadow {
+  box-shadow: var(--shadow-inner);
+}
+
+// Colored shadow (for primary buttons, etc.)
+@mixin colored-shadow($color: "primary") {
+  @if $color == "primary" {
+    box-shadow: var(--shadow-primary);
+  } @else if $color == "error" {
+    box-shadow: var(--shadow-error);
+  }
+}

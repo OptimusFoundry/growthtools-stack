@@ -1,0 +1,105 @@
+// =============================================================================
+// ACCESSIBILITY MIXINS
+// =============================================================================
+
+// Screen reader only
+@mixin sr-only {
+  border-width: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+// Undo screen reader only
+@mixin not-sr-only {
+  clip: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  padding: 0;
+  position: static;
+  white-space: normal;
+  width: auto;
+}
+
+// Focus visible styles
+@mixin focus-visible {
+  &:focus-visible {
+    @content;
+  }
+}
+
+// Focus ring
+@mixin focus-ring($color: var(--focus-ring-color), $width: var(--focus-ring-width), $offset: var(--focus-ring-offset)) {
+  &:focus-visible {
+    outline: $width solid $color;
+    outline-offset: $offset;
+  }
+}
+
+// Custom focus ring (box-shadow based, for rounded elements)
+@mixin focus-ring-shadow($color: var(--focus-ring-color), $width: 3px, $offset: 2px) {
+  &:focus-visible {
+    box-shadow: 0 0 0 $offset var(--color-surface), 0 0 0 calc($offset + $width) $color;
+    outline: none;
+  }
+}
+
+// Minimum touch target size (44x44px)
+@mixin touch-target($size: 44px) {
+  min-height: $size;
+  min-width: $size;
+
+  // For elements that can't be resized, use pseudo-element
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::before {
+      content: "";
+      height: $size;
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: $size;
+    }
+  }
+}
+
+// High contrast mode support
+@mixin high-contrast {
+  @media (forced-colors: active) {
+    @content;
+  }
+}
+
+// Prefers contrast
+@mixin prefers-contrast($level: "more") {
+  @if $level == "more" {
+    @media (prefers-contrast: more) {
+      @content;
+    }
+  } @else if $level == "less" {
+    @media (prefers-contrast: less) {
+      @content;
+    }
+  }
+}
+
+// Interactive element base styles
+@mixin interactive {
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}

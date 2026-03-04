@@ -1,0 +1,103 @@
+// =============================================================================
+// RISO THEME (RISOGRAPH PRINT)
+// =============================================================================
+// Inspired by risograph printing. Halftone dots, ink misregistration.
+// Beautiful imperfection. Zine aesthetic meets corporate software.
+
+[data-theme="riso"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(97% 0.008 90deg);
+
+  // Base colors (newsprint off-white)
+  --color-base-50: oklch(97% 0.008 90deg);
+  --color-base-100: oklch(95% 0.01 85deg);
+  --color-base-200: oklch(92% 0.012 80deg);
+  --color-base-300: oklch(87% 0.015 75deg);
+  --color-base-400: oklch(70% 0.02 70deg);
+  --color-base-500: oklch(55% 0.02 65deg);
+  --color-base-600: oklch(42% 0.018 60deg);
+  --color-base-700: oklch(30% 0.015 55deg);
+  --color-base-800: oklch(22% 0.012 50deg);
+  --color-base-900: oklch(15% 0.01 45deg);
+  --color-base-950: oklch(10% 0.008 40deg);
+
+  // Content colors
+  --color-base-content: oklch(18% 0.01 50deg);
+  --color-base-content-secondary: oklch(40% 0.012 55deg);
+  --color-base-content-tertiary: oklch(55% 0.01 60deg);
+
+  // Surface colors
+  --color-surface: oklch(98% 0.006 95deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(18% 0.01 50deg / 0.5);
+
+  // Border colors
+  --color-border: oklch(88% 0.012 80deg);
+  --color-border-hover: oklch(78% 0.018 75deg);
+
+  // Shadow colors (soft print shadow)
+  --shadow-color: oklch(50% 0.03 60deg / 0.1);
+  --shadow-color-strong: oklch(40% 0.04 55deg / 0.18);
+
+  // Primary (riso blue - that specific lovely blue)
+  --color-primary: oklch(52% 0.18 240deg);
+  --color-primary-hover: oklch(47% 0.2 240deg);
+  --color-primary-active: oklch(42% 0.18 240deg);
+  --color-primary-content: oklch(98% 0.01 240deg);
+
+  // Secondary (riso fluorescent pink)
+  --color-secondary: oklch(65% 0.25 350deg);
+  --color-secondary-hover: oklch(60% 0.27 350deg);
+  --color-secondary-active: oklch(55% 0.25 350deg);
+  --color-secondary-content: oklch(15% 0.04 350deg);
+
+  // Accent (riso yellow)
+  --color-accent: oklch(88% 0.18 95deg);
+  --color-accent-hover: oklch(83% 0.2 95deg);
+  --color-accent-active: oklch(78% 0.18 95deg);
+  --color-accent-content: oklch(18% 0.05 95deg);
+
+  // Semantic colors (riso ink colors)
+  --color-success: oklch(55% 0.15 160deg);
+  --color-success-hover: oklch(50% 0.17 160deg);
+  --color-success-bg: oklch(94% 0.04 160deg);
+  --color-success-content: oklch(98% 0.01 160deg);
+  --color-warning: oklch(75% 0.14 70deg);
+  --color-warning-hover: oklch(70% 0.16 70deg);
+  --color-warning-bg: oklch(95% 0.04 70deg);
+  --color-warning-content: oklch(22% 0.05 70deg);
+  --color-error: oklch(55% 0.2 25deg);
+  --color-error-hover: oklch(50% 0.22 25deg);
+  --color-error-bg: oklch(94% 0.04 25deg);
+  --color-error-content: oklch(98% 0.01 25deg);
+  --color-info: oklch(52% 0.18 240deg);
+  --color-info-hover: oklch(47% 0.2 240deg);
+  --color-info-bg: oklch(94% 0.04 240deg);
+  --color-info-content: oklch(98% 0.01 240deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(52% 0.18 240deg / 0.4);
+
+  // Muted
+  --color-muted: oklch(55% 0.01 60deg);
+
+  // ==========================================================================
+  // RISO DESIGN TOKENS
+  // ==========================================================================
+
+  // Soft, slightly offset shadows (like misregistration)
+  --shadow-xs: 1px 1px 0 oklch(65% 0.25 350deg / 0.15), 0 1px 3px var(--shadow-color);
+  --shadow-sm: 2px 2px 0 oklch(65% 0.25 350deg / 0.12), 0 2px 6px var(--shadow-color);
+  --shadow-md: 3px 3px 0 oklch(65% 0.25 350deg / 0.1), 0 4px 12px var(--shadow-color);
+  --shadow-lg: 4px 4px 0 oklch(65% 0.25 350deg / 0.08), 0 8px 20px var(--shadow-color-strong);
+  --shadow-xl: 5px 5px 0 oklch(65% 0.25 350deg / 0.06), 0 12px 32px var(--shadow-color-strong);
+  --shadow-2xl: 6px 6px 0 oklch(65% 0.25 350deg / 0.05), 0 16px 44px var(--shadow-color-strong);
+
+  // Slightly imperfect radius
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}

@@ -1,0 +1,266 @@
+// =============================================================================
+// DATAGRID COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.dataGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+// =============================================================================
+// TABLE
+// =============================================================================
+
+.tableWrapper {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+}
+
+.tableWrapperLoading {
+  min-height: 200px;
+}
+
+// =============================================================================
+// LOADING OVERLAY
+// =============================================================================
+
+.loadingOverlay {
+  align-items: center;
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  inset: 0;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  transition: opacity var(--duration-normal) var(--ease-out),
+    visibility var(--duration-normal) var(--ease-out);
+  visibility: hidden;
+  z-index: var(--z-overlay);
+}
+
+.loadingOverlayVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loadingMessage {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.table {
+  border-collapse: collapse;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  width: 100%;
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.header {
+  background-color: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+// =============================================================================
+// HEAD CELL
+// =============================================================================
+
+.head {
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.headContent {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-base-content);
+  }
+}
+
+.sortIcon {
+  align-items: center;
+  display: flex;
+  opacity: var(--opacity-disabled);
+
+  svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+// =============================================================================
+// BODY
+// =============================================================================
+
+.body {
+  .row {
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+// =============================================================================
+// ROW
+// =============================================================================
+
+.row {
+  @include transition-colors;
+
+  &:hover {
+    background-color: var(--color-row-hover);
+  }
+}
+
+.selected {
+  background-color: oklch(from var(--color-primary) l c h / 0.1);
+
+  &:hover {
+    background-color: oklch(from var(--color-primary) l c h / 0.15);
+  }
+}
+
+.clickable {
+  cursor: pointer;
+
+  @include focus-ring;
+}
+
+.expanded {
+  background-color: var(--color-row-hover);
+}
+
+// =============================================================================
+// EXPANDED ROW
+// =============================================================================
+
+.expandedRow {
+  background-color: var(--color-header-bg);
+  transition: visibility 0s var(--duration-normal);
+  visibility: collapse;
+}
+
+.expandedRowVisible {
+  transition: visibility 0s 0s;
+  visibility: visible;
+}
+
+.expandedCell {
+  padding: 0;
+}
+
+.expandedWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--duration-normal) var(--ease-out),
+    opacity var(--duration-normal) var(--ease-out);
+
+  .expandedRowVisible & {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+.expandedContent {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 var(--space-4);
+  transition: padding var(--duration-normal) var(--ease-out);
+
+  .expandedRowVisible & {
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-4);
+  }
+}
+
+// =============================================================================
+// CELL
+// =============================================================================
+
+.cell {
+  color: var(--color-base-content);
+  padding: var(--space-3) var(--space-4);
+}
+
+.checkboxCell {
+  padding: var(--space-3) var(--space-4);
+  width: var(--space-10);
+}
+
+// =============================================================================
+// ALIGNMENT
+// =============================================================================
+
+.align-left {
+  text-align: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+
+// =============================================================================
+// STATES
+// =============================================================================
+
+.loadingCell,
+.emptyCell {
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.loading,
+.empty {
+  color: var(--color-muted);
+}
+
+// =============================================================================
+// PAGINATION
+// =============================================================================
+
+.paginationWrapper {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.pageInfo {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+}

@@ -1,0 +1,194 @@
+// =============================================================================
+// TEXT COMPONENT STYLES
+// =============================================================================
+
+.text {
+  font-family: var(--font-family-sans);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-xs {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-tight);
+}
+
+.size-sm {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+}
+
+.size-md {
+  font-size: var(--font-size-base);
+}
+
+.size-lg {
+  font-size: var(--font-size-lg);
+}
+
+.size-xl {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+}
+
+.size-2xl {
+  font-size: var(--font-size-2xl);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+.size-3xl {
+  font-size: var(--font-size-3xl);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+.size-4xl {
+  font-size: var(--font-size-4xl);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-none);
+}
+
+.size-5xl {
+  font-size: var(--font-size-5xl);
+  letter-spacing: var(--letter-spacing-tighter);
+  line-height: var(--line-height-none);
+}
+
+// =============================================================================
+// WEIGHTS
+// =============================================================================
+
+.weight-normal {
+  font-weight: var(--font-weight-normal);
+}
+
+.weight-medium {
+  font-weight: var(--font-weight-medium);
+}
+
+.weight-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.weight-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+// =============================================================================
+// COLORS
+// =============================================================================
+
+.color-default {
+  color: var(--color-base-content);
+}
+
+.color-muted {
+  color: var(--color-muted);
+}
+
+.color-primary {
+  color: var(--color-primary);
+}
+
+.color-secondary {
+  color: var(--color-secondary);
+}
+
+.color-success {
+  color: var(--color-success);
+}
+
+.color-warning {
+  color: var(--color-warning);
+}
+
+.color-error {
+  color: var(--color-error);
+}
+
+.color-inherit {
+  color: inherit;
+}
+
+// =============================================================================
+// ALIGNMENT
+// =============================================================================
+
+.align-left {
+  text-align: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.align-justify {
+  text-align: justify;
+}
+
+// =============================================================================
+// TRUNCATION
+// =============================================================================
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lineClamp {
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  -webkit-line-clamp: var(--line-clamp, 2);
+  overflow: hidden;
+}
+
+// =============================================================================
+// TEXT STYLES
+// =============================================================================
+
+.italic {
+  font-style: italic;
+}
+
+.underline {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.strikethrough {
+  text-decoration: line-through;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+// =============================================================================
+// TRANSFORMS
+// =============================================================================
+
+.transform-uppercase {
+  text-transform: uppercase;
+}
+
+.transform-lowercase {
+  text-transform: lowercase;
+}
+
+.transform-capitalize {
+  text-transform: capitalize;
+}
+
+.transform-none {
+  text-transform: none;
+}

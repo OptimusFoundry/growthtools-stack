@@ -1,0 +1,110 @@
+// =============================================================================
+// PIXEL THEME (8-BIT AESTHETIC)
+// =============================================================================
+// Retro gaming vibes. Chunky pixels, limited palette, nostalgic.
+// Game Boy meets modern SaaS. Press Start to continue.
+
+[data-theme="pixel"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(95% 0.02 140deg);
+
+  // Base colors (LCD screen green-gray)
+  --color-base-50: oklch(95% 0.02 140deg);
+  --color-base-100: oklch(92% 0.025 140deg);
+  --color-base-200: oklch(88% 0.03 140deg);
+  --color-base-300: oklch(82% 0.03 140deg);
+  --color-base-400: oklch(65% 0.035 140deg);
+  --color-base-500: oklch(50% 0.035 140deg);
+  --color-base-600: oklch(38% 0.03 140deg);
+  --color-base-700: oklch(28% 0.025 140deg);
+  --color-base-800: oklch(20% 0.02 140deg);
+  --color-base-900: oklch(14% 0.015 140deg);
+  --color-base-950: oklch(8% 0.01 140deg);
+
+  // Content colors (dark pixel)
+  --color-base-content: oklch(15% 0.02 140deg);
+  --color-base-content-secondary: oklch(35% 0.025 140deg);
+  --color-base-content-tertiary: oklch(50% 0.02 140deg);
+
+  // Surface colors
+  --color-surface: oklch(97% 0.015 140deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(15% 0.02 140deg / 0.6);
+
+  // Border colors (chunky pixel borders)
+  --color-border: oklch(75% 0.03 140deg);
+  --color-border-hover: oklch(60% 0.04 140deg);
+
+  // Shadow colors (hard pixel shadows)
+  --shadow-color: oklch(30% 0.03 140deg / 1);
+  --shadow-color-strong: oklch(20% 0.03 140deg / 1);
+
+  // Primary (classic blue)
+  --color-primary: oklch(50% 0.2 250deg);
+  --color-primary-hover: oklch(45% 0.22 250deg);
+  --color-primary-active: oklch(40% 0.2 250deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (pixel red)
+  --color-secondary: oklch(52% 0.22 25deg);
+  --color-secondary-hover: oklch(47% 0.24 25deg);
+  --color-secondary-active: oklch(42% 0.22 25deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (gold coin)
+  --color-accent: oklch(78% 0.16 85deg);
+  --color-accent-hover: oklch(73% 0.18 85deg);
+  --color-accent-active: oklch(68% 0.16 85deg);
+  --color-accent-content: oklch(18% 0.04 85deg);
+
+  // Semantic colors (limited palette)
+  --color-success: oklch(55% 0.18 145deg);
+  --color-success-hover: oklch(50% 0.2 145deg);
+  --color-success-bg: oklch(92% 0.05 145deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(78% 0.16 85deg);
+  --color-warning-hover: oklch(73% 0.18 85deg);
+  --color-warning-bg: oklch(94% 0.05 85deg);
+  --color-warning-content: oklch(18% 0.04 85deg);
+  --color-error: oklch(52% 0.22 25deg);
+  --color-error-hover: oklch(47% 0.24 25deg);
+  --color-error-bg: oklch(92% 0.05 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(50% 0.18 250deg);
+  --color-info-hover: oklch(45% 0.2 250deg);
+  --color-info-bg: oklch(92% 0.05 250deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(50% 0.2 250deg / 0.5);
+  --focus-ring-width: 4px;
+  --focus-ring-offset: 0;
+
+  // Muted
+  --color-muted: oklch(50% 0.02 140deg);
+
+  // ==========================================================================
+  // PIXEL DESIGN TOKENS
+  // ==========================================================================
+
+  // Hard pixel shadows (no blur!)
+  --shadow-xs: 2px 2px 0 0 var(--shadow-color);
+  --shadow-sm: 3px 3px 0 0 var(--shadow-color);
+  --shadow-md: 4px 4px 0 0 var(--shadow-color);
+  --shadow-lg: 6px 6px 0 0 var(--shadow-color);
+  --shadow-xl: 8px 8px 0 0 var(--shadow-color-strong);
+  --shadow-2xl: 10px 10px 0 0 var(--shadow-color-strong);
+
+  // NO border radius (pixels are square!)
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-full: 0;
+
+  // Chunky borders
+  --border-width: 3px;
+  --border-width-thick: 4px;
+}

@@ -1,0 +1,61 @@
+// =============================================================================
+// FORMHINT COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.hint {
+  align-items: flex-start;
+  display: flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  gap: var(--space-1-5);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+// =============================================================================
+// ELEMENTS
+// =============================================================================
+
+.icon {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  height: var(--line-height-normal);
+
+  svg {
+    display: block;
+  }
+}
+
+.text {
+  flex: 1;
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  color: var(--color-muted);
+
+  .icon {
+    color: var(--color-muted);
+  }
+}
+
+.error {
+  color: var(--color-error);
+
+  .icon {
+    color: var(--color-error);
+  }
+}
+
+.success {
+  color: var(--color-success);
+
+  .icon {
+    color: var(--color-success);
+  }
+}

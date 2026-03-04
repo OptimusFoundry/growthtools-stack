@@ -1,0 +1,46 @@
+// =============================================================================
+// SHADOW TOKENS
+// =============================================================================
+// Elevation system using layered shadows for depth perception.
+
+:root {
+  // Shadow colors
+  --shadow-color: oklch(0% 0 0deg / 0.08);
+  --shadow-color-strong: oklch(0% 0 0deg / 0.15);
+
+  // Shadow scale
+  --shadow-none: none;
+  --shadow-xs:
+    0 1px 2px 0 var(--shadow-color);
+  --shadow-sm:
+    0 1px 3px 0 var(--shadow-color),
+    0 1px 2px -1px var(--shadow-color);
+  --shadow-md:
+    0 4px 6px -1px var(--shadow-color),
+    0 2px 4px -2px var(--shadow-color);
+  --shadow-lg:
+    0 10px 15px -3px var(--shadow-color),
+    0 4px 6px -4px var(--shadow-color);
+  --shadow-xl:
+    0 20px 25px -5px var(--shadow-color),
+    0 8px 10px -6px var(--shadow-color);
+  --shadow-2xl:
+    0 25px 50px -12px var(--shadow-color-strong);
+  --shadow-inner:
+    inset 0 2px 4px 0 var(--shadow-color);
+
+  // Colored shadows (for buttons, cards)
+  --shadow-primary:
+    0 4px 14px 0 oklch(55% 0.25 265deg / 0.25);
+  --shadow-error:
+    0 4px 14px 0 oklch(55% 0.22 25deg / 0.25);
+
+  // Component-specific
+  --shadow-button: var(--shadow-sm);
+  --shadow-button-hover: var(--shadow-md);
+  --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
+  --shadow-dropdown: var(--shadow-lg);
+  --shadow-modal: var(--shadow-2xl);
+  --shadow-tooltip: var(--shadow-md);
+}

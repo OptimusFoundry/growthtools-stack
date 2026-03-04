@@ -1,0 +1,92 @@
+// =============================================================================
+// SAND THEME (DESERT MINIMAL)
+// =============================================================================
+// Warm desert minimalism. Terracotta, sand, and sun-bleached neutrals.
+// Inspired by Moroccan architecture, desert landscapes, and earth.
+// Calm, grounded, naturally sophisticated.
+
+[data-theme="sand"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(97% 0.012 70deg);
+
+  // Base colors (warm sand tones)
+  --color-base-50: oklch(97% 0.012 70deg);                              // Bleached sand
+  --color-base-100: oklch(95% 0.018 65deg);                             // Light sand
+  --color-base-200: oklch(92% 0.025 60deg);                             // Warm sand
+  --color-base-300: oklch(87% 0.03 55deg);                              // Desert sand
+  --color-base-400: oklch(72% 0.04 50deg);                              // Tan
+  --color-base-500: oklch(58% 0.045 45deg);                             // Camel
+  --color-base-600: oklch(45% 0.04 42deg);                              // Dark tan
+  --color-base-700: oklch(35% 0.035 40deg);                             // Brown
+  --color-base-800: oklch(25% 0.03 38deg);                              // Dark brown
+  --color-base-900: oklch(18% 0.025 35deg);                             // Very dark
+  --color-base-950: oklch(12% 0.02 35deg);                              // Near black
+
+  // Content colors (dark warm browns for readability)
+  --color-base-content: oklch(18% 0.02 40deg);                          // Near black brown
+  --color-base-content-secondary: oklch(35% 0.025 45deg);               // Dark brown
+  --color-base-content-tertiary: oklch(50% 0.02 50deg);                 // Medium brown
+
+  // Surface colors
+  --color-surface: oklch(98% 0.01 70deg);                               // Off-white warm
+  --color-surface-elevated: oklch(100% 0 0deg);                         // White
+  --color-surface-overlay: oklch(22% 0.03 40deg / 0.5);
+
+  // Border colors (subtle warm)
+  --color-border: oklch(90% 0.02 60deg);
+  --color-border-hover: oklch(82% 0.03 55deg);
+
+  // Shadow colors (warm)
+  --shadow-color: oklch(45% 0.04 45deg / 0.1);
+  --shadow-color-strong: oklch(35% 0.04 45deg / 0.18);
+
+  // Primary (terracotta)
+  --color-primary: oklch(52% 0.12 35deg);
+  --color-primary-hover: oklch(47% 0.14 35deg);
+  --color-primary-active: oklch(42% 0.12 35deg);
+  --color-primary-content: oklch(98% 0.01 35deg);
+
+  // Secondary (sage green - desert plant)
+  --color-secondary: oklch(55% 0.08 145deg);
+  --color-secondary-hover: oklch(50% 0.1 145deg);
+  --color-secondary-active: oklch(45% 0.08 145deg);
+  --color-secondary-content: oklch(98% 0.01 145deg);
+
+  // Accent (desert sky blue)
+  --color-accent: oklch(62% 0.1 230deg);
+  --color-accent-hover: oklch(57% 0.12 230deg);
+  --color-accent-active: oklch(52% 0.1 230deg);
+  --color-accent-content: oklch(98% 0.01 230deg);
+
+  // Semantic colors (earthy)
+  --color-success: oklch(55% 0.1 145deg);
+  --color-success-hover: oklch(50% 0.12 145deg);
+  --color-success-bg: oklch(95% 0.03 145deg);
+  --color-success-content: oklch(98% 0.01 145deg);
+  --color-warning: oklch(72% 0.12 70deg);
+  --color-warning-hover: oklch(67% 0.14 70deg);
+  --color-warning-bg: oklch(95% 0.03 70deg);
+  --color-warning-content: oklch(25% 0.04 70deg);
+  --color-error: oklch(52% 0.14 25deg);
+  --color-error-hover: oklch(47% 0.16 25deg);
+  --color-error-bg: oklch(95% 0.03 25deg);
+  --color-error-content: oklch(98% 0.01 25deg);
+  --color-info: oklch(55% 0.1 230deg);
+  --color-info-hover: oklch(50% 0.12 230deg);
+  --color-info-bg: oklch(95% 0.03 230deg);
+  --color-info-content: oklch(98% 0.01 230deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(52% 0.12 35deg / 0.4);
+
+  // Muted color
+  --color-muted: oklch(55% 0.03 50deg);
+
+  // Natural rounded corners
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}

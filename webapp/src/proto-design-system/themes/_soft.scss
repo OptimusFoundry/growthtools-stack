@@ -1,0 +1,81 @@
+// =============================================================================
+// SOFT THEME (WARM CREAMY AESTHETIC)
+// =============================================================================
+// A warm, soft theme with off-white backgrounds and creamy mocha surfaces.
+// Cozy and inviting with subtle warmth throughout.
+
+[data-theme="soft"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(99% 0.006 80deg);
+
+  // Base colors (off-white cream tones)
+  --color-base-50: oklch(99% 0.006 80deg);                              // Almost white with cream hint
+  --color-base-100: oklch(97.5% 0.008 75deg);                           // Off-white
+  --color-base-200: oklch(95% 0.012 70deg);                             // Light cream
+  --color-base-300: oklch(91% 0.015 65deg);                             // Warm cream
+  --color-base-400: oklch(75% 0.02 55deg);                              // Tan
+  --color-base-500: oklch(60% 0.025 50deg);                             // Warm brown
+  --color-base-600: oklch(48% 0.025 45deg);                             // Mocha
+  --color-base-700: oklch(38% 0.02 45deg);                              // Dark mocha
+  --color-base-800: oklch(28% 0.018 45deg);                             // Espresso
+  --color-base-900: oklch(20% 0.015 45deg);                             // Dark espresso
+  --color-base-950: oklch(14% 0.012 45deg);                             // Near black
+
+  // Content colors (dark warm browns for readability)
+  --color-base-content: oklch(20% 0.018 50deg);                         // Near black brown
+  --color-base-content-secondary: oklch(40% 0.018 50deg);               // Dark mocha
+  --color-base-content-tertiary: oklch(55% 0.015 55deg);                // Medium mocha
+
+  // Surface colors (creamy mocha tones)
+  --color-surface: oklch(95% 0.015 65deg);                              // Creamy surface
+  --color-surface-elevated: oklch(99% 0.005 80deg);                     // Near white elevated
+  --color-surface-overlay: oklch(25% 0.02 45deg / 0.4);                 // Warm overlay
+
+  // Border colors - subtle warm borders
+  --color-border: oklch(89% 0.02 60deg);                                // Cream border
+  --color-border-hover: oklch(82% 0.025 55deg);                         // Tan border
+
+  // Warm shadows (mocha tinted)
+  --shadow-color: oklch(50% 0.03 50deg / 0.1);
+  --shadow-color-strong: oklch(40% 0.03 50deg / 0.18);
+
+  // Primary (warm terracotta)
+  --color-primary: oklch(55% 0.12 45deg);
+  --color-primary-hover: oklch(50% 0.14 45deg);
+  --color-primary-active: oklch(45% 0.12 45deg);
+  --color-primary-content: oklch(98% 0.008 60deg);
+
+  // Secondary (dusty rose)
+  --color-secondary: oklch(65% 0.1 15deg);
+  --color-secondary-hover: oklch(60% 0.12 15deg);
+  --color-secondary-active: oklch(55% 0.1 15deg);
+  --color-secondary-content: oklch(98% 0.008 15deg);
+
+  // Accent (warm sage)
+  --color-accent: oklch(68% 0.08 140deg);
+  --color-accent-hover: oklch(63% 0.1 140deg);
+  --color-accent-active: oklch(58% 0.08 140deg);
+  --color-accent-content: oklch(22% 0.03 140deg);
+
+  // Semantic colors (soft, warm versions)
+  --color-success: oklch(62% 0.1 145deg);
+  --color-success-hover: oklch(57% 0.12 145deg);
+  --color-success-bg: oklch(96% 0.025 145deg);
+  --color-warning: oklch(72% 0.1 75deg);
+  --color-warning-hover: oklch(67% 0.12 75deg);
+  --color-warning-bg: oklch(96% 0.025 75deg);
+  --color-error: oklch(58% 0.12 25deg);
+  --color-error-hover: oklch(53% 0.14 25deg);
+  --color-error-bg: oklch(96% 0.025 25deg);
+  --color-info: oklch(58% 0.1 240deg);
+  --color-info-hover: oklch(53% 0.12 240deg);
+  --color-info-bg: oklch(96% 0.025 240deg);
+
+  // Focus ring (warm)
+  --focus-ring-color: oklch(55% 0.12 45deg / 0.35);
+
+  // Muted color (warm mocha)
+  --color-muted: oklch(55% 0.02 55deg);
+}

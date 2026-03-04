@@ -1,0 +1,94 @@
+// =============================================================================
+// BIOLUMINESCENT THEME
+// =============================================================================
+// Deep ocean darkness with ethereal glowing accents.
+// Inspired by deep sea creatures, jellyfish, and underwater caves.
+// Mysterious, otherworldly, hauntingly beautiful.
+
+[data-theme="bioluminescent"] {
+  color-scheme: dark;
+
+  // Background
+  --color-background: oklch(5% 0.02 230deg);
+
+  // Base colors (abyssal depths)
+  --color-base-50: oklch(5% 0.02 230deg);                               // Abyss
+  --color-base-100: oklch(8% 0.025 225deg);                             // Deep ocean
+  --color-base-200: oklch(11% 0.03 220deg);                             // Dark water
+  --color-base-300: oklch(16% 0.03 220deg);                             // Mid depth
+  --color-base-400: oklch(28% 0.025 220deg);                            // Lighter depth
+  --color-base-500: oklch(42% 0.02 220deg);                             // Muted blue
+  --color-base-600: oklch(58% 0.018 220deg);                            // Light muted
+  --color-base-700: oklch(72% 0.015 220deg);                            // Lighter
+  --color-base-800: oklch(84% 0.01 220deg);                             // Very light
+  --color-base-900: oklch(92% 0.005 220deg);                            // Near white
+  --color-base-950: oklch(97% 0 0deg);                                  // White
+
+  // Content colors (high contrast with subtle glow)
+  --color-base-content: oklch(95% 0.02 200deg);                         // Bright cyan-white
+  --color-base-content-secondary: oklch(78% 0.03 200deg);               // Light cyan
+  --color-base-content-tertiary: oklch(62% 0.025 210deg);               // Medium
+
+  // Surface colors
+  --color-surface: oklch(9% 0.025 225deg);
+  --color-surface-elevated: oklch(13% 0.03 220deg);
+  --color-surface-overlay: oklch(5% 0.02 230deg / 0.9);
+
+  // Border colors (subtle luminescence)
+  --color-border: oklch(20% 0.04 200deg);
+  --color-border-hover: oklch(30% 0.08 180deg);
+
+  // Shadow colors (ethereal glow)
+  --shadow-color: oklch(65% 0.2 180deg / 0.15);
+  --shadow-color-strong: oklch(65% 0.2 180deg / 0.3);
+
+  // Primary (jellyfish cyan)
+  --color-primary: oklch(75% 0.18 190deg);
+  --color-primary-hover: oklch(88% 0.22 190deg);
+  --color-primary-active: oklch(68% 0.18 190deg);
+  --color-primary-content: oklch(10% 0.03 190deg);
+
+  // Secondary (bioluminescent purple)
+  --color-secondary: oklch(65% 0.2 280deg);
+  --color-secondary-hover: oklch(78% 0.24 280deg);
+  --color-secondary-active: oklch(58% 0.2 280deg);
+  --color-secondary-content: oklch(10% 0.03 280deg);
+
+  // Accent (phosphorescent green)
+  --color-accent: oklch(80% 0.22 160deg);
+  --color-accent-hover: oklch(92% 0.26 160deg);
+  --color-accent-active: oklch(72% 0.22 160deg);
+  --color-accent-content: oklch(10% 0.04 160deg);
+
+  // Semantic colors (ocean life)
+  --color-success: oklch(75% 0.2 160deg);
+  --color-success-hover: oklch(88% 0.24 160deg);
+  --color-success-bg: oklch(18% 0.06 160deg);
+  --color-success-content: oklch(10% 0.03 160deg);
+  --color-warning: oklch(80% 0.18 80deg);
+  --color-warning-hover: oklch(92% 0.22 80deg);
+  --color-warning-bg: oklch(18% 0.05 80deg);
+  --color-warning-content: oklch(10% 0.04 80deg);
+  --color-error: oklch(65% 0.22 15deg);
+  --color-error-hover: oklch(78% 0.26 15deg);
+  --color-error-bg: oklch(18% 0.05 15deg);
+  --color-error-content: oklch(95% 0.02 15deg);
+  --color-info: oklch(70% 0.18 240deg);
+  --color-info-hover: oklch(82% 0.22 240deg);
+  --color-info-bg: oklch(18% 0.05 240deg);
+  --color-info-content: oklch(95% 0.02 240deg);
+
+  // Focus ring (glowing)
+  --focus-ring-color: oklch(75% 0.18 190deg / 0.6);
+
+  // Muted color
+  --color-muted: oklch(50% 0.04 210deg);
+
+  // Custom: Ethereal glow effects
+  --shadow-glow-sm: 0 0 15px oklch(75% 0.18 190deg / 0.3);
+  --shadow-glow-md: 0 0 30px oklch(75% 0.18 190deg / 0.4);
+  --shadow-glow-lg: 0 0 50px oklch(75% 0.18 190deg / 0.5);
+
+  // Header background (more visible in bioluminescent theme)
+  --color-header-bg: var(--color-base-300);
+}

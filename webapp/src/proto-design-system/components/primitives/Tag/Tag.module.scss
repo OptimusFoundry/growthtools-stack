@@ -1,0 +1,190 @@
+// =============================================================================
+// TAG COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.tag {
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-base-content-secondary);
+  display: inline-flex;
+  gap: var(--space-1-5);
+  max-width: 100%;
+
+  @include transition-colors;
+
+  &.selectable {
+    cursor: pointer;
+
+    @include focus-ring;
+
+    &:hover:not(.disabled) {
+      background-color: var(--color-hover-overlay-strong);
+    }
+  }
+
+  &.selected {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
+
+    .removeButton {
+      color: var(--color-primary-content);
+
+      &:hover {
+        background-color: oklch(0% 0 0 / 0.1);
+      }
+    }
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.sm {
+  font-size: var(--font-size-xs);
+  padding: var(--space-0-5) var(--space-2);
+
+  .avatar {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+
+  .icon svg,
+  .removeButton svg {
+    height: var(--space-3);
+    width: var(--space-3);
+  }
+}
+
+.md {
+  font-size: var(--font-size-sm);
+  padding: var(--space-1) var(--space-2-5);
+
+  .avatar {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+
+  .icon svg,
+  .removeButton svg {
+    height: var(--space-3-5);
+    width: var(--space-3-5);
+  }
+}
+
+.lg {
+  font-size: var(--font-size-base);
+  padding: var(--space-1-5) var(--space-3);
+
+  .avatar {
+    height: var(--space-6);
+    width: var(--space-6);
+  }
+
+  .icon svg,
+  .removeButton svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  background-color: var(--color-surface);
+}
+
+.primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.secondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-secondary-content);
+}
+
+.success {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning);
+  color: var(--color-warning-content);
+}
+
+.error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.info {
+  background-color: var(--color-info-bg);
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+// =============================================================================
+// ELEMENTS
+// =============================================================================
+
+.avatar {
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  margin: calc(var(--space-0-5) * -1);
+  margin-left: 0;
+  opacity: var(--opacity-loading);
+  padding: var(--space-0-5);
+
+  @include transition-colors;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-base-200);
+    opacity: 1;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}

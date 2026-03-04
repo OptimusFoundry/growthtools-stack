@@ -1,0 +1,226 @@
+// =============================================================================
+// DROPDOWN MENU COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.dropdownMenu {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 12rem;
+  overflow: hidden;
+  padding: var(--space-1);
+}
+
+// =============================================================================
+// ITEMS
+// =============================================================================
+
+.items {
+  display: flex;
+  flex-direction: column;
+}
+
+// =============================================================================
+// ITEM
+// =============================================================================
+
+.item {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-base-content);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-2);
+  text-align: left;
+  width: 100%;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover:not(.disabled) {
+    background-color: var(--color-hover-overlay-strong);
+  }
+
+  &.active {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+
+    .sublabel {
+      color: var(--color-primary-content);
+      opacity: 0.8;
+    }
+
+    .shortcut {
+      color: var(--color-primary-content);
+      opacity: 0.8;
+    }
+  }
+
+  &.disabled {
+    color: var(--color-base-content-tertiary);
+    cursor: not-allowed;
+
+    .leftIcon,
+    .rightIcon {
+      opacity: var(--opacity-disabled);
+    }
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.sm .item {
+  font-size: var(--font-size-xs);
+  min-height: var(--space-7);
+  padding: var(--space-1) var(--space-2);
+
+  .leftIcon svg,
+  .rightIcon svg {
+    height: var(--space-3-5);
+    width: var(--space-3-5);
+  }
+
+  .checkbox svg {
+    height: var(--space-3);
+    width: var(--space-3);
+  }
+}
+
+.md .item {
+  font-size: var(--font-size-sm);
+  min-height: var(--space-8);
+  padding: var(--space-1-5) var(--space-3);
+
+  .leftIcon svg,
+  .rightIcon svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+
+  .checkbox svg {
+    height: var(--space-3-5);
+    width: var(--space-3-5);
+  }
+}
+
+.lg .item {
+  font-size: var(--font-size-base);
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-4);
+
+  .leftIcon svg,
+  .rightIcon svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+
+  .checkbox svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+// =============================================================================
+// ITEM ELEMENTS
+// =============================================================================
+
+.checkbox {
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  display: flex;
+  flex-shrink: 0;
+  height: var(--space-4);
+  justify-content: center;
+  width: var(--space-4);
+
+  &.checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+.leftIcon,
+.rightIcon {
+  align-items: center;
+  color: var(--color-base-content-secondary);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.active .leftIcon,
+.active .rightIcon {
+  color: inherit;
+}
+
+.labelWrapper {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.label {
+  line-height: var(--line-height-tight);
+}
+
+.sublabel {
+  color: var(--color-base-content-secondary);
+  font-size: 0.85em;
+  line-height: var(--line-height-tight);
+}
+
+.shortcut {
+  color: var(--color-base-content-tertiary);
+  flex-shrink: 0;
+  font-size: 0.8em;
+  margin-left: auto;
+}
+
+// =============================================================================
+// DIVIDER
+// =============================================================================
+
+.divider {
+  background-color: var(--color-border);
+  height: 1px;
+  margin: var(--space-1) 0;
+  position: relative;
+
+  &:has(.dividerLabel) {
+    align-items: center;
+    background: transparent;
+    display: flex;
+    height: auto;
+    margin: var(--space-2) 0;
+    padding: 0 var(--space-3);
+  }
+}
+
+.dividerLabel {
+  color: var(--color-base-content-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+}
+
+// =============================================================================
+// CAPTION
+// =============================================================================
+
+.caption {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-base-content-tertiary);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+}

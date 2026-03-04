@@ -1,0 +1,112 @@
+{
+	"extends": [
+		"stylelint-config-standard-scss",
+		"stylelint-config-recess-order"
+	],
+	"plugins": ["stylelint-scss", "stylelint-declaration-strict-value"],
+	"rules": {
+		"order/properties-order": null,
+		"keyframes-name-pattern": null,
+		"scale-unlimited/declaration-strict-value": [
+			[
+				"/color$/",
+				"fill",
+				"stroke",
+				"font-size",
+				"font-weight",
+				"line-height",
+				"letter-spacing",
+				"font-family",
+				"padding",
+				"margin",
+				"gap",
+				"border-radius",
+				"border-width",
+				"transition-duration",
+				"animation-duration"
+			],
+			{
+				"ignoreValues": [
+					"transparent",
+					"currentColor",
+					"currentcolor",
+					"inherit",
+					"initial",
+					"unset",
+					"none",
+					"auto",
+					"0",
+					"1",
+					"100%",
+					"50%",
+					"/^0 /",
+					"/ 0$/",
+					"/ 0 /",
+					"/^[0-9.]+em$/",
+					"/^var\\(--/"
+				],
+				"message": "Use design tokens from @/design-tokens/ instead of hardcoded values. See docs/design-tokens.md"
+			}
+		],
+		"scss/dollar-variable-pattern": [
+			"^([a-z][a-z0-9]*)(-[a-z0-9]+)*$",
+			{
+				"message": "Expected variable to be kebab-case"
+			}
+		],
+		"scss/load-partial-extension": "never",
+		"scss/at-rule-no-unknown": true,
+		"scss/comment-no-empty": true,
+		"scss/declaration-nested-properties": "never",
+		"scss/dimension-no-non-numeric-values": true,
+		"scss/function-quote-no-quoted-strings-inside": true,
+		"scss/function-unquote-no-unquoted-strings-inside": true,
+		"scss/no-duplicate-dollar-variables": true,
+		"scss/no-duplicate-mixins": true,
+		"scss/operator-no-newline-after": true,
+		"scss/operator-no-unspaced": true,
+		"function-no-unknown": null,
+		"no-descending-specificity": null,
+		"selector-class-pattern": null,
+		"custom-property-pattern": [
+			"^(_)?[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+			{
+				"message": "Expected custom property name to be kebab-case (--_prefix allowed for internal properties)"
+			}
+		],
+		"color-function-notation": "legacy",
+		"alpha-value-notation": "number",
+		"import-notation": "string",
+		"property-no-deprecated": [
+			true,
+			{
+				"ignoreProperties": ["clip"]
+			}
+		],
+		"no-invalid-position-declaration": null,
+		"media-feature-range-notation": null,
+		"container-name-pattern": null,
+		"hue-degree-notation": null,
+		"lightness-notation": null,
+		"selector-not-notation": null,
+		"declaration-block-no-redundant-longhand-properties": null,
+		"declaration-property-value-keyword-no-deprecated": null,
+		"rule-empty-line-before": null,
+		"comment-empty-line-before": null,
+		"no-duplicate-selectors": null
+	},
+	"ignoreFiles": [
+		"**/*.js",
+		"**/*.jsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"node_modules/**",
+		"dist/**",
+		"build/**",
+		"storybook-static/**",
+		"src/design-tokens/**",
+		"src/proto-design-system/base/**",
+		"src/proto-design-system/mixins/**",
+		"src/proto-design-system/UIShell/Column/grid-example.module.scss"
+	]
+}

@@ -1,0 +1,25 @@
+export type {
+	SortDirection,
+	TableBodyProps,
+	TableCaptionProps,
+	TableCellProps,
+	TableExpandedRowProps,
+	TableFooterProps,
+	TableHeaderProps,
+	TableHeadProps,
+	TableProps,
+	TableRowProps,
+	TableSize,
+	TableVariant,
+} from "./Table";
+export {
+	Table,
+	TableBody,
+	TableCaption,
+	TableCell,
+	TableExpandedRow,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "./Table";

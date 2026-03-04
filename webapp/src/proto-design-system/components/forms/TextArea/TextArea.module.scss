@@ -1,0 +1,142 @@
+// =============================================================================
+// TEXTAREA COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  width: fit-content;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+// =============================================================================
+// LABEL
+// =============================================================================
+
+.label {
+  color: var(--color-base-content);
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-0-5);
+  line-height: var(--line-height-tight);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.visuallyHidden {
+  @include sr-only;
+}
+
+// =============================================================================
+// TEXTAREA
+// =============================================================================
+
+.textarea {
+  appearance: none;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  min-height: var(--space-20);
+  outline: none;
+  width: 100%;
+
+  @include transition-colors;
+
+  &::placeholder {
+    color: var(--color-muted);
+  }
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  font-size: var(--font-size-sm);
+  padding: var(--space-1-5) var(--space-2-5);
+}
+
+.size-md {
+  font-size: var(--font-size-base);
+  padding: var(--space-2) var(--space-3);
+}
+
+.size-lg {
+  font-size: var(--font-size-lg);
+  padding: var(--space-2-5) var(--space-4);
+}
+
+// =============================================================================
+// RESIZE
+// =============================================================================
+
+.resize-none {
+  resize: none;
+}
+
+.resize-vertical {
+  resize: vertical;
+}
+
+.resize-horizontal {
+  resize: horizontal;
+}
+
+.resize-both {
+  resize: both;
+}
+
+// =============================================================================
+// STATES
+// =============================================================================
+
+.error {
+  border-color: var(--color-error);
+
+  &:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px oklch(from var(--color-error) l c h / 0.2);
+  }
+}
+
+.disabled {
+  background-color: var(--color-base-100);
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// HELPER & ERROR TEXT
+// =============================================================================
+
+.helper {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.errorMessage {
+  color: var(--color-error);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}

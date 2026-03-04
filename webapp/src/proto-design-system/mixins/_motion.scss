@@ -1,0 +1,170 @@
+// =============================================================================
+// MOTION MIXINS
+// =============================================================================
+
+// Standard transition
+@mixin transition($properties: all, $duration: var(--duration-normal), $easing: var(--ease-out)) {
+  transition-duration: $duration;
+  transition-property: $properties;
+  transition-timing-function: $easing;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Color transition (background, border, text color)
+@mixin transition-colors($duration: var(--duration-fast)) {
+  transition:
+    background-color $duration var(--ease-out),
+    border-color $duration var(--ease-out),
+    color $duration var(--ease-out);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Transform transition
+@mixin transition-transform($duration: var(--duration-normal)) {
+  transition: transform $duration var(--ease-out);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Opacity transition
+@mixin transition-opacity($duration: var(--duration-normal)) {
+  transition: opacity $duration var(--ease-out);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Shadow transition
+@mixin transition-shadow($duration: var(--duration-normal)) {
+  transition: box-shadow $duration var(--ease-out);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Reduced motion query
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// Motion safe (only apply when motion is allowed)
+@mixin motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    @content;
+  }
+}
+
+// Keyframe animation with reduced motion support
+@mixin animate($name, $duration: var(--duration-normal), $easing: var(--ease-out), $fill-mode: both) {
+  animation-duration: $duration;
+  animation-fill-mode: $fill-mode;
+  animation-name: $name;
+  animation-timing-function: $easing;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+// Fade in animation
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+// Fade out animation
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+// Slide up animation
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Slide down animation
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Scale in animation
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Spin animation
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Pulse animation
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Skeleton loading animation
+@keyframes skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

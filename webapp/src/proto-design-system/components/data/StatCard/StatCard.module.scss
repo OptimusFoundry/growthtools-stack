@@ -1,0 +1,148 @@
+// =============================================================================
+// STATCARD COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.card {
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+
+  @include transition-colors;
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.outlined {
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+
+.filled {
+  background-color: var(--color-base-100);
+  border: 1px solid transparent;
+}
+
+// =============================================================================
+// CLICKABLE
+// =============================================================================
+
+.clickable {
+  appearance: none;
+  cursor: pointer;
+  text-align: left;
+
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-100);
+    border-color: var(--color-border-hover);
+  }
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.icon {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// VALUE ROW
+// =============================================================================
+
+.valueRow {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.value {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+// =============================================================================
+// TREND
+// =============================================================================
+
+.trend {
+  align-items: center;
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-1);
+
+  svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+.trend-up {
+  color: var(--color-success);
+}
+
+.trend-down {
+  color: var(--color-error);
+}
+
+.trend-neutral {
+  color: var(--color-muted);
+}
+
+// =============================================================================
+// FOOTER
+// =============================================================================
+
+.footer {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.previousValue {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  text-decoration: line-through;
+}
+
+.description {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+}

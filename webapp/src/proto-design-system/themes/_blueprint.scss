@@ -1,0 +1,109 @@
+// =============================================================================
+// BLUEPRINT THEME (TECHNICAL DRAWING)
+// =============================================================================
+// Architectural precision. Cyan lines on white. Grid-first thinking.
+// Like CAD software meets modern UI. For engineers who design.
+
+[data-theme="blueprint"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(99% 0.005 230deg);
+
+  // Base colors (blueprint paper)
+  --color-base-50: oklch(99% 0.005 230deg);
+  --color-base-100: oklch(97% 0.01 230deg);
+  --color-base-200: oklch(94% 0.015 230deg);
+  --color-base-300: oklch(90% 0.02 230deg);
+  --color-base-400: oklch(72% 0.03 230deg);
+  --color-base-500: oklch(55% 0.03 230deg);
+  --color-base-600: oklch(42% 0.025 230deg);
+  --color-base-700: oklch(30% 0.02 230deg);
+  --color-base-800: oklch(22% 0.015 230deg);
+  --color-base-900: oklch(15% 0.01 230deg);
+  --color-base-950: oklch(10% 0.008 230deg);
+
+  // Content colors (technical blue-black)
+  --color-base-content: oklch(18% 0.015 230deg);
+  --color-base-content-secondary: oklch(42% 0.02 230deg);
+  --color-base-content-tertiary: oklch(55% 0.015 230deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(18% 0.015 230deg / 0.5);
+
+  // Border colors (grid lines)
+  --color-border: oklch(85% 0.04 210deg);
+  --color-border-hover: oklch(65% 0.1 210deg);
+
+  // Shadow colors (technical, minimal)
+  --shadow-color: oklch(55% 0.05 210deg / 0.1);
+  --shadow-color-strong: oklch(45% 0.06 210deg / 0.18);
+
+  // Primary (blueprint cyan)
+  --color-primary: oklch(55% 0.15 210deg);
+  --color-primary-hover: oklch(50% 0.17 210deg);
+  --color-primary-active: oklch(45% 0.15 210deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (annotation red)
+  --color-secondary: oklch(55% 0.2 25deg);
+  --color-secondary-hover: oklch(50% 0.22 25deg);
+  --color-secondary-active: oklch(45% 0.2 25deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (highlight yellow)
+  --color-accent: oklch(85% 0.15 95deg);
+  --color-accent-hover: oklch(80% 0.17 95deg);
+  --color-accent-active: oklch(75% 0.15 95deg);
+  --color-accent-content: oklch(20% 0.04 95deg);
+
+  // Semantic colors (technical)
+  --color-success: oklch(55% 0.15 150deg);
+  --color-success-hover: oklch(50% 0.17 150deg);
+  --color-success-bg: oklch(95% 0.04 150deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(78% 0.14 85deg);
+  --color-warning-hover: oklch(73% 0.16 85deg);
+  --color-warning-bg: oklch(96% 0.04 85deg);
+  --color-warning-content: oklch(22% 0.05 85deg);
+  --color-error: oklch(55% 0.2 25deg);
+  --color-error-hover: oklch(50% 0.22 25deg);
+  --color-error-bg: oklch(95% 0.04 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(55% 0.15 210deg);
+  --color-info-hover: oklch(50% 0.17 210deg);
+  --color-info-bg: oklch(95% 0.04 210deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring (technical)
+  --focus-ring-color: oklch(55% 0.15 210deg / 0.4);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  // Muted
+  --color-muted: oklch(55% 0.015 230deg);
+
+  // ==========================================================================
+  // BLUEPRINT DESIGN TOKENS
+  // ==========================================================================
+
+  // Precise, technical shadows
+  --shadow-xs: 0 1px 2px var(--shadow-color);
+  --shadow-sm: 0 2px 4px var(--shadow-color);
+  --shadow-md: 0 3px 8px var(--shadow-color);
+  --shadow-lg: 0 6px 16px var(--shadow-color-strong);
+  --shadow-xl: 0 10px 28px var(--shadow-color-strong);
+  --shadow-2xl: 0 16px 40px var(--shadow-color-strong);
+
+  // Sharp, precise corners
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+
+  // Thin precise borders
+  --border-width: 1px;
+  --border-width-thick: 2px;
+}

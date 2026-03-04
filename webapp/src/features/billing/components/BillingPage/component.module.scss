@@ -1,0 +1,100 @@
+
+.billing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+	max-width: 800px;
+}
+
+.pageTitle {
+	font-size: var(--font-size-xl);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-base-content);
+	margin: 0;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+}
+
+.sectionTitle {
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-base-content);
+	margin: 0;
+}
+
+.card {
+	padding: var(--space-4);
+	background-color: var(--color-base-100);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--color-border);
+}
+
+// Subscription Card
+.planHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	margin-bottom: var(--space-2);
+}
+
+.planName {
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-base-content);
+}
+
+.billingDate {
+	font-size: var(--font-size-base);
+	color: var(--color-base-content-secondary);
+	margin: 0;
+}
+
+.canceledNote {
+	font-size: var(--font-size-sm);
+	color: var(--color-warning);
+	margin: 0;
+}
+
+// Billing Actions
+.actionsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+}
+
+.actionRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--space-3);
+	flex-wrap: wrap;
+}
+
+.actionInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-0-5);
+	flex: 1;
+	min-width: 200px;
+}
+
+.actionLabel {
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-base-content);
+}
+
+.actionDescription {
+	font-size: var(--font-size-sm);
+	color: var(--color-base-content-secondary);
+}
+
+.divider {
+	height: 1px;
+	background-color: var(--color-border);
+	margin: var(--space-1) 0;
+}

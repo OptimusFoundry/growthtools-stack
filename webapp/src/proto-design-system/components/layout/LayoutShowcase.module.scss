@@ -1,0 +1,62 @@
+// =============================================================================
+// LAYOUT SHOWCASE STORIES STYLES
+// Responsive utility classes for story layouts
+// =============================================================================
+@use "../../mixins" as *;
+
+// =============================================================================
+// CONTENT PADDING
+// Responsive padding that reduces on mobile
+// =============================================================================
+
+.contentPadding {
+  padding: var(--space-3);
+
+  @include breakpoint(sm) {
+    padding: var(--space-4);
+  }
+
+  @include breakpoint(md) {
+    padding: var(--space-6);
+  }
+}
+
+.contentPaddingLg {
+  padding: var(--space-4);
+
+  @include breakpoint(sm) {
+    padding: var(--space-6);
+  }
+
+  @include breakpoint(md) {
+    padding: var(--space-8);
+  }
+}
+
+// =============================================================================
+// HEADER PADDING
+// Responsive horizontal padding for headers
+// =============================================================================
+
+.headerPadding {
+  padding: var(--space-2) var(--space-3);
+
+  @include breakpoint(sm) {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+// =============================================================================
+// NAV PADDING
+// Responsive horizontal padding for sub-navigation
+// =============================================================================
+
+.navPadding {
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+
+  @include breakpoint(sm) {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}

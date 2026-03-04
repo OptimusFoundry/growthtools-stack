@@ -1,0 +1,107 @@
+// =============================================================================
+// SPINNER COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.spinner {
+  animation: spin var(--duration-slower) linear infinite;
+  border: var(--border-width-md) solid transparent;
+  border-radius: var(--radius-full);
+  border-top-color: currentcolor;
+  display: inline-block;
+  flex-shrink: 0;
+
+  @include reduced-motion {
+    animation: pulse var(--duration-slower) ease-in-out infinite;
+    border-color: currentcolor;
+    border-style: dotted;
+    opacity: var(--opacity-loading);
+  }
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.xs {
+  height: var(--space-3);
+  width: var(--space-3);
+}
+
+.sm {
+  height: var(--space-4);
+  width: var(--space-4);
+}
+
+.md {
+  border-width: var(--border-width-md);
+  height: var(--space-6);
+  width: var(--space-6);
+}
+
+.lg {
+  border-width: var(--border-width-lg);
+  height: var(--space-8);
+  width: var(--space-8);
+}
+
+.xl {
+  border-width: var(--border-width-xl);
+  height: var(--space-12);
+  width: var(--space-12);
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  border-top-color: var(--color-base-content);
+}
+
+.primary {
+  border-top-color: var(--color-primary);
+}
+
+.secondary {
+  border-top-color: var(--color-secondary);
+}
+
+.white {
+  border-top-color: var(--color-white);
+}
+
+// =============================================================================
+// ANIMATIONS
+// =============================================================================
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: var(--opacity-disabled);
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+// =============================================================================
+// VISUALLY HIDDEN (for screen readers)
+// =============================================================================
+
+.visuallyHidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

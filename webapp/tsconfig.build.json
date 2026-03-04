@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.json",
+	"exclude": [
+		"node_modules",
+		"dist",
+		"build",
+		"public",
+		".storybook",
+		"**/*.stories.ts",
+		"**/*.stories.tsx",
+		"**/*.stories.js",
+		"**/*.stories.jsx",
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"src/proto-design-system-old/**/*"
+	]
+}

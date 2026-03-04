@@ -1,0 +1,79 @@
+// =============================================================================
+// MIDNIGHT THEME (OLED-FRIENDLY)
+// =============================================================================
+// True black theme optimized for OLED displays.
+
+[data-theme="midnight"] {
+  color-scheme: dark;
+
+  // Background
+  --color-background: oklch(0% 0 0deg);
+
+  // Base colors (true black base)
+  --color-base-50: oklch(0% 0 0deg);
+  --color-base-100: oklch(8% 0.005 240deg);
+  --color-base-200: oklch(12% 0.01 240deg);
+  --color-base-300: oklch(18% 0.01 240deg);
+  --color-base-400: oklch(32% 0.015 240deg);
+  --color-base-500: oklch(50% 0.015 240deg);
+  --color-base-600: oklch(65% 0.01 240deg);
+  --color-base-700: oklch(78% 0.008 240deg);
+  --color-base-800: oklch(88% 0.005 240deg);
+  --color-base-900: oklch(94% 0.003 240deg);
+  --color-base-950: oklch(98% 0.002 240deg);
+
+  // Content colors — Softened for 2026
+  --color-base-content: oklch(90% 0.006 250deg);
+  --color-base-content-secondary: oklch(65% 0.008 250deg);
+  --color-base-content-tertiary: oklch(48% 0.008 250deg);
+  --color-muted: oklch(55% 0.008 250deg);
+
+  // Surface colors (true black)
+  --color-surface: oklch(0% 0 0deg);
+  --color-surface-elevated: oklch(10% 0.008 240deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.85);
+
+  // Border colors (subtle)
+  --color-border: oklch(20% 0.01 240deg);
+  --color-border-hover: oklch(30% 0.015 240deg);
+
+  // Shadow colors (minimal for OLED)
+  --shadow-color: oklch(0% 0 0deg / 0.4);
+  --shadow-color-strong: oklch(0% 0 0deg / 0.6);
+
+  // Primary (vibrant against black)
+  --color-primary: oklch(70% 0.24 265deg);
+  --color-primary-hover: oklch(82% 0.28 265deg);
+  --color-primary-active: oklch(62% 0.24 265deg);
+  --color-primary-content: oklch(10% 0.02 265deg);
+
+  // Secondary
+  --color-secondary: oklch(72% 0.16 300deg);
+  --color-secondary-hover: oklch(84% 0.2 300deg);
+  --color-secondary-active: oklch(64% 0.16 300deg);
+
+  // Accent (more vibrant)
+  --color-accent: oklch(75% 0.22 180deg);
+  --color-accent-hover: oklch(87% 0.26 180deg);
+  --color-accent-active: oklch(67% 0.22 180deg);
+
+  // Semantic colors (high contrast)
+  --color-success: oklch(72% 0.2 145deg);
+  --color-success-hover: oklch(84% 0.24 145deg);
+  --color-success-bg: oklch(15% 0.04 145deg);
+  --color-warning: oklch(80% 0.16 85deg);
+  --color-warning-hover: oklch(90% 0.2 85deg);
+  --color-warning-bg: oklch(15% 0.04 85deg);
+  --color-error: oklch(68% 0.22 25deg);
+  --color-error-hover: oklch(80% 0.26 25deg);
+  --color-error-bg: oklch(15% 0.04 25deg);
+  --color-info: oklch(70% 0.18 240deg);
+  --color-info-hover: oklch(82% 0.22 240deg);
+  --color-info-bg: oklch(15% 0.04 240deg);
+
+  // Focus ring (bright for visibility)
+  --focus-ring-color: oklch(70% 0.24 265deg / 0.7);
+
+  // Header background (more visible in OLED theme)
+  --color-header-bg: var(--color-base-300);
+}

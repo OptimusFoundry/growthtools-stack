@@ -1,0 +1,91 @@
+// =============================================================================
+// CANDY THEME
+// =============================================================================
+// Ultra-bright, playful, Gen-Z aesthetic. Dopamine-inducing colors.
+// Bold, fun, unapologetically loud. TikTok meets Nickelodeon.
+
+[data-theme="candy"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(99% 0.015 350deg);
+
+  // Base colors (bright white with pink warmth)
+  --color-base-50: oklch(99% 0.015 350deg);                             // Warm white
+  --color-base-100: oklch(97% 0.02 350deg);                             // Light pink white
+  --color-base-200: oklch(94% 0.03 350deg);                             // Soft pink
+  --color-base-300: oklch(90% 0.04 350deg);                             // Light candy pink
+  --color-base-400: oklch(75% 0.06 350deg);                             // Medium pink
+  --color-base-500: oklch(60% 0.08 350deg);                             // Darker pink
+  --color-base-600: oklch(48% 0.08 350deg);                             // Deep pink
+  --color-base-700: oklch(38% 0.06 350deg);                             // Dark
+  --color-base-800: oklch(28% 0.04 350deg);                             // Very dark
+  --color-base-900: oklch(18% 0.03 350deg);                             // Near black
+  --color-base-950: oklch(10% 0.02 350deg);                             // Black
+
+  // Content colors (fun and readable)
+  --color-base-content: oklch(25% 0.05 320deg);                         // Dark magenta
+  --color-base-content-secondary: oklch(45% 0.06 320deg);               // Medium magenta
+  --color-base-content-tertiary: oklch(60% 0.05 320deg);                // Light magenta
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(25% 0.05 320deg / 0.5);
+
+  // Border colors (playful)
+  --color-border: oklch(90% 0.05 350deg);
+  --color-border-hover: oklch(85% 0.08 350deg);
+
+  // Shadow colors (colorful!)
+  --shadow-color: oklch(70% 0.2 320deg / 0.2);
+  --shadow-color-strong: oklch(70% 0.2 320deg / 0.35);
+
+  // Primary (electric purple)
+  --color-primary: oklch(55% 0.28 300deg);
+  --color-primary-hover: oklch(50% 0.3 300deg);
+  --color-primary-active: oklch(45% 0.28 300deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (bubblegum pink)
+  --color-secondary: oklch(70% 0.25 350deg);
+  --color-secondary-hover: oklch(65% 0.27 350deg);
+  --color-secondary-active: oklch(60% 0.25 350deg);
+  --color-secondary-content: oklch(15% 0.05 350deg);
+
+  // Accent (electric cyan)
+  --color-accent: oklch(80% 0.2 195deg);
+  --color-accent-hover: oklch(75% 0.22 195deg);
+  --color-accent-active: oklch(70% 0.2 195deg);
+  --color-accent-content: oklch(15% 0.05 195deg);
+
+  // Semantic colors (candy bright)
+  --color-success: oklch(75% 0.25 150deg);
+  --color-success-hover: oklch(70% 0.27 150deg);
+  --color-success-bg: oklch(92% 0.1 150deg);
+  --color-success-content: oklch(20% 0.05 150deg);
+  --color-warning: oklch(88% 0.2 85deg);
+  --color-warning-hover: oklch(83% 0.22 85deg);
+  --color-warning-bg: oklch(95% 0.1 85deg);
+  --color-warning-content: oklch(25% 0.06 85deg);
+  --color-error: oklch(65% 0.28 15deg);
+  --color-error-hover: oklch(60% 0.3 15deg);
+  --color-error-bg: oklch(92% 0.1 15deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(65% 0.22 260deg);
+  --color-info-hover: oklch(60% 0.24 260deg);
+  --color-info-bg: oklch(92% 0.08 260deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(55% 0.28 300deg / 0.5);
+
+  // Muted color
+  --color-muted: oklch(60% 0.05 350deg);
+
+  // Custom: Playful rounded corners
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}

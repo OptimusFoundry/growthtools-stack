@@ -1,0 +1,93 @@
+// =============================================================================
+// CYBERPUNK THEME
+// =============================================================================
+// Neon-soaked dystopian future. Hot pink and cyan on deep black.
+// Inspired by Blade Runner, Akira, and neon-lit Tokyo nights.
+
+[data-theme="cyberpunk"] {
+  color-scheme: dark;
+
+  // Background
+  --color-background: oklch(8% 0.02 280deg);
+
+  // Base colors (deep void black with slight blue)
+  --color-base-50: oklch(8% 0.02 280deg);                               // Deepest void
+  --color-base-100: oklch(10% 0.025 280deg);                            // Near black
+  --color-base-200: oklch(13% 0.03 280deg);                             // Dark surface
+  --color-base-300: oklch(18% 0.03 280deg);                             // Elevated dark
+  --color-base-400: oklch(30% 0.03 280deg);                             // Mid dark
+  --color-base-500: oklch(45% 0.025 280deg);                            // Muted
+  --color-base-600: oklch(60% 0.02 280deg);                             // Light muted
+  --color-base-700: oklch(75% 0.015 280deg);                            // Lighter
+  --color-base-800: oklch(85% 0.01 280deg);                             // Very light
+  --color-base-900: oklch(92% 0.005 280deg);                            // Near white
+  --color-base-950: oklch(97% 0 0deg);                                  // White
+
+  // Content colors (solid readable text)
+  --color-base-content: oklch(90% 0.01 0deg);                           // Off-white
+  --color-base-content-secondary: oklch(65% 0.01 0deg);                 // Gray
+  --color-base-content-tertiary: oklch(50% 0.01 0deg);                  // Darker gray
+
+  // Surface colors
+  --color-surface: oklch(12% 0.025 280deg);                             // Card surface
+  --color-surface-elevated: oklch(16% 0.03 280deg);                     // Elevated
+  --color-surface-overlay: oklch(0% 0 0deg / 0.85);                     // Dark overlay
+
+  // Border colors (neon glow hints)
+  --color-border: oklch(25% 0.05 320deg);                               // Subtle pink border
+  --color-border-hover: oklch(35% 0.08 320deg);                         // Glow on hover
+
+  // Shadow colors (neon glow)
+  --shadow-color: oklch(60% 0.3 320deg / 0.3);                          // Pink glow
+  --shadow-color-strong: oklch(60% 0.3 320deg / 0.5);                   // Strong pink glow
+
+  // Primary (hot neon pink)
+  --color-primary: oklch(65% 0.3 330deg);
+  --color-primary-hover: oklch(78% 0.34 330deg);
+  --color-primary-active: oklch(58% 0.3 330deg);
+  --color-primary-content: oklch(10% 0.02 330deg);
+
+  // Secondary (electric cyan)
+  --color-secondary: oklch(75% 0.2 195deg);
+  --color-secondary-hover: oklch(88% 0.24 195deg);
+  --color-secondary-active: oklch(68% 0.2 195deg);
+  --color-secondary-content: oklch(10% 0.03 195deg);
+
+  // Accent (toxic yellow-green)
+  --color-accent: oklch(85% 0.25 115deg);
+  --color-accent-hover: oklch(94% 0.28 115deg);
+  --color-accent-active: oklch(78% 0.25 115deg);
+  --color-accent-content: oklch(10% 0.05 115deg);
+
+  // Semantic colors (neon versions)
+  --color-success: oklch(75% 0.25 145deg);
+  --color-success-hover: oklch(88% 0.28 145deg);
+  --color-success-bg: oklch(20% 0.08 145deg);
+  --color-success-content: oklch(10% 0.03 145deg);
+  --color-warning: oklch(85% 0.2 85deg);
+  --color-warning-hover: oklch(94% 0.24 85deg);
+  --color-warning-bg: oklch(20% 0.08 85deg);
+  --color-warning-content: oklch(10% 0.05 85deg);
+  --color-error: oklch(65% 0.28 25deg);
+  --color-error-hover: oklch(78% 0.32 25deg);
+  --color-error-bg: oklch(20% 0.08 25deg);
+  --color-error-content: oklch(95% 0.02 25deg);
+  --color-info: oklch(70% 0.2 240deg);
+  --color-info-hover: oklch(82% 0.24 240deg);
+  --color-info-bg: oklch(20% 0.08 240deg);
+  --color-info-content: oklch(10% 0.03 240deg);
+
+  // Focus ring (neon glow)
+  --focus-ring-color: oklch(65% 0.3 330deg / 0.6);
+
+  // Muted color
+  --color-muted: oklch(50% 0.03 280deg);
+
+  // Custom: Neon glow shadows
+  --shadow-glow-sm: 0 0 10px oklch(65% 0.3 330deg / 0.4);
+  --shadow-glow-md: 0 0 20px oklch(65% 0.3 330deg / 0.5);
+  --shadow-glow-lg: 0 0 40px oklch(65% 0.3 330deg / 0.6);
+
+  // Header background (more visible in cyberpunk theme)
+  --color-header-bg: var(--color-base-300);
+}

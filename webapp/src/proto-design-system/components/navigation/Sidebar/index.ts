@@ -1,0 +1,26 @@
+export type {
+	SidebarDividerProps,
+	SidebarGroupProps,
+	SidebarHeaderProps,
+	SidebarItemProps,
+	SidebarLogoProps,
+	SidebarMobileTriggerProps,
+	SidebarProps,
+	SidebarProviderProps,
+	SidebarSectionProps,
+	SidebarToggleProps,
+	SidebarVariant,
+} from "./Sidebar";
+export {
+	Sidebar,
+	SidebarDivider,
+	SidebarGroup,
+	SidebarHeader,
+	SidebarItem,
+	SidebarLogo,
+	SidebarMobileTrigger,
+	SidebarProvider,
+	SidebarSection,
+	SidebarToggle,
+	useSidebarContext,
+} from "./Sidebar";

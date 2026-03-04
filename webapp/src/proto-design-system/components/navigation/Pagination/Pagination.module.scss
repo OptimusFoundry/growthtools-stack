@@ -1,0 +1,153 @@
+// =============================================================================
+// PAGINATION COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.pagination {
+  align-items: center;
+  display: flex;
+  gap: var(--space-1);
+}
+
+// =============================================================================
+// PAGES
+// =============================================================================
+
+.pages {
+  align-items: center;
+  display: flex;
+  gap: var(--space-1);
+}
+
+// =============================================================================
+// BUTTON
+// =============================================================================
+
+.button {
+  align-items: center;
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  justify-content: center;
+  min-width: var(--space-8);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-base-200);
+  }
+
+  &.active {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+.outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-base-content);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-base-100);
+    border-color: var(--color-border-hover);
+  }
+
+  &.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-base-content);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-base-100);
+  }
+
+  &.active {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+// =============================================================================
+// DOTS
+// =============================================================================
+
+.dots {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  font-family: var(--font-family-sans);
+  justify-content: center;
+  min-width: var(--space-8);
+  user-select: none;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  .button {
+    font-size: var(--font-size-xs);
+    height: var(--space-7);
+    padding: 0 var(--space-2);
+  }
+
+  .dots {
+    font-size: var(--font-size-xs);
+  }
+}
+
+.size-md {
+  .button {
+    font-size: var(--font-size-sm);
+    height: var(--space-8);
+    padding: 0 var(--space-2-5);
+  }
+
+  .dots {
+    font-size: var(--font-size-sm);
+  }
+}
+
+.size-lg {
+  .button {
+    font-size: var(--font-size-base);
+    height: var(--space-10);
+    padding: 0 var(--space-3);
+  }
+
+  .dots {
+    font-size: var(--font-size-base);
+  }
+}

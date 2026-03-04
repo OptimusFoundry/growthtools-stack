@@ -1,0 +1,36 @@
+// =============================================================================
+// ASPECTRATIO COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.container {
+  height: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.content {
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+
+  // Make direct children fill the container
+  > * {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  // Handle images specifically
+  > img {
+    display: block;
+  }
+
+  // Handle iframes
+  > iframe {
+    border: none;
+  }
+}

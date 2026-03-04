@@ -1,0 +1,373 @@
+// =============================================================================
+// SIDEBAR COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.sidebar {
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  transition: width var(--duration-normal) var(--ease-out);
+  width: var(--space-64);
+}
+
+.collapsed {
+  width: var(--space-16);
+
+  .nav {
+    align-items: center;
+    padding: var(--space-4) var(--space-2);
+  }
+
+  .item {
+    justify-content: center;
+    padding: var(--space-2);
+    width: var(--space-10);
+    height: var(--space-10);
+  }
+
+  .groupButton {
+    justify-content: center;
+    padding: var(--space-2);
+    width: var(--space-10);
+    height: var(--space-10);
+  }
+
+  .sectionItems {
+    align-items: center;
+  }
+}
+
+// =============================================================================
+// MOBILE DRAWER
+// =============================================================================
+
+.backdrop {
+  background-color: oklch(0 0 0 / 0.5);
+  inset: 0;
+  position: fixed;
+  z-index: var(--z-modal);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: fadeIn var(--duration-fast) var(--ease-out);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile {
+  border-right: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xl);
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  transform: translateX(-100%);
+  width: var(--space-64);
+  z-index: var(--z-modal);
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform var(--duration-normal) var(--ease-out);
+  }
+}
+
+.mobileOpen {
+  transform: translateX(0);
+}
+
+.mobileTrigger {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: var(--space-2);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.compact {
+  width: var(--space-56);
+
+  &.collapsed {
+    width: var(--space-14);
+
+    .nav {
+      padding: var(--space-3) var(--space-1);
+    }
+
+    .item {
+      width: var(--space-9);
+      height: var(--space-9);
+    }
+
+    .groupButton {
+      width: var(--space-9);
+      height: var(--space-9);
+    }
+  }
+}
+
+// =============================================================================
+// NAV
+// =============================================================================
+
+.nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.header {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+}
+
+.headerCollapsed {
+  justify-content: center;
+  padding: var(--space-3) var(--space-2);
+}
+
+.logo {
+  flex: 1;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// =============================================================================
+// TOGGLE BUTTON
+// =============================================================================
+
+.toggle {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: var(--space-2);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// SECTION
+// =============================================================================
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sectionTitle {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  padding: var(--space-2) var(--space-3);
+  text-transform: uppercase;
+}
+
+.sectionItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+// =============================================================================
+// ITEM
+// =============================================================================
+
+.item {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover:not(.disabled) {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+}
+
+.active {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+    color: var(--color-primary-content);
+  }
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// ITEM ELEMENTS
+// =============================================================================
+
+.itemIcon {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+.itemLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemBadge {
+  flex-shrink: 0;
+}
+
+// =============================================================================
+// GROUP
+// =============================================================================
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  width: 100%;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+}
+
+.groupChevron {
+  align-items: center;
+  display: flex;
+  margin-left: auto;
+
+  svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+.groupItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding-left: var(--space-8);
+}
+
+// =============================================================================
+// DIVIDER
+// =============================================================================
+
+.divider {
+  background-color: var(--color-border);
+  border: none;
+  height: 1px;
+  margin: var(--space-2) 0;
+}

@@ -1,0 +1,25 @@
+// =============================================================================
+// Z-INDEX TOKENS
+// =============================================================================
+// Consistent layering system to prevent z-index wars.
+
+:root {
+  // Base layers
+  --z-behind: -1;
+  --z-base: 0;
+  --z-raised: 1;
+
+  // Component layers
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-tooltip: 70;
+  --z-toast: 80;
+  --z-command-palette: 90;
+
+  // Maximum layer (use sparingly)
+  --z-max: 9999;
+}

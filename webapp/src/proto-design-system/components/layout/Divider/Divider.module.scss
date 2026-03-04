@@ -1,0 +1,117 @@
+// =============================================================================
+// DIVIDER COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.divider {
+  border: none;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+// =============================================================================
+// ORIENTATION
+// =============================================================================
+
+.horizontal {
+  border-top: 1px solid var(--color-border);
+  height: 0;
+  width: 100%;
+}
+
+.vertical {
+  align-self: stretch;
+  border-left: 1px solid var(--color-border);
+  height: auto;
+  min-height: var(--space-4);
+  width: 0;
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.solid {
+  &.horizontal {
+    border-top-style: solid;
+  }
+
+  &.vertical {
+    border-left-style: solid;
+  }
+}
+
+.dashed {
+  &.horizontal {
+    border-top-style: dashed;
+  }
+
+  &.vertical {
+    border-left-style: dashed;
+  }
+}
+
+.dotted {
+  &.horizontal {
+    border-top-style: dotted;
+  }
+
+  &.vertical {
+    border-left-style: dotted;
+  }
+}
+
+// =============================================================================
+// WITH LABEL
+// =============================================================================
+
+.withLabel {
+  align-items: center;
+  border: none !important;
+  border-top: none !important;
+  display: flex;
+  gap: var(--space-4);
+  height: auto !important;
+
+  &::before,
+  &::after {
+    background-color: var(--color-border);
+    content: "";
+    flex: 1;
+    height: 1px;
+  }
+
+  &.dashed {
+    &::before,
+    &::after {
+      background: repeating-linear-gradient(
+        to right,
+        var(--color-border) 0,
+        var(--color-border) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+  }
+
+  &.dotted {
+    &::before,
+    &::after {
+      background: repeating-linear-gradient(
+        to right,
+        var(--color-border) 0,
+        var(--color-border) 2px,
+        transparent 2px,
+        transparent 6px
+      );
+    }
+  }
+}
+
+.label {
+  color: var(--color-muted);
+  flex-shrink: 0;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+}

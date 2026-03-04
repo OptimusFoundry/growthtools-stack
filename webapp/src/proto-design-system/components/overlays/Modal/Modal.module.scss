@@ -1,0 +1,219 @@
+// =============================================================================
+// MODAL COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.dialog {
+  background: transparent;
+  border: none;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  overflow: visible;
+  padding: var(--space-4);
+  width: 100%;
+
+  // Hide native backdrop - we use our own animated one
+  &::backdrop {
+    background-color: transparent;
+  }
+
+  &[open] {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+// =============================================================================
+// BACKDROP (animated via motion.dev)
+// =============================================================================
+
+.backdrop {
+  background-color: oklch(0% 0 0 / 0.5);
+  inset: 0;
+  position: fixed;
+}
+
+// =============================================================================
+// MODAL CONTENT
+// =============================================================================
+
+.modal {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--space-8));
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm .modal {
+  width: min(100%, var(--space-96));
+}
+
+.size-md .modal {
+  width: min(100%, 32rem);
+}
+
+.size-lg .modal {
+  width: min(100%, 48rem);
+}
+
+.size-xl .modal {
+  width: min(100%, 64rem);
+}
+
+.size-full .modal {
+  height: calc(100vh - var(--space-8));
+  width: calc(100vw - var(--space-8));
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+}
+
+.headerWithIcon {
+  padding: var(--space-6);
+}
+
+.headerContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.description {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+// =============================================================================
+// ICON
+// =============================================================================
+
+.iconWrapper {
+  align-items: center;
+  border-radius: var(--radius-full);
+  display: flex;
+  flex-shrink: 0;
+  height: var(--space-10);
+  justify-content: center;
+  width: var(--space-10);
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+.icon-default {
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+}
+
+.icon-success {
+  background-color: oklch(from var(--color-success) l c h / 0.15);
+  color: var(--color-success);
+}
+
+.icon-warning {
+  background-color: oklch(from var(--color-warning) l c h / 0.15);
+  color: var(--color-warning);
+}
+
+.icon-error {
+  background-color: oklch(from var(--color-error) l c h / 0.15);
+  color: var(--color-error);
+}
+
+.icon-info {
+  background-color: oklch(from var(--color-info) l c h / 0.15);
+  color: var(--color-info);
+}
+
+// =============================================================================
+// CLOSE BUTTON
+// =============================================================================
+
+.closeButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  margin: calc(var(--space-1) * -1);
+  padding: var(--space-1);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: oklch(from var(--color-base-content) l c h / 0.08);
+    color: var(--color-base-content);
+  }
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+// =============================================================================
+// BODY
+// =============================================================================
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+// =============================================================================
+// FOOTER
+// =============================================================================
+
+.footer {
+  align-items: center;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-6);
+}

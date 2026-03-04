@@ -1,0 +1,190 @@
+// =============================================================================
+// LIST COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.default {
+  // No additional styling
+}
+
+.divided {
+  .item {
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.bordered {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+
+  .item {
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+// =============================================================================
+// ITEM
+// =============================================================================
+
+.item {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+
+  @include transition-colors;
+}
+
+.interactive {
+  cursor: pointer;
+
+  @include focus-ring;
+
+  &:hover:not(.disabled) {
+    background-color: var(--color-row-hover);
+  }
+}
+
+.selected {
+  background-color: oklch(from var(--color-primary) l c h / 0.1);
+
+  &:hover:not(.disabled) {
+    background-color: oklch(from var(--color-primary) l c h / 0.15);
+  }
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// ITEM ELEMENTS
+// =============================================================================
+
+.leading {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-shrink: 0;
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.primary {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+}
+
+.secondary {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+}
+
+.trailing {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+}
+
+// =============================================================================
+// GROUP
+// =============================================================================
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupLabel {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  padding: var(--space-2) var(--space-3);
+  text-transform: uppercase;
+}
+
+.groupItems {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  .item {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .primary {
+    font-size: var(--font-size-sm);
+  }
+
+  .secondary {
+    font-size: var(--font-size-xs);
+  }
+}
+
+.size-md {
+  .item {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .primary {
+    font-size: var(--font-size-base);
+  }
+}
+
+.size-lg {
+  .item {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .primary {
+    font-size: var(--font-size-lg);
+  }
+
+  .secondary {
+    font-size: var(--font-size-base);
+  }
+}

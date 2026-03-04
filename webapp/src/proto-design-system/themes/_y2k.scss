@@ -1,0 +1,104 @@
+// =============================================================================
+// Y2K THEME (MILLENNIUM BUG)
+// =============================================================================
+// Early 2000s web aesthetic. Bubbly, chrome, gradient fever.
+// AOL, Windows XP, early web dreams. Nostalgia for dial-up.
+
+[data-theme="y2k"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(98% 0.015 260deg);
+
+  // Base colors (soft periwinkle tints)
+  --color-base-50: oklch(98% 0.015 260deg);
+  --color-base-100: oklch(96% 0.02 255deg);
+  --color-base-200: oklch(93% 0.025 250deg);
+  --color-base-300: oklch(88% 0.03 245deg);
+  --color-base-400: oklch(72% 0.035 240deg);
+  --color-base-500: oklch(58% 0.035 235deg);
+  --color-base-600: oklch(45% 0.03 230deg);
+  --color-base-700: oklch(32% 0.025 225deg);
+  --color-base-800: oklch(22% 0.02 220deg);
+  --color-base-900: oklch(15% 0.015 215deg);
+  --color-base-950: oklch(10% 0.01 210deg);
+
+  // Content colors
+  --color-base-content: oklch(18% 0.015 230deg);
+  --color-base-content-secondary: oklch(40% 0.018 235deg);
+  --color-base-content-tertiary: oklch(55% 0.015 240deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(18% 0.015 230deg / 0.5);
+
+  // Border colors (gradient hint)
+  --color-border: oklch(90% 0.025 250deg);
+  --color-border-hover: oklch(82% 0.04 245deg);
+
+  // Shadow colors (colorful!)
+  --shadow-color: oklch(65% 0.12 280deg / 0.15);
+  --shadow-color-strong: oklch(55% 0.15 260deg / 0.25);
+
+  // Primary (bubbly blue)
+  --color-primary: oklch(58% 0.2 250deg);
+  --color-primary-hover: oklch(53% 0.22 248deg);
+  --color-primary-active: oklch(48% 0.2 246deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (hot pink)
+  --color-secondary: oklch(68% 0.24 340deg);
+  --color-secondary-hover: oklch(63% 0.26 338deg);
+  --color-secondary-active: oklch(58% 0.24 336deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (lime green)
+  --color-accent: oklch(78% 0.2 130deg);
+  --color-accent-hover: oklch(73% 0.22 128deg);
+  --color-accent-active: oklch(68% 0.2 126deg);
+  --color-accent-content: oklch(15% 0.04 130deg);
+
+  // Semantic colors
+  --color-success: oklch(68% 0.18 150deg);
+  --color-success-hover: oklch(63% 0.2 150deg);
+  --color-success-bg: oklch(94% 0.05 150deg);
+  --color-success-content: oklch(15% 0.04 150deg);
+  --color-warning: oklch(82% 0.16 90deg);
+  --color-warning-hover: oklch(77% 0.18 90deg);
+  --color-warning-bg: oklch(96% 0.05 90deg);
+  --color-warning-content: oklch(22% 0.05 90deg);
+  --color-error: oklch(62% 0.22 20deg);
+  --color-error-hover: oklch(57% 0.24 20deg);
+  --color-error-bg: oklch(94% 0.05 20deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(58% 0.18 250deg);
+  --color-info-hover: oklch(53% 0.2 250deg);
+  --color-info-bg: oklch(94% 0.05 250deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring
+  --focus-ring-color: oklch(58% 0.2 250deg / 0.4);
+
+  // Muted
+  --color-muted: oklch(55% 0.015 240deg);
+
+  // ==========================================================================
+  // Y2K DESIGN TOKENS
+  // ==========================================================================
+
+  // Bubbly glossy shadows
+  --shadow-xs: 0 1px 2px var(--shadow-color), inset 0 1px 0 oklch(100% 0 0deg / 0.5);
+  --shadow-sm: 0 2px 6px var(--shadow-color), inset 0 1px 0 oklch(100% 0 0deg / 0.5);
+  --shadow-md: 0 4px 14px var(--shadow-color), inset 0 2px 0 oklch(100% 0 0deg / 0.4);
+  --shadow-lg: 0 8px 24px var(--shadow-color-strong), inset 0 2px 0 oklch(100% 0 0deg / 0.3);
+  --shadow-xl: 0 14px 40px var(--shadow-color-strong), inset 0 3px 0 oklch(100% 0 0deg / 0.25);
+  --shadow-2xl: 0 22px 56px var(--shadow-color-strong), inset 0 4px 0 oklch(100% 0 0deg / 0.2);
+
+  // VERY bubbly radius
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+}

@@ -1,0 +1,53 @@
+// =============================================================================
+// TEXTFIELD COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  width: 100%;
+}
+
+// =============================================================================
+// LABEL
+// =============================================================================
+
+.label {
+  color: var(--color-base-content);
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-0-5);
+  line-height: var(--line-height-tight);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.visuallyHidden {
+  @include sr-only;
+}
+
+// =============================================================================
+// HELPER & ERROR TEXT
+// =============================================================================
+
+.helper {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.error {
+  color: var(--color-error);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}

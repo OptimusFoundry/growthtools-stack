@@ -1,0 +1,58 @@
+{
+	"name": "webapp",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b tsconfig.build.json && vite build",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"lint:scss": "stylelint \"src/**/*.scss\"",
+		"lint:scss:fix": "stylelint \"src/**/*.scss\" --fix",
+		"format": "biome format --write .",
+		"preview": "vite preview",
+		"storybook": "storybook dev -p 6006"
+	},
+	"dependencies": {
+		"@stripe/react-stripe-js": "^5.4.1",
+		"@stripe/stripe-js": "^8.6.0",
+		"@tanstack/react-router": "^1.142.13",
+		"lucide-react": "^0.562.0",
+		"motion": "^11.18.2",
+		"react": "^19.2.3",
+		"react-dom": "^19.2.3",
+		"react-markdown": "^10.1.0",
+		"recharts": "^3.6.0",
+		"remark-gfm": "^4.0.1",
+		"remixicon": "^4.7.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.10",
+		"@msw/playwright": "^0.4.2",
+		"@playwright/test": "^1.57.0",
+		"@storybook/addon-links": "^10.1.10",
+		"@storybook/react": "^10.1.10",
+		"@storybook/react-vite": "^10.1.10",
+		"@tanstack/react-router-devtools": "^1.142.13",
+		"@tanstack/router-plugin": "^1.142.13",
+		"@types/node": "^25.0.3",
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.2",
+		"msw": "^2.12.7",
+		"sass-embedded": "^1.97.1",
+		"storybook": "^10.1.10",
+		"stylelint": "^16.26.1",
+		"stylelint-config-recess-order": "^7.4.0",
+		"stylelint-config-standard-scss": "^16.0.0",
+		"stylelint-declaration-strict-value": "^1.10.11",
+		"stylelint-scss": "^6.13.0",
+		"typescript": "~5.9.3",
+		"vite": "^7.3.0",
+		"vite-plugin-compression": "^0.5.1"
+	},
+	"optionalDependencies": {
+		"@rollup/rollup-linux-x64-gnu": "^4.54.0"
+	}
+}

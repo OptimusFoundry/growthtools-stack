@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(tree:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(./convert-to-css-modules.sh:*)",
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run storybook:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm run lint:scss:*)",
+      "Bash(npx stylelint:*)",
+      "Bash(git rebase:*)",
+      "Bash(cat:*)",
+      "Bash(xargs -I {} bash -c 'echo \"\"\"\"===== {} =====\"\"\"\" && head -50 {}')",
+      "Bash(grep:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(git checkout:*)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(nvm use:*)",
+      "Bash(du:*)",
+      "Bash(npm ls:*)",
+      "Bash(xargs:*)",
+      "Bash(ls:*)",
+      "Bash(npm run lint:*)",
+      "Bash(make test-integration:*)",
+      "Bash(go clean:*)",
+      "WebSearch",
+      "Bash(npm run lint:fix:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

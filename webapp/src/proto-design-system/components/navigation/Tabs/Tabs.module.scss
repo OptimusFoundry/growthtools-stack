@@ -1,0 +1,158 @@
+// =============================================================================
+// TABS COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+// =============================================================================
+// TAB LIST
+// =============================================================================
+
+.tabList {
+  display: flex;
+  gap: var(--space-1);
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+.line {
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
+  position: relative;
+}
+
+.enclosed {
+  background-color: var(--color-base-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-1);
+}
+
+.pill {
+  gap: var(--space-2);
+}
+
+// =============================================================================
+// TAB
+// =============================================================================
+
+.tab {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-2);
+  position: relative;
+  white-space: nowrap;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover:not(:disabled) {
+    color: var(--color-base-content);
+  }
+}
+
+// Line variant tabs
+.line .tab {
+  margin-bottom: -1px;
+  padding-bottom: var(--space-3);
+
+  &.active {
+    color: var(--color-primary);
+  }
+}
+
+// =============================================================================
+// LINE INDICATOR (animated)
+// =============================================================================
+
+.indicator {
+  background-color: var(--color-primary);
+  bottom: 0;
+  height: 2px;
+  position: absolute;
+}
+
+// Enclosed variant tabs
+.enclosed .tab {
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+
+  &.active {
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-base-content);
+  }
+}
+
+// Pill variant tabs
+.pill .tab {
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-4);
+
+  &.active {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm .tab {
+  font-size: var(--font-size-xs);
+  padding-bottom: var(--space-2);
+}
+
+.size-md .tab {
+  font-size: var(--font-size-sm);
+}
+
+.size-lg .tab {
+  font-size: var(--font-size-base);
+  padding-bottom: var(--space-4);
+}
+
+// =============================================================================
+// ICON
+// =============================================================================
+
+.icon {
+  align-items: center;
+  display: flex;
+
+  svg {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+// =============================================================================
+// TAB PANELS
+// =============================================================================
+
+.tabPanels {
+  padding-top: var(--space-4);
+}
+
+.tabPanel {
+  outline: none;
+}

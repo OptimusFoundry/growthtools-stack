@@ -1,0 +1,45 @@
+.container {
+	padding-top: var(--space-6);
+}
+
+.loadingState {
+	min-height: 200px;
+}
+
+.planIcon {
+	color: var(--color-primary);
+}
+
+.secondaryIcon {
+	color: var(--color-base-content-secondary);
+	flex-shrink: 0;
+}
+
+// Quick Actions
+.quickAction {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-2) 0;
+}
+
+.quickActionIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius-md);
+	background: var(--color-base-200);
+	color: var(--color-base-content-secondary);
+	flex-shrink: 0;
+}
+
+.quickActionContent {
+	flex: 1;
+	min-width: 0;
+}
+
+.quickActionButton {
+	flex-shrink: 0;
+}

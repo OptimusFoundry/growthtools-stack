@@ -1,0 +1,109 @@
+// =============================================================================
+// NEON ORANGE THEME (ELECTRIC WHITE)
+// =============================================================================
+// Blazing neon blue accents on pure white with deep blue secondary tones.
+// High voltage meets ocean depth. Electric shock aesthetic.
+
+[data-theme="neon-orange"] {
+  color-scheme: light;
+
+  // Background
+  --color-background: oklch(100% 0 0deg);
+
+  // Base colors (pure white, zero tint)
+  --color-base-50: oklch(100% 0 0deg);
+  --color-base-100: oklch(98% 0 0deg);
+  --color-base-200: oklch(95% 0 0deg);
+  --color-base-300: oklch(90% 0 0deg);
+  --color-base-400: oklch(72% 0 0deg);
+  --color-base-500: oklch(55% 0 0deg);
+  --color-base-600: oklch(40% 0 0deg);
+  --color-base-700: oklch(28% 0 0deg);
+  --color-base-800: oklch(18% 0 0deg);
+  --color-base-900: oklch(12% 0 0deg);
+  --color-base-950: oklch(5% 0 0deg);
+
+  // Content colors (pure black)
+  --color-base-content: oklch(5% 0 0deg);
+  --color-base-content-secondary: oklch(30% 0 0deg);
+  --color-base-content-tertiary: oklch(50% 0 0deg);
+
+  // Surface colors
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(5% 0 0deg / 0.6);
+
+  // Border colors (subtle until hover)
+  --color-border: oklch(92% 0 0deg);
+  --color-border-hover: oklch(70% 0.22 255deg);
+
+  // Shadow colors (neon glow on hover/active)
+  --shadow-color: oklch(0% 0 0deg / 0.08);
+  --shadow-color-strong: oklch(0% 0 0deg / 0.15);
+
+  // Primary (bright blue)
+  --color-primary: oklch(62% 0.25 255deg);
+  --color-primary-hover: oklch(57% 0.27 255deg);
+  --color-primary-active: oklch(52% 0.25 255deg);
+  --color-primary-content: oklch(100% 0 0deg);
+
+  // Secondary (deep blue)
+  --color-secondary: oklch(35% 0.15 255deg);
+  --color-secondary-hover: oklch(30% 0.17 255deg);
+  --color-secondary-active: oklch(25% 0.15 255deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent (neon yellow)
+  --color-accent: oklch(92% 0.2 100deg);
+  --color-accent-hover: oklch(87% 0.22 100deg);
+  --color-accent-active: oklch(82% 0.2 100deg);
+  --color-accent-content: oklch(10% 0.05 100deg);
+
+  // Semantic colors (neon versions)
+  --color-success: oklch(72% 0.25 150deg);
+  --color-success-hover: oklch(67% 0.27 150deg);
+  --color-success-bg: oklch(96% 0.06 150deg);
+  --color-success-content: oklch(15% 0.05 150deg);
+  --color-warning: oklch(88% 0.2 90deg);
+  --color-warning-hover: oklch(83% 0.22 90deg);
+  --color-warning-bg: oklch(97% 0.05 90deg);
+  --color-warning-content: oklch(20% 0.06 90deg);
+  --color-error: oklch(62% 0.28 25deg);
+  --color-error-hover: oklch(57% 0.3 25deg);
+  --color-error-bg: oklch(96% 0.05 25deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(62% 0.22 260deg);
+  --color-info-hover: oklch(57% 0.24 260deg);
+  --color-info-bg: oklch(96% 0.05 260deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring (neon blue glow)
+  --focus-ring-color: oklch(62% 0.25 255deg / 0.5);
+  --focus-ring-width: 3px;
+
+  // Muted
+  --color-muted: oklch(50% 0 0deg);
+
+  // ==========================================================================
+  // NEON DESIGN TOKENS
+  // ==========================================================================
+
+  // Neon glow shadows
+  --shadow-xs: 0 1px 2px var(--shadow-color);
+  --shadow-sm: 0 2px 4px var(--shadow-color);
+  --shadow-md: 0 4px 8px var(--shadow-color);
+  --shadow-lg: 0 8px 16px var(--shadow-color);
+  --shadow-xl: 0 12px 24px var(--shadow-color-strong);
+  --shadow-2xl: 0 20px 40px var(--shadow-color-strong);
+
+  // Custom neon glow effects
+  --shadow-neon-blue: 0 0 20px oklch(62% 0.25 255deg / 0.5), 0 0 40px oklch(62% 0.25 255deg / 0.3);
+  --shadow-neon-deep: 0 0 20px oklch(35% 0.15 255deg / 0.5), 0 0 40px oklch(35% 0.15 255deg / 0.3);
+  --shadow-neon-yellow: 0 0 20px oklch(92% 0.2 100deg / 0.5), 0 0 40px oklch(92% 0.2 100deg / 0.3);
+
+  // Sharp modern radius
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}

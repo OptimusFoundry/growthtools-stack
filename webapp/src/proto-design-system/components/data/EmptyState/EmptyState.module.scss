@@ -1,0 +1,128 @@
+// =============================================================================
+// EMPTYSTATE COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.emptyState {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+// =============================================================================
+// ICON
+// =============================================================================
+
+.icon {
+  align-items: center;
+  background-color: var(--color-base-100);
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  display: flex;
+  justify-content: center;
+}
+
+// =============================================================================
+// CONTENT
+// =============================================================================
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.description {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  line-height: var(--line-height-normal);
+  margin: 0;
+  max-width: 24rem;
+}
+
+// =============================================================================
+// ACTIONS
+// =============================================================================
+
+.actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  padding: var(--space-6);
+
+  .icon {
+    padding: var(--space-3);
+
+    svg {
+      height: var(--space-6);
+      width: var(--space-6);
+    }
+  }
+
+  .title {
+    font-size: var(--font-size-base);
+  }
+
+  .description {
+    font-size: var(--font-size-sm);
+  }
+}
+
+.size-md {
+  padding: var(--space-10);
+
+  .icon {
+    padding: var(--space-4);
+
+    svg {
+      height: var(--space-8);
+      width: var(--space-8);
+    }
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+  }
+
+  .description {
+    font-size: var(--font-size-base);
+  }
+}
+
+.size-lg {
+  padding: var(--space-16);
+
+  .icon {
+    padding: var(--space-5);
+
+    svg {
+      height: var(--space-10);
+      width: var(--space-10);
+    }
+  }
+
+  .title {
+    font-size: var(--font-size-xl);
+  }
+
+  .description {
+    font-size: var(--font-size-lg);
+  }
+}

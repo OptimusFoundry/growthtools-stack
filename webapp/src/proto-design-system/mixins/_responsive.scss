@@ -1,0 +1,81 @@
+// =============================================================================
+// RESPONSIVE MIXINS
+// =============================================================================
+@use "sass:map";
+@use "../tokens/breakpoints" as *;
+
+// Breakpoint mixin (mobile-first)
+@mixin breakpoint($size) {
+  @if map.has-key($breakpoints, $size) {
+    @media (min-width: map.get($breakpoints, $size)) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$size}";
+  }
+}
+
+// Max-width breakpoint (desktop-first)
+@mixin breakpoint-down($size) {
+  @if map.has-key($breakpoints, $size) {
+    @media (width <= calc(map.get($breakpoints, $size) - 1px)) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$size}";
+  }
+}
+
+// Between breakpoints
+@mixin breakpoint-between($min, $max) {
+  @if map.has-key($breakpoints, $min) and map.has-key($breakpoints, $max) {
+    @media (min-width: map.get($breakpoints, $min)) and (width <= calc(map.get($breakpoints, $max) - 1px)) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoints: #{$min} or #{$max}";
+  }
+}
+
+// Container query support
+@mixin container($name: null) {
+  container-type: inline-size;
+
+  @if $name {
+    container-name: $name;
+  }
+}
+
+@mixin container-query($size, $name: null) {
+  @if map.has-key($container-query-sizes, $size) {
+    $width: map.get($container-query-sizes, $size);
+
+    @if $name {
+      @container #{$name} (min-width: #{$width}) {
+        @content;
+      }
+    } @else {
+      @container (min-width: #{$width}) {
+        @content;
+      }
+    }
+  } @else {
+    @warn "Unknown container query size: #{$size}";
+  }
+}
+
+// Hide at breakpoint
+@mixin hide-at($size) {
+  @include breakpoint($size) {
+    display: none !important;
+  }
+}
+
+// Show at breakpoint
+@mixin show-at($size) {
+  display: none !important;
+
+  @include breakpoint($size) {
+    display: block !important;
+  }
+}

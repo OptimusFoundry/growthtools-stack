@@ -1,0 +1,119 @@
+// =============================================================================
+// TOOLTIP COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.wrapper {
+  display: inline-block;
+  position: relative;
+
+  &:hover .tooltip,
+  &:focus-within .tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// =============================================================================
+// TOOLTIP
+// =============================================================================
+
+.tooltip {
+  background-color: var(--color-base-900);
+  border-radius: var(--radius-md);
+  color: var(--color-base-100);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-tight);
+  max-width: var(--space-64);
+  opacity: 0;
+  padding: var(--space-1-5) var(--space-2-5);
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    visibility var(--duration-fast) var(--ease-out);
+  visibility: hidden;
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+// =============================================================================
+// POSITIONS
+// =============================================================================
+
+.top {
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: var(--space-2);
+  transform: translateX(-50%);
+
+  .arrow {
+    border-color: var(--color-base-900) transparent transparent transparent;
+    border-width: var(--space-1) var(--space-1) 0 var(--space-1);
+    bottom: calc(var(--space-1) * -1);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.bottom {
+  left: 50%;
+  margin-top: var(--space-2);
+  top: 100%;
+  transform: translateX(-50%);
+
+  .arrow {
+    border-color: transparent transparent var(--color-base-900) transparent;
+    border-width: 0 var(--space-1) var(--space-1) var(--space-1);
+    left: 50%;
+    top: calc(var(--space-1) * -1);
+    transform: translateX(-50%);
+  }
+}
+
+.left {
+  margin-right: var(--space-2);
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+
+  .arrow {
+    border-color: transparent transparent transparent var(--color-base-900);
+    border-width: var(--space-1) 0 var(--space-1) var(--space-1);
+    right: calc(var(--space-1) * -1);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+.right {
+  left: 100%;
+  margin-left: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+
+  .arrow {
+    border-color: transparent var(--color-base-900) transparent transparent;
+    border-width: var(--space-1) var(--space-1) var(--space-1) 0;
+    left: calc(var(--space-1) * -1);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+// =============================================================================
+// ARROW
+// =============================================================================
+
+.arrow {
+  border-style: solid;
+  height: 0;
+  position: absolute;
+  width: 0;
+}

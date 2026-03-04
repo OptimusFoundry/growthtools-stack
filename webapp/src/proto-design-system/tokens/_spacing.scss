@@ -1,0 +1,72 @@
+// =============================================================================
+// SPACING TOKENS
+// =============================================================================
+// 8px base grid system with extended scale for all spacing needs.
+
+:root {
+  // Base unit
+  --space-unit: 8px;
+
+  // Spacing scale (multiples of 8px)
+  --space-0: 0;
+  --space-px: 1px;
+  --space-0-5: 2px;    // 0.25 * 8
+  --space-1: 4px;      // 0.5 * 8
+  --space-1-5: 6px;    // 0.75 * 8
+  --space-2: 8px;      // 1 * 8
+  --space-2-5: 10px;   // 1.25 * 8
+  --space-3: 12px;     // 1.5 * 8
+  --space-3-5: 14px;   // 1.75 * 8
+  --space-4: 16px;     // 2 * 8
+  --space-5: 20px;     // 2.5 * 8
+  --space-6: 24px;     // 3 * 8
+  --space-7: 28px;     // 3.5 * 8
+  --space-8: 32px;     // 4 * 8
+  --space-9: 36px;     // 4.5 * 8
+  --space-10: 40px;    // 5 * 8
+  --space-11: 44px;    // 5.5 * 8
+  --space-12: 48px;    // 6 * 8
+  --space-14: 56px;    // 7 * 8
+  --space-16: 64px;    // 8 * 8
+  --space-20: 80px;    // 10 * 8
+  --space-24: 96px;    // 12 * 8
+  --space-28: 112px;   // 14 * 8
+  --space-32: 128px;   // 16 * 8
+  --space-36: 144px;   // 18 * 8
+  --space-40: 160px;   // 20 * 8
+  --space-44: 176px;   // 22 * 8
+  --space-48: 192px;   // 24 * 8
+  --space-52: 208px;   // 26 * 8
+  --space-56: 224px;   // 28 * 8
+  --space-60: 240px;   // 30 * 8
+  --space-64: 256px;   // 32 * 8
+  --space-72: 288px;   // 36 * 8
+  --space-80: 320px;   // 40 * 8
+  --space-96: 384px;   // 48 * 8
+
+  // Semantic spacing
+  --space-xs: var(--space-1);
+  --space-sm: var(--space-2);
+  --space-md: var(--space-4);
+  --space-lg: var(--space-6);
+  --space-xl: var(--space-8);
+  --space-2xl: var(--space-12);
+  --space-3xl: var(--space-16);
+  --space-4xl: var(--space-24);
+
+  // Component-specific spacing
+  --space-input-x: var(--space-3);
+  --space-input-y: var(--space-2);
+  --space-button-x: var(--space-4);
+  --space-button-y: var(--space-2);
+  --space-card: var(--space-4);
+  --space-section: var(--space-8);
+  --space-page: var(--space-6);
+
+  // Gap utilities
+  --gap-xs: var(--space-1);
+  --gap-sm: var(--space-2);
+  --gap-md: var(--space-4);
+  --gap-lg: var(--space-6);
+  --gap-xl: var(--space-8);
+}

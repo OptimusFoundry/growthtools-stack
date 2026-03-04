@@ -1,0 +1,95 @@
+// =============================================================================
+// TERMINAL THEME (HACKER)
+// =============================================================================
+// Classic green phosphor CRT aesthetic. Matrix-inspired.
+// For those who see the code behind everything.
+
+[data-theme="terminal"] {
+  color-scheme: dark;
+
+  // Background
+  --color-background: oklch(4% 0.01 145deg);
+
+  // Base colors (CRT black)
+  --color-base-50: oklch(4% 0.01 145deg);                               // Pure CRT black
+  --color-base-100: oklch(6% 0.015 145deg);                             // Screen black
+  --color-base-200: oklch(9% 0.02 145deg);                              // Dark terminal
+  --color-base-300: oklch(13% 0.02 145deg);                             // Elevated
+  --color-base-400: oklch(25% 0.025 145deg);                            // Mid
+  --color-base-500: oklch(40% 0.03 145deg);                             // Muted green
+  --color-base-600: oklch(55% 0.035 145deg);                            // Light muted
+  --color-base-700: oklch(70% 0.04 145deg);                             // Lighter
+  --color-base-800: oklch(82% 0.035 145deg);                            // Very light
+  --color-base-900: oklch(90% 0.025 145deg);                            // Near white
+  --color-base-950: oklch(96% 0.015 145deg);                            // Phosphor white
+
+  // Content colors (bright phosphor green)
+  --color-base-content: oklch(88% 0.18 145deg);                         // Bright phosphor
+  --color-base-content-secondary: oklch(72% 0.14 145deg);               // Medium phosphor
+  --color-base-content-tertiary: oklch(55% 0.1 145deg);                 // Dim phosphor
+
+  // Surface colors
+  --color-surface: oklch(6% 0.015 145deg);
+  --color-surface-elevated: oklch(10% 0.02 145deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.9);
+
+  // Border colors (scanline effect)
+  --color-border: oklch(20% 0.05 145deg);
+  --color-border-hover: oklch(35% 0.1 145deg);
+
+  // Shadow colors (CRT glow)
+  --shadow-color: oklch(70% 0.2 145deg / 0.2);
+  --shadow-color-strong: oklch(70% 0.2 145deg / 0.4);
+
+  // Primary (matrix green)
+  --color-primary: oklch(75% 0.22 145deg);
+  --color-primary-hover: oklch(88% 0.26 145deg);
+  --color-primary-active: oklch(68% 0.22 145deg);
+  --color-primary-content: oklch(5% 0.02 145deg);
+
+  // Secondary (amber - old terminal)
+  --color-secondary: oklch(80% 0.18 80deg);
+  --color-secondary-hover: oklch(92% 0.22 80deg);
+  --color-secondary-active: oklch(72% 0.18 80deg);
+  --color-secondary-content: oklch(10% 0.04 80deg);
+
+  // Accent (cyan - selection highlight)
+  --color-accent: oklch(75% 0.15 195deg);
+  --color-accent-hover: oklch(88% 0.19 195deg);
+  --color-accent-active: oklch(68% 0.15 195deg);
+  --color-accent-content: oklch(10% 0.03 195deg);
+
+  // Semantic colors (terminal-style)
+  --color-success: oklch(75% 0.22 145deg);
+  --color-success-hover: oklch(88% 0.26 145deg);
+  --color-success-bg: oklch(15% 0.06 145deg);
+  --color-success-content: oklch(5% 0.02 145deg);
+  --color-warning: oklch(80% 0.18 80deg);
+  --color-warning-hover: oklch(92% 0.22 80deg);
+  --color-warning-bg: oklch(15% 0.06 80deg);
+  --color-warning-content: oklch(10% 0.04 80deg);
+  --color-error: oklch(65% 0.22 25deg);
+  --color-error-hover: oklch(78% 0.26 25deg);
+  --color-error-bg: oklch(15% 0.06 25deg);
+  --color-error-content: oklch(95% 0.02 25deg);
+  --color-info: oklch(75% 0.15 195deg);
+  --color-info-hover: oklch(88% 0.19 195deg);
+  --color-info-bg: oklch(15% 0.05 195deg);
+  --color-info-content: oklch(10% 0.03 195deg);
+
+  // Focus ring (phosphor glow)
+  --focus-ring-color: oklch(75% 0.22 145deg / 0.6);
+
+  // Muted color
+  --color-muted: oklch(45% 0.1 145deg);
+
+  // Custom: CRT effects
+  --shadow-crt: 0 0 8px oklch(75% 0.22 145deg / 0.5);
+  --shadow-scanline: inset 0 0 100px oklch(75% 0.22 145deg / 0.03);
+
+  // Monospace everything
+  --font-family-sans: var(--font-family-mono);
+
+  // Header background (more visible in terminal theme)
+  --color-header-bg: var(--color-base-300);
+}

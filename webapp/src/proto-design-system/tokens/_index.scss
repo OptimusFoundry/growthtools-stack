@@ -1,0 +1,16 @@
+// =============================================================================
+// TOKEN INDEX
+// =============================================================================
+// Aggregates all token files for easy importing.
+
+@forward "colors";
+@forward "spacing";
+@forward "typography";
+@forward "radius";
+@forward "shadows";
+@forward "motion";
+@forward "breakpoints";
+@forward "z-index";
+
+// Re-export breakpoint variables for use in other SCSS files
+@use "breakpoints" as *;

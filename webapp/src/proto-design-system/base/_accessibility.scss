@@ -1,0 +1,115 @@
+// =============================================================================
+// ACCESSIBILITY STYLES
+// =============================================================================
+
+// Focus ring styles
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+// Skip link
+.skip-link {
+  background-color: var(--color-primary);
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  color: var(--color-primary-content);
+  font-weight: var(--font-weight-semibold);
+  height: 1px;
+  left: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-2) var(--space-4);
+  position: absolute;
+  top: var(--space-4);
+  white-space: nowrap;
+  width: 1px;
+  z-index: var(--z-max);
+
+  &:focus {
+    clip: auto;
+    clip-path: none;
+    height: auto;
+    overflow: visible;
+    width: auto;
+  }
+}
+
+// Screen reader only (visually hidden but accessible)
+.sr-only {
+  border-width: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+// Not screen reader only (undo sr-only)
+.not-sr-only {
+  clip: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  padding: 0;
+  position: static;
+  white-space: normal;
+  width: auto;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// High contrast mode support
+@media (forced-colors: active) {
+  // Ensure borders are visible
+  *:focus-visible {
+    outline: 2px solid CanvasText;
+  }
+
+  // Ensure buttons have visible borders
+  button,
+  [role="button"] {
+    border: 1px solid ButtonText;
+  }
+}
+
+// Touch target sizing (minimum 44x44px)
+@mixin touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+// Ensure interactive elements have proper touch targets on mobile
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
+// Respect user's color scheme preference when no theme is set
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+  }
+}

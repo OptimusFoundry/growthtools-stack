@@ -17,7 +17,9 @@
       "Bash(wc:*)",
       "Bash(grep:*)",
       "WebSearch",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(git ls-tree:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

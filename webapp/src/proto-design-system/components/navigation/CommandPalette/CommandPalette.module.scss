@@ -1,0 +1,258 @@
+// =============================================================================
+// COMMAND PALETTE COMPONENT STYLES
+// =============================================================================
+@use "../../../mixins" as *;
+
+.dialog {
+  background: transparent;
+  border: none;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  overflow: visible;
+  padding: var(--space-16) var(--space-4) var(--space-4);
+  width: 100%;
+
+  &::backdrop {
+    background-color: oklch(0% 0 0 / 0.5);
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: backdropFadeIn var(--duration-fast) var(--ease-out);
+    }
+  }
+
+  &[open] {
+    display: flex;
+    justify-content: center;
+
+    .palette {
+      @media (prefers-reduced-motion: no-preference) {
+        animation: paletteEnter var(--duration-normal) var(--ease-out);
+      }
+    }
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes paletteEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// =============================================================================
+// PALETTE
+// =============================================================================
+
+.palette {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  max-height: min(80vh, 32rem);
+  overflow: hidden;
+  width: min(100%, 40rem);
+}
+
+// =============================================================================
+// SEARCH
+// =============================================================================
+
+.searchWrapper {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.searchIcon {
+  color: var(--color-muted);
+  flex-shrink: 0;
+  height: var(--space-5);
+  width: var(--space-5);
+}
+
+.input {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--color-base-content);
+  flex: 1;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-muted);
+  }
+}
+
+// =============================================================================
+// LIST
+// =============================================================================
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+// =============================================================================
+// GROUP
+// =============================================================================
+
+.group {
+  &:not(:first-child) {
+    margin-top: var(--space-2);
+  }
+}
+
+.groupLabel {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  padding: var(--space-2) var(--space-3);
+  text-transform: uppercase;
+}
+
+// =============================================================================
+// ITEM
+// =============================================================================
+
+.item {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2-5) var(--space-3);
+  text-align: left;
+  width: 100%;
+
+  @include transition-colors;
+
+  &:hover,
+  &.selected {
+    background-color: var(--color-base-100);
+  }
+}
+
+.itemIcon {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-shrink: 0;
+
+  svg {
+    height: var(--space-5);
+    width: var(--space-5);
+  }
+}
+
+.itemContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.itemLabel {
+  color: var(--color-base-content);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.itemDescription {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// =============================================================================
+// SHORTCUT
+// =============================================================================
+
+.shortcut {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+.kbd {
+  align-items: center;
+  background-color: var(--color-base-100);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  height: var(--space-5);
+  justify-content: center;
+  min-width: var(--space-5);
+  padding: 0 var(--space-1);
+}
+
+// =============================================================================
+// EMPTY
+// =============================================================================
+
+.empty {
+  color: var(--color-muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+// =============================================================================
+// FOOTER
+// =============================================================================
+
+.footer {
+  align-items: center;
+  background-color: var(--color-base-50);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.hint {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  gap: var(--space-1);
+}

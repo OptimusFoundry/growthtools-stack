@@ -1,0 +1,27 @@
+// =============================================================================
+// ACCOUNT PAGE STYLES
+// =============================================================================
+@use "@/proto-design-system/mixins" as *;
+
+.billing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.billing-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  @include breakpoint(sm) {
+    flex-direction: row;
+  }
+}
+
+.billing-status {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-5);
+  align-items: baseline;
+}
