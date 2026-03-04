@@ -1,0 +1,83 @@
+.calendarGrid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 1px;
+	background: var(--color-border);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+}
+
+.dayHeader {
+	padding: var(--space-2);
+	text-align: center;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-base-content-secondary);
+	background: var(--color-surface);
+}
+
+.dayCell {
+	min-height: 80px;
+	padding: var(--space-1);
+	background: var(--color-surface);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.emptyCell {
+	background: var(--color-base-200);
+}
+
+.today {
+	background: var(--color-primary-50, var(--color-surface));
+	outline: 2px solid var(--color-primary);
+	outline-offset: -2px;
+}
+
+.dayNumber {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-base-content);
+	padding: var(--space-1);
+}
+
+.postDots {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+	padding: 0 var(--space-1);
+}
+
+.dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.dot-draft {
+	background: var(--color-base-content-secondary);
+}
+
+.dot-scheduled {
+	background: var(--color-warning);
+}
+
+.dot-publishing {
+	background: var(--color-primary);
+}
+
+.dot-published {
+	background: var(--color-success);
+}
+
+.dot-failed {
+	background: var(--color-error);
+}
+
+.moreCount {
+	font-size: var(--font-size-xs);
+	color: var(--color-base-content-secondary);
+}

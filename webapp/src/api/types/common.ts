@@ -38,39 +38,3 @@ export interface ApiListResponse<T> {
 	page_size: number;
 	total_pages: number;
 }
-
-// ============================================================================
-// Analytics Types (API format)
-// ============================================================================
-
-export type AnalyticsPeriod = "hour" | "day" | "week" | "month";
-
-export interface ApiSignupDataPoint {
-	date: string;
-	count: number;
-}
-
-export interface ApiSignupsOverTimeResponse {
-	data: ApiSignupDataPoint[];
-	total: number;
-	period: AnalyticsPeriod;
-}
-
-export interface ApiSignupsBySourceDataPoint {
-	date: string;
-	utm_source: string | null;
-	count: number;
-}
-
-export interface ApiSignupsBySourceResponse {
-	data: ApiSignupsBySourceDataPoint[];
-	sources: string[];
-	total: number;
-	period: AnalyticsPeriod;
-}
-
-export interface SignupsOverTimeParams {
-	period?: AnalyticsPeriod;
-	from?: string;
-	to?: string;
-}

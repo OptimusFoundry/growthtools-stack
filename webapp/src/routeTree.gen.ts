@@ -10,8 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as PostsRouteImport } from './routes/posts'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as MainRouteImport } from './routes/main'
+import { Route as ChatRouteImport } from './routes/chat'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
@@ -27,6 +31,11 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PostsRoute = PostsRouteImport.update({
+  id: '/posts',
+  path: '/posts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MediaRoute = MediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -35,6 +44,21 @@ const MediaRoute = MediaRouteImport.update({
 const MainRoute = MainRouteImport.update({
   id: '/main',
   path: '/main',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -87,8 +111,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
+  '/blog': typeof BlogRoute
+  '/calendar': typeof CalendarRoute
+  '/chat': typeof ChatRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
+  '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
@@ -101,8 +129,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
+  '/blog': typeof BlogRoute
+  '/calendar': typeof CalendarRoute
+  '/chat': typeof ChatRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
+  '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
@@ -116,8 +148,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
+  '/blog': typeof BlogRoute
+  '/calendar': typeof CalendarRoute
+  '/chat': typeof ChatRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
+  '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
@@ -132,8 +168,12 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/analytics'
+    | '/blog'
+    | '/calendar'
+    | '/chat'
     | '/main'
     | '/media'
+    | '/posts'
     | '/signin'
     | '/billing/pay'
     | '/billing/payment_attempt'
@@ -146,8 +186,12 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/analytics'
+    | '/blog'
+    | '/calendar'
+    | '/chat'
     | '/main'
     | '/media'
+    | '/posts'
     | '/signin'
     | '/billing/pay'
     | '/billing/payment_attempt'
@@ -160,8 +204,12 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/analytics'
+    | '/blog'
+    | '/calendar'
+    | '/chat'
     | '/main'
     | '/media'
+    | '/posts'
     | '/signin'
     | '/billing/pay'
     | '/billing/payment_attempt'
@@ -175,8 +223,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  BlogRoute: typeof BlogRoute
+  CalendarRoute: typeof CalendarRoute
+  ChatRoute: typeof ChatRoute
   MainRoute: typeof MainRoute
   MediaRoute: typeof MediaRoute
+  PostsRoute: typeof PostsRoute
   SigninRoute: typeof SigninRoute
   BillingPayRoute: typeof BillingPayRoute
   BillingPayment_attemptRoute: typeof BillingPayment_attemptRoute
@@ -195,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/posts': {
+      id: '/posts'
+      path: '/posts'
+      fullPath: '/posts'
+      preLoaderRoute: typeof PostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/media': {
       id: '/media'
       path: '/media'
@@ -207,6 +266,27 @@ declare module '@tanstack/react-router' {
       path: '/main'
       fullPath: '/main'
       preLoaderRoute: typeof MainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -279,8 +359,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
   AnalyticsRoute: AnalyticsRoute,
+  BlogRoute: BlogRoute,
+  CalendarRoute: CalendarRoute,
+  ChatRoute: ChatRoute,
   MainRoute: MainRoute,
   MediaRoute: MediaRoute,
+  PostsRoute: PostsRoute,
   SigninRoute: SigninRoute,
   BillingPayRoute: BillingPayRoute,
   BillingPayment_attemptRoute: BillingPayment_attemptRoute,

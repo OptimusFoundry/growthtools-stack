@@ -1,0 +1,114 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { FileText, Plus } from "lucide-react";
+import { motion } from "motion/react";
+import { useMemo, useState } from "react";
+import { useBlogPosts } from "@/hooks/useBlogPosts";
+import { Badge } from "@/proto-design-system/components/primitives/Badge";
+import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Card } from "@/proto-design-system/components/layout/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
+import { Select } from "@/proto-design-system/components/forms/Select";
+import type { BlogStatus } from "@/types/blog";
+import styles from "./page.module.scss";
+
+export const Route = createFileRoute("/blog")({
+	component: BlogPage,
+});
+
+const STATUS_OPTIONS = [
+	{ value: "", label: "All Statuses" },
+	{ value: "draft", label: "Draft" },
+	{ value: "published", label: "Published" },
+	{ value: "archived", label: "Archived" },
+];
+
+const STATUS_BADGE_VARIANT: Record<BlogStatus, "default" | "success" | "secondary"> = {
+	draft: "default",
+	published: "success",
+	archived: "secondary",
+};
+
+function BlogPage() {
+	const [statusFilter, setStatusFilter] = useState<string>("");
+
+	const filters = useMemo(() => ({
+		status: (statusFilter || undefined) as BlogStatus | undefined,
+	}), [statusFilter]);
+
+	const { blogPosts, loading } = useBlogPosts(filters);
+
+	return (
+		<motion.div
+			className={styles.page}
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			transition={{ duration: 0.6 }}
+		>
+			<Stack direction="row" justify="between" align="center">
+				<div className={styles.pageHeader}>
+					<h1 className={styles.pageTitle}>Blog</h1>
+					<p className={styles.pageDescription}>
+						Write and manage your blog posts
+					</p>
+				</div>
+				<Button variant="primary">
+					<Plus size={16} /> New Post
+				</Button>
+			</Stack>
+
+			<Stack direction="row" gap="sm">
+				<Select
+					options={STATUS_OPTIONS}
+					value={statusFilter}
+					onChange={(e) => setStatusFilter(e.target.value)}
+					placeholder="Filter by status"
+				/>
+			</Stack>
+
+			<div className={styles.pageContent}>
+				{loading ? (
+					<Spinner />
+				) : blogPosts.length === 0 ? (
+					<EmptyState
+						title="No blog posts yet"
+						description="Create your first blog post to share long-form content."
+						icon={<FileText size={48} />}
+						action={<Button variant="primary"><Plus size={16} /> New Post</Button>}
+					/>
+				) : (
+					<Stack gap="sm">
+						{blogPosts.map((post) => (
+							<Card key={post.id} padding="md" interactive>
+								<Stack gap="xs">
+									<Stack direction="row" gap="xs" align="center">
+										<strong>{post.title}</strong>
+										<Badge variant={STATUS_BADGE_VARIANT[post.status]}>
+											{post.status}
+										</Badge>
+									</Stack>
+									{post.excerpt && (
+										<p>{post.excerpt}</p>
+									)}
+									<Stack direction="row" gap="sm" align="center">
+										<span>{new Date(post.createdAt).toLocaleDateString()}</span>
+										{post.keywords.length > 0 && (
+											<Stack direction="row" gap="xs" wrap>
+												{post.keywords.slice(0, 3).map((keyword) => (
+													<Badge key={keyword} variant="outline" size="sm">
+														{keyword}
+													</Badge>
+												))}
+											</Stack>
+										)}
+									</Stack>
+								</Stack>
+							</Card>
+						))}
+					</Stack>
+				)}
+			</div>
+		</motion.div>
+	);
+}

@@ -19,39 +19,6 @@ export interface AccountUser {
 }
 
 // ============================================================================
-// Analytics Types (placeholder — will be replaced with social media analytics)
-// ============================================================================
-
-export interface Analytics {
-	overview: {
-		totalSignups: number;
-		todaySignups: number;
-		verificationRate: number;
-		referralRate: number;
-		viralCoefficient: number;
-		avgReferralsPerUser: number;
-	};
-	funnel: {
-		impressions: number;
-		started: number;
-		submitted: number;
-		verified: number;
-		referred: number;
-	};
-	trafficSources: {
-		source: string;
-		count: number;
-		percentage: number;
-	}[];
-	timeline: {
-		date: string;
-		signups: number;
-		referrals: number;
-		verifications: number;
-	}[];
-}
-
-// ============================================================================
 // UI Types
 // ============================================================================
 

@@ -26,13 +26,13 @@ export const TIER_CONFIGS: Record<TierName, TierDisplayConfig> = {
 	pro: {
 		name: "pro",
 		displayName: "Pro",
-		description: "For growing businesses",
+		description: "For growing creators",
 		highlighted: true,
 	},
 	team: {
 		name: "team",
 		displayName: "Team",
-		description: "For larger teams and enterprises",
+		description: "For teams and agencies",
 	},
 };
 
@@ -48,64 +48,44 @@ export interface FeatureDisplayConfig {
 
 export const FEATURE_DISPLAY_CONFIGS: FeatureDisplayConfig[] = [
 	{
-		key: "email_verification",
-		name: "Email Verification",
-		description: "Verify user emails before adding to waitlist",
+		key: "platform_connections",
+		name: "Platform Connections",
+		description: "Connect social media accounts",
 	},
 	{
-		key: "referral_system",
-		name: "Referral System",
-		description: "Enable referral tracking and rewards",
+		key: "ai_content_generation",
+		name: "AI Content Generation",
+		description: "Generate posts with Claude AI",
 	},
 	{
-		key: "visual_form_builder",
-		name: "Visual Form Builder",
-		description: "Drag-and-drop form customization",
+		key: "scheduling",
+		name: "Post Scheduling",
+		description: "Schedule posts for optimal times",
 	},
 	{
-		key: "visual_email_builder",
-		name: "Visual Email Builder",
-		description: "Design emails with our visual editor",
+		key: "analytics",
+		name: "Analytics",
+		description: "Track engagement and performance",
 	},
 	{
-		key: "all_widget_types",
-		name: "All Widget Types",
-		description: "Access to all widget types including advanced options",
+		key: "blog",
+		name: "Blog Engine",
+		description: "Create and publish SEO-optimized blog posts",
+	},
+	{
+		key: "media_library",
+		name: "Media Library",
+		description: "Upload and manage images and videos",
+	},
+	{
+		key: "github_integration",
+		name: "GitHub Integration",
+		description: "Auto-generate posts from GitHub activity",
 	},
 	{
 		key: "remove_branding",
 		name: "Remove Branding",
-		description: "Remove platform branding from your forms",
-	},
-	{
-		key: "anti_spam_protection",
-		name: "Anti-spam Protection",
-		description: "Advanced spam and bot protection",
-	},
-	{
-		key: "enhanced_lead_data",
-		name: "Enhanced Lead Data",
-		description: "Collect additional lead information",
-	},
-	{
-		key: "tracking_pixels",
-		name: "Tracking Pixels",
-		description: "Add Facebook, Google, and other tracking pixels",
-	},
-	{
-		key: "webhooks_zapier",
-		name: "Webhooks & Zapier",
-		description: "Integrate with external services",
-	},
-	{
-		key: "email_blasts",
-		name: "Email Blasts",
-		description: "Send bulk emails to your waitlist",
-	},
-	{
-		key: "json_export",
-		name: "JSON Export",
-		description: "Export data in JSON format",
+		description: "Remove Growth Tools branding",
 	},
 ];
 
@@ -122,17 +102,27 @@ export interface LimitDisplayConfig {
 
 export const LIMIT_DISPLAY_CONFIGS: LimitDisplayConfig[] = [
 	{
-		key: "campaigns",
-		name: "Campaigns",
-		description: "Number of waitlist campaigns",
+		key: "posts_per_month",
+		name: "Posts per Month",
+		description: "Number of posts you can create per month",
 		formatValue: (value) => (value === null ? "Unlimited" : value.toString()),
 	},
 	{
-		key: "leads",
-		name: "Leads",
-		description: "Maximum leads per campaign",
+		key: "platforms",
+		name: "Platforms",
+		description: "Number of connected social platforms",
+		formatValue: (value) => (value === null ? "Unlimited" : value.toString()),
+	},
+	{
+		key: "media_storage_mb",
+		name: "Media Storage",
+		description: "Storage for images and videos",
 		formatValue: (value) =>
-			value === null ? "Unlimited" : value.toLocaleString(),
+			value === null
+				? "Unlimited"
+				: value >= 1000
+					? `${(value / 1000).toFixed(0)} GB`
+					: `${value} MB`,
 	},
 	{
 		key: "team_members",
@@ -157,18 +147,14 @@ export const TIER_UPGRADE_PATH: Record<TierName, TierName | null> = {
 // ============================================================================
 
 export const FEATURE_REQUIRED_TIER: Record<string, TierName> = {
-	email_verification: "pro",
-	referral_system: "pro",
-	visual_form_builder: "free",
-	visual_email_builder: "pro",
-	all_widget_types: "pro",
-	remove_branding: "pro",
-	anti_spam_protection: "pro",
-	enhanced_lead_data: "pro",
-	tracking_pixels: "team",
-	webhooks_zapier: "team",
-	email_blasts: "team",
-	json_export: "pro",
+	platform_connections: "free",
+	ai_content_generation: "pro",
+	scheduling: "pro",
+	analytics: "pro",
+	blog: "pro",
+	media_library: "free",
+	github_integration: "pro",
+	remove_branding: "team",
 };
 
 // ============================================================================

@@ -27,23 +27,20 @@ export interface TierInfo {
 // ============================================================================
 
 export const DEFAULT_TIER_FEATURES: TierFeatures = {
-	email_verification: false,
-	referral_system: false,
-	visual_form_builder: true,
-	visual_email_builder: false,
-	all_widget_types: false,
+	platform_connections: true,
+	ai_content_generation: false,
+	scheduling: false,
+	analytics: false,
+	blog: false,
+	media_library: true,
+	github_integration: false,
 	remove_branding: false,
-	anti_spam_protection: false,
-	enhanced_lead_data: false,
-	tracking_pixels: false,
-	webhooks_zapier: false,
-	email_blasts: false,
-	json_export: false,
 };
 
 export const DEFAULT_TIER_LIMITS: TierLimits = {
-	campaigns: 1,
-	leads: 200,
+	posts_per_month: 10,
+	platforms: 2,
+	media_storage_mb: 100,
 	team_members: 1,
 };
 
