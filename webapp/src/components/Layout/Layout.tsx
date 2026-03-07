@@ -3,6 +3,7 @@ import {
 	BarChart,
 	Calendar,
 	CreditCard,
+	Film,
 	HelpCircle,
 	Image,
 	MessageSquare,
@@ -40,6 +41,7 @@ const iconMap: Record<string, React.ReactNode> = {
 	"chat-line": <MessageSquare size={18} />,
 	"image-line": <Image size={18} />,
 	"article-line": <Newspaper size={18} />,
+	"film-line": <Film size={18} />,
 	"settings-line": <Settings size={18} />,
 	"bank-card-line": <CreditCard size={18} />,
 };
