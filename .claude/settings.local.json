@@ -48,7 +48,10 @@
       "Bash(npx:*)",
       "Bash(docker exec:*)",
       "Bash(curl:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(lsof:*)",
+      "Bash(kill 52903:*)",
+      "Bash(docker ps:*)"
     ],
     "deny": [],
     "ask": []
