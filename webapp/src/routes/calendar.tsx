@@ -102,18 +102,15 @@ interface DayCounts {
 	upcoming: number;
 }
 
-function computeDayCounts(dayPosts: Post[], isPast: boolean): DayCounts {
+function computeDayCounts(dayPosts: Post[]): DayCounts {
 	let published = 0;
 	let failed = 0;
 	let upcoming = 0;
 
 	for (const post of dayPosts) {
-		if (isPast) {
-			if (post.status === "published") published++;
-			else if (post.status === "failed" || post.status === "partially_published") failed++;
-		} else {
-			upcoming++;
-		}
+		if (post.status === "published") published++;
+		else if (post.status === "failed" || post.status === "partially_published") failed++;
+		else upcoming++;
 	}
 
 	return { published, failed, upcoming };
@@ -340,8 +337,7 @@ function CalendarPage() {
 								{calendarCells.map(({ day, dateKey }) => {
 									const dayPosts = day ? (postsByDate.get(dateKey) ?? []) : [];
 									const isToday = dateKey === today;
-									const isPast = dateKey < today;
-									const counts = day ? computeDayCounts(dayPosts, isPast) : { published: 0, failed: 0, upcoming: 0 };
+									const counts = day ? computeDayCounts(dayPosts) : { published: 0, failed: 0, upcoming: 0 };
 									const hasPosts = dayPosts.length > 0;
 
 									return (
@@ -358,28 +354,23 @@ function CalendarPage() {
 													>
 														<span className={calendarStyles.dayNumber}>{day}</span>
 														<div className={calendarStyles.dayCounts}>
-															{isPast ? (
-																<>
-																	{counts.published > 0 && (
-																		<span className={`${calendarStyles.countRow} ${calendarStyles.countSuccess}`}>
-																			<CheckCircle size={12} />
-																			{counts.published}
-																		</span>
-																	)}
-																	{counts.failed > 0 && (
-																		<span className={`${calendarStyles.countRow} ${calendarStyles.countError}`}>
-																			<XCircle size={12} />
-																			{counts.failed}
-																		</span>
-																	)}
-																</>
-															) : (
-																counts.upcoming > 0 && (
-																	<span className={`${calendarStyles.countRow} ${calendarStyles.countScheduled}`}>
-																		<Clock size={12} />
-																		{counts.upcoming}
-																	</span>
-																)
+															{counts.published > 0 && (
+																<span className={`${calendarStyles.countRow} ${calendarStyles.countSuccess}`}>
+																	<CheckCircle size={12} />
+																	{counts.published}
+																</span>
+															)}
+															{counts.failed > 0 && (
+																<span className={`${calendarStyles.countRow} ${calendarStyles.countError}`}>
+																	<XCircle size={12} />
+																	{counts.failed}
+																</span>
+															)}
+															{counts.upcoming > 0 && (
+																<span className={`${calendarStyles.countRow} ${calendarStyles.countScheduled}`}>
+																	<Clock size={12} />
+																	{counts.upcoming}
+																</span>
 															)}
 														</div>
 													</button>
