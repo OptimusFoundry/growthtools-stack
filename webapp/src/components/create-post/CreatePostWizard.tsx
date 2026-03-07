@@ -1,16 +1,14 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
-import { useAdaptContent } from "@/hooks/useAdaptContent";
+import { useCallback, useEffect } from "react";
 import { useCreatePost } from "@/hooks/useCreatePost";
-import { useGenerateContent } from "@/hooks/useGenerateContent";
-import { useGenerateThread } from "@/hooks/useGenerateThread";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
+import { useSSEContentGenerate } from "@/hooks/useSSEContentGenerate";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import { PLATFORM_SUPPORTS_THREADS, type PlatformType } from "@/types/platform";
+import type { PlatformType } from "@/types/platform";
 import { ComposeStep } from "./ComposeStep";
 import styles from "./CreatePostWizard.module.scss";
 import { PreviewStep } from "./PreviewStep";
@@ -21,19 +19,75 @@ export function CreatePostWizard() {
 	const wizard = useCreatePostWizard();
 	const { state } = wizard;
 
-	const { generateContent } = useGenerateContent();
-	const { adaptContent } = useAdaptContent();
-	const { generateThread } = useGenerateThread();
+	const sse = useSSEContentGenerate();
 	const { createPost } = useCreatePost();
 	const { publishPost } = usePublishPost();
 	const { schedulePost } = useSchedulePost();
 	const { uploadMedia } = useUploadMedia();
 
-	const runGeneration = useCallback(
-		async (platforms?: PlatformType[]) => {
-			const targetPlatforms = platforms ?? state.selectedPlatforms;
-			wizard.startGeneration();
+	// Sync SSE platform completions into wizard state
+	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
+	useEffect(() => {
+		for (const [platform, content] of Object.entries(sse.platformContent)) {
+			if (content) {
+				wizard.setPlatformContent(platform as PlatformType, content);
+				wizard.setPlatformProgress(platform as PlatformType, "done");
+			}
+		}
+	}, [sse.platformContent]);
 
+	// When SSE phase changes, update wizard progress
+	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
+	useEffect(() => {
+		if (sse.phase === "adapting" && sse.currentPlatform) {
+			wizard.setPlatformProgress(
+				sse.currentPlatform as PlatformType,
+				"generating",
+			);
+		}
+	}, [sse.phase, sse.currentPlatform]);
+
+	// Sync SSE thread completions into wizard state
+	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
+	useEffect(() => {
+		for (const [platform, segments] of Object.entries(sse.threadContent)) {
+			if (segments && segments.length > 0) {
+				wizard.setThreadContent(platform as PlatformType, segments);
+			}
+		}
+	}, [sse.threadContent]);
+
+	// When SSE finishes, mark generation complete
+	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
+	useEffect(() => {
+		if (!sse.loading && sse.phase === "idle" && sse.baseContent) {
+			wizard.generationComplete();
+		}
+	}, [sse.loading, sse.phase, sse.baseContent]);
+
+	// Sync SSE errors to wizard
+	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
+	useEffect(() => {
+		if (sse.error) {
+			wizard.setError(sse.error);
+			wizard.generationFailed();
+		}
+	}, [sse.error]);
+
+	const handleGenerate = useCallback(() => {
+		if (!state.blurb.trim()) {
+			wizard.setError("Please write something to share.");
+			return;
+		}
+		if (state.selectedPlatforms.length === 0) {
+			wizard.setError("Select at least one platform.");
+			return;
+		}
+
+		wizard.startGeneration();
+
+		// Upload pending files first, then start SSE generation
+		const uploadAndGenerate = async () => {
 			for (const pendingFile of state.pendingFiles) {
 				if (!pendingFile.error) {
 					try {
@@ -45,73 +99,19 @@ export function CreatePostWizard() {
 				}
 			}
 
-			try {
-				const baseResult = await generateContent(state.blurb, targetPlatforms);
-				const baseContent = baseResult.content;
+			sse.generate(state.blurb, state.selectedPlatforms, state.contentType);
+		};
 
-				const adaptPromises = targetPlatforms.map(async (platform) => {
-					wizard.setPlatformProgress(platform, "generating");
-					try {
-						const adapted = await adaptContent(baseContent, platform);
-						wizard.setPlatformContent(platform, adapted.content);
-
-						if (
-							state.contentType === "thread" &&
-							PLATFORM_SUPPORTS_THREADS[platform]
-						) {
-							const threadResult = await generateThread(baseContent, platform);
-							wizard.setThreadContent(platform, threadResult.thread);
-						}
-
-						wizard.setPlatformProgress(platform, "done");
-					} catch {
-						wizard.setPlatformProgress(platform, "error");
-					}
-				});
-
-				await Promise.allSettled(adaptPromises);
-				wizard.generationComplete();
-			} catch {
-				wizard.setError("Failed to generate base content. Please try again.");
-				for (const p of targetPlatforms) {
-					wizard.setPlatformProgress(p, "error");
-				}
-				wizard.generationFailed();
-			}
-		},
-		[
-			state.selectedPlatforms,
-			state.pendingFiles,
-			state.blurb,
-			state.contentType,
-			wizard,
-			generateContent,
-			adaptContent,
-			generateThread,
-			uploadMedia,
-		],
-	);
-
-	const handleGenerate = useCallback(() => {
-		if (!state.blurb.trim()) {
-			wizard.setError("Please write something to share.");
-			return;
-		}
-		if (state.selectedPlatforms.length === 0) {
-			wizard.setError("Select at least one platform.");
-			return;
-		}
-		runGeneration();
-	}, [state.blurb, state.selectedPlatforms, wizard, runGeneration]);
-
-	const handleRetryFailed = useCallback(() => {
-		const failedPlatforms = state.selectedPlatforms.filter(
-			(p) => state.generationProgress[p] === "error",
-		);
-		if (failedPlatforms.length > 0) {
-			runGeneration(failedPlatforms);
-		}
-	}, [state.selectedPlatforms, state.generationProgress, runGeneration]);
+		uploadAndGenerate();
+	}, [
+		state.blurb,
+		state.selectedPlatforms,
+		state.pendingFiles,
+		state.contentType,
+		wizard,
+		sse,
+		uploadMedia,
+	]);
 
 	const handlePublish = useCallback(async () => {
 		wizard.setSubmitting(true);
@@ -234,13 +234,15 @@ export function CreatePostWizard() {
 					publishMode={state.publishMode}
 					scheduledAt={state.scheduledAt}
 					submitting={state.submitting}
+					streamingPlatform={sse.currentPlatform as PlatformType}
+					streamingText={sse.streamingText}
+					streamingPhase={sse.phase}
 					onUpdateContent={wizard.updatePlatformContent}
 					onUpdateThreadSegment={wizard.updateThreadSegment}
 					onSetPublishMode={wizard.setPublishMode}
 					onSetScheduledAt={wizard.setScheduledAt}
 					onPublish={handlePublish}
 					onSchedule={handleSchedule}
-					onRetryFailed={handleRetryFailed}
 				/>
 			</div>
 		</div>

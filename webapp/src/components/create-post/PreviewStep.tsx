@@ -33,6 +33,9 @@ interface PreviewStepProps {
 	publishMode: PublishMode;
 	scheduledAt: string;
 	submitting: boolean;
+	streamingPlatform: PlatformType;
+	streamingText: string;
+	streamingPhase: "idle" | "generating" | "adapting" | "threading";
 	onUpdateContent: (platform: PlatformType, content: string) => void;
 	onUpdateThreadSegment: (
 		platform: PlatformType,
@@ -43,7 +46,6 @@ interface PreviewStepProps {
 	onSetScheduledAt: (scheduledAt: string) => void;
 	onPublish: () => void;
 	onSchedule: () => void;
-	onRetryFailed: () => void;
 }
 
 function StatusIcon({ status }: { status: GenerationStatus }) {
@@ -98,13 +100,15 @@ export function PreviewStep({
 	publishMode,
 	scheduledAt,
 	submitting,
+	streamingPlatform,
+	streamingText,
+	streamingPhase,
 	onUpdateContent,
 	onUpdateThreadSegment,
 	onSetPublishMode,
 	onSetScheduledAt,
 	onPublish,
 	onSchedule,
-	onRetryFailed,
 }: PreviewStepProps) {
 	const isThread = contentType === "thread";
 
@@ -120,21 +124,30 @@ export function PreviewStep({
 		);
 	}
 
-	// State 2: Generating — show progress per platform
+	// State 2: Generating — show progress per platform with streaming text
 	if (generating) {
-		const hasErrors = Object.values(generationProgress).some(
-			(s) => s === "error",
-		);
+		const streamingLabel =
+			streamingPhase === "generating"
+				? "Generating base content..."
+				: streamingPhase === "adapting" && streamingPlatform
+					? `Adapting for ${PLATFORM_DISPLAY_NAMES[streamingPlatform] ?? streamingPlatform}...`
+					: streamingPhase === "threading" && streamingPlatform
+						? `Creating thread for ${PLATFORM_DISPLAY_NAMES[streamingPlatform] ?? streamingPlatform}...`
+						: "Generating content...";
 
 		return (
 			<div className={styles.previewPanel}>
 				<Stack gap="md">
 					<Text as="h3" size="lg" weight="medium">
-						Generating content...
+						{streamingLabel}
 					</Text>
-					<Text size="sm" color="secondary">
-						AI is adapting your content for each platform
-					</Text>
+
+					{streamingText && (
+						<div className={styles.streamingText}>
+							{streamingText}
+							<span className={styles.streamingCursor} />
+						</div>
+					)}
 
 					<div className={styles.progressList}>
 						{selectedPlatforms.map((platform) => {
@@ -156,14 +169,6 @@ export function PreviewStep({
 							);
 						})}
 					</div>
-
-					{hasErrors && (
-						<Stack direction="row" justify="end">
-							<Button variant="secondary" onClick={onRetryFailed}>
-								Retry Failed
-							</Button>
-						</Stack>
-					)}
 				</Stack>
 			</div>
 		);

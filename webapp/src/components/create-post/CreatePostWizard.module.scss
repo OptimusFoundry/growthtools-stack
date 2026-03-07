@@ -92,26 +92,6 @@
 	padding-top: var(--space-4);
 }
 
-.previewHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: var(--space-2);
-}
-
-.threadSegment {
-	padding: var(--space-3);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-}
-
-.segmentHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: var(--space-2);
-}
-
 // Publish radio options
 .publishOptions {
 	display: flex;
@@ -142,6 +122,41 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-0-5);
+}
+
+// Streaming text preview
+.streamingText {
+	white-space: pre-wrap;
+	font-size: var(--font-size-base);
+	line-height: var(--line-height-relaxed);
+	color: var(--color-text);
+	min-height: 120px;
+	max-height: 300px;
+	overflow-y: auto;
+	padding: var(--space-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+}
+
+.streamingCursor {
+	display: inline-block;
+	width: 2px;
+	height: 1em;
+	background: var(--color-primary);
+	vertical-align: text-bottom;
+	animation: blink 0.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0;
+	}
 }
 
 @keyframes spin {
