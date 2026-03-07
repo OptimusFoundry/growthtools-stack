@@ -43,6 +43,7 @@ type WizardAction =
 			thread: string[];
 	  }
 	| { type: "GENERATION_COMPLETE" }
+	| { type: "GENERATION_FAILED" }
 	| { type: "SET_PUBLISH_MODE"; mode: PublishMode }
 	| { type: "SET_SCHEDULED_AT"; scheduledAt: string }
 	| { type: "SET_ERROR"; error: string | null }
@@ -135,6 +136,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 			};
 		case "GENERATION_COMPLETE":
 			return { ...state, generating: false, generated: true };
+		case "GENERATION_FAILED":
+			return { ...state, generating: false };
 		case "SET_PUBLISH_MODE":
 			return { ...state, publishMode: action.mode };
 		case "SET_SCHEDULED_AT":
@@ -215,6 +218,10 @@ export function useCreatePostWizard() {
 		() => dispatch({ type: "GENERATION_COMPLETE" }),
 		[],
 	);
+	const generationFailed = useCallback(
+		() => dispatch({ type: "GENERATION_FAILED" }),
+		[],
+	);
 	const setPublishMode = useCallback(
 		(mode: PublishMode) => dispatch({ type: "SET_PUBLISH_MODE", mode }),
 		[],
@@ -255,6 +262,7 @@ export function useCreatePostWizard() {
 		setPlatformContent,
 		setThreadContent,
 		generationComplete,
+		generationFailed,
 		setPublishMode,
 		setScheduledAt,
 		setError,

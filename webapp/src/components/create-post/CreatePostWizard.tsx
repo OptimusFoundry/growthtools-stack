@@ -76,6 +76,7 @@ export function CreatePostWizard() {
 				for (const p of targetPlatforms) {
 					wizard.setPlatformProgress(p, "error");
 				}
+				wizard.generationFailed();
 			}
 		},
 		[
