@@ -82,7 +82,9 @@ function EditPostWizard({ editPostId }: { editPostId: string }) {
 	);
 
 	const isPublishing =
-		post.status === "publishing" || post.status === "published";
+		post.status === "publishing" ||
+		post.status === "published" ||
+		post.status === "partially_published";
 
 	return (
 		<WizardInner
@@ -90,6 +92,7 @@ function EditPostWizard({ editPostId }: { editPostId: string }) {
 			initialOverrides={overrides}
 			initialBaseContent={post.baseContent}
 			readOnly={isPublishing}
+			platformPosts={isPublishing ? platformPosts : undefined}
 		/>
 	);
 }
@@ -99,6 +102,7 @@ interface WizardInnerProps {
 	initialOverrides?: Partial<WizardState>;
 	initialBaseContent?: string;
 	readOnly?: boolean;
+	platformPosts?: PlatformPost[];
 }
 
 function WizardInner({
@@ -106,6 +110,7 @@ function WizardInner({
 	initialOverrides,
 	initialBaseContent,
 	readOnly = false,
+	platformPosts,
 }: WizardInnerProps = {}) {
 	const isEditMode = Boolean(editPostId);
 	const navigate = useNavigate();
@@ -460,6 +465,7 @@ function WizardInner({
 					ssePhase={sse.phase}
 					uploadedMedia={state.uploadedMedia}
 					readOnly={readOnly}
+					platformPosts={platformPosts}
 					onUpdateContent={wizard.updatePlatformContent}
 					onUpdateThreadSegment={wizard.updateThreadSegment}
 				/>

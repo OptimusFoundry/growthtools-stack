@@ -17,6 +17,7 @@ import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { MediaItem } from "@/types/media";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
+import type { PlatformPost } from "@/types/post";
 import styles from "./CreatePostWizard.module.scss";
 import { PlatformPreviewCard } from "./PlatformPreviewCard";
 import type {
@@ -36,6 +37,7 @@ interface PreviewStepProps {
 	ssePhase: "idle" | "describing" | "generating" | "adapting";
 	uploadedMedia: MediaItem[];
 	readOnly?: boolean;
+	platformPosts?: PlatformPost[];
 	onUpdateContent: (platform: PlatformType, content: string) => void;
 	onUpdateThreadSegment: (
 		platform: PlatformType,
@@ -150,6 +152,70 @@ function AdaptingProgress({
 	);
 }
 
+function formatTimestamp(iso: string): string {
+	const date = new Date(iso);
+	return date.toLocaleString(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	});
+}
+
+function PlatformPublishStatusLabel({ pp }: { pp: PlatformPost }) {
+	if (pp.status === "published") {
+		return (
+			<Badge variant="success" size="sm">
+				Published
+			</Badge>
+		);
+	}
+
+	if (pp.status === "failed") {
+		const isRetrying = pp.attemptCount < pp.maxAttempts && pp.nextRetryAt;
+		return (
+			<Badge variant="error" size="sm">
+				{isRetrying ? `Retry ${pp.attemptCount}/${pp.maxAttempts}` : "Failed"}
+			</Badge>
+		);
+	}
+
+	if (pp.status === "publishing") {
+		return (
+			<Badge variant="warning" size="sm">
+				Publishing
+			</Badge>
+		);
+	}
+
+	return (
+		<Badge variant="default" size="sm">
+			Pending
+		</Badge>
+	);
+}
+
+function PlatformPostTimestamp({ pp }: { pp: PlatformPost }) {
+	if (pp.status === "published" && pp.publishedAt) {
+		return (
+			<Text size="xs" color="secondary">
+				Published {formatTimestamp(pp.publishedAt)}
+			</Text>
+		);
+	}
+
+	if (pp.status === "failed" && pp.errorMessage) {
+		return (
+			<Text size="xs" color="secondary">
+				{pp.errorMessage}
+			</Text>
+		);
+	}
+
+	return null;
+}
+
 export function PreviewStep({
 	selectedPlatforms,
 	platformContent,
@@ -162,9 +228,15 @@ export function PreviewStep({
 	ssePhase,
 	uploadedMedia,
 	readOnly = false,
+	platformPosts,
 	onUpdateContent,
 	onUpdateThreadSegment,
 }: PreviewStepProps) {
+	const platformPostByPlatform = platformPosts
+		? Object.fromEntries(
+				platformPosts.map((pp) => [pp.platform, pp]),
+			)
+		: undefined;
 	const isThread = contentType === "thread";
 
 	const hasContent = generating || generated;
@@ -220,11 +292,19 @@ export function PreviewStep({
 
 							<Tabs defaultTab={selectedPlatforms[0]}>
 								<TabList aria-label="Platform previews">
-									{selectedPlatforms.map((platform) => (
-										<Tab key={platform} id={platform}>
-											{PLATFORM_DISPLAY_NAMES[platform]}
-										</Tab>
-									))}
+									{selectedPlatforms.map((platform) => {
+										const pp = platformPostByPlatform?.[platform];
+										return (
+											<Tab key={platform} id={platform}>
+												<Stack gap="0" align="center">
+													<span>{PLATFORM_DISPLAY_NAMES[platform]}</span>
+													{pp && (
+														<PlatformPublishStatusLabel pp={pp} />
+													)}
+												</Stack>
+											</Tab>
+										);
+									})}
 								</TabList>
 								<TabPanels>
 									{selectedPlatforms.map((platform) => (
@@ -244,6 +324,13 @@ export function PreviewStep({
 														onUpdateThreadSegment(platform, index, content)
 													}
 												/>
+												{platformPostByPlatform?.[platform] && (
+													<div className={styles.postTimestamp}>
+														<PlatformPostTimestamp
+															pp={platformPostByPlatform[platform]}
+														/>
+													</div>
+												)}
 											</div>
 										</TabPanel>
 									))}
