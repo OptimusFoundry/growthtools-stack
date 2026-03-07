@@ -124,21 +124,6 @@
 	gap: var(--space-0-5);
 }
 
-// Streaming text preview
-.streamingText {
-	white-space: pre-wrap;
-	font-size: var(--font-size-base);
-	line-height: var(--line-height-relaxed);
-	color: var(--color-text);
-	min-height: 120px;
-	max-height: 300px;
-	overflow-y: auto;
-	padding: var(--space-3);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	background: var(--color-surface);
-}
-
 .streamingCursor {
 	display: inline-block;
 	width: 2px;
@@ -157,6 +142,16 @@
 	50% {
 		opacity: 0;
 	}
+}
+
+// Base content body inside accordion
+.baseContentBody {
+	white-space: pre-wrap;
+	font-size: var(--font-size-sm);
+	line-height: var(--line-height-relaxed);
+	color: var(--color-text-secondary);
+	max-height: 200px;
+	overflow-y: auto;
 }
 
 @keyframes spin {
