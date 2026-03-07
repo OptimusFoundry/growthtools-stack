@@ -39,6 +39,7 @@ export function PlatformPreviewCard({
 			platform={platform}
 			content={content}
 			onChange={onContentChange}
+			media={uploadedMedia}
 		/>
 	);
 }

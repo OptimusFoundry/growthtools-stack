@@ -1,5 +1,7 @@
+import { ImageIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
+import type { MediaItem } from "@/types/media";
 import {
 	PLATFORM_CHAR_LIMITS,
 	PLATFORM_DISPLAY_NAMES,
@@ -11,6 +13,7 @@ interface PlatformPostCardProps {
 	platform: PlatformType;
 	content: string;
 	onChange: (content: string) => void;
+	media?: MediaItem[];
 }
 
 // -- Editable content (shared across all variants)
@@ -60,6 +63,44 @@ function EditableContent({
 			aria-label={`Edit ${PLATFORM_DISPLAY_NAMES[platform]} content`}
 			data-placeholder="Write your post..."
 		/>
+	);
+}
+
+// -- Media grid (renders inside post card, between content and action bar)
+
+function MediaGrid({ media }: { media: MediaItem[] }) {
+	if (media.length === 0) return null;
+
+	const gridClass =
+		media.length === 1
+			? styles.mediaGrid1
+			: media.length === 2
+				? styles.mediaGrid2
+				: media.length === 3
+					? styles.mediaGrid3
+					: styles.mediaGrid4;
+
+	return (
+		<div className={`${styles.mediaGrid} ${gridClass}`}>
+			{media.slice(0, 4).map((item, i) => (
+				<div key={item.id} className={styles.mediaGridItem}>
+					{item.url ? (
+						<img
+							src={item.url}
+							alt={item.altText ?? item.filename}
+							className={styles.mediaGridImg}
+						/>
+					) : (
+						<div className={styles.mediaGridPlaceholder}>
+							<ImageIcon size={24} />
+						</div>
+					)}
+					{media.length > 4 && i === 3 && (
+						<div className={styles.mediaGridOverflow}>+{media.length - 4}</div>
+					)}
+				</div>
+			))}
+		</div>
 	);
 }
 
@@ -242,10 +283,12 @@ function XPostCard({
 	content,
 	onChange,
 	charLimit,
+	media,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
+	media?: MediaItem[];
 }) {
 	const isOver = content.length > charLimit;
 
@@ -272,6 +315,7 @@ function XPostCard({
 						platform="x"
 						className={styles.editableContent}
 					/>
+					{media && media.length > 0 && <MediaGrid media={media} />}
 					<div className={styles.xActions}>
 						<button type="button" className={styles.actionBtn} tabIndex={-1}>
 							<IconReply />
@@ -304,10 +348,12 @@ function BlueSkyPostCard({
 	content,
 	onChange,
 	charLimit,
+	media,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
+	media?: MediaItem[];
 }) {
 	const isOver = content.length > charLimit;
 
@@ -333,6 +379,7 @@ function BlueSkyPostCard({
 						platform="bluesky"
 						className={styles.editableContent}
 					/>
+					{media && media.length > 0 && <MediaGrid media={media} />}
 					<div className={styles.xActions}>
 						<button type="button" className={styles.actionBtn} tabIndex={-1}>
 							<IconBskyReply />
@@ -362,10 +409,12 @@ function ThreadsPostCard({
 	content,
 	onChange,
 	charLimit,
+	media,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
+	media?: MediaItem[];
 }) {
 	const isOver = content.length > charLimit;
 
@@ -390,6 +439,7 @@ function ThreadsPostCard({
 						platform="threads"
 						className={styles.editableContent}
 					/>
+					{media && media.length > 0 && <MediaGrid media={media} />}
 					<div className={styles.threadsActions}>
 						<button type="button" className={styles.actionBtn} tabIndex={-1}>
 							<IconHeart />
@@ -420,11 +470,13 @@ function GenericPostCard({
 	content,
 	onChange,
 	charLimit,
+	media,
 }: {
 	platform: PlatformType;
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
+	media?: MediaItem[];
 }) {
 	const displayName = PLATFORM_DISPLAY_NAMES[platform];
 	const isOver = content.length > charLimit;
@@ -444,6 +496,7 @@ function GenericPostCard({
 					className={styles.editableContent}
 				/>
 			</div>
+			{media && media.length > 0 && <MediaGrid media={media} />}
 			<div className={styles.genericFooter}>
 				<Badge variant={isOver ? "error" : "default"} size="sm">
 					{content.length} / {charLimit}
@@ -459,6 +512,7 @@ export function PlatformPostCard({
 	platform,
 	content,
 	onChange,
+	media,
 }: PlatformPostCardProps) {
 	const charLimit = PLATFORM_CHAR_LIMITS[platform];
 
@@ -469,6 +523,7 @@ export function PlatformPostCard({
 					content={content}
 					onChange={onChange}
 					charLimit={charLimit}
+					media={media}
 				/>
 			);
 		case "bluesky":
@@ -477,6 +532,7 @@ export function PlatformPostCard({
 					content={content}
 					onChange={onChange}
 					charLimit={charLimit}
+					media={media}
 				/>
 			);
 		case "threads":
@@ -485,6 +541,7 @@ export function PlatformPostCard({
 					content={content}
 					onChange={onChange}
 					charLimit={charLimit}
+					media={media}
 				/>
 			);
 		default:
@@ -494,6 +551,7 @@ export function PlatformPostCard({
 					content={content}
 					onChange={onChange}
 					charLimit={charLimit}
+					media={media}
 				/>
 			);
 	}

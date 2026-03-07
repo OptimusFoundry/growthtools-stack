@@ -258,3 +258,103 @@
 	padding: var(--space-2) var(--space-4);
 	border-top: 1px solid var(--color-border);
 }
+
+// =============================================================================
+// MEDIA GRID (inside post cards, platform-style image layouts)
+// =============================================================================
+
+.mediaGrid {
+	display: grid;
+	gap: var(--space-0-5, 2px);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	margin-top: var(--space-3);
+	border: 1px solid var(--color-border);
+}
+
+.mediaGrid1 {
+	grid-template-columns: 1fr;
+}
+
+.mediaGrid2 {
+	grid-template-columns: 1fr 1fr;
+}
+
+.mediaGrid3 {
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+
+	.mediaGridItem:first-child {
+		grid-row: 1 / -1;
+	}
+}
+
+.mediaGrid4 {
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+}
+
+.mediaGridItem {
+	position: relative;
+	overflow: hidden;
+	min-height: 0;
+}
+
+// Single image: 16:9 like X/Twitter
+.mediaGrid1 .mediaGridItem {
+	aspect-ratio: 16 / 9;
+}
+
+// 2 images: tall rectangles side by side (7:8 like X)
+.mediaGrid2 .mediaGridItem {
+	aspect-ratio: 7 / 8;
+}
+
+// 3 images: left tall, right two stacked squares
+.mediaGrid3 {
+	grid-template-rows: 1fr 1fr;
+
+	.mediaGridItem:first-child {
+		aspect-ratio: auto;
+	}
+
+	.mediaGridItem:nth-child(2),
+	.mediaGridItem:nth-child(3) {
+		aspect-ratio: 1 / 1;
+	}
+}
+
+// 4 images: 2x2 grid of equal cells (16:9 each like X)
+.mediaGrid4 .mediaGridItem {
+	aspect-ratio: 16 / 9;
+}
+
+.mediaGridImg {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.mediaGridPlaceholder {
+	width: 100%;
+	height: 100%;
+	min-height: 80px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-surface-secondary);
+	color: var(--color-base-content-tertiary);
+}
+
+.mediaGridOverflow {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-overlay, rgb(0, 0, 0, 0.5));
+	color: var(--color-white, #fff);
+	font-size: var(--font-size-2xl);
+	font-weight: var(--font-weight-bold);
+}
