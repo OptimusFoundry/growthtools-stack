@@ -2,26 +2,20 @@ import { useCallback, useRef, useState } from "react";
 import type { WizardContentType } from "@/components/create-post/useCreatePostWizard";
 import type { PlatformType } from "@/types/platform";
 
-type Phase = "idle" | "generating" | "adapting" | "threading";
+type Phase = "idle" | "generating";
 
 interface SSEContentGenerateState {
 	phase: Phase;
-	currentPlatform: string;
-	streamingText: string;
 	platformContent: Partial<Record<PlatformType, string>>;
 	threadContent: Partial<Record<PlatformType, string[]>>;
-	baseContent: string;
 	loading: boolean;
 	error: string | null;
 }
 
 const initialState: SSEContentGenerateState = {
 	phase: "idle",
-	currentPlatform: "",
-	streamingText: "",
 	platformContent: {},
 	threadContent: {},
-	baseContent: "",
 	loading: false,
 	error: null,
 };
@@ -103,27 +97,7 @@ export function useSSEContentGenerate() {
 						if (line.startsWith("data: ")) {
 							const data = line.slice(6);
 
-							if (currentEvent === "phase") {
-								const payload = JSON.parse(data) as {
-									phase: string;
-									platform: string;
-								};
-								setState((prev) => ({
-									...prev,
-									phase: payload.phase as Phase,
-									currentPlatform: payload.platform,
-									streamingText: "",
-								}));
-							} else if (currentEvent === "base_done") {
-								const payload = JSON.parse(data) as {
-									content: string;
-								};
-								setState((prev) => ({
-									...prev,
-									baseContent: payload.content,
-									streamingText: "",
-								}));
-							} else if (currentEvent === "platform_done") {
+							if (currentEvent === "platform_done") {
 								const payload = JSON.parse(data) as {
 									platform: string;
 									content: string;
@@ -134,7 +108,6 @@ export function useSSEContentGenerate() {
 										...prev.platformContent,
 										[payload.platform]: payload.content,
 									},
-									streamingText: "",
 								}));
 							} else if (currentEvent === "thread_done") {
 								const payload = JSON.parse(data) as {
@@ -160,12 +133,6 @@ export function useSSEContentGenerate() {
 									loading: false,
 									phase: "idle",
 									error: data,
-								}));
-							} else {
-								// Plain data chunk (no named event) — streaming text
-								setState((prev) => ({
-									...prev,
-									streamingText: prev.streamingText + data,
 								}));
 							}
 

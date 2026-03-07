@@ -33,9 +33,6 @@ interface PreviewStepProps {
 	publishMode: PublishMode;
 	scheduledAt: string;
 	submitting: boolean;
-	streamingPlatform: PlatformType;
-	streamingText: string;
-	streamingPhase: "idle" | "generating" | "adapting" | "threading";
 	onUpdateContent: (platform: PlatformType, content: string) => void;
 	onUpdateThreadSegment: (
 		platform: PlatformType,
@@ -100,9 +97,6 @@ export function PreviewStep({
 	publishMode,
 	scheduledAt,
 	submitting,
-	streamingPlatform,
-	streamingText,
-	streamingPhase,
 	onUpdateContent,
 	onUpdateThreadSegment,
 	onSetPublishMode,
@@ -126,28 +120,12 @@ export function PreviewStep({
 
 	// State 2: Generating — show progress per platform with streaming text
 	if (generating) {
-		const streamingLabel =
-			streamingPhase === "generating"
-				? "Generating base content..."
-				: streamingPhase === "adapting" && streamingPlatform
-					? `Adapting for ${PLATFORM_DISPLAY_NAMES[streamingPlatform] ?? streamingPlatform}...`
-					: streamingPhase === "threading" && streamingPlatform
-						? `Creating thread for ${PLATFORM_DISPLAY_NAMES[streamingPlatform] ?? streamingPlatform}...`
-						: "Generating content...";
-
 		return (
 			<div className={styles.previewPanel}>
 				<Stack gap="md">
 					<Text as="h3" size="lg" weight="medium">
-						{streamingLabel}
+						Generating content...
 					</Text>
-
-					{streamingText && (
-						<div className={styles.streamingText}>
-							{streamingText}
-							<span className={styles.streamingCursor} />
-						</div>
-					)}
 
 					<div className={styles.progressList}>
 						{selectedPlatforms.map((platform) => {

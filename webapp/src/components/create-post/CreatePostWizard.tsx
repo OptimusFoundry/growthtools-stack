@@ -36,16 +36,15 @@ export function CreatePostWizard() {
 		}
 	}, [sse.platformContent]);
 
-	// When SSE phase changes, update wizard progress
+	// When SSE phase changes to generating, mark all platforms as generating
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
 	useEffect(() => {
-		if (sse.phase === "adapting" && sse.currentPlatform) {
-			wizard.setPlatformProgress(
-				sse.currentPlatform as PlatformType,
-				"generating",
-			);
+		if (sse.phase === "generating") {
+			for (const platform of state.selectedPlatforms) {
+				wizard.setPlatformProgress(platform, "generating");
+			}
 		}
-	}, [sse.phase, sse.currentPlatform]);
+	}, [sse.phase, state.selectedPlatforms]);
 
 	// Sync SSE thread completions into wizard state
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
@@ -60,10 +59,14 @@ export function CreatePostWizard() {
 	// When SSE finishes, mark generation complete
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
 	useEffect(() => {
-		if (!sse.loading && sse.phase === "idle" && sse.baseContent) {
+		if (
+			!sse.loading &&
+			sse.phase === "idle" &&
+			Object.keys(sse.platformContent).length > 0
+		) {
 			wizard.generationComplete();
 		}
-	}, [sse.loading, sse.phase, sse.baseContent]);
+	}, [sse.loading, sse.phase, sse.platformContent]);
 
 	// Sync SSE errors to wizard
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
@@ -234,9 +237,6 @@ export function CreatePostWizard() {
 					publishMode={state.publishMode}
 					scheduledAt={state.scheduledAt}
 					submitting={state.submitting}
-					streamingPlatform={sse.currentPlatform as PlatformType}
-					streamingText={sse.streamingText}
-					streamingPhase={sse.phase}
 					onUpdateContent={wizard.updatePlatformContent}
 					onUpdateThreadSegment={wizard.updateThreadSegment}
 					onSetPublishMode={wizard.setPublishMode}
