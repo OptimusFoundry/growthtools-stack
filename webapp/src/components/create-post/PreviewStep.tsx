@@ -269,6 +269,23 @@ export function PreviewStep({
 					</Stack>
 				)}
 
+				{/* Base content accordion — visible during generation and after */}
+				{baseContent && (
+					<BaseAccordion
+						content={baseContent}
+						isStreaming={ssePhase === "generating"}
+					/>
+				)}
+
+				{/* Loading state before content starts streaming */}
+				{generating && !baseContent && ssePhase !== "describing" && (
+					<EmptyState
+						title="Generating content"
+						description="Your AI-adapted content will appear here shortly"
+						icon={<Spinner size="lg" />}
+					/>
+				)}
+
 				<PageTransition pageKey={belowKey} type="slideUp" duration={0.25}>
 					{/* Adapting progress */}
 					{generating && ssePhase === "adapting" && (
@@ -284,11 +301,6 @@ export function PreviewStep({
 							<Text as="h3" size="lg" weight="medium">
 								Review Content
 							</Text>
-
-							<BaseAccordion
-								content={baseContent}
-								isStreaming={ssePhase === "generating"}
-							/>
 
 							<Tabs defaultTab={selectedPlatforms[0]}>
 								<TabList aria-label="Platform previews">
