@@ -413,10 +413,10 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 				{connectedPlatforms.length > 0 && (
 					<Stack gap="md">
 						<Stack gap="xs">
-							<Text as="h3" size="lg" weight="medium">
+							<Text as="h2" size="xl" weight="semibold">
 								Connected Platforms
 							</Text>
-							<Text size="sm" color="secondary">
+							<Text size="md" color="secondary">
 								Manage your active platform connections
 							</Text>
 						</Stack>
@@ -442,10 +442,10 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 				{availablePlatforms.length > 0 && (
 					<Stack gap="md">
 						<Stack gap="xs">
-							<Text as="h3" size="lg" weight="medium">
+							<Text as="h2" size="xl" weight="semibold">
 								Add a Platform
 							</Text>
-							<Text size="sm" color="secondary">
+							<Text size="md" color="secondary">
 								Connect more accounts to expand your reach
 							</Text>
 						</Stack>

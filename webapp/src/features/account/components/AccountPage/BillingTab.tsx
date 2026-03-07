@@ -111,7 +111,7 @@ const SubscriptionSummary = memo(function SubscriptionSummary({
 			<CardBody>
 				<Stack gap="md" align="start">
 					<Stack direction="row" gap="sm" align="center" justify="between">
-						<Text as="h3" size="lg" weight="medium">
+						<Text as="h2" size="xl" weight="semibold">
 							Current Plan
 						</Text>
 						<Badge variant={statusVariant} size="sm">
@@ -220,7 +220,7 @@ const BillingActionsCard = memo(function BillingActionsCard({
 		<Card variant="outlined">
 			<CardBody>
 				<Stack gap="md">
-					<Text as="h3" size="lg" weight="medium">
+					<Text as="h2" size="xl" weight="semibold">
 						Billing & Invoices
 					</Text>
 
@@ -288,7 +288,7 @@ const NoSubscriptionState = memo(function NoSubscriptionState() {
 	return (
 		<Stack gap="lg">
 			<Stack gap="xs">
-				<Text as="h3" size="xl" weight="semibold">
+				<Text as="h2" size="xl" weight="semibold">
 					Choose a Plan
 				</Text>
 				<Text color="secondary">
