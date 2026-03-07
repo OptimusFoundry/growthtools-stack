@@ -52,6 +52,8 @@ interface PreviewStepProps {
 	onSetScheduledAt: (scheduledAt: string) => void;
 	onPublish: () => void;
 	onSchedule: () => void;
+	onSaveDraft: () => void;
+	savingDraft: boolean;
 }
 
 function BaseContentBody({
@@ -180,6 +182,8 @@ export function PreviewStep({
 	onSetScheduledAt,
 	onPublish,
 	onSchedule,
+	onSaveDraft,
+	savingDraft,
 }: PreviewStepProps) {
 	const isThread = contentType === "thread";
 
@@ -346,6 +350,14 @@ export function PreviewStep({
 										Choose how you want to publish above
 									</Text>
 								)}
+								<Button
+									variant="ghost"
+									onClick={onSaveDraft}
+									isLoading={savingDraft}
+									disabled={savingDraft || submitting}
+								>
+									Save as Draft
+								</Button>
 							</Stack>
 						</Stack>
 					)}

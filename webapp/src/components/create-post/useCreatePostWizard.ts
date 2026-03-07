@@ -177,8 +177,13 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 	}
 }
 
-export function useCreatePostWizard() {
-	const [state, dispatch] = useReducer(wizardReducer, initialState);
+export function useCreatePostWizard(
+	initialOverrides?: Partial<WizardState>,
+) {
+	const [state, dispatch] = useReducer(wizardReducer, {
+		...initialState,
+		...initialOverrides,
+	});
 
 	const setBlurb = useCallback(
 		(blurb: string) => dispatch({ type: "SET_BLURB", blurb }),

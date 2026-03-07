@@ -18,6 +18,7 @@ export interface ApiPost {
 	media_ids: string[];
 	tags: string[];
 	ai_generated: boolean;
+	base_content?: string;
 	source: PostSource;
 	github_event_id?: string;
 	created_at: string;
@@ -31,6 +32,7 @@ export interface ApiPlatformPost {
 	platform_post_id?: string;
 	status: "pending" | "publishing" | "published" | "failed";
 	content?: string;
+	thread_segments?: { content: string; image_index?: number }[];
 	published_at?: string;
 	error_message?: string;
 	engagement: {

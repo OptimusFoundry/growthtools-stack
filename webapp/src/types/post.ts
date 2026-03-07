@@ -30,6 +30,7 @@ export interface Post {
 	mediaIds: string[];
 	tags: string[];
 	aiGenerated: boolean;
+	baseContent?: string;
 	source: PostSource;
 	githubEventId?: string;
 	createdAt: string;
@@ -43,6 +44,7 @@ export interface PlatformPost {
 	platformPostId?: string;
 	status: "pending" | "publishing" | "published" | "failed";
 	content?: string;
+	threadSegments?: { content: string; imageIndex?: number }[];
 	publishedAt?: string;
 	errorMessage?: string;
 	engagement: {
@@ -83,4 +85,20 @@ export interface UpdatePostRequest {
 	scheduled_at?: string;
 	media_ids?: string[];
 	tags?: string[];
+}
+
+export interface PlatformContentInput {
+	platform: string;
+	content?: string;
+	thread_segments?: { content: string; image_index?: number }[];
+}
+
+export interface SaveDraftRequest {
+	content: string;
+	content_type: ContentType;
+	tags?: string[];
+	media_ids?: string[];
+	ai_generated: boolean;
+	base_content?: string;
+	platforms: PlatformContentInput[];
 }

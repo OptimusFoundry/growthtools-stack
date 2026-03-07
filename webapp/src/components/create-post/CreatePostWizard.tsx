@@ -1,30 +1,117 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect } from "react";
 import { useCreatePost } from "@/hooks/useCreatePost";
+import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { usePublishPost } from "@/hooks/usePublishPost";
+import { useSaveDraft } from "@/hooks/useSaveDraft";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
 import {
 	filesToBase64,
 	useSSEContentGenerate,
 } from "@/hooks/useSSEContentGenerate";
+import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformType } from "@/types/platform";
+import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import { ComposeStep } from "./ComposeStep";
 import styles from "./CreatePostWizard.module.scss";
 import { PreviewStep } from "./PreviewStep";
+import type { WizardContentType, WizardState } from "./useCreatePostWizard";
 import { useCreatePostWizard } from "./useCreatePostWizard";
 
-export function CreatePostWizard() {
+interface CreatePostWizardProps {
+	editPostId?: string;
+}
+
+function buildInitialOverrides(
+	content: string,
+	contentType: string,
+	platformPosts: PlatformPost[],
+): Partial<WizardState> {
+	const selectedPlatforms = platformPosts.map(
+		(pp) => pp.platform as PlatformType,
+	);
+	const platformContent: Partial<Record<PlatformType, string>> = {};
+	const threadContent: Partial<
+		Record<PlatformType, { content: string; imageIndex?: number }[]>
+	> = {};
+
+	for (const pp of platformPosts) {
+		const platform = pp.platform as PlatformType;
+		if (pp.content) {
+			platformContent[platform] = pp.content;
+		}
+		if (pp.threadSegments && pp.threadSegments.length > 0) {
+			threadContent[platform] = pp.threadSegments;
+		}
+	}
+
+	return {
+		blurb: content,
+		contentType: (contentType === "thread"
+			? "thread"
+			: "text") as WizardContentType,
+		selectedPlatforms,
+		platformContent,
+		threadContent,
+		generated: selectedPlatforms.length > 0,
+	};
+}
+
+export function CreatePostWizard({ editPostId }: CreatePostWizardProps = {}) {
+	if (editPostId) {
+		return <EditPostWizard editPostId={editPostId} />;
+	}
+	return <WizardInner />;
+}
+
+function EditPostWizard({ editPostId }: { editPostId: string }) {
+	const { post, platformPosts, loading, error } = useGetPostDetails(editPostId);
+
+	if (loading) return <Spinner />;
+	if (error) return <Alert variant="error">{error}</Alert>;
+	if (!post) return <Alert variant="error">Post not found</Alert>;
+
+	const overrides = buildInitialOverrides(
+		post.content,
+		post.contentType,
+		platformPosts,
+	);
+
+	return (
+		<WizardInner
+			editPostId={editPostId}
+			initialOverrides={overrides}
+			initialBaseContent={post.baseContent}
+		/>
+	);
+}
+
+interface WizardInnerProps {
+	editPostId?: string;
+	initialOverrides?: Partial<WizardState>;
+	initialBaseContent?: string;
+}
+
+function WizardInner({
+	editPostId,
+	initialOverrides,
+	initialBaseContent,
+}: WizardInnerProps = {}) {
+	const isEditMode = Boolean(editPostId);
 	const navigate = useNavigate();
-	const wizard = useCreatePostWizard();
+	const wizard = useCreatePostWizard(initialOverrides);
 	const { state } = wizard;
 
 	const sse = useSSEContentGenerate();
 	const { createPost } = useCreatePost();
 	const { publishPost } = usePublishPost();
+	const { saveDraft, loading: savingDraft } = useSaveDraft();
+	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
 	const { uploadMedia } = useUploadMedia();
 
@@ -223,14 +310,77 @@ export function CreatePostWizard() {
 		navigate,
 	]);
 
+	const handleSaveDraft = useCallback(async () => {
+		wizard.setSubmitting(true);
+		wizard.setError(null);
+
+		try {
+			const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
+				(platform) => {
+					const entry: PlatformContentInput = {
+						platform,
+						content: state.platformContent[platform],
+					};
+					const segments = state.threadContent[platform];
+					if (segments && segments.length > 0) {
+						entry.thread_segments = segments;
+					}
+					return entry;
+				},
+			);
+
+			const baseContentValue = sse.baseContent || initialBaseContent;
+			const draftData = {
+				content: state.blurb,
+				content_type: state.contentType,
+				ai_generated: state.generated,
+				base_content: baseContentValue || undefined,
+				media_ids:
+					state.uploadedMedia.length > 0
+						? state.uploadedMedia.map((m) => m.id)
+						: undefined,
+				platforms,
+			};
+
+			if (isEditMode && editPostId) {
+				await updateDraft(editPostId, draftData);
+			} else {
+				await saveDraft(draftData);
+			}
+			navigate({ to: "/posts" });
+		} catch {
+			wizard.setError("Failed to save draft. Please try again.");
+		} finally {
+			wizard.setSubmitting(false);
+		}
+	}, [
+		state.selectedPlatforms,
+		state.platformContent,
+		state.threadContent,
+		state.blurb,
+		state.contentType,
+		state.generated,
+		state.uploadedMedia,
+		wizard,
+		sse,
+		initialBaseContent,
+		saveDraft,
+		updateDraft,
+		isEditMode,
+		editPostId,
+		navigate,
+	]);
+
 	return (
 		<div className={styles.page}>
 			<Stack gap="xs">
 				<Text as="h1" size="2xl" weight="bold">
-					Create Post
+					{isEditMode ? "Edit Post" : "Create Post"}
 				</Text>
 				<Text color="secondary">
-					Write a blurb and let AI adapt it for each platform
+					{isEditMode
+						? "Update your post content and platform adaptations"
+						: "Write a blurb and let AI adapt it for each platform"}
 				</Text>
 			</Stack>
 
@@ -258,7 +408,7 @@ export function CreatePostWizard() {
 					generationProgress={state.generationProgress}
 					generating={state.generating}
 					generated={state.generated}
-					baseContent={sse.baseContent}
+					baseContent={sse.baseContent || initialBaseContent || ""}
 					ssePhase={sse.phase}
 					publishMode={state.publishMode}
 					scheduledAt={state.scheduledAt}
@@ -270,6 +420,8 @@ export function CreatePostWizard() {
 					onSetScheduledAt={wizard.setScheduledAt}
 					onPublish={handlePublish}
 					onSchedule={handleSchedule}
+					onSaveDraft={handleSaveDraft}
+					savingDraft={savingDraft || updatingDraft}
 				/>
 			</div>
 		</div>
