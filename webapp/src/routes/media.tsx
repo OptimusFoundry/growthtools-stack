@@ -4,14 +4,14 @@ import { motion } from "motion/react";
 import { useCallback, useRef } from "react";
 import { useMedia } from "@/hooks/useMedia";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { formatFileSize, isImageType } from "@/types/media";
-import styles from "./page.module.scss";
 import mediaStyles from "./media.module.scss";
+import styles from "./page.module.scss";
 
 export const Route = createFileRoute("/media")({
 	component: MediaPage,
@@ -57,7 +57,11 @@ function MediaPage() {
 						Store and organize your media assets
 					</p>
 				</div>
-				<Button variant="primary" onClick={handleUploadClick} isLoading={uploading}>
+				<Button
+					variant="primary"
+					onClick={handleUploadClick}
+					isLoading={uploading}
+				>
 					<Upload size={16} /> Upload
 				</Button>
 				<input
@@ -103,12 +107,16 @@ function MediaPage() {
 								</div>
 								<div className={mediaStyles.mediaInfo}>
 									<Stack gap="xs">
-										<span className={mediaStyles.filename} title={item.filename}>
+										<span
+											className={mediaStyles.filename}
+											title={item.filename}
+										>
 											{item.filename}
 										</span>
 										<Stack direction="row" gap="xs" align="center">
 											<Badge variant="outline" size="sm">
-												{item.contentType.split("/")[1]?.toUpperCase() ?? "FILE"}
+												{item.contentType.split("/")[1]?.toUpperCase() ??
+													"FILE"}
 											</Badge>
 											<span className={mediaStyles.fileSize}>
 												{formatFileSize(item.sizeBytes)}

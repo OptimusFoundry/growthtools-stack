@@ -3,12 +3,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { useGetPosts } from "@/hooks/useGetPosts";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
 import type { Post } from "@/types/post";
-import styles from "./page.module.scss";
 import calendarStyles from "./calendar.module.scss";
+import styles from "./page.module.scss";
 
 export const Route = createFileRoute("/calendar")({
 	component: CalendarPage,
@@ -16,8 +16,18 @@ export const Route = createFileRoute("/calendar")({
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
-	"January", "February", "March", "April", "May", "June",
-	"July", "August", "September", "October", "November", "December",
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
 ];
 
 function getDaysInMonth(year: number, month: number): number {
@@ -40,7 +50,9 @@ function CalendarPage() {
 	const { posts, loading } = useGetPosts();
 
 	const navigateMonth = useCallback((delta: number) => {
-		setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+		setCurrentDate(
+			(prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1),
+		);
 	}, []);
 
 	const daysInMonth = getDaysInMonth(year, month);
@@ -89,11 +101,21 @@ function CalendarPage() {
 
 			<div className={styles.pageContent}>
 				<Stack direction="row" justify="between" align="center">
-					<Button variant="ghost" onClick={() => navigateMonth(-1)} aria-label="Previous month">
+					<Button
+						variant="ghost"
+						onClick={() => navigateMonth(-1)}
+						aria-label="Previous month"
+					>
 						<ChevronLeft size={18} />
 					</Button>
-					<strong>{MONTHS[month]} {year}</strong>
-					<Button variant="ghost" onClick={() => navigateMonth(1)} aria-label="Next month">
+					<strong>
+						{MONTHS[month]} {year}
+					</strong>
+					<Button
+						variant="ghost"
+						onClick={() => navigateMonth(1)}
+						aria-label="Next month"
+					>
 						<ChevronRight size={18} />
 					</Button>
 				</Stack>
@@ -103,7 +125,9 @@ function CalendarPage() {
 				) : (
 					<div className={calendarStyles.calendarGrid}>
 						{DAYS_OF_WEEK.map((day) => (
-							<div key={day} className={calendarStyles.dayHeader}>{day}</div>
+							<div key={day} className={calendarStyles.dayHeader}>
+								{day}
+							</div>
 						))}
 						{calendarCells.map(({ day, dateKey }) => {
 							const dayPosts = day ? (postsByDate.get(dateKey) ?? []) : [];
@@ -125,7 +149,9 @@ function CalendarPage() {
 													/>
 												))}
 												{dayPosts.length > 3 && (
-													<span className={calendarStyles.moreCount}>+{dayPosts.length - 3}</span>
+													<span className={calendarStyles.moreCount}>
+														+{dayPosts.length - 3}
+													</span>
 												)}
 											</div>
 										</>

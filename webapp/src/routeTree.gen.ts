@@ -20,7 +20,11 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BillingIndexRouteImport } from './routes/billing/index'
+import { Route as PostsNewRouteImport } from './routes/posts_.new'
+import { Route as PostsIdRouteImport } from './routes/posts_.$id'
 import { Route as OauthSignedinRouteImport } from './routes/oauth/signedin'
+import { Route as BlogNewRouteImport } from './routes/blog_.new'
+import { Route as BlogIdRouteImport } from './routes/blog_.$id'
 import { Route as BillingPlansRouteImport } from './routes/billing/plans'
 import { Route as BillingPayment_methodRouteImport } from './routes/billing/payment_method'
 import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
@@ -81,9 +85,29 @@ const BillingIndexRoute = BillingIndexRouteImport.update({
   path: '/billing/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PostsNewRoute = PostsNewRouteImport.update({
+  id: '/posts_/new',
+  path: '/posts/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostsIdRoute = PostsIdRouteImport.update({
+  id: '/posts_/$id',
+  path: '/posts/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OauthSignedinRoute = OauthSignedinRouteImport.update({
   id: '/oauth/signedin',
   path: '/oauth/signedin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogNewRoute = BlogNewRouteImport.update({
+  id: '/blog_/new',
+  path: '/blog/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIdRoute = BlogIdRouteImport.update({
+  id: '/blog_/$id',
+  path: '/blog/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BillingPlansRoute = BillingPlansRouteImport.update({
@@ -122,7 +146,11 @@ export interface FileRoutesByFullPath {
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
   '/billing/plans': typeof BillingPlansRoute
+  '/blog/$id': typeof BlogIdRoute
+  '/blog/new': typeof BlogNewRoute
   '/oauth/signedin': typeof OauthSignedinRoute
+  '/posts/$id': typeof PostsIdRoute
+  '/posts/new': typeof PostsNewRoute
   '/billing': typeof BillingIndexRoute
 }
 export interface FileRoutesByTo {
@@ -140,7 +168,11 @@ export interface FileRoutesByTo {
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
   '/billing/plans': typeof BillingPlansRoute
+  '/blog/$id': typeof BlogIdRoute
+  '/blog/new': typeof BlogNewRoute
   '/oauth/signedin': typeof OauthSignedinRoute
+  '/posts/$id': typeof PostsIdRoute
+  '/posts/new': typeof PostsNewRoute
   '/billing': typeof BillingIndexRoute
 }
 export interface FileRoutesById {
@@ -159,7 +191,11 @@ export interface FileRoutesById {
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
   '/billing/plans': typeof BillingPlansRoute
+  '/blog_/$id': typeof BlogIdRoute
+  '/blog_/new': typeof BlogNewRoute
   '/oauth/signedin': typeof OauthSignedinRoute
+  '/posts_/$id': typeof PostsIdRoute
+  '/posts_/new': typeof PostsNewRoute
   '/billing/': typeof BillingIndexRoute
 }
 export interface FileRouteTypes {
@@ -179,7 +215,11 @@ export interface FileRouteTypes {
     | '/billing/payment_attempt'
     | '/billing/payment_method'
     | '/billing/plans'
+    | '/blog/$id'
+    | '/blog/new'
     | '/oauth/signedin'
+    | '/posts/$id'
+    | '/posts/new'
     | '/billing'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -197,7 +237,11 @@ export interface FileRouteTypes {
     | '/billing/payment_attempt'
     | '/billing/payment_method'
     | '/billing/plans'
+    | '/blog/$id'
+    | '/blog/new'
     | '/oauth/signedin'
+    | '/posts/$id'
+    | '/posts/new'
     | '/billing'
   id:
     | '__root__'
@@ -215,7 +259,11 @@ export interface FileRouteTypes {
     | '/billing/payment_attempt'
     | '/billing/payment_method'
     | '/billing/plans'
+    | '/blog_/$id'
+    | '/blog_/new'
     | '/oauth/signedin'
+    | '/posts_/$id'
+    | '/posts_/new'
     | '/billing/'
   fileRoutesById: FileRoutesById
 }
@@ -234,7 +282,11 @@ export interface RootRouteChildren {
   BillingPayment_attemptRoute: typeof BillingPayment_attemptRoute
   BillingPayment_methodRoute: typeof BillingPayment_methodRoute
   BillingPlansRoute: typeof BillingPlansRoute
+  BlogIdRoute: typeof BlogIdRoute
+  BlogNewRoute: typeof BlogNewRoute
   OauthSignedinRoute: typeof OauthSignedinRoute
+  PostsIdRoute: typeof PostsIdRoute
+  PostsNewRoute: typeof PostsNewRoute
   BillingIndexRoute: typeof BillingIndexRoute
 }
 
@@ -317,11 +369,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/posts_/new': {
+      id: '/posts_/new'
+      path: '/posts/new'
+      fullPath: '/posts/new'
+      preLoaderRoute: typeof PostsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/posts_/$id': {
+      id: '/posts_/$id'
+      path: '/posts/$id'
+      fullPath: '/posts/$id'
+      preLoaderRoute: typeof PostsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/oauth/signedin': {
       id: '/oauth/signedin'
       path: '/oauth/signedin'
       fullPath: '/oauth/signedin'
       preLoaderRoute: typeof OauthSignedinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog_/new': {
+      id: '/blog_/new'
+      path: '/blog/new'
+      fullPath: '/blog/new'
+      preLoaderRoute: typeof BlogNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog_/$id': {
+      id: '/blog_/$id'
+      path: '/blog/$id'
+      fullPath: '/blog/$id'
+      preLoaderRoute: typeof BlogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/billing/plans': {
@@ -370,7 +450,11 @@ const rootRouteChildren: RootRouteChildren = {
   BillingPayment_attemptRoute: BillingPayment_attemptRoute,
   BillingPayment_methodRoute: BillingPayment_methodRoute,
   BillingPlansRoute: BillingPlansRoute,
+  BlogIdRoute: BlogIdRoute,
+  BlogNewRoute: BlogNewRoute,
   OauthSignedinRoute: OauthSignedinRoute,
+  PostsIdRoute: PostsIdRoute,
+  PostsNewRoute: PostsNewRoute,
   BillingIndexRoute: BillingIndexRoute,
 }
 export const routeTree = rootRouteImport

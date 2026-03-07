@@ -48,18 +48,13 @@ test.describe("Posts", () => {
 	// =========================================================================
 
 	test.describe("Filtering", () => {
-		test("filter by status shows matching posts", async ({
-			network,
-			page,
-		}) => {
+		test("filter by status shows matching posts", async ({ network, page }) => {
 			network.use(
 				http.get("*/api/protected/posts", ({ request }) => {
 					const url = new URL(request.url);
 					const status = url.searchParams.get("status");
 					if (status === "draft") {
-						return HttpResponse.json(
-							posts.filter((p) => p.status === "draft"),
-						);
+						return HttpResponse.json(posts.filter((p) => p.status === "draft"));
 					}
 					return HttpResponse.json(posts);
 				}),

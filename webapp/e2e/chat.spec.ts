@@ -50,9 +50,7 @@ test.describe("Chat", () => {
 			expect(await sendBtn.isVisible()).toBeTruthy();
 		});
 
-		test("send button is disabled when input is empty", async ({
-			page,
-		}) => {
+		test("send button is disabled when input is empty", async ({ page }) => {
 			await page.goto("/chat");
 			await page.waitForLoadState("networkidle");
 
@@ -66,10 +64,7 @@ test.describe("Chat", () => {
 	// =========================================================================
 
 	test.describe("Error Handling", () => {
-		test("handles chat API error gracefully", async ({
-			network,
-			page,
-		}) => {
+		test("handles chat API error gracefully", async ({ network, page }) => {
 			network.use(
 				http.post("*/api/protected/chat", () => {
 					return HttpResponse.json(

@@ -3,8 +3,9 @@
  * Tabbed container for account settings and billing management
  */
 
-import { CreditCard } from "lucide-react";
-import { memo } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { CreditCard, Mic, Share2 } from "lucide-react";
+import { memo, useCallback } from "react";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import {
 	Tab,
@@ -16,6 +17,15 @@ import {
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import { BillingTab } from "./BillingTab";
 import styles from "./component.module.scss";
+import { PlatformConnectionsTab } from "./PlatformConnectionsTab";
+import { VoiceProfileTab } from "./VoiceProfileTab";
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const VALID_TABS = ["billing", "voice-profile", "platforms"] as const;
+const DEFAULT_TAB = "billing";
 
 // ============================================================================
 // Component
@@ -25,6 +35,26 @@ import styles from "./component.module.scss";
  * AccountPage displays settings with tabbed navigation
  */
 export const AccountPage = memo(function AccountPage() {
+	const search = useSearch({ from: "/account" });
+	const navigate = useNavigate();
+
+	const tab = (search as { tab?: string }).tab;
+	const activeTab =
+		tab && VALID_TABS.includes(tab as (typeof VALID_TABS)[number])
+			? tab
+			: DEFAULT_TAB;
+
+	const handleTabChange = useCallback(
+		(tabId: string) => {
+			navigate({
+				to: "/account",
+				search: tabId === DEFAULT_TAB ? {} : { tab: tabId },
+				replace: true,
+			});
+		},
+		[navigate],
+	);
+
 	return (
 		<div className={styles.page}>
 			<Stack gap="lg">
@@ -37,15 +67,31 @@ export const AccountPage = memo(function AccountPage() {
 					</Text>
 				</Stack>
 
-				<Tabs defaultTab="billing" variant="line">
+				<Tabs
+					activeTab={activeTab}
+					onTabChange={handleTabChange}
+					variant="line"
+				>
 					<TabList aria-label="Settings tabs">
 						<Tab id="billing" icon={<CreditCard size={16} />}>
 							Billing
+						</Tab>
+						<Tab id="voice-profile" icon={<Mic size={16} />}>
+							Voice Profile
+						</Tab>
+						<Tab id="platforms" icon={<Share2 size={16} />}>
+							Platforms
 						</Tab>
 					</TabList>
 					<TabPanels>
 						<TabPanel id="billing">
 							<BillingTab />
+						</TabPanel>
+						<TabPanel id="voice-profile">
+							<VoiceProfileTab />
+						</TabPanel>
+						<TabPanel id="platforms">
+							<PlatformConnectionsTab />
 						</TabPanel>
 					</TabPanels>
 				</Tabs>

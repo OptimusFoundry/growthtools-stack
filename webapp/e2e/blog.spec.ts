@@ -55,10 +55,7 @@ test.describe("Blog", () => {
 	// =========================================================================
 
 	test.describe("Filtering", () => {
-		test("filter by status shows matching posts", async ({
-			network,
-			page,
-		}) => {
+		test("filter by status shows matching posts", async ({ network, page }) => {
 			network.use(
 				http.get("*/api/protected/blog", ({ request }) => {
 					const url = new URL(request.url);
@@ -85,10 +82,7 @@ test.describe("Blog", () => {
 	// =========================================================================
 
 	test.describe("Empty State", () => {
-		test("shows empty state when no blog posts", async ({
-			network,
-			page,
-		}) => {
+		test("shows empty state when no blog posts", async ({ network, page }) => {
 			network.use(
 				http.get("*/api/protected/blog", () => {
 					return HttpResponse.json([]);

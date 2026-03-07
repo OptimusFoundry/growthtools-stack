@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Plus, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { usePublishPost } from "@/hooks/usePublishPost";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
+import { Select } from "@/proto-design-system/components/forms/Select";
+import { Card } from "@/proto-design-system/components/layout/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Card } from "@/proto-design-system/components/layout/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Select } from "@/proto-design-system/components/forms/Select";
-import type { PostStatus, ContentType } from "@/types/post";
+import type { ContentType, PostStatus } from "@/types/post";
 import styles from "./page.module.scss";
 
 export const Route = createFileRoute("/posts")({
@@ -36,7 +36,10 @@ const CONTENT_TYPE_OPTIONS = [
 	{ value: "thread", label: "Thread" },
 ];
 
-const STATUS_BADGE_VARIANT: Record<PostStatus, "success" | "warning" | "error" | "default" | "primary"> = {
+const STATUS_BADGE_VARIANT: Record<
+	PostStatus,
+	"success" | "warning" | "error" | "default" | "primary"
+> = {
 	draft: "default",
 	scheduled: "warning",
 	publishing: "primary",
@@ -48,10 +51,13 @@ function PostsPage() {
 	const [statusFilter, setStatusFilter] = useState<string>("");
 	const [contentTypeFilter, setContentTypeFilter] = useState<string>("");
 
-	const filters = useMemo(() => ({
-		status: (statusFilter || undefined) as PostStatus | undefined,
-		contentType: (contentTypeFilter || undefined) as ContentType | undefined,
-	}), [statusFilter, contentTypeFilter]);
+	const filters = useMemo(
+		() => ({
+			status: (statusFilter || undefined) as PostStatus | undefined,
+			contentType: (contentTypeFilter || undefined) as ContentType | undefined,
+		}),
+		[statusFilter, contentTypeFilter],
+	);
 
 	const { posts, loading, refetch } = useGetPosts(filters);
 	const { deletePost, loading: deleting } = useDeletePost();
@@ -89,9 +95,11 @@ function PostsPage() {
 						Create, manage, and publish your social media posts
 					</p>
 				</div>
-				<Button variant="primary">
-					<Plus size={16} /> Create Post
-				</Button>
+				<Link to="/posts/new">
+					<Button variant="primary">
+						<Plus size={16} /> Create Post
+					</Button>
+				</Link>
 			</Stack>
 
 			<Stack direction="row" gap="sm">
@@ -117,50 +125,70 @@ function PostsPage() {
 						title="No posts yet"
 						description="Create your first post to get started."
 						icon={<FileText size={48} />}
-						action={<Button variant="primary"><Plus size={16} /> Create Post</Button>}
+						action={
+							<Link to="/posts/new">
+								<Button variant="primary">
+									<Plus size={16} /> Create Post
+								</Button>
+							</Link>
+						}
 					/>
 				) : (
 					<Stack gap="sm">
 						{posts.map((post) => (
-							<Card key={post.id} padding="md">
-								<Stack direction="row" justify="between" align="center">
-									<Stack gap="xs">
-										<Stack direction="row" gap="xs" align="center">
-											<strong>{post.title || post.content.slice(0, 60)}</strong>
-											<Badge variant={STATUS_BADGE_VARIANT[post.status]}>
-												{post.status}
-											</Badge>
+							<Link key={post.id} to="/posts/$id" params={{ id: post.id }}>
+								<Card padding="md" interactive>
+									<Stack direction="row" justify="between" align="center">
+										<Stack gap="xs">
+											<Stack direction="row" gap="xs" align="center">
+												<strong>
+													{post.title || post.content.slice(0, 60)}
+												</strong>
+												<Badge variant={STATUS_BADGE_VARIANT[post.status]}>
+													{post.status}
+												</Badge>
+											</Stack>
+											<Stack direction="row" gap="xs" align="center" wrap>
+												{post.tags.map((tag) => (
+													<Badge key={tag} variant="outline" size="sm">
+														{tag}
+													</Badge>
+												))}
+											</Stack>
+											<span>
+												{new Date(post.createdAt).toLocaleDateString()}
+											</span>
 										</Stack>
-										<Stack direction="row" gap="xs" align="center" wrap>
-											{post.tags.map((tag) => (
-												<Badge key={tag} variant="outline" size="sm">{tag}</Badge>
-											))}
-										</Stack>
-										<span>{new Date(post.createdAt).toLocaleDateString()}</span>
-									</Stack>
-									<Stack direction="row" gap="xs">
-										{post.status === "draft" && (
+										<Stack direction="row" gap="xs">
+											{post.status === "draft" && (
+												<Button
+													variant="primary"
+													size="sm"
+													onClick={(e) => {
+														e.preventDefault();
+														handlePublish(post.id);
+													}}
+													isLoading={publishing}
+												>
+													Publish
+												</Button>
+											)}
 											<Button
-												variant="primary"
+												variant="destructive"
 												size="sm"
-												onClick={() => handlePublish(post.id)}
-												isLoading={publishing}
+												onClick={(e) => {
+													e.preventDefault();
+													handleDelete(post.id);
+												}}
+												isLoading={deleting}
+												aria-label="Delete post"
 											>
-												Publish
+												<Trash2 size={14} />
 											</Button>
-										)}
-										<Button
-											variant="destructive"
-											size="sm"
-											onClick={() => handleDelete(post.id)}
-											isLoading={deleting}
-											aria-label="Delete post"
-										>
-											<Trash2 size={14} />
-										</Button>
+										</Stack>
 									</Stack>
-								</Stack>
-							</Card>
+								</Card>
+							</Link>
 						))}
 					</Stack>
 				)}

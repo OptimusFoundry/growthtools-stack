@@ -49,11 +49,7 @@ function Index() {
 					<h2 className={cardStyles.sectionTitle}>Quick Access</h2>
 					<div className={cardStyles.cardGrid}>
 						{quickLinks.map((link) => (
-							<Link
-								key={link.href}
-								to={link.href}
-								className={cardStyles.card}
-							>
+							<Link key={link.href} to={link.href} className={cardStyles.card}>
 								{link.icon}
 								<span className={cardStyles.cardLabel}>{link.label}</span>
 							</Link>

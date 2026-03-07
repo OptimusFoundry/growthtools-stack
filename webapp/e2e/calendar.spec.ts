@@ -40,8 +40,18 @@ test.describe("Calendar", () => {
 
 			const now = new Date();
 			const monthNames = [
-				"January", "February", "March", "April", "May", "June",
-				"July", "August", "September", "October", "November", "December",
+				"January",
+				"February",
+				"March",
+				"April",
+				"May",
+				"June",
+				"July",
+				"August",
+				"September",
+				"October",
+				"November",
+				"December",
 			];
 			const currentMonth = monthNames[now.getMonth()];
 			const currentYear = now.getFullYear().toString();

@@ -94,9 +94,7 @@ export const cacheKeys = {
 		overview: (dateRange?: string) =>
 			dateRange ? `analytics:overview:${dateRange}` : "analytics:overview",
 		timeseries: (dateRange?: string) =>
-			dateRange
-				? `analytics:timeseries:${dateRange}`
-				: "analytics:timeseries",
+			dateRange ? `analytics:timeseries:${dateRange}` : "analytics:timeseries",
 		platforms: () => "analytics:platforms",
 		topPosts: () => "analytics:top-posts",
 	},

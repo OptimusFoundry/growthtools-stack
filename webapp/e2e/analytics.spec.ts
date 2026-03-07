@@ -75,10 +75,7 @@ test.describe("Analytics", () => {
 	// =========================================================================
 
 	test.describe("Error Handling", () => {
-		test("handles 500 server error on overview", async ({
-			network,
-			page,
-		}) => {
+		test("handles 500 server error on overview", async ({ network, page }) => {
 			network.use(
 				http.get("*/api/protected/analytics/overview", () => {
 					return HttpResponse.json(

@@ -12,8 +12,8 @@ import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import { PLATFORM_DISPLAY_NAMES } from "@/types/platform";
 import type { PlatformType } from "@/types/platform";
+import { PLATFORM_DISPLAY_NAMES } from "@/types/platform";
 import styles from "./component.module.scss";
 
 function formatNumber(value: number): string {

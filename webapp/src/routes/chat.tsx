@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Bot, Send, User } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
-import { Button } from "@/proto-design-system/components/primitives/Button";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import chatStyles from "./chat.module.scss";
 
@@ -109,7 +109,10 @@ function ChatPage() {
 			setMessages((prev) =>
 				prev.map((msg) =>
 					msg.id === assistantId
-						? { ...msg, content: "Sorry, something went wrong. Please try again." }
+						? {
+								...msg,
+								content: "Sorry, something went wrong. Please try again.",
+							}
 						: msg,
 				),
 			);
@@ -142,7 +145,10 @@ function ChatPage() {
 					<div className={chatStyles.emptyChat}>
 						<Bot size={48} />
 						<h2>AI Content Assistant</h2>
-						<p>Ask me to help generate social media posts, brainstorm ideas, or refine your content.</p>
+						<p>
+							Ask me to help generate social media posts, brainstorm ideas, or
+							refine your content.
+						</p>
 					</div>
 				)}
 				{messages.map((msg) => (
@@ -154,7 +160,10 @@ function ChatPage() {
 							{msg.role === "user" ? <User size={18} /> : <Bot size={18} />}
 						</div>
 						<div className={chatStyles.messageContent}>
-							{msg.content || (streaming && msg.role === "assistant" ? <Spinner size="sm" /> : null)}
+							{msg.content ||
+								(streaming && msg.role === "assistant" ? (
+									<Spinner size="sm" />
+								) : null)}
 						</div>
 					</div>
 				))}
