@@ -140,7 +140,7 @@ function WizardInner({
 				}
 			}
 		}
-	}, [sse.phase, state.selectedPlatforms, state.generationProgress]);
+	}, [sse.phase, state.selectedPlatforms]);
 
 	// Sync SSE thread completions into wizard state
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
