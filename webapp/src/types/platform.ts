@@ -47,3 +47,25 @@ export const PLATFORM_CHAR_LIMITS: Record<PlatformType, number> = {
 	tiktok: 2200,
 	pinterest: 500,
 };
+
+export const PLATFORM_MEDIA_REQUIRED: Record<PlatformType, boolean> = {
+	x: false,
+	linkedin: false,
+	bluesky: false,
+	facebook: false,
+	instagram: true,
+	threads: false,
+	tiktok: true,
+	pinterest: true,
+};
+
+export const PLATFORM_SUPPORTS_THREADS: Record<PlatformType, boolean> = {
+	x: true,
+	linkedin: false,
+	bluesky: true,
+	facebook: false,
+	instagram: false,
+	threads: true,
+	tiktok: false,
+	pinterest: false,
+};

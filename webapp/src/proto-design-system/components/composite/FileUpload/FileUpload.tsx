@@ -1,5 +1,6 @@
 import {
 	AlertCircle,
+	CheckCircle,
 	File,
 	FileArchive,
 	FileText,
@@ -131,7 +132,6 @@ export function FileUpload({
 				newFiles.push({
 					file,
 					id: generateId(),
-					progress: error ? undefined : 0,
 					error: error || undefined,
 				});
 			}
@@ -251,9 +251,17 @@ export function FileUpload({
 				<ul className={styles.fileList}>
 					{files.map((uploadedFile) => {
 						const FileIcon = getFileIcon(uploadedFile.file.type);
+						const isReady =
+							!uploadedFile.error &&
+							(uploadedFile.progress === undefined ||
+								uploadedFile.progress >= 100);
 						return (
 							<li key={uploadedFile.id} className={styles.fileItem}>
-								<FileIcon className={styles.fileIcon} />
+								{isReady ? (
+									<CheckCircle className={styles.successIcon} />
+								) : (
+									<FileIcon className={styles.fileIcon} />
+								)}
 								<div className={styles.fileInfo}>
 									<span className={styles.fileName}>
 										{uploadedFile.file.name}
@@ -268,6 +276,7 @@ export function FileUpload({
 										</span>
 									)}
 									{uploadedFile.progress !== undefined &&
+										uploadedFile.progress < 100 &&
 										!uploadedFile.error && (
 											<div className={styles.progressBar}>
 												<div

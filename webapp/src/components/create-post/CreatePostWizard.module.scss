@@ -1,0 +1,155 @@
+@use "@/proto-design-system/mixins" as *;
+
+// Page layout
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+	padding: var(--space-4);
+	width: 100%;
+
+	@include breakpoint(md) {
+		padding: var(--space-5);
+	}
+}
+
+// Two-column layout
+.twoColumn {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+
+	@include breakpoint(lg) {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-6);
+		align-items: start;
+	}
+}
+
+.actions {
+	@include breakpoint-down(sm) {
+		flex-direction: column-reverse;
+
+		> * {
+			width: 100%;
+		}
+	}
+}
+
+// Preview panel
+.previewPanel {
+	@include breakpoint(lg) {
+		position: sticky;
+		top: var(--space-4);
+	}
+}
+
+// Generation progress
+.progressList {
+	width: 100%;
+}
+
+.progressRow {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-2) 0;
+	border-bottom: 1px solid var(--color-border);
+
+	&:last-child {
+		border-bottom: none;
+	}
+}
+
+.progressPlatform {
+	flex: 1;
+	text-align: left;
+}
+
+.statusDone {
+	color: var(--color-success);
+}
+
+.statusError {
+	color: var(--color-error);
+}
+
+.statusGenerating {
+	color: var(--color-warning);
+	animation: spin 1s linear infinite;
+}
+
+.statusPending {
+	width: 18px;
+	height: 18px;
+	border-radius: var(--radius-full);
+	background: var(--color-base-100);
+}
+
+// Preview content
+.tabPanelContent {
+	padding-top: var(--space-4);
+}
+
+.previewHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--space-2);
+}
+
+.threadSegment {
+	padding: var(--space-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+}
+
+.segmentHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--space-2);
+}
+
+// Publish radio options
+.publishOptions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.publishOption {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-2);
+	padding: var(--space-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	transition: border-color var(--duration-normal) var(--ease-out);
+
+	&:hover {
+		border-color: var(--color-border-hover);
+	}
+
+	&.publishOptionActive {
+		border-color: var(--color-primary);
+	}
+}
+
+.publishOptionContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-0-5);
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}

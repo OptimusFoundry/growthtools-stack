@@ -156,6 +156,13 @@
   width: var(--space-8);
 }
 
+.successIcon {
+  color: var(--color-success);
+  flex-shrink: 0;
+  height: var(--space-8);
+  width: var(--space-8);
+}
+
 .fileInfo {
   display: flex;
   flex: 1;
