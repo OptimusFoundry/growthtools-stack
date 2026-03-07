@@ -2,23 +2,56 @@ import { useCallback, useRef, useState } from "react";
 import type { WizardContentType } from "@/components/create-post/useCreatePostWizard";
 import type { PlatformType } from "@/types/platform";
 
-type Phase = "idle" | "generating";
+type Phase = "idle" | "describing" | "generating" | "adapting";
+
+export interface ImagePayload {
+	mime_type: string;
+	data: string;
+}
+
+export interface ThreadSegment {
+	content: string;
+	image_index?: number;
+}
 
 interface SSEContentGenerateState {
 	phase: Phase;
+	baseContent: string;
+	streamingText: Partial<Record<PlatformType, string>>;
 	platformContent: Partial<Record<PlatformType, string>>;
-	threadContent: Partial<Record<PlatformType, string[]>>;
+	threadContent: Partial<Record<PlatformType, ThreadSegment[]>>;
 	loading: boolean;
 	error: string | null;
 }
 
 const initialState: SSEContentGenerateState = {
 	phase: "idle",
+	baseContent: "",
+	streamingText: {},
 	platformContent: {},
 	threadContent: {},
 	loading: false,
 	error: null,
 };
+
+export async function filesToBase64(files: File[]): Promise<ImagePayload[]> {
+	return Promise.all(
+		files.map(
+			(file) =>
+				new Promise<ImagePayload>((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => {
+						const result = reader.result as string;
+						// Strip "data:image/jpeg;base64," prefix
+						const base64 = result.split(",")[1];
+						resolve({ mime_type: file.type, data: base64 });
+					};
+					reader.onerror = reject;
+					reader.readAsDataURL(file);
+				}),
+		),
+	);
+}
 
 export function useSSEContentGenerate() {
 	const [state, setState] = useState<SSEContentGenerateState>(initialState);
@@ -29,6 +62,7 @@ export function useSSEContentGenerate() {
 			prompt: string,
 			platforms: PlatformType[],
 			contentType: WizardContentType = "text",
+			images?: ImagePayload[],
 		) => {
 			abortRef.current?.abort();
 			const controller = new AbortController();
@@ -37,10 +71,19 @@ export function useSSEContentGenerate() {
 			setState({
 				...initialState,
 				loading: true,
-				phase: "generating",
+				phase: images && images.length > 0 ? "describing" : "generating",
 			});
 
 			try {
+				const body: Record<string, unknown> = {
+					prompt,
+					platforms,
+					content_type: contentType,
+				};
+				if (images && images.length > 0) {
+					body.images = images;
+				}
+
 				const res = await fetch(
 					`${import.meta.env.VITE_API_URL}/api/protected/content/generate/stream`,
 					{
@@ -50,11 +93,7 @@ export function useSSEContentGenerate() {
 							Accept: "text/event-stream",
 						},
 						credentials: "include",
-						body: JSON.stringify({
-							prompt,
-							platforms,
-							content_type: contentType,
-						}),
+						body: JSON.stringify(body),
 						signal: controller.signal,
 					},
 				);
@@ -83,7 +122,6 @@ export function useSSEContentGenerate() {
 
 					buffer += decoder.decode(value, { stream: true });
 					const lines = buffer.split("\n");
-					// Keep the last potentially incomplete line in the buffer
 					buffer = lines.pop() ?? "";
 
 					let currentEvent = "";
@@ -97,7 +135,62 @@ export function useSSEContentGenerate() {
 						if (line.startsWith("data: ")) {
 							const data = line.slice(6);
 
-							if (currentEvent === "platform_done") {
+							if (currentEvent === "phase") {
+								const payload = JSON.parse(data) as {
+									phase: string;
+									platform: string;
+								};
+								if (payload.phase === "describing") {
+									setState((prev) => ({
+										...prev,
+										phase: "describing",
+									}));
+								} else if (payload.phase === "generating") {
+									setState((prev) => ({
+										...prev,
+										phase: "generating",
+									}));
+								} else if (
+									payload.phase === "adapting" ||
+									payload.phase === "threading"
+								) {
+									setState((prev) => ({
+										...prev,
+										phase: "adapting",
+									}));
+								}
+							} else if (currentEvent === "chunk") {
+								const payload = JSON.parse(data) as {
+									platform: string;
+									text: string;
+								};
+								if (!payload.platform) {
+									// Base content chunk
+									setState((prev) => ({
+										...prev,
+										baseContent: prev.baseContent + payload.text,
+									}));
+								} else {
+									// Per-platform streaming chunk
+									setState((prev) => ({
+										...prev,
+										streamingText: {
+											...prev.streamingText,
+											[payload.platform]:
+												(prev.streamingText[payload.platform as PlatformType] ??
+													"") + payload.text,
+										},
+									}));
+								}
+							} else if (currentEvent === "base_done") {
+								const payload = JSON.parse(data) as {
+									content: string;
+								};
+								setState((prev) => ({
+									...prev,
+									baseContent: payload.content,
+								}));
+							} else if (currentEvent === "platform_done") {
 								const payload = JSON.parse(data) as {
 									platform: string;
 									content: string;
@@ -112,7 +205,7 @@ export function useSSEContentGenerate() {
 							} else if (currentEvent === "thread_done") {
 								const payload = JSON.parse(data) as {
 									platform: string;
-									segments: string[];
+									segments: ThreadSegment[];
 								};
 								setState((prev) => ({
 									...prev,

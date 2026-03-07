@@ -1,3 +1,5 @@
+import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
+import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import { PlatformPostCard } from "./PlatformPostCard";
 import { ThreadView } from "./ThreadView";
@@ -5,8 +7,9 @@ import { ThreadView } from "./ThreadView";
 interface PlatformPreviewCardProps {
 	platform: PlatformType;
 	content: string;
-	threadSegments?: string[];
+	threadSegments?: ThreadSegment[];
 	isThread: boolean;
+	uploadedMedia?: MediaItem[];
 	onContentChange: (content: string) => void;
 	onThreadSegmentChange: (index: number, content: string) => void;
 }
@@ -16,6 +19,7 @@ export function PlatformPreviewCard({
 	content,
 	threadSegments,
 	isThread,
+	uploadedMedia,
 	onContentChange,
 	onThreadSegmentChange,
 }: PlatformPreviewCardProps) {
@@ -24,6 +28,7 @@ export function PlatformPreviewCard({
 			<ThreadView
 				platform={platform}
 				segments={threadSegments}
+				uploadedMedia={uploadedMedia}
 				onSegmentChange={onThreadSegmentChange}
 			/>
 		);

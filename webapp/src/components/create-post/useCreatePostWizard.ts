@@ -1,4 +1,5 @@
 import { useCallback, useReducer } from "react";
+import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
 import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
@@ -17,7 +18,7 @@ export interface WizardState {
 	generated: boolean;
 	generationProgress: Partial<Record<PlatformType, GenerationStatus>>;
 	platformContent: Partial<Record<PlatformType, string>>;
-	threadContent: Partial<Record<PlatformType, string[]>>;
+	threadContent: Partial<Record<PlatformType, ThreadSegment[]>>;
 	publishMode: PublishMode;
 	scheduledAt: string;
 	error: string | null;
@@ -40,7 +41,7 @@ type WizardAction =
 	| {
 			type: "SET_THREAD_CONTENT";
 			platform: PlatformType;
-			thread: string[];
+			thread: ThreadSegment[];
 	  }
 	| { type: "GENERATION_COMPLETE" }
 	| { type: "GENERATION_FAILED" }
@@ -157,7 +158,12 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 		case "UPDATE_THREAD_SEGMENT": {
 			const current = state.threadContent[action.platform] ?? [];
 			const updated = [...current];
-			updated[action.index] = action.content;
+			if (updated[action.index]) {
+				updated[action.index] = {
+					...updated[action.index],
+					content: action.content,
+				};
+			}
 			return {
 				...state,
 				threadContent: {
@@ -210,7 +216,7 @@ export function useCreatePostWizard() {
 		[],
 	);
 	const setThreadContent = useCallback(
-		(platform: PlatformType, thread: string[]) =>
+		(platform: PlatformType, thread: ThreadSegment[]) =>
 			dispatch({ type: "SET_THREAD_CONTENT", platform, thread }),
 		[],
 	);

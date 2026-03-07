@@ -3,7 +3,10 @@ import { useCallback, useEffect } from "react";
 import { useCreatePost } from "@/hooks/useCreatePost";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
-import { useSSEContentGenerate } from "@/hooks/useSSEContentGenerate";
+import {
+	filesToBase64,
+	useSSEContentGenerate,
+} from "@/hooks/useSSEContentGenerate";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
@@ -36,15 +39,21 @@ export function CreatePostWizard() {
 		}
 	}, [sse.platformContent]);
 
-	// When SSE phase changes to generating, mark all platforms as generating
+	// When SSE phase changes, update platform progress accordingly
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
 	useEffect(() => {
-		if (sse.phase === "generating") {
+		if (sse.phase === "describing" || sse.phase === "generating") {
 			for (const platform of state.selectedPlatforms) {
 				wizard.setPlatformProgress(platform, "generating");
 			}
+		} else if (sse.phase === "adapting") {
+			for (const platform of state.selectedPlatforms) {
+				if (state.generationProgress[platform] !== "done") {
+					wizard.setPlatformProgress(platform, "generating");
+				}
+			}
 		}
-	}, [sse.phase, state.selectedPlatforms]);
+	}, [sse.phase, state.selectedPlatforms, state.generationProgress]);
 
 	// Sync SSE thread completions into wizard state
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
@@ -89,20 +98,35 @@ export function CreatePostWizard() {
 
 		wizard.startGeneration();
 
-		// Upload pending files first, then start SSE generation
+		// Upload pending files + convert to base64 for AI, then start SSE generation
 		const uploadAndGenerate = async () => {
-			for (const pendingFile of state.pendingFiles) {
-				if (!pendingFile.error) {
-					try {
-						const media = await uploadMedia(pendingFile.file);
-						wizard.addUploadedMedia(media);
-					} catch {
-						// continue with remaining files
-					}
-				}
-			}
+			const validFiles = state.pendingFiles
+				.filter((f) => !f.error)
+				.map((f) => f.file);
 
-			sse.generate(state.blurb, state.selectedPlatforms, state.contentType);
+			// S3 upload (for publishing) and base64 (for AI) run in parallel
+			const [imagePayloads] = await Promise.all([
+				validFiles.length > 0 ? filesToBase64(validFiles) : Promise.resolve([]),
+				(async () => {
+					for (const pendingFile of state.pendingFiles) {
+						if (!pendingFile.error) {
+							try {
+								const media = await uploadMedia(pendingFile.file);
+								wizard.addUploadedMedia(media);
+							} catch {
+								// continue with remaining files
+							}
+						}
+					}
+				})(),
+			]);
+
+			sse.generate(
+				state.blurb,
+				state.selectedPlatforms,
+				state.contentType,
+				imagePayloads.length > 0 ? imagePayloads : undefined,
+			);
 		};
 
 		uploadAndGenerate();
@@ -234,9 +258,12 @@ export function CreatePostWizard() {
 					generationProgress={state.generationProgress}
 					generating={state.generating}
 					generated={state.generated}
+					baseContent={sse.baseContent}
+					ssePhase={sse.phase}
 					publishMode={state.publishMode}
 					scheduledAt={state.scheduledAt}
 					submitting={state.submitting}
+					uploadedMedia={state.uploadedMedia}
 					onUpdateContent={wizard.updatePlatformContent}
 					onUpdateThreadSegment={wizard.updateThreadSegment}
 					onSetPublishMode={wizard.setPublishMode}
