@@ -21,6 +21,7 @@ export interface ApiPost {
 	base_content?: string;
 	source: PostSource;
 	github_event_id?: string;
+	platforms: string[];
 	created_at: string;
 	updated_at: string;
 }

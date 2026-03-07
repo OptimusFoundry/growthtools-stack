@@ -23,6 +23,7 @@ export function toPost(api: ApiPost): Post {
 		baseContent: api.base_content,
 		source: api.source,
 		githubEventId: api.github_event_id,
+		platforms: api.platforms ?? [],
 		createdAt: api.created_at,
 		updatedAt: api.updated_at,
 	};

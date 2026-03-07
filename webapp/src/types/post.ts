@@ -34,6 +34,7 @@ export interface Post {
 	baseContent?: string;
 	source: PostSource;
 	githubEventId?: string;
+	platforms: string[];
 	createdAt: string;
 	updatedAt: string;
 }

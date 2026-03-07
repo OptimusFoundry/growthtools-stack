@@ -300,18 +300,20 @@ function CalendarPage() {
 															Publish
 														</Button>
 													)}
-													<Button
-														variant="destructive"
-														size="sm"
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															setDeleteTargetId(post.id);
-														}}
-														aria-label="Delete post"
-													>
-														<Trash2 size={14} />
-													</Button>
+													{post.status !== "published" && post.status !== "partially_published" && (
+														<Button
+															variant="destructive"
+															size="sm"
+															onClick={(e) => {
+																e.preventDefault();
+																e.stopPropagation();
+																setDeleteTargetId(post.id);
+															}}
+															aria-label="Delete post"
+														>
+															<Trash2 size={14} />
+														</Button>
+													)}
 												</Stack>
 											</Stack>
 										</Card>
