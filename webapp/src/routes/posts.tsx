@@ -12,8 +12,9 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import type { ContentType, PostStatus } from "@/types/post";
+import type { ContentType, PostSource, PostStatus } from "@/types/post";
 import styles from "./page.module.scss";
 
 export const Route = createFileRoute("/posts")({
@@ -48,6 +49,30 @@ const STATUS_BADGE_VARIANT: Record<
 	failed: "error",
 	partially_published: "warning",
 };
+
+const SOURCE_LABELS: Record<PostSource, string> = {
+	manual: "Manual",
+	ai_generated: "AI Generated",
+	github_event: "GitHub",
+	bulk_import: "Import",
+};
+
+function formatDate(iso: string): string {
+	return new Date(iso).toLocaleDateString(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+function formatDateTime(iso: string): string {
+	return new Date(iso).toLocaleString(undefined, {
+		month: "short",
+		day: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	});
+}
 
 function PostsPage() {
 	const [statusFilter, setStatusFilter] = useState<string>("");
@@ -144,25 +169,46 @@ function PostsPage() {
 							<Link key={post.id} to="/posts/$id" params={{ id: post.id }}>
 								<Card padding="md" interactive>
 									<Stack direction="row" justify="between" align="center">
-										<Stack gap="xs">
-											<Stack direction="row" gap="xs" align="center">
-												<strong>
+										<Stack gap="md">
+											<Stack direction="row" gap="sm" align="center">
+												<Text size="sm" weight="semibold">
 													{post.title || post.content.slice(0, 60)}
-												</strong>
-												<Badge variant={STATUS_BADGE_VARIANT[post.status]}>
+												</Text>
+												<Badge variant={STATUS_BADGE_VARIANT[post.status]} size="sm">
 													{post.status}
 												</Badge>
 											</Stack>
-											<Stack direction="row" gap="xs" align="center" wrap>
-												{post.tags.map((tag) => (
-													<Badge key={tag} variant="outline" size="sm">
-														{tag}
-													</Badge>
-												))}
+											{post.tags.length > 0 && (
+												<Stack direction="row" gap="xs" align="center" wrap>
+													{post.tags.map((tag) => (
+														<Badge key={tag} variant="outline" size="sm">
+															{tag}
+														</Badge>
+													))}
+												</Stack>
+											)}
+											<Stack direction="row" gap="md" align="center">
+												<Text size="xs" color="muted">
+													<Text as="span" size="xs" color="secondary" weight="medium">Source: </Text>
+													{SOURCE_LABELS[post.source] ?? post.source}
+												</Text>
+												<Text size="xs" color="muted">
+													<Text as="span" size="xs" color="secondary" weight="medium">Created: </Text>
+													{formatDate(post.createdAt)}
+												</Text>
+												{post.scheduledAt && (
+													<Text size="xs" color="muted">
+														<Text as="span" size="xs" color="secondary" weight="medium">Scheduled: </Text>
+														{formatDateTime(post.scheduledAt)}
+													</Text>
+												)}
+												{post.publishedAt && (
+													<Text size="xs" color="muted">
+														<Text as="span" size="xs" color="secondary" weight="medium">Published: </Text>
+														{formatDateTime(post.publishedAt)}
+													</Text>
+												)}
 											</Stack>
-											<span>
-												{new Date(post.createdAt).toLocaleDateString()}
-											</span>
 										</Stack>
 										<Stack direction="row" gap="xs">
 											{post.status === "draft" && (
