@@ -1,6 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect } from "react";
-import { useCreatePost } from "@/hooks/useCreatePost";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
@@ -82,11 +81,15 @@ function EditPostWizard({ editPostId }: { editPostId: string }) {
 		platformPosts,
 	);
 
+	const isPublishing =
+		post.status === "publishing" || post.status === "published";
+
 	return (
 		<WizardInner
 			editPostId={editPostId}
 			initialOverrides={overrides}
 			initialBaseContent={post.baseContent}
+			readOnly={isPublishing}
 		/>
 	);
 }
@@ -95,12 +98,14 @@ interface WizardInnerProps {
 	editPostId?: string;
 	initialOverrides?: Partial<WizardState>;
 	initialBaseContent?: string;
+	readOnly?: boolean;
 }
 
 function WizardInner({
 	editPostId,
 	initialOverrides,
 	initialBaseContent,
+	readOnly = false,
 }: WizardInnerProps = {}) {
 	const isEditMode = Boolean(editPostId);
 	const navigate = useNavigate();
@@ -108,7 +113,6 @@ function WizardInner({
 	const { state } = wizard;
 
 	const sse = useSSEContentGenerate();
-	const { createPost } = useCreatePost();
 	const { publishPost } = usePublishPost();
 	const { saveDraft, loading: savingDraft } = useSaveDraft();
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
@@ -232,18 +236,31 @@ function WizardInner({
 		wizard.setError(null);
 
 		try {
-			const firstPlatform = state.selectedPlatforms[0];
-			const content = state.platformContent[firstPlatform] ?? state.blurb;
+			const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
+				(platform) => {
+					const entry: PlatformContentInput = {
+						platform,
+						content: state.platformContent[platform],
+					};
+					const segments = state.threadContent[platform];
+					if (segments && segments.length > 0) {
+						entry.thread_segments = segments;
+					}
+					return entry;
+				},
+			);
 
-			const post = await createPost({
-				content,
+			const baseContentValue = sse.baseContent || initialBaseContent;
+			const post = await saveDraft({
+				content: state.blurb,
 				content_type: state.contentType,
-				status: "draft",
+				ai_generated: state.generated,
+				base_content: baseContentValue || undefined,
 				media_ids:
 					state.uploadedMedia.length > 0
 						? state.uploadedMedia.map((m) => m.id)
 						: undefined,
-				platforms: [...state.selectedPlatforms],
+				platforms,
 			});
 
 			await publishPost(post.id, [...state.selectedPlatforms]);
@@ -256,11 +273,15 @@ function WizardInner({
 	}, [
 		state.selectedPlatforms,
 		state.platformContent,
+		state.threadContent,
 		state.blurb,
 		state.contentType,
+		state.generated,
 		state.uploadedMedia,
 		wizard,
-		createPost,
+		sse,
+		initialBaseContent,
+		saveDraft,
 		publishPost,
 		navigate,
 	]);
@@ -275,19 +296,31 @@ function WizardInner({
 		wizard.setError(null);
 
 		try {
-			const firstPlatform = state.selectedPlatforms[0];
-			const content = state.platformContent[firstPlatform] ?? state.blurb;
+			const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
+				(platform) => {
+					const entry: PlatformContentInput = {
+						platform,
+						content: state.platformContent[platform],
+					};
+					const segments = state.threadContent[platform];
+					if (segments && segments.length > 0) {
+						entry.thread_segments = segments;
+					}
+					return entry;
+				},
+			);
 
-			const post = await createPost({
-				content,
+			const baseContentValue = sse.baseContent || initialBaseContent;
+			const post = await saveDraft({
+				content: state.blurb,
 				content_type: state.contentType,
-				status: "draft",
-				scheduled_at: state.scheduledAt,
+				ai_generated: state.generated,
+				base_content: baseContentValue || undefined,
 				media_ids:
 					state.uploadedMedia.length > 0
 						? state.uploadedMedia.map((m) => m.id)
 						: undefined,
-				platforms: [...state.selectedPlatforms],
+				platforms,
 			});
 
 			await schedulePost(post.id, state.scheduledAt);
@@ -301,11 +334,15 @@ function WizardInner({
 		state.scheduledAt,
 		state.selectedPlatforms,
 		state.platformContent,
+		state.threadContent,
 		state.blurb,
 		state.contentType,
+		state.generated,
 		state.uploadedMedia,
 		wizard,
-		createPost,
+		sse,
+		initialBaseContent,
+		saveDraft,
 		schedulePost,
 		navigate,
 	]);
@@ -391,14 +428,25 @@ function WizardInner({
 					blurb={state.blurb}
 					contentType={state.contentType}
 					selectedPlatforms={state.selectedPlatforms}
+					platformContent={state.platformContent}
 					pendingFiles={state.pendingFiles}
 					generating={state.generating}
 					generated={state.generated}
+					publishMode={state.publishMode}
+					scheduledAt={state.scheduledAt}
+					submitting={state.submitting}
+					savingDraft={savingDraft || updatingDraft}
+					readOnly={readOnly}
 					onBlurbChange={wizard.setBlurb}
 					onContentTypeChange={wizard.setContentType}
 					onTogglePlatform={wizard.togglePlatform}
 					onFilesChange={wizard.setPendingFiles}
 					onGenerate={handleGenerate}
+					onSetPublishMode={wizard.setPublishMode}
+					onSetScheduledAt={wizard.setScheduledAt}
+					onPublish={handlePublish}
+					onSchedule={handleSchedule}
+					onSaveDraft={handleSaveDraft}
 				/>
 				<PreviewStep
 					selectedPlatforms={state.selectedPlatforms}
@@ -410,18 +458,10 @@ function WizardInner({
 					generated={state.generated}
 					baseContent={sse.baseContent || initialBaseContent || ""}
 					ssePhase={sse.phase}
-					publishMode={state.publishMode}
-					scheduledAt={state.scheduledAt}
-					submitting={state.submitting}
 					uploadedMedia={state.uploadedMedia}
+					readOnly={readOnly}
 					onUpdateContent={wizard.updatePlatformContent}
 					onUpdateThreadSegment={wizard.updateThreadSegment}
-					onSetPublishMode={wizard.setPublishMode}
-					onSetScheduledAt={wizard.setScheduledAt}
-					onPublish={handlePublish}
-					onSchedule={handleSchedule}
-					onSaveDraft={handleSaveDraft}
-					savingDraft={savingDraft || updatingDraft}
 				/>
 			</div>
 		</div>

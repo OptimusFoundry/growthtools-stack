@@ -2,8 +2,10 @@ import { useCallback } from "react";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
 import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
 import { FileUpload } from "@/proto-design-system/components/composite/FileUpload";
+import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
+import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
@@ -14,39 +16,69 @@ import {
 	type PlatformType,
 } from "@/types/platform";
 import styles from "./CreatePostWizard.module.scss";
-import type { WizardContentType } from "./useCreatePostWizard";
+import type { PublishMode, WizardContentType } from "./useCreatePostWizard";
 
 interface ComposeStepProps {
 	blurb: string;
 	contentType: WizardContentType;
 	selectedPlatforms: PlatformType[];
+	platformContent: Partial<Record<PlatformType, string>>;
 	pendingFiles: UploadedFile[];
 	generating: boolean;
 	generated: boolean;
+	publishMode: PublishMode;
+	scheduledAt: string;
+	submitting: boolean;
+	savingDraft: boolean;
+	readOnly?: boolean;
 	onBlurbChange: (blurb: string) => void;
 	onContentTypeChange: (contentType: WizardContentType) => void;
 	onTogglePlatform: (platform: PlatformType) => void;
 	onFilesChange: (files: UploadedFile[]) => void;
 	onGenerate: () => void;
+	onSetPublishMode: (mode: PublishMode) => void;
+	onSetScheduledAt: (scheduledAt: string) => void;
+	onPublish: () => void;
+	onSchedule: () => void;
+	onSaveDraft: () => void;
 }
 
 export function ComposeStep({
 	blurb,
 	contentType,
 	selectedPlatforms,
+	platformContent,
 	pendingFiles,
 	generating,
 	generated,
+	publishMode,
+	scheduledAt,
+	submitting,
+	savingDraft,
+	readOnly = false,
 	onBlurbChange,
 	onContentTypeChange,
 	onTogglePlatform,
 	onFilesChange,
 	onGenerate,
+	onSetPublishMode,
+	onSetScheduledAt,
+	onPublish,
+	onSchedule,
+	onSaveDraft,
 }: ComposeStepProps) {
 	const { connections } = usePlatformConnections();
 	const activeConnections = connections.filter((c) => c.status === "active");
 
 	const canGenerate = blurb.trim().length > 0 && selectedPlatforms.length > 0;
+
+	// Detect if platforms changed after generation
+	const generatedPlatforms = Object.keys(platformContent) as PlatformType[];
+	const platformsChanged =
+		generated &&
+		generatedPlatforms.length > 0 &&
+		(selectedPlatforms.length !== generatedPlatforms.length ||
+			selectedPlatforms.some((p) => !platformContent[p]));
 
 	const threadSupported = selectedPlatforms.some(
 		(p) => PLATFORM_SUPPORTS_THREADS[p],
@@ -70,6 +102,7 @@ export function ComposeStep({
 				onChange={(e) => onBlurbChange(e.target.value)}
 				fullWidth
 				required
+				disabled={readOnly}
 			/>
 
 			{/* Platforms — inline tags */}
@@ -86,6 +119,7 @@ export function ComposeStep({
 								checked={selectedPlatforms.includes(conn.platform)}
 								onChange={() => onTogglePlatform(conn.platform)}
 								size="sm"
+								disabled={readOnly}
 							/>
 						))}
 					</Stack>
@@ -110,42 +144,145 @@ export function ComposeStep({
 						checked={contentType === "thread"}
 						onChange={handleContentTypeToggle}
 						size="sm"
+						disabled={readOnly}
 					/>
 				</Stack>
 			)}
 
 			{threadSupported && <Divider />}
 
-			{/* Media */}
-			<Stack gap="sm">
-				<Text size="sm" weight="medium">
-					Media
-				</Text>
-				<FileUpload
-					accept="image/*,video/*"
-					multiple
-					maxSize={50 * 1024 * 1024}
-					maxFiles={10}
-					files={pendingFiles}
-					onFilesChange={onFilesChange}
-					label="Drag & drop files here"
-					description="or click to browse"
-				/>
-			</Stack>
+			{/* Media — hidden when read-only */}
+			{!readOnly && (
+				<>
+					<Stack gap="sm">
+						<Text size="sm" weight="medium">
+							Media
+						</Text>
+						<FileUpload
+							accept="image/*,video/*"
+							multiple
+							maxSize={50 * 1024 * 1024}
+							maxFiles={10}
+							files={pendingFiles}
+							onFilesChange={onFilesChange}
+							label="Drag & drop files here"
+							description="or click to browse"
+						/>
+					</Stack>
 
-			<Divider />
+					<Divider />
 
-			{/* Actions */}
-			<Stack direction="row" gap="sm" justify="end" className={styles.actions}>
-				<Button
-					variant="primary"
-					onClick={onGenerate}
-					disabled={!canGenerate || generating}
-					isLoading={generating}
-				>
-					{generated ? "Regenerate" : "Generate Content"}
-				</Button>
-			</Stack>
+					{/* Generate */}
+					<Stack direction="row" gap="sm" justify="end" className={styles.actions}>
+						<Button
+							variant="primary"
+							onClick={onGenerate}
+							disabled={!canGenerate || generating}
+							isLoading={generating}
+						>
+							{generated ? "Regenerate" : "Generate Content"}
+						</Button>
+					</Stack>
+				</>
+			)}
+
+			{/* Publish options — shown after content is generated, hidden when read-only */}
+			{generated && !readOnly && (
+				<>
+					<Divider />
+
+					{platformsChanged && (
+						<Alert variant="warning">
+							Platforms changed since last generation. Regenerate content before
+							publishing.
+						</Alert>
+					)}
+
+					<div className={styles.publishOptions}>
+						<label
+							className={`${styles.publishOption} ${publishMode === "now" ? styles.publishOptionActive : ""}`}
+						>
+							<input
+								type="radio"
+								name="publishMode"
+								value="now"
+								checked={publishMode === "now"}
+								onChange={() => onSetPublishMode("now")}
+								disabled={submitting}
+							/>
+							<div className={styles.publishOptionContent}>
+								<Text size="sm" weight="medium">
+									Send immediately
+								</Text>
+								<Text size="xs" color="muted">
+									Publish to all selected platforms right now
+								</Text>
+							</div>
+						</label>
+						<label
+							className={`${styles.publishOption} ${publishMode === "schedule" ? styles.publishOptionActive : ""}`}
+						>
+							<input
+								type="radio"
+								name="publishMode"
+								value="schedule"
+								checked={publishMode === "schedule"}
+								onChange={() => onSetPublishMode("schedule")}
+								disabled={submitting}
+							/>
+							<div className={styles.publishOptionContent}>
+								<Text size="sm" weight="medium">
+									Schedule for later
+								</Text>
+								<Text size="xs" color="muted">
+									Choose a date and time
+								</Text>
+							</div>
+						</label>
+					</div>
+
+					{publishMode === "schedule" && (
+						<TextField
+							type="datetime-local"
+							label="Date & Time"
+							value={scheduledAt}
+							onChange={(e) => onSetScheduledAt(e.target.value)}
+						/>
+					)}
+
+					<Stack direction="row" gap="sm" justify="end">
+						{publishMode === "now" && (
+							<Button
+								variant="primary"
+								onClick={onPublish}
+								isLoading={submitting}
+								disabled={submitting || platformsChanged}
+							>
+								Publish to {selectedPlatforms.length} Platform
+								{selectedPlatforms.length !== 1 ? "s" : ""}
+							</Button>
+						)}
+						{publishMode === "schedule" && scheduledAt && (
+							<Button
+								variant="primary"
+								onClick={onSchedule}
+								isLoading={submitting}
+								disabled={submitting || platformsChanged}
+							>
+								Schedule Post
+							</Button>
+						)}
+						<Button
+							variant="ghost"
+							onClick={onSaveDraft}
+							isLoading={savingDraft}
+							disabled={savingDraft || submitting}
+						>
+							Save as Draft
+						</Button>
+					</Stack>
+				</>
+			)}
 		</Stack>
 	);
 }

@@ -10,6 +10,7 @@ interface ThreadViewProps {
 	platform: PlatformType;
 	segments: ThreadSegment[];
 	uploadedMedia?: MediaItem[];
+	readOnly?: boolean;
 	onSegmentChange: (index: number, content: string) => void;
 }
 
@@ -17,6 +18,7 @@ export function ThreadView({
 	platform,
 	segments,
 	uploadedMedia,
+	readOnly,
 	onSegmentChange,
 }: ThreadViewProps) {
 	const [expanded, setExpanded] = useState(false);
@@ -36,6 +38,7 @@ export function ThreadView({
 				content={segments[0]?.content ?? ""}
 				onChange={(content) => onSegmentChange(0, content)}
 				media={media.length > 0 ? media : undefined}
+				readOnly={readOnly}
 			/>
 		);
 	}
@@ -51,6 +54,7 @@ export function ThreadView({
 						? getMediaForSegment(segments[0])
 						: undefined
 				}
+				readOnly={readOnly}
 			/>
 
 			<button
@@ -87,6 +91,7 @@ export function ThreadView({
 										content={segment.content}
 										onChange={(content) => onSegmentChange(i + 1, content)}
 										media={media.length > 0 ? media : undefined}
+										readOnly={readOnly}
 									/>
 								</div>
 							);

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Plus, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -12,6 +12,7 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import type { ContentType, PostStatus } from "@/types/post";
 import styles from "./page.module.scss";
 
@@ -62,15 +63,18 @@ function PostsPage() {
 	const { posts, loading, refetch } = useGetPosts(filters);
 	const { deletePost, loading: deleting } = useDeletePost();
 	const { publishPost, loading: publishing } = usePublishPost();
+	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-	const handleDelete = async (id: string) => {
+	const handleDeleteConfirm = useCallback(async () => {
+		if (!deleteTargetId) return;
 		try {
-			await deletePost(id);
+			await deletePost(deleteTargetId);
+			setDeleteTargetId(null);
 			refetch();
 		} catch {
 			// error is surfaced via hook state
 		}
-	};
+	}, [deleteTargetId, deletePost, refetch]);
 
 	const handlePublish = async (id: string) => {
 		try {
@@ -166,6 +170,7 @@ function PostsPage() {
 													size="sm"
 													onClick={(e) => {
 														e.preventDefault();
+														e.stopPropagation();
 														handlePublish(post.id);
 													}}
 													isLoading={publishing}
@@ -178,9 +183,9 @@ function PostsPage() {
 												size="sm"
 												onClick={(e) => {
 													e.preventDefault();
-													handleDelete(post.id);
+													e.stopPropagation();
+													setDeleteTargetId(post.id);
 												}}
-												isLoading={deleting}
 												aria-label="Delete post"
 											>
 												<Trash2 size={14} />
@@ -193,6 +198,29 @@ function PostsPage() {
 					</Stack>
 				)}
 			</div>
+			<Modal
+				isOpen={deleteTargetId !== null}
+				onClose={() => setDeleteTargetId(null)}
+				title="Delete post"
+				description="Are you sure you want to delete this post? This action cannot be undone."
+				size="sm"
+				footer={
+					<Stack direction="row" gap="sm" justify="end">
+						<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleDeleteConfirm}
+							isLoading={deleting}
+						>
+							Delete
+						</Button>
+					</Stack>
+				}
+			>
+				{null}
+			</Modal>
 		</motion.div>
 	);
 }

@@ -14,6 +14,7 @@ interface PlatformPostCardProps {
 	content: string;
 	onChange: (content: string) => void;
 	media?: MediaItem[];
+	readOnly?: boolean;
 }
 
 // -- Editable content (shared across all variants)
@@ -23,11 +24,13 @@ function EditableContent({
 	onChange,
 	platform,
 	className,
+	readOnly,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	platform: PlatformType;
 	className?: string;
+	readOnly?: boolean;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
 
@@ -55,7 +58,7 @@ function EditableContent({
 		<div
 			ref={ref}
 			className={className ?? styles.editableContent}
-			contentEditable
+			contentEditable={!readOnly}
 			suppressContentEditableWarning
 			onInput={handleInput}
 			onPaste={handlePaste}
@@ -284,11 +287,13 @@ function XPostCard({
 	onChange,
 	charLimit,
 	media,
+	readOnly,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
 	media?: MediaItem[];
+	readOnly?: boolean;
 }) {
 	const isOver = content.length > charLimit;
 
@@ -314,6 +319,7 @@ function XPostCard({
 						onChange={onChange}
 						platform="x"
 						className={styles.editableContent}
+						readOnly={readOnly}
 					/>
 					{media && media.length > 0 && <MediaGrid media={media} />}
 					<div className={styles.xActions}>
@@ -349,11 +355,13 @@ function BlueSkyPostCard({
 	onChange,
 	charLimit,
 	media,
+	readOnly,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
 	media?: MediaItem[];
+	readOnly?: boolean;
 }) {
 	const isOver = content.length > charLimit;
 
@@ -378,6 +386,7 @@ function BlueSkyPostCard({
 						onChange={onChange}
 						platform="bluesky"
 						className={styles.editableContent}
+						readOnly={readOnly}
 					/>
 					{media && media.length > 0 && <MediaGrid media={media} />}
 					<div className={styles.xActions}>
@@ -410,11 +419,13 @@ function ThreadsPostCard({
 	onChange,
 	charLimit,
 	media,
+	readOnly,
 }: {
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
 	media?: MediaItem[];
+	readOnly?: boolean;
 }) {
 	const isOver = content.length > charLimit;
 
@@ -438,6 +449,7 @@ function ThreadsPostCard({
 						onChange={onChange}
 						platform="threads"
 						className={styles.editableContent}
+						readOnly={readOnly}
 					/>
 					{media && media.length > 0 && <MediaGrid media={media} />}
 					<div className={styles.threadsActions}>
@@ -471,12 +483,14 @@ function GenericPostCard({
 	onChange,
 	charLimit,
 	media,
+	readOnly,
 }: {
 	platform: PlatformType;
 	content: string;
 	onChange: (content: string) => void;
 	charLimit: number;
 	media?: MediaItem[];
+	readOnly?: boolean;
 }) {
 	const displayName = PLATFORM_DISPLAY_NAMES[platform];
 	const isOver = content.length > charLimit;
@@ -494,6 +508,7 @@ function GenericPostCard({
 					onChange={onChange}
 					platform={platform}
 					className={styles.editableContent}
+					readOnly={readOnly}
 				/>
 			</div>
 			{media && media.length > 0 && <MediaGrid media={media} />}
@@ -513,6 +528,7 @@ export function PlatformPostCard({
 	content,
 	onChange,
 	media,
+	readOnly,
 }: PlatformPostCardProps) {
 	const charLimit = PLATFORM_CHAR_LIMITS[platform];
 
@@ -524,6 +540,7 @@ export function PlatformPostCard({
 					onChange={onChange}
 					charLimit={charLimit}
 					media={media}
+					readOnly={readOnly}
 				/>
 			);
 		case "bluesky":
@@ -533,6 +550,7 @@ export function PlatformPostCard({
 					onChange={onChange}
 					charLimit={charLimit}
 					media={media}
+					readOnly={readOnly}
 				/>
 			);
 		case "threads":
@@ -542,6 +560,7 @@ export function PlatformPostCard({
 					onChange={onChange}
 					charLimit={charLimit}
 					media={media}
+					readOnly={readOnly}
 				/>
 			);
 		default:
@@ -552,6 +571,7 @@ export function PlatformPostCard({
 					onChange={onChange}
 					charLimit={charLimit}
 					media={media}
+					readOnly={readOnly}
 				/>
 			);
 	}

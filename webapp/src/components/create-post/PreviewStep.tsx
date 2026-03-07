@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
 import { Accordion } from "@/proto-design-system/components/composite/Accordion";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { PageTransition } from "@/proto-design-system/components/layout/PageTransition";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import {
@@ -15,7 +13,6 @@ import {
 	Tabs,
 } from "@/proto-design-system/components/navigation/Tabs/Tabs";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { MediaItem } from "@/types/media";
@@ -24,7 +21,6 @@ import styles from "./CreatePostWizard.module.scss";
 import { PlatformPreviewCard } from "./PlatformPreviewCard";
 import type {
 	GenerationStatus,
-	PublishMode,
 	WizardContentType,
 } from "./useCreatePostWizard";
 
@@ -38,22 +34,14 @@ interface PreviewStepProps {
 	generated: boolean;
 	baseContent: string;
 	ssePhase: "idle" | "describing" | "generating" | "adapting";
-	publishMode: PublishMode;
-	scheduledAt: string;
-	submitting: boolean;
 	uploadedMedia: MediaItem[];
+	readOnly?: boolean;
 	onUpdateContent: (platform: PlatformType, content: string) => void;
 	onUpdateThreadSegment: (
 		platform: PlatformType,
 		index: number,
 		content: string,
 	) => void;
-	onSetPublishMode: (mode: PublishMode) => void;
-	onSetScheduledAt: (scheduledAt: string) => void;
-	onPublish: () => void;
-	onSchedule: () => void;
-	onSaveDraft: () => void;
-	savingDraft: boolean;
 }
 
 function BaseContentBody({
@@ -172,18 +160,10 @@ export function PreviewStep({
 	generated,
 	baseContent,
 	ssePhase,
-	publishMode,
-	scheduledAt,
-	submitting,
 	uploadedMedia,
+	readOnly = false,
 	onUpdateContent,
 	onUpdateThreadSegment,
-	onSetPublishMode,
-	onSetScheduledAt,
-	onPublish,
-	onSchedule,
-	onSaveDraft,
-	savingDraft,
 }: PreviewStepProps) {
 	const isThread = contentType === "thread";
 
@@ -217,11 +197,6 @@ export function PreviewStep({
 					</Stack>
 				)}
 
-				<BaseAccordion
-					content={baseContent}
-					isStreaming={ssePhase === "generating"}
-				/>
-
 				<PageTransition pageKey={belowKey} type="slideUp" duration={0.25}>
 					{/* Adapting progress */}
 					{generating && ssePhase === "adapting" && (
@@ -231,12 +206,17 @@ export function PreviewStep({
 						/>
 					)}
 
-					{/* Review + publish */}
+					{/* Review content (preview only) */}
 					{generated && (
 						<Stack gap="md">
 							<Text as="h3" size="lg" weight="medium">
 								Review Content
 							</Text>
+
+							<BaseAccordion
+								content={baseContent}
+								isStreaming={ssePhase === "generating"}
+							/>
 
 							<Tabs defaultTab={selectedPlatforms[0]}>
 								<TabList aria-label="Platform previews">
@@ -256,6 +236,7 @@ export function PreviewStep({
 													threadSegments={threadContent[platform]}
 													isThread={isThread}
 													uploadedMedia={uploadedMedia}
+													readOnly={readOnly}
 													onContentChange={(content) =>
 														onUpdateContent(platform, content)
 													}
@@ -268,97 +249,6 @@ export function PreviewStep({
 									))}
 								</TabPanels>
 							</Tabs>
-
-							<Divider />
-
-							<div className={styles.publishOptions}>
-								<label
-									className={`${styles.publishOption} ${publishMode === "now" ? styles.publishOptionActive : ""}`}
-								>
-									<input
-										type="radio"
-										name="publishMode"
-										value="now"
-										checked={publishMode === "now"}
-										onChange={() => onSetPublishMode("now")}
-										disabled={submitting}
-									/>
-									<div className={styles.publishOptionContent}>
-										<Text size="sm" weight="medium">
-											Send immediately
-										</Text>
-										<Text size="xs" color="muted">
-											Publish to all selected platforms right now
-										</Text>
-									</div>
-								</label>
-								<label
-									className={`${styles.publishOption} ${publishMode === "schedule" ? styles.publishOptionActive : ""}`}
-								>
-									<input
-										type="radio"
-										name="publishMode"
-										value="schedule"
-										checked={publishMode === "schedule"}
-										onChange={() => onSetPublishMode("schedule")}
-										disabled={submitting}
-									/>
-									<div className={styles.publishOptionContent}>
-										<Text size="sm" weight="medium">
-											Schedule for later
-										</Text>
-										<Text size="xs" color="muted">
-											Choose a date and time
-										</Text>
-									</div>
-								</label>
-							</div>
-
-							{publishMode === "schedule" && (
-								<TextField
-									type="datetime-local"
-									label="Date & Time"
-									value={scheduledAt}
-									onChange={(e) => onSetScheduledAt(e.target.value)}
-								/>
-							)}
-
-							<Stack gap="sm">
-								{publishMode === "now" && (
-									<Button
-										variant="primary"
-										onClick={onPublish}
-										isLoading={submitting}
-										disabled={submitting}
-									>
-										Publish to {selectedPlatforms.length} Platform
-										{selectedPlatforms.length !== 1 ? "s" : ""}
-									</Button>
-								)}
-								{publishMode === "schedule" && scheduledAt && (
-									<Button
-										variant="primary"
-										onClick={onSchedule}
-										isLoading={submitting}
-										disabled={submitting}
-									>
-										Schedule Post
-									</Button>
-								)}
-								{!publishMode && (
-									<Text size="sm" color="secondary">
-										Choose how you want to publish above
-									</Text>
-								)}
-								<Button
-									variant="ghost"
-									onClick={onSaveDraft}
-									isLoading={savingDraft}
-									disabled={savingDraft || submitting}
-								>
-									Save as Draft
-								</Button>
-							</Stack>
 						</Stack>
 					)}
 				</PageTransition>

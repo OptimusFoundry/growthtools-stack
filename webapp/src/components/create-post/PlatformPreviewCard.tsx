@@ -10,6 +10,7 @@ interface PlatformPreviewCardProps {
 	threadSegments?: ThreadSegment[];
 	isThread: boolean;
 	uploadedMedia?: MediaItem[];
+	readOnly?: boolean;
 	onContentChange: (content: string) => void;
 	onThreadSegmentChange: (index: number, content: string) => void;
 }
@@ -20,6 +21,7 @@ export function PlatformPreviewCard({
 	threadSegments,
 	isThread,
 	uploadedMedia,
+	readOnly,
 	onContentChange,
 	onThreadSegmentChange,
 }: PlatformPreviewCardProps) {
@@ -29,6 +31,7 @@ export function PlatformPreviewCard({
 				platform={platform}
 				segments={threadSegments}
 				uploadedMedia={uploadedMedia}
+				readOnly={readOnly}
 				onSegmentChange={onThreadSegmentChange}
 			/>
 		);
@@ -40,6 +43,7 @@ export function PlatformPreviewCard({
 			content={content}
 			onChange={onContentChange}
 			media={uploadedMedia}
+			readOnly={readOnly}
 		/>
 	);
 }
