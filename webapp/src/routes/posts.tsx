@@ -46,6 +46,7 @@ const STATUS_BADGE_VARIANT: Record<
 	publishing: "primary",
 	published: "success",
 	failed: "error",
+	partially_published: "warning",
 };
 
 function PostsPage() {

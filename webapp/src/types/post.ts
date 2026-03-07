@@ -3,7 +3,8 @@ export type PostStatus =
 	| "scheduled"
 	| "publishing"
 	| "published"
-	| "failed";
+	| "failed"
+	| "partially_published";
 export type ContentType =
 	| "text"
 	| "image"
@@ -54,6 +55,10 @@ export interface PlatformPost {
 		shares?: number;
 		clicks?: number;
 	};
+	attemptCount: number;
+	maxAttempts: number;
+	nextRetryAt?: string;
+	lastAttemptAt?: string;
 	createdAt: string;
 	updatedAt: string;
 }

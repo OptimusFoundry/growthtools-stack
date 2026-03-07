@@ -44,6 +44,10 @@ export function toPlatformPost(api: ApiPlatformPost): PlatformPost {
 		publishedAt: api.published_at,
 		errorMessage: api.error_message,
 		engagement: api.engagement,
+		attemptCount: api.attempt_count,
+		maxAttempts: api.max_attempts,
+		nextRetryAt: api.next_retry_at,
+		lastAttemptAt: api.last_attempt_at,
 		createdAt: api.created_at,
 		updatedAt: api.updated_at,
 	};

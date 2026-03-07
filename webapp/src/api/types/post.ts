@@ -42,6 +42,10 @@ export interface ApiPlatformPost {
 		shares?: number;
 		clicks?: number;
 	};
+	attempt_count: number;
+	max_attempts: number;
+	next_retry_at?: string;
+	last_attempt_at?: string;
 	created_at: string;
 	updated_at: string;
 }
