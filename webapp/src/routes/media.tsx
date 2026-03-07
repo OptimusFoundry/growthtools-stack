@@ -95,7 +95,7 @@ function MediaPage() {
 								<div className={mediaStyles.thumbnail}>
 									{isImageType(item.contentType) ? (
 										<img
-											src={item.s3Url}
+											src={item.url}
 											alt={item.altText ?? item.filename}
 											className={mediaStyles.thumbnailImage}
 										/>

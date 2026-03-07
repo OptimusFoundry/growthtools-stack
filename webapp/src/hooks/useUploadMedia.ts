@@ -1,4 +1,6 @@
 import { useCallback, useState } from "react";
+import { toMediaItem } from "@/api/transforms/media";
+import type { ApiMediaItem } from "@/api/types/media";
 import type { MediaItem } from "@/types/media";
 import { getErrorMessage } from "@/utils";
 
@@ -28,8 +30,8 @@ export const useUploadMedia = () => {
 				throw new Error(text || `Upload failed with status ${response.status}`);
 			}
 
-			const data: MediaItem = await response.json();
-			return data;
+			const data: ApiMediaItem = await response.json();
+			return toMediaItem(data);
 		} catch (err: unknown) {
 			const message = getErrorMessage(err);
 			setError(message);

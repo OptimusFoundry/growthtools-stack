@@ -5,7 +5,7 @@ export interface MediaItem {
 	accountId: string;
 	filename: string;
 	contentType: string;
-	s3Url: string;
+	url: string;
 	sizeBytes: number;
 	width?: number;
 	height?: number;

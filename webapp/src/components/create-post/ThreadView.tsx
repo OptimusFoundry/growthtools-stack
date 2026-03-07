@@ -17,8 +17,8 @@ interface ThreadViewProps {
 function ThreadImageThumbnail({ media }: { media: MediaItem }) {
 	return (
 		<div className={styles.imageThumbnail}>
-			{media.s3Url ? (
-				<img src={media.s3Url} alt="Attached" className={styles.thumbnailImg} />
+			{media.url ? (
+				<img src={media.url} alt="Attached" className={styles.thumbnailImg} />
 			) : (
 				<div className={styles.thumbnailPlaceholder}>
 					<ImageIcon size={16} />
