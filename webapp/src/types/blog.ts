@@ -40,3 +40,17 @@ export interface CreateBlogPostRequest {
 	og_description?: string;
 	featured_image_id?: string;
 }
+
+export interface UpdateBlogPostRequest {
+	title?: string;
+	slug?: string;
+	content?: string;
+	excerpt?: string;
+	status?: BlogStatus;
+	seo_title?: string;
+	meta_description?: string;
+	keywords?: string[];
+	og_title?: string;
+	og_description?: string;
+	featured_image_id?: string;
+}

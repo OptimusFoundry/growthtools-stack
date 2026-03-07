@@ -13,7 +13,10 @@ export const useGenerateBlog = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	const generateBlog = useCallback(
-		async (topic: string, keywords: string[]): Promise<GenerateBlogResponse> => {
+		async (
+			topic: string,
+			keywords: string[],
+		): Promise<GenerateBlogResponse> => {
 			setLoading(true);
 			setError(null);
 

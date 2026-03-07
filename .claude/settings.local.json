@@ -43,7 +43,12 @@
       "WebFetch(domain:pkg.go.dev)",
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(do echo:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git mv:*)",
+      "Bash(npx:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(git:*)"
     ],
     "deny": [],
     "ask": []

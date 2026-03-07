@@ -11,7 +11,10 @@ export const useGenerateContent = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	const generateContent = useCallback(
-		async (prompt: string, platforms: string[]): Promise<GenerateContentResponse> => {
+		async (
+			prompt: string,
+			platforms: string[],
+		): Promise<GenerateContentResponse> => {
 			setLoading(true);
 			setError(null);
 

@@ -1,18 +1,23 @@
 /**
  * Mock data for E2E tests
  *
- * Uses camelCase to match frontend type format (hooks transform API responses)
+ * Uses snake_case to match API response format (Go JSON tags).
+ * Hooks transform API responses to camelCase domain types.
  */
 
+import type {
+	ApiAnalyticsOverview,
+	ApiPlatformBreakdown,
+	ApiTimeSeriesDataPoint,
+} from "../../../src/api/types/analytics";
 import type { ApiPrice, ApiSubscription } from "../../../src/api/types/billing";
+import type { ApiBlogPost } from "../../../src/api/types/blog";
+import type { ApiMediaItem } from "../../../src/api/types/media";
+import type { ApiPlatformConnection } from "../../../src/api/types/platform";
+import type { ApiPost } from "../../../src/api/types/post";
 import type { ApiTierInfo, ApiTierName } from "../../../src/api/types/tier";
 import type { ApiUser } from "../../../src/api/types/user";
-import type { AnalyticsOverview, PlatformBreakdown, TimeSeriesDataPoint } from "../../../src/types/analytics";
-import type { BlogPost } from "../../../src/types/blog";
-import type { MediaItem } from "../../../src/types/media";
-import type { PlatformConnection } from "../../../src/types/platform";
-import type { Post } from "../../../src/types/post";
-import type { VoiceProfile } from "../../../src/types/voiceProfile";
+import type { ApiVoiceProfile } from "../../../src/api/types/voiceProfile";
 
 // ============================================================================
 // Tier Configurations
@@ -155,93 +160,99 @@ export const prices: ApiPrice[] = [
 
 const now = new Date().toISOString();
 
-export const posts: Post[] = [
+export const posts: ApiPost[] = [
 	{
 		id: "post_1",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		title: "Announcing our new feature launch",
-		content: "We just shipped an amazing new feature that will change the way you manage social media.",
-		contentType: "text",
+		content:
+			"We just shipped an amazing new feature that will change the way you manage social media.",
+		content_type: "text",
 		status: "published",
-		publishedAt: "2025-12-15T10:00:00Z",
-		mediaIds: [],
+		published_at: "2025-12-15T10:00:00Z",
+		media_ids: [],
 		tags: ["announcement", "product"],
-		aiGenerated: false,
+		ai_generated: false,
 		source: "manual",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "post_2",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		title: "AI-generated tips for developers",
-		content: "Here are 5 tips every developer should know when building social media integrations.",
-		contentType: "thread",
+		content:
+			"Here are 5 tips every developer should know when building social media integrations.",
+		content_type: "thread",
 		status: "draft",
-		mediaIds: [],
+		media_ids: [],
 		tags: ["tips", "development"],
-		aiGenerated: true,
+		ai_generated: true,
 		source: "ai_generated",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "post_3",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		title: "Weekly community update",
-		content: "This week's community highlights including top contributors and trending topics.",
-		contentType: "image",
+		content:
+			"This week's community highlights including top contributors and trending topics.",
+		content_type: "image",
 		status: "scheduled",
-		scheduledAt: "2026-04-01T14:00:00Z",
-		mediaIds: ["media_1"],
+		scheduled_at: "2026-04-01T14:00:00Z",
+		media_ids: ["media_1"],
 		tags: ["community", "weekly"],
-		aiGenerated: false,
+		ai_generated: false,
 		source: "manual",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 ];
 
-export const getPostById = (id: string): Post | undefined =>
+export const getPostById = (id: string): ApiPost | undefined =>
 	posts.find((p) => p.id === id);
 
 // ============================================================================
 // Platform Connection Data
 // ============================================================================
 
-export const platformConnections: PlatformConnection[] = [
+export const platformConnections: ApiPlatformConnection[] = [
 	{
 		id: "conn_1",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		platform: "x",
-		platformUserId: "x_user_123",
-		displayName: "@testuser",
+		platform_user_id: "x_user_123",
+		display_name: "@testuser",
 		status: "active",
-		connectedAt: "2025-06-01T00:00:00Z",
-		createdAt: now,
-		updatedAt: now,
+		scopes: ["read", "write"],
+		connected_at: "2025-06-01T00:00:00Z",
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "conn_2",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		platform: "linkedin",
-		platformUserId: "li_user_456",
-		displayName: "Test User",
+		platform_user_id: "li_user_456",
+		display_name: "Test User",
 		status: "active",
-		connectedAt: "2025-06-15T00:00:00Z",
-		createdAt: now,
-		updatedAt: now,
+		scopes: ["r_liteprofile", "w_member_social"],
+		connected_at: "2025-06-15T00:00:00Z",
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "conn_3",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		platform: "bluesky",
-		platformUserId: "bs_user_789",
-		displayName: "testuser.bsky.social",
+		platform_user_id: "bs_user_789",
+		display_name: "testuser.bsky.social",
 		status: "expired",
-		connectedAt: "2025-05-01T00:00:00Z",
-		createdAt: now,
-		updatedAt: now,
+		scopes: [],
+		connected_at: "2025-05-01T00:00:00Z",
+		created_at: now,
+		updated_at: now,
 	},
 ];
 
@@ -249,45 +260,45 @@ export const platformConnections: PlatformConnection[] = [
 // Media Data
 // ============================================================================
 
-export const mediaItems: MediaItem[] = [
+export const mediaItems: ApiMediaItem[] = [
 	{
 		id: "media_1",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		filename: "product-screenshot.png",
-		contentType: "image/png",
-		s3Url: "https://cdn.example.com/media/product-screenshot.png",
-		sizeBytes: 524288,
+		content_type: "image/png",
+		s3_url: "https://cdn.example.com/media/product-screenshot.png",
+		size_bytes: 524288,
 		width: 1920,
 		height: 1080,
-		altText: "Product screenshot",
+		alt_text: "Product screenshot",
 		source: "upload",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "media_2",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		filename: "demo-video.mp4",
-		contentType: "video/mp4",
-		s3Url: "https://cdn.example.com/media/demo-video.mp4",
-		sizeBytes: 10485760,
+		content_type: "video/mp4",
+		s3_url: "https://cdn.example.com/media/demo-video.mp4",
+		size_bytes: 10485760,
 		source: "upload",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "media_3",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		filename: "ai-generated-banner.jpg",
-		contentType: "image/jpeg",
-		s3Url: "https://cdn.example.com/media/ai-generated-banner.jpg",
-		sizeBytes: 204800,
+		content_type: "image/jpeg",
+		s3_url: "https://cdn.example.com/media/ai-generated-banner.jpg",
+		size_bytes: 204800,
 		width: 1200,
 		height: 630,
-		altText: "AI-generated social media banner",
+		alt_text: "AI-generated social media banner",
 		source: "ai_generated",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 ];
 
@@ -295,44 +306,46 @@ export const mediaItems: MediaItem[] = [
 // Blog Data
 // ============================================================================
 
-export const blogPosts: BlogPost[] = [
+export const blogPosts: ApiBlogPost[] = [
 	{
 		id: "blog_1",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		title: "Getting Started with Growth Tools",
 		slug: "getting-started",
-		content: "A comprehensive guide to setting up your social media automation.",
+		content:
+			"A comprehensive guide to setting up your social media automation.",
 		excerpt: "Learn how to set up Growth Tools for your workflow.",
 		status: "published",
-		seoTitle: "Getting Started with Growth Tools | Guide",
-		metaDescription: "Learn how to get started with Growth Tools for social media automation.",
+		seo_title: "Getting Started with Growth Tools | Guide",
+		meta_description:
+			"Learn how to get started with Growth Tools for social media automation.",
 		keywords: ["growth tools", "getting started", "social media"],
-		publishedAt: "2025-11-01T12:00:00Z",
-		createdAt: now,
-		updatedAt: now,
+		published_at: "2025-11-01T12:00:00Z",
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "blog_2",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		title: "Top 10 Social Media Tips for Developers",
 		slug: "social-media-tips-developers",
 		content: "Developer-focused tips for building an online presence.",
 		excerpt: "Practical social media tips for software developers.",
 		status: "draft",
 		keywords: ["developers", "social media", "tips"],
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	},
 	{
 		id: "blog_3",
-		accountId: "acc_123",
+		account_id: "acc_123",
 		title: "Old Announcement Post",
 		slug: "old-announcement",
 		content: "This post has been archived.",
 		status: "archived",
 		keywords: ["archive"],
-		createdAt: "2025-01-01T00:00:00Z",
-		updatedAt: "2025-06-01T00:00:00Z",
+		created_at: "2025-01-01T00:00:00Z",
+		updated_at: "2025-06-01T00:00:00Z",
 	},
 ];
 
@@ -340,47 +353,124 @@ export const blogPosts: BlogPost[] = [
 // Analytics Data
 // ============================================================================
 
-export const analyticsOverview: AnalyticsOverview = {
-	totalImpressions: 125400,
-	totalLikes: 8920,
-	totalComments: 1456,
-	totalShares: 3210,
-	totalClicks: 6780,
-	engagementRate: 4.2,
+export const analyticsOverview: ApiAnalyticsOverview = {
+	total_impressions: 125400,
+	total_likes: 8920,
+	total_comments: 1456,
+	total_shares: 3210,
+	total_clicks: 6780,
+	engagement_rate: 4.2,
 };
 
-export const analyticsTimeseries: TimeSeriesDataPoint[] = [
-	{ date: "2025-12-01", impressions: 4200, likes: 310, comments: 45, shares: 120, clicks: 230 },
-	{ date: "2025-12-02", impressions: 3800, likes: 290, comments: 52, shares: 98, clicks: 210 },
-	{ date: "2025-12-03", impressions: 5100, likes: 420, comments: 67, shares: 145, clicks: 310 },
-	{ date: "2025-12-04", impressions: 4600, likes: 380, comments: 41, shares: 110, clicks: 260 },
-	{ date: "2025-12-05", impressions: 6200, likes: 510, comments: 78, shares: 190, clicks: 380 },
-	{ date: "2025-12-06", impressions: 3900, likes: 270, comments: 33, shares: 85, clicks: 190 },
-	{ date: "2025-12-07", impressions: 4500, likes: 350, comments: 55, shares: 130, clicks: 250 },
+export const analyticsTimeseries: ApiTimeSeriesDataPoint[] = [
+	{
+		date: "2025-12-01",
+		impressions: 4200,
+		likes: 310,
+		comments: 45,
+		shares: 120,
+		clicks: 230,
+	},
+	{
+		date: "2025-12-02",
+		impressions: 3800,
+		likes: 290,
+		comments: 52,
+		shares: 98,
+		clicks: 210,
+	},
+	{
+		date: "2025-12-03",
+		impressions: 5100,
+		likes: 420,
+		comments: 67,
+		shares: 145,
+		clicks: 310,
+	},
+	{
+		date: "2025-12-04",
+		impressions: 4600,
+		likes: 380,
+		comments: 41,
+		shares: 110,
+		clicks: 260,
+	},
+	{
+		date: "2025-12-05",
+		impressions: 6200,
+		likes: 510,
+		comments: 78,
+		shares: 190,
+		clicks: 380,
+	},
+	{
+		date: "2025-12-06",
+		impressions: 3900,
+		likes: 270,
+		comments: 33,
+		shares: 85,
+		clicks: 190,
+	},
+	{
+		date: "2025-12-07",
+		impressions: 4500,
+		likes: 350,
+		comments: 55,
+		shares: 130,
+		clicks: 250,
+	},
 ];
 
-export const platformBreakdown: PlatformBreakdown[] = [
-	{ platform: "x", impressions: 45000, likes: 3200, comments: 540, shares: 1200, clicks: 2100 },
-	{ platform: "linkedin", impressions: 38000, likes: 2800, comments: 620, shares: 1500, clicks: 2800 },
-	{ platform: "bluesky", impressions: 22000, likes: 1600, comments: 180, shares: 350, clicks: 980 },
-	{ platform: "facebook", impressions: 20400, likes: 1320, comments: 116, shares: 160, clicks: 900 },
+export const platformBreakdown: ApiPlatformBreakdown[] = [
+	{
+		platform: "x",
+		impressions: 45000,
+		likes: 3200,
+		comments: 540,
+		shares: 1200,
+		clicks: 2100,
+	},
+	{
+		platform: "linkedin",
+		impressions: 38000,
+		likes: 2800,
+		comments: 620,
+		shares: 1500,
+		clicks: 2800,
+	},
+	{
+		platform: "bluesky",
+		impressions: 22000,
+		likes: 1600,
+		comments: 180,
+		shares: 350,
+		clicks: 980,
+	},
+	{
+		platform: "facebook",
+		impressions: 20400,
+		likes: 1320,
+		comments: 116,
+		shares: 160,
+		clicks: 900,
+	},
 ];
 
 // ============================================================================
 // Voice Profile Data
 // ============================================================================
 
-export const voiceProfile: VoiceProfile = {
+export const voiceProfile: ApiVoiceProfile = {
 	id: "voice_1",
-	accountId: "acc_123",
+	account_id: "acc_123",
 	tone: "professional",
 	style: "concise",
-	examplePosts: [
+	example_posts: [
 		"We just shipped a major update. Here's what's new...",
 		"5 tips for developers building in public.",
 	],
 	industry: "technology",
-	targetAudience: "developers and founders",
-	createdAt: now,
-	updatedAt: now,
+	target_audience: "developers and founders",
+	created_at: now,
+	updated_at: now,
 };

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
+import { toPosts } from "@/api/transforms/post";
+import type { ApiPost } from "@/api/types/post";
 import type { Post, PostFilters } from "@/types/post";
 import { getErrorMessage, isAbortError } from "@/utils";
 
@@ -16,15 +18,21 @@ export const useGetPosts = (filters?: PostFilters) => {
 			try {
 				const params = new URLSearchParams();
 				if (filters?.status) params.set("status", filters.status);
-				if (filters?.contentType) params.set("content_type", filters.contentType);
-				if (filters?.limit !== undefined) params.set("limit", String(filters.limit));
-				if (filters?.offset !== undefined) params.set("offset", String(filters.offset));
+				if (filters?.contentType)
+					params.set("content_type", filters.contentType);
+				if (filters?.limit !== undefined)
+					params.set("limit", String(filters.limit));
+				if (filters?.offset !== undefined)
+					params.set("offset", String(filters.offset));
 
 				const query = params.toString();
 				const url = `${import.meta.env.VITE_API_URL}/api/protected/posts${query ? `?${query}` : ""}`;
 
-				const response = await fetcher<Post[]>(url, { method: "GET", signal });
-				setPosts(response);
+				const response = await fetcher<ApiPost[]>(url, {
+					method: "GET",
+					signal,
+				});
+				setPosts(toPosts(response));
 			} catch (err: unknown) {
 				if (isAbortError(err)) {
 					console.debug("Request was aborted.");

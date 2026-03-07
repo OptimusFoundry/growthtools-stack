@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
+import { toMediaItems } from "@/api/transforms/media";
+import type { ApiMediaItem } from "@/api/types/media";
 import type { MediaItem } from "@/types/media";
 import { getErrorMessage, isAbortError } from "@/utils";
 
@@ -20,14 +22,19 @@ export const useMedia = (filters?: MediaFilters) => {
 
 			try {
 				const params = new URLSearchParams();
-				if (filters?.limit !== undefined) params.set("limit", String(filters.limit));
-				if (filters?.offset !== undefined) params.set("offset", String(filters.offset));
+				if (filters?.limit !== undefined)
+					params.set("limit", String(filters.limit));
+				if (filters?.offset !== undefined)
+					params.set("offset", String(filters.offset));
 
 				const query = params.toString();
 				const url = `${import.meta.env.VITE_API_URL}/api/protected/media${query ? `?${query}` : ""}`;
 
-				const response = await fetcher<MediaItem[]>(url, { method: "GET", signal });
-				setMedia(response);
+				const response = await fetcher<ApiMediaItem[]>(url, {
+					method: "GET",
+					signal,
+				});
+				setMedia(toMediaItems(response));
 			} catch (err: unknown) {
 				if (isAbortError(err)) {
 					console.debug("Request was aborted.");

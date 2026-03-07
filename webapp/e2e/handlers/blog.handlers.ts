@@ -28,15 +28,15 @@ export const blogHandlers = [
 		return HttpResponse.json(
 			{
 				id: "blog_new",
-				accountId: "acc_123",
+				account_id: "acc_123",
 				title: body.title ?? "",
 				slug: body.slug ?? "",
 				content: body.content ?? "",
 				excerpt: body.excerpt ?? "",
 				status: body.status ?? "draft",
 				keywords: body.keywords ?? [],
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 			{ status: 201 },
 		);
@@ -56,6 +56,9 @@ export const blogScenarios = {
 	/** Server error */
 	serverError: () =>
 		http.get("*/api/protected/blog", () => {
-			return HttpResponse.json({ error: "Internal server error" }, { status: 500 });
+			return HttpResponse.json(
+				{ error: "Internal server error" },
+				{ status: 500 },
+			);
 		}),
 };

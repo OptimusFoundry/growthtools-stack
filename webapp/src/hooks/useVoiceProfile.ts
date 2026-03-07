@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
-import type { UpdateVoiceProfileRequest, VoiceProfile } from "@/types/voiceProfile";
+import { toVoiceProfile } from "@/api/transforms/voiceProfile";
+import type { ApiVoiceProfile } from "@/api/types/voiceProfile";
+import type {
+	UpdateVoiceProfileRequest,
+	VoiceProfile,
+} from "@/types/voiceProfile";
 import { getErrorMessage, isAbortError } from "@/utils";
 
 export const useVoiceProfile = () => {
@@ -13,11 +18,11 @@ export const useVoiceProfile = () => {
 		setError(null);
 
 		try {
-			const response = await fetcher<VoiceProfile>(
+			const response = await fetcher<ApiVoiceProfile>(
 				`${import.meta.env.VITE_API_URL}/api/protected/settings/voice`,
 				{ method: "GET", signal },
 			);
-			setVoiceProfile(response);
+			setVoiceProfile(toVoiceProfile(response));
 		} catch (err: unknown) {
 			if (isAbortError(err)) {
 				console.debug("Request was aborted.");
@@ -35,7 +40,7 @@ export const useVoiceProfile = () => {
 			setError(null);
 
 			try {
-				const response = await fetcher<VoiceProfile>(
+				const response = await fetcher<ApiVoiceProfile>(
 					`${import.meta.env.VITE_API_URL}/api/protected/settings/voice`,
 					{
 						method: "PUT",
@@ -43,8 +48,9 @@ export const useVoiceProfile = () => {
 						body: JSON.stringify(data),
 					},
 				);
-				setVoiceProfile(response);
-				return response;
+				const profile = toVoiceProfile(response);
+				setVoiceProfile(profile);
+				return profile;
 			} catch (err: unknown) {
 				const message = getErrorMessage(err);
 				setError(message);

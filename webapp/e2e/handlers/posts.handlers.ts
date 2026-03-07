@@ -19,7 +19,7 @@ export const postsHandlers = [
 			filtered = filtered.filter((p) => p.status === status);
 		}
 		if (contentType) {
-			filtered = filtered.filter((p) => p.contentType === contentType);
+			filtered = filtered.filter((p) => p.content_type === contentType);
 		}
 
 		return HttpResponse.json(filtered);
@@ -41,17 +41,17 @@ export const postsHandlers = [
 		return HttpResponse.json(
 			{
 				id: "post_new",
-				accountId: "acc_123",
+				account_id: "acc_123",
 				title: body.title ?? "",
 				content: body.content ?? "",
-				contentType: body.content_type ?? "text",
+				content_type: body.content_type ?? "text",
 				status: body.status ?? "draft",
-				mediaIds: body.media_ids ?? [],
+				media_ids: body.media_ids ?? [],
 				tags: body.tags ?? [],
-				aiGenerated: false,
+				ai_generated: false,
 				source: "manual",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 			{ status: 201 },
 		);
@@ -63,7 +63,10 @@ export const postsHandlers = [
 		if (!post) {
 			return HttpResponse.json({ error: "Post not found" }, { status: 404 });
 		}
-		return HttpResponse.json({ ...post, updatedAt: new Date().toISOString() });
+		return HttpResponse.json({
+			...post,
+			updated_at: new Date().toISOString(),
+		});
 	}),
 
 	// Delete post
@@ -84,7 +87,7 @@ export const postsHandlers = [
 		return HttpResponse.json({
 			...post,
 			status: "published",
-			publishedAt: new Date().toISOString(),
+			published_at: new Date().toISOString(),
 		});
 	}),
 
@@ -97,7 +100,7 @@ export const postsHandlers = [
 		return HttpResponse.json({
 			...post,
 			status: "scheduled",
-			scheduledAt: new Date(Date.now() + 86400000).toISOString(),
+			scheduled_at: new Date(Date.now() + 86400000).toISOString(),
 		});
 	}),
 ];
@@ -115,7 +118,10 @@ export const postsScenarios = {
 	/** Server error */
 	serverError: () =>
 		http.get("*/api/protected/posts", () => {
-			return HttpResponse.json({ error: "Internal server error" }, { status: 500 });
+			return HttpResponse.json(
+				{ error: "Internal server error" },
+				{ status: 500 },
+			);
 		}),
 
 	/** Network failure */

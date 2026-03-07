@@ -1,6 +1,22 @@
-export type PostStatus = "draft" | "scheduled" | "publishing" | "published" | "failed";
-export type ContentType = "text" | "image" | "video" | "carousel" | "thread" | "story" | "reel";
-export type PostSource = "manual" | "ai_generated" | "github_event" | "bulk_import";
+export type PostStatus =
+	| "draft"
+	| "scheduled"
+	| "publishing"
+	| "published"
+	| "failed";
+export type ContentType =
+	| "text"
+	| "image"
+	| "video"
+	| "carousel"
+	| "thread"
+	| "story"
+	| "reel";
+export type PostSource =
+	| "manual"
+	| "ai_generated"
+	| "github_event"
+	| "bulk_import";
 
 export interface Post {
 	id: string;

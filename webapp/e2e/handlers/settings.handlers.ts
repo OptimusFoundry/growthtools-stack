@@ -19,7 +19,7 @@ export const settingsHandlers = [
 		return HttpResponse.json({
 			...voiceProfile,
 			...body,
-			updatedAt: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
 		});
 	}),
 ];
@@ -31,12 +31,18 @@ export const settingsScenarios = {
 	/** No voice profile configured */
 	noVoiceProfile: () =>
 		http.get("*/api/protected/settings/voice", () => {
-			return HttpResponse.json({ error: "Voice profile not found" }, { status: 404 });
+			return HttpResponse.json(
+				{ error: "Voice profile not found" },
+				{ status: 404 },
+			);
 		}),
 
 	/** Server error */
 	serverError: () =>
 		http.get("*/api/protected/settings/voice", () => {
-			return HttpResponse.json({ error: "Internal server error" }, { status: 500 });
+			return HttpResponse.json(
+				{ error: "Internal server error" },
+				{ status: 500 },
+			);
 		}),
 };

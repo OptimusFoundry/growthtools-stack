@@ -68,14 +68,14 @@
 |---|------|--------|----------|------------|-------|
 | 3.1 | Platform connection store (CRUD for OAuth tokens) | `done` | P0 | — | `store/platform_connection.go` |
 | 3.2 | Platform OAuth flow — connect/disconnect endpoints | `done` | P0 | 3.1 | InitiateOAuth, HandleOAuthCallback, ConnectBluesky, DisconnectPlatform |
-| 3.3 | X / Twitter adapter | `todo` | P0 | 3.1 | OAuth 1.0a, v2 API, text + media upload |
-| 3.4 | BlueSky adapter | `todo` | P0 | 3.1 | AT Protocol, session auth, facets, blob upload |
-| 3.5 | LinkedIn adapter | `todo` | P0 | 3.1 | OAuth 2.0, REST API, 2-step image upload |
-| 3.6 | Facebook adapter | `todo` | P1 | 3.1 | Graph API, text/photo/multi-photo posts |
-| 3.7 | Instagram adapter | `todo` | P1 | 3.1 | 2-step container flow, status polling, caption validation |
-| 3.8 | Threads adapter | `todo` | P1 | 3.1 | 2-step container flow, text-only, 500 char limit |
-| 3.9 | TikTok adapter | `todo` | P1 | 3.1 | PostVideo, PostPhotoSlideshow, CheckPublishStatus |
-| 3.10 | Pinterest adapter | `todo` | P1 | 3.1 | CreatePin, ListBoards, CreateBoard, PublishToBoard |
+| 3.3 | X / Twitter adapter | `done` | P0 | 3.1 | OAuth 1.0a, v2 API, chunked media upload, 280 char limit |
+| 3.4 | BlueSky adapter | `done` | P0 | 3.1 | AT Protocol, session auth, blob upload, 300 char limit |
+| 3.5 | LinkedIn adapter | `done` | P0 | 3.1 | OAuth 2.0, REST API, 2-step image upload, 3000 char limit |
+| 3.6 | Facebook adapter | `done` | P1 | 3.1 | Graph API, text/photo posts, 63K char limit |
+| 3.7 | Instagram adapter | `done` | P1 | 3.1 | 2-step container flow, requires media, caption validation |
+| 3.8 | Threads adapter | `done` | P1 | 3.1 | 2-step container flow, text+image, 500 char limit |
+| 3.9 | TikTok adapter | `done` | P1 | 3.1 | Video upload, init+upload flow, limited analytics |
+| 3.10 | Pinterest adapter | `done` | P1 | 3.1 | CreatePin, ListBoards, auto-select board, 500 char limit |
 | 3.11 | Adapter registry — maps platform name to adapter | `done` | P0 | 3.3+ | `platforms/adapters/registry.go` (scaffold exists) |
 | 3.12 | Adapter unit tests | `todo` | P1 | 3.3–3.10 | httptest mock servers |
 

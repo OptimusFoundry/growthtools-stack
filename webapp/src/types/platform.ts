@@ -1,4 +1,12 @@
-export type PlatformType = "x" | "linkedin" | "bluesky" | "facebook" | "instagram" | "threads" | "tiktok" | "pinterest";
+export type PlatformType =
+	| "x"
+	| "linkedin"
+	| "bluesky"
+	| "facebook"
+	| "instagram"
+	| "threads"
+	| "tiktok"
+	| "pinterest";
 
 export interface PlatformConnection {
 	id: string;
@@ -7,6 +15,7 @@ export interface PlatformConnection {
 	platformUserId: string;
 	displayName?: string;
 	status: "active" | "expired" | "revoked" | "error";
+	scopes: string[];
 	connectedAt: string;
 	createdAt: string;
 	updatedAt: string;

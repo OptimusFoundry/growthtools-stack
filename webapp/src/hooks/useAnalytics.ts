@@ -1,6 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
-import type { AnalyticsOverview, PlatformBreakdown, TimeSeriesDataPoint } from "@/types/analytics";
+import {
+	toAnalyticsOverview,
+	toPlatformBreakdown,
+	toTimeSeriesDataPoint,
+} from "@/api/transforms/analytics";
+import type {
+	ApiAnalyticsOverview,
+	ApiPlatformBreakdown,
+	ApiTimeSeriesDataPoint,
+} from "@/api/types/analytics";
+import type {
+	AnalyticsOverview,
+	PlatformBreakdown,
+	TimeSeriesDataPoint,
+} from "@/types/analytics";
 import { getErrorMessage, isAbortError } from "@/utils";
 
 interface AnalyticsFilters {
@@ -11,7 +25,9 @@ interface AnalyticsFilters {
 export const useAnalytics = (filters?: AnalyticsFilters) => {
 	const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
 	const [timeseries, setTimeseries] = useState<TimeSeriesDataPoint[]>([]);
-	const [platformBreakdown, setPlatformBreakdown] = useState<PlatformBreakdown[]>([]);
+	const [platformBreakdown, setPlatformBreakdown] = useState<
+		PlatformBreakdown[]
+	>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -33,14 +49,23 @@ export const useAnalytics = (filters?: AnalyticsFilters) => {
 
 			try {
 				const [overviewData, timeseriesData, platformData] = await Promise.all([
-					fetcher<AnalyticsOverview>(`${base}/overview${query}`, { method: "GET", signal }),
-					fetcher<TimeSeriesDataPoint[]>(`${base}/timeseries${query}`, { method: "GET", signal }),
-					fetcher<PlatformBreakdown[]>(`${base}/platforms${query}`, { method: "GET", signal }),
+					fetcher<ApiAnalyticsOverview>(`${base}/overview${query}`, {
+						method: "GET",
+						signal,
+					}),
+					fetcher<ApiTimeSeriesDataPoint[]>(`${base}/timeseries${query}`, {
+						method: "GET",
+						signal,
+					}),
+					fetcher<ApiPlatformBreakdown[]>(`${base}/platforms${query}`, {
+						method: "GET",
+						signal,
+					}),
 				]);
 
-				setOverview(overviewData);
-				setTimeseries(timeseriesData);
-				setPlatformBreakdown(platformData);
+				setOverview(toAnalyticsOverview(overviewData));
+				setTimeseries(timeseriesData.map(toTimeSeriesDataPoint));
+				setPlatformBreakdown(platformData.map(toPlatformBreakdown));
 			} catch (err: unknown) {
 				if (isAbortError(err)) {
 					console.debug("Request was aborted.");

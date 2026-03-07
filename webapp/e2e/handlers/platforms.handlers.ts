@@ -26,6 +26,9 @@ export const platformsScenarios = {
 	/** Server error */
 	serverError: () =>
 		http.get("*/api/protected/platforms", () => {
-			return HttpResponse.json({ error: "Internal server error" }, { status: 500 });
+			return HttpResponse.json(
+				{ error: "Internal server error" },
+				{ status: 500 },
+			);
 		}),
 };

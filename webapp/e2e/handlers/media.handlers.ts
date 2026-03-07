@@ -19,16 +19,16 @@ export const mediaHandlers = [
 		return HttpResponse.json(
 			{
 				id: "media_new",
-				accountId: "acc_123",
+				account_id: "acc_123",
 				filename: "uploaded-file.png",
-				contentType: "image/png",
-				s3Url: "https://cdn.example.com/media/uploaded-file.png",
-				sizeBytes: 102400,
+				content_type: "image/png",
+				s3_url: "https://cdn.example.com/media/uploaded-file.png",
+				size_bytes: 102400,
 				width: 800,
 				height: 600,
 				source: "upload",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 			{ status: 201 },
 		);
@@ -57,6 +57,9 @@ export const mediaScenarios = {
 	/** Server error */
 	serverError: () =>
 		http.get("*/api/protected/media", () => {
-			return HttpResponse.json({ error: "Internal server error" }, { status: 500 });
+			return HttpResponse.json(
+				{ error: "Internal server error" },
+				{ status: 500 },
+			);
 		}),
 };

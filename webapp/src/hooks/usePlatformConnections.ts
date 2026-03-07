@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
+import { toPlatformConnections } from "@/api/transforms/platform";
+import type { ApiPlatformConnection } from "@/api/types/platform";
 import type { PlatformConnection } from "@/types/platform";
 import { getErrorMessage, isAbortError } from "@/utils";
 
@@ -13,11 +15,13 @@ export const usePlatformConnections = () => {
 		setError(null);
 
 		try {
-			const response = await fetcher<PlatformConnection[]>(
+			const response = await fetcher<ApiPlatformConnection[]>(
 				`${import.meta.env.VITE_API_URL}/api/protected/platforms`,
 				{ method: "GET", signal },
 			);
-			setConnections(response);
+			setConnections(
+				Array.isArray(response) ? toPlatformConnections(response) : [],
+			);
 		} catch (err: unknown) {
 			if (isAbortError(err)) {
 				console.debug("Request was aborted.");

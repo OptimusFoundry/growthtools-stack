@@ -114,9 +114,9 @@ const ConnectedCard = memo(function ConnectedCard({
 								<Text size="lg" weight="semibold">
 									{PLATFORM_DISPLAY_NAMES[connection.platform as PlatformType]}
 								</Text>
-								{connection.display_name && (
+								{connection.displayName && (
 									<Text size="sm" color="secondary">
-										{connection.display_name}
+										{connection.displayName}
 									</Text>
 								)}
 							</Stack>
@@ -132,7 +132,7 @@ const ConnectedCard = memo(function ConnectedCard({
 								Username
 							</Text>
 							<Text size="sm" weight="medium">
-								@{connection.platform_user_id}
+								@{connection.platformUserId}
 							</Text>
 						</div>
 						<div className={styles.metaItem}>
@@ -140,7 +140,7 @@ const ConnectedCard = memo(function ConnectedCard({
 								Connected
 							</Text>
 							<Text size="sm" weight="medium">
-								{formatDate(connection.connected_at)}
+								{formatDate(connection.connectedAt)}
 							</Text>
 						</div>
 						{connection.scopes?.length > 0 && (

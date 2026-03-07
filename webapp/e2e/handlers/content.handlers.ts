@@ -10,7 +10,8 @@ export const contentHandlers = [
 	// Generate content
 	http.post("*/api/protected/content/generate", () => {
 		return HttpResponse.json({
-			content: "Here are 5 tips for building a strong developer community on social media:\n\n1. Share your real experiences, not just polished wins.\n2. Engage with replies and build genuine conversations.\n3. Post consistently, even when the engagement is low.\n4. Use visuals to break up technical content.\n5. Collaborate with other developers in your niche.",
+			content:
+				"Here are 5 tips for building a strong developer community on social media:\n\n1. Share your real experiences, not just polished wins.\n2. Engage with replies and build genuine conversations.\n3. Post consistently, even when the engagement is low.\n4. Use visuals to break up technical content.\n5. Collaborate with other developers in your niche.",
 			contentType: "text",
 			suggestedTags: ["community", "developers", "tips"],
 		});
@@ -61,9 +62,6 @@ export const contentScenarios = {
 	/** Chat error */
 	chatError: () =>
 		http.post("*/api/protected/chat", () => {
-			return HttpResponse.json(
-				{ error: "Chat unavailable" },
-				{ status: 503 },
-			);
+			return HttpResponse.json({ error: "Chat unavailable" }, { status: 503 });
 		}),
 };
