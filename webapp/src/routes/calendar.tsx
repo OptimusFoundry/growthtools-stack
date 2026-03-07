@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Clock, Trash2, XCircle } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { useDeletePost } from "@/hooks/useDeletePost";
@@ -96,24 +96,41 @@ function formatDisplayDate(dateStr: string): string {
 	});
 }
 
-interface DayCounts {
-	published: number;
-	failed: number;
-	upcoming: number;
-}
+type StatusCounts = Partial<Record<PostStatus, number>>;
 
-function computeDayCounts(dayPosts: Post[]): DayCounts {
-	let published = 0;
-	let failed = 0;
-	let upcoming = 0;
+const STATUS_STRIPE_ORDER: PostStatus[] = [
+	"published",
+	"partially_published",
+	"failed",
+	"publishing",
+	"scheduled",
+	"draft",
+];
 
+const STATUS_LABELS: Record<PostStatus, string> = {
+	draft: "draft",
+	scheduled: "scheduled",
+	publishing: "publishing",
+	published: "published",
+	failed: "failed",
+	partially_published: "partial",
+};
+
+const STATUS_STRIPE_CLASS: Record<PostStatus, string> = {
+	published: "stripePublished",
+	partially_published: "stripePartial",
+	failed: "stripeFailed",
+	publishing: "stripePublishing",
+	scheduled: "stripeScheduled",
+	draft: "stripeDraft",
+};
+
+function computeStatusCounts(dayPosts: Post[]): StatusCounts {
+	const counts: StatusCounts = {};
 	for (const post of dayPosts) {
-		if (post.status === "published") published++;
-		else if (post.status === "failed" || post.status === "partially_published") failed++;
-		else upcoming++;
+		counts[post.status] = (counts[post.status] ?? 0) + 1;
 	}
-
-	return { published, failed, upcoming };
+	return counts;
 }
 
 function CalendarPage() {
@@ -337,7 +354,7 @@ function CalendarPage() {
 								{calendarCells.map(({ day, dateKey }) => {
 									const dayPosts = day ? (postsByDate.get(dateKey) ?? []) : [];
 									const isToday = dateKey === today;
-									const counts = day ? computeDayCounts(dayPosts) : { published: 0, failed: 0, upcoming: 0 };
+									const counts = day ? computeStatusCounts(dayPosts) : {};
 									const hasPosts = dayPosts.length > 0;
 
 									return (
@@ -353,25 +370,19 @@ function CalendarPage() {
 														onClick={() => setSelectedDate(dateKey)}
 													>
 														<span className={calendarStyles.dayNumber}>{day}</span>
-														<div className={calendarStyles.dayCounts}>
-															{counts.published > 0 && (
-																<span className={`${calendarStyles.countRow} ${calendarStyles.countSuccess}`}>
-																	<CheckCircle size={12} />
-																	{counts.published}
-																</span>
-															)}
-															{counts.failed > 0 && (
-																<span className={`${calendarStyles.countRow} ${calendarStyles.countError}`}>
-																	<XCircle size={12} />
-																	{counts.failed}
-																</span>
-															)}
-															{counts.upcoming > 0 && (
-																<span className={`${calendarStyles.countRow} ${calendarStyles.countScheduled}`}>
-																	<Clock size={12} />
-																	{counts.upcoming}
-																</span>
-															)}
+														<div className={calendarStyles.statusStripes}>
+															{STATUS_STRIPE_ORDER.map((status) => {
+																const count = counts[status];
+																if (!count) return null;
+																return (
+																	<span
+																		key={status}
+																		className={`${calendarStyles.stripe} ${calendarStyles[STATUS_STRIPE_CLASS[status]]}`}
+																	>
+																		{count} {STATUS_LABELS[status]}
+																	</span>
+																);
+															})}
 														</div>
 													</button>
 												) : (
