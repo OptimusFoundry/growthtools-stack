@@ -2,19 +2,19 @@ import express from "express";
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { Kafka, type Consumer, type Producer } from "kafkajs";
 import { renderVideo } from "./render";
 import { uploadToS3 } from "./s3";
 import type { VideoConfig } from "./compositions/TextOnGradient/types";
 
 const app = express();
-app.use(express.json({ limit: "10mb" }));
 
 const PORT = parseInt(process.env.PORT || "4000", 10);
-const RENDERER_SECRET = process.env.RENDERER_SECRET || "";
-const CALLBACK_URL = process.env.CALLBACK_URL || "";
+const KAFKA_BROKERS = process.env.KAFKA_BROKERS || "localhost:9092";
 const STORAGE_TYPE = process.env.STORAGE_TYPE || "local";
 const OUTPUT_DIR = process.env.OUTPUT_DIR || "../base-server/media-uploads";
 
+// Health check endpoint (for Docker healthcheck)
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
@@ -27,29 +27,26 @@ interface RenderRequest {
   s3_bucket?: string;
 }
 
-app.post("/render", (req, res) => {
-  const secret = req.headers["x-renderer-secret"];
-  if (RENDERER_SECRET && secret !== RENDERER_SECRET) {
-    res.status(401).json({ error: "unauthorized" });
-    return;
-  }
+interface RenderResult {
+  job_id: string;
+  status: "completed" | "failed";
+  file_url: string;
+  error_message: string;
+}
 
-  const body = req.body as RenderRequest;
-  if (!body.job_id || !body.config || !body.aspect_ratio) {
-    res.status(400).json({ error: "missing required fields" });
-    return;
-  }
-
-  // Accept immediately, render async
-  res.status(202).json({ message: "render started", job_id: body.job_id });
-
-  // Process render in background
-  processRender(body).catch((err) => {
-    console.error(`Render failed for job ${body.job_id}:`, err);
-  });
+const kafka = new Kafka({
+  clientId: "video-renderer",
+  brokers: KAFKA_BROKERS.split(","),
+  retry: {
+    initialRetryTime: 1000,
+    retries: 10,
+  },
 });
 
-async function processRender(body: RenderRequest): Promise<void> {
+let producer: Producer;
+let consumer: Consumer;
+
+async function processRender(body: RenderRequest): Promise<RenderResult> {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "video-render-"));
   const outputPath = path.join(tmpDir, `${body.job_id}.mp4`);
 
@@ -67,20 +64,26 @@ async function processRender(body: RenderRequest): Promise<void> {
       fileUrl = await saveToLocal(outputPath, body.output_key);
     }
 
-    await sendCallback(body.job_id, "completed", fileUrl, undefined);
+    return {
+      job_id: body.job_id,
+      status: "completed",
+      file_url: fileUrl,
+      error_message: "",
+    };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : "unknown error";
-    await sendCallback(body.job_id, "failed", undefined, errorMsg);
+    return {
+      job_id: body.job_id,
+      status: "failed",
+      file_url: "",
+      error_message: errorMsg,
+    };
   } finally {
-    // Cleanup temp files
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 }
 
-async function saveToLocal(
-  sourcePath: string,
-  key: string,
-): Promise<string> {
+async function saveToLocal(sourcePath: string, key: string): Promise<string> {
   const destPath = path.join(OUTPUT_DIR, key);
   fs.mkdirSync(path.dirname(destPath), { recursive: true });
   fs.copyFileSync(sourcePath, destPath);
@@ -88,38 +91,82 @@ async function saveToLocal(
   return key;
 }
 
-async function sendCallback(
-  jobId: string,
-  status: "completed" | "failed",
-  fileUrl?: string,
-  errorMessage?: string,
-): Promise<void> {
-  if (!CALLBACK_URL) {
-    console.log(`Callback skipped (no CALLBACK_URL). Job ${jobId}: ${status}`);
-    return;
-  }
-
+async function publishResult(result: RenderResult): Promise<void> {
   try {
-    await fetch(CALLBACK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(RENDERER_SECRET
-          ? { "X-Renderer-Secret": RENDERER_SECRET }
-          : {}),
-      },
-      body: JSON.stringify({
-        job_id: jobId,
-        status,
-        file_url: fileUrl,
-        error_message: errorMessage,
-      }),
+    await producer.send({
+      topic: "video.render.result",
+      messages: [
+        {
+          key: result.job_id,
+          value: JSON.stringify(result),
+        },
+      ],
     });
+    console.log(
+      `Published render result for job ${result.job_id}: ${result.status}`,
+    );
   } catch (err) {
-    console.error(`Failed to send callback for job ${jobId}:`, err);
+    console.error(
+      `Failed to publish render result for job ${result.job_id}:`,
+      err,
+    );
   }
 }
 
-app.listen(PORT, () => {
-  console.log(`Video renderer listening on port ${PORT}`);
+async function startKafka(): Promise<void> {
+  producer = kafka.producer();
+  await producer.connect();
+  console.log("Kafka producer connected");
+
+  consumer = kafka.consumer({ groupId: "video-renderer" });
+  await consumer.connect();
+  await consumer.subscribe({
+    topic: "video.render.request",
+    fromBeginning: false,
+  });
+
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      if (!message.value) return;
+
+      let body: RenderRequest;
+      try {
+        body = JSON.parse(message.value.toString()) as RenderRequest;
+      } catch (err) {
+        console.error("Failed to parse render request:", err);
+        return;
+      }
+
+      if (!body.job_id || !body.config || !body.aspect_ratio) {
+        console.error("Render request missing required fields:", body.job_id);
+        return;
+      }
+
+      console.log(`Received render request for job ${body.job_id}`);
+
+      // Fire-and-forget render processing (matches previous 202 pattern)
+      processRender(body)
+        .then((result) => publishResult(result))
+        .catch((err) => {
+          console.error(`Render failed for job ${body.job_id}:`, err);
+        });
+    },
+  });
+
+  console.log("Kafka consumer started on topic: video.render.request");
+}
+
+async function main(): Promise<void> {
+  // Start Express for health checks
+  app.listen(PORT, () => {
+    console.log(`Video renderer health check on port ${PORT}`);
+  });
+
+  // Start Kafka consumer/producer
+  await startKafka();
+}
+
+main().catch((err) => {
+  console.error("Failed to start video renderer:", err);
+  process.exit(1);
 });
