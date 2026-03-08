@@ -1,0 +1,45 @@
+@use "@/proto-design-system/mixins" as *;
+
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+	padding: var(--space-4);
+
+	@include breakpoint(md) {
+		padding: var(--space-5);
+	}
+}
+
+.twoColumn {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+
+	@include breakpoint(lg) {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-6);
+		align-items: start;
+	}
+}
+
+.previewPanel {
+	@include breakpoint(lg) {
+		position: sticky;
+		top: var(--space-4);
+	}
+}
+
+.colorSwatch {
+	width: 24px;
+	height: 24px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--color-border);
+}
+
+.videoPlayer {
+	width: 100%;
+	border-radius: var(--radius-md);
+	background: var(--color-base-200);
+}
