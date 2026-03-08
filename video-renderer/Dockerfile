@@ -3,6 +3,7 @@ FROM node:22-slim
 # Install Chromium dependencies for Remotion
 RUN apt-get update && apt-get install -y \
     chromium \
+    curl \
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
