@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Film, Plus } from "lucide-react";
+import { Film, Plus, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
-import { useVideoJobs } from "@/hooks/useVideoJobs";
+import { useCallback } from "react";
+import { useDeleteVideoConfig } from "@/hooks/useDeleteVideoConfig";
+import { useVideoConfigs } from "@/hooks/useVideoConfigs";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
@@ -9,33 +11,11 @@ import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { VideoJobStatus } from "@/types/video";
 import styles from "./page.module.scss";
 
 export const Route = createFileRoute("/video")({
 	component: VideoPage,
 });
-
-const STATUS_BADGE_VARIANT: Record<
-	VideoJobStatus,
-	"success" | "warning" | "error" | "default" | "primary"
-> = {
-	pending: "default",
-	generating_config: "primary",
-	rendering: "warning",
-	uploading: "warning",
-	completed: "success",
-	failed: "error",
-};
-
-const STATUS_LABELS: Record<VideoJobStatus, string> = {
-	pending: "Pending",
-	generating_config: "Generating",
-	rendering: "Rendering",
-	uploading: "Uploading",
-	completed: "Completed",
-	failed: "Failed",
-};
 
 function formatDate(iso: string): string {
 	return new Date(iso).toLocaleDateString(undefined, {
@@ -48,7 +28,22 @@ function formatDate(iso: string): string {
 }
 
 function VideoPage() {
-	const { jobs, loading, error } = useVideoJobs();
+	const { configs, loading, error, refetch } = useVideoConfigs();
+	const { deleteConfig, loading: deleting } = useDeleteVideoConfig();
+
+	const handleDelete = useCallback(
+		async (e: React.MouseEvent, id: string) => {
+			e.preventDefault();
+			e.stopPropagation();
+			try {
+				await deleteConfig(id);
+				refetch();
+			} catch {
+				// error handled by hook
+			}
+		},
+		[deleteConfig, refetch],
+	);
 
 	return (
 		<motion.div
@@ -78,7 +73,7 @@ function VideoPage() {
 					<Text color="error" size="sm">
 						{error}
 					</Text>
-				) : jobs.length === 0 ? (
+				) : configs.length === 0 ? (
 					<EmptyState
 						title="No videos yet"
 						description="Create your first AI-powered video from your posts or custom content."
@@ -93,53 +88,41 @@ function VideoPage() {
 					/>
 				) : (
 					<Stack gap="sm">
-						{jobs.map((job) => (
-							<Card key={job.id} padding="md">
-								<Stack direction="row" justify="between" align="center">
-									<Stack gap="md">
-										<Stack direction="row" gap="sm" align="center">
-											<Text size="sm" weight="semibold">
-												Video Job
-											</Text>
-											<Badge
-												variant={STATUS_BADGE_VARIANT[job.status]}
-												size="sm"
-											>
-												{STATUS_LABELS[job.status]}
-											</Badge>
-										</Stack>
-										<Stack direction="row" gap="md" align="center">
-											<Text size="xs" color="muted">
-												<Text
-													as="span"
-													size="xs"
-													color="secondary"
-													weight="medium"
-												>
-													Ratio:{" "}
+						{configs.map((config) => (
+							<Link
+								key={config.id}
+								to="/video/$id"
+								params={{ id: config.id }}
+								style={{ textDecoration: "none" }}
+							>
+								<Card padding="md">
+									<Stack direction="row" justify="between" align="center">
+										<Stack gap="md">
+											<Stack direction="row" gap="sm" align="center">
+												<Text size="sm" weight="semibold">
+													{config.title}
 												</Text>
-												{job.aspectRatio}
-											</Text>
+												<Badge variant="default" size="sm">
+													{config.template}
+												</Badge>
+											</Stack>
 											<Text size="xs" color="muted">
-												<Text
-													as="span"
-													size="xs"
-													color="secondary"
-													weight="medium"
-												>
-													Created:{" "}
-												</Text>
-												{formatDate(job.createdAt)}
+												{formatDate(config.createdAt)}
 											</Text>
 										</Stack>
-										{job.errorMessage && (
-											<Text size="xs" color="error">
-												{job.errorMessage}
-											</Text>
-										)}
+										<Button
+											variant="ghost"
+											size="sm"
+											disabled={deleting}
+											onClick={(e) =>
+												handleDelete(e as React.MouseEvent, config.id)
+											}
+										>
+											<Trash2 size={14} />
+										</Button>
 									</Stack>
-								</Stack>
-							</Card>
+								</Card>
+							</Link>
 						))}
 					</Stack>
 				)}

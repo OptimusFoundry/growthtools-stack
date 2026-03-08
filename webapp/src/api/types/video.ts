@@ -10,6 +10,7 @@ export interface ApiVideoConfig {
 	id: string;
 	account_id: string;
 	title: string;
+	prompt?: string;
 	post_id?: string;
 	config: Record<string, unknown>;
 	template: string;

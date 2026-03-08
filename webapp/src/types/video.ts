@@ -35,6 +35,7 @@ export interface VideoConfig {
 	id: string;
 	accountId: string;
 	title: string;
+	prompt?: string;
 	postId?: string;
 	config: Record<string, unknown>;
 	template: string;

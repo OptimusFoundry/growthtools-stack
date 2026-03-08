@@ -12,6 +12,7 @@ export function toVideoConfig(api: ApiVideoConfig): VideoConfig {
 		id: api.id,
 		accountId: api.account_id,
 		title: api.title,
+		prompt: api.prompt,
 		postId: api.post_id,
 		config: api.config,
 		template: api.template,

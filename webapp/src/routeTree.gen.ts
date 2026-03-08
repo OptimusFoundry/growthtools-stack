@@ -22,6 +22,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BillingIndexRouteImport } from './routes/billing/index'
 import { Route as VideoNewRouteImport } from './routes/video_.new'
+import { Route as VideoIdRouteImport } from './routes/video_.$id'
 import { Route as PostsNewRouteImport } from './routes/posts_.new'
 import { Route as PostsIdRouteImport } from './routes/posts_.$id'
 import { Route as OauthSignedinRouteImport } from './routes/oauth/signedin'
@@ -97,6 +98,11 @@ const VideoNewRoute = VideoNewRouteImport.update({
   path: '/video/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VideoIdRoute = VideoIdRouteImport.update({
+  id: '/video_/$id',
+  path: '/video/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PostsNewRoute = PostsNewRouteImport.update({
   id: '/posts_/new',
   path: '/posts/new',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
+  '/video/$id': typeof VideoIdRoute
   '/video/new': typeof VideoNewRoute
   '/billing': typeof BillingIndexRoute
 }
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
+  '/video/$id': typeof VideoIdRoute
   '/video/new': typeof VideoNewRoute
   '/billing': typeof BillingIndexRoute
 }
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts_/$id': typeof PostsIdRoute
   '/posts_/new': typeof PostsNewRoute
+  '/video_/$id': typeof VideoIdRoute
   '/video_/new': typeof VideoNewRoute
   '/billing/': typeof BillingIndexRoute
 }
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts/$id'
     | '/posts/new'
+    | '/video/$id'
     | '/video/new'
     | '/billing'
   fileRoutesByTo: FileRoutesByTo
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts/$id'
     | '/posts/new'
+    | '/video/$id'
     | '/video/new'
     | '/billing'
   id:
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts_/$id'
     | '/posts_/new'
+    | '/video_/$id'
     | '/video_/new'
     | '/billing/'
   fileRoutesById: FileRoutesById
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   OauthSignedinRoute: typeof OauthSignedinRoute
   PostsIdRoute: typeof PostsIdRoute
   PostsNewRoute: typeof PostsNewRoute
+  VideoIdRoute: typeof VideoIdRoute
   VideoNewRoute: typeof VideoNewRoute
   BillingIndexRoute: typeof BillingIndexRoute
 }
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideoNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/video_/$id': {
+      id: '/video_/$id'
+      path: '/video/$id'
+      fullPath: '/video/$id'
+      preLoaderRoute: typeof VideoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/posts_/new': {
       id: '/posts_/new'
       path: '/posts/new'
@@ -496,6 +516,7 @@ const rootRouteChildren: RootRouteChildren = {
   OauthSignedinRoute: OauthSignedinRoute,
   PostsIdRoute: PostsIdRoute,
   PostsNewRoute: PostsNewRoute,
+  VideoIdRoute: VideoIdRoute,
   VideoNewRoute: VideoNewRoute,
   BillingIndexRoute: BillingIndexRoute,
 }
