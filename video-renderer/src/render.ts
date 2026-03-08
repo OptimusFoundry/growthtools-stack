@@ -4,7 +4,7 @@ import path from "path";
 import { getDimensions } from "./utils/aspectRatio";
 import type { VideoConfig } from "./compositions/TextOnGradient/types";
 
-const ENTRY_POINT = path.resolve(__dirname, "compositions/Root.tsx");
+const ENTRY_POINT = path.resolve(__dirname, "..", "src", "compositions", "Root.tsx");
 
 export interface RenderOptions {
   config: VideoConfig;
@@ -25,10 +25,13 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
     entryPoint: ENTRY_POINT,
   });
 
+  const browserExecutable = process.env.CHROMIUM_PATH || undefined;
+
   const composition = await selectComposition({
     serveUrl: bundleLocation,
     id: "TextOnGradient",
     inputProps: { config },
+    browserExecutable,
   });
 
   composition.width = dims.width;
@@ -42,5 +45,6 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
     codec: "h264",
     outputLocation: outputPath,
     inputProps: { config },
+    browserExecutable,
   });
 }

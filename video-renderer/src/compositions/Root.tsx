@@ -1,5 +1,5 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, registerRoot } from "remotion";
 import { TextOnGradient } from "./TextOnGradient";
 import type { VideoConfig } from "./TextOnGradient/types";
 
@@ -42,3 +42,5 @@ export const RemotionRoot: React.FC = () => {
     </>
   );
 };
+
+registerRoot(RemotionRoot);

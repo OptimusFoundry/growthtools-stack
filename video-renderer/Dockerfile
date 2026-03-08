@@ -16,6 +16,11 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     && rm -rf /var/lib/apt/lists/*
 
+
+# Tell Remotion/Puppeteer to use system Chromium, skip downloading
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV CHROMIUM_PATH=/usr/bin/chromium
+
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
