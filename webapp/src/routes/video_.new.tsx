@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Play } from "lucide-react";
+import { motion } from "motion/react";
 import { useCallback, useState } from "react";
 import { useCreateRenderJob } from "@/hooks/useCreateRenderJob";
 import { useGenerateVideoConfig } from "@/hooks/useGenerateVideoConfig";
@@ -91,38 +92,47 @@ function NewVideoPage() {
 		: undefined;
 
 	return (
-		<div className={styles.container}>
-			<Stack gap="xl">
-				<Stack direction="row" gap="sm" align="center">
-					<Link to="/video">
-						<Button variant="ghost" size="sm">
-							<ArrowLeft size={16} />
-							Back
-						</Button>
-					</Link>
-					<Text as="h1" size="2xl" weight="semibold">
-						Create Video
-					</Text>
-				</Stack>
+		<motion.div
+			className={styles.page}
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			transition={{ duration: 0.6 }}
+		>
+			<Stack direction="row" justify="between" align="center">
+				<div className={styles.pageHeader}>
+					<Stack direction="row" gap="sm" align="center">
+						<Link to="/video">
+							<Button variant="ghost" size="sm">
+								<ArrowLeft size={16} />
+							</Button>
+						</Link>
+						<h1 className={styles.pageTitle}>Create Video</h1>
+					</Stack>
+					<p className={styles.pageDescription}>
+						Generate an AI-powered video from your content
+					</p>
+				</div>
+			</Stack>
 
-				{/* Step indicator */}
-				<Stack direction="row" gap="sm">
-					<Badge variant={step === "content" ? "primary" : "default"}>
-						1. Content
-					</Badge>
-					<Badge variant={step === "preview" ? "primary" : "default"}>
-						2. Preview
-					</Badge>
-					<Badge variant={step === "render" ? "primary" : "default"}>
-						3. Render
-					</Badge>
-				</Stack>
+			{/* Step indicator */}
+			<Stack direction="row" gap="sm">
+				<Badge variant={step === "content" ? "primary" : "default"}>
+					1. Content
+				</Badge>
+				<Badge variant={step === "preview" ? "primary" : "default"}>
+					2. Preview
+				</Badge>
+				<Badge variant={step === "render" ? "primary" : "default"}>
+					3. Render
+				</Badge>
+			</Stack>
 
+			<div className={styles.pageContent}>
 				{/* Step 1: Content Input */}
 				{step === "content" && (
-					<Card>
-						<Stack gap="md" style={{ padding: "var(--space-4)" }}>
-							<Text as="h2" size="xl" weight="medium">
+					<Card padding="md">
+						<Stack gap="md">
+							<Text as="h2" size="lg" weight="medium">
 								What should your video be about?
 							</Text>
 							<TextField
@@ -145,17 +155,13 @@ function NewVideoPage() {
 							)}
 							<Stack direction="row" justify="end">
 								<Button
+									variant="primary"
 									onClick={handleGenerate}
 									disabled={generating || !title.trim() || !prompt.trim()}
+									isLoading={generating}
 								>
-									{generating ? (
-										<Spinner size="sm" />
-									) : (
-										<>
-											Generate Config
-											<ArrowRight size={16} />
-										</>
-									)}
+									Generate Config
+									<ArrowRight size={16} />
 								</Button>
 							</Stack>
 						</Stack>
@@ -164,17 +170,15 @@ function NewVideoPage() {
 
 				{/* Step 2: Config Preview */}
 				{step === "preview" && config && (
-					<Stack gap="md">
-						<Card>
-							<Stack gap="sm" style={{ padding: "var(--space-4)" }}>
-								<Text as="h2" size="xl" weight="medium">
+					<Stack gap="sm">
+						<Card padding="md">
+							<Stack gap="sm">
+								<Text as="h2" size="lg" weight="medium">
 									Video Configuration
 								</Text>
 								<Text size="sm" color="secondary">
 									{config.template} &middot; {scenes.length} scenes
 								</Text>
-
-								{/* Theme colors */}
 								{theme && (
 									<Stack direction="row" gap="sm" align="center">
 										<Text size="sm" weight="medium">
@@ -197,12 +201,13 @@ function NewVideoPage() {
 							</Stack>
 						</Card>
 
-						{/* Scene cards */}
 						{scenes.map((scene, index) => (
-							<Card key={scene.id}>
-								<Stack gap="xs" style={{ padding: "var(--space-3)" }}>
+							<Card key={scene.id} padding="md">
+								<Stack gap="xs">
 									<Stack direction="row" justify="between" align="center">
-										<Badge variant="default">Scene {index + 1}</Badge>
+										<Badge variant="default" size="sm">
+											Scene {index + 1}
+										</Badge>
 										<Text size="xs" color="secondary">
 											{Math.round(scene.duration_frames / 30)}s
 										</Text>
@@ -219,12 +224,10 @@ function NewVideoPage() {
 
 						<Stack direction="row" justify="between">
 							<Button variant="ghost" onClick={() => setStep("content")}>
-								<ArrowLeft size={16} />
-								Back
+								<ArrowLeft size={16} /> Back
 							</Button>
-							<Button onClick={() => setStep("render")}>
-								Continue to Render
-								<ArrowRight size={16} />
+							<Button variant="primary" onClick={() => setStep("render")}>
+								Continue to Render <ArrowRight size={16} />
 							</Button>
 						</Stack>
 					</Stack>
@@ -232,15 +235,14 @@ function NewVideoPage() {
 
 				{/* Step 3: Render */}
 				{step === "render" && (
-					<Card>
-						<Stack gap="md" style={{ padding: "var(--space-4)" }}>
-							<Text as="h2" size="xl" weight="medium">
+					<Card padding="md">
+						<Stack gap="md">
+							<Text as="h2" size="lg" weight="medium">
 								Render Video
 							</Text>
 
 							{!activeJobId && (
 								<>
-									{/* Aspect ratio picker */}
 									<Stack gap="sm">
 										<Text size="sm" weight="medium">
 											Aspect Ratio
@@ -274,24 +276,20 @@ function NewVideoPage() {
 											variant="ghost"
 											onClick={() => setStep("preview")}
 										>
-											<ArrowLeft size={16} />
-											Back
+											<ArrowLeft size={16} /> Back
 										</Button>
-										<Button onClick={handleRender} disabled={rendering}>
-											{rendering ? (
-												<Spinner size="sm" />
-											) : (
-												<>
-													<Play size={16} />
-													Start Render
-												</>
-											)}
+										<Button
+											variant="primary"
+											onClick={handleRender}
+											disabled={rendering}
+											isLoading={rendering}
+										>
+											<Play size={16} /> Start Render
 										</Button>
 									</Stack>
 								</>
 							)}
 
-							{/* Job progress */}
 							{activeJobId && job && (
 								<Stack gap="sm">
 									<Stack direction="row" gap="sm" align="center">
@@ -338,9 +336,7 @@ function NewVideoPage() {
 											</Text>
 											<Button
 												variant="secondary"
-												onClick={() => {
-													setActiveJobId(null);
-												}}
+												onClick={() => setActiveJobId(null)}
 											>
 												Try Again
 											</Button>
@@ -351,7 +347,7 @@ function NewVideoPage() {
 						</Stack>
 					</Card>
 				)}
-			</Stack>
-		</div>
+			</div>
+		</motion.div>
 	);
 }

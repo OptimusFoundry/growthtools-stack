@@ -38,7 +38,7 @@ const STATUS_LABELS: Record<VideoJobStatus, string> = {
 };
 
 function formatDate(iso: string): string {
-	return new Date(iso).toLocaleDateString("en-US", {
+	return new Date(iso).toLocaleDateString(undefined, {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
@@ -50,92 +50,100 @@ function formatDate(iso: string): string {
 function VideoPage() {
 	const { jobs, loading, error } = useVideoJobs();
 
-	if (loading) {
-		return (
-			<div className={styles.container}>
-				<Stack gap="md" align="center" justify="center">
-					<Spinner />
-				</Stack>
-			</div>
-		);
-	}
-
 	return (
-		<div className={styles.container}>
-			<Stack gap="xl">
-				<Stack direction="row" justify="between" align="center">
-					<Stack gap="xs">
-						<Text as="h1" size="3xl" weight="semibold">
-							Video
-						</Text>
-						<Text color="secondary">
-							Create AI-powered short videos from your content
-						</Text>
-					</Stack>
-					<Link to="/video/new">
-						<Button>
-							<Plus size={16} />
-							Create Video
-						</Button>
-					</Link>
-				</Stack>
+		<motion.div
+			className={styles.page}
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			transition={{ duration: 0.6 }}
+		>
+			<Stack direction="row" justify="between" align="center">
+				<div className={styles.pageHeader}>
+					<h1 className={styles.pageTitle}>Video</h1>
+					<p className={styles.pageDescription}>
+						Create AI-powered short videos from your content
+					</p>
+				</div>
+				<Link to="/video/new">
+					<Button variant="primary">
+						<Plus size={16} /> Create Video
+					</Button>
+				</Link>
+			</Stack>
 
-				{error && (
+			<div className={styles.pageContent}>
+				{loading ? (
+					<Spinner />
+				) : error ? (
 					<Text color="error" size="sm">
 						{error}
 					</Text>
-				)}
-
-				{jobs.length === 0 ? (
+				) : jobs.length === 0 ? (
 					<EmptyState
 						title="No videos yet"
 						description="Create your first AI-powered video from your posts or custom content."
-						icon={<Film size={40} />}
+						icon={<Film size={48} />}
 						action={
 							<Link to="/video/new">
-								<Button>
-									<Plus size={16} />
-									Create Video
+								<Button variant="primary">
+									<Plus size={16} /> Create Video
 								</Button>
 							</Link>
 						}
 					/>
 				) : (
 					<Stack gap="sm">
-						{jobs.map((job, index) => (
-							<motion.div
-								key={job.id}
-								initial={{ opacity: 0, y: 8 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ delay: index * 0.05 }}
-							>
-								<Card className={styles.card}>
-									<Stack direction="row" justify="between" align="center">
-										<Stack gap="xs">
-											<Stack direction="row" gap="sm" align="center">
-												<Film size={16} />
-												<Text weight="medium">Video Job</Text>
-												<Badge variant={STATUS_BADGE_VARIANT[job.status]}>
-													{STATUS_LABELS[job.status]}
-												</Badge>
-											</Stack>
-											<Text size="sm" color="secondary">
-												{job.aspectRatio} &middot; Created{" "}
+						{jobs.map((job) => (
+							<Card key={job.id} padding="md">
+								<Stack direction="row" justify="between" align="center">
+									<Stack gap="md">
+										<Stack direction="row" gap="sm" align="center">
+											<Text size="sm" weight="semibold">
+												Video Job
+											</Text>
+											<Badge
+												variant={STATUS_BADGE_VARIANT[job.status]}
+												size="sm"
+											>
+												{STATUS_LABELS[job.status]}
+											</Badge>
+										</Stack>
+										<Stack direction="row" gap="md" align="center">
+											<Text size="xs" color="muted">
+												<Text
+													as="span"
+													size="xs"
+													color="secondary"
+													weight="medium"
+												>
+													Ratio:{" "}
+												</Text>
+												{job.aspectRatio}
+											</Text>
+											<Text size="xs" color="muted">
+												<Text
+													as="span"
+													size="xs"
+													color="secondary"
+													weight="medium"
+												>
+													Created:{" "}
+												</Text>
 												{formatDate(job.createdAt)}
 											</Text>
-											{job.errorMessage && (
-												<Text size="sm" color="error">
-													{job.errorMessage}
-												</Text>
-											)}
 										</Stack>
+										{job.errorMessage && (
+											<Text size="xs" color="error">
+												{job.errorMessage}
+											</Text>
+										)}
 									</Stack>
-								</Card>
-							</motion.div>
+								</Stack>
+							</Card>
 						))}
 					</Stack>
 				)}
-			</Stack>
-		</div>
+			</div>
+		</motion.div>
 	);
 }
