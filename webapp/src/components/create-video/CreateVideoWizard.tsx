@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useCreateRenderJob } from "@/hooks/useCreateRenderJob";
 import { useGenerateVideoConfig } from "@/hooks/useGenerateVideoConfig";
 import { useGetVideoConfig } from "@/hooks/useGetVideoConfig";
-import { useVideoJob } from "@/hooks/useVideoJob";
+import { useVideoJobsForConfig } from "@/hooks/useVideoJobForConfig";
+import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
@@ -12,7 +13,7 @@ import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { VideoAspectRatio, VideoConfig } from "@/types/video";
 import { ComposeStep } from "./ComposeStep";
 import styles from "./CreateVideoWizard.module.scss";
-import { PreviewStep } from "./PreviewStep";
+import { ConfigPanel, RendersPanel } from "./PreviewStep";
 
 interface CreateVideoWizardProps {
 	editConfigId?: string;
@@ -22,9 +23,7 @@ export function CreateVideoWizard({ editConfigId }: CreateVideoWizardProps) {
 	const isEditMode = Boolean(editConfigId);
 	const [title, setTitle] = useState("");
 	const [prompt, setPrompt] = useState("");
-	const [aspectRatio, setAspectRatio] = useState<VideoAspectRatio>("9:16");
 	const [config, setConfig] = useState<VideoConfig | null>(null);
-	const [activeJobId, setActiveJobId] = useState<string | null>(null);
 	const [initialized, setInitialized] = useState(!isEditMode);
 
 	const {
@@ -43,7 +42,8 @@ export function CreateVideoWizard({ editConfigId }: CreateVideoWizardProps) {
 		loading: rendering,
 		error: renderError,
 	} = useCreateRenderJob();
-	const { job } = useVideoJob(activeJobId);
+
+	const { jobs, startPolling } = useVideoJobsForConfig(config?.id);
 
 	useEffect(() => {
 		if (loadedConfig && !initialized) {
@@ -59,25 +59,23 @@ export function CreateVideoWizard({ editConfigId }: CreateVideoWizardProps) {
 		try {
 			const result = await generateConfig({ title, prompt });
 			setConfig(result);
-			setActiveJobId(null);
 		} catch {
 			// error handled by hook
 		}
 	}, [title, prompt, generateConfig]);
 
-	const handleRender = useCallback(async () => {
-		if (!config) return;
-		try {
-			const result = await createRenderJob(config.id, aspectRatio);
-			setActiveJobId(result.id);
-		} catch {
-			// error handled by hook
-		}
-	}, [config, aspectRatio, createRenderJob]);
-
-	const handleRetry = useCallback(() => {
-		setActiveJobId(null);
-	}, []);
+	const handleRender = useCallback(
+		async (ratio: VideoAspectRatio) => {
+			if (!config) return;
+			try {
+				await createRenderJob(config.id, ratio);
+				startPolling();
+			} catch {
+				// error handled by hook
+			}
+		},
+		[config, createRenderJob, startPolling],
+	);
 
 	if (isEditMode && loadingConfig) {
 		return (
@@ -115,30 +113,30 @@ export function CreateVideoWizard({ editConfigId }: CreateVideoWizardProps) {
 				</Text>
 			</Stack>
 
-			<div className={styles.twoColumn}>
+			{/* Top row: compose + config side by side */}
+			<div className={styles.topRow}>
 				<ComposeStep
 					title={title}
 					prompt={prompt}
-					aspectRatio={aspectRatio}
 					generating={generating}
 					configExists={config !== null}
-					rendering={rendering}
-					activeJobId={activeJobId}
 					generateError={generateError}
-					renderError={renderError}
 					onTitleChange={setTitle}
 					onPromptChange={setPrompt}
-					onAspectRatioChange={setAspectRatio}
 					onGenerate={handleGenerate}
-					onRender={handleRender}
 				/>
-				<PreviewStep
-					config={config}
-					generating={generating}
-					job={job}
-					onRetry={handleRetry}
-				/>
+				<ConfigPanel config={config} generating={generating} />
 			</div>
+
+			{/* Bottom row: renders full width */}
+			<Divider />
+			<RendersPanel
+				config={config}
+				jobs={jobs}
+				rendering={rendering}
+				renderError={renderError}
+				onRender={handleRender}
+			/>
 		</div>
 	);
 }
