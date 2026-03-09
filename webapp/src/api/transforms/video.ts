@@ -4,7 +4,7 @@
  * Transform between API (snake_case) and UI (camelCase) video types
  */
 
-import type { VideoConfig, VideoJob } from "@/types/video";
+import type { VideoConfig, VideoConfigData, VideoJob } from "@/types/video";
 import type { ApiVideoConfig, ApiVideoJob } from "../types/video";
 
 export function toVideoConfig(api: ApiVideoConfig): VideoConfig {
@@ -14,7 +14,7 @@ export function toVideoConfig(api: ApiVideoConfig): VideoConfig {
 		title: api.title,
 		prompt: api.prompt,
 		postId: api.post_id,
-		config: api.config,
+		config: api.config as unknown as VideoConfigData,
 		template: api.template,
 		createdAt: api.created_at,
 		updatedAt: api.updated_at,

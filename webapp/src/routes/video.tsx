@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Film, Plus, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useDeleteVideoConfig } from "@/hooks/useDeleteVideoConfig";
 import { useVideoConfigs } from "@/hooks/useVideoConfigs";
+import { useVideoJobs } from "@/hooks/useVideoJobs";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
@@ -11,11 +12,33 @@ import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
+import type { VideoJob, VideoJobStatus } from "@/types/video";
 import styles from "./page.module.scss";
 
 export const Route = createFileRoute("/video")({
 	component: VideoPage,
 });
+
+const STATUS_BADGE_VARIANT: Record<
+	VideoJobStatus,
+	"success" | "warning" | "error" | "default" | "primary"
+> = {
+	pending: "default",
+	generating_config: "primary",
+	rendering: "warning",
+	uploading: "warning",
+	completed: "success",
+	failed: "error",
+};
+
+const STATUS_LABELS: Record<VideoJobStatus, string> = {
+	pending: "Pending",
+	generating_config: "Generating",
+	rendering: "Rendering",
+	uploading: "Uploading",
+	completed: "Completed",
+	failed: "Failed",
+};
 
 function formatDate(iso: string): string {
 	return new Date(iso).toLocaleDateString(undefined, {
@@ -29,7 +52,19 @@ function formatDate(iso: string): string {
 
 function VideoPage() {
 	const { configs, loading, error, refetch } = useVideoConfigs();
+	const { jobs } = useVideoJobs();
 	const { deleteConfig, loading: deleting } = useDeleteVideoConfig();
+
+	// Build a map of configId → latest job (jobs are sorted desc by created_at)
+	const latestJobByConfig = useMemo(() => {
+		const map = new Map<string, VideoJob>();
+		for (const job of jobs) {
+			if (!map.has(job.videoConfigId)) {
+				map.set(job.videoConfigId, job);
+			}
+		}
+		return map;
+	}, [jobs]);
 
 	const handleDelete = useCallback(
 		async (e: React.MouseEvent, id: string) => {
@@ -88,42 +123,58 @@ function VideoPage() {
 					/>
 				) : (
 					<Stack gap="sm">
-						{configs.map((config) => (
-							<Link
-								key={config.id}
-								to="/video/$id"
-								params={{ id: config.id }}
-								style={{ textDecoration: "none" }}
-							>
-								<Card padding="md">
-									<Stack direction="row" justify="between" align="center">
-										<Stack gap="md">
-											<Stack direction="row" gap="sm" align="center">
-												<Text size="sm" weight="semibold">
-													{config.title}
+						{configs.map((config) => {
+							const latestJob = latestJobByConfig.get(config.id);
+							return (
+								<Link
+									key={config.id}
+									to="/video/$id"
+									params={{ id: config.id }}
+									style={{ textDecoration: "none" }}
+								>
+									<Card padding="md">
+										<Stack direction="row" justify="between" align="center">
+											<Stack gap="md">
+												<Stack direction="row" gap="sm" align="center">
+													<Text size="sm" weight="semibold">
+														{config.title}
+													</Text>
+													<Badge variant="default" size="sm">
+														{config.template}
+													</Badge>
+													{latestJob && (
+														<Badge
+															variant={STATUS_BADGE_VARIANT[latestJob.status]}
+															size="sm"
+														>
+															{STATUS_LABELS[latestJob.status]}
+														</Badge>
+													)}
+													{!latestJob && (
+														<Badge variant="default" size="sm">
+															Draft
+														</Badge>
+													)}
+												</Stack>
+												<Text size="xs" color="muted">
+													{formatDate(config.createdAt)}
 												</Text>
-												<Badge variant="default" size="sm">
-													{config.template}
-												</Badge>
 											</Stack>
-											<Text size="xs" color="muted">
-												{formatDate(config.createdAt)}
-											</Text>
+											<Button
+												variant="ghost"
+												size="sm"
+												disabled={deleting}
+												onClick={(e) =>
+													handleDelete(e as React.MouseEvent, config.id)
+												}
+											>
+												<Trash2 size={14} />
+											</Button>
 										</Stack>
-										<Button
-											variant="ghost"
-											size="sm"
-											disabled={deleting}
-											onClick={(e) =>
-												handleDelete(e as React.MouseEvent, config.id)
-											}
-										>
-											<Trash2 size={14} />
-										</Button>
-									</Stack>
-								</Card>
-							</Link>
-						))}
+									</Card>
+								</Link>
+							);
+						})}
 					</Stack>
 				)}
 			</div>

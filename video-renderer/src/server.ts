@@ -5,7 +5,7 @@ import path from "path";
 import { Kafka, type Consumer, type Producer } from "kafkajs";
 import { renderVideo } from "./render";
 import { uploadToS3 } from "./s3";
-import type { VideoConfig } from "./compositions/TextOnGradient/types";
+import type { VideoConfigV2 } from "./compositions/types";
 
 const app = express();
 
@@ -14,6 +14,21 @@ const KAFKA_BROKERS = process.env.KAFKA_BROKERS || "localhost:9092";
 const STORAGE_TYPE = process.env.STORAGE_TYPE || "local";
 const OUTPUT_DIR = process.env.OUTPUT_DIR || "../base-server/media-uploads";
 
+function log(level: "info" | "warn" | "error", msg: string, meta?: Record<string, unknown>) {
+  const entry = {
+    ts: new Date().toISOString(),
+    level,
+    service: "video-renderer",
+    msg,
+    ...meta,
+  };
+  if (level === "error") {
+    console.error(JSON.stringify(entry));
+  } else {
+    console.log(JSON.stringify(entry));
+  }
+}
+
 // Health check endpoint (for Docker healthcheck)
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
@@ -21,7 +36,7 @@ app.get("/health", (_req, res) => {
 
 interface RenderRequest {
   job_id: string;
-  config: VideoConfig;
+  config: VideoConfigV2;
   aspect_ratio: string;
   output_key: string;
   s3_bucket?: string;
@@ -49,6 +64,18 @@ let consumer: Consumer;
 async function processRender(body: RenderRequest): Promise<RenderResult> {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "video-render-"));
   const outputPath = path.join(tmpDir, `${body.job_id}.mp4`);
+  const startTime = Date.now();
+
+  log("info", "starting render", {
+    job_id: body.job_id,
+    aspect_ratio: body.aspect_ratio,
+    template: body.config.template,
+    scenes: body.config.scenes?.length ?? 0,
+    fps: body.config.fps,
+    output_key: body.output_key,
+    storage_type: body.s3_bucket ? "s3" : "local",
+    tmp_dir: tmpDir,
+  });
 
   try {
     await renderVideo({
@@ -57,12 +84,31 @@ async function processRender(body: RenderRequest): Promise<RenderResult> {
       outputPath,
     });
 
+    const renderDuration = Date.now() - startTime;
+    const stat = fs.statSync(outputPath);
+    log("info", "render completed, uploading", {
+      job_id: body.job_id,
+      render_duration_ms: renderDuration,
+      file_size_bytes: stat.size,
+      file_size_mb: (stat.size / (1024 * 1024)).toFixed(2),
+    });
+
+    const uploadStart = Date.now();
     let fileUrl = "";
     if (STORAGE_TYPE === "s3" && body.s3_bucket) {
       fileUrl = await uploadToS3(outputPath, body.s3_bucket, body.output_key);
     } else {
       fileUrl = await saveToLocal(outputPath, body.output_key);
     }
+
+    const totalDuration = Date.now() - startTime;
+    log("info", "job completed successfully", {
+      job_id: body.job_id,
+      file_url: fileUrl,
+      render_duration_ms: renderDuration,
+      upload_duration_ms: Date.now() - uploadStart,
+      total_duration_ms: totalDuration,
+    });
 
     return {
       job_id: body.job_id,
@@ -72,6 +118,13 @@ async function processRender(body: RenderRequest): Promise<RenderResult> {
     };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : "unknown error";
+    const stack = err instanceof Error ? err.stack : undefined;
+    log("error", "render failed", {
+      job_id: body.job_id,
+      error: errorMsg,
+      stack,
+      duration_ms: Date.now() - startTime,
+    });
     return {
       job_id: body.job_id,
       status: "failed",
@@ -79,7 +132,16 @@ async function processRender(body: RenderRequest): Promise<RenderResult> {
       error_message: errorMsg,
     };
   } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      log("info", "cleaned up tmp dir", { job_id: body.job_id, tmp_dir: tmpDir });
+    } catch (cleanupErr) {
+      log("warn", "failed to clean up tmp dir", {
+        job_id: body.job_id,
+        tmp_dir: tmpDir,
+        error: cleanupErr instanceof Error ? cleanupErr.message : "unknown",
+      });
+    }
   }
 }
 
@@ -87,7 +149,7 @@ async function saveToLocal(sourcePath: string, key: string): Promise<string> {
   const destPath = path.join(OUTPUT_DIR, key);
   fs.mkdirSync(path.dirname(destPath), { recursive: true });
   fs.copyFileSync(sourcePath, destPath);
-  console.log(`Video saved to local storage: ${destPath}`);
+  log("info", "saved to local storage", { dest_path: destPath, key });
   return key;
 }
 
@@ -102,21 +164,23 @@ async function publishResult(result: RenderResult): Promise<void> {
         },
       ],
     });
-    console.log(
-      `Published render result for job ${result.job_id}: ${result.status}`,
-    );
+    log("info", "published render result", {
+      job_id: result.job_id,
+      status: result.status,
+      error_message: result.error_message || undefined,
+    });
   } catch (err) {
-    console.error(
-      `Failed to publish render result for job ${result.job_id}:`,
-      err,
-    );
+    log("error", "failed to publish render result", {
+      job_id: result.job_id,
+      error: err instanceof Error ? err.message : "unknown",
+    });
   }
 }
 
 async function startKafka(): Promise<void> {
   producer = kafka.producer();
   await producer.connect();
-  console.log("Kafka producer connected");
+  log("info", "kafka producer connected", { brokers: KAFKA_BROKERS });
 
   consumer = kafka.consumer({ groupId: "video-renderer" });
   await consumer.connect();
@@ -126,40 +190,69 @@ async function startKafka(): Promise<void> {
   });
 
   await consumer.run({
-    eachMessage: async ({ message }) => {
-      if (!message.value) return;
+    eachMessage: async ({ message, partition, heartbeat }) => {
+      if (!message.value) {
+        log("warn", "received empty kafka message, skipping");
+        return;
+      }
 
       let body: RenderRequest;
       try {
         body = JSON.parse(message.value.toString()) as RenderRequest;
       } catch (err) {
-        console.error("Failed to parse render request:", err);
+        log("error", "failed to parse render request", {
+          error: err instanceof Error ? err.message : "unknown",
+          raw_length: message.value.length,
+        });
         return;
       }
 
       if (!body.job_id || !body.config || !body.aspect_ratio) {
-        console.error("Render request missing required fields:", body.job_id);
+        log("error", "render request missing required fields", {
+          job_id: body.job_id || "missing",
+          has_config: !!body.config,
+          has_aspect_ratio: !!body.aspect_ratio,
+        });
         return;
       }
 
-      console.log(`Received render request for job ${body.job_id}`);
+      log("info", "received render request", {
+        job_id: body.job_id,
+        partition,
+        aspect_ratio: body.aspect_ratio,
+        output_key: body.output_key,
+      });
 
       // Fire-and-forget render processing (matches previous 202 pattern)
       processRender(body)
         .then((result) => publishResult(result))
         .catch((err) => {
-          console.error(`Render failed for job ${body.job_id}:`, err);
+          log("error", "unhandled error in render pipeline", {
+            job_id: body.job_id,
+            error: err instanceof Error ? err.message : "unknown",
+            stack: err instanceof Error ? err.stack : undefined,
+          });
         });
     },
   });
 
-  console.log("Kafka consumer started on topic: video.render.request");
+  log("info", "kafka consumer started", { topic: "video.render.request" });
 }
 
 async function main(): Promise<void> {
+  log("info", "starting video renderer", {
+    port: PORT,
+    kafka_brokers: KAFKA_BROKERS,
+    storage_type: STORAGE_TYPE,
+    output_dir: OUTPUT_DIR,
+    chromium_path: process.env.CHROMIUM_PATH || "default",
+    node_version: process.version,
+    pid: process.pid,
+  });
+
   // Start Express for health checks
   app.listen(PORT, () => {
-    console.log(`Video renderer health check on port ${PORT}`);
+    log("info", "health check server listening", { port: PORT });
   });
 
   // Start Kafka consumer/producer
@@ -167,6 +260,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error("Failed to start video renderer:", err);
+  log("error", "failed to start video renderer", {
+    error: err instanceof Error ? err.message : "unknown",
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   process.exit(1);
 });

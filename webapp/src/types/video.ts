@@ -8,28 +8,138 @@ export type VideoJobStatus =
 
 export type VideoAspectRatio = "9:16" | "1:1" | "16:9";
 
-export interface VideoTheme {
-	backgroundColors: string[];
-	textColor: string;
-	accentColor: string;
-	fontFamily: string;
+// --- Config Types ---
+
+export interface GradientBackground {
+	type: "gradient";
+	colors: string[];
+	angle?: number;
+}
+
+export interface SolidBackground {
+	type: "solid";
+	color: string;
+}
+
+export interface ImageBackground {
+	type: "image";
+	url: string;
+	fit?: "cover" | "contain" | "fill";
+}
+
+export interface VideoBackgroundConfig {
+	type: "video";
+	url: string;
+	fit?: "cover" | "contain" | "fill";
+}
+
+export type BackgroundConfig =
+	| GradientBackground
+	| SolidBackground
+	| ImageBackground
+	| VideoBackgroundConfig;
+
+export interface FontConfig {
+	family: string;
+	weight?: number;
+	style?: "normal" | "italic";
+}
+
+export interface SpringAnimationConfig {
+	type: "spring";
+	mass?: number;
+	damping?: number;
+	stiffness?: number;
+}
+
+export interface EasingAnimationConfig {
+	type: "easing";
+	function:
+		| "linear"
+		| "ease-in"
+		| "ease-out"
+		| "ease-in-out"
+		| "bounce"
+		| "elastic";
+}
+
+export type AnimationConfig = SpringAnimationConfig | EasingAnimationConfig;
+
+export interface MotionEffect {
+	property: "opacity" | "translateX" | "translateY" | "scale" | "rotate";
+	from: number;
+	to: number;
+	animation?: AnimationConfig;
+	delay_frames?: number;
+}
+
+export interface ElementAnimation {
+	enter?: MotionEffect[];
+	exit?: MotionEffect[];
+}
+
+export interface VideoTextElement {
+	type: "text";
+	content: string;
+	font?: FontConfig;
+	color?: string;
+	size?: number;
+	weight?: number;
+	alignment?: "left" | "center" | "right";
+	position: { x: number; y: number };
+	width?: number;
+	animation?: ElementAnimation;
+}
+
+export interface VideoMediaElement {
+	type: "image" | "video" | "audio";
+	url: string;
+	fit?: "cover" | "contain" | "fill";
+	size?: { width: number; height: number };
+	position?: { x: number; y: number };
+	volume?: number;
+	animation?: ElementAnimation;
+}
+
+export type SceneElement = VideoTextElement | VideoMediaElement;
+
+export interface TransitionTiming {
+	type: "linear" | "spring";
+	duration_frames?: number;
+	mass?: number;
+	damping?: number;
+	stiffness?: number;
+}
+
+export interface TransitionConfig {
+	type: "fade" | "slide" | "wipe" | "flip";
+	direction?: "from-left" | "from-right" | "from-top" | "from-bottom";
+	timing?: TransitionTiming;
 }
 
 export interface VideoScene {
 	id: string;
-	durationFrames: number;
-	text: string;
-	subtext?: string;
-	transition: "fade" | "slide" | "none";
-	animation: "slide_up" | "fade" | "stagger";
+	duration_frames: number;
+	background: BackgroundConfig;
+	elements: SceneElement[];
+	transition_in?: TransitionConfig;
+}
+
+export interface GlobalAudio {
+	url: string;
+	volume?: number;
 }
 
 export interface VideoConfigData {
-	template: string;
-	theme: VideoTheme;
-	scenes: VideoScene[];
+	version: 2;
+	template: "universal";
 	fps: number;
+	global_font?: FontConfig;
+	global_audio?: GlobalAudio;
+	scenes: VideoScene[];
 }
+
+// --- API Models ---
 
 export interface VideoConfig {
 	id: string;
@@ -37,7 +147,7 @@ export interface VideoConfig {
 	title: string;
 	prompt?: string;
 	postId?: string;
-	config: Record<string, unknown>;
+	config: VideoConfigData;
 	template: string;
 	createdAt: string;
 	updatedAt: string;
@@ -69,6 +179,6 @@ export interface CreateRenderJobRequest {
 
 export interface UpdateVideoConfigRequest {
 	title?: string;
-	config?: Record<string, unknown>;
+	config?: VideoConfigData;
 	template?: string;
 }
