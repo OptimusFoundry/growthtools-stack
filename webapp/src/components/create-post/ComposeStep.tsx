@@ -173,7 +173,12 @@ export function ComposeStep({
 					<Divider />
 
 					{/* Generate */}
-					<Stack direction="row" gap="sm" justify="end" className={styles.actions}>
+					<Stack
+						direction="row"
+						gap="sm"
+						justify="end"
+						className={styles.actions}
+					>
 						<Button
 							variant="primary"
 							onClick={onGenerate}

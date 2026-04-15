@@ -14,10 +14,20 @@ export const Background: React.FC<BackgroundProps> = ({ config }) => {
       return <AbsoluteFill style={{ background: gradient }} />;
     }
 
+    case "radial": {
+      const cx = config.center?.x ?? 50;
+      const cy = config.center?.y ?? 50;
+      const gradient = `radial-gradient(circle at ${cx}% ${cy}%, ${config.colors.join(", ")})`;
+      return <AbsoluteFill style={{ background: gradient }} />;
+    }
+
     case "solid":
       return <AbsoluteFill style={{ backgroundColor: config.color }} />;
 
     case "image":
+      if (!config.url) {
+        return <AbsoluteFill style={{ backgroundColor: "#000" }} />;
+      }
       return (
         <AbsoluteFill>
           <Img
@@ -32,6 +42,9 @@ export const Background: React.FC<BackgroundProps> = ({ config }) => {
       );
 
     case "video":
+      if (!config.url) {
+        return <AbsoluteFill style={{ backgroundColor: "#000" }} />;
+      }
       return (
         <AbsoluteFill>
           <Video

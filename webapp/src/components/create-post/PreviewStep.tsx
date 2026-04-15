@@ -233,9 +233,7 @@ export function PreviewStep({
 	onUpdateThreadSegment,
 }: PreviewStepProps) {
 	const platformPostByPlatform = platformPosts
-		? Object.fromEntries(
-				platformPosts.map((pp) => [pp.platform, pp]),
-			)
+		? Object.fromEntries(platformPosts.map((pp) => [pp.platform, pp]))
 		: undefined;
 	const isThread = contentType === "thread";
 
@@ -310,9 +308,7 @@ export function PreviewStep({
 											<Tab key={platform} id={platform}>
 												<Stack gap="0" align="center">
 													<span>{PLATFORM_DISPLAY_NAMES[platform]}</span>
-													{pp && (
-														<PlatformPublishStatusLabel pp={pp} />
-													)}
+													{pp && <PlatformPublishStatusLabel pp={pp} />}
 												</Stack>
 											</Tab>
 										);

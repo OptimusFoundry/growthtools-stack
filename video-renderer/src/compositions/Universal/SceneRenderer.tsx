@@ -3,6 +3,7 @@ import { AbsoluteFill } from "remotion";
 import type { SceneV2 } from "../types";
 import { Background } from "./backgrounds/Background";
 import { MediaElementRenderer } from "./elements/MediaElement";
+import { OverlayElementRenderer } from "./elements/OverlayElement";
 import { TextElementRenderer } from "./elements/TextElement";
 
 interface SceneRendererProps {
@@ -25,6 +26,14 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
               element={element}
               sceneDurationFrames={scene.duration_frames}
               globalFont={globalFont}
+            />
+          );
+        }
+        if (element.type === "overlay") {
+          return (
+            <OverlayElementRenderer
+              key={`${scene.id}-el-${index}`}
+              element={element}
             />
           );
         }

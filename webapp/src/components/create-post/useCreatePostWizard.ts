@@ -177,9 +177,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 	}
 }
 
-export function useCreatePostWizard(
-	initialOverrides?: Partial<WizardState>,
-) {
+export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 	const [state, dispatch] = useReducer(wizardReducer, {
 		...initialState,
 		...initialOverrides,

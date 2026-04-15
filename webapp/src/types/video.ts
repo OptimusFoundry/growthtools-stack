@@ -33,8 +33,15 @@ export interface VideoBackgroundConfig {
 	fit?: "cover" | "contain" | "fill";
 }
 
+export interface RadialGradientBackground {
+	type: "radial";
+	colors: string[];
+	center?: { x: number; y: number };
+}
+
 export type BackgroundConfig =
 	| GradientBackground
+	| RadialGradientBackground
 	| SolidBackground
 	| ImageBackground
 	| VideoBackgroundConfig;
@@ -65,10 +72,24 @@ export interface EasingAnimationConfig {
 
 export type AnimationConfig = SpringAnimationConfig | EasingAnimationConfig;
 
+export interface MotionKeyframe {
+	progress: number;
+	value: number;
+}
+
 export interface MotionEffect {
-	property: "opacity" | "translateX" | "translateY" | "scale" | "rotate";
+	property:
+		| "opacity"
+		| "translateX"
+		| "translateY"
+		| "scale"
+		| "rotate"
+		| "blur"
+		| "skewX"
+		| "skewY";
 	from: number;
 	to: number;
+	keyframes?: MotionKeyframe[];
 	animation?: AnimationConfig;
 	delay_frames?: number;
 }
@@ -76,6 +97,18 @@ export interface MotionEffect {
 export interface ElementAnimation {
 	enter?: MotionEffect[];
 	exit?: MotionEffect[];
+}
+
+export interface TextStroke {
+	width: number;
+	color: string;
+}
+
+export interface TextShadow {
+	x: number;
+	y: number;
+	blur: number;
+	color: string;
 }
 
 export interface VideoTextElement {
@@ -88,6 +121,11 @@ export interface VideoTextElement {
 	alignment?: "left" | "center" | "right";
 	position: { x: number; y: number };
 	width?: number;
+	text_stroke?: TextStroke;
+	text_shadow?: TextShadow[];
+	letter_spacing?: number;
+	line_height?: number;
+	uppercase?: boolean;
 	animation?: ElementAnimation;
 }
 
@@ -101,7 +139,17 @@ export interface VideoMediaElement {
 	animation?: ElementAnimation;
 }
 
-export type SceneElement = VideoTextElement | VideoMediaElement;
+export interface VideoOverlayElement {
+	type: "overlay";
+	style: "vignette" | "letterbox" | "color-grade" | "film-grain";
+	opacity?: number;
+	color?: string;
+}
+
+export type SceneElement =
+	| VideoTextElement
+	| VideoMediaElement
+	| VideoOverlayElement;
 
 export interface TransitionTiming {
 	type: "linear" | "spring";
@@ -171,6 +219,9 @@ export interface GenerateVideoConfigRequest {
 	title: string;
 	prompt: string;
 	post_id?: string;
+	style?: string;
+	duration?: number;
+	media_ids?: string[];
 }
 
 export interface CreateRenderJobRequest {
@@ -181,4 +232,22 @@ export interface UpdateVideoConfigRequest {
 	title?: string;
 	config?: VideoConfigData;
 	template?: string;
+}
+
+export interface RefinementMessage {
+	id: string;
+	videoConfigId: string;
+	accountId: string;
+	role: "user" | "assistant";
+	content: string;
+	createdAt: string;
+}
+
+export interface ApiRefinementMessage {
+	id: string;
+	video_config_id: string;
+	account_id: string;
+	role: "user" | "assistant";
+	content: string;
+	created_at: string;
 }

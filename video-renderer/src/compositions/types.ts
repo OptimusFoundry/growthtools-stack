@@ -23,8 +23,15 @@ export interface VideoBackground {
   fit?: "cover" | "contain" | "fill";
 }
 
+export interface RadialGradientBackground {
+  type: "radial";
+  colors: string[];
+  center?: { x: number; y: number }; // percentage 0-100, default 50/50
+}
+
 export type BackgroundConfig =
   | GradientBackground
+  | RadialGradientBackground
   | SolidBackground
   | ImageBackground
   | VideoBackground;
@@ -55,10 +62,16 @@ export type AnimationConfig = SpringAnimation | EasingAnimation;
 
 // --- Motion Effects ---
 
+export interface MotionKeyframe {
+  progress: number; // 0-1
+  value: number;
+}
+
 export interface MotionEffect {
-  property: "opacity" | "translateX" | "translateY" | "scale" | "rotate";
+  property: "opacity" | "translateX" | "translateY" | "scale" | "rotate" | "blur" | "skewX" | "skewY";
   from: number;
   to: number;
+  keyframes?: MotionKeyframe[]; // multi-keyframe interpolation (overrides from/to when present)
   animation?: AnimationConfig; // default: spring
   delay_frames?: number;
 }
@@ -70,6 +83,18 @@ export interface ElementAnimation {
 
 // --- Elements ---
 
+export interface TextStroke {
+  width: number;
+  color: string;
+}
+
+export interface TextShadow {
+  x: number;
+  y: number;
+  blur: number;
+  color: string;
+}
+
 export interface TextElement {
   type: "text";
   content: string;
@@ -80,6 +105,11 @@ export interface TextElement {
   alignment?: "left" | "center" | "right";
   position: { x: number; y: number }; // percentage 0-100
   width?: number; // percentage 0-100
+  text_stroke?: TextStroke;
+  text_shadow?: TextShadow[];
+  letter_spacing?: number; // px
+  line_height?: number;
+  uppercase?: boolean;
   animation?: ElementAnimation;
 }
 
@@ -93,7 +123,14 @@ export interface MediaElement {
   animation?: ElementAnimation;
 }
 
-export type SceneElement = TextElement | MediaElement;
+export interface OverlayElement {
+  type: "overlay";
+  style: "vignette" | "letterbox" | "color-grade" | "film-grain";
+  opacity?: number; // 0-1, default varies by style
+  color?: string; // for color-grade
+}
+
+export type SceneElement = TextElement | MediaElement | OverlayElement;
 
 // --- Transitions ---
 

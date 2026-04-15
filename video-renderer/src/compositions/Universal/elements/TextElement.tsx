@@ -48,6 +48,14 @@ export const TextElementRenderer: React.FC<TextElementProps> = ({
     combinedStyle.transform = `${enterStyle.transform} ${exitStyle.transform}`;
   }
 
+  const textShadow = element.text_shadow
+    ?.map((s) => `${s.x}px ${s.y}px ${s.blur}px ${s.color}`)
+    .join(", ");
+
+  const webkitTextStroke = element.text_stroke
+    ? `${element.text_stroke.width}px ${element.text_stroke.color}`
+    : undefined;
+
   return (
     <div
       style={{
@@ -62,8 +70,13 @@ export const TextElementRenderer: React.FC<TextElementProps> = ({
         fontWeight: element.weight ?? element.font?.weight ?? 700,
         fontFamily,
         fontStyle: element.font?.style ?? "normal",
-        lineHeight: 1.2,
+        lineHeight: element.line_height ?? 1.2,
+        letterSpacing: element.letter_spacing,
+        textTransform: element.uppercase ? "uppercase" : undefined,
+        textShadow,
+        WebkitTextStroke: webkitTextStroke,
         opacity: combinedStyle.opacity ?? 1,
+        filter: combinedStyle.filter,
       }}
     >
       {element.content}

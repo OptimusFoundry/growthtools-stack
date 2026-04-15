@@ -6,6 +6,14 @@ function computeValue(
   effect: MotionEffect,
   progress: number,
 ): number {
+  if (effect.keyframes && effect.keyframes.length >= 2) {
+    const inputRange = effect.keyframes.map((kf) => kf.progress);
+    const outputRange = effect.keyframes.map((kf) => kf.value);
+    return interpolate(progress, inputRange, outputRange, {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    });
+  }
   return interpolate(progress, [0, 1], [effect.from, effect.to], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -107,6 +115,15 @@ export function useElementMotion(
         break;
       case "rotate":
         transforms.push(`rotate(${value}deg)`);
+        break;
+      case "blur":
+        style.filter = `blur(${value}px)`;
+        break;
+      case "skewX":
+        transforms.push(`skewX(${value}deg)`);
+        break;
+      case "skewY":
+        transforms.push(`skewY(${value}deg)`);
         break;
     }
   }

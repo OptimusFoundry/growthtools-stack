@@ -24,6 +24,10 @@ export const MediaElementRenderer: React.FC<MediaElementProps> = ({
     "exit",
   );
 
+  if (!element.url) {
+    return null;
+  }
+
   if (element.type === "audio") {
     return <Audio src={element.url} volume={element.volume ?? 1} />;
   }

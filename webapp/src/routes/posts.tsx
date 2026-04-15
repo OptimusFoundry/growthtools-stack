@@ -9,11 +9,11 @@ import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Select } from "@/proto-design-system/components/forms/Select";
 import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import type { ContentType, PostSource, PostStatus } from "@/types/post";
 import styles from "./page.module.scss";
 
@@ -174,7 +174,10 @@ function PostsPage() {
 												<Text size="sm" weight="semibold">
 													{post.title || post.content.slice(0, 60)}
 												</Text>
-												<Badge variant={STATUS_BADGE_VARIANT[post.status]} size="sm">
+												<Badge
+													variant={STATUS_BADGE_VARIANT[post.status]}
+													size="sm"
+												>
 													{post.status}
 												</Badge>
 											</Stack>
@@ -189,22 +192,50 @@ function PostsPage() {
 											)}
 											<Stack direction="row" gap="md" align="center">
 												<Text size="xs" color="muted">
-													<Text as="span" size="xs" color="secondary" weight="medium">Source: </Text>
+													<Text
+														as="span"
+														size="xs"
+														color="secondary"
+														weight="medium"
+													>
+														Source:{" "}
+													</Text>
 													{SOURCE_LABELS[post.source] ?? post.source}
 												</Text>
 												<Text size="xs" color="muted">
-													<Text as="span" size="xs" color="secondary" weight="medium">Created: </Text>
+													<Text
+														as="span"
+														size="xs"
+														color="secondary"
+														weight="medium"
+													>
+														Created:{" "}
+													</Text>
 													{formatDate(post.createdAt)}
 												</Text>
 												{post.scheduledAt && (
 													<Text size="xs" color="muted">
-														<Text as="span" size="xs" color="secondary" weight="medium">Scheduled: </Text>
+														<Text
+															as="span"
+															size="xs"
+															color="secondary"
+															weight="medium"
+														>
+															Scheduled:{" "}
+														</Text>
 														{formatDateTime(post.scheduledAt)}
 													</Text>
 												)}
 												{post.publishedAt && (
 													<Text size="xs" color="muted">
-														<Text as="span" size="xs" color="secondary" weight="medium">Published: </Text>
+														<Text
+															as="span"
+															size="xs"
+															color="secondary"
+															weight="medium"
+														>
+															Published:{" "}
+														</Text>
 														{formatDateTime(post.publishedAt)}
 													</Text>
 												)}
@@ -225,20 +256,21 @@ function PostsPage() {
 													Publish
 												</Button>
 											)}
-											{post.status !== "published" && post.status !== "partially_published" && (
-												<Button
-													variant="destructive"
-													size="sm"
-													onClick={(e) => {
-														e.preventDefault();
-														e.stopPropagation();
-														setDeleteTargetId(post.id);
-													}}
-													aria-label="Delete post"
-												>
-													<Trash2 size={14} />
-												</Button>
-											)}
+											{post.status !== "published" &&
+												post.status !== "partially_published" && (
+													<Button
+														variant="destructive"
+														size="sm"
+														onClick={(e) => {
+															e.preventDefault();
+															e.stopPropagation();
+															setDeleteTargetId(post.id);
+														}}
+														aria-label="Delete post"
+													>
+														<Trash2 size={14} />
+													</Button>
+												)}
 										</Stack>
 									</Stack>
 								</Card>

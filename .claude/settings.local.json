@@ -51,7 +51,14 @@
       "Bash(git:*)",
       "Bash(lsof:*)",
       "Bash(kill 52903:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "WebFetch(domain:www.remotion.dev)",
+      "Bash(npm install:*)",
+      "Bash(pgrep:*)",
+      "WebFetch(domain:www.goprimer.com)",
+      "WebFetch(domain:motionapp.com)",
+      "WebFetch(domain:www.big3.sg)",
+      "WebFetch(domain:www.opus.pro)"
     ],
     "deny": [],
     "ask": []
