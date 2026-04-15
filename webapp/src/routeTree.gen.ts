@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VideoRouteImport } from './routes/video'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as PostsRouteImport } from './routes/posts'
 import { Route as MediaRouteImport } from './routes/media'
@@ -21,8 +20,6 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BillingIndexRouteImport } from './routes/billing/index'
-import { Route as VideoNewRouteImport } from './routes/video_.new'
-import { Route as VideoIdRouteImport } from './routes/video_.$id'
 import { Route as PostsNewRouteImport } from './routes/posts_.new'
 import { Route as PostsIdRouteImport } from './routes/posts_.$id'
 import { Route as OauthSignedinRouteImport } from './routes/oauth/signedin'
@@ -33,11 +30,6 @@ import { Route as BillingPayment_methodRouteImport } from './routes/billing/paym
 import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
 import { Route as BillingPayRouteImport } from './routes/billing/pay'
 
-const VideoRoute = VideoRouteImport.update({
-  id: '/video',
-  path: '/video',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
@@ -91,16 +83,6 @@ const IndexRoute = IndexRouteImport.update({
 const BillingIndexRoute = BillingIndexRouteImport.update({
   id: '/billing/',
   path: '/billing/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VideoNewRoute = VideoNewRouteImport.update({
-  id: '/video_/new',
-  path: '/video/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VideoIdRoute = VideoIdRouteImport.update({
-  id: '/video_/$id',
-  path: '/video/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsNewRoute = PostsNewRouteImport.update({
@@ -160,7 +142,6 @@ export interface FileRoutesByFullPath {
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
-  '/video': typeof VideoRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
@@ -170,9 +151,7 @@ export interface FileRoutesByFullPath {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
-  '/video/$id': typeof VideoIdRoute
-  '/video/new': typeof VideoNewRoute
-  '/billing': typeof BillingIndexRoute
+  '/billing/': typeof BillingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -185,7 +164,6 @@ export interface FileRoutesByTo {
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
-  '/video': typeof VideoRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
@@ -195,8 +173,6 @@ export interface FileRoutesByTo {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
-  '/video/$id': typeof VideoIdRoute
-  '/video/new': typeof VideoNewRoute
   '/billing': typeof BillingIndexRoute
 }
 export interface FileRoutesById {
@@ -211,7 +187,6 @@ export interface FileRoutesById {
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
-  '/video': typeof VideoRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
@@ -221,8 +196,6 @@ export interface FileRoutesById {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts_/$id': typeof PostsIdRoute
   '/posts_/new': typeof PostsNewRoute
-  '/video_/$id': typeof VideoIdRoute
-  '/video_/new': typeof VideoNewRoute
   '/billing/': typeof BillingIndexRoute
 }
 export interface FileRouteTypes {
@@ -238,7 +211,6 @@ export interface FileRouteTypes {
     | '/media'
     | '/posts'
     | '/signin'
-    | '/video'
     | '/billing/pay'
     | '/billing/payment_attempt'
     | '/billing/payment_method'
@@ -248,9 +220,7 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts/$id'
     | '/posts/new'
-    | '/video/$id'
-    | '/video/new'
-    | '/billing'
+    | '/billing/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -263,7 +233,6 @@ export interface FileRouteTypes {
     | '/media'
     | '/posts'
     | '/signin'
-    | '/video'
     | '/billing/pay'
     | '/billing/payment_attempt'
     | '/billing/payment_method'
@@ -273,8 +242,6 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts/$id'
     | '/posts/new'
-    | '/video/$id'
-    | '/video/new'
     | '/billing'
   id:
     | '__root__'
@@ -288,7 +255,6 @@ export interface FileRouteTypes {
     | '/media'
     | '/posts'
     | '/signin'
-    | '/video'
     | '/billing/pay'
     | '/billing/payment_attempt'
     | '/billing/payment_method'
@@ -298,8 +264,6 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts_/$id'
     | '/posts_/new'
-    | '/video_/$id'
-    | '/video_/new'
     | '/billing/'
   fileRoutesById: FileRoutesById
 }
@@ -314,7 +278,6 @@ export interface RootRouteChildren {
   MediaRoute: typeof MediaRoute
   PostsRoute: typeof PostsRoute
   SigninRoute: typeof SigninRoute
-  VideoRoute: typeof VideoRoute
   BillingPayRoute: typeof BillingPayRoute
   BillingPayment_attemptRoute: typeof BillingPayment_attemptRoute
   BillingPayment_methodRoute: typeof BillingPayment_methodRoute
@@ -324,20 +287,11 @@ export interface RootRouteChildren {
   OauthSignedinRoute: typeof OauthSignedinRoute
   PostsIdRoute: typeof PostsIdRoute
   PostsNewRoute: typeof PostsNewRoute
-  VideoIdRoute: typeof VideoIdRoute
-  VideoNewRoute: typeof VideoNewRoute
   BillingIndexRoute: typeof BillingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/video': {
-      id: '/video'
-      path: '/video'
-      fullPath: '/video'
-      preLoaderRoute: typeof VideoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/signin': {
       id: '/signin'
       path: '/signin'
@@ -411,22 +365,8 @@ declare module '@tanstack/react-router' {
     '/billing/': {
       id: '/billing/'
       path: '/billing'
-      fullPath: '/billing'
+      fullPath: '/billing/'
       preLoaderRoute: typeof BillingIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/video_/new': {
-      id: '/video_/new'
-      path: '/video/new'
-      fullPath: '/video/new'
-      preLoaderRoute: typeof VideoNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/video_/$id': {
-      id: '/video_/$id'
-      path: '/video/$id'
-      fullPath: '/video/$id'
-      preLoaderRoute: typeof VideoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/posts_/new': {
@@ -506,7 +446,6 @@ const rootRouteChildren: RootRouteChildren = {
   MediaRoute: MediaRoute,
   PostsRoute: PostsRoute,
   SigninRoute: SigninRoute,
-  VideoRoute: VideoRoute,
   BillingPayRoute: BillingPayRoute,
   BillingPayment_attemptRoute: BillingPayment_attemptRoute,
   BillingPayment_methodRoute: BillingPayment_methodRoute,
@@ -516,8 +455,6 @@ const rootRouteChildren: RootRouteChildren = {
   OauthSignedinRoute: OauthSignedinRoute,
   PostsIdRoute: PostsIdRoute,
   PostsNewRoute: PostsNewRoute,
-  VideoIdRoute: VideoIdRoute,
-  VideoNewRoute: VideoNewRoute,
   BillingIndexRoute: BillingIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -39,13 +39,7 @@ export const navigationConfig: NavGroup[] = [
 				iconClass: "article-line",
 				allowedPersonas: ["admin", "marketing", "content_creator"],
 			},
-			{
-				label: "Video",
-				href: "/video",
-				iconClass: "film-line",
-				allowedPersonas: ["admin", "marketing", "content_creator"],
-			},
-		],
+			],
 	},
 	{
 		label: "Insights",
