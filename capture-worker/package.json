@@ -5,9 +5,15 @@
   "type": "module",
   "description": "Logs into a deployed app via /test-login and captures screenshots + video of a target page. Dogfooded against protoapp.xyz.",
   "scripts": {
-    "capture": "node index.mjs"
+    "capture": "tsx index.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "playwright": "^1.57.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }

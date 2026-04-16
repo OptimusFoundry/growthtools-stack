@@ -3,48 +3,60 @@
 // from a CLI (dogfood) or imported as a function from a webhook handler.
 //
 // CLI usage:
-//   node index.mjs --page /posts/new --commit 06fdc6f
-//   node index.mjs --config fixtures/guinea-pig.json --page /calendar
+//   npm run capture -- --page /posts/new --commit 06fdc6f
+//   npm run capture -- --config fixtures/guinea-pig.json --page /calendar
 //
 // Env overrides:
 //   APP_URL, APP_EMAIL, APP_PASSWORD, OUT_DIR
 
-import { chromium } from "playwright";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/**
- * @typedef {object} CaptureInput
- * @property {string} appUrl         Base URL of the deployed app (no trailing slash).
- * @property {string} email          Seeded test-login email.
- * @property {string} password       Seeded test-login password.
- * @property {string} pagePath       Target path to capture (e.g. "/posts/new").
- * @property {string} [commit]       Commit SHA; used to namespace outputs.
- * @property {string} [testLoginPath] Defaults to "/test-login".
- * @property {string} [outDir]       Defaults to "./captures".
- * @property {number} [dwellMs]      Milliseconds to linger on the page so the video has content. Default 3500.
- */
+export interface CaptureInput {
+	/** Base URL of the deployed app (no trailing slash). */
+	appUrl: string;
+	/** Seeded test-login email. */
+	email: string;
+	/** Seeded test-login password. */
+	password: string;
+	/** Target path to capture (e.g. "/posts/new"). */
+	pagePath: string;
+	/** Commit SHA; used to namespace outputs. */
+	commit?: string | null;
+	/** Defaults to "/test-login". */
+	testLoginPath?: string;
+	/** Defaults to "./captures". */
+	outDir?: string;
+	/** Milliseconds to linger on the page so the video has content. Default 3500. */
+	dwellMs?: number;
+}
 
-/**
- * @typedef {object} CaptureResult
- * @property {string} screenshotPath
- * @property {string} videoPath
- * @property {string} metadataPath
- * @property {string} captureDir
- */
+export interface CaptureResult {
+	screenshotPath: string;
+	videoPath: string;
+	metadataPath: string;
+	captureDir: string;
+}
 
-/** @param {string} p */
-function slugifyPath(p) {
+interface GuineaPigConfig {
+	name?: string;
+	repo?: string;
+	appUrl?: string;
+	testLoginPath?: string;
+	credentials?: { email?: string; password?: string };
+}
+
+function slugifyPath(p: string): string {
 	const trimmed = p.replace(/^\/+|\/+$/g, "");
 	if (!trimmed) return "index";
 	return trimmed.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
 }
 
-/** @param {string | undefined} sha */
-function shortSha(sha) {
+function shortSha(sha: string | null | undefined): string {
 	if (!sha) return `local-${Date.now()}`;
 	return sha.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12) || `local-${Date.now()}`;
 }
@@ -52,10 +64,8 @@ function shortSha(sha) {
 /**
  * Drives a full capture. Exported so a webhook/queue worker can import it
  * without a CLI round-trip.
- * @param {CaptureInput} input
- * @returns {Promise<CaptureResult>}
  */
-export async function capture(input) {
+export async function capture(input: CaptureInput): Promise<CaptureResult> {
 	const {
 		appUrl,
 		email,
@@ -83,8 +93,8 @@ export async function capture(input) {
 	});
 	const page = await context.newPage();
 
-	let screenshotPath;
-	let videoPath;
+	let screenshotPath = "";
+	let videoPath = "";
 	try {
 		await page.goto(`${appUrl}${testLoginPath}`, { waitUntil: "networkidle" });
 		await page.getByTestId("test-login-email").fill(email);
@@ -100,14 +110,13 @@ export async function capture(input) {
 
 		// Scroll a little so the video isn't a static frame — this is the
 		// "linger & reveal" pattern that makes a short clip feel alive.
-		const body = await page.$("body");
-		if (body) {
-			await page.mouse.move(720, 450);
-			await page.evaluate(() => window.scrollBy({ top: 200, behavior: "smooth" }));
-			await page.waitForTimeout(Math.min(dwellMs, 5000));
-			await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
-			await page.waitForTimeout(600);
-		}
+		await page.mouse.move(720, 450);
+		await page.evaluate(() =>
+			window.scrollBy({ top: 200, behavior: "smooth" }),
+		);
+		await page.waitForTimeout(Math.min(dwellMs, 5000));
+		await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+		await page.waitForTimeout(600);
 
 		screenshotPath = path.join(captureDir, "screenshot.png");
 		await page.screenshot({ path: screenshotPath, fullPage: true });
@@ -123,8 +132,6 @@ export async function capture(input) {
 			videoPath = path.join(captureDir, "recording.webm");
 			// Playwright writes to a tmp-ish path; move it to the well-known name.
 			await fs.rename(rawPath, videoPath);
-		} else {
-			videoPath = "";
 		}
 	} finally {
 		await browser.close();
@@ -143,12 +150,13 @@ export async function capture(input) {
 	return { screenshotPath, videoPath, metadataPath, captureDir };
 }
 
-function parseArgs(argv) {
-	/** @type {Record<string, string | boolean>} */
-	const args = {};
+type CliArgs = Record<string, string | boolean>;
+
+function parseArgs(argv: string[]): CliArgs {
+	const args: CliArgs = {};
 	for (let i = 0; i < argv.length; i++) {
 		const token = argv[i];
-		if (!token.startsWith("--")) continue;
+		if (!token?.startsWith("--")) continue;
 		const key = token.slice(2);
 		const next = argv[i + 1];
 		if (next === undefined || next.startsWith("--")) {
@@ -161,59 +169,70 @@ function parseArgs(argv) {
 	return args;
 }
 
-async function loadConfig(configPath) {
-	const raw = await fs.readFile(configPath, "utf8");
-	return JSON.parse(raw);
+async function loadConfig(configPath: string): Promise<GuineaPigConfig> {
+	try {
+		const raw = await fs.readFile(configPath, "utf8");
+		return JSON.parse(raw) as GuineaPigConfig;
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException).code === "ENOENT") return {};
+		throw err;
+	}
 }
 
-async function main() {
+function stringArg(args: CliArgs, key: string): string | undefined {
+	const value = args[key];
+	return typeof value === "string" ? value : undefined;
+}
+
+async function main(): Promise<void> {
 	const args = parseArgs(process.argv.slice(2));
-	const configPath =
-		typeof args.config === "string"
-			? path.resolve(args.config)
-			: path.join(__dirname, "fixtures", "guinea-pig.json");
+	const configArg = stringArg(args, "config");
+	const configPath = configArg
+		? path.resolve(configArg)
+		: path.join(__dirname, "fixtures", "guinea-pig.json");
 
-	let config = {};
-	try {
-		config = await loadConfig(configPath);
-	} catch (err) {
-		if (err.code !== "ENOENT") throw err;
-	}
+	const config = await loadConfig(configPath);
 
-	const input = {
-		appUrl: process.env.APP_URL ?? args["app-url"] ?? config.appUrl,
-		email:
-			process.env.APP_EMAIL ?? args.email ?? config.credentials?.email,
-		password:
-			process.env.APP_PASSWORD ??
-			args.password ??
-			config.credentials?.password,
-		pagePath: args.page ?? args.path ?? "/",
-		commit: args.commit ?? null,
-		testLoginPath: config.testLoginPath ?? "/test-login",
-		outDir:
-			process.env.OUT_DIR ??
-			args.out ??
-			path.join(__dirname, "captures"),
-	};
+	const appUrl =
+		process.env.APP_URL ?? stringArg(args, "app-url") ?? config.appUrl;
+	const email =
+		process.env.APP_EMAIL ??
+		stringArg(args, "email") ??
+		config.credentials?.email;
+	const password =
+		process.env.APP_PASSWORD ??
+		stringArg(args, "password") ??
+		config.credentials?.password;
+	const pagePath = stringArg(args, "page") ?? stringArg(args, "path") ?? "/";
+	const commit = stringArg(args, "commit") ?? null;
+	const outDir =
+		process.env.OUT_DIR ??
+		stringArg(args, "out") ??
+		path.join(__dirname, "captures");
 
-	if (!input.appUrl || !input.email || !input.password) {
+	if (!appUrl || !email || !password) {
 		console.error(
 			"Missing inputs. Provide --config <path> or APP_URL/APP_EMAIL/APP_PASSWORD.",
 		);
 		process.exit(1);
 	}
 
-	console.log(
-		`→ capturing ${input.appUrl}${input.pagePath} (commit=${input.commit ?? "none"})`,
-	);
-	const result = await capture(input);
+	console.log(`→ capturing ${appUrl}${pagePath} (commit=${commit ?? "none"})`);
+	const result = await capture({
+		appUrl,
+		email,
+		password,
+		pagePath,
+		commit,
+		testLoginPath: config.testLoginPath,
+		outDir,
+	});
 	console.log("✓ done");
 	console.log(JSON.stringify(result, null, 2));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	main().catch((err) => {
+	main().catch((err: unknown) => {
 		console.error(err);
 		process.exit(1);
 	});
