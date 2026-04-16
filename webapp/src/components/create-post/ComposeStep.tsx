@@ -188,7 +188,10 @@ export function ComposeStep({
 			{/* Publish options — shown after content is generated, hidden when read-only */}
 			{generated && !readOnly && (
 				<>
-					
+					<Text size="base" weight="semibold">
+						Publish
+					</Text>
+
 					{platformsChanged && (
 						<Alert variant="warning">
 							Platforms changed since last generation. Regenerate content before
