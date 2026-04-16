@@ -1,41 +1,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import {
+	Clock,
+	FileText,
+	Globe,
+	List,
+	Plus,
+	RefreshCw,
+	SearchX,
+	Trash2,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Select } from "@/proto-design-system/components/forms/Select";
-import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { ContentType, PostSource, PostStatus } from "@/types/post";
-import styles from "./page.module.scss";
+import { getPlatformIcon } from "@/utils/platformIcons";
+import styles from "./posts.module.scss";
 
 export const Route = createFileRoute("/posts")({
 	component: PostsPage,
 });
 
-const STATUS_OPTIONS = [
-	{ value: "", label: "All Statuses" },
-	{ value: "draft", label: "Draft" },
-	{ value: "scheduled", label: "Scheduled" },
-	{ value: "published", label: "Published" },
-	{ value: "failed", label: "Failed" },
+const STATUS_ITEMS = [
+	{ id: "", label: "All Statuses" },
+	{ id: "draft", label: "Draft" },
+	{ id: "scheduled", label: "Scheduled" },
+	{ id: "published", label: "Published" },
+	{ id: "failed", label: "Failed" },
 ];
 
-const CONTENT_TYPE_OPTIONS = [
-	{ value: "", label: "All Types" },
-	{ value: "text", label: "Text" },
-	{ value: "image", label: "Image" },
-	{ value: "video", label: "Video" },
-	{ value: "carousel", label: "Carousel" },
-	{ value: "thread", label: "Thread" },
+const CONTENT_TYPE_ITEMS = [
+	{ id: "", label: "All Types" },
+	{ id: "text", label: "Text" },
+	{ id: "thread", label: "Thread" },
+	{ id: "image", label: "Image" },
+	{ id: "video", label: "Video" },
 ];
 
 const STATUS_BADGE_VARIANT: Record<
@@ -50,28 +58,38 @@ const STATUS_BADGE_VARIANT: Record<
 	partially_published: "warning",
 };
 
-const SOURCE_LABELS: Record<PostSource, string> = {
-	manual: "Manual",
-	ai_generated: "AI Generated",
-	github_event: "GitHub",
-	bulk_import: "Import",
+const STATUS_LABELS: Record<PostStatus, string> = {
+	draft: "Draft",
+	scheduled: "Scheduled",
+	publishing: "Publishing",
+	published: "Published",
+	failed: "Failed",
+	partially_published: "Partial",
 };
 
-function formatDate(iso: string): string {
+
+function timeAgo(iso: string): string {
+	const seconds = Math.floor(
+		(Date.now() - new Date(iso).getTime()) / 1000,
+	);
+	if (seconds < 60) return "just now";
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	if (days < 7) return `${days}d ago`;
 	return new Date(iso).toLocaleDateString(undefined, {
 		month: "short",
 		day: "numeric",
-		year: "numeric",
 	});
 }
 
-function formatDateTime(iso: string): string {
-	return new Date(iso).toLocaleString(undefined, {
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	});
+function truncate(text: string, maxLen: number): string {
+	if (text.length <= maxLen) return text;
+	const truncated = text.slice(0, maxLen);
+	const lastSpace = truncated.lastIndexOf(" ");
+	return (lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) + "...";
 }
 
 function PostsPage() {
@@ -86,6 +104,7 @@ function PostsPage() {
 		[statusFilter, contentTypeFilter],
 	);
 
+	const { posts: allPosts } = useGetPosts();
 	const { posts, loading, refetch } = useGetPosts(filters);
 	const { deletePost, loading: deleting } = useDeletePost();
 	const { publishPost, loading: publishing } = usePublishPost();
@@ -111,17 +130,22 @@ function PostsPage() {
 		}
 	};
 
+	const hasActiveFilter = statusFilter !== "" || contentTypeFilter !== "";
+	const postCount = allPosts.length;
+	const publishedCount = allPosts.filter((p) => p.status === "published").length;
+	const draftCount = allPosts.filter((p) => p.status === "draft").length;
+
 	return (
 		<motion.div
 			className={styles.page}
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
-			transition={{ duration: 0.6 }}
+			transition={{ duration: 0.3 }}
 		>
-			<Stack direction="row" justify="between" align="center">
-				<div className={styles.pageHeader}>
-					<h1 className={styles.pageTitle}>Posts</h1>
-					<p className={styles.pageDescription}>
+			<div className={styles.header}>
+				<div>
+					<h1 className={styles.title}>Posts</h1>
+					<p className={styles.subtitle}>
 						Create, manage, and publish your social media posts
 					</p>
 				</div>
@@ -130,26 +154,66 @@ function PostsPage() {
 						<Plus size={16} /> Create Post
 					</Button>
 				</Link>
-			</Stack>
+			</div>
 
-			<Stack direction="row" gap="sm">
-				<Select
-					options={STATUS_OPTIONS}
+			<div className={styles.stats}>
+				<div className={styles.statItem}>
+					<Text size="2xl" weight="bold">{postCount}</Text>
+					<Text size="xs" color="muted">Total</Text>
+				</div>
+				<div className={styles.statDivider} />
+				<div className={styles.statItem}>
+					<Text size="2xl" weight="bold">{publishedCount}</Text>
+					<Text size="xs" color="muted">Published</Text>
+				</div>
+				<div className={styles.statDivider} />
+				<div className={styles.statItem}>
+					<Text size="2xl" weight="bold">{draftCount}</Text>
+					<Text size="xs" color="muted">Drafts</Text>
+				</div>
+			</div>
+
+			<div className={styles.filters}>
+				<Dropdown
+					items={STATUS_ITEMS}
 					value={statusFilter}
-					onChange={(e) => setStatusFilter(e.target.value)}
+					onChange={setStatusFilter}
 					placeholder="Filter by status"
+					size="sm"
+					variant="outline"
 				/>
-				<Select
-					options={CONTENT_TYPE_OPTIONS}
+				<Dropdown
+					items={CONTENT_TYPE_ITEMS}
 					value={contentTypeFilter}
-					onChange={(e) => setContentTypeFilter(e.target.value)}
+					onChange={setContentTypeFilter}
 					placeholder="Filter by type"
+					size="sm"
+					variant="outline"
 				/>
-			</Stack>
+			</div>
 
-			<div className={styles.pageContent}>
+			<div className={styles.content}>
 				{loading ? (
-					<Spinner />
+					<div className={styles.loadingState}>
+						<Spinner />
+					</div>
+				) : posts.length === 0 && hasActiveFilter ? (
+					<EmptyState
+						title="No matching posts"
+						description="Try adjusting your filters to find what you're looking for."
+						icon={<SearchX size={48} />}
+						action={
+							<Button
+								variant="secondary"
+								onClick={() => {
+									setStatusFilter("");
+									setContentTypeFilter("");
+								}}
+							>
+								Clear filters
+							</Button>
+						}
+					/>
 				) : posts.length === 0 ? (
 					<EmptyState
 						title="No posts yet"
@@ -164,121 +228,142 @@ function PostsPage() {
 						}
 					/>
 				) : (
-					<Stack gap="sm">
-						{posts.map((post) => (
-							<Link key={post.id} to="/posts/$id" params={{ id: post.id }}>
-								<Card padding="md" interactive>
-									<Stack direction="row" justify="between" align="center">
-										<Stack gap="md">
-											<Stack direction="row" gap="sm" align="center">
-												<Text size="sm" weight="semibold">
-													{post.title || post.content.slice(0, 60)}
-												</Text>
-												<Badge
-													variant={STATUS_BADGE_VARIANT[post.status]}
-													size="sm"
-												>
-													{post.status}
-												</Badge>
-											</Stack>
-											{post.tags.length > 0 && (
-												<Stack direction="row" gap="xs" align="center" wrap>
-													{post.tags.map((tag) => (
-														<Badge key={tag} variant="outline" size="sm">
-															{tag}
-														</Badge>
-													))}
-												</Stack>
-											)}
-											<Stack direction="row" gap="md" align="center">
-												<Text size="xs" color="muted">
-													<Text
-														as="span"
-														size="xs"
-														color="secondary"
-														weight="medium"
-													>
-														Source:{" "}
+					<Stack gap="xs">
+						{posts.map((post, index) => {
+							const isThread = post.contentType === "thread";
+							return (
+								<motion.div
+									key={post.id}
+									initial={{ opacity: 0, y: 8 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ duration: 0.2, delay: index * 0.03 }}
+								>
+									<Link
+										to="/posts/$id"
+										params={{ id: post.id }}
+										className={styles.postLink}
+									>
+										<div className={styles.postCard}>
+											<div className={styles.postCardLeft}>
+												<div className={`${styles.postIcon} ${isThread ? styles.postIconThread : ""}`}>
+													{isThread ? <List size={16} /> : <FileText size={16} />}
+												</div>
+											</div>
+											<div className={styles.postCardBody}>
+												<div className={styles.postTitleRow}>
+													<Text size="sm" weight="medium" className={styles.postTitle}>
+														{truncate(post.title || post.content, 80)}
 													</Text>
-													{SOURCE_LABELS[post.source] ?? post.source}
-												</Text>
-												<Text size="xs" color="muted">
-													<Text
-														as="span"
-														size="xs"
-														color="secondary"
-														weight="medium"
-													>
-														Created:{" "}
-													</Text>
-													{formatDate(post.createdAt)}
-												</Text>
-												{post.scheduledAt && (
-													<Text size="xs" color="muted">
-														<Text
-															as="span"
-															size="xs"
-															color="secondary"
-															weight="medium"
-														>
-															Scheduled:{" "}
-														</Text>
-														{formatDateTime(post.scheduledAt)}
-													</Text>
-												)}
-												{post.publishedAt && (
-													<Text size="xs" color="muted">
-														<Text
-															as="span"
-															size="xs"
-															color="secondary"
-															weight="medium"
-														>
-															Published:{" "}
-														</Text>
-														{formatDateTime(post.publishedAt)}
-													</Text>
-												)}
-											</Stack>
-										</Stack>
-										<Stack direction="row" gap="xs">
-											{post.status === "draft" && (
-												<Button
-													variant="primary"
-													size="sm"
-													onClick={(e) => {
-														e.preventDefault();
-														e.stopPropagation();
-														handlePublish(post.id);
-													}}
-													isLoading={publishing}
-												>
-													Publish
-												</Button>
-											)}
-											{post.status !== "published" &&
-												post.status !== "partially_published" && (
-													<Button
-														variant="destructive"
+													<Badge
+														variant={STATUS_BADGE_VARIANT[post.status]}
 														size="sm"
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															setDeleteTargetId(post.id);
-														}}
-														aria-label="Delete post"
 													>
-														<Trash2 size={14} />
-													</Button>
+														{STATUS_LABELS[post.status]}
+													</Badge>
+												</div>
+												{post.tags.length > 0 && (
+													<div className={styles.postTags}>
+														{post.tags.slice(0, 4).map((tag) => (
+															<span key={tag} className={styles.tag}>
+																{tag}
+															</span>
+														))}
+														{post.tags.length > 4 && (
+															<span className={styles.tag}>
+																+{post.tags.length - 4}
+															</span>
+														)}
+													</div>
 												)}
-										</Stack>
-									</Stack>
-								</Card>
-							</Link>
-						))}
+												<div className={styles.postFooter}>
+													<div className={styles.postMeta}>
+														{post.platforms.length > 0 && (
+															<span className={styles.platformIcons}>
+																{post.platforms.map((p) => (
+																	<span key={p} className={styles.platformIcon} title={p}>
+																		{getPlatformIcon(p, 14)}
+																	</span>
+																))}
+															</span>
+														)}
+														{post.publishedAt ? (
+															<span className={styles.metaItem}>
+																<Globe size={12} />
+																Published {timeAgo(post.publishedAt)}
+															</span>
+														) : post.scheduledAt ? (
+															<span className={styles.metaItem}>
+																<Clock size={12} />
+																Scheduled {timeAgo(post.scheduledAt)}
+															</span>
+														) : (
+															<span className={styles.metaItem}>
+																<Clock size={12} />
+																{timeAgo(post.createdAt)}
+															</span>
+														)}
+													</div>
+													<div className={styles.postActions}>
+														{post.status === "draft" && (
+															<Button
+																variant="primary"
+																size="sm"
+																isIconOnly
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	handlePublish(post.id);
+																}}
+																isLoading={publishing}
+																aria-label="Publish post"
+															>
+																<Globe size={14} />
+															</Button>
+														)}
+														{post.status === "failed" && (
+															<Button
+																variant="outline"
+																size="sm"
+																isIconOnly
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	handlePublish(post.id);
+																}}
+																isLoading={publishing}
+																aria-label="Retry publish"
+															>
+																<RefreshCw size={14} />
+															</Button>
+														)}
+														{post.status !== "published" &&
+															post.status !== "partially_published" && (
+																<Button
+																	variant="ghost"
+																	size="sm"
+																	isIconOnly
+																	onClick={(e) => {
+																		e.preventDefault();
+																		e.stopPropagation();
+																		setDeleteTargetId(post.id);
+																	}}
+																	aria-label="Delete post"
+																>
+																	<Trash2 size={14} />
+																</Button>
+															)}
+													</div>
+												</div>
+											</div>
+										</div>
+									</Link>
+								</motion.div>
+							);
+						})}
 					</Stack>
 				)}
 			</div>
+
 			<Modal
 				isOpen={deleteTargetId !== null}
 				onClose={() => setDeleteTargetId(null)}

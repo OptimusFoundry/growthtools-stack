@@ -92,7 +92,7 @@ func (s *Store) ListPosts(ctx context.Context, params ListPostsParams) ([]Post, 
 	if limit <= 0 {
 		limit = 20
 	}
-	var posts []Post
+	posts := make([]Post, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlListPosts,
 		params.AccountID, params.Status, params.ContentType, params.Source, limit, params.Offset)
 	if err != nil {
