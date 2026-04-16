@@ -15,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 	const persona = user?.persona ?? "admin";
 
 	return (
-		<ThemeProvider defaultTheme="neon-orange">
+		<ThemeProvider defaultTheme="light">
 			<BannerCenterProvider>
 				<TierProvider>
 					<PersonaProvider persona={persona}>
