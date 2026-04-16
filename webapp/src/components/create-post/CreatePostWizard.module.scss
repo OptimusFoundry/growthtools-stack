@@ -177,6 +177,24 @@
 	overflow-y: auto;
 }
 
+// Platform status summary
+.platformStatusSummary {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	padding: var(--space-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+}
+
+.platformStatusRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	padding: var(--space-1) 0;
+}
+
 @keyframes spin {
 	from {
 		transform: rotate(0deg);

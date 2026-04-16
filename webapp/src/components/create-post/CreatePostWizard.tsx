@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
@@ -13,6 +13,7 @@ import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformType } from "@/types/platform";
@@ -82,18 +83,20 @@ function EditPostWizard({ editPostId }: { editPostId: string }) {
 		platformPosts,
 	);
 
-	const isPublishing =
+	const hasBeenPublished =
 		post.status === "publishing" ||
 		post.status === "published" ||
-		post.status === "partially_published";
+		post.status === "partially_published" ||
+		post.status === "failed";
 
 	return (
 		<WizardInner
 			editPostId={editPostId}
 			initialOverrides={overrides}
 			initialBaseContent={post.baseContent}
-			readOnly={isPublishing}
-			platformPosts={isPublishing ? platformPosts : undefined}
+			readOnly={hasBeenPublished}
+			platformPosts={hasBeenPublished ? platformPosts : undefined}
+			postStatus={post.status}
 		/>
 	);
 }
@@ -104,6 +107,7 @@ interface WizardInnerProps {
 	initialBaseContent?: string;
 	readOnly?: boolean;
 	platformPosts?: PlatformPost[];
+	postStatus?: string;
 }
 
 function WizardInner({
@@ -112,6 +116,7 @@ function WizardInner({
 	initialBaseContent,
 	readOnly = false,
 	platformPosts,
+	postStatus,
 }: WizardInnerProps = {}) {
 	const isEditMode = Boolean(editPostId);
 	const navigate = useNavigate();
@@ -414,6 +419,23 @@ function WizardInner({
 		navigate,
 	]);
 
+	const [retrying, setRetrying] = useState(false);
+	const hasFailed = postStatus === "failed" || postStatus === "partially_published";
+
+	const handleRetry = useCallback(async () => {
+		if (!editPostId) return;
+		setRetrying(true);
+		try {
+			const url = `${import.meta.env.VITE_API_URL}/api/protected/posts/${editPostId}/retry`;
+			await fetch(url, { method: "POST", credentials: "include" });
+			navigate({ to: "/posts" });
+		} catch {
+			wizard.setError("Failed to retry. Please try again.");
+		} finally {
+			setRetrying(false);
+		}
+	}, [editPostId, navigate, wizard]);
+
 	return (
 		<div className={styles.page}>
 			<Stack gap="xs">
@@ -421,14 +443,28 @@ function WizardInner({
 					<ArrowLeft size={16} />
 					<Text size="sm" color="secondary">Back to posts</Text>
 				</Link>
-				<Text as="h1" size="2xl" weight="bold">
-					{isEditMode ? "Edit Post" : "Create Post"}
-				</Text>
-				<Text color="secondary">
-					{isEditMode
-						? "Update your post content and platform adaptations"
-						: "Write a blurb and let AI adapt it for each platform"}
-				</Text>
+				<Stack direction="row" justify="between" align="center">
+					<Stack gap="xs">
+						<Text as="h1" size="2xl" weight="bold">
+							{isEditMode ? "Edit Post" : "Create Post"}
+						</Text>
+						<Text color="secondary">
+							{isEditMode
+								? "Update your post content and platform adaptations"
+								: "Write a blurb and let AI adapt it for each platform"}
+						</Text>
+					</Stack>
+					{hasFailed && (
+						<Button
+							variant="primary"
+							onClick={handleRetry}
+							isLoading={retrying}
+							leftIcon={<RefreshCw size={16} />}
+						>
+							Retry failed
+						</Button>
+					)}
+				</Stack>
 			</Stack>
 
 			{state.error && <Alert variant="error">{state.error}</Alert>}

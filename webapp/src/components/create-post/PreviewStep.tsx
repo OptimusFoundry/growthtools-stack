@@ -301,6 +301,24 @@ export function PreviewStep({
 								Review Content
 							</Text>
 
+							{/* Platform status summary */}
+							{platformPostByPlatform && (
+								<div className={styles.platformStatusSummary}>
+									{selectedPlatforms.map((platform) => {
+										const pp = platformPostByPlatform[platform];
+										if (!pp) return null;
+										return (
+											<div key={platform} className={styles.platformStatusRow}>
+												<Text size="sm">
+													{PLATFORM_DISPLAY_NAMES[platform]}
+												</Text>
+												<PlatformPublishStatusLabel pp={pp} />
+											</div>
+										);
+									})}
+								</div>
+							)}
+
 							{baseContent && (
 								<BaseAccordion
 									content={baseContent}
