@@ -1,4 +1,5 @@
 import { CheckCircle, Loader } from "lucide-react";
+import { PlatformPostStatus } from "./PlatformPostStatus";
 import { useEffect, useRef, useState } from "react";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
 import { Accordion } from "@/proto-design-system/components/composite/Accordion";
@@ -334,14 +335,9 @@ export function PreviewStep({
 													}
 												/>
 												{platformPostByPlatform?.[platform] && (
-													<div className={styles.postTimestamp}>
-														<PlatformPublishStatusLabel
-															pp={platformPostByPlatform[platform]}
-														/>
-														<PlatformPostTimestamp
-															pp={platformPostByPlatform[platform]}
-														/>
-													</div>
+													<PlatformPostStatus
+														platformPost={platformPostByPlatform[platform]}
+													/>
 												)}
 											</div>
 										</TabPanel>
