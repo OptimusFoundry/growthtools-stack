@@ -13,7 +13,7 @@ A Go-based server application with webhook delivery, Kafka event streaming, and 
 Start all services (PostgreSQL, Kafka, Zookeeper) with migrations:
 
 ```bash
-docker-compose -f docker-compose.services.yml up -d
+docker-compose -f ../docker-compose.yml up -d
 ```
 
 This will start:
@@ -50,13 +50,13 @@ go run main.go
 ### Stopping Services
 
 ```bash
-docker-compose -f docker-compose.services.yml down
+docker-compose -f ../docker-compose.yml down
 ```
 
 To also remove volumes (database data):
 
 ```bash
-docker-compose -f docker-compose.services.yml down -v
+docker-compose -f ../docker-compose.yml down -v
 ```
 
 ## Production Database Migrations

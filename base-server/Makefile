@@ -17,17 +17,18 @@ export TEST_DB_NAME ?= base_db
 export TEST_API_HOST ?= localhost
 export TEST_API_PORT ?= 8080
 
-# Start local services (database, kafka, migrations)
+# Start local services (database, kafka, migrations). Compose lives at repo
+# root since it also defines capture-worker.
 dev-up:
 	@echo "Starting local dev services..."
-	docker compose -f docker-compose.services.yml up -d --wait db kafka
-	docker compose -f docker-compose.services.yml up flyway
+	docker compose -f ../docker-compose.yml up -d --wait db kafka
+	docker compose -f ../docker-compose.yml up flyway
 	@echo "Local services ready!"
 
 # Stop local services
 dev-down:
 	@echo "Stopping local dev services..."
-	docker compose -f docker-compose.services.yml down -v
+	docker compose -f ../docker-compose.yml down -v
 	@echo "Local services stopped!"
 
 # Run unit tests locally (mocked - no DB needed)

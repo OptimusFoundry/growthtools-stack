@@ -66,7 +66,7 @@ If you prefer to run tests manually:
 
 1. **Start test infrastructure:**
 ```bash
-docker compose -f docker-compose.services.yml up -d
+docker compose -f ../docker-compose.yml up -d
 ```
 
 2. **Set environment variables:**
@@ -94,7 +94,7 @@ go test -v -tags=integration ./tests/...
 
 4. **Stop test infrastructure:**
 ```bash
-docker compose -f docker-compose.services.yml down
+docker compose -f ../docker-compose.yml down
 ```
 
 ## Test Structure
