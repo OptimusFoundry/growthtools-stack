@@ -1,0 +1,13 @@
+{
+  "name": "capture-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Logs into a deployed app via /test-login and captures screenshots + video of a target page. Dogfooded against protoapp.xyz.",
+  "scripts": {
+    "capture": "node index.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.57.0"
+  }
+}

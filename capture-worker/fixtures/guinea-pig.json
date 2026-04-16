@@ -1,0 +1,11 @@
+{
+  "name": "growth-tools self-hosted",
+  "repo": "SAVentures/growthtools-stack",
+  "appUrl": "https://protoapp.xyz",
+  "testLoginPath": "/test-login",
+  "credentials": {
+    "email": "playwright-1776371029@example.com",
+    "password": "playwright-password"
+  },
+  "notes": "Dogfood target for the capture pipeline. User was seeded against protoapp.xyz on 2026-04-16. Password is intentionally weak; this account only exists to let Playwright log in and screenshot the app."
+}
