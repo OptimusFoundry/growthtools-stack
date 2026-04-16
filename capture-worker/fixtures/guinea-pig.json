@@ -1,11 +1,11 @@
 {
-  "name": "growth-tools self-hosted",
+  "name": "growth-tools self-hosted (shubhanshu demo account)",
   "repo": "SAVentures/growthtools-stack",
   "appUrl": "https://protoapp.xyz",
   "testLoginPath": "/test-login",
   "credentials": {
-    "email": "playwright-1776371029@example.com",
-    "password": "playwright-password"
+    "email": "hello@shubhanshu.dev",
+    "password": "playwright-demo"
   },
-  "notes": "Dogfood target for the capture pipeline. User was seeded against protoapp.xyz on 2026-04-16. Password is intentionally weak; this account only exists to let Playwright log in and screenshot the app."
+  "notes": "Dogfood target. Shubhanshu's account on protoapp.xyz — has real social media platforms connected, so captures show richer UI than the placeholder Playwright user. Email/password creds were attached to the existing Google-OAuth user via a direct DB insert on 2026-04-16 (user_auth + email_auth rows linked to users.id f1b03a23-ecaa-4032-8553-d4ff348661c2). The weak password is intentional — this is a login-only backdoor for automated capture."
 }
