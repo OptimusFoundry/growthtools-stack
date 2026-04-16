@@ -209,7 +209,8 @@ func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []Ima
 	sb.WriteString("- This is SINGLE POST mode. All content MUST fit in one post. Condense, summarize, or cut less important details to stay within the character limit. Do NOT suggest splitting into multiple posts.\n")
 	fmt.Fprintf(&sb, "- Tone hint: %s.\n", p.ToneHint)
 
-	sb.WriteString("- Do NOT use hashtags.\n")
+	sb.WriteString("- Do NOT use hashtags anywhere in the content.\n")
+	sb.WriteString("- Do NOT use @mentions.\n")
 
 	sb.WriteString("- Return ONLY the adapted content, no commentary.\n")
 
@@ -258,6 +259,7 @@ func SystemThread(platformID string, imageDescriptions []ImageDescription) strin
 	sb.WriteString("- First post must hook the reader — no preamble.\n")
 	sb.WriteString("- Last post should have a clear conclusion or CTA.\n")
 	sb.WriteString("- Do NOT number the parts (no 1/, 2/, 3/ prefixes). Each part should read naturally on its own.\n")
+	sb.WriteString("- Do NOT use hashtags anywhere in the thread.\n")
 	sb.WriteString("- Separate each post with the delimiter: ---THREAD_BREAK---\n")
 	sb.WriteString("- Return ONLY the thread posts separated by the delimiter.\n")
 
@@ -348,7 +350,7 @@ Return a single JSON object. No markdown fences, no commentary, no preamble — 
 - char_count must be the exact character count of content (Unicode-aware, including spaces and punctuation). Count carefully. If in doubt, shorten.
 
 ### Content rules
-- Do NOT use hashtags in any post regardless of platform, unless the voice profile explicitly requests them.
+- Do NOT use hashtags in any post regardless of platform or voice profile.
 - Do NOT use @mentions unless the blurb explicitly references a specific account to tag.
 - Preserve the user's core message and intent. Do not invent facts, stats, or claims not present or clearly implied in the blurb.
 - If the blurb is vague or thin, make the post informative and engaging — expand the angle, not the facts.
@@ -372,7 +374,7 @@ Return a single JSON object. No markdown fences, no commentary, no preamble — 
 ### What to NEVER include in output
 - No labels like "Here's your post:" or "LinkedIn version:"
 - No meta-commentary about the content
-- No hashtags (unless voice profile explicitly says otherwise)
+- No hashtags
 - No markdown formatting inside post content (no **bold**, no bullet points with "-" unless natural to the platform)
 - No emoji overuse — one or two emoji max per post unless the voice profile or platform tone calls for more
 
