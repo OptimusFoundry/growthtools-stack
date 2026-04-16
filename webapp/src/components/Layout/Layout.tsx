@@ -7,11 +7,9 @@ import {
 	HelpCircle,
 	Image,
 	MessageSquare,
-	Moon,
 	Newspaper,
 	PenSquare,
 	Settings,
-	Sun,
 } from "lucide-react";
 import React, { memo } from "react";
 import UserName from "@/components/user/Username";
@@ -26,8 +24,8 @@ import {
 	SidebarSection,
 	SidebarToggle,
 } from "@/proto-design-system/components/navigation/Sidebar";
-import { useTheme } from "@/proto-design-system/hooks/useTheme";
 import styles from "./layout.module.scss";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 interface LayoutProps {
 	children: React.ReactNode;
@@ -54,8 +52,6 @@ const getIcon = (iconClass?: string) => {
 const AppSidebar = memo(function AppSidebar() {
 	const { getNavigationGroups } = usePersona();
 	const navigationGroups = getNavigationGroups();
-	const { theme, setTheme } = useTheme();
-	const isDark = theme === "midnight";
 	const location = useLocation();
 
 	return (
@@ -100,13 +96,9 @@ const AppSidebar = memo(function AppSidebar() {
 				>
 					Help
 				</SidebarItem>
-				<SidebarItem
-					icon={isDark ? <Sun size={18} /> : <Moon size={18} />}
-					onClick={() => setTheme(isDark ? "neon-orange" : "midnight")}
-				>
-					{isDark ? "Light Mode" : "Dark Mode"}
-				</SidebarItem>
 			</SidebarSection>
+
+			<ThemeSwitcher />
 
 			<div className={styles.userFooter}>
 				<UserName />

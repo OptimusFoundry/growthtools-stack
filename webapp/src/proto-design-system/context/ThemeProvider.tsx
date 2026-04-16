@@ -10,6 +10,7 @@ import {
 	getSystemTheme,
 	subscribeToSystemTheme,
 	type ThemeName,
+	themes,
 } from "../themes/themes";
 
 export interface ThemeContextValue {
@@ -34,14 +35,10 @@ export function ThemeProvider({
 	storageKey = "proto-theme",
 }: ThemeProviderProps) {
 	const [theme, setThemeState] = useState<ThemeName>(() => {
-		// Try to get from localStorage first
 		if (typeof window !== "undefined") {
 			const stored = localStorage.getItem(storageKey);
-			if (
-				stored &&
-				(stored === "light" || stored === "dark" || stored === "midnight")
-			) {
-				return stored;
+			if (stored && stored in themes) {
+				return stored as ThemeName;
 			}
 		}
 		return defaultTheme;
