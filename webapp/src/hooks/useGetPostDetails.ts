@@ -1,18 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
+import { toMediaItems } from "@/api/transforms/media";
 import { toPlatformPost, toPost } from "@/api/transforms/post";
+import type { ApiMediaItem } from "@/api/types/media";
 import type { ApiPlatformPost, ApiPost } from "@/api/types/post";
+import type { MediaItem } from "@/types/media";
 import type { PlatformPost, Post } from "@/types/post";
 import { getErrorMessage } from "@/utils";
 
 interface PostDetailsResponse {
 	post: ApiPost;
 	platform_posts: ApiPlatformPost[];
+	media: ApiMediaItem[] | null;
 }
 
 export const useGetPostDetails = (postId: string) => {
 	const [post, setPost] = useState<Post | null>(null);
 	const [platformPosts, setPlatformPosts] = useState<PlatformPost[]>([]);
+	const [media, setMedia] = useState<MediaItem[]>([]);
 	const [loading, setLoading] = useState(Boolean(postId));
 	const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +33,7 @@ export const useGetPostDetails = (postId: string) => {
 			);
 			setPost(toPost(response.post));
 			setPlatformPosts((response.platform_posts ?? []).map(toPlatformPost));
+			setMedia(toMediaItems(response.media ?? []));
 		} catch (err: unknown) {
 			setError(getErrorMessage(err));
 		} finally {
@@ -39,5 +45,5 @@ export const useGetPostDetails = (postId: string) => {
 		fetchDetails();
 	}, [fetchDetails]);
 
-	return { post, platformPosts, loading, error, refetch: fetchDetails };
+	return { post, platformPosts, media, loading, error, refetch: fetchDetails };
 };

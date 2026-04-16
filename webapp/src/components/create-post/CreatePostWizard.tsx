@@ -17,6 +17,7 @@ import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcru
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
+import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import { ComposeStep } from "./ComposeStep";
@@ -34,6 +35,7 @@ function buildInitialOverrides(
 	content: string,
 	contentType: string,
 	platformPosts: PlatformPost[],
+	media: MediaItem[],
 ): Partial<WizardState> {
 	const selectedPlatforms = platformPosts.map(
 		(pp) => pp.platform as PlatformType,
@@ -61,6 +63,7 @@ function buildInitialOverrides(
 		selectedPlatforms,
 		platformContent,
 		threadContent,
+		uploadedMedia: media,
 		generated: selectedPlatforms.length > 0,
 	};
 }
@@ -73,7 +76,8 @@ export function CreatePostWizard({ editPostId }: CreatePostWizardProps = {}) {
 }
 
 function EditPostWizard({ editPostId }: { editPostId: string }) {
-	const { post, platformPosts, loading, error } = useGetPostDetails(editPostId);
+	const { post, platformPosts, media, loading, error } =
+		useGetPostDetails(editPostId);
 
 	if (loading) return <Spinner />;
 	if (error) return <Alert variant="error">{error}</Alert>;
@@ -83,6 +87,7 @@ function EditPostWizard({ editPostId }: { editPostId: string }) {
 		post.content,
 		post.contentType,
 		platformPosts,
+		media,
 	);
 
 	const hasBeenPublished =

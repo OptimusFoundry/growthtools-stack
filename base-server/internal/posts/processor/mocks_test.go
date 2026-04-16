@@ -101,6 +101,21 @@ func (mr *MockPostStoreMockRecorder) DeletePost(ctx, accountID, postID any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostStore)(nil).DeletePost), ctx, accountID, postID)
 }
 
+// GetMediaByIDs mocks base method.
+func (m *MockPostStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMediaByIDs", ctx, ids)
+	ret0, _ := ret[0].([]store.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMediaByIDs indicates an expected call of GetMediaByIDs.
+func (mr *MockPostStoreMockRecorder) GetMediaByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMediaByIDs", reflect.TypeOf((*MockPostStore)(nil).GetMediaByIDs), ctx, ids)
+}
+
 // GetPlatformPostsByPostID mocks base method.
 func (m *MockPostStore) GetPlatformPostsByPostID(ctx context.Context, postID uuid.UUID) ([]store.PlatformPost, error) {
 	m.ctrl.T.Helper()

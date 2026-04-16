@@ -26,6 +26,7 @@ type PostStore interface {
 	GetPlatformPostsByPostID(ctx context.Context, postID uuid.UUID) ([]store.PlatformPost, error)
 	DeletePlatformPostsByPostID(ctx context.Context, postID uuid.UUID) error
 	ResetPlatformPostsForRetry(ctx context.Context, postID uuid.UUID) error
+	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
 // EventPublisher publishes events to a message broker
@@ -56,10 +57,11 @@ func New(store PostStore, publisher EventPublisher, logger *observability.Logger
 	}
 }
 
-// PostWithPlatformPosts combines a post with its platform posts
+// PostWithPlatformPosts combines a post with its platform posts and attached media
 type PostWithPlatformPosts struct {
 	Post          store.Post           `json:"post"`
 	PlatformPosts []store.PlatformPost `json:"platform_posts"`
+	Media         []store.Media        `json:"media"`
 }
 
 func (p *PostProcessor) CreatePost(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
@@ -261,9 +263,20 @@ func (p *PostProcessor) GetPostWithPlatformPosts(ctx context.Context, accountID,
 		return PostWithPlatformPosts{}, ErrFailedCreatePost
 	}
 
+	var media []store.Media
+	if len(post.MediaIDs) > 0 {
+		media, err = p.store.GetMediaByIDs(ctx, []uuid.UUID(post.MediaIDs))
+		if err != nil {
+			p.logger.Error(ctx, "failed to get media for post", err)
+			// Non-fatal: return post without media rather than failing entirely
+			media = nil
+		}
+	}
+
 	return PostWithPlatformPosts{
 		Post:          post,
 		PlatformPosts: platformPosts,
+		Media:         media,
 	}, nil
 }
 
