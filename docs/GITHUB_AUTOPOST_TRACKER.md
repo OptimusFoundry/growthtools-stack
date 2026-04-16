@@ -70,16 +70,23 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[-]` skipped
 - [ ] Upload screenshots to S3 via existing media service
 - [ ] Load encrypted storage state, launch Playwright with it, capture auth failures
 
-## Phase 6b — CLI for storage state capture (auth bridge)
+## Phase 6b — Auth bridge (Playwright shared secret)
 
-- [ ] Design `gt` CLI: `gt connect-preview <repo>` command
-- [ ] CLI launches local Playwright Chromium, navigates to preview URL
-- [ ] User logs in interactively (Google SSO, email/pw, magic link — whatever)
-- [ ] CLI captures `page.context().storageState()` after user confirms "done"
-- [ ] CLI encrypts state with per-account key, uploads to `POST /api/protected/github/repos/:id/storage-state`
-- [ ] Backend persists encrypted blob + expiry hint to `github_repos.preview_storage_state`
-- [ ] Backend endpoint: `DELETE /api/protected/github/repos/:id/storage-state` for re-auth
-- [ ] Detect auth failures during screenshot runs → notify user via in-app + email
+- [ ] Endpoint: `POST /api/protected/github/repos/:id/playwright-secret/rotate` — generate new secret, encrypt+store, return once
+- [ ] Endpoint: `DELETE /api/protected/github/repos/:id/playwright-secret` — invalidate
+- [ ] Encryption: per-account key, stored secret never returned after generation
+- [ ] Screenshot worker: POSTs secret to `{preview_url}/_gt/playwright-auth`, uses returned session cookie
+- [ ] Handle auth failures: clear message with "regenerate secret" CTA
+- [ ] Docs: framework snippets for the auth bridge endpoint
+  - [ ] Go + Gin
+  - [ ] Go + net/http (stdlib)
+  - [ ] Node + Express
+  - [ ] Next.js API route
+  - [ ] Python + FastAPI
+  - [ ] Ruby on Rails (nice-to-have)
+- [ ] Reference implementation in Growth Tools' own webapp/base-server (dogfood)
+- [ ] Rate-limit guidance in docs (10 req/min)
+- [ ] Settings UI: generate secret, show once, copy button, rotate button
 
 ## Phase 6c — Storybook screenshot path
 
