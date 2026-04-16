@@ -70,23 +70,24 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[-]` skipped
 - [ ] Upload screenshots to S3 via existing media service
 - [ ] Load encrypted storage state, launch Playwright with it, capture auth failures
 
-## Phase 6b — Auth bridge (Playwright shared secret)
+## Phase 6b — Screenshot bot credentials (email/password)
 
-- [ ] Endpoint: `POST /api/protected/github/repos/:id/playwright-secret/rotate` — generate new secret, encrypt+store, return once
-- [ ] Endpoint: `DELETE /api/protected/github/repos/:id/playwright-secret` — invalidate
-- [ ] Encryption: per-account key, stored secret never returned after generation
-- [ ] Screenshot worker: POSTs secret to `{preview_url}/_gt/playwright-auth`, uses returned session cookie
-- [ ] Handle auth failures: clear message with "regenerate secret" CTA
-- [ ] Docs: framework snippets for the auth bridge endpoint
-  - [ ] Go + Gin
-  - [ ] Go + net/http (stdlib)
-  - [ ] Node + Express
-  - [ ] Next.js API route
-  - [ ] Python + FastAPI
-  - [ ] Ruby on Rails (nice-to-have)
-- [ ] Reference implementation in Growth Tools' own webapp/base-server (dogfood)
-- [ ] Rate-limit guidance in docs (10 req/min)
-- [ ] Settings UI: generate secret, show once, copy button, rotate button
+- [ ] Schema: add login_url, login_email, login_password_encrypted, selector overrides, success pattern to github_repos
+- [ ] AES-256-GCM encryption with per-account key for password field
+- [ ] Endpoints:
+  - [ ] `PUT /api/protected/github/repos/:id/credentials` — set/update (password never echoed back)
+  - [ ] `DELETE /api/protected/github/repos/:id/credentials` — clear
+- [ ] Screenshot worker auth step:
+  - [ ] Navigate to login_url
+  - [ ] Fill email/password fields (selectors with fallback defaults)
+  - [ ] Submit, wait for success signal (URL pattern / element / default timeout)
+  - [ ] On failure, capture error screenshot + notify user
+- [ ] Settings UI:
+  - [ ] Form with login URL, email, password fields
+  - [ ] "Advanced" collapsible section for selector overrides
+  - [ ] Test button: performs login flow and reports success/failure
+- [ ] Docs: setup guide for creating a screenshot bot account
+- [ ] Safety: if login fails 3 runs in a row, disable auto-posting for the repo + notify user
 
 ## Phase 6c — Storybook screenshot path
 
