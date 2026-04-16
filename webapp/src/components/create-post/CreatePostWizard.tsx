@@ -1,4 +1,5 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -416,6 +417,10 @@ function WizardInner({
 	return (
 		<div className={styles.page}>
 			<Stack gap="xs">
+				<Link to="/posts" className={styles.backLink}>
+					<ArrowLeft size={16} />
+					<Text size="sm" color="secondary">Back to posts</Text>
+				</Link>
 				<Text as="h1" size="2xl" weight="bold">
 					{isEditMode ? "Edit Post" : "Create Post"}
 				</Text>

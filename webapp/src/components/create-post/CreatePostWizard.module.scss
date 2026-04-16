@@ -13,6 +13,20 @@
 	}
 }
 
+// Back link
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  text-decoration: none;
+  color: var(--color-muted);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--color-base-content);
+  }
+}
+
 // Two-column layout
 .twoColumn {
 	display: flex;
@@ -92,8 +106,11 @@
 	padding-top: var(--space-4);
 }
 
-// Timestamp below post card
+// Status + timestamp below post card
 .postTimestamp {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
 	margin-top: var(--space-3);
 }
 

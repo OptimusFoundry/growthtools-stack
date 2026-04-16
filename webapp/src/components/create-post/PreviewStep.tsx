@@ -267,8 +267,8 @@ export function PreviewStep({
 					</Stack>
 				)}
 
-				{/* Base content accordion — visible during generation and after */}
-				{baseContent && (
+				{/* Base content streaming — shown during generation only */}
+				{baseContent && generating && (
 					<BaseAccordion
 						content={baseContent}
 						isStreaming={ssePhase === "generating"}
@@ -300,19 +300,20 @@ export function PreviewStep({
 								Review Content
 							</Text>
 
+							{baseContent && (
+								<BaseAccordion
+									content={baseContent}
+									isStreaming={ssePhase === "generating"}
+								/>
+							)}
+
 							<Tabs defaultTab={selectedPlatforms[0]}>
 								<TabList aria-label="Platform previews">
-									{selectedPlatforms.map((platform) => {
-										const pp = platformPostByPlatform?.[platform];
-										return (
-											<Tab key={platform} id={platform}>
-												<Stack gap="0" align="center">
-													<span>{PLATFORM_DISPLAY_NAMES[platform]}</span>
-													{pp && <PlatformPublishStatusLabel pp={pp} />}
-												</Stack>
-											</Tab>
-										);
-									})}
+									{selectedPlatforms.map((platform) => (
+										<Tab key={platform} id={platform}>
+											{PLATFORM_DISPLAY_NAMES[platform]}
+										</Tab>
+									))}
 								</TabList>
 								<TabPanels>
 									{selectedPlatforms.map((platform) => (
@@ -334,6 +335,9 @@ export function PreviewStep({
 												/>
 												{platformPostByPlatform?.[platform] && (
 													<div className={styles.postTimestamp}>
+														<PlatformPublishStatusLabel
+															pp={platformPostByPlatform[platform]}
+														/>
 														<PlatformPostTimestamp
 															pp={platformPostByPlatform[platform]}
 														/>
