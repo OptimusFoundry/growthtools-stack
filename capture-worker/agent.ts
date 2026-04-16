@@ -160,6 +160,81 @@ interface LocatorSpec {
 	name?: string;
 }
 
+// Runs inside the browser on every navigation. Creates a floating cursor
+// element that tracks the latest mousemove — gives the recorded video
+// something to show while the agent is "thinking" and animates clicks.
+const cursorOverlayScript = `
+(() => {
+  if (window.__pwCursorInstalled) return;
+  window.__pwCursorInstalled = true;
+
+  const cursor = document.createElement('div');
+  cursor.id = '__pw_cursor';
+  cursor.style.cssText = [
+    'position:fixed',
+    'top:0',
+    'left:0',
+    'width:22px',
+    'height:22px',
+    'border-radius:50%',
+    'background:radial-gradient(circle,rgba(255,40,60,0.9) 0%,rgba(255,40,60,0.45) 55%,transparent 80%)',
+    'border:2px solid rgba(255,255,255,0.9)',
+    'box-shadow:0 0 10px rgba(0,0,0,0.35)',
+    'pointer-events:none',
+    'z-index:2147483647',
+    'transform:translate(-50%,-50%)',
+    'transition:transform 40ms linear,opacity 120ms',
+    'opacity:0'
+  ].join(';');
+
+  const attach = () => {
+    if (document.body && !cursor.isConnected) document.body.appendChild(cursor);
+  };
+  if (document.body) attach();
+  else document.addEventListener('DOMContentLoaded', attach, { once: true });
+
+  let currentX = 0;
+  let currentY = 0;
+  document.addEventListener('mousemove', (e) => {
+    currentX = e.clientX;
+    currentY = e.clientY;
+    cursor.style.opacity = '1';
+    cursor.style.transform = 'translate(' + (currentX) + 'px,' + (currentY) + 'px) translate(-50%,-50%)';
+  }, true);
+
+  // Pulse when clicked so the video shows something happening.
+  document.addEventListener('mousedown', () => {
+    cursor.animate(
+      [
+        { boxShadow: '0 0 0 0 rgba(255,40,60,0.6)' },
+        { boxShadow: '0 0 0 16px rgba(255,40,60,0)' },
+      ],
+      { duration: 350, easing: 'ease-out' },
+    );
+  }, true);
+})();
+`;
+
+// Animate the real mouse pointer from its current position to the center of
+// the target element with many small steps — the injected cursor overlay
+// renders the motion in the video.
+async function animateMouseToLocator(
+	page: Page,
+	loc: Awaited<ReturnType<Page["locator"]>>,
+): Promise<void> {
+	try {
+		const box = await loc.boundingBox({ timeout: 3000 });
+		if (!box) return;
+		const targetX = box.x + box.width / 2;
+		const targetY = box.y + box.height / 2;
+		// 25 steps over ~400ms gives a visible but snappy glide.
+		await page.mouse.move(targetX, targetY, { steps: 25 });
+		await page.waitForTimeout(120);
+	} catch {
+		// Element not visible / detached — fall through and let the click retry.
+	}
+}
+
 function resolveLocator(page: Page, spec: LocatorSpec) {
 	switch (spec.by) {
 		case "testid":
@@ -209,11 +284,13 @@ async function executeTool(
 		}
 		case "click": {
 			const loc = resolveLocator(page, args as unknown as LocatorSpec);
+			await animateMouseToLocator(page, loc);
 			await loc.click({ timeout: 5000 });
 			return snapshot(ctx, `clicked ${JSON.stringify(args)}`);
 		}
 		case "fill": {
 			const loc = resolveLocator(page, args as unknown as LocatorSpec);
+			await animateMouseToLocator(page, loc);
 			await loc.fill(String(args.text ?? ""), { timeout: 5000 });
 			return snapshot(ctx, `filled ${JSON.stringify({ ...args, text: "***" })}`);
 		}
@@ -326,7 +403,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		goal,
 		repoRoot = path.resolve(__dirname, ".."),
 		outDir = path.join(__dirname, "captures"),
-		maxSteps = 20,
+		maxSteps = 30,
 		// Generous budget because Gemini free tier caps at 5 RPM so a 20-step
 		// run will likely spend a couple of minutes waiting out 429s.
 		wallClockMs = 5 * 60_000,
@@ -348,6 +425,12 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		viewport: { width: 1440, height: 900 },
 		recordVideo: { dir: captureDir, size: { width: 1440, height: 900 } },
 	});
+
+	// Inject a visible cursor that follows mousemove events. Playwright's
+	// video recorder doesn't render the OS cursor, so without this the clip
+	// shows content changing with no apparent cause.
+	await context.addInitScript(cursorOverlayScript);
+
 	const page = await context.newPage();
 	const stepIndex = { value: 0 };
 	const doneState: { value: boolean; narration?: string } = { value: false };
@@ -384,6 +467,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 			"4. Call `done` with a 1-2 sentence narration of what the commit ships to users — describe the feature, not your steps.",
 			"",
 			"LOCATOR PRIORITY: prefer testid (grep the diff for `data-testid`). Fall back to role+name, then visible text.",
+			"IF a click or fill fails with 'strict mode violation ... resolved to N elements', the text is not unique. Switch to `by=role` with a specific `name` (e.g. by=role value=button name='Publish') or pick a more specific label. Don't retry the same ambiguous locator.",
 			`HARD LIMITS: at most ${maxSteps} tool calls. Aim for 5-10 for a clean clip.`,
 		].join("\n");
 
