@@ -59,16 +59,39 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[-]` skipped
 - [ ] Store result on `github_events` row
 - [ ] If not postable, mark event processed and stop
 
-## Phase 6 — Screenshot service
+## Phase 6 — Screenshot service (app screenshots)
 
 - [ ] Spike: Playwright in Go (chromedp) vs Playwright Node CLI
 - [ ] Decision: standalone Docker service or in-process worker
-- [ ] Service: accepts `{preview_url, routes[], auth}`, returns media URLs
+- [ ] Service: accepts `{preview_url, routes[], storage_state}`, returns media URLs
 - [ ] Viewport strategy: 1440x900 desktop + 375x667 mobile
 - [ ] 5-second settle time, 30-second timeout per route
 - [ ] Full-page vs viewport (decide from open question #1)
 - [ ] Upload screenshots to S3 via existing media service
-- [ ] Handle auth: MVP supports public routes only, log + skip private
+- [ ] Load encrypted storage state, launch Playwright with it, capture auth failures
+
+## Phase 6b — CLI for storage state capture (auth bridge)
+
+- [ ] Design `gt` CLI: `gt connect-preview <repo>` command
+- [ ] CLI launches local Playwright Chromium, navigates to preview URL
+- [ ] User logs in interactively (Google SSO, email/pw, magic link — whatever)
+- [ ] CLI captures `page.context().storageState()` after user confirms "done"
+- [ ] CLI encrypts state with per-account key, uploads to `POST /api/protected/github/repos/:id/storage-state`
+- [ ] Backend persists encrypted blob + expiry hint to `github_repos.preview_storage_state`
+- [ ] Backend endpoint: `DELETE /api/protected/github/repos/:id/storage-state` for re-auth
+- [ ] Detect auth failures during screenshot runs → notify user via in-app + email
+
+## Phase 6c — Storybook screenshot path
+
+- [ ] Add `storybook_url` and `component_globs` to `github_repos`
+- [ ] Component-file → story-ID mapping helper (handles CSF naming conventions)
+- [ ] Screenshot service: accepts `{storybook_url, story_ids[]}` as alternate input
+- [ ] Ship `showcaseDecorator` in `proto-design-system/storybook/`
+  - [ ] Gradient background (configurable via Storybook globals)
+  - [ ] Padding + centered layout
+  - [ ] Optional component name label
+- [ ] Document decorator usage in design system README
+- [ ] Worker logic: if commit touches `component_globs` and `storybook_url` is set, route to Storybook screenshots (in addition to or instead of app screenshots)
 
 ## Phase 7 — Post generation
 

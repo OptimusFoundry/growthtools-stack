@@ -121,10 +121,63 @@ Key decisions:
 - 5-second settle time after navigation (wait for animations, lazy images)
 - Timeout: 30 seconds per route
 
-**Auth problem**: Protected routes need auth. MVP solutions:
-- User provides a test account's credentials (stored encrypted)
-- User provides cookies via extension
-- Or: only screenshot public routes in MVP
+**Auth problem**: Protected routes need auth. MVP solution:
+
+**Storage state reuse** — one-time setup, reuse until session expires.
+
+1. User triggers "Connect preview" in settings for a repo
+2. User runs a small Growth Tools CLI on their machine: `gt connect-preview <repo>`
+3. CLI launches a local Playwright browser, navigates to their preview URL
+4. User logs in normally (Google SSO, email/password, magic link — whatever)
+5. CLI captures the full browser storage state (cookies + localStorage + sessionStorage), encrypts it, uploads to Growth Tools
+6. All subsequent screenshot runs launch Playwright with `storageState: <decrypted blob>` — app treats them as already-logged-in
+7. If session expires during a screenshot run, we detect auth failure and notify the user to reconnect
+
+**Why not automate Google SSO directly?** Google actively blocks automation and breaks flows on every UI change. Storage state sidesteps the whole problem — we never touch credentials, never simulate SSO, and it works for any auth method.
+
+**Why a local CLI (not headful in-cloud)?** No infrastructure to run VNC-accessible browsers; user's credentials never leave their machine (only the resulting session tokens do); simplest possible UX for MVP. Cloud-hosted browser with streamed CDP is a follow-up if the CLI step is a friction point.
+
+### 3b. Storybook as a first-class posting surface
+
+Many commits change individual components, not full pages. For those, Storybook gives a cleaner screenshot than the app — no auth, no data loading, no scaffolding around the component.
+
+**How it works:**
+- User configures a Storybook URL per repo (optional, separate from preview URL) — e.g. `https://storybook.myapp.com` or a Chromatic preview URL
+- When commits touch files matching configured patterns (default: `**/components/**/*.tsx`), worker extracts component names
+- Maps component file → Storybook story ID (Storybook follows `category-component--variant` convention, e.g. `Button.tsx` → `primitives-button--default`)
+- Playwright navigates to each story URL (`{storybook_url}/iframe.html?id={storyId}&viewMode=story`) and screenshots
+- Screenshots are wrapped in a marketing-friendly decorator (branded background, padding, centered)
+
+**Branded showcase decorator** — a tiny helper shipped in the design system:
+
+```tsx
+// proto-design-system/storybook/showcaseDecorator.tsx
+export const showcaseDecorator = (Story) => (
+  <div style={{
+    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    padding: 64,
+    minHeight: 400,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}>
+    <Story />
+  </div>
+);
+```
+
+User opts in globally (applied to all stories via `.storybook/preview.ts`) or per-tag (`tags: ['showcase']`). Background, padding, and accent color configurable via Storybook globals.
+
+**Why this is great:** component-level commits are the most common for mature codebases. App-level screenshots miss them or show them buried in context. Storybook + showcase decorator captures them beautifully with zero page-level auth.
+
+**Screenshot strategy per commit type:**
+
+| Commit changes | Screenshot target |
+|---|---|
+| New route / page | App at that route (via preview URL) |
+| Component in `components/` | Storybook story (if Storybook URL configured) |
+| Both | Both |
+| Neither | Text-only post, no screenshots |
 
 ### 4. Post generation
 
@@ -175,8 +228,12 @@ CREATE TABLE github_repos (
   auto_post_enabled BOOLEAN NOT NULL DEFAULT false,
   auto_publish_enabled BOOLEAN NOT NULL DEFAULT false,
   preview_url TEXT,
+  storybook_url TEXT,
+  component_globs TEXT[] NOT NULL DEFAULT ARRAY['**/components/**/*.tsx', '**/proto-design-system/**/*.tsx'],
   watched_branches TEXT[] NOT NULL DEFAULT ARRAY['main'],
   default_platforms TEXT[] NOT NULL DEFAULT '{}',
+  preview_storage_state BYTEA, -- encrypted browser storage state (cookies + localStorage)
+  storage_state_expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ,
@@ -231,3 +288,6 @@ Currently stores webhook delivery info but not the payload. Need to:
 3. How do we handle a push with multiple commits? One post per commit or one summary post per push?
 4. If Playwright fails, do we still create a text-only draft or skip entirely?
 5. Self-hosted preview URLs (`localhost:3000`) — skip, require public URL, or offer a tunneling helper?
+6. Storage state expiry: detect proactively (check session age) or reactively (fail on screenshot run)? Reactive is simpler but can delay notifications.
+7. Storybook story ID mapping: rely on Storybook's CSF conventions (filename → auto-generated ID) or require users to tag stories they want auto-screenshotted?
+8. Multiple components in one commit: separate post per component or one post with multiple screenshots?
