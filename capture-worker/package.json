@@ -7,9 +7,11 @@
   "scripts": {
     "capture": "tsx index.ts",
     "demo": "tsx agent.ts",
+    "serve": "tsx server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1031.0",
     "@google/genai": "^1.50.1",
     "playwright": "^1.57.0"
   },
