@@ -63,7 +63,7 @@ export function PostPublishStatus({
 	return (
 		<div className={styles.container}>
 			<div className={styles.header}>
-				<Text size="sm" weight="medium">
+				<Text size="base" weight="semibold">
 					Publish Status
 				</Text>
 				{hasFailed && onRetry && (

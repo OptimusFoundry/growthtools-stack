@@ -6,7 +6,6 @@ import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -92,7 +91,7 @@ export function ComposeStep({
 	);
 
 	return (
-		<Stack gap="md">
+		<Stack gap="lg">
 			{/* Blurb */}
 			<TextArea
 				label="Your message"
@@ -105,9 +104,9 @@ export function ComposeStep({
 				disabled={readOnly}
 			/>
 
-			{/* Platforms — inline tags */}
+			{/* Platforms */}
 			<Stack gap="sm">
-				<Text size="sm" weight="medium">
+				<Text size="base" weight="semibold">
 					Platforms
 				</Text>
 				{activeConnections.length > 0 ? (
@@ -130,12 +129,10 @@ export function ComposeStep({
 				)}
 			</Stack>
 
-			<Divider />
-
 			{/* Post config */}
 			{threadSupported && (
 				<Stack gap="sm">
-					<Text size="sm" weight="medium">
+					<Text size="base" weight="semibold">
 						Post Config
 					</Text>
 					<Switch
@@ -149,13 +146,11 @@ export function ComposeStep({
 				</Stack>
 			)}
 
-			{threadSupported && <Divider />}
-
 			{/* Media — hidden when read-only */}
 			{!readOnly && (
 				<>
 					<Stack gap="sm">
-						<Text size="sm" weight="medium">
+						<Text size="base" weight="semibold">
 							Media
 						</Text>
 						<FileUpload
@@ -170,8 +165,7 @@ export function ComposeStep({
 						/>
 					</Stack>
 
-					<Divider />
-
+					
 					{/* Generate */}
 					<Stack
 						direction="row"
@@ -194,8 +188,7 @@ export function ComposeStep({
 			{/* Publish options — shown after content is generated, hidden when read-only */}
 			{generated && !readOnly && (
 				<>
-					<Divider />
-
+					
 					{platformsChanged && (
 						<Alert variant="warning">
 							Platforms changed since last generation. Regenerate content before
