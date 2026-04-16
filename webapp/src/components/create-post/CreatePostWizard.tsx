@@ -440,16 +440,19 @@ function WizardInner({
 
 	return (
 		<div className={styles.page}>
-			<Stack gap="sm">
-				<Breadcrumb
-					size="lg"
-					items={[
-						{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
-						{ label: isEditMode ? "Edit Post" : "New Post" },
-					]}
-				/>
-				<Divider />
-				<Text color="secondary">
+			<Breadcrumb
+				size="lg"
+				items={[
+					{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
+					{ label: isEditMode ? "Edit Post" : "New Post" },
+				]}
+			/>
+			<Divider />
+			<Stack gap="xs">
+				<Text as="h1" size="xl" weight="semibold">
+					{isEditMode ? "Edit Post" : "Create Post"}
+				</Text>
+				<Text size="sm" color="secondary">
 					{isEditMode
 						? "Update your post content and platform adaptations"
 						: "Write a blurb and let AI adapt it for each platform"}
