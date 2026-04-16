@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TestLoginRouteImport } from './routes/test-login'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as PostsRouteImport } from './routes/posts'
 import { Route as MediaRouteImport } from './routes/media'
@@ -30,6 +31,11 @@ import { Route as BillingPayment_methodRouteImport } from './routes/billing/paym
 import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
 import { Route as BillingPayRouteImport } from './routes/billing/pay'
 
+const TestLoginRoute = TestLoginRouteImport.update({
+  id: '/test-login',
+  path: '/test-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
+  '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
+  '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
   '/signin': typeof SigninRoute
+  '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
   '/billing/payment_method': typeof BillingPayment_methodRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/media'
     | '/posts'
     | '/signin'
+    | '/test-login'
     | '/billing/pay'
     | '/billing/payment_attempt'
     | '/billing/payment_method'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/media'
     | '/posts'
     | '/signin'
+    | '/test-login'
     | '/billing/pay'
     | '/billing/payment_attempt'
     | '/billing/payment_method'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/media'
     | '/posts'
     | '/signin'
+    | '/test-login'
     | '/billing/pay'
     | '/billing/payment_attempt'
     | '/billing/payment_method'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   MediaRoute: typeof MediaRoute
   PostsRoute: typeof PostsRoute
   SigninRoute: typeof SigninRoute
+  TestLoginRoute: typeof TestLoginRoute
   BillingPayRoute: typeof BillingPayRoute
   BillingPayment_attemptRoute: typeof BillingPayment_attemptRoute
   BillingPayment_methodRoute: typeof BillingPayment_methodRoute
@@ -292,6 +305,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test-login': {
+      id: '/test-login'
+      path: '/test-login'
+      fullPath: '/test-login'
+      preLoaderRoute: typeof TestLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
@@ -446,6 +466,7 @@ const rootRouteChildren: RootRouteChildren = {
   MediaRoute: MediaRoute,
   PostsRoute: PostsRoute,
   SigninRoute: SigninRoute,
+  TestLoginRoute: TestLoginRoute,
   BillingPayRoute: BillingPayRoute,
   BillingPayment_attemptRoute: BillingPayment_attemptRoute,
   BillingPayment_methodRoute: BillingPayment_methodRoute,

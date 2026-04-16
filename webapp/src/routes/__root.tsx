@@ -6,7 +6,9 @@ import { useAuth } from "@/contexts/auth";
 function isPublicRoute(): boolean {
 	if (typeof window === "undefined") return false;
 	const path = window.location.pathname;
-	return path === "/signin" || path.startsWith("/oauth");
+	return (
+		path === "/signin" || path.startsWith("/oauth") || path.startsWith("/test-")
+	);
 }
 
 function RootLayout() {

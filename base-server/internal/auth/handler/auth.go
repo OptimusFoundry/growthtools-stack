@@ -62,6 +62,28 @@ func (h *Handler) HandleEmailLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+// HandleTestLogin authenticates with email/password and sets the session
+// cookie directly. Used by the hidden /test-login page so Playwright can
+// authenticate without the Google OAuth round-trip.
+func (h *Handler) HandleTestLogin(c *gin.Context) {
+	var req EmailLoginRequest
+	ctx := c.Request.Context()
+	if err := c.ShouldBindJSON(&req); err != nil {
+		apierrors.ValidationError(c, err)
+		return
+	}
+
+	token, err := h.authProcessor.Login(ctx, req.Email, req.Password)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	secure := os.Getenv("GO_ENV") == "production"
+	c.SetCookie("token", token, 86400, "/", h.authProcessor.GetWebAppHost(), secure, true)
+	c.Status(http.StatusNoContent)
+}
+
 func (h *Handler) HandleEmailSignup(c *gin.Context) {
 	var req EmailSignupRequest
 	ctx := c.Request.Context()

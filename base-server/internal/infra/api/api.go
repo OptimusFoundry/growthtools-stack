@@ -74,6 +74,11 @@ func (a *API) RegisterRoutes() {
 		authGroup.POST("/signup/email", a.authHandler.HandleEmailSignup)
 		authGroup.GET("/google/callback", a.authHandler.HandleGoogleOauthCallback)
 
+		// Hidden login endpoint for Playwright/E2E automation. Sets the
+		// session cookie directly so browser tests can authenticate without
+		// going through Google OAuth.
+		authGroup.POST("/test/login", a.authHandler.HandleTestLogin)
+
 		// GitHub webhook (public, uses signature validation)
 		apiGroup.POST("/github/webhook", a.githubHandler.HandleWebhook)
 
