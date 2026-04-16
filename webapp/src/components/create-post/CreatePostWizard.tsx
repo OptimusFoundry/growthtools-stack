@@ -13,8 +13,8 @@ import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { MediaItem } from "@/types/media";
@@ -428,7 +428,8 @@ function WizardInner({
 	]);
 
 	const [retrying, setRetrying] = useState(false);
-	const hasFailed = postStatus === "failed" || postStatus === "partially_published";
+	const hasFailed =
+		postStatus === "failed" || postStatus === "partially_published";
 
 	const handleRetry = useCallback(async () => {
 		if (!editPostId) return;
@@ -450,7 +451,13 @@ function WizardInner({
 				size="lg"
 				items={[
 					{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
-					{ label: !isEditMode ? "New Post" : postStatus === "draft" ? "Edit Post" : "Post Details" },
+					{
+						label: !isEditMode
+							? "New Post"
+							: postStatus === "draft"
+								? "Edit Post"
+								: "Post Details",
+					},
 				]}
 			/>
 			<Divider />

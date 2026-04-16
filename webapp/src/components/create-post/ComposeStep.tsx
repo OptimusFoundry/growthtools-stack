@@ -186,7 +186,6 @@ export function ComposeStep({
 						/>
 					</Stack>
 
-					
 					{/* Generate */}
 					<Stack
 						direction="row"

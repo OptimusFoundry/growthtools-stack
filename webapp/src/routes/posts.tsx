@@ -67,11 +67,8 @@ const STATUS_LABELS: Record<PostStatus, string> = {
 	partially_published: "Partial",
 };
 
-
 function timeAgo(iso: string): string {
-	const seconds = Math.floor(
-		(Date.now() - new Date(iso).getTime()) / 1000,
-	);
+	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
 	if (seconds < 60) return "just now";
 	const minutes = Math.floor(seconds / 60);
 	if (minutes < 60) return `${minutes}m ago`;
@@ -89,7 +86,10 @@ function truncate(text: string, maxLen: number): string {
 	if (text.length <= maxLen) return text;
 	const truncated = text.slice(0, maxLen);
 	const lastSpace = truncated.lastIndexOf(" ");
-	return (lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) + "...";
+	return (
+		(lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) +
+		"..."
+	);
 }
 
 function PostsPage() {
@@ -132,7 +132,9 @@ function PostsPage() {
 
 	const hasActiveFilter = statusFilter !== "" || contentTypeFilter !== "";
 	const postCount = allPosts.length;
-	const publishedCount = allPosts.filter((p) => p.status === "published").length;
+	const publishedCount = allPosts.filter(
+		(p) => p.status === "published",
+	).length;
 	const draftCount = allPosts.filter((p) => p.status === "draft").length;
 
 	return (
@@ -158,18 +160,30 @@ function PostsPage() {
 
 			<div className={styles.stats}>
 				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">{postCount}</Text>
-					<Text size="xs" color="muted">Total</Text>
+					<Text size="2xl" weight="bold">
+						{postCount}
+					</Text>
+					<Text size="xs" color="muted">
+						Total
+					</Text>
 				</div>
 				<div className={styles.statDivider} />
 				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">{publishedCount}</Text>
-					<Text size="xs" color="muted">Published</Text>
+					<Text size="2xl" weight="bold">
+						{publishedCount}
+					</Text>
+					<Text size="xs" color="muted">
+						Published
+					</Text>
 				</div>
 				<div className={styles.statDivider} />
 				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">{draftCount}</Text>
-					<Text size="xs" color="muted">Drafts</Text>
+					<Text size="2xl" weight="bold">
+						{draftCount}
+					</Text>
+					<Text size="xs" color="muted">
+						Drafts
+					</Text>
 				</div>
 			</div>
 
@@ -245,13 +259,23 @@ function PostsPage() {
 									>
 										<div className={styles.postCard}>
 											<div className={styles.postCardLeft}>
-												<div className={`${styles.postIcon} ${isThread ? styles.postIconThread : ""}`}>
-													{isThread ? <List size={16} /> : <FileText size={16} />}
+												<div
+													className={`${styles.postIcon} ${isThread ? styles.postIconThread : ""}`}
+												>
+													{isThread ? (
+														<List size={16} />
+													) : (
+														<FileText size={16} />
+													)}
 												</div>
 											</div>
 											<div className={styles.postCardBody}>
 												<div className={styles.postTitleRow}>
-													<Text size="sm" weight="medium" className={styles.postTitle}>
+													<Text
+														size="sm"
+														weight="medium"
+														className={styles.postTitle}
+													>
 														{truncate(post.title || post.content, 80)}
 													</Text>
 													<Badge
@@ -280,7 +304,11 @@ function PostsPage() {
 														{post.platforms.length > 0 && (
 															<span className={styles.platformIcons}>
 																{post.platforms.map((p) => (
-																	<span key={p} className={styles.platformIcon} title={p}>
+																	<span
+																		key={p}
+																		className={styles.platformIcon}
+																		title={p}
+																	>
 																		{getPlatformIcon(p, 14)}
 																	</span>
 																))}

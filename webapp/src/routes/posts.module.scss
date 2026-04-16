@@ -182,6 +182,7 @@
   background: var(--color-base-100);
   padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-full);
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
   line-height: 1.4;
 }
 

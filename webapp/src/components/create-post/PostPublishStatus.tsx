@@ -1,4 +1,10 @@
-import { AlertCircle, CheckCircle, Clock, Loader, RefreshCw } from "lucide-react";
+import {
+	AlertCircle,
+	CheckCircle,
+	Clock,
+	Loader,
+	RefreshCw,
+} from "lucide-react";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
