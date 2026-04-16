@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { PenSquare } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -12,6 +12,7 @@ import {
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -438,14 +439,14 @@ function WizardInner({
 
 	return (
 		<div className={styles.page}>
-			<Stack gap="xs">
-				<Link to="/posts" className={styles.backLink}>
-					<ArrowLeft size={16} />
-					<Text size="sm" color="secondary">Back to posts</Text>
-				</Link>
-				<Text as="h1" size="2xl" weight="bold">
-					{isEditMode ? "Edit Post" : "Create Post"}
-				</Text>
+			<Stack gap="sm">
+				<Breadcrumb
+					size="lg"
+					items={[
+						{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
+						{ label: isEditMode ? "Edit Post" : "New Post" },
+					]}
+				/>
 				<Text color="secondary">
 					{isEditMode
 						? "Update your post content and platform adaptations"
