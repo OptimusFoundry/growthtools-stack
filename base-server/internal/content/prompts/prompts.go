@@ -228,8 +228,12 @@ func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []Ima
 }
 
 // SystemThread builds the system prompt for generating a thread from content.
-func SystemThread(platformID string, imageDescriptions []ImageDescription) string {
+// If maxThreadParts > 0, it overrides the platform's default.
+func SystemThread(platformID string, maxThreadParts int, imageDescriptions []ImageDescription) string {
 	p := GetPlatform(platformID)
+	if maxThreadParts > 0 {
+		p.MaxThreadParts = maxThreadParts
+	}
 	var sb strings.Builder
 
 	sb.WriteString("You are a social media thread specialist.\n\n")

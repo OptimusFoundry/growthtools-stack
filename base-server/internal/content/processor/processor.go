@@ -129,7 +129,7 @@ func (p *ContentProcessor) GenerateThread(ctx context.Context, content string, p
 		observability.Field{Key: "operation", Value: "generate_thread"},
 	)
 
-	systemPrompt := prompts.SystemThread(platform, nil)
+	systemPrompt := prompts.SystemThread(platform, 0, nil)
 
 	messages := []aiclient.Message{
 		{Role: "user", Content: content},
@@ -289,9 +289,6 @@ func (p *ContentProcessor) streamPlatform(
 	cb StreamCallbacks,
 ) error {
 	platformCfg := prompts.GetPlatform(platform)
-	if maxThreadParts > 0 {
-		platformCfg.MaxThreadParts = maxThreadParts
-	}
 	isThread := contentType == "thread" && platformCfg.SupportsThreads
 
 	if isThread {
@@ -302,7 +299,7 @@ func (p *ContentProcessor) streamPlatform(
 
 	var sysPrompt string
 	if isThread {
-		sysPrompt = prompts.SystemThread(platform, imageDescriptionsForPrompts(imageDescriptions))
+		sysPrompt = prompts.SystemThread(platform, maxThreadParts, imageDescriptionsForPrompts(imageDescriptions))
 	} else {
 		sysPrompt = prompts.SystemAdapt(platform, voice, imageDescriptionsForPrompts(imageDescriptions))
 	}
