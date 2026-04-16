@@ -1,7 +1,57 @@
+# =============================================================================
+# Shared
+# =============================================================================
 .idea/
+.DS_Store
+*.local
 env.local
 coverage.out
-media-uploads/
 
-# Go build output
+# =============================================================================
+# Go backend (base-server/)
+# =============================================================================
 base-server/server
+base-server/media-uploads/
+base-server/coverage.out
+
+# =============================================================================
+# React frontend (webapp/)
+# =============================================================================
+node_modules
+dist
+dist-ssr
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.dev
+.env.production
+
+# Storybook
+storybook-static
+
+# Testing
+coverage
+playwright-report/
+test-debug-screenshot.png
+test-results/
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
