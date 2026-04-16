@@ -437,7 +437,8 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		while (!doneState.value && stepIndex.value < maxSteps && Date.now() < deadline) {
 			const response = await callWithRetry(generate, deadline);
 
-			const parts = response.candidates?.[0]?.content?.parts ?? [];
+			const modelContent = response.candidates?.[0]?.content;
+			const parts = modelContent?.parts ?? [];
 			const functionCall = parts.find((p) => p.functionCall)?.functionCall;
 
 			if (!functionCall) {
@@ -466,11 +467,12 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 
 			console.log(`[agent] ${functionCall.name}(${JSON.stringify(functionCall.args)}) -> ${result.message}`);
 
-			// Append model's call and our response to history so it can see the result.
-			history.push({
-				role: "model",
-				parts: [{ functionCall }],
-			});
+			// Echo the model's full content (parts included) so any thought_signature
+			// parts Gemini 3 emits round-trip correctly — stripping them fails with
+			// "Function call is missing a thought_signature" on follow-up requests.
+			if (modelContent) {
+				history.push(modelContent);
+			}
 
 			const responseParts: Content["parts"] = [
 				{
