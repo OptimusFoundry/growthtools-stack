@@ -1,5 +1,5 @@
 # Test runner image with Go installed
-FROM golang:1.23-alpine
+FROM golang:1.24-alpine
 
 # Install required tools and build dependencies for CGO (needed for -race flag)
 RUN apk --no-cache add git curl bash gcc musl-dev
