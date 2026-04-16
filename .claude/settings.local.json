@@ -58,7 +58,13 @@
       "WebFetch(domain:www.goprimer.com)",
       "WebFetch(domain:motionapp.com)",
       "WebFetch(domain:www.big3.sg)",
-      "WebFetch(domain:www.opus.pro)"
+      "WebFetch(domain:www.opus.pro)",
+      "Bash(make dev-up *)",
+      "Bash(docker rm *)",
+      "Bash(go run *)",
+      "WebFetch(domain:docs.bsky.app)",
+      "Bash(PGPASSWORD=base_password psql *)",
+      "WebFetch(domain:developers.facebook.com)"
     ],
     "deny": [],
     "ask": []
