@@ -38,16 +38,18 @@ var (
 )
 
 type MediaProcessor struct {
-	store     MediaStore
-	fileStore FileStore
-	logger    *observability.Logger
+	store         MediaStore
+	fileStore     FileStore
+	publicBaseURL string
+	logger        *observability.Logger
 }
 
-func New(store MediaStore, fileStore FileStore, logger *observability.Logger) MediaProcessor {
+func New(store MediaStore, fileStore FileStore, publicBaseURL string, logger *observability.Logger) MediaProcessor {
 	return MediaProcessor{
-		store:     store,
-		fileStore: fileStore,
-		logger:    logger,
+		store:         store,
+		fileStore:     fileStore,
+		publicBaseURL: publicBaseURL,
+		logger:        logger,
 	}
 }
 
@@ -69,6 +71,12 @@ func (p *MediaProcessor) Upload(ctx context.Context, accountID uuid.UUID, filena
 	if err != nil {
 		p.logger.Error(ctx, "failed to upload file to S3", err)
 		return store.Media{}, ErrFailedUpload
+	}
+
+	// If fileStore returned a relative key (local-dir mode), build a full public URL
+	// so external services (Threads, Instagram, etc.) can fetch it by URL.
+	if !strings.HasPrefix(s3URL, "http://") && !strings.HasPrefix(s3URL, "https://") && p.publicBaseURL != "" {
+		s3URL = strings.TrimRight(p.publicBaseURL, "/") + "/public/media/file/" + key
 	}
 
 	params := store.CreateMediaParams{
@@ -143,6 +151,23 @@ func (p *MediaProcessor) List(ctx context.Context, accountID uuid.UUID, limit, o
 }
 
 // GetFile retrieves a file from storage by media ID
+// GetFileByKey fetches a file by its storage key without requiring account context.
+// Used by the public media endpoint so external platforms can fetch media by URL.
+// The key format (account_id/uuid.ext) provides enough entropy to prevent enumeration.
+func (p *MediaProcessor) GetFileByKey(ctx context.Context, key string) (io.ReadCloser, string, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "key", Value: key},
+		observability.Field{Key: "operation", Value: "get_file_by_key"},
+	)
+
+	reader, contentType, err := p.fileStore.GetFile(ctx, key)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get file from storage by key", err)
+		return nil, "", ErrFailedGetFile
+	}
+	return reader, contentType, nil
+}
+
 func (p *MediaProcessor) GetFile(ctx context.Context, accountID, mediaID uuid.UUID) (io.ReadCloser, string, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: accountID.String()},

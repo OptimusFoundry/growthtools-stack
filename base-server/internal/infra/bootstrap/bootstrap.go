@@ -290,7 +290,13 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	deps.PostsHandler = postsHandler.New(postsProc, logger)
 
 	// Media
-	mediaProc := mediaProcessor.New(&deps.Store, fileStore, logger)
+	// Public base URL is used to build fetchable URLs for media uploaded to local storage
+	// so external services (Threads, Instagram) can fetch them. Falls back to WEBAPP_URI.
+	publicBaseURL := os.Getenv("OAUTH_REDIRECT_BASE")
+	if publicBaseURL == "" {
+		publicBaseURL = cfg.Services.WebAppURI
+	}
+	mediaProc := mediaProcessor.New(&deps.Store, fileStore, publicBaseURL, logger)
 	deps.MediaHandler = mediaHandler.New(mediaProc, logger)
 
 	// GitHub integration

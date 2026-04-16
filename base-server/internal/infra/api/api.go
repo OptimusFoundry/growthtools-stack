@@ -87,6 +87,10 @@ func (a *API) RegisterRoutes() {
 		apiGroup.POST("/platforms/webhooks/:platform/delete", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"success": true})
 		})
+
+		// Public media file fetch — required so external platforms (Threads,
+		// Instagram) can fetch media by URL. Root-level, not under /api.
+		a.router.GET("/public/media/file/*key", a.mediaHandler.HandlePublicGetFile)
 	}
 
 	// Protected routes (JWT required)

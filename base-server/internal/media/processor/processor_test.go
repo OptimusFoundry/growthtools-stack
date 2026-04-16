@@ -33,7 +33,7 @@ func TestMediaProcessor_Upload(t *testing.T) {
 				return "https://s3.example.com/" + key, nil
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		result, err := proc.Upload(context.Background(), accountID, "test.png", "image/png", 1024, strings.NewReader("data"))
 
@@ -50,7 +50,7 @@ func TestMediaProcessor_Upload(t *testing.T) {
 				return "", errors.New("storage error")
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		_, err := proc.Upload(context.Background(), accountID, "test.png", "image/png", 1024, strings.NewReader("data"))
 
@@ -75,7 +75,7 @@ func TestMediaProcessor_Upload(t *testing.T) {
 				return nil
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		_, err := proc.Upload(context.Background(), accountID, "test.png", "image/png", 1024, strings.NewReader("data"))
 
@@ -106,7 +106,7 @@ func TestMediaProcessor_Delete(t *testing.T) {
 				return nil
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		err := proc.Delete(context.Background(), accountID, mediaID)
 
@@ -121,7 +121,7 @@ func TestMediaProcessor_Delete(t *testing.T) {
 			},
 		}
 		mockFS := &MockFileStore{}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		err := proc.Delete(context.Background(), accountID, mediaID)
 
@@ -140,7 +140,7 @@ func TestMediaProcessor_Delete(t *testing.T) {
 			},
 		}
 		mockFS := &MockFileStore{}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		err := proc.Delete(context.Background(), accountID, mediaID)
 
@@ -159,7 +159,7 @@ func TestMediaProcessor_Delete(t *testing.T) {
 			},
 		}
 		mockFS := &MockFileStore{}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		err := proc.Delete(context.Background(), accountID, mediaID)
 
@@ -182,7 +182,7 @@ func TestMediaProcessor_Delete(t *testing.T) {
 				return errors.New("storage error")
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		err := proc.Delete(context.Background(), accountID, mediaID)
 
@@ -203,7 +203,7 @@ func TestMediaProcessor_List(t *testing.T) {
 			},
 		}
 		mockFS := &MockFileStore{}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		result, err := proc.List(context.Background(), accountID, 10, 0)
 
@@ -219,7 +219,7 @@ func TestMediaProcessor_List(t *testing.T) {
 			},
 		}
 		mockFS := &MockFileStore{}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		_, err := proc.List(context.Background(), accountID, 10, 0)
 
@@ -246,7 +246,7 @@ func TestMediaProcessor_GetFile(t *testing.T) {
 				return io.NopCloser(strings.NewReader("file data")), "image/png", nil
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		reader, contentType, err := proc.GetFile(context.Background(), accountID, mediaID)
 
@@ -265,7 +265,7 @@ func TestMediaProcessor_GetFile(t *testing.T) {
 			},
 		}
 		mockFS := &MockFileStore{}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		_, _, err := proc.GetFile(context.Background(), accountID, mediaID)
 
@@ -285,7 +285,7 @@ func TestMediaProcessor_GetFile(t *testing.T) {
 				return nil, "", errors.New("storage error")
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		_, _, err := proc.GetFile(context.Background(), accountID, mediaID)
 
@@ -305,7 +305,7 @@ func TestMediaProcessor_GetFile(t *testing.T) {
 				return io.NopCloser(strings.NewReader("data")), "", nil
 			},
 		}
-		proc := New(mockStore, mockFS, logger)
+		proc := New(mockStore, mockFS, "", logger)
 
 		reader, contentType, err := proc.GetFile(context.Background(), accountID, mediaID)
 

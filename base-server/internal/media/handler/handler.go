@@ -124,6 +124,36 @@ func (h *Handler) HandleDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Media deleted successfully"})
 }
 
+// HandlePublicGetFile streams a media file without authentication, addressed by S3 key.
+// This is needed so external platforms (Threads, Instagram) can fetch media by URL.
+// The S3 key format (account_id/uuid.ext) provides enough entropy to prevent enumeration.
+func (h *Handler) HandlePublicGetFile(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Reconstruct the key from the path. Route is /public/media/file/*key
+	key := c.Param("key")
+	if key == "" {
+		apierrors.BadRequest(c, "INVALID_INPUT", "Missing media key")
+		return
+	}
+	// Strip leading slash from wildcard match
+	if key[0] == '/' {
+		key = key[1:]
+	}
+
+	reader, contentType, err := h.processor.GetFileByKey(ctx, key)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+	defer reader.Close()
+
+	c.Header("Content-Type", contentType)
+	c.Header("Cache-Control", "public, max-age=86400")
+	c.Status(http.StatusOK)
+	io.Copy(c.Writer, reader)
+}
+
 // HandleGetFile streams a file from storage with the correct Content-Type
 func (h *Handler) HandleGetFile(c *gin.Context) {
 	ctx := c.Request.Context()
