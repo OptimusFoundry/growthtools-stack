@@ -265,9 +265,14 @@ func SystemThread(platformID string, imageDescriptions []ImageDescription) strin
 
 	if len(imageDescriptions) > 0 {
 		sb.WriteString("\n## Image Placement\n")
-		sb.WriteString("The user has attached images to this post. You MUST use ALL images — every image must be assigned to exactly one thread part.\n")
-		sb.WriteString("To assign an image, add `[IMAGE:N]` on its own line at the end of the thread part (where N is the image number).\n")
-		sb.WriteString("Each image may be used at most once. Spread them across different parts for visual variety.\n")
+		if len(imageDescriptions) == 1 {
+			sb.WriteString("The user has attached ONE image. Place it on the FIRST thread part to hook the reader visually.\n")
+			sb.WriteString("Add `[IMAGE:1]` on its own line at the end of the first part.\n")
+		} else {
+			sb.WriteString("The user has attached images to this post. You MUST use ALL images — every image must be assigned to exactly one thread part.\n")
+			sb.WriteString("To assign an image, add `[IMAGE:N]` on its own line at the end of the thread part (where N is the image number).\n")
+			sb.WriteString("Each image may be used at most once. Spread them across different parts for visual variety, but prefer placing Image 1 on the first part.\n")
+		}
 		sb.WriteString("Available images:\n")
 		for _, d := range imageDescriptions {
 			fmt.Fprintf(&sb, "- Image %d: %s\n", d.Index, d.Description)
