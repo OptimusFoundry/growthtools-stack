@@ -22,10 +22,43 @@ defaults:
     working-directory: webapp
 
 jobs:
+  biome-lint:
+    name: Biome Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Biome lint
+        run: npm run lint
+
+  scss-lint:
+    name: SCSS Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run SCSS lint
+        run: npm run lint:scss
+
   build-and-deploy:
     name: Build and deploy webapp
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    needs: [biome-lint, scss-lint]
     steps:
       - uses: actions/checkout@v4
 
