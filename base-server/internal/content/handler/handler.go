@@ -29,7 +29,7 @@ type ContentProcessor interface {
 	GeneratePost(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string) (string, error)
 	AdaptContent(ctx context.Context, accountID uuid.UUID, content string, platform string) (string, error)
 	GenerateThread(ctx context.Context, content string, platform string) ([]string, error)
-	StreamGenerateAndAdapt(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, contentType string, images []aiclient.ImageData, cb processor.StreamCallbacks) error
+	StreamGenerateAndAdapt(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, contentType string, images []aiclient.ImageData, maxThreadParts int, cb processor.StreamCallbacks) error
 }
 
 // Handler handles HTTP requests for content generation.
@@ -72,10 +72,11 @@ type ImageInput struct {
 
 // StreamGenerateRequest is the request body for streaming content generation.
 type StreamGenerateRequest struct {
-	Prompt      string       `json:"prompt" binding:"required"`
-	Platforms   []string     `json:"platforms" binding:"required,min=1"`
-	ContentType string       `json:"content_type"`
-	Images      []ImageInput `json:"images"`
+	Prompt         string       `json:"prompt" binding:"required"`
+	Platforms      []string     `json:"platforms" binding:"required,min=1"`
+	ContentType    string       `json:"content_type"`
+	Images         []ImageInput `json:"images"`
+	MaxThreadParts int          `json:"max_thread_parts,omitempty"`
 }
 
 // HandleGeneratePost generates a social media post from a prompt.
@@ -241,7 +242,7 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 		},
 	}
 
-	if err := h.processor.StreamGenerateAndAdapt(ctx, accountID, req.Prompt, req.Platforms, contentType, images, callbacks); err != nil {
+	if err := h.processor.StreamGenerateAndAdapt(ctx, accountID, req.Prompt, req.Platforms, contentType, images, req.MaxThreadParts, callbacks); err != nil {
 		h.logger.Error(ctx, "streaming content generation failed", err)
 		writeSSE("error", "failed to generate content")
 		return

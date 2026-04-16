@@ -63,6 +63,7 @@ export function useSSEContentGenerate() {
 			platforms: PlatformType[],
 			contentType: WizardContentType = "text",
 			images?: ImagePayload[],
+			maxThreadParts?: number,
 		) => {
 			abortRef.current?.abort();
 			const controller = new AbortController();
@@ -82,6 +83,9 @@ export function useSSEContentGenerate() {
 				};
 				if (images && images.length > 0) {
 					body.images = images;
+				}
+				if (maxThreadParts && maxThreadParts > 0) {
+					body.max_thread_parts = maxThreadParts;
 				}
 
 				const res = await fetch(

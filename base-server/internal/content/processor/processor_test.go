@@ -206,7 +206,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 		var platformContents []string
 		var chunksMu sync.Mutex
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Write about Go", []string{"x", "linkedin"}, "text", nil, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Write about Go", []string{"x", "linkedin"}, "text", nil, 0, StreamCallbacks{
 			OnPhase: func(phase string, platform string) {
 				chunksMu.Lock()
 				phases = append(phases, phase+":"+platform)
@@ -252,7 +252,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 			text     string
 		}
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "test", []string{"x"}, "text", nil, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "test", []string{"x"}, "text", nil, 0, StreamCallbacks{
 			OnPhase: func(string, string) {},
 			OnChunk: func(platform string, chunk string) {
 				chunks = append(chunks, struct {
@@ -293,7 +293,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 		var threadPlatforms []string
 		var threadSegments [][]ThreadSegment
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Write about Go", []string{"x"}, "thread", nil, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Write about Go", []string{"x"}, "thread", nil, 0, StreamCallbacks{
 			OnPhase:        func(string, string) {},
 			OnChunk:        func(string, string) {},
 			OnBaseDone:     func(string) {},
@@ -321,7 +321,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 		}
 		proc := New(noVoiceStore, mockAI, logger)
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Write about Go", []string{"x"}, "text", nil, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Write about Go", []string{"x"}, "text", nil, 0, StreamCallbacks{
 			OnPhase:        func(string, string) {},
 			OnChunk:        func(string, string) {},
 			OnBaseDone:     func(string) {},
@@ -347,7 +347,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 		}
 		proc := New(noVoiceStore, mockAI, logger)
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "test", []string{"x"}, "text", nil, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "test", []string{"x"}, "text", nil, 0, StreamCallbacks{
 			OnPhase:        func(string, string) {},
 			OnChunk:        func(string, string) {},
 			OnBaseDone:     func(string) {},
@@ -378,7 +378,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 
 		var resultContent string
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "test", []string{"bluesky"}, "text", nil, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "test", []string{"bluesky"}, "text", nil, 0, StreamCallbacks{
 			OnPhase:    func(string, string) {},
 			OnChunk:    func(string, string) {},
 			OnBaseDone: func(string) {},
@@ -426,7 +426,7 @@ func TestContentProcessor_StreamGenerateAndAdapt(t *testing.T) {
 			{MIMEType: "image/jpeg", Data: []byte("fake-image-data")},
 		}
 
-		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Check out this view", []string{"x"}, "text", images, StreamCallbacks{
+		err := proc.StreamGenerateAndAdapt(context.Background(), accountID, "Check out this view", []string{"x"}, "text", images, 0, StreamCallbacks{
 			OnPhase: func(phase string, platform string) {
 				phasesMu.Lock()
 				phases = append(phases, phase)

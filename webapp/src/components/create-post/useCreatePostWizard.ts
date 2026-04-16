@@ -19,6 +19,7 @@ export interface WizardState {
 	generationProgress: Partial<Record<PlatformType, GenerationStatus>>;
 	platformContent: Partial<Record<PlatformType, string>>;
 	threadContent: Partial<Record<PlatformType, ThreadSegment[]>>;
+	maxThreadParts: number;
 	publishMode: PublishMode;
 	scheduledAt: string;
 	error: string | null;
@@ -28,6 +29,7 @@ export interface WizardState {
 type WizardAction =
 	| { type: "SET_BLURB"; blurb: string }
 	| { type: "SET_CONTENT_TYPE"; contentType: WizardContentType }
+	| { type: "SET_MAX_THREAD_PARTS"; value: number }
 	| { type: "TOGGLE_PLATFORM"; platform: PlatformType }
 	| { type: "SET_PENDING_FILES"; files: UploadedFile[] }
 	| { type: "ADD_UPLOADED_MEDIA"; media: MediaItem }
@@ -68,6 +70,7 @@ const initialState: WizardState = {
 	generationProgress: {},
 	platformContent: {},
 	threadContent: {},
+	maxThreadParts: 5,
 	publishMode: null,
 	scheduledAt: "",
 	error: null,
@@ -80,6 +83,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 			return { ...state, blurb: action.blurb };
 		case "SET_CONTENT_TYPE":
 			return { ...state, contentType: action.contentType };
+		case "SET_MAX_THREAD_PARTS":
+			return { ...state, maxThreadParts: action.value };
 		case "TOGGLE_PLATFORM": {
 			const exists = state.selectedPlatforms.includes(action.platform);
 			return {
@@ -192,6 +197,10 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 			dispatch({ type: "SET_CONTENT_TYPE", contentType }),
 		[],
 	);
+	const setMaxThreadParts = useCallback(
+		(value: number) => dispatch({ type: "SET_MAX_THREAD_PARTS", value }),
+		[],
+	);
 	const togglePlatform = useCallback(
 		(platform: PlatformType) => dispatch({ type: "TOGGLE_PLATFORM", platform }),
 		[],
@@ -263,6 +272,7 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		state,
 		setBlurb,
 		setContentType,
+		setMaxThreadParts,
 		togglePlatform,
 		setPendingFiles,
 		addUploadedMedia,

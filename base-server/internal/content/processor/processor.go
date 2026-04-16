@@ -216,6 +216,7 @@ func (p *ContentProcessor) StreamGenerateAndAdapt(
 	platforms []string,
 	contentType string,
 	images []aiclient.ImageData,
+	maxThreadParts int,
 	cb StreamCallbacks,
 ) error {
 	ctx = observability.WithFields(ctx,
@@ -265,7 +266,7 @@ func (p *ContentProcessor) StreamGenerateAndAdapt(
 
 	for _, platform := range platforms {
 		g.Go(func() error {
-			return p.streamPlatform(gCtx, platform, baseContent, contentType, voice, imageDescriptions, cb)
+			return p.streamPlatform(gCtx, platform, baseContent, contentType, voice, imageDescriptions, maxThreadParts, cb)
 		})
 	}
 
@@ -284,9 +285,13 @@ func (p *ContentProcessor) streamPlatform(
 	contentType string,
 	voice *prompts.VoiceContext,
 	imageDescriptions []ImageDescription,
+	maxThreadParts int,
 	cb StreamCallbacks,
 ) error {
 	platformCfg := prompts.GetPlatform(platform)
+	if maxThreadParts > 0 {
+		platformCfg.MaxThreadParts = maxThreadParts
+	}
 	isThread := contentType == "thread" && platformCfg.SupportsThreads
 
 	if isThread {

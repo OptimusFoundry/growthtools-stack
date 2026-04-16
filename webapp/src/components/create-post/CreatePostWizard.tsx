@@ -230,6 +230,7 @@ function WizardInner({
 				state.selectedPlatforms,
 				state.contentType,
 				imagePayloads.length > 0 ? imagePayloads : undefined,
+				state.contentType === "thread" ? state.maxThreadParts : undefined,
 			);
 		};
 
@@ -483,7 +484,9 @@ function WizardInner({
 						savingDraft={savingDraft || updatingDraft}
 						readOnly={readOnly}
 						onBlurbChange={wizard.setBlurb}
+						maxThreadParts={state.maxThreadParts}
 						onContentTypeChange={wizard.setContentType}
+						onMaxThreadPartsChange={wizard.setMaxThreadParts}
 						onTogglePlatform={wizard.togglePlatform}
 						onFilesChange={wizard.setPendingFiles}
 						onGenerate={handleGenerate}

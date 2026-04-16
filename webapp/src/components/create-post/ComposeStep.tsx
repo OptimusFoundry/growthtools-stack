@@ -23,6 +23,7 @@ interface ComposeStepProps {
 	selectedPlatforms: PlatformType[];
 	platformContent: Partial<Record<PlatformType, string>>;
 	pendingFiles: UploadedFile[];
+	maxThreadParts: number;
 	generating: boolean;
 	generated: boolean;
 	publishMode: PublishMode;
@@ -32,6 +33,7 @@ interface ComposeStepProps {
 	readOnly?: boolean;
 	onBlurbChange: (blurb: string) => void;
 	onContentTypeChange: (contentType: WizardContentType) => void;
+	onMaxThreadPartsChange: (value: number) => void;
 	onTogglePlatform: (platform: PlatformType) => void;
 	onFilesChange: (files: UploadedFile[]) => void;
 	onGenerate: () => void;
@@ -45,6 +47,7 @@ interface ComposeStepProps {
 export function ComposeStep({
 	blurb,
 	contentType,
+	maxThreadParts,
 	selectedPlatforms,
 	platformContent,
 	pendingFiles,
@@ -57,6 +60,7 @@ export function ComposeStep({
 	readOnly = false,
 	onBlurbChange,
 	onContentTypeChange,
+	onMaxThreadPartsChange,
 	onTogglePlatform,
 	onFilesChange,
 	onGenerate,
@@ -143,6 +147,23 @@ export function ComposeStep({
 						size="sm"
 						disabled={readOnly}
 					/>
+					{contentType === "thread" && (
+						<Stack direction="row" gap="md" align="end">
+							<div style={{ width: "120px" }}>
+								<TextField
+									label="Thread length"
+									type="number"
+									value={String(maxThreadParts)}
+									onChange={(e) => {
+										const val = Number.parseInt(e.target.value, 10);
+										if (val >= 3 && val <= 25) onMaxThreadPartsChange(val);
+									}}
+									helperText="3–25 posts"
+									disabled={readOnly}
+								/>
+							</div>
+						</Stack>
+					)}
 				</Stack>
 			)}
 
