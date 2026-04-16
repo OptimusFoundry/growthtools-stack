@@ -19,16 +19,15 @@ export default function ChatBox() {
 					const normalizedContent = msg.content.replace(/\\n/g, "\n");
 					return (
 						<div
-							className={
+							className={`${
 								msg.role === "user"
 									? styles["chat-bubble-user"]
 									: styles["chat-bubble-ai"]
-							}
+							} ${styles["chat-bubble"]}`}
 							key={i}
-							style={{ marginBottom: 12 }}
 						>
 							<strong>{msg.role === "user" ? "You" : "AI"}:</strong>
-							<div style={{ marginLeft: 10 }}>
+							<div className={styles["chat-bubble-body"]}>
 								<ReactMarkdown remarkPlugins={[remarkGfm]}>
 									{normalizedContent}
 								</ReactMarkdown>
@@ -38,12 +37,11 @@ export default function ChatBox() {
 				})}
 				{currentResponse ? (
 					<div
-						className={styles["chat-bubble-ai"]}
+						className={`${styles["chat-bubble-ai"]} ${styles["chat-bubble"]}`}
 						key={"currentResp"}
-						style={{ marginBottom: 12 }}
 					>
 						<strong>AI:</strong>
-						<div style={{ marginLeft: 10 }}>
+						<div className={styles["chat-bubble-body"]}>
 							<ReactMarkdown remarkPlugins={[remarkGfm]}>
 								{currentResponse.replace(/\\n/g, "\n")}
 							</ReactMarkdown>

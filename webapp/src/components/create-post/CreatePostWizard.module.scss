@@ -163,6 +163,11 @@
 	overflow-y: auto;
 }
 
+// Thread length input — narrow
+.threadLengthField {
+	width: var(--space-32);
+}
+
 // Platform status summary
 .platformStatusSummary {
 	display: flex;

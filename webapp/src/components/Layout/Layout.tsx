@@ -108,7 +108,7 @@ const AppSidebar = memo(function AppSidebar() {
 				</SidebarItem>
 			</SidebarSection>
 
-			<div style={{ marginTop: "auto", padding: "1rem" }}>
+			<div className={styles.userFooter}>
 				<UserName />
 			</div>
 		</Sidebar>

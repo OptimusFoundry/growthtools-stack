@@ -110,7 +110,7 @@ export function ComposeStep({
 
 			{/* Platforms */}
 			<Stack gap="sm">
-				<Text size="base" weight="semibold">
+				<Text size="md" weight="semibold">
 					Platforms
 				</Text>
 				{activeConnections.length > 0 ? (
@@ -136,7 +136,7 @@ export function ComposeStep({
 			{/* Post config */}
 			{threadSupported && (
 				<Stack gap="sm">
-					<Text size="base" weight="semibold">
+					<Text size="md" weight="semibold">
 						Post Config
 					</Text>
 					<Switch
@@ -149,7 +149,7 @@ export function ComposeStep({
 					/>
 					{contentType === "thread" && (
 						<Stack direction="row" gap="md" align="end">
-							<div style={{ width: "120px" }}>
+							<div className={styles.threadLengthField}>
 								<TextField
 									label="Thread length"
 									type="number"
@@ -171,7 +171,7 @@ export function ComposeStep({
 			{!readOnly && (
 				<>
 					<Stack gap="sm">
-						<Text size="base" weight="semibold">
+						<Text size="md" weight="semibold">
 							Media
 						</Text>
 						<FileUpload
@@ -209,7 +209,7 @@ export function ComposeStep({
 			{/* Publish options — shown after content is generated, hidden when read-only */}
 			{generated && !readOnly && (
 				<>
-					<Text size="base" weight="semibold">
+					<Text size="md" weight="semibold">
 						Publish
 					</Text>
 

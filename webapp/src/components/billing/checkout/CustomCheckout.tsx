@@ -14,7 +14,7 @@ interface CheckoutFormProps {
 
 const CustomCheckout = ({ clientSecret }: CheckoutFormProps) => {
 	return (
-		<div style={{ width: "100%", maxWidth: "800px" }}>
+		<div className="checkout-wrapper">
 			<div className="checkout-container">
 				<h2>Complete Your Payment</h2>
 				<EmbeddedCheckoutProvider

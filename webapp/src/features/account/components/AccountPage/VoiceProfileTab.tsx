@@ -22,6 +22,7 @@ import {
 	TONE_OPTIONS,
 	type UpdateVoiceProfileRequest,
 } from "@/types/voiceProfile";
+import styles from "./VoiceProfileTab.module.scss";
 
 // ============================================================================
 // Hooks
@@ -155,7 +156,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 	if (loading && !tone) {
 		return (
 			<Container size="md" padded={false}>
-				<Stack align="center" justify="center" style={{ minHeight: 200 }}>
+				<Stack align="center" justify="center" className={styles.loadingState}>
 					<Spinner size="lg" />
 				</Stack>
 			</Container>

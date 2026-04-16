@@ -144,7 +144,7 @@ const ConnectedCard = memo(function ConnectedCard({
 							</Text>
 						</div>
 						{connection.scopes?.length > 0 && (
-							<div className={styles.metaItem} style={{ gridColumn: "1 / -1" }}>
+							<div className={`${styles.metaItem} ${styles.metaItemFullRow}`}>
 								<Text size="xs" color="secondary">
 									Permissions
 								</Text>
@@ -375,7 +375,7 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 	if (loading) {
 		return (
 			<Container size="lg" padded={false} className={styles.container}>
-				<Stack align="center" justify="center" style={{ minHeight: "200px" }}>
+				<Stack align="center" justify="center" className={styles.loadingState}>
 					<Spinner size="lg" />
 				</Stack>
 			</Container>

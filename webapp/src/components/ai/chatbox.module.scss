@@ -23,6 +23,19 @@
   gap: var(--space-1);
 }
 
+.chat-bubble {
+  margin-bottom: var(--space-3);
+}
+
+.chat-bubble-body {
+  margin-left: var(--space-2);
+}
+
+.chat-image {
+  max-width: 100%;
+  max-height: var(--space-96);
+}
+
 .chat-bubble-user {
   border-color: var(--color-border);
   border-width: var(--border-width-sm);

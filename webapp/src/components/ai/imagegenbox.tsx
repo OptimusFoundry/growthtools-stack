@@ -17,16 +17,15 @@ export default function ImageGenBox() {
 				{messages.map((msg, i) => {
 					return (
 						<div
-							className={
+							className={`${
 								msg.role === "user"
 									? styles["chat-bubble-user"]
 									: styles["chat-bubble-ai"]
-							}
+							} ${styles["chat-bubble"]}`}
 							key={i}
-							style={{ marginBottom: 12 }}
 						>
 							<strong>{msg.role === "user" ? "You" : "AI"}:</strong>
-							<div style={{ marginLeft: 10 }}>
+							<div className={styles["chat-bubble-body"]}>
 								{msg.role === "user" ? (
 									<ReactMarkdown remarkPlugins={[remarkGfm]}>
 										{msg.content.replace(/\\n/g, "\n")}
@@ -35,7 +34,7 @@ export default function ImageGenBox() {
 									<img
 										src={`data:image/png;base64, ${msg.content}`}
 										alt="AI generated"
-										style={{ maxWidth: "100%", maxHeight: "400px" }}
+										className={styles["chat-image"]}
 									/>
 								)}
 							</div>

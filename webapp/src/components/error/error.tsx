@@ -13,7 +13,7 @@ export const ErrorState: React.FC<ErrorStateProps> = (
 	props: ErrorStateProps,
 ) => {
 	return (
-		<div style={{ width: "100%" }}>
+		<div className={styles.errorState}>
 			<p>{props.message}</p>
 		</div>
 	);

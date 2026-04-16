@@ -516,7 +516,6 @@ function WizardInner({
 					ssePhase={sse.phase}
 					uploadedMedia={state.uploadedMedia}
 					readOnly={readOnly}
-					platformPosts={platformPosts}
 					onUpdateContent={wizard.updatePlatformContent}
 					onUpdateThreadSegment={wizard.updateThreadSegment}
 				/>

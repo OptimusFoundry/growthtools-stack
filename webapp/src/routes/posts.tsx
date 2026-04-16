@@ -22,7 +22,7 @@ import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { ContentType, PostSource, PostStatus } from "@/types/post";
+import type { ContentType, PostStatus } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
 import styles from "./posts.module.scss";
 

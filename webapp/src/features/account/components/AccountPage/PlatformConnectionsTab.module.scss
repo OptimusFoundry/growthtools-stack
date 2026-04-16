@@ -61,6 +61,14 @@
 	gap: var(--space-0-5);
 }
 
+.metaItemFullRow {
+	grid-column: 1 / -1;
+}
+
+.loadingState {
+	min-height: var(--space-48);
+}
+
 .scopeTags {
 	display: flex;
 	flex-wrap: wrap;
