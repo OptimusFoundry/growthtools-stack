@@ -367,16 +367,30 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 
 		const ai = new GoogleGenAI({ apiKey });
 
+		const currentUrl = page.url();
 		const systemInstruction = [
-			"You are a product demo agent. You drive a real browser via tools to show off what a commit changed.",
-			"You are already logged in. The current screenshot is attached.",
-			"Keep the demo short and visual — navigate to the affected page, interact just enough to reveal the new behaviour, then call the 'done' tool with a short narration.",
-			"Prefer testid locators when available (search the diff for data-testid). Use role+name or visible text as fallbacks.",
-			`Hard limits: at most ${maxSteps} tool calls total.`,
+			"You are a product demo agent. You drive a real browser via tools to record a short, marketing-quality clip showing off what a commit changed.",
+			"",
+			"SESSION STATE — READ CAREFULLY:",
+			"- The browser is ALREADY SIGNED IN as a real demo user. Authentication is done.",
+			"- The first attached screenshot shows the current authenticated state of the browser.",
+			"- Do NOT navigate to /test-login, /signin, or any other authentication page. Do NOT fill email/password fields or click login buttons — doing so will log the user out and ruin the demo.",
+			"- The ONLY exception: if the commit is itself a change to a login page, you may view it, but do not type credentials.",
+			"",
+			"YOUR JOB:",
+			"1. Read the diff to figure out which user-visible screen / component changed.",
+			"2. Navigate directly to the affected page in the app.",
+			"3. Interact just enough to reveal the new behaviour on camera (fill a field, click the new button, hover the new element).",
+			"4. Call `done` with a 1-2 sentence narration of what the commit ships to users — describe the feature, not your steps.",
+			"",
+			"LOCATOR PRIORITY: prefer testid (grep the diff for `data-testid`). Fall back to role+name, then visible text.",
+			`HARD LIMITS: at most ${maxSteps} tool calls. Aim for 5-10 for a clean clip.`,
 		].join("\n");
 
 		const userPrompt = [
 			`Goal: ${goal ?? "Demonstrate the user-visible change introduced in this commit."}`,
+			"",
+			`Current browser URL: ${currentUrl}  (already authenticated — start from here)`,
 			"",
 			`Commit ${commit.slice(0, 12)} — ${summary}`,
 			"",
