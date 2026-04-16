@@ -283,7 +283,6 @@ function PostsPage() {
 				isOpen={deleteTargetId !== null}
 				onClose={() => setDeleteTargetId(null)}
 				title="Delete post"
-				description="Are you sure you want to delete this post? This action cannot be undone."
 				size="sm"
 				footer={
 					<Stack direction="row" gap="sm" justify="end">
@@ -300,7 +299,10 @@ function PostsPage() {
 					</Stack>
 				}
 			>
-				{null}
+				<Text color="secondary">
+					Are you sure you want to delete this post? This action cannot be
+					undone.
+				</Text>
 			</Modal>
 		</motion.div>
 	);
