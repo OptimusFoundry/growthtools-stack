@@ -12,6 +12,7 @@ import {
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
@@ -447,6 +448,7 @@ function WizardInner({
 						{ label: isEditMode ? "Edit Post" : "New Post" },
 					]}
 				/>
+				<Divider />
 				<Text color="secondary">
 					{isEditMode
 						? "Update your post content and platform adaptations"
