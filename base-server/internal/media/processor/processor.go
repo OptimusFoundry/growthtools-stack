@@ -67,16 +67,9 @@ func (p *MediaProcessor) Upload(ctx context.Context, accountID uuid.UUID, filena
 	}
 	key := accountID.String() + "/" + uuid.New().String() + ext
 
-	s3URL, err := p.fileStore.UploadFile(ctx, key, data, contentType)
-	if err != nil {
+	if _, err := p.fileStore.UploadFile(ctx, key, data, contentType); err != nil {
 		p.logger.Error(ctx, "failed to upload file to S3", err)
 		return store.Media{}, ErrFailedUpload
-	}
-
-	// If fileStore returned a relative key (local-dir mode), build a full public URL
-	// so external services (Threads, Instagram, etc.) can fetch it by URL.
-	if !strings.HasPrefix(s3URL, "http://") && !strings.HasPrefix(s3URL, "https://") && p.publicBaseURL != "" {
-		s3URL = strings.TrimRight(p.publicBaseURL, "/") + "/public/media/file/" + key
 	}
 
 	params := store.CreateMediaParams{
@@ -84,7 +77,7 @@ func (p *MediaProcessor) Upload(ctx context.Context, accountID uuid.UUID, filena
 		Filename:    filename,
 		ContentType: contentType,
 		S3Key:       key,
-		S3URL:       s3URL,
+		S3URL:       p.publicURL(key),
 		SizeBytes:   size,
 		Source:      "upload",
 	}
@@ -166,6 +159,14 @@ func (p *MediaProcessor) GetFileByKey(ctx context.Context, key string) (io.ReadC
 		return nil, "", ErrFailedGetFile
 	}
 	return reader, contentType, nil
+}
+
+// publicURL builds a fetchable URL for a stored object key from the configured base.
+func (p *MediaProcessor) publicURL(key string) string {
+	if p.publicBaseURL == "" {
+		return key
+	}
+	return strings.TrimRight(p.publicBaseURL, "/") + "/" + key
 }
 
 func (p *MediaProcessor) GetFile(ctx context.Context, accountID, mediaID uuid.UUID) (io.ReadCloser, string, error) {

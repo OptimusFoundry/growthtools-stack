@@ -70,8 +70,9 @@ type S3Config struct {
 
 // StorageConfig holds file storage configuration
 type StorageConfig struct {
-	Type     string // "local" or "s3"
-	MediaDir string // local directory for file storage
+	Type          string // "local" or "s3"
+	MediaDir      string // local directory for file storage
+	PublicURLBase string // base URL for fetchable media URLs (e.g. https://bucket.s3.region.amazonaws.com or https://api.example.com/public/media/file)
 }
 
 // GitHubConfig holds GitHub integration configuration
@@ -181,6 +182,7 @@ func Load() (*Config, error) {
 	// Storage configuration
 	cfg.Storage.Type = getEnvWithDefault("STORAGE_TYPE", "local")
 	cfg.Storage.MediaDir = getEnvWithDefault("MEDIA_DIR", "./media-uploads")
+	cfg.Storage.PublicURLBase = getEnvWithDefault("MEDIA_PUBLIC_URL_BASE", "")
 
 	// GitHub configuration (optional in dev)
 	cfg.GitHub.WebhookSecret = getEnvWithDefault("GITHUB_WEBHOOK_SECRET", "")

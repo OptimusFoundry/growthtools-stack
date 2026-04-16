@@ -13,7 +13,7 @@ export function toMediaItem(api: ApiMediaItem): MediaItem {
 		accountId: api.account_id,
 		filename: api.filename,
 		contentType: api.content_type,
-		url: `${import.meta.env.VITE_API_URL}/api/protected/media/${api.id}/file`,
+		url: api.s3_url,
 		sizeBytes: api.size_bytes,
 		width: api.width,
 		height: api.height,

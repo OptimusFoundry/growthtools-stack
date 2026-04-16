@@ -290,13 +290,10 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	deps.PostsHandler = postsHandler.New(postsProc, logger)
 
 	// Media
-	// Public base URL is used to build fetchable URLs for media uploaded to local storage
-	// so external services (Threads, Instagram) can fetch them. Falls back to WEBAPP_URI.
-	publicBaseURL := os.Getenv("OAUTH_REDIRECT_BASE")
-	if publicBaseURL == "" {
-		publicBaseURL = cfg.Services.WebAppURI
-	}
-	mediaProc := mediaProcessor.New(&deps.Store, fileStore, publicBaseURL, logger)
+	// MEDIA_PUBLIC_URL_BASE is the source of truth for media URLs. Set it to a public S3
+	// URL (https://bucket.s3.region.amazonaws.com) for direct fetches, or to a proxy
+	// endpoint (https://api.example.com/public/media/file) when the bucket is private.
+	mediaProc := mediaProcessor.New(&deps.Store, fileStore, cfg.Storage.PublicURLBase, logger)
 	deps.MediaHandler = mediaHandler.New(mediaProc, logger)
 
 	// GitHub integration
