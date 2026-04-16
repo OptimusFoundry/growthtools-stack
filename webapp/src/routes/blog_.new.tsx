@@ -167,13 +167,13 @@ function NewBlogPostPage() {
 			animate={{ opacity: 1 }}
 			transition={{ duration: 0.6 }}
 		>
-			<div className={styles.editorHeader}>
+			<Stack direction="row" align="center" justify="between" gap="md">
 				<Link to="/blog">
 					<Button variant="ghost" size="sm">
 						<ArrowLeft size={16} /> Back to Blog
 					</Button>
 				</Link>
-				<div className={styles.editorActions}>
+				<Stack direction="row" gap="sm">
 					<Button
 						variant="secondary"
 						onClick={handleSaveDraft}
@@ -190,13 +190,13 @@ function NewBlogPostPage() {
 					>
 						Publish
 					</Button>
-				</div>
-			</div>
+				</Stack>
+			</Stack>
 
 			{error && <Alert variant="error">{error}</Alert>}
 
 			<div className={styles.blogLayout}>
-				<div className={styles.blogMain}>
+				<Stack gap="lg">
 					<TextField
 						label="Title"
 						placeholder="Blog post title"
@@ -240,13 +240,13 @@ function NewBlogPostPage() {
 						value={excerpt}
 						onChange={(e) => setExcerpt(e.target.value)}
 					/>
-				</div>
+				</Stack>
 
-				<div className={styles.blogSidebar}>
+				<Stack gap="md">
 					<Card padding="md">
 						<Stack gap="sm">
 							<p className={styles.sectionLabel}>SEO Settings</p>
-							<div className={styles.sidebarSection}>
+							<Stack gap="sm">
 								<TextField
 									label="SEO Title"
 									placeholder="SEO title"
@@ -280,10 +280,10 @@ function NewBlogPostPage() {
 									onChange={(e) => setKeywords(e.target.value)}
 									helperText="Separate keywords with commas"
 								/>
-							</div>
+							</Stack>
 						</Stack>
 					</Card>
-				</div>
+				</Stack>
 			</div>
 		</motion.div>
 	);
