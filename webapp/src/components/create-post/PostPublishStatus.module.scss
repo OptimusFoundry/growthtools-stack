@@ -1,0 +1,74 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.platform {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.platformIcon {
+  display: flex;
+  align-items: center;
+  color: var(--color-muted);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.iconSuccess {
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.iconError {
+  color: var(--color-error);
+  flex-shrink: 0;
+}
+
+.iconSpinning {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  animation: spin 1.5s linear infinite;
+}
+
+.iconMuted {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

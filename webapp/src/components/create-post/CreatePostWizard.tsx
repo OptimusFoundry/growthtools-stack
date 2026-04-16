@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -13,13 +13,13 @@ import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import { ComposeStep } from "./ComposeStep";
 import styles from "./CreatePostWizard.module.scss";
+import { PostPublishStatus } from "./PostPublishStatus";
 import { PreviewStep } from "./PreviewStep";
 import type { WizardContentType, WizardState } from "./useCreatePostWizard";
 import { useCreatePostWizard } from "./useCreatePostWizard";
@@ -443,57 +443,52 @@ function WizardInner({
 					<ArrowLeft size={16} />
 					<Text size="sm" color="secondary">Back to posts</Text>
 				</Link>
-				<Stack direction="row" justify="between" align="center">
-					<Stack gap="xs">
-						<Text as="h1" size="2xl" weight="bold">
-							{isEditMode ? "Edit Post" : "Create Post"}
-						</Text>
-						<Text color="secondary">
-							{isEditMode
-								? "Update your post content and platform adaptations"
-								: "Write a blurb and let AI adapt it for each platform"}
-						</Text>
-					</Stack>
-					{hasFailed && (
-						<Button
-							variant="primary"
-							onClick={handleRetry}
-							isLoading={retrying}
-							leftIcon={<RefreshCw size={16} />}
-						>
-							Retry failed
-						</Button>
-					)}
-				</Stack>
+				<Text as="h1" size="2xl" weight="bold">
+					{isEditMode ? "Edit Post" : "Create Post"}
+				</Text>
+				<Text color="secondary">
+					{isEditMode
+						? "Update your post content and platform adaptations"
+						: "Write a blurb and let AI adapt it for each platform"}
+				</Text>
 			</Stack>
 
 			{state.error && <Alert variant="error">{state.error}</Alert>}
 
 			<div className={styles.twoColumn}>
-				<ComposeStep
-					blurb={state.blurb}
-					contentType={state.contentType}
-					selectedPlatforms={state.selectedPlatforms}
-					platformContent={state.platformContent}
-					pendingFiles={state.pendingFiles}
-					generating={state.generating}
-					generated={state.generated}
-					publishMode={state.publishMode}
-					scheduledAt={state.scheduledAt}
-					submitting={state.submitting}
-					savingDraft={savingDraft || updatingDraft}
-					readOnly={readOnly}
-					onBlurbChange={wizard.setBlurb}
-					onContentTypeChange={wizard.setContentType}
-					onTogglePlatform={wizard.togglePlatform}
-					onFilesChange={wizard.setPendingFiles}
-					onGenerate={handleGenerate}
-					onSetPublishMode={wizard.setPublishMode}
-					onSetScheduledAt={wizard.setScheduledAt}
-					onPublish={handlePublish}
-					onSchedule={handleSchedule}
-					onSaveDraft={handleSaveDraft}
-				/>
+				<Stack gap="lg">
+					<ComposeStep
+						blurb={state.blurb}
+						contentType={state.contentType}
+						selectedPlatforms={state.selectedPlatforms}
+						platformContent={state.platformContent}
+						pendingFiles={state.pendingFiles}
+						generating={state.generating}
+						generated={state.generated}
+						publishMode={state.publishMode}
+						scheduledAt={state.scheduledAt}
+						submitting={state.submitting}
+						savingDraft={savingDraft || updatingDraft}
+						readOnly={readOnly}
+						onBlurbChange={wizard.setBlurb}
+						onContentTypeChange={wizard.setContentType}
+						onTogglePlatform={wizard.togglePlatform}
+						onFilesChange={wizard.setPendingFiles}
+						onGenerate={handleGenerate}
+						onSetPublishMode={wizard.setPublishMode}
+						onSetScheduledAt={wizard.setScheduledAt}
+						onPublish={handlePublish}
+						onSchedule={handleSchedule}
+						onSaveDraft={handleSaveDraft}
+					/>
+					{platformPosts && platformPosts.length > 0 && (
+						<PostPublishStatus
+							platformPosts={platformPosts}
+							onRetry={hasFailed ? handleRetry : undefined}
+							retrying={retrying}
+						/>
+					)}
+				</Stack>
 				<PreviewStep
 					selectedPlatforms={state.selectedPlatforms}
 					platformContent={state.platformContent}
