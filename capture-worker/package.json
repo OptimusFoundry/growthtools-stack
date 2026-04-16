@@ -6,9 +6,11 @@
   "description": "Logs into a deployed app via /test-login and captures screenshots + video of a target page. Dogfooded against protoapp.xyz.",
   "scripts": {
     "capture": "tsx index.ts",
+    "demo": "tsx agent.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^1.50.1",
     "playwright": "^1.57.0"
   },
   "devDependencies": {

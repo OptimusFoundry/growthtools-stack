@@ -13,6 +13,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { loginAs } from "./auth.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -96,14 +97,7 @@ export async function capture(input: CaptureInput): Promise<CaptureResult> {
 	let screenshotPath = "";
 	let videoPath = "";
 	try {
-		await page.goto(`${appUrl}${testLoginPath}`, { waitUntil: "networkidle" });
-		await page.getByTestId("test-login-email").fill(email);
-		await page.getByTestId("test-login-password").fill(password);
-		await page.getByTestId("test-login-submit").click();
-
-		// Wait until the app reports us on the post-login destination. The hidden
-		// login page always redirects to "/" on success.
-		await page.waitForURL(`${appUrl}/`, { timeout: 15000 });
+		await loginAs(page, { appUrl, email, password, testLoginPath });
 
 		await page.goto(`${appUrl}${pagePath}`, { waitUntil: "networkidle" });
 		await page.waitForLoadState("networkidle");
