@@ -444,18 +444,24 @@ function WizardInner({
 				size="lg"
 				items={[
 					{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
-					{ label: isEditMode ? "Edit Post" : "New Post" },
+					{ label: !isEditMode ? "New Post" : postStatus === "draft" ? "Edit Post" : "Post Details" },
 				]}
 			/>
 			<Divider />
 			<Stack gap="xs">
 				<Text as="h1" size="xl" weight="semibold">
-					{isEditMode ? "Edit Post" : "Create Post"}
+					{!isEditMode
+						? "Create Post"
+						: postStatus === "draft"
+							? "Edit Post"
+							: "Post Details"}
 				</Text>
 				<Text size="sm" color="secondary">
-					{isEditMode
-						? "Update your post content and platform adaptations"
-						: "Write a blurb and let AI adapt it for each platform"}
+					{!isEditMode
+						? "Write a blurb and let AI adapt it for each platform"
+						: postStatus === "draft"
+							? "Update your post content and platform adaptations"
+							: "View your published post and platform statuses"}
 				</Text>
 			</Stack>
 
