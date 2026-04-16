@@ -252,10 +252,10 @@ func SystemThread(platformID string, imageDescriptions []ImageDescription) strin
 	}
 
 	sb.WriteString("## Rules\n")
-	sb.WriteString("- This is THREAD mode. You MUST spread the content across MANY posts. Each post should cover ONE idea, fact, or point. NEVER combine multiple distinct ideas into a single post.\n")
+	sb.WriteString("- This is THREAD mode. Each post should cover ONE idea, fact, or point. NEVER combine multiple distinct ideas into a single post.\n")
 	sb.WriteString("- If the content contains a list (e.g., \"10 facts\", \"5 tips\"), each item MUST be its own thread post. Do NOT merge items.\n")
 	fmt.Fprintf(&sb, "- HARD LIMIT: Each individual post maximum %d characters. Aim for %d to leave a safety margin.\n", charLimit, int(float64(charLimit)*0.9))
-	fmt.Fprintf(&sb, "- Use at minimum 3 parts and at maximum %d parts. More parts is better — prefer 5-10+ parts over 2-3 dense ones.\n", maxParts)
+	fmt.Fprintf(&sb, "- EXACT COUNT: Produce EXACTLY %d thread parts. Not %d, not %d. Exactly %d. The user explicitly requested this number.\n", maxParts, maxParts-1, maxParts+1, maxParts)
 	sb.WriteString("- First post must hook the reader — no preamble.\n")
 	sb.WriteString("- Last post should have a clear conclusion or CTA.\n")
 	sb.WriteString("- Do NOT number the parts (no 1/, 2/, 3/ prefixes). Each part should read naturally on its own.\n")
@@ -311,7 +311,7 @@ func SystemUnified() string {
 3. **Voice Profile** (optional): A JSON object with tone, style, industry, target_audience, custom_instructions, and example_posts. If provided, you MUST match this voice. If absent, default to: engaging, clear, founder-friendly.
 4. **Mode per platform**: Each platform entry will include a "mode" field — either "single" or "thread".
    - "single": Produce exactly ONE post that fits within the platform's char_limit.
-   - "thread": Produce a multi-part thread. Only allowed when supports_threads is true. Each part must fit within thread_char_limit. Maximum number of parts is max_thread_parts.
+   - "thread": Produce a multi-part thread. Only allowed when supports_threads is true. Each part must fit within thread_char_limit. Number of parts MUST equal max_thread_parts exactly.
 
 ## OUTPUT FORMAT
 
@@ -351,7 +351,7 @@ Return a single JSON object. No markdown fences, no commentary, no preamble — 
 
 ### Character limits are hard technical limits
 - In "single" mode: char_count MUST be ≤ the platform's char_limit. Aim for 90% of the limit to leave a safety margin. If the blurb is long, condense ruthlessly — cut secondary details, merge sentences, remove filler. Never exceed the limit.
-- In "thread" mode: Every individual part's char_count MUST be ≤ thread_char_limit. The total number of parts MUST be ≤ max_thread_parts.
+- In "thread" mode: Every individual part's char_count MUST be ≤ thread_char_limit. The total number of parts MUST equal max_thread_parts exactly.
 - char_count must be the exact character count of content (Unicode-aware, including spaces and punctuation). Count carefully. If in doubt, shorten.
 
 ### Content rules
@@ -370,7 +370,7 @@ Return a single JSON object. No markdown fences, no commentary, no preamble — 
 - Part 1 must hook the reader immediately. No "In this thread I'll discuss..." preamble.
 - The final part must close with a conclusion, takeaway, or call to action.
 - Do NOT number the parts (no "1/", "2/", "3/" prefixes). Each part should read naturally on its own.
-- Use at minimum 3 parts and at maximum max_thread_parts.
+- Produce EXACTLY max_thread_parts posts. This is a strict requirement set by the user, not a suggestion or maximum.
 
 ### Single-post rules (mode = "single")
 - Everything fits in one post. Do not suggest "continued in comments" or "see thread." Do not reference a follow-up.

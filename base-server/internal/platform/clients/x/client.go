@@ -1,6 +1,7 @@
 package x
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/rand"
@@ -9,7 +10,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"sort"
 	"strconv"
@@ -90,8 +93,86 @@ func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, access
 	return CreateTweetResponse{ID: result.Data.ID}, nil
 }
 
-// UploadMedia uploads media to X via the v1.1 chunked upload endpoint.
+// UploadMedia uploads media to X via the v2 API with OAuth 2.0 Bearer auth.
+// Uses a single multipart POST for simple image uploads.
 func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (string, error) {
+	mediaType := req.MediaType
+	if mediaType == "" {
+		mediaType = "image/jpeg"
+	}
+
+	mediaCategory := "tweet_image"
+	if strings.HasPrefix(mediaType, "video/") {
+		mediaCategory = "tweet_video"
+	} else if strings.HasPrefix(mediaType, "image/gif") {
+		mediaCategory = "tweet_gif"
+	}
+
+	endpoint := "https://api.x.com/2/media/upload"
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	if err := writer.WriteField("media_category", mediaCategory); err != nil {
+		return "", fmt.Errorf("xapi: failed to write media_category: %w", err)
+	}
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", `form-data; name="media"; filename="upload"`)
+	h.Set("Content-Type", mediaType)
+	part, err := writer.CreatePart(h)
+	if err != nil {
+		return "", fmt.Errorf("xapi: failed to create media part: %w", err)
+	}
+	if _, err := part.Write(req.MediaBytes); err != nil {
+		return "", fmt.Errorf("xapi: failed to write media bytes: %w", err)
+	}
+	if err := writer.Close(); err != nil {
+		return "", fmt.Errorf("xapi: failed to close multipart writer: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &body)
+	if err != nil {
+		return "", fmt.Errorf("xapi: failed to create upload request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", writer.FormDataContentType())
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return "", fmt.Errorf("xapi: upload request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("xapi: media upload failed with %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	// v2 response shape: { "data": { "id": "...", "media_key": "..." } }
+	// Fallback to v1.1-style: { "media_id_string": "..." }
+	var v2Result struct {
+		Data struct {
+			ID       string `json:"id"`
+			MediaKey string `json:"media_key"`
+		} `json:"data"`
+		MediaIDString string `json:"media_id_string"`
+	}
+	if err := json.Unmarshal(respBody, &v2Result); err != nil {
+		return "", fmt.Errorf("xapi: failed to parse upload response: %w", err)
+	}
+
+	if v2Result.Data.ID != "" {
+		return v2Result.Data.ID, nil
+	}
+	if v2Result.MediaIDString != "" {
+		return v2Result.MediaIDString, nil
+	}
+	return "", fmt.Errorf("xapi: no media ID in response: %s", string(respBody))
+}
+
+// uploadMediaLegacy is the old v1.1 chunked flow, kept for reference.
+func (c *Client) uploadMediaLegacy(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (string, error) {
 	totalBytes := len(req.MediaBytes)
 	mediaType := req.MediaType
 	if mediaType == "" {
@@ -100,7 +181,6 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 
 	uploadURL := "https://upload.twitter.com/1.1/media/upload.json"
 
-	// INIT
 	initParams := url.Values{}
 	initParams.Set("command", "INIT")
 	initParams.Set("total_bytes", strconv.Itoa(totalBytes))
@@ -131,7 +211,6 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 		return "", fmt.Errorf("xapi: failed to parse INIT response: %w", err)
 	}
 
-	// APPEND — send in chunks of 5MB
 	const chunkSize = 5 * 1024 * 1024
 	for i := 0; i < totalBytes; i += chunkSize {
 		end := i + chunkSize
@@ -164,7 +243,6 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 		}
 	}
 
-	// FINALIZE
 	finalizeParams := url.Values{}
 	finalizeParams.Set("command", "FINALIZE")
 	finalizeParams.Set("media_id", initResult.MediaIDString)

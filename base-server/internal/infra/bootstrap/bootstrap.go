@@ -218,7 +218,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 			ClientID:     cfg.Platforms.XAPIKey,
 			ClientSecret: cfg.Platforms.XAPISecret,
 			RedirectURL:  redirectBase + "/x",
-			Scopes:       []string{"tweet.read", "tweet.write", "users.read", "offline.access"},
+			Scopes:       []string{"tweet.read", "tweet.write", "users.read", "media.write", "offline.access"},
 			AuthURL:      "https://x.com/i/oauth2/authorize",
 			TokenURL:     "https://api.x.com/2/oauth2/token",
 		},
