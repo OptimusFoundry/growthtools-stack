@@ -1,0 +1,328 @@
+package x
+
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha1"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	"base-server/internal/infra/observability"
+)
+
+// Client handles HTTP communication with the X (Twitter) API.
+type Client struct {
+	apiKey     string
+	apiSecret  string
+	httpClient *http.Client
+	logger     *observability.Logger
+}
+
+// NewClient creates a new X API client with app-level credentials.
+func NewClient(apiKey, apiSecret string, logger *observability.Logger) *Client {
+	return &Client{
+		apiKey:     apiKey,
+		apiSecret:  apiSecret,
+		httpClient: &http.Client{},
+		logger:     logger,
+	}
+}
+
+// CreateTweet posts a tweet via the X v2 API.
+func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, accessToken, tokenSecret string) (CreateTweetResponse, error) {
+	payload := map[string]any{
+		"text": req.Text,
+	}
+	if len(req.MediaIDs) > 0 {
+		payload["media"] = map[string]any{
+			"media_ids": req.MediaIDs,
+		}
+	}
+	if req.ReplyToID != "" {
+		payload["reply"] = map[string]any{
+			"in_reply_to_tweet_id": req.ReplyToID,
+		}
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return CreateTweetResponse{}, fmt.Errorf("xapi: failed to marshal payload: %w", err)
+	}
+
+	endpoint := "https://api.x.com/2/tweets"
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
+	if err != nil {
+		return CreateTweetResponse{}, fmt.Errorf("xapi: failed to create request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", c.authHeader(http.MethodPost, endpoint, nil, accessToken, tokenSecret))
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return CreateTweetResponse{}, fmt.Errorf("xapi: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusCreated {
+		return CreateTweetResponse{}, fmt.Errorf("xapi: API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Data struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return CreateTweetResponse{}, fmt.Errorf("xapi: failed to parse response: %w", err)
+	}
+
+	return CreateTweetResponse{ID: result.Data.ID}, nil
+}
+
+// UploadMedia uploads media to X via the v1.1 chunked upload endpoint.
+func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (string, error) {
+	totalBytes := len(req.MediaBytes)
+	mediaType := req.MediaType
+	if mediaType == "" {
+		mediaType = "image/jpeg"
+	}
+
+	uploadURL := "https://upload.twitter.com/1.1/media/upload.json"
+
+	// INIT
+	initParams := url.Values{}
+	initParams.Set("command", "INIT")
+	initParams.Set("total_bytes", strconv.Itoa(totalBytes))
+	initParams.Set("media_type", mediaType)
+
+	initReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, strings.NewReader(initParams.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("xapi: failed to create INIT request: %w", err)
+	}
+	initReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	initReq.Header.Set("Authorization", c.authHeader(http.MethodPost, uploadURL, initParams, accessToken, tokenSecret))
+
+	initResp, err := c.httpClient.Do(initReq)
+	if err != nil {
+		return "", fmt.Errorf("xapi: INIT request failed: %w", err)
+	}
+	defer initResp.Body.Close()
+	initBody, _ := io.ReadAll(initResp.Body)
+
+	if initResp.StatusCode != http.StatusAccepted && initResp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("xapi: INIT failed with %d: %s", initResp.StatusCode, string(initBody))
+	}
+
+	var initResult struct {
+		MediaIDString string `json:"media_id_string"`
+	}
+	if err := json.Unmarshal(initBody, &initResult); err != nil {
+		return "", fmt.Errorf("xapi: failed to parse INIT response: %w", err)
+	}
+
+	// APPEND — send in chunks of 5MB
+	const chunkSize = 5 * 1024 * 1024
+	for i := 0; i < totalBytes; i += chunkSize {
+		end := i + chunkSize
+		if end > totalBytes {
+			end = totalBytes
+		}
+		chunk := req.MediaBytes[i:end]
+		segmentIndex := i / chunkSize
+
+		appendParams := url.Values{}
+		appendParams.Set("command", "APPEND")
+		appendParams.Set("media_id", initResult.MediaIDString)
+		appendParams.Set("segment_index", strconv.Itoa(segmentIndex))
+		appendParams.Set("media_data", base64.StdEncoding.EncodeToString(chunk))
+
+		appendReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, strings.NewReader(appendParams.Encode()))
+		if err != nil {
+			return "", fmt.Errorf("xapi: failed to create APPEND request: %w", err)
+		}
+		appendReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		appendReq.Header.Set("Authorization", c.authHeader(http.MethodPost, uploadURL, appendParams, accessToken, tokenSecret))
+
+		appendResp, err := c.httpClient.Do(appendReq)
+		if err != nil {
+			return "", fmt.Errorf("xapi: APPEND request failed: %w", err)
+		}
+		appendResp.Body.Close()
+		if appendResp.StatusCode != http.StatusNoContent && appendResp.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("xapi: APPEND failed with %d", appendResp.StatusCode)
+		}
+	}
+
+	// FINALIZE
+	finalizeParams := url.Values{}
+	finalizeParams.Set("command", "FINALIZE")
+	finalizeParams.Set("media_id", initResult.MediaIDString)
+
+	finalizeReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, strings.NewReader(finalizeParams.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("xapi: failed to create FINALIZE request: %w", err)
+	}
+	finalizeReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	finalizeReq.Header.Set("Authorization", c.authHeader(http.MethodPost, uploadURL, finalizeParams, accessToken, tokenSecret))
+
+	finalizeResp, err := c.httpClient.Do(finalizeReq)
+	if err != nil {
+		return "", fmt.Errorf("xapi: FINALIZE request failed: %w", err)
+	}
+	defer finalizeResp.Body.Close()
+
+	if finalizeResp.StatusCode != http.StatusCreated && finalizeResp.StatusCode != http.StatusOK {
+		finalizeBody, _ := io.ReadAll(finalizeResp.Body)
+		return "", fmt.Errorf("xapi: FINALIZE failed with %d: %s", finalizeResp.StatusCode, string(finalizeBody))
+	}
+
+	return initResult.MediaIDString, nil
+}
+
+// GetTweetMetrics retrieves public engagement metrics for a tweet.
+func (c *Client) GetTweetMetrics(ctx context.Context, tweetID, accessToken, tokenSecret string) (TweetMetrics, error) {
+	endpoint := fmt.Sprintf("https://api.x.com/2/tweets/%s?tweet.fields=public_metrics", tweetID)
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return TweetMetrics{}, fmt.Errorf("xapi: failed to create request: %w", err)
+	}
+
+	params := url.Values{}
+	params.Set("tweet.fields", "public_metrics")
+	httpReq.Header.Set("Authorization", c.authHeader(http.MethodGet, fmt.Sprintf("https://api.x.com/2/tweets/%s", tweetID), params, accessToken, tokenSecret))
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return TweetMetrics{}, fmt.Errorf("xapi: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return TweetMetrics{}, fmt.Errorf("xapi: API returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Data struct {
+			PublicMetrics struct {
+				RetweetCount    int `json:"retweet_count"`
+				ReplyCount      int `json:"reply_count"`
+				LikeCount       int `json:"like_count"`
+				QuoteCount      int `json:"quote_count"`
+				BookmarkCount   int `json:"bookmark_count"`
+				ImpressionCount int `json:"impression_count"`
+			} `json:"public_metrics"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return TweetMetrics{}, fmt.Errorf("xapi: failed to parse response: %w", err)
+	}
+
+	m := result.Data.PublicMetrics
+	return TweetMetrics{
+		ImpressionCount: m.ImpressionCount,
+		LikeCount:       m.LikeCount,
+		ReplyCount:      m.ReplyCount,
+		RetweetCount:    m.RetweetCount,
+		QuoteCount:      m.QuoteCount,
+		BookmarkCount:   m.BookmarkCount,
+	}, nil
+}
+
+// VerifyCredentials checks if an OAuth 2.0 Bearer token is still valid by calling GET /2/users/me.
+func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.x.com/2/users/me", nil)
+	if err != nil {
+		return fmt.Errorf("xapi: failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("xapi: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	io.ReadAll(resp.Body)
+
+	// 200 = valid token, 403 = valid token but endpoint not accessible (Free tier),
+	// 429 = rate limited (token is still valid). Only 401 means the token is expired/revoked.
+	if resp.StatusCode == http.StatusUnauthorized {
+		return fmt.Errorf("xapi: verify credentials returned %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// authHeader returns the appropriate Authorization header value.
+// If tokenSecret is empty, the token is an OAuth 2.0 Bearer token.
+// Otherwise, it's an OAuth 1.0a token requiring HMAC-SHA1 signing.
+func (c *Client) authHeader(method, baseURL string, queryParams url.Values, accessToken, tokenSecret string) string {
+	if tokenSecret == "" {
+		return "Bearer " + accessToken
+	}
+	return c.buildOAuth1Header(method, baseURL, queryParams, accessToken, tokenSecret)
+}
+
+// buildOAuth1Header constructs an OAuth 1.0a Authorization header using HMAC-SHA1.
+func (c *Client) buildOAuth1Header(method, baseURL string, queryParams url.Values, oauthToken, oauthTokenSecret string) string {
+	nonce := make([]byte, 16)
+	rand.Read(nonce)
+	oauthNonce := base64.StdEncoding.EncodeToString(nonce)
+
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+
+	oauthParams := url.Values{}
+	oauthParams.Set("oauth_consumer_key", c.apiKey)
+	oauthParams.Set("oauth_nonce", oauthNonce)
+	oauthParams.Set("oauth_signature_method", "HMAC-SHA1")
+	oauthParams.Set("oauth_timestamp", timestamp)
+	oauthParams.Set("oauth_token", oauthToken)
+	oauthParams.Set("oauth_version", "1.0")
+
+	allParams := url.Values{}
+	for k, v := range oauthParams {
+		allParams[k] = v
+	}
+	if queryParams != nil {
+		for k, v := range queryParams {
+			allParams[k] = v
+		}
+	}
+
+	var paramPairs []string
+	for k := range allParams {
+		for _, v := range allParams[k] {
+			paramPairs = append(paramPairs, url.QueryEscape(k)+"="+url.QueryEscape(v))
+		}
+	}
+	sort.Strings(paramPairs)
+	paramString := strings.Join(paramPairs, "&")
+
+	signatureBase := strings.ToUpper(method) + "&" + url.QueryEscape(baseURL) + "&" + url.QueryEscape(paramString)
+	signingKey := url.QueryEscape(c.apiSecret) + "&" + url.QueryEscape(oauthTokenSecret)
+
+	mac := hmac.New(sha1.New, []byte(signingKey))
+	mac.Write([]byte(signatureBase))
+	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+
+	return fmt.Sprintf(`OAuth oauth_consumer_key="%s", oauth_nonce="%s", oauth_signature="%s", oauth_signature_method="HMAC-SHA1", oauth_timestamp="%s", oauth_token="%s", oauth_version="1.0"`,
+		url.QueryEscape(c.apiKey),
+		url.QueryEscape(oauthNonce),
+		url.QueryEscape(signature),
+		timestamp,
+		url.QueryEscape(oauthToken),
+	)
+}

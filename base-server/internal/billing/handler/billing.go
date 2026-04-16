@@ -1,0 +1,31 @@
+package handler
+
+import (
+	"errors"
+
+	"base-server/internal/infra/apierrors"
+	"base-server/internal/billing/processor"
+	"base-server/internal/infra/observability"
+
+	"github.com/gin-gonic/gin"
+)
+
+type Handler struct {
+	processor processor.BillingProcessor
+	logger    *observability.Logger
+}
+
+func New(processor processor.BillingProcessor, logger *observability.Logger) Handler {
+	return Handler{processor: processor, logger: logger}
+}
+
+func (h *Handler) handleError(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, processor.ErrNoActiveSubscription):
+		apierrors.NotFound(c, "No active subscription found")
+	case errors.Is(err, processor.ErrSubscriptionAlreadyExists):
+		apierrors.Conflict(c, "SUBSCRIPTION_EXISTS", "You already have an active subscription. Use billing portal to change plans.")
+	default:
+		apierrors.InternalError(c, err)
+	}
+}

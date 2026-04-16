@@ -1,5 +1,7 @@
 .idea/
 env.local
-server
-base-server
 coverage.out
+media-uploads/
+
+# Go build output
+base-server/server

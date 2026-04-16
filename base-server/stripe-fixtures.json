@@ -1,0 +1,110 @@
+{
+  "_meta": {
+    "template_version": 0,
+    "description": "Create LaunchCamp.xyz products and prices. Run with: stripe fixtures stripe-fixtures.json"
+  },
+  "fixtures": [
+    {
+      "name": "product_free",
+      "path": "/v1/products",
+      "method": "post",
+      "params": {
+        "name": "LaunchCamp Free",
+        "description": "Free tier - Get started with LaunchCamp.xyz"
+      }
+    },
+    {
+      "name": "product_pro",
+      "path": "/v1/products",
+      "method": "post",
+      "params": {
+        "name": "LaunchCamp Pro",
+        "description": "Pro tier - Advanced features for growing businesses"
+      }
+    },
+    {
+      "name": "product_team",
+      "path": "/v1/products",
+      "method": "post",
+      "params": {
+        "name": "LaunchCamp Team",
+        "description": "Team tier - Full features with team collaboration"
+      }
+    },
+    {
+      "name": "price_free",
+      "path": "/v1/prices",
+      "method": "post",
+      "params": {
+        "product": "${product_free:id}",
+        "currency": "usd",
+        "unit_amount": 0,
+        "lookup_key": "free",
+        "transfer_lookup_key": true,
+        "recurring": {
+          "interval": "month"
+        }
+      }
+    },
+    {
+      "name": "price_pro_monthly",
+      "path": "/v1/prices",
+      "method": "post",
+      "params": {
+        "product": "${product_pro:id}",
+        "currency": "usd",
+        "unit_amount": 2900,
+        "lookup_key": "lc_pro_monthly",
+        "transfer_lookup_key": true,
+        "recurring": {
+          "interval": "month"
+        }
+      }
+    },
+    {
+      "name": "price_pro_annual",
+      "path": "/v1/prices",
+      "method": "post",
+      "params": {
+        "product": "${product_pro:id}",
+        "currency": "usd",
+        "unit_amount": 29000,
+        "lookup_key": "lc_pro_annual",
+        "transfer_lookup_key": true,
+        "recurring": {
+          "interval": "year"
+        }
+      }
+    },
+    {
+      "name": "price_team_monthly",
+      "path": "/v1/prices",
+      "method": "post",
+      "params": {
+        "product": "${product_team:id}",
+        "currency": "usd",
+        "unit_amount": 7900,
+        "lookup_key": "lc_team_monthly",
+        "transfer_lookup_key": true,
+        "recurring": {
+          "interval": "month"
+        }
+      }
+    },
+    {
+      "name": "price_team_annual",
+      "path": "/v1/prices",
+      "method": "post",
+      "params": {
+        "product": "${product_team:id}",
+        "currency": "usd",
+        "unit_amount": 79000,
+        "lookup_key": "lc_team_annual",
+        "transfer_lookup_key": true,
+        "recurring": {
+          "interval": "year"
+        }
+      }
+    }
+  ]
+}

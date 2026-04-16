@@ -1,0 +1,1 @@
+ALTER TABLE video_configs ADD COLUMN prompt TEXT NOT NULL DEFAULT '';

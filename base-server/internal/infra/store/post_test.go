@@ -1,0 +1,303 @@
+package store
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCreatePost(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	title := "My First Post"
+	post, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Title:       &title,
+		Content:     "Hello world content",
+		ContentType: ContentTypeText,
+		Status:      PostStatusDraft,
+		Tags:        StringArray{"go", "testing"},
+		AIGenerated: false,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+	assert.NotEqual(t, uuid.Nil, post.ID)
+	assert.Equal(t, accountID, post.AccountID)
+	assert.Equal(t, &title, post.Title)
+	assert.Equal(t, "Hello world content", post.Content)
+	assert.Equal(t, ContentTypeText, post.ContentType)
+	assert.Equal(t, PostStatusDraft, post.Status)
+	assert.False(t, post.AIGenerated)
+	assert.Equal(t, PostSourceManual, post.Source)
+	assert.Nil(t, post.DeletedAt)
+}
+
+func TestGetPostByID(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	created, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "Test content",
+		ContentType: ContentTypeText,
+		Status:      PostStatusDraft,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	// Happy path
+	got, err := s.GetPostByID(ctx, accountID, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, created.ID, got.ID)
+	assert.Equal(t, created.Content, got.Content)
+
+	// Not found - wrong ID
+	_, err = s.GetPostByID(ctx, accountID, uuid.New())
+	assert.ErrorIs(t, err, ErrNotFound)
+
+	// Not found - wrong account
+	_, err = s.GetPostByID(ctx, uuid.New(), created.ID)
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestListPosts(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	// Create posts with different statuses
+	for _, status := range []string{PostStatusDraft, PostStatusDraft, PostStatusScheduled} {
+		_, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "content-" + status + "-" + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      status,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+	}
+
+	// List all
+	posts, err := s.ListPosts(ctx, ListPostsParams{
+		AccountID: accountID,
+		Limit:     10,
+	})
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, len(posts), 3)
+
+	// Filter by status
+	draftStatus := PostStatusDraft
+	drafts, err := s.ListPosts(ctx, ListPostsParams{
+		AccountID: accountID,
+		Status:    &draftStatus,
+		Limit:     10,
+	})
+	require.NoError(t, err)
+	for _, p := range drafts {
+		assert.Equal(t, PostStatusDraft, p.Status)
+	}
+
+	// Empty result for different account
+	otherAccount := createTestAccount(t, s)
+	posts, err = s.ListPosts(ctx, ListPostsParams{AccountID: otherAccount, Limit: 10})
+	require.NoError(t, err)
+	assert.Empty(t, posts)
+}
+
+func TestUpdatePost(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	created, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "original content",
+		ContentType: ContentTypeText,
+		Status:      PostStatusDraft,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	newContent := "updated content"
+	newStatus := PostStatusScheduled
+	updated, err := s.UpdatePost(ctx, accountID, created.ID, UpdatePostParams{
+		Content: &newContent,
+		Status:  &newStatus,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "updated content", updated.Content)
+	assert.Equal(t, PostStatusScheduled, updated.Status)
+
+	// Not found
+	_, err = s.UpdatePost(ctx, accountID, uuid.New(), UpdatePostParams{Content: &newContent})
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestDeletePost(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	created, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "to be deleted",
+		ContentType: ContentTypeText,
+		Status:      PostStatusDraft,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	// Soft delete
+	err = s.DeletePost(ctx, accountID, created.ID)
+	require.NoError(t, err)
+
+	// Should not be found after delete
+	_, err = s.GetPostByID(ctx, accountID, created.ID)
+	assert.ErrorIs(t, err, ErrNotFound)
+
+	// Double delete returns not found
+	err = s.DeletePost(ctx, accountID, created.ID)
+	assert.ErrorIs(t, err, ErrNotFound)
+
+	// Delete non-existent
+	err = s.DeletePost(ctx, accountID, uuid.New())
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestUpdatePostStatus(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	created, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "status test",
+		ContentType: ContentTypeText,
+		Status:      PostStatusDraft,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	now := time.Now().UTC()
+	err = s.UpdatePostStatus(ctx, accountID, created.ID, PostStatusPublished, &now)
+	require.NoError(t, err)
+
+	got, err := s.GetPostByID(ctx, accountID, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, PostStatusPublished, got.Status)
+	assert.NotNil(t, got.PublishedAt)
+
+	// Not found
+	err = s.UpdatePostStatus(ctx, accountID, uuid.New(), PostStatusPublished, &now)
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestGetDueScheduledPosts(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	pastTime := time.Now().UTC().Add(-1 * time.Hour)
+	futureTime := time.Now().UTC().Add(1 * time.Hour)
+
+	// Create a past scheduled post
+	_, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "due post " + uuid.New().String()[:8],
+		ContentType: ContentTypeText,
+		Status:      PostStatusScheduled,
+		ScheduledAt: &pastTime,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	// Create a future scheduled post
+	_, err = s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "future post " + uuid.New().String()[:8],
+		ContentType: ContentTypeText,
+		Status:      PostStatusScheduled,
+		ScheduledAt: &futureTime,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	duePosts, err := s.GetDueScheduledPosts(ctx, time.Now().UTC())
+	require.NoError(t, err)
+	// At least the past post should be due
+	assert.GreaterOrEqual(t, len(duePosts), 1)
+	for _, p := range duePosts {
+		assert.Equal(t, PostStatusScheduled, p.Status)
+		assert.True(t, p.ScheduledAt.Before(time.Now().UTC()) || p.ScheduledAt.Equal(time.Now().UTC()))
+	}
+}
+
+func TestCountPostsByAccount(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	count, err := s.CountPostsByAccount(ctx, accountID)
+	require.NoError(t, err)
+	assert.Equal(t, 0, count)
+
+	_, err = s.CreatePost(ctx, CreatePostParams{
+		AccountID:   accountID,
+		Content:     "count test",
+		ContentType: ContentTypeText,
+		Status:      PostStatusDraft,
+		Source:      PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	count, err = s.CountPostsByAccount(ctx, accountID)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
+}
