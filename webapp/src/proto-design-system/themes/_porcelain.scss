@@ -88,6 +88,8 @@
   // Focus ring
   --focus-ring-color: oklch(72% 0.2 60deg / 0.45);
 
-  // Muted
-  --color-muted: oklch(70% 0.01 255deg);
+  // Muted — used by the sidebar nav for default (unselected) item text,
+  // so it needs to clear WCAG AA against surface. Tertiary stays softer
+  // for true caption-level de-emphasis.
+  --color-muted: oklch(52% 0.012 255deg);
 }
