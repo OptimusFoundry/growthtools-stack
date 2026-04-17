@@ -30,12 +30,11 @@
   --color-base-900: oklch(12% 0 0deg);
   --color-base-950: oklch(5% 0 0deg);
 
-  // Content colors — soft ink rather than pure black. Headings lift to 18%
-  // so the electric palette feels like it's glowing against something warm,
-  // not stamped onto a hard black/white contrast. Still ~12:1 WCAG contrast.
-  --color-base-content: oklch(18% 0 0deg);
-  --color-base-content-secondary: oklch(42% 0 0deg);
-  --color-base-content-tertiary: oklch(58% 0 0deg);
+  // Content colors — even softer ink. Body lifts to 25% L so the page
+  // feels relaxed, not stark. Still ~8:1 against white (AAA for body).
+  --color-base-content: oklch(25% 0 0deg);
+  --color-base-content-secondary: oklch(48% 0 0deg);
+  --color-base-content-tertiary: oklch(64% 0 0deg);
 
   // Surface colors
   --color-surface: oklch(100% 0 0deg);
@@ -93,9 +92,9 @@
   --focus-ring-color: oklch(62% 0.3 330deg / 0.3);
   --focus-ring-width: 0.5px;
 
-  // Muted — used by sidebar nav default items; kept slightly darker than
-  // tertiary so it stays readable (~5:1 on white).
-  --color-muted: oklch(52% 0 0deg);
+  // Muted — used by sidebar nav default items; still darker than tertiary
+  // for readability (~4.4:1 on white — clears AA for regular text).
+  --color-muted: oklch(55% 0 0deg);
 
   // ==========================================================================
   // GLOW DESIGN TOKENS (inherited from neon)
