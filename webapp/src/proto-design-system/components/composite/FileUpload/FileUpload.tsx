@@ -27,6 +27,19 @@ export interface UploadedFile {
 	error?: string;
 }
 
+/**
+ * ExistingFile represents a file that's already persisted server-side (e.g.
+ * a saved draft's attached media). Rendered in the same list as fresh
+ * UploadedFile entries so users can remove either one with a single X.
+ */
+export interface ExistingFile {
+	id: string;
+	name: string;
+	size: number;
+	/** MIME type — used to pick the file icon. */
+	contentType?: string;
+}
+
 export interface FileUploadProps {
 	/** Upload variant */
 	variant?: FileUploadVariant;
@@ -42,6 +55,10 @@ export interface FileUploadProps {
 	files?: UploadedFile[];
 	/** File change handler */
 	onFilesChange?: (files: UploadedFile[]) => void;
+	/** Already-persisted files — rendered above the pending uploads. */
+	existingFiles?: ExistingFile[];
+	/** Called when the X on an existing file row is clicked. */
+	onRemoveExisting?: (id: string) => void;
 	/** Disabled state */
 	disabled?: boolean;
 	/** Dropzone label */
@@ -96,6 +113,8 @@ export function FileUpload({
 	maxFiles,
 	files = [],
 	onFilesChange,
+	existingFiles = [],
+	onRemoveExisting,
 	disabled = false,
 	label = "Drag & drop files here",
 	description = "or click to browse",
@@ -247,8 +266,29 @@ export function FileUpload({
 				tabIndex={-1}
 			/>
 
-			{showFileList && files.length > 0 && (
+			{showFileList && (existingFiles.length > 0 || files.length > 0) && (
 				<ul className={styles.fileList}>
+					{existingFiles.map((existing) => (
+						<li key={`existing-${existing.id}`} className={styles.fileItem}>
+							<CheckCircle className={styles.successIcon} />
+							<div className={styles.fileInfo}>
+								<span className={styles.fileName}>{existing.name}</span>
+								<span className={styles.fileSize}>
+									{formatFileSize(existing.size)}
+								</span>
+							</div>
+							{onRemoveExisting && (
+								<button
+									type="button"
+									className={styles.removeButton}
+									onClick={() => onRemoveExisting(existing.id)}
+									aria-label={`Remove ${existing.name}`}
+								>
+									<X />
+								</button>
+							)}
+						</li>
+					))}
 					{files.map((uploadedFile) => {
 						const FileIcon = getFileIcon(uploadedFile.file.type);
 						const isReady =

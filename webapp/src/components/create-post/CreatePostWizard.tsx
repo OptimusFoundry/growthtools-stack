@@ -540,6 +540,13 @@ function WizardInner({
 						selectedPlatforms={state.selectedPlatforms}
 						platformContent={state.platformContent}
 						pendingFiles={state.pendingFiles}
+						existingMedia={state.uploadedMedia.map((m) => ({
+							id: m.id,
+							name: m.filename,
+							size: m.sizeBytes,
+							contentType: m.contentType,
+						}))}
+						onRemoveExistingMedia={wizard.removeUploadedMedia}
 						generating={state.generating}
 						generated={state.generated}
 						publishMode={state.publishMode}

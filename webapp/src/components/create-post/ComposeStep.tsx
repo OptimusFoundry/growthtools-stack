@@ -1,6 +1,9 @@
 import { type ReactNode, useCallback } from "react";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
-import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
+import type {
+	ExistingFile,
+	UploadedFile,
+} from "@/proto-design-system/components/composite/FileUpload";
 import { FileUpload } from "@/proto-design-system/components/composite/FileUpload";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
@@ -23,6 +26,8 @@ interface ComposeStepProps {
 	selectedPlatforms: PlatformType[];
 	platformContent: Partial<Record<PlatformType, string>>;
 	pendingFiles: UploadedFile[];
+	existingMedia: ExistingFile[];
+	onRemoveExistingMedia: (id: string) => void;
 	maxThreadParts: number;
 	generating: boolean;
 	generated: boolean;
@@ -67,6 +72,8 @@ export function ComposeStep({
 	selectedPlatforms,
 	platformContent,
 	pendingFiles,
+	existingMedia,
+	onRemoveExistingMedia,
 	generating,
 	generated,
 	publishMode,
@@ -185,6 +192,8 @@ export function ComposeStep({
 							maxFiles={10}
 							files={pendingFiles}
 							onFilesChange={onFilesChange}
+							existingFiles={existingMedia}
+							onRemoveExisting={onRemoveExistingMedia}
 							label="Drag & drop files here"
 							description="or click to browse"
 						/>

@@ -33,6 +33,7 @@ type WizardAction =
 	| { type: "TOGGLE_PLATFORM"; platform: PlatformType }
 	| { type: "SET_PENDING_FILES"; files: UploadedFile[] }
 	| { type: "ADD_UPLOADED_MEDIA"; media: MediaItem }
+	| { type: "REMOVE_UPLOADED_MEDIA"; id: string }
 	| { type: "START_GENERATION" }
 	| {
 			type: "SET_PLATFORM_PROGRESS";
@@ -100,6 +101,11 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 			return {
 				...state,
 				uploadedMedia: [...state.uploadedMedia, action.media],
+			};
+		case "REMOVE_UPLOADED_MEDIA":
+			return {
+				...state,
+				uploadedMedia: state.uploadedMedia.filter((m) => m.id !== action.id),
 			};
 		case "START_GENERATION": {
 			const progress: Partial<Record<PlatformType, GenerationStatus>> = {};
@@ -213,6 +219,10 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		(media: MediaItem) => dispatch({ type: "ADD_UPLOADED_MEDIA", media }),
 		[],
 	);
+	const removeUploadedMedia = useCallback(
+		(id: string) => dispatch({ type: "REMOVE_UPLOADED_MEDIA", id }),
+		[],
+	);
 	const startGeneration = useCallback(
 		() => dispatch({ type: "START_GENERATION" }),
 		[],
@@ -276,6 +286,7 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		togglePlatform,
 		setPendingFiles,
 		addUploadedMedia,
+		removeUploadedMedia,
 		startGeneration,
 		setPlatformProgress,
 		setPlatformContent,

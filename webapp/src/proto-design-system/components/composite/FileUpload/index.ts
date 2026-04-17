@@ -1,4 +1,5 @@
 export {
+	type ExistingFile,
 	FileUpload,
 	type FileUploadProps,
 	type FileUploadVariant,
