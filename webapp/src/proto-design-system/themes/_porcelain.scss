@@ -44,22 +44,22 @@
   --shadow-color: oklch(50% 0.01 250deg / 0.06);
   --shadow-color-strong: oklch(35% 0.01 250deg / 0.12);
 
-  // Primary — bright, saturated royal blue
-  --color-primary: oklch(58% 0.24 255deg);
-  --color-primary-hover: oklch(53% 0.26 255deg);
-  --color-primary-active: oklch(48% 0.24 255deg);
+  // Primary — muted royal blue, confident but not loud
+  --color-primary: oklch(52% 0.14 255deg);
+  --color-primary-hover: oklch(47% 0.16 255deg);
+  --color-primary-active: oklch(42% 0.14 255deg);
   --color-primary-content: oklch(100% 0 0deg);
 
-  // Secondary — electric cyan
-  --color-secondary: oklch(68% 0.18 220deg);
-  --color-secondary-hover: oklch(63% 0.2 220deg);
-  --color-secondary-active: oklch(58% 0.18 220deg);
+  // Secondary — soft cyan
+  --color-secondary: oklch(62% 0.1 220deg);
+  --color-secondary-hover: oklch(57% 0.12 220deg);
+  --color-secondary-active: oklch(52% 0.1 220deg);
   --color-secondary-content: oklch(100% 0 0deg);
 
-  // Accent — bright sky blue
-  --color-accent: oklch(72% 0.16 230deg);
-  --color-accent-hover: oklch(67% 0.18 230deg);
-  --color-accent-active: oklch(62% 0.16 230deg);
+  // Accent — dusky sky blue
+  --color-accent: oklch(68% 0.09 230deg);
+  --color-accent-hover: oklch(63% 0.11 230deg);
+  --color-accent-active: oklch(58% 0.09 230deg);
   --color-accent-content: oklch(100% 0 0deg);
 
   // Semantic colors
@@ -81,7 +81,7 @@
   --color-info-content: oklch(100% 0 0deg);
 
   // Focus ring
-  --focus-ring-color: oklch(58% 0.24 255deg / 0.35);
+  --focus-ring-color: oklch(52% 0.14 255deg / 0.35);
 
   // Muted
   --color-muted: oklch(62% 0.01 255deg);
