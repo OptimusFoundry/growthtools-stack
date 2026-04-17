@@ -8,6 +8,10 @@
 [data-theme="glow"] {
   color-scheme: light;
 
+  // Typography — Space Grotesk for headings/display sizes (kicks in on
+  // Text size=xl and up). Body stays on Geist via --font-family-sans.
+  --font-family-display: "Space Grotesk", "Geist", "Inter", -apple-system, sans-serif;
+
   // Background
   --color-background: oklch(100% 0 0deg);
 

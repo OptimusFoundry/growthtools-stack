@@ -30,8 +30,29 @@
   font-size: var(--font-size-lg);
 }
 
+// Headings (Text with as=h1..h6) get the theme's display font + semibold
+// weight regardless of size. Tag selector + .text gives us specificity
+// 0,1,1 — beats .text (0,1,0), so it wins without !important.
+:is(h1, h2, h3, h4, h5, h6).text {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+}
+
+// Large size classes also get the display font, so "visual headings" that
+// aren't semantic h1-h6 (e.g. <Text size="2xl">) still pick up the
+// theme's heading character.
+.size-xl,
+.size-2xl,
+.size-3xl,
+.size-4xl,
+.size-5xl {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+}
+
 .size-xl {
   font-size: var(--font-size-xl);
+  letter-spacing: var(--letter-spacing-tight);
   line-height: var(--line-height-tight);
 }
 
@@ -43,13 +64,13 @@
 
 .size-3xl {
   font-size: var(--font-size-3xl);
-  letter-spacing: var(--letter-spacing-tight);
+  letter-spacing: var(--letter-spacing-tighter);
   line-height: var(--line-height-tight);
 }
 
 .size-4xl {
   font-size: var(--font-size-4xl);
-  letter-spacing: var(--letter-spacing-tight);
+  letter-spacing: var(--letter-spacing-tighter);
   line-height: var(--line-height-none);
 }
 
