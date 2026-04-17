@@ -77,6 +77,7 @@
   --color-warning-hover: oklch(70% 0.14 80deg);
   --color-warning-bg: oklch(97% 0.03 80deg);
   --color-warning-content: oklch(22% 0.04 80deg);
+
   // Error — deeper and pulled to pure red (hue 15°) so destructive
   // buttons don't collide with the bright citrus primary. Lower L
   // ("darker") reads as "caution" rather than "action".

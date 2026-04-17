@@ -1,0 +1,92 @@
+// =============================================================================
+// FOG THEME
+// =============================================================================
+// A porcelain variant that swaps border-based separation for bg/surface
+// contrast. Canvas is a soft cool gray, surfaces are pure white, and
+// borders are transparent — the elevation of cards comes from the tone
+// shift alone. Feels closer to macOS than to material.
+
+[data-theme="fog"] {
+  color-scheme: light;
+
+  // Background — soft cool gray canvas
+  --color-background: oklch(95% 0.004 250deg);
+
+  // Base colors — tuned so subtle fills (hover, pressed) stay just a
+  // step off the gray canvas without turning into a distinct panel.
+  --color-base-50: oklch(96% 0.004 250deg);
+  --color-base-100: oklch(93% 0.005 250deg);
+  --color-base-200: oklch(91% 0.006 250deg);
+  --color-base-300: oklch(87% 0.007 250deg);
+  --color-base-400: oklch(75% 0.008 250deg);
+  --color-base-500: oklch(60% 0.008 250deg);
+  --color-base-600: oklch(45% 0.008 250deg);
+  --color-base-700: oklch(32% 0.006 250deg);
+  --color-base-800: oklch(22% 0.006 250deg);
+  --color-base-900: oklch(15% 0.005 250deg);
+  --color-base-950: oklch(9% 0.004 250deg);
+
+  // Content — soft slate ink, same hierarchy as porcelain
+  --color-base-content: oklch(42% 0.014 255deg);
+  --color-base-content-secondary: oklch(58% 0.012 255deg);
+  --color-base-content-tertiary: oklch(70% 0.01 255deg);
+
+  // Surface — pure white cards. The ~5 L points of contrast against the
+  // gray canvas does the spatial work that borders usually do.
+  --color-surface: oklch(100% 0 0deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay: oklch(20% 0.008 250deg / 0.4);
+
+  // Borders — transparent. Elevation is purely via bg/surface contrast.
+  --color-border: oklch(0% 0 0deg / 0);
+  --color-border-hover: oklch(50% 0.01 250deg / 0.08);
+
+  // Shadow — a little more present than porcelain since there are no
+  // borders to hint at card edges
+  --shadow-color: oklch(40% 0.01 250deg / 0.08);
+  --shadow-color-strong: oklch(25% 0.01 250deg / 0.16);
+
+  // Primary — vivid citrus (same as porcelain — this is the identity)
+  --color-primary: oklch(70% 0.24 55deg);
+  --color-primary-hover: oklch(65% 0.26 55deg);
+  --color-primary-active: oklch(60% 0.24 55deg);
+  --color-primary-content: oklch(18% 0.04 55deg);
+
+  // Secondary — rich rust
+  --color-secondary: oklch(52% 0.17 30deg);
+  --color-secondary-hover: oklch(47% 0.19 30deg);
+  --color-secondary-active: oklch(42% 0.17 30deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent — honey gold
+  --color-accent: oklch(82% 0.16 85deg);
+  --color-accent-hover: oklch(77% 0.18 85deg);
+  --color-accent-active: oklch(72% 0.16 85deg);
+  --color-accent-content: oklch(22% 0.04 55deg);
+
+  // Semantic colors (match porcelain)
+  --color-success: oklch(55% 0.14 155deg);
+  --color-success-hover: oklch(50% 0.16 155deg);
+  --color-success-bg: oklch(94% 0.02 155deg);
+  --color-success-content: oklch(100% 0 0deg);
+  --color-warning: oklch(75% 0.12 80deg);
+  --color-warning-hover: oklch(70% 0.14 80deg);
+  --color-warning-bg: oklch(95% 0.03 80deg);
+  --color-warning-content: oklch(22% 0.04 80deg);
+  --color-error: oklch(48% 0.22 18deg);
+  --color-error-hover: oklch(43% 0.24 18deg);
+  --color-error-bg: oklch(94% 0.03 18deg);
+  --color-error-content: oklch(100% 0 0deg);
+  --color-info: oklch(52% 0.14 240deg);
+  --color-info-hover: oklch(47% 0.16 240deg);
+  --color-info-bg: oklch(94% 0.03 240deg);
+  --color-info-content: oklch(100% 0 0deg);
+
+  // Focus ring — noticeably stronger so it stands out against the gray
+  // canvas even without a border to anchor it
+  --focus-ring-color: oklch(70% 0.24 55deg / 0.55);
+
+  // Muted — slightly darker than porcelain since nav sits on surface,
+  // and the gray canvas raises the overall visual weight
+  --color-muted: oklch(50% 0.012 255deg);
+}

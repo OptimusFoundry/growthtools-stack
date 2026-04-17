@@ -25,7 +25,8 @@ export type ThemeName =
 	| "neon"
 	| "blueprint"
 	| "paper"
-	| "porcelain";
+	| "porcelain"
+	| "fog";
 
 export interface Theme {
 	name: ThemeName;
@@ -68,6 +69,7 @@ export const themes: Record<ThemeName, Theme> = {
 	blueprint: { name: "blueprint", label: "Blueprint", colorScheme: "light" },
 	paper: { name: "paper", label: "Paper", colorScheme: "light" },
 	porcelain: { name: "porcelain", label: "Porcelain", colorScheme: "light" },
+	fog: { name: "fog", label: "Fog", colorScheme: "light" },
 };
 
 export const themeNames = Object.keys(themes) as ThemeName[];
