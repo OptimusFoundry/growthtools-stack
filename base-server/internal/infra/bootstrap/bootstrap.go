@@ -161,6 +161,10 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	// capture artefacts for the browser. In localdir mode it stays nil and
 	// the github processor leaves capture URLs unchanged.
 	var urlSigner githubProcessor.URLSigner
+	// s3Head is used by the draft generator to read size + content-type of
+	// capture artifacts when creating media rows. Nil in localdir mode —
+	// draft generation only runs in deployments that have S3 anyway.
+	var s3Head githubProcessor.S3HeadClient
 	switch cfg.Storage.Type {
 	case "s3":
 		s3Client := s3.NewClient(s3.S3Config{
@@ -171,6 +175,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 		}, logger)
 		fileStore = s3Client
 		urlSigner = s3Client
+		s3Head = s3Client
 	default:
 		fileStore = localdir.NewClient(cfg.Storage.MediaDir, logger)
 	}
@@ -338,8 +343,13 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	analyticsWorker := workers.NewAnalyticsWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, registry, &platformsProc, logger)
 	schedulerWorker := workers.NewSchedulerWorker(&deps.Store, kafkaProducer, logger)
 	githubWorker := workers.NewGitHubWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, logger)
-	captureResultWorker := workers.NewCaptureResultWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, logger)
+	captureResultWorker := workers.NewCaptureResultWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, kafkaProducer, logger)
 	retryWorker := workers.NewRetryWorker(&deps.Store, registry, &platformsProc, logger)
+
+	// Draft generator: consumes github.draft.generate, builds an AI draft
+	// from the commit + capture artifacts, persists it through SaveDraft.
+	draftGen := githubProcessor.NewDraftGenerator(&deps.Store, &contentProc, &postsProc, s3Head, logger)
+	draftGeneratorWorker := workers.NewDraftGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &draftGen, logger)
 
 	deps.WorkerManager = workers.NewManager(logger)
 	deps.WorkerManager.Register(publishWorker)
@@ -348,6 +358,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	deps.WorkerManager.Register(githubWorker)
 	deps.WorkerManager.Register(captureResultWorker)
 	deps.WorkerManager.Register(retryWorker)
+	deps.WorkerManager.Register(draftGeneratorWorker)
 
 	logger.Info(ctx, "All dependencies initialized")
 

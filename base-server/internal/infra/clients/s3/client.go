@@ -102,6 +102,26 @@ func (c *Client) Bucket() string {
 	return c.config.Bucket
 }
 
+// HeadObject returns size and content type for an object without fetching its body.
+func (c *Client) HeadObject(ctx context.Context, key string) (int64, string, error) {
+	out, err := c.s3.HeadObject(ctx, &awss3.HeadObjectInput{
+		Bucket: &c.config.Bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return 0, "", fmt.Errorf("s3: HeadObject failed: %w", err)
+	}
+	var size int64
+	if out.ContentLength != nil {
+		size = *out.ContentLength
+	}
+	contentType := ""
+	if out.ContentType != nil {
+		contentType = *out.ContentType
+	}
+	return size, contentType, nil
+}
+
 // GetFile retrieves a file from S3 and returns a reader plus the content type.
 func (c *Client) GetFile(ctx context.Context, key string) (io.ReadCloser, string, error) {
 	out, err := c.s3.GetObject(ctx, &awss3.GetObjectInput{

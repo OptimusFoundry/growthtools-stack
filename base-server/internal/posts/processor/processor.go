@@ -290,14 +290,16 @@ type PlatformDraftContent struct {
 
 // SaveDraftParams holds the parameters for saving a draft post
 type SaveDraftParams struct {
-	AccountID   uuid.UUID
-	Content     string
-	ContentType string
-	Tags        []string
-	MediaIDs    store.UUIDArray
-	AIGenerated bool
-	BaseContent *string
-	Platforms   []PlatformDraftContent
+	AccountID     uuid.UUID
+	Content       string
+	ContentType   string
+	Tags          []string
+	MediaIDs      store.UUIDArray
+	AIGenerated   bool
+	BaseContent   *string
+	Platforms     []PlatformDraftContent
+	Source        string
+	GitHubEventID *uuid.UUID
 }
 
 // SaveDraft creates a post with draft status and platform_post rows with adapted content
@@ -307,16 +309,21 @@ func (p *PostProcessor) SaveDraft(ctx context.Context, params SaveDraftParams) (
 		observability.Field{Key: "operation", Value: "save_draft"},
 	)
 
+	source := params.Source
+	if source == "" {
+		source = "manual"
+	}
 	createParams := store.CreatePostParams{
-		AccountID:   params.AccountID,
-		Content:     params.Content,
-		ContentType: params.ContentType,
-		Status:      "draft",
-		Tags:        store.StringArray(params.Tags),
-		MediaIDs:    params.MediaIDs,
-		AIGenerated: params.AIGenerated,
-		Source:      "manual",
-		BaseContent: params.BaseContent,
+		AccountID:     params.AccountID,
+		Content:       params.Content,
+		ContentType:   params.ContentType,
+		Status:        "draft",
+		Tags:          store.StringArray(params.Tags),
+		MediaIDs:      params.MediaIDs,
+		AIGenerated:   params.AIGenerated,
+		Source:        source,
+		BaseContent:   params.BaseContent,
+		GitHubEventID: params.GitHubEventID,
 	}
 
 	post, err := p.store.CreatePost(ctx, createParams)

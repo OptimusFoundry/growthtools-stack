@@ -15,6 +15,16 @@ import (
 // mirrored in the github processor (TopicCaptureRequests is the request side).
 const TopicCaptureResults = "github.capture.results"
 
+// TopicDraftGenerate is the topic CaptureResultWorker publishes to after
+// persisting a successful capture. DraftGeneratorWorker consumes it and
+// produces an AI draft post from the commit + captured media.
+const TopicDraftGenerate = "github.draft.generate"
+
+// DraftGenerateEvent is the github.draft.generate message body.
+type DraftGenerateEvent struct {
+	CommitID uuid.UUID `json:"commit_id"`
+}
+
 // CaptureUpload mirrors the capture-worker's upload entry in its result
 // message. Keep in sync with capture-worker/kafka.ts.
 type CaptureUpload struct {
@@ -38,19 +48,31 @@ type CaptureResultStore interface {
 	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
 }
 
+// DraftEventPublisher is the Kafka producer dependency used to fan out a
+// draft-generation request after a successful capture.
+type DraftEventPublisher interface {
+	Publish(ctx context.Context, topic, key string, payload any) error
+}
+
 // CaptureResultWorker reads github.capture.results and persists the capture
-// output (or failure marker) onto the originating github_commits row.
+// output (or failure marker) onto the originating github_commits row. On
+// success it also publishes github.draft.generate so the draft-generator
+// worker can pick the commit up asynchronously.
 type CaptureResultWorker struct {
-	consumer *kafka.Consumer
-	store    CaptureResultStore
-	logger   *observability.Logger
+	consumer  *kafka.Consumer
+	store     CaptureResultStore
+	publisher DraftEventPublisher
+	logger    *observability.Logger
 }
 
 // NewCaptureResultWorker wires a consumer for the capture-result topic.
-func NewCaptureResultWorker(brokers, groupID string, captureStore CaptureResultStore, logger *observability.Logger) *CaptureResultWorker {
+// publisher may be nil; when nil the worker still persists capture_output but
+// skips emitting the draft-generate event (useful in tests/local dev).
+func NewCaptureResultWorker(brokers, groupID string, captureStore CaptureResultStore, publisher DraftEventPublisher, logger *observability.Logger) *CaptureResultWorker {
 	w := &CaptureResultWorker{
-		store:  captureStore,
-		logger: logger,
+		store:     captureStore,
+		publisher: publisher,
+		logger:    logger,
 	}
 	w.consumer = kafka.NewConsumer(brokers, groupID, TopicCaptureResults, w.handle, logger)
 	return w
@@ -96,6 +118,18 @@ func (w *CaptureResultWorker) handle(ctx context.Context, key, value []byte) err
 	if err := w.store.UpdateGitHubCommitCapture(ctx, msg.CommitID, raw); err != nil {
 		w.logger.Error(ctx, "failed to persist capture result", err)
 		return err
+	}
+
+	// Fan out to the draft generator on success only — failed captures don't
+	// produce usable artifacts, and we don't want to burn AI spend generating
+	// a draft with no media.
+	if msg.Success && w.publisher != nil {
+		event := DraftGenerateEvent{CommitID: msg.CommitID}
+		if err := w.publisher.Publish(ctx, TopicDraftGenerate, msg.CommitID.String(), event); err != nil {
+			// Persistence already succeeded — log and move on. The user can
+			// re-trigger draft generation from the UI if the event is lost.
+			w.logger.Error(ctx, "failed to publish draft.generate event", err)
+		}
 	}
 	return nil
 }

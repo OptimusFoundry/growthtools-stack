@@ -1165,6 +1165,146 @@ func TestStore_CountGitHubCommitsByConnection(t *testing.T) {
 }
 
 // ============================================================================
+// GetGitHubCommitForDraft
+// ============================================================================
+
+func TestStore_GetGitHubCommitForDraft(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) uuid.UUID // returns commitID to look up
+		wantErr error
+		assert  func(t *testing.T, got GitHubCommitForDraft)
+	}{
+		{
+			name: "happy path returns account_id, repo owner/name, sha, message, branch",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-draft-" + uuid.New().String()[:16]
+				branch := "main"
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					strPtr("Author"), strPtr("a@b.com"), "draft commit message",
+					&branch, strPtr("https://github.com/example"), time.Now().UTC(), nil)
+				require.NoError(t, err)
+				return commit.ID
+			},
+			assert: func(t *testing.T, got GitHubCommitForDraft) {
+				assert.NotEqual(t, uuid.Nil, got.ID)
+				assert.NotEqual(t, uuid.Nil, got.AccountID)
+				assert.NotEmpty(t, got.RepoOwner)
+				assert.NotEmpty(t, got.RepoName)
+				assert.Equal(t, "draft commit message", got.Message)
+				assert.NotNil(t, got.Branch)
+				assert.Equal(t, "main", *got.Branch)
+				assert.Nil(t, got.PostID)
+				assert.Nil(t, got.CaptureOutput)
+			},
+		},
+		{
+			name: "happy path returns capture_output and post_id when set",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-cap-" + uuid.New().String()[:16]
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					nil, nil, "capture msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				// Set capture output
+				captureJSON := json.RawMessage(`{"status":"ok","uploaded":[]}`)
+				require.NoError(t, s.UpdateGitHubCommitCapture(ctx, commit.ID, captureJSON))
+				// Create a post and link it
+				accountID := createTestAccount(t, s)
+				post, err := s.CreatePost(ctx, CreatePostParams{
+					AccountID:   accountID,
+					Content:     "linked post",
+					ContentType: ContentTypeText,
+					Status:      PostStatusDraft,
+					Source:      PostSourceManual,
+				})
+				require.NoError(t, err)
+				require.NoError(t, s.UpdateGitHubCommitPostID(ctx, commit.ID, post.ID))
+				return commit.ID
+			},
+			assert: func(t *testing.T, got GitHubCommitForDraft) {
+				assert.NotNil(t, got.CaptureOutput)
+				assert.NotNil(t, got.PostID)
+				assert.NotEqual(t, uuid.Nil, *got.PostID)
+			},
+		},
+		{
+			name: "returns ErrNotFound when commit id does not exist",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				return uuid.New()
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			name: "returns ErrNotFound when owning connection is soft-deleted",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-delconn-" + uuid.New().String()[:12]
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				// Soft-delete the connection (cascades to repos via SoftDeleteGitHubConnection)
+				require.NoError(t, s.SoftDeleteGitHubConnection(ctx, userID))
+				return commit.ID
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			name: "returns ErrNotFound when owning repo is soft-deleted",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-delrepo-" + uuid.New().String()[:12]
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				// Soft-delete only the repo, leaving the connection alive
+				require.NoError(t, s.SoftDeleteGitHubRepo(ctx, repo.ID))
+				return commit.ID
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			commitID := tt.setup(t)
+			got, err := s.GetGitHubCommitForDraft(ctx, commitID)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assert != nil {
+				tt.assert(t, got)
+			}
+		})
+	}
+}
+
+// ============================================================================
 // GetGitHubCommitByIDForUser
 // ============================================================================
 

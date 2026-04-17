@@ -505,6 +505,46 @@ func (s *Store) UpdateGitHubCommitPostID(ctx context.Context, commitID, postID u
 	return nil
 }
 
+// GitHubCommitForDraft is the commit + owning account + repo context a
+// background worker needs to generate a draft post. No user scope — the
+// worker fires on a Kafka event and doesn't run under a user session.
+type GitHubCommitForDraft struct {
+	ID            uuid.UUID        `db:"id"`
+	SHA           string           `db:"sha"`
+	Message       string           `db:"message"`
+	Branch        *string          `db:"branch"`
+	PostID        *uuid.UUID       `db:"post_id"`
+	CaptureOutput *json.RawMessage `db:"capture_output"`
+	AccountID     uuid.UUID        `db:"account_id"`
+	RepoOwner     string           `db:"repo_owner"`
+	RepoName      string           `db:"repo_name"`
+}
+
+const sqlGetGitHubCommitForDraft = `
+SELECT gc.id, gc.sha, gc.message, gc.branch, gc.post_id, gc.capture_output,
+       a.id AS account_id,
+       gr.owner AS repo_owner, gr.name AS repo_name
+FROM github_commits gc
+JOIN github_repos gr ON gr.id = gc.repo_id AND gr.deleted_at IS NULL
+JOIN github_connections c ON c.id = gr.connection_id AND c.deleted_at IS NULL
+JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
+WHERE gc.id = $1
+`
+
+// GetGitHubCommitForDraft resolves the owning account and repo metadata for a
+// commit id. Used by the draft-generator worker which has only a commit id.
+func (s *Store) GetGitHubCommitForDraft(ctx context.Context, commitID uuid.UUID) (GitHubCommitForDraft, error) {
+	var row GitHubCommitForDraft
+	err := s.db.GetContext(ctx, &row, sqlGetGitHubCommitForDraft, commitID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubCommitForDraft{}, ErrNotFound
+		}
+		return GitHubCommitForDraft{}, fmt.Errorf("failed to get github commit for draft: %w", err)
+	}
+	return row, nil
+}
+
 const sqlListGitHubCommitsByConnection = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.post_id, gc.capture_requested_at, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name,

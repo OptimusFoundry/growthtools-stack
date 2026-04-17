@@ -1,5 +1,7 @@
 package processor
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor
+
 import (
 	"context"
 	"errors"
@@ -363,6 +365,91 @@ func (p *ContentProcessor) streamPlatform(
 	return nil
 }
 
+// ThreadWithMediaPlanResult holds the generated output for one platform when
+// GenerateWithMediaPlan runs.
+type ThreadWithMediaPlanResult struct {
+	Content  string          // full thread text joined with newlines
+	Segments []ThreadSegment // one entry per thread part; ImageIndex left nil (caller assigns)
+}
+
+// GenerateWithMediaPlan is the non-streaming entry point used by background
+// workers (e.g. the GitHub draft generator). It produces base content and
+// per-platform threads in one call, with the prompt instructing the AI about
+// pre-assigned media layout so copy lines up with attachments.
+//
+// Only thread-capable platforms are accepted; single-post platforms should be
+// filtered out by the caller.
+func (p *ContentProcessor) GenerateWithMediaPlan(
+	ctx context.Context,
+	accountID uuid.UUID,
+	prompt string,
+	platforms []string,
+	maxThreadParts int,
+	plan *prompts.MediaPlan,
+) (string, map[string]ThreadWithMediaPlanResult, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "operation", Value: "generate_with_media_plan"},
+	)
+
+	voice := p.getVoiceContext(ctx, accountID)
+
+	baseSystem := prompts.SystemGenerate(platforms, voice)
+	baseContent, err := p.aiClient.CreateMessage(ctx, baseSystem, []aiclient.Message{
+		{Role: "user", Content: prompt},
+	}, 0)
+	if err != nil {
+		p.logger.Error(ctx, "failed to generate base content", err)
+		return "", nil, ErrStreamGenerate
+	}
+	baseContent = strings.TrimSpace(baseContent)
+
+	results := make(map[string]ThreadWithMediaPlanResult, len(platforms))
+	var mu sync.Mutex
+	g, gCtx := errgroup.WithContext(ctx)
+
+	for _, platform := range platforms {
+		g.Go(func() error {
+			platformCfg := prompts.GetPlatform(platform)
+			sysPrompt := prompts.SystemThreadWithMediaPlan(platform, maxThreadParts, plan)
+
+			raw, err := p.aiClient.CreateMessage(gCtx, sysPrompt, []aiclient.Message{
+				{Role: "user", Content: baseContent},
+			}, 0)
+			if err != nil {
+				p.logger.Error(gCtx, "failed to generate thread for platform "+platform, err)
+				return err
+			}
+
+			charLimit := platformCfg.ThreadCharLimit
+			if charLimit == 0 {
+				charLimit = platformCfg.CharLimit
+			}
+
+			parts := parseThreadSegments(raw)
+			segments := make([]ThreadSegment, 0, len(parts))
+			joined := make([]string, 0, len(parts))
+			for _, s := range parts {
+				trimmed := truncateToCharLimit(s, charLimit)
+				segments = append(segments, ThreadSegment{Content: trimmed})
+				joined = append(joined, trimmed)
+			}
+
+			mu.Lock()
+			results[platform] = ThreadWithMediaPlanResult{
+				Content:  strings.Join(joined, "\n"),
+				Segments: segments,
+			}
+			mu.Unlock()
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return "", nil, ErrStreamGenerate
+	}
+	return baseContent, results, nil
+}
+
 // imageDescriptionsForPrompts converts ImageDescription slice to the format used by prompts.
 func imageDescriptionsForPrompts(descriptions []ImageDescription) []prompts.ImageDescription {
 	if len(descriptions) == 0 {
@@ -465,5 +552,3 @@ func (p *ContentProcessor) getVoiceContext(ctx context.Context, accountID uuid.U
 	return voice
 }
 
-// Ensure sync is used (needed for handler-side mutex, not processor).
-var _ = sync.Mutex{}

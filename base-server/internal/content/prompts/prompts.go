@@ -184,6 +184,18 @@ type ImageDescription struct {
 	Description string
 }
 
+// MediaPlan describes pre-assigned media attachments for a thread. When set,
+// the thread prompt instructs the AI to write copy aware of exactly which
+// index sits on which segment (e.g. a demo video on segment 1). Indexes are
+// 1-based to match [IMAGE:N] marker semantics.
+type MediaPlan struct {
+	// VideoIndex is the 1-based index of an attached video clip, or 0 if none.
+	VideoIndex int
+	// ImageIndexes are the 1-based indexes of still images in order they
+	// should be laid out across segments (after the video, if present).
+	ImageIndexes []int
+}
+
 // SystemAdapt builds the system prompt for adapting base content to one platform.
 func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []ImageDescription) string {
 	p := GetPlatform(platformID)
@@ -224,6 +236,35 @@ func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []Ima
 		sb.WriteString("- Reference every image naturally in the text, but do NOT describe them literally.\n")
 	}
 
+	return sb.String()
+}
+
+// SystemThreadWithMediaPlan builds a thread prompt that is aware of
+// pre-assigned media attachments (e.g. a video on segment 1, screenshots on
+// subsequent segments). Unlike the imageDescriptions variant, the AI does
+// NOT emit [IMAGE:N] markers — the caller assigns indexes deterministically
+// after receiving the segments.
+func SystemThreadWithMediaPlan(platformID string, maxThreadParts int, plan *MediaPlan) string {
+	base := SystemThread(platformID, maxThreadParts, nil)
+	if plan == nil || (plan.VideoIndex == 0 && len(plan.ImageIndexes) == 0) {
+		return base
+	}
+
+	var sb strings.Builder
+	sb.WriteString(base)
+	sb.WriteString("\n## Media Plan (pre-assigned, do NOT emit [IMAGE:N] markers)\n")
+	sb.WriteString("Media is attached to segments in a fixed order by the caller. Write copy aware of this layout:\n")
+	segment := 1
+	if plan.VideoIndex > 0 {
+		fmt.Fprintf(&sb, "- Segment %d: a short video clip demonstrating the change. Open with a hook that references what the viewer is about to see.\n", segment)
+		segment++
+	}
+	for _, idx := range plan.ImageIndexes {
+		_ = idx
+		fmt.Fprintf(&sb, "- Segment %d: a screenshot. Point at what's visible — don't describe it literally, call out what matters.\n", segment)
+		segment++
+	}
+	sb.WriteString("- Remaining segments (if any) have no attached media. Carry the thread forward with context, details, or a closing takeaway.\n")
 	return sb.String()
 }
 
