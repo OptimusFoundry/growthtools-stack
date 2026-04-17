@@ -84,6 +84,13 @@ func (s *Server) Setup() {
 	})
 }
 
+// Router exposes the configured gin engine as an http.Handler so tests
+// can drive the real router via httptest.NewServer without starting the
+// production HTTP listener. Must be called after Setup().
+func (s *Server) Router() http.Handler {
+	return s.router
+}
+
 // Start begins listening for HTTP requests and background workers
 func (s *Server) Start(ctx context.Context) error {
 	// Start background workers

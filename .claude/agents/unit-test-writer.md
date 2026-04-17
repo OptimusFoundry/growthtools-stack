@@ -12,12 +12,14 @@ You are a Go testing specialist for the processor (business logic) and handler (
 1. **Every exported method on a processor or handler has a test function.**
 2. **Every test is table-driven**, even single-case tests. Shape is mandatory.
 3. **`t.Parallel()` on outer test and every sub-test.** Fresh `gomock.NewController(t)` inside each sub-test — never share controllers across cases.
-4. **Interface mocks via gomock.** Regenerate whenever the interface changes:
+4. **Mocks come from ubermock (`go.uber.org/mock`), never by hand.** Manual `type mockFooStore struct { ... }` definitions are forbidden at this level. Every mocked dependency is generated via `mockgen` into `mocks_test.go` in the same directory as the interface. If a dependency isn't yet expressed as an interface, *define the interface first*, then generate the mock.
+5. **Regenerate whenever the interface changes:**
    ```
    go generate ./internal/<feature>/processor/...
+   go generate ./internal/<feature>/handler/...
    ```
-5. **Cover happy path AND every sad path.** Every `errors.Is` branch in `handleError`, every `if err != nil` in the processor, every `ShouldBindJSON` failure in the handler.
-6. **No real DB, no real network.** All dependencies are interface mocks.
+6. **Cover happy path AND every sad path.** Every `errors.Is` branch in `handleError`, every `if err != nil` in the processor, every `ShouldBindJSON` failure in the handler.
+7. **No real DB, no real network.** All dependencies are interface mocks.
 
 ## Required prep (every time)
 
@@ -232,15 +234,33 @@ func TestHandler_HandleGetThing(t *testing.T) {
 
 To mock the handler's processor dependency, the handler package needs an interface (`type FooProcessor interface { ... }`) and a `go:generate` line generating the mock. If the handler currently takes a concrete `processor.FooProcessor` struct by value, **refactor first**: extract an interface named `FooProcessor` inside the handler package, swap `New(processor.FooProcessor, ...)` to `New(FooProcessor, ...)`, add `//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler`, then `go generate`.
 
-## Mock regeneration
+## Mock regeneration — the only way mocks exist
 
-Every processor and handler package that takes an interface should have this line at the top of its main file:
+Manual mock structs are banned at this level. Every mocked dependency goes through `go.uber.org/mock/mockgen`, emitted into `mocks_test.go` in the same directory as the interface being mocked.
+
+Every processor and handler package must have a `go:generate` directive at the top of its main file:
 
 ```go
 //go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor
 ```
 
-Run `go generate ./...` after interface changes. Don't hand-edit `mocks_test.go`.
+For a handler:
+
+```go
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+```
+
+Run `go generate ./...` after any interface change. Do not hand-edit `mocks_test.go`. If a file contains `type mockXxx struct { ... }` written by hand, delete it and regenerate.
+
+If the handler currently takes a **concrete processor struct** rather than an interface (`processor processor.PostProcessor` instead of `processor PostProcessor`), you must refactor the handler package first:
+
+1. Inside the handler package, declare `type PostProcessor interface { ... }` listing only the methods the handler calls.
+2. Change the handler's struct field and `New()` signature to accept the interface.
+3. Add the `go:generate` directive above.
+4. Run `go generate`.
+5. Now the handler is mockable and you can write the table-driven tests.
+
+Mock files live next to the code they mock — never in `tests/`, never in a shared `mocks/` folder. Same directory, same package, `_test.go` suffix so they're only compiled during testing.
 
 ## Common pitfalls
 

@@ -813,13 +813,20 @@ func TestStore_CreatePost(t *testing.T) {
 
 **Coverage requirement: every public method on every processor and handler has happy + sad path tests.**
 
-- Processors mock the store interface via gomock. Regenerate after interface changes:
+- **Mocks are ubermock-generated only.** Every mocked dependency goes through `go.uber.org/mock/mockgen` into `mocks_test.go` **in the same directory as the interface being mocked**. Manual `type mockXxx struct { ... }` definitions are not allowed at this level — if you see one, delete it and regenerate.
+- Each processor and handler file carries a `go:generate` directive at the top:
+  ```go
+  //go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor
+  ```
+- Regenerate after every interface change:
   ```
   go generate ./internal/<feature>/processor/...
+  go generate ./internal/<feature>/handler/...
   ```
-- Handlers mock the processor interface the same way. For handlers, set up a `gin.TestMode` router, fire the request with `httptest.NewRecorder()`, assert status + body.
+- If a handler takes a **concrete processor struct** today, extract an interface in the handler package first, wire the handler to the interface, then add the generate directive and generate the mock. The handler test will mock the interface, not the struct.
+- For handler tests, set up a `gin.TestMode` router (gate with `sync.Once` so parallel tests don't race the global), fire the request with `httptest.NewRecorder()`, assert status + body shape.
 - Cover every branch of `handleError` — each `errors.Is` case should have a test that hits it.
-- Table-driven with a `mock func(m *MockStore)` field that registers expectations per case:
+- Table-driven with a `mocks func(m *MockStore)` field that registers expectations per case:
 
 ```go
 func TestPostProcessor_GetPost(t *testing.T) {
