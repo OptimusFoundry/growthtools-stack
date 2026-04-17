@@ -112,7 +112,7 @@ export function ComposeStep({
 
 	return (
 		<Stack gap="lg">
-			<Section title="Your message">
+			<Section title="Idea or Instructions for post">
 				<TextArea
 					placeholder="What do you want to share? Describe your topic, achievement, or idea..."
 					rows={6}
