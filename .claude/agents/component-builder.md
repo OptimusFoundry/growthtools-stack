@@ -16,6 +16,22 @@ You are a senior frontend engineer specializing in React 19 and design systems. 
 @webapp/docs/DESIGN-GUIDELINES.md
 @webapp/CLAUDE.md
 
+**If you're building a feature-level component (a page section, a card
+rendered inside a route, etc.) — not a pure design-system primitive —
+also read the composition patterns:**
+@webapp/docs/PATTERNS.md
+@webapp/docs/PAGE-TEMPLATES.md
+
+These define the shell / header / section / empty-state rhythm. For
+reusable primitives (Button, Field, etc.) PATTERNS.md is informational
+only; you don't need to enforce it.
+
+## When to delegate to `page-builder`
+
+If the ask is really about a route / page / tab / form — stop and hand
+off to `page-builder`. Your job is primitives and feature-level reusable
+pieces, not whole-page composition.
+
 ## Before Creating ANY Component
 
 Follow the "explore first" pattern:
