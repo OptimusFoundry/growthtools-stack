@@ -9,16 +9,17 @@
 [data-theme="fog"] {
   color-scheme: light;
 
-  // Background — soft cool gray canvas, darker than porcelain so the
-  // white surfaces pop clearly without any border help.
-  --color-background: oklch(93% 0.005 250deg);
+  // Background — soft, near-neutral gray. Just enough tone to read as
+  // "a gray canvas, not a white page" but still delicate. The ~5.5 L
+  // contrast with pure-white surfaces does the spatial work.
+  --color-background: oklch(94.5% 0.003 250deg);
 
   // Base colors — tuned so subtle fills (hover, pressed) stay just a
   // step off the gray canvas without turning into a distinct panel.
-  --color-base-50: oklch(94% 0.005 250deg);
-  --color-base-100: oklch(91% 0.006 250deg);
-  --color-base-200: oklch(88% 0.007 250deg);
-  --color-base-300: oklch(84% 0.008 250deg);
+  --color-base-50: oklch(95.5% 0.003 250deg);
+  --color-base-100: oklch(92% 0.004 250deg);
+  --color-base-200: oklch(89% 0.005 250deg);
+  --color-base-300: oklch(85% 0.006 250deg);
   --color-base-400: oklch(75% 0.008 250deg);
   --color-base-500: oklch(60% 0.008 250deg);
   --color-base-600: oklch(45% 0.008 250deg);
