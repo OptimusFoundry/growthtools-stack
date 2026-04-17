@@ -1,24 +1,29 @@
-// Always-on HTTP server exposing the capture agent.
+// Always-on HTTP + Kafka service for the capture agent.
 //
-// Routes:
-//   GET  /health        -> 200 "ok"
-//   POST /capture       -> { commit, pagePath?, goal?, email?, password? }
-//                          Runs runDemo() against the configured app, uploads
-//                          outputs to S3 (if S3_BUCKET is set), returns keys.
+// Kafka (primary):
+//   Consumes github.capture.requests, runs Playwright, uploads to S3,
+//   publishes result on github.capture.results. See kafka.ts.
+//
+// HTTP (dev / manual):
+//   GET  /health   -> 200 "ok" (used by the ECS task healthcheck)
+//   POST /capture  -> same runCapture call the Kafka bridge uses, so a
+//                     local invocation produces the same artefacts.
 //
 // Env:
 //   PORT (default 8080)
-//   APP_URL, APP_EMAIL, APP_PASSWORD — defaults used when request body omits them
+//   APP_URL, APP_EMAIL, APP_PASSWORD — defaults used when request omits them
 //   GEMINI_API_KEY (or GOOGLE_AI_API_KEY) — forwarded to the agent
-//   S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY — upload target
-//   CAPTURE_WORKER_SHARED_SECRET — if set, required as X-Capture-Secret header
+//   S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY — uploads
+//   CAPTURE_WORKER_SHARED_SECRET — optional shared secret for /capture
+//   KAFKA_BROKERS — comma-separated brokers, enables the Kafka bridge
+//   KAFKA_CONSUMER_GROUP — defaults to "capture-worker"
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import fs from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { runDemo } from "./agent.ts";
+import { isS3Enabled, runCapture, s3BucketName } from "./capture.ts";
+import { startKafkaBridge } from "./kafka.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -42,53 +47,6 @@ const config = JSON.parse(
 
 const sharedSecret = process.env.CAPTURE_WORKER_SHARED_SECRET ?? "";
 const port = Number.parseInt(process.env.PORT ?? "8080", 10);
-
-const s3Bucket = process.env.S3_BUCKET ?? "";
-const s3 = s3Bucket
-	? new S3Client({
-			region: process.env.S3_REGION ?? "us-east-1",
-			credentials:
-				process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
-					? {
-							accessKeyId: process.env.S3_ACCESS_KEY_ID,
-							secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-						}
-					: undefined,
-		})
-	: null;
-
-function guessContentType(file: string): string {
-	if (file.endsWith(".png")) return "image/png";
-	if (file.endsWith(".webm")) return "video/webm";
-	if (file.endsWith(".json")) return "application/json";
-	return "application/octet-stream";
-}
-
-async function uploadDir(
-	localDir: string,
-	keyPrefix: string,
-): Promise<string[]> {
-	if (!s3 || !s3Bucket) return [];
-	const entries = await fs.readdir(localDir);
-	const uploaded: string[] = [];
-	for (const entry of entries) {
-		const full = path.join(localDir, entry);
-		const stat = await fs.stat(full);
-		if (!stat.isFile()) continue;
-		const key = `${keyPrefix}/${entry}`;
-		const body = await fs.readFile(full);
-		await s3.send(
-			new PutObjectCommand({
-				Bucket: s3Bucket,
-				Key: key,
-				Body: body,
-				ContentType: guessContentType(entry),
-			}),
-		);
-		uploaded.push(key);
-	}
-	return uploaded;
-}
 
 async function readBody(req: http.IncomingMessage): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -135,8 +93,6 @@ async function handle(
 		return;
 	}
 
-	// Shared-secret auth (if configured). ALB listener rules can also enforce
-	// this by matching the same header.
 	if (sharedSecret) {
 		const provided = req.headers["x-capture-secret"];
 		if (provided !== sharedSecret) {
@@ -163,34 +119,34 @@ async function handle(
 	}
 
 	console.log(`[server] capture commit=${commit} page=${body.pagePath ?? "/"}`);
-	const result = await runDemo({
+	const output = await runCapture({
+		commit,
 		appUrl,
 		email,
 		password,
-		commit,
 		goal: body.goal,
 	});
-
-	const keyPrefix = `captures/${commit.slice(0, 12)}/demo`;
-	const uploadedKeys = await uploadDir(result.captureDir, keyPrefix);
-
 	send(res, 200, {
-		commit,
-		captureDir: result.captureDir,
-		stepCount: result.stepCount,
-		uploaded: uploadedKeys.map((k) => ({
-			key: k,
-			url: s3Bucket ? `s3://${s3Bucket}/${k}` : null,
-		})),
+		commit: output.commit,
+		captureDir: output.captureDir,
+		stepCount: output.stepCount,
+		uploaded: output.uploaded.map((u) => ({ key: u.key, url: u.url ?? null })),
 	});
 }
 
 server.listen(port, () => {
 	console.log(`[server] listening on :${port}`);
 	console.log(
-		`[server] S3 uploads: ${s3Bucket ? `enabled (${s3Bucket})` : "disabled"}`,
+		`[server] S3 uploads: ${isS3Enabled() ? `enabled (${s3BucketName()})` : "disabled"}`,
 	);
 	console.log(
 		`[server] shared secret: ${sharedSecret ? "required" : "disabled"}`,
 	);
+});
+
+// Fire up the Kafka bridge alongside the HTTP server. If KAFKA_BROKERS is
+// empty (local dev without Kafka) it just logs and exits; the HTTP endpoint
+// still works.
+void startKafkaBridge().catch((err: unknown) => {
+	console.error("[kafka] bridge failed to start:", err);
 });

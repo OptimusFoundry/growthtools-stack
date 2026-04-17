@@ -21,16 +21,8 @@ type Config struct {
 	S3            S3Config
 	Storage       StorageConfig
 	GitHub        GitHubConfig
-	Capture       CaptureConfig
 	Kafka     KafkaConfig
 	Platforms PlatformsConfig
-}
-
-// CaptureConfig holds capture-worker trigger settings. When URL is empty
-// commits are recorded but no Playwright capture is kicked off.
-type CaptureConfig struct {
-	URL          string
-	SharedSecret string
 }
 
 // DatabaseConfig holds database connection settings
@@ -199,9 +191,6 @@ func Load() (*Config, error) {
 	cfg.GitHub.OAuthClientID = getEnvWithDefault("GITHUB_OAUTH_CLIENT_ID", "")
 	cfg.GitHub.OAuthClientSecret = getEnvWithDefault("GITHUB_OAUTH_CLIENT_SECRET", "")
 
-	// Capture-worker trigger (optional — no-op when URL empty)
-	cfg.Capture.URL = getEnvWithDefault("CAPTURE_WORKER_URL", "")
-	cfg.Capture.SharedSecret = getEnvWithDefault("CAPTURE_WORKER_SHARED_SECRET", "")
 
 	// Kafka configuration
 	cfg.Kafka.Brokers = getEnvWithDefault("KAFKA_BROKERS", "localhost:9092")

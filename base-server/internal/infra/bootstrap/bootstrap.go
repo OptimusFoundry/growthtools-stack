@@ -22,7 +22,6 @@ import (
 	"base-server/internal/infra/tiers"
 
 	// Growth Tools clients
-	captureclient "base-server/internal/infra/clients/capture"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/clients/gemini"
 	"base-server/internal/platform/clients/bluesky"
@@ -298,13 +297,15 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	mediaProc := mediaProcessor.New(&deps.Store, fileStore, cfg.Storage.PublicURLBase, logger)
 	deps.MediaHandler = mediaHandler.New(mediaProc, logger)
 
-	// GitHub integration
+	// GitHub integration — the capture pipeline is fully async over Kafka:
+	// webhook writes commits, publishes github.capture.requests, returns 200;
+	// capture-worker consumes and publishes github.capture.results; a worker
+	// below reads results and updates commit rows.
 	ghClient := githubclient.NewClient(cfg.GitHub.OAuthClientID, cfg.GitHub.OAuthClientSecret, logger)
-	captureClient := captureclient.NewClient(cfg.Capture.URL, cfg.Capture.SharedSecret, logger)
 	githubProc := githubProcessor.NewWithOAuth(
 		&deps.Store,
 		ghClient,
-		captureClient,
+		kafkaProducer,
 		cfg.GitHub.WebhookSecret,
 		cfg.GitHub.OAuthClientID,
 		cfg.Services.WebAppURI,
@@ -330,6 +331,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	analyticsWorker := workers.NewAnalyticsWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, registry, &platformsProc, logger)
 	schedulerWorker := workers.NewSchedulerWorker(&deps.Store, kafkaProducer, logger)
 	githubWorker := workers.NewGitHubWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, logger)
+	captureResultWorker := workers.NewCaptureResultWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, logger)
 	retryWorker := workers.NewRetryWorker(&deps.Store, registry, &platformsProc, logger)
 
 	deps.WorkerManager = workers.NewManager(logger)
@@ -337,6 +339,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	deps.WorkerManager.Register(analyticsWorker)
 	deps.WorkerManager.Register(schedulerWorker)
 	deps.WorkerManager.Register(githubWorker)
+	deps.WorkerManager.Register(captureResultWorker)
 	deps.WorkerManager.Register(retryWorker)
 
 	logger.Info(ctx, "All dependencies initialized")

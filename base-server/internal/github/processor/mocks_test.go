@@ -10,7 +10,6 @@
 package processor
 
 import (
-	capture "base-server/internal/infra/clients/capture"
 	github "base-server/internal/infra/clients/github"
 	store "base-server/internal/infra/store"
 	context "context"
@@ -424,55 +423,40 @@ func (mr *MockGitHubClientMockRecorder) ListUserRepos(ctx, token, page any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRepos", reflect.TypeOf((*MockGitHubClient)(nil).ListUserRepos), ctx, token, page)
 }
 
-// MockCaptureClient is a mock of CaptureClient interface.
-type MockCaptureClient struct {
+// MockEventPublisher is a mock of EventPublisher interface.
+type MockEventPublisher struct {
 	ctrl     *gomock.Controller
-	recorder *MockCaptureClientMockRecorder
+	recorder *MockEventPublisherMockRecorder
 	isgomock struct{}
 }
 
-// MockCaptureClientMockRecorder is the mock recorder for MockCaptureClient.
-type MockCaptureClientMockRecorder struct {
-	mock *MockCaptureClient
+// MockEventPublisherMockRecorder is the mock recorder for MockEventPublisher.
+type MockEventPublisherMockRecorder struct {
+	mock *MockEventPublisher
 }
 
-// NewMockCaptureClient creates a new mock instance.
-func NewMockCaptureClient(ctrl *gomock.Controller) *MockCaptureClient {
-	mock := &MockCaptureClient{ctrl: ctrl}
-	mock.recorder = &MockCaptureClientMockRecorder{mock}
+// NewMockEventPublisher creates a new mock instance.
+func NewMockEventPublisher(ctrl *gomock.Controller) *MockEventPublisher {
+	mock := &MockEventPublisher{ctrl: ctrl}
+	mock.recorder = &MockEventPublisherMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCaptureClient) EXPECT() *MockCaptureClientMockRecorder {
+func (m *MockEventPublisher) EXPECT() *MockEventPublisherMockRecorder {
 	return m.recorder
 }
 
-// Capture mocks base method.
-func (m *MockCaptureClient) Capture(ctx context.Context, req capture.Request) (capture.Response, error) {
+// Publish mocks base method.
+func (m *MockEventPublisher) Publish(ctx context.Context, topic, key string, payload any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Capture", ctx, req)
-	ret0, _ := ret[0].(capture.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Capture indicates an expected call of Capture.
-func (mr *MockCaptureClientMockRecorder) Capture(ctx, req any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Capture", reflect.TypeOf((*MockCaptureClient)(nil).Capture), ctx, req)
-}
-
-// Enabled mocks base method.
-func (m *MockCaptureClient) Enabled() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Enabled")
-	ret0, _ := ret[0].(bool)
+	ret := m.ctrl.Call(m, "Publish", ctx, topic, key, payload)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Enabled indicates an expected call of Enabled.
-func (mr *MockCaptureClientMockRecorder) Enabled() *gomock.Call {
+// Publish indicates an expected call of Publish.
+func (mr *MockEventPublisherMockRecorder) Publish(ctx, topic, key, payload any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enabled", reflect.TypeOf((*MockCaptureClient)(nil).Enabled))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockEventPublisher)(nil).Publish), ctx, topic, key, payload)
 }

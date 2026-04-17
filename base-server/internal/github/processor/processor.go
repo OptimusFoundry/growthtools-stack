@@ -16,13 +16,27 @@ import (
 	"sync"
 	"time"
 
-	captureclient "base-server/internal/infra/clients/capture"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 )
+
+// TopicCaptureRequests is the Kafka topic base-server publishes to when a
+// commit should be handed off to the capture-worker. The capture-worker
+// consumes this and publishes outcomes to TopicCaptureResults.
+const TopicCaptureRequests = "github.capture.requests"
+
+// CaptureRequest is the github.capture.requests message body.
+type CaptureRequest struct {
+	CommitID uuid.UUID `json:"commit_id"`
+	SHA      string    `json:"sha"`
+	Owner    string    `json:"owner"`
+	Repo     string    `json:"repo"`
+	Message  string    `json:"message"`
+	AppURL   string    `json:"app_url,omitempty"`
+}
 
 // GitHubStore defines the database operations required by GitHubProcessor
 type GitHubStore interface {
@@ -63,10 +77,10 @@ type GitHubClient interface {
 	GetRepoReadme(ctx context.Context, token, owner, name string) (string, error)
 }
 
-// CaptureClient defines the capture-worker calls required by GitHubProcessor
-type CaptureClient interface {
-	Enabled() bool
-	Capture(ctx context.Context, req captureclient.Request) (captureclient.Response, error)
+// EventPublisher is the Kafka producer dependency (post and github both
+// already use this shape elsewhere in the codebase).
+type EventPublisher interface {
+	Publish(ctx context.Context, topic, key string, payload any) error
 }
 
 var (
@@ -90,7 +104,7 @@ type oauthStateEntry struct {
 type GitHubProcessor struct {
 	store         GitHubStore
 	githubClient  GitHubClient
-	captureClient CaptureClient
+	publisher     EventPublisher
 	webhookSecret string
 	webAppHost    string
 	oauthClientID string
@@ -111,12 +125,12 @@ func New(store GitHubStore, webhookSecret string, logger *observability.Logger) 
 }
 
 // NewWithOAuth creates a GitHubProcessor with OAuth and webhook capabilities.
-// captureClient may be nil; when nil (or when Enabled() is false) commits are
-// still persisted but no Playwright capture is kicked off.
+// publisher may be nil; when nil, commits are persisted but no capture is
+// enqueued — useful in tests and local dev without Kafka.
 func NewWithOAuth(
 	store GitHubStore,
 	githubClient GitHubClient,
-	captureClient CaptureClient,
+	publisher EventPublisher,
 	webhookSecret string,
 	oauthClientID string,
 	webAppHost string,
@@ -125,7 +139,7 @@ func NewWithOAuth(
 	return GitHubProcessor{
 		store:         store,
 		githubClient:  githubClient,
-		captureClient: captureClient,
+		publisher:     publisher,
 		webhookSecret: webhookSecret,
 		oauthClientID: oauthClientID,
 		webAppHost:    webAppHost,
@@ -304,11 +318,13 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		}
 	}
 
-	// Fire capture-worker asynchronously — we don't want GitHub's webhook
-	// delivery waiting on a ~5min Playwright run, and retries would
-	// re-hit ErrDuplicateEvent on delivery_id anyway.
-	if len(inserted) > 0 && p.captureClient != nil && p.captureClient.Enabled() {
-		go p.captureCommits(context.WithoutCancel(ctx), repo, inserted)
+	// Hand the new commits off to the capture pipeline over Kafka. The
+	// capture-worker consumes github.capture.requests, runs Playwright,
+	// and publishes outcomes on github.capture.results for the result
+	// worker to persist. Webhook delivery returns as soon as the requests
+	// are enqueued.
+	if len(inserted) > 0 && p.publisher != nil {
+		p.enqueueCaptureRequests(context.WithoutCancel(ctx), repo, inserted)
 	}
 
 	return nil
@@ -337,37 +353,30 @@ func appURLFromReadme(readme string) string {
 	return ""
 }
 
-// captureCommits triggers the capture-worker for each newly-inserted commit
-// and stores the response on the commit row. Best-effort; errors are logged.
-func (p *GitHubProcessor) captureCommits(ctx context.Context, repo store.GitHubRepo, commits []store.GitHubCommit) {
+// enqueueCaptureRequests publishes one github.capture.requests message per
+// newly-inserted commit. The app URL (when derivable) comes from the repo
+// README, per the project convention that README always advertises it —
+// we look it up once per push, not once per commit.
+func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store.GitHubRepo, commits []store.GitHubCommit) {
 	// Look up the connection to borrow the access token for README lookup.
 	var appURL string
-	conn, err := p.store.GetGitHubConnectionByUserID(ctx, repo.ConnectionID)
-	if err == nil {
+	if conn, err := p.store.GetGitHubConnectionByUserID(ctx, repo.ConnectionID); err == nil {
 		if readme, readmeErr := p.githubClient.GetRepoReadme(ctx, conn.AccessToken, repo.Owner, repo.Name); readmeErr == nil {
 			appURL = appURLFromReadme(readme)
 		}
 	}
 
 	for _, commit := range commits {
-		req := captureclient.Request{
-			Commit: commit.SHA,
-			AppURL: appURL,
-			Goal:   commit.Message,
+		req := CaptureRequest{
+			CommitID: commit.ID,
+			SHA:      commit.SHA,
+			Owner:    repo.Owner,
+			Repo:     repo.Name,
+			Message:  commit.Message,
+			AppURL:   appURL,
 		}
-		resp, captureErr := p.captureClient.Capture(ctx, req)
-		if captureErr != nil {
-			p.logger.Error(ctx, fmt.Sprintf("capture-worker failed for %s", commit.SHA), captureErr)
-			// Persist an error marker so UI can show "tried and failed".
-			failed, _ := json.Marshal(map[string]string{"error": captureErr.Error()})
-			if updateErr := p.store.UpdateGitHubCommitCapture(ctx, commit.ID, failed); updateErr != nil {
-				p.logger.Error(ctx, "failed to record capture failure", updateErr)
-			}
-			continue
-		}
-		raw, _ := json.Marshal(resp)
-		if updateErr := p.store.UpdateGitHubCommitCapture(ctx, commit.ID, raw); updateErr != nil {
-			p.logger.Error(ctx, "failed to record capture output", updateErr)
+		if err := p.publisher.Publish(ctx, TopicCaptureRequests, commit.ID.String(), req); err != nil {
+			p.logger.Error(ctx, fmt.Sprintf("failed to enqueue capture request for %s", commit.SHA), err)
 		}
 	}
 }
