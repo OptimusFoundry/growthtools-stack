@@ -288,14 +288,14 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// Posts
 	postsProc := postsProcessor.New(&deps.Store, kafkaProducer, logger)
-	deps.PostsHandler = postsHandler.New(postsProc, logger)
+	deps.PostsHandler = postsHandler.New(&postsProc, logger)
 
 	// Media
 	// MEDIA_PUBLIC_URL_BASE is the source of truth for media URLs. Set it to a public S3
 	// URL (https://bucket.s3.region.amazonaws.com) for direct fetches, or to a proxy
 	// endpoint (https://api.example.com/public/media/file) when the bucket is private.
 	mediaProc := mediaProcessor.New(&deps.Store, fileStore, cfg.Storage.PublicURLBase, logger)
-	deps.MediaHandler = mediaHandler.New(mediaProc, logger)
+	deps.MediaHandler = mediaHandler.New(&mediaProc, logger)
 
 	// GitHub integration — the capture pipeline is fully async over Kafka:
 	// webhook writes commits, publishes github.capture.requests, returns 200;
@@ -311,19 +311,19 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 		cfg.Services.WebAppURI,
 		logger,
 	)
-	deps.GitHubHandler = githubHandler.New(githubProc, cfg.Services.WebAppURI, logger)
+	deps.GitHubHandler = githubHandler.New(&githubProc, cfg.Services.WebAppURI, logger)
 
 	// Blog
 	blogProc := blogProcessor.New(&deps.Store, logger)
-	deps.BlogHandler = blogHandler.New(blogProc, logger)
+	deps.BlogHandler = blogHandler.New(&blogProc, logger)
 
 	// Analytics
 	analyticsProc := analyticsProcessor.New(&deps.Store, logger)
-	deps.AnalyticsHandler = analyticsHandler.New(analyticsProc, logger)
+	deps.AnalyticsHandler = analyticsHandler.New(&analyticsProc, logger)
 
 	// Settings (voice profile)
 	settingsProc := settingsProcessor.New(&deps.Store, logger)
-	deps.SettingsHandler = settingsHandler.New(settingsProc, logger)
+	deps.SettingsHandler = settingsHandler.New(&settingsProc, logger)
 
 	// --- Workers ---
 

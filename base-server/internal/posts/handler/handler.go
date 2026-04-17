@@ -1,6 +1,9 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,12 +19,27 @@ import (
 	"github.com/google/uuid"
 )
 
+// PostProcessor defines the post operations required by the handler.
+type PostProcessor interface {
+	CreatePost(ctx context.Context, params store.CreatePostParams) (store.Post, error)
+	GetPost(ctx context.Context, accountID, postID uuid.UUID) (store.Post, error)
+	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error)
+	UpdatePost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdatePostParams) (store.Post, error)
+	DeletePost(ctx context.Context, accountID, postID uuid.UUID) error
+	PublishPost(ctx context.Context, accountID, postID uuid.UUID, platforms []string) error
+	SchedulePost(ctx context.Context, accountID, postID uuid.UUID, scheduledAt time.Time) (store.Post, error)
+	SaveDraft(ctx context.Context, params processor.SaveDraftParams) (store.Post, error)
+	GetPostWithPlatformPosts(ctx context.Context, accountID, postID uuid.UUID) (processor.PostWithPlatformPosts, error)
+	UpdateDraft(ctx context.Context, params processor.UpdateDraftParams) (store.Post, error)
+	RetryFailedPlatformPosts(ctx context.Context, accountID, postID uuid.UUID) error
+}
+
 type Handler struct {
-	processor processor.PostProcessor
+	processor PostProcessor
 	logger    *observability.Logger
 }
 
-func New(processor processor.PostProcessor, logger *observability.Logger) Handler {
+func New(processor PostProcessor, logger *observability.Logger) Handler {
 	return Handler{
 		processor: processor,
 		logger:    logger,

@@ -1,23 +1,33 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+
 import (
+	"context"
 	"net/http"
 	"time"
 
-	"base-server/internal/analytics/processor"
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
+// AnalyticsProcessor defines the analytics operations required by the handler.
+type AnalyticsProcessor interface {
+	GetOverview(ctx context.Context, accountID uuid.UUID, from, to time.Time) (store.AnalyticsOverview, error)
+	GetTimeSeries(ctx context.Context, accountID uuid.UUID, from, to time.Time) ([]store.AnalyticsTimeSeries, error)
+	GetPlatformBreakdown(ctx context.Context, accountID uuid.UUID, from, to time.Time) ([]store.PlatformAnalytics, error)
+}
+
 type Handler struct {
-	processor processor.AnalyticsProcessor
+	processor AnalyticsProcessor
 	logger    *observability.Logger
 }
 
-func New(processor processor.AnalyticsProcessor, logger *observability.Logger) Handler {
+func New(processor AnalyticsProcessor, logger *observability.Logger) Handler {
 	return Handler{
 		processor: processor,
 		logger:    logger,

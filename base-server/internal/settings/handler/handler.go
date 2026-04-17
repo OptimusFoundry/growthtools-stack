@@ -1,23 +1,33 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 	"base-server/internal/settings/processor"
+	"base-server/internal/infra/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
+// SettingsProcessor defines the settings operations required by the handler.
+type SettingsProcessor interface {
+	GetVoiceProfile(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error)
+	UpdateVoiceProfile(ctx context.Context, accountID uuid.UUID, tone, style string, examplePosts []string, industry, targetAudience, customInstructions *string) (store.VoiceProfile, error)
+}
+
 type Handler struct {
-	processor processor.SettingsProcessor
+	processor SettingsProcessor
 	logger    *observability.Logger
 }
 
-func New(processor processor.SettingsProcessor, logger *observability.Logger) Handler {
+func New(processor SettingsProcessor, logger *observability.Logger) Handler {
 	return Handler{
 		processor: processor,
 		logger:    logger,

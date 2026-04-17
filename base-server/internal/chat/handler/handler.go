@@ -1,5 +1,7 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+
 import (
 	"context"
 	"errors"
@@ -7,8 +9,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"base-server/internal/infra/apierrors"
 	"base-server/internal/chat/processor"
+	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 

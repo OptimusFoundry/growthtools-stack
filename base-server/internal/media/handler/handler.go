@@ -1,6 +1,9 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -9,17 +12,27 @@ import (
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 	"base-server/internal/media/processor"
+	"base-server/internal/infra/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
+// MediaProcessor defines the media operations required by the handler.
+type MediaProcessor interface {
+	Upload(ctx context.Context, accountID uuid.UUID, filename, contentType string, size int64, data io.Reader) (store.Media, error)
+	List(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]store.Media, error)
+	Delete(ctx context.Context, accountID, mediaID uuid.UUID) error
+	GetFile(ctx context.Context, accountID, mediaID uuid.UUID) (io.ReadCloser, string, error)
+	GetFileByKey(ctx context.Context, key string) (io.ReadCloser, string, error)
+}
+
 type Handler struct {
-	processor processor.MediaProcessor
+	processor MediaProcessor
 	logger    *observability.Logger
 }
 
-func New(processor processor.MediaProcessor, logger *observability.Logger) Handler {
+func New(processor MediaProcessor, logger *observability.Logger) Handler {
 	return Handler{
 		processor: processor,
 		logger:    logger,

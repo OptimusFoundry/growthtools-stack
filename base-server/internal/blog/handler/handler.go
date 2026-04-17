@@ -1,12 +1,15 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=handler.go -destination=mocks_test.go -package=handler
+
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
 
-	"base-server/internal/infra/apierrors"
 	"base-server/internal/blog/processor"
+	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
@@ -14,12 +17,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// BlogProcessor defines the blog operations required by the handler.
+type BlogProcessor interface {
+	CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
+	GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
+	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error)
+	UpdateBlogPost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
+	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
+	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
+}
+
 type Handler struct {
-	processor processor.BlogProcessor
+	processor BlogProcessor
 	logger    *observability.Logger
 }
 
-func New(processor processor.BlogProcessor, logger *observability.Logger) Handler {
+func New(processor BlogProcessor, logger *observability.Logger) Handler {
 	return Handler{
 		processor: processor,
 		logger:    logger,
