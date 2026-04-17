@@ -39,7 +39,7 @@ dev-test-unit:
 # Run store tests locally (requires dev-up first)
 dev-test-store:
 	@echo "Running store tests locally..."
-	go test -short ./internal/store/...
+	go test -short ./internal/infra/store/...
 
 # Run integration tests locally (requires running server)
 dev-test-integration:
@@ -74,7 +74,7 @@ docker-test-unit:
 docker-test-store:
 	@echo "Running store tests in Docker..."
 	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
-		go test -short ./internal/store/...
+		go test -short ./internal/infra/store/...
 
 # Run integration tests in Docker (with test server)
 docker-test-integration:
