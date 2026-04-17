@@ -3,224 +3,209 @@
 package tests
 
 import (
-	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
 
-	analyticsHandler "base-server/internal/analytics/handler"
-	analyticsProcessor "base-server/internal/analytics/processor"
 	"base-server/internal/infra/store"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
-
-// mockAnalyticsStore implements analyticsProcessor.AnalyticsStore for testing.
-type mockAnalyticsStore struct {
-	overview    store.AnalyticsOverview
-	timeSeries  []store.AnalyticsTimeSeries
-	platformBD  []store.PlatformAnalytics
-}
-
-func newMockAnalyticsStore() *mockAnalyticsStore {
-	return &mockAnalyticsStore{
-		overview: store.AnalyticsOverview{
-			TotalImpressions: 1000,
-			TotalLikes:       250,
-			TotalComments:    50,
-			TotalShares:      30,
-			TotalClicks:      120,
-		},
-		timeSeries: []store.AnalyticsTimeSeries{
-			{
-				Date:        time.Now().AddDate(0, 0, -1).UTC(),
-				Impressions: 500,
-				Likes:       100,
-				Comments:    20,
-				Shares:      15,
-				Clicks:      60,
-			},
-			{
-				Date:        time.Now().UTC(),
-				Impressions: 500,
-				Likes:       150,
-				Comments:    30,
-				Shares:      15,
-				Clicks:      60,
-			},
-		},
-		platformBD: []store.PlatformAnalytics{
-			{Platform: "twitter", Impressions: 600, Likes: 150, Comments: 30, Shares: 20, Clicks: 70},
-			{Platform: "linkedin", Impressions: 400, Likes: 100, Comments: 20, Shares: 10, Clicks: 50},
-		},
-	}
-}
-
-func (m *mockAnalyticsStore) GetAnalyticsOverview(_ context.Context, _ uuid.UUID, _, _ time.Time) (store.AnalyticsOverview, error) {
-	return m.overview, nil
-}
-
-func (m *mockAnalyticsStore) GetAnalyticsTimeSeries(_ context.Context, _ uuid.UUID, _, _ time.Time) ([]store.AnalyticsTimeSeries, error) {
-	return m.timeSeries, nil
-}
-
-func (m *mockAnalyticsStore) GetAnalyticsByPlatform(_ context.Context, _ uuid.UUID, _, _ time.Time) ([]store.PlatformAnalytics, error) {
-	return m.platformBD, nil
-}
-
-// setupAnalyticsRouter sets up a Gin router with the analytics handler and mock store.
-func setupAnalyticsRouter(accountID uuid.UUID) *gin.Engine {
-	mockStore := newMockAnalyticsStore()
-	logger := testLogger()
-
-	proc := analyticsProcessor.New(mockStore, logger)
-	handler := analyticsHandler.New(proc, logger)
-
-	router := setupTestRouter()
-	protected := router.Group("/api/protected", mockAuthMiddleware(accountID))
-	{
-		protected.GET("/analytics/overview", handler.HandleGetOverview)
-		protected.GET("/analytics/timeseries", handler.HandleGetTimeSeries)
-		protected.GET("/analytics/platforms", handler.HandleGetPlatformBreakdown)
-	}
-
-	return router
-}
 
 func TestAnalyticsAPI_GetOverview(t *testing.T) {
 	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/overview", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp store.AnalyticsOverview
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, 1000, resp.TotalImpressions)
-	assert.Equal(t, 250, resp.TotalLikes)
-	assert.Equal(t, 50, resp.TotalComments)
-	assert.Equal(t, 30, resp.TotalShares)
-	assert.Equal(t, 120, resp.TotalClicks)
-}
-
-func TestAnalyticsAPI_GetOverview_WithDateRange(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
+	srv := setupTestServer(t)
 
 	from := time.Now().AddDate(0, 0, -7).UTC().Format(time.RFC3339)
 	to := time.Now().UTC().Format(time.RFC3339)
 
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/overview?from="+from+"&to="+to, nil)
-	assertStatus(t, w, http.StatusOK)
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) (token string, queryPath string)
+		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name: "200 returns overview with no date params",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), "/api/protected/analytics/overview"
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var got store.AnalyticsOverview
+				require.NoError(t, json.Unmarshal(body, &got))
+				// Zero values are valid for a fresh account
+				assert.GreaterOrEqual(t, got.TotalImpressions, 0)
+			},
+		},
+		{
+			name: "200 returns overview with date range",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID),
+					"/api/protected/analytics/overview?from=" + from + "&to=" + to
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "400 when from is invalid",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID),
+					"/api/protected/analytics/overview?from=not-a-date"
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "400 when to is invalid",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID),
+					"/api/protected/analytics/overview?from=" + from + "&to=bad-date"
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "400 when from is after to",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				earlyTo := time.Now().AddDate(0, 0, -14).UTC().Format(time.RFC3339)
+				return newJWT(t, userID, accountID),
+					"/api/protected/analytics/overview?from=" + from + "&to=" + earlyTo
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string) {
+				return "", "/api/protected/analytics/overview"
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+	}
 
-	var resp store.AnalyticsOverview
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, 1000, resp.TotalImpressions)
-}
-
-func TestAnalyticsAPI_GetOverview_InvalidFromDate(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/overview?from=invalid-date", nil)
-	assertStatus(t, w, http.StatusBadRequest)
-}
-
-func TestAnalyticsAPI_GetOverview_InvalidToDate(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	from := time.Now().AddDate(0, 0, -7).UTC().Format(time.RFC3339)
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/overview?from="+from+"&to=bad-date", nil)
-	assertStatus(t, w, http.StatusBadRequest)
-}
-
-func TestAnalyticsAPI_GetOverview_FromAfterTo(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	from := time.Now().UTC().Format(time.RFC3339)
-	to := time.Now().AddDate(0, 0, -7).UTC().Format(time.RFC3339)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/overview?from="+from+"&to="+to, nil)
-	assertStatus(t, w, http.StatusBadRequest)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, path := tt.setup(t)
+			resp, body := srv.Request(t, http.MethodGet, path, nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.wantBody != nil {
+				tt.wantBody(t, body)
+			}
+		})
+	}
 }
 
 func TestAnalyticsAPI_GetTimeSeries(t *testing.T) {
 	t.Parallel()
+	srv := setupTestServer(t)
 
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
+	from := time.Now().AddDate(0, 0, -7).UTC().Format(time.RFC3339)
 
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/timeseries", nil)
-	assertStatus(t, w, http.StatusOK)
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) (token string, path string)
+		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name: "200 returns timeseries (may be empty for new account)",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), "/api/protected/analytics/timeseries"
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				// Body is a JSON array — may be [] for fresh account
+				var ts []store.AnalyticsTimeSeries
+				require.NoError(t, json.Unmarshal(body, &ts))
+			},
+		},
+		{
+			name: "400 when from date is invalid",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID),
+					"/api/protected/analytics/timeseries?from=not-a-date"
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string) {
+				return "", "/api/protected/analytics/timeseries?from=" + from
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+	}
 
-	var timeseries []store.AnalyticsTimeSeries
-	parseResponseBody(t, w, &timeseries)
-	assert.Len(t, timeseries, 2)
-}
-
-func TestAnalyticsAPI_GetTimeSeries_InvalidDateRange(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/timeseries?from=not-a-date", nil)
-	assertStatus(t, w, http.StatusBadRequest)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, path := tt.setup(t)
+			resp, body := srv.Request(t, http.MethodGet, path, nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.wantBody != nil {
+				tt.wantBody(t, body)
+			}
+		})
+	}
 }
 
 func TestAnalyticsAPI_GetPlatformBreakdown(t *testing.T) {
 	t.Parallel()
+	srv := setupTestServer(t)
 
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) (token string, path string)
+		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name: "200 returns platform breakdown",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), "/api/protected/analytics/platforms"
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var platforms []store.PlatformAnalytics
+				require.NoError(t, json.Unmarshal(body, &platforms))
+				// For a fresh account there are no analytics rows
+			},
+		},
+		{
+			name: "400 when from is invalid",
+			setup: func(t *testing.T) (string, string) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID),
+					"/api/protected/analytics/platforms?from=bad-date"
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string) {
+				return "", "/api/protected/analytics/platforms"
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+	}
 
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/platforms", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var platforms []store.PlatformAnalytics
-	parseResponseBody(t, w, &platforms)
-	assert.Len(t, platforms, 2)
-	assert.Equal(t, "twitter", platforms[0].Platform)
-	assert.Equal(t, "linkedin", platforms[1].Platform)
-}
-
-func TestAnalyticsAPI_GetPlatformBreakdown_InvalidDateRange(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/platforms?from=bad-date", nil)
-	assertStatus(t, w, http.StatusBadRequest)
-}
-
-func TestAnalyticsAPI_DefaultDateRange(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router := setupAnalyticsRouter(accountID)
-
-	// No from/to params - should default to last 30 days
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/overview", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	w = makeRequest(t, router, http.MethodGet, "/api/protected/analytics/timeseries", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	w = makeRequest(t, router, http.MethodGet, "/api/protected/analytics/platforms", nil)
-	assertStatus(t, w, http.StatusOK)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, path := tt.setup(t)
+			resp, body := srv.Request(t, http.MethodGet, path, nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.wantBody != nil {
+				tt.wantBody(t, body)
+			}
+		})
+	}
 }

@@ -3,261 +3,178 @@
 package tests
 
 import (
-	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
-	"time"
 
-	settingsHandler "base-server/internal/settings/handler"
-	settingsProcessor "base-server/internal/settings/processor"
 	"base-server/internal/infra/store"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// mockSettingsStore implements settingsProcessor.SettingsStore for testing.
-type mockSettingsStore struct {
-	profiles map[uuid.UUID]store.VoiceProfile // keyed by accountID
-}
-
-func newMockSettingsStore() *mockSettingsStore {
-	return &mockSettingsStore{
-		profiles: make(map[uuid.UUID]store.VoiceProfile),
-	}
-}
-
-func (m *mockSettingsStore) GetVoiceProfileByAccount(_ context.Context, accountID uuid.UUID) (store.VoiceProfile, error) {
-	profile, ok := m.profiles[accountID]
-	if !ok {
-		return store.VoiceProfile{}, store.ErrNotFound
-	}
-	return profile, nil
-}
-
-func (m *mockSettingsStore) CreateVoiceProfile(_ context.Context, params store.CreateVoiceProfileParams) (store.VoiceProfile, error) {
-	now := time.Now().UTC()
-	profile := store.VoiceProfile{
-		ID:                 uuid.New(),
-		AccountID:          params.AccountID,
-		Tone:               params.Tone,
-		Style:              params.Style,
-		ExamplePosts:       params.ExamplePosts,
-		Industry:           params.Industry,
-		TargetAudience:     params.TargetAudience,
-		CustomInstructions: params.CustomInstructions,
-		CreatedAt:          now,
-		UpdatedAt:          now,
-	}
-	m.profiles[params.AccountID] = profile
-	return profile, nil
-}
-
-func (m *mockSettingsStore) UpdateVoiceProfile(_ context.Context, accountID uuid.UUID, params store.UpdateVoiceProfileParams) (store.VoiceProfile, error) {
-	profile, ok := m.profiles[accountID]
-	if !ok {
-		return store.VoiceProfile{}, store.ErrNotFound
-	}
-	if params.Tone != nil {
-		profile.Tone = *params.Tone
-	}
-	if params.Style != nil {
-		profile.Style = *params.Style
-	}
-	if params.ExamplePosts != nil {
-		profile.ExamplePosts = params.ExamplePosts
-	}
-	if params.Industry != nil {
-		profile.Industry = params.Industry
-	}
-	if params.TargetAudience != nil {
-		profile.TargetAudience = params.TargetAudience
-	}
-	if params.CustomInstructions != nil {
-		profile.CustomInstructions = params.CustomInstructions
-	}
-	profile.UpdatedAt = time.Now().UTC()
-	m.profiles[accountID] = profile
-	return profile, nil
-}
-
-// setupSettingsRouter sets up a Gin router with the settings handler and mock store.
-func setupSettingsRouter(accountID uuid.UUID) (*gin.Engine, *mockSettingsStore) {
-	mockStore := newMockSettingsStore()
-	logger := testLogger()
-
-	proc := settingsProcessor.New(mockStore, logger)
-	handler := settingsHandler.New(proc, logger)
-
-	router := setupTestRouter()
-	protected := router.Group("/api/protected", mockAuthMiddleware(accountID))
-	{
-		protected.GET("/settings/voice", handler.HandleGetVoiceProfile)
-		protected.PUT("/settings/voice", handler.HandleUpdateVoiceProfile)
-	}
-
-	return router, mockStore
-}
-
 func TestSettingsAPI_GetVoiceProfile(t *testing.T) {
 	t.Parallel()
+	srv := setupTestServer(t)
 
-	accountID := uuid.New()
-	router, mockStore := setupSettingsRouter(accountID)
-
-	// Seed a voice profile
-	mockStore.profiles[accountID] = store.VoiceProfile{
-		ID:           uuid.New(),
-		AccountID:    accountID,
-		Tone:         "professional",
-		Style:        "concise",
-		ExamplePosts: store.StringArray{"Example post 1"},
-		Industry:     strPtr("tech"),
-		CreatedAt:    time.Now().UTC(),
-		UpdatedAt:    time.Now().UTC(),
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) string // returns token
+		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name: "200 returns existing voice profile",
+			setup: func(t *testing.T) string {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				seedVoiceProfile(t, srv.Store, accountID)
+				return newJWT(t, userID, accountID)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var got store.VoiceProfile
+				require.NoError(t, json.Unmarshal(body, &got))
+				assert.Equal(t, "professional", got.Tone)
+				assert.Equal(t, "concise", got.Style)
+			},
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) string {
+				return ""
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "404 when no voice profile exists",
+			setup: func(t *testing.T) string {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID)
+			},
+			wantStatus: http.StatusNotFound,
+		},
 	}
 
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/settings/voice", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp store.VoiceProfile
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, "professional", resp.Tone)
-	assert.Equal(t, "concise", resp.Style)
-	require.NotNil(t, resp.Industry)
-	assert.Equal(t, "tech", *resp.Industry)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token := tt.setup(t)
+			resp, body := srv.Request(t, http.MethodGet, "/api/protected/settings/voice", nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.wantBody != nil {
+				tt.wantBody(t, body)
+			}
+		})
+	}
 }
 
-func TestSettingsAPI_GetVoiceProfile_NotFound(t *testing.T) {
+func TestSettingsAPI_UpdateVoiceProfile(t *testing.T) {
 	t.Parallel()
+	srv := setupTestServer(t)
 
-	accountID := uuid.New()
-	router, _ := setupSettingsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/settings/voice", nil)
-	assertNotFound(t, w)
-}
-
-func TestSettingsAPI_UpdateVoiceProfile_Create(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupSettingsRouter(accountID)
-
-	body := map[string]interface{}{
-		"tone":            "casual",
-		"style":           "storytelling",
-		"example_posts":   []string{"Check out this cool thing!", "Just shipped a feature"},
-		"industry":        "saas",
-		"target_audience": "developers",
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (token string, body map[string]any)
+		wantStatus  int
+		afterAssert func(t *testing.T, respBody []byte)
+	}{
+		{
+			name: "200 creates voice profile when none exists",
+			setup: func(t *testing.T) (string, map[string]any) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), map[string]any{
+					"tone":            "casual",
+					"style":           "storytelling",
+					"example_posts":   []string{"Post one", "Post two"},
+					"industry":        "saas",
+					"target_audience": "developers",
+				}
+			},
+			wantStatus: http.StatusOK,
+			afterAssert: func(t *testing.T, body []byte) {
+				var vp store.VoiceProfile
+				require.NoError(t, json.Unmarshal(body, &vp))
+				assert.Equal(t, "casual", vp.Tone)
+				assert.Equal(t, "storytelling", vp.Style)
+				assert.Len(t, vp.ExamplePosts, 2)
+				require.NotNil(t, vp.Industry)
+				assert.Equal(t, "saas", *vp.Industry)
+			},
+		},
+		{
+			name: "200 updates existing voice profile",
+			setup: func(t *testing.T) (string, map[string]any) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				seedVoiceProfile(t, srv.Store, accountID) // pre-existing profile
+				return newJWT(t, userID, accountID), map[string]any{
+					"tone":  "witty",
+					"style": "conversational",
+				}
+			},
+			wantStatus: http.StatusOK,
+			afterAssert: func(t *testing.T, body []byte) {
+				var vp store.VoiceProfile
+				require.NoError(t, json.Unmarshal(body, &vp))
+				assert.Equal(t, "witty", vp.Tone)
+				assert.Equal(t, "conversational", vp.Style)
+			},
+		},
+		{
+			name: "200 sets custom instructions",
+			setup: func(t *testing.T) (string, map[string]any) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), map[string]any{
+					"tone":                "professional",
+					"style":               "authoritative",
+					"custom_instructions": "Always end with a call to action.",
+				}
+			},
+			wantStatus: http.StatusOK,
+			afterAssert: func(t *testing.T, body []byte) {
+				var vp store.VoiceProfile
+				require.NoError(t, json.Unmarshal(body, &vp))
+				require.NotNil(t, vp.CustomInstructions)
+				assert.Contains(t, *vp.CustomInstructions, "call to action")
+			},
+		},
+		{
+			name: "400 when tone is missing",
+			setup: func(t *testing.T) (string, map[string]any) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), map[string]any{
+					"style": "concise",
+				}
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "400 when style is missing",
+			setup: func(t *testing.T) (string, map[string]any) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), map[string]any{
+					"tone": "casual",
+				}
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, map[string]any) {
+				return "", map[string]any{"tone": "x", "style": "y"}
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
 	}
 
-	w := makeRequest(t, router, http.MethodPut, "/api/protected/settings/voice", body)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp store.VoiceProfile
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, "casual", resp.Tone)
-	assert.Equal(t, "storytelling", resp.Style)
-	assert.Len(t, resp.ExamplePosts, 2)
-	require.NotNil(t, resp.Industry)
-	assert.Equal(t, "saas", *resp.Industry)
-}
-
-func TestSettingsAPI_UpdateVoiceProfile_Update(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, mockStore := setupSettingsRouter(accountID)
-
-	// Seed an existing profile
-	mockStore.profiles[accountID] = store.VoiceProfile{
-		ID:           uuid.New(),
-		AccountID:    accountID,
-		Tone:         "professional",
-		Style:        "concise",
-		ExamplePosts: store.StringArray{"Old example"},
-		CreatedAt:    time.Now().UTC(),
-		UpdatedAt:    time.Now().UTC(),
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, body := tt.setup(t)
+			resp, respBody := srv.Request(t, http.MethodPut, "/api/protected/settings/voice", body, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.afterAssert != nil {
+				tt.afterAssert(t, respBody)
+			}
+		})
 	}
-
-	body := map[string]interface{}{
-		"tone":          "casual",
-		"style":         "conversational",
-		"example_posts": []string{"New example 1", "New example 2"},
-	}
-
-	w := makeRequest(t, router, http.MethodPut, "/api/protected/settings/voice", body)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp store.VoiceProfile
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, "casual", resp.Tone)
-	assert.Equal(t, "conversational", resp.Style)
-	assert.Len(t, resp.ExamplePosts, 2)
-}
-
-func TestSettingsAPI_UpdateVoiceProfile_ValidationError(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupSettingsRouter(accountID)
-
-	// Missing required fields (tone and style)
-	body := map[string]interface{}{
-		"example_posts": []string{"Some post"},
-	}
-
-	w := makeRequest(t, router, http.MethodPut, "/api/protected/settings/voice", body)
-	assertStatus(t, w, http.StatusBadRequest)
-}
-
-func TestSettingsAPI_UpdateVoiceProfile_WithCustomInstructions(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupSettingsRouter(accountID)
-
-	body := map[string]interface{}{
-		"tone":                "witty",
-		"style":               "thread",
-		"custom_instructions": "Always include a call to action. Use emojis sparingly.",
-	}
-
-	w := makeRequest(t, router, http.MethodPut, "/api/protected/settings/voice", body)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp store.VoiceProfile
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, "witty", resp.Tone)
-	require.NotNil(t, resp.CustomInstructions)
-	assert.Contains(t, *resp.CustomInstructions, "call to action")
-}
-
-func TestSettingsAPI_UpdateAndGetVoiceProfile_RoundTrip(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupSettingsRouter(accountID)
-
-	// First, create the profile
-	body := map[string]interface{}{
-		"tone":          "professional",
-		"style":         "authoritative",
-		"example_posts": []string{"Post 1"},
-	}
-
-	w := makeRequest(t, router, http.MethodPut, "/api/protected/settings/voice", body)
-	assertStatus(t, w, http.StatusOK)
-
-	// Now get it back
-	w = makeRequest(t, router, http.MethodGet, "/api/protected/settings/voice", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp store.VoiceProfile
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, "professional", resp.Tone)
-	assert.Equal(t, "authoritative", resp.Style)
 }

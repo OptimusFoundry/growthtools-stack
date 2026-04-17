@@ -272,19 +272,22 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		return ErrInvalidSignature
 	}
 
-	// 4. Persist the raw event (payload stored as empty JSONB for now —
-	//    we keep the per-commit details on github_commits).
+	// 4. If no repo is linked to this delivery we have no account to attribute
+	//    the event to, so we acknowledge it (200) without persisting.
+	if !repoFound {
+		return nil
+	}
+
+	// Persist the raw event now that we have a valid account_id from the repo.
 	if _, err := p.store.CreateGitHubEvent(ctx, store.CreateGitHubEventParams{
+		AccountID:  repo.AccountID,
+		RepoName:   repo.Owner + "/" + repo.Name,
 		EventType:  eventType,
 		DeliveryID: deliveryID,
 		Payload:    store.JSONB{},
 	}); err != nil {
 		p.logger.Error(ctx, "failed to persist GitHub event", err)
 		return err
-	}
-
-	if !repoFound {
-		return nil
 	}
 
 	// Backfill github_repo_id if we connected before knowing it.

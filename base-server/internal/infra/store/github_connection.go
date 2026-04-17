@@ -28,6 +28,10 @@ type GitHubConnection struct {
 type GitHubRepo struct {
 	ID            uuid.UUID  `db:"id" json:"id"`
 	ConnectionID  uuid.UUID  `db:"connection_id" json:"connection_id"`
+	// AccountID is the account that owns this repo (resolved via the connection
+	// owner → accounts join). Populated by GetGitHubRepoByGitHubID and
+	// GetGitHubRepoByOwnerName so the webhook processor can attribute events.
+	AccountID     uuid.UUID  `db:"account_id" json:"account_id"`
 	GitHubRepoID  int64      `db:"github_repo_id" json:"github_repo_id"`
 	Owner         string     `db:"owner" json:"owner"`
 	Name          string     `db:"name" json:"name"`
@@ -233,10 +237,16 @@ func (s *Store) GetGitHubRepoByConnectionAndName(ctx context.Context, connection
 // GetGitHubRepoByGitHubID finds a connected repo by the github.com numeric id.
 // Webhook payloads carry repository.id so we can look up the repo + its
 // per-hook secret without trusting any other field first.
+// The query joins github_connections → accounts to surface the account_id so
+// the webhook processor can attribute events without an extra round-trip.
 const sqlGetGitHubRepoByGitHubID = `
-SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
-FROM github_repos
-WHERE github_repo_id = $1 AND deleted_at IS NULL
+SELECT r.id, r.connection_id, a.id AS account_id, r.github_repo_id, r.owner, r.name,
+       r.default_branch, r.webhook_id, r.webhook_secret, r.enabled,
+       r.created_at, r.updated_at, r.deleted_at
+FROM github_repos r
+JOIN github_connections c ON c.id = r.connection_id AND c.deleted_at IS NULL
+JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
+WHERE r.github_repo_id = $1 AND r.deleted_at IS NULL
 `
 
 func (s *Store) GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64) (GitHubRepo, error) {
@@ -253,10 +263,15 @@ func (s *Store) GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64)
 
 // GetGitHubRepoByOwnerName finds a repo by owner/name across all connections.
 // Used as a fallback when github_repo_id hasn't been backfilled yet (still 0).
+// Joins to surface account_id for event attribution.
 const sqlGetGitHubRepoByOwnerName = `
-SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
-FROM github_repos
-WHERE owner = $1 AND name = $2 AND deleted_at IS NULL
+SELECT r.id, r.connection_id, a.id AS account_id, r.github_repo_id, r.owner, r.name,
+       r.default_branch, r.webhook_id, r.webhook_secret, r.enabled,
+       r.created_at, r.updated_at, r.deleted_at
+FROM github_repos r
+JOIN github_connections c ON c.id = r.connection_id AND c.deleted_at IS NULL
+JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
+WHERE r.owner = $1 AND r.name = $2 AND r.deleted_at IS NULL
 `
 
 func (s *Store) GetGitHubRepoByOwnerName(ctx context.Context, owner, name string) (GitHubRepo, error) {

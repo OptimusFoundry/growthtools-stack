@@ -4,249 +4,166 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
-	"time"
 
-	platformsHandler "base-server/internal/platform/handler"
-	platformsProcessor "base-server/internal/platform/processor"
 	"base-server/internal/infra/store"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
-
-// mockPlatformProcessor implements platformsHandler.PlatformProcessor for testing.
-// We implement the handler's interface directly since the processor depends on
-// external OAuth services.
-type mockPlatformProcessor struct {
-	connections map[uuid.UUID]store.PlatformConnection
-}
-
-func newMockPlatformProcessor() *mockPlatformProcessor {
-	return &mockPlatformProcessor{
-		connections: make(map[uuid.UUID]store.PlatformConnection),
-	}
-}
-
-func (m *mockPlatformProcessor) InitiateOAuth(_ context.Context, accountID uuid.UUID, platform string) (string, error) {
-	return "https://oauth.example.com/auth?platform=" + platform, nil
-}
-
-func (m *mockPlatformProcessor) HandleOAuthCallback(_ context.Context, accountID uuid.UUID, platform, code string) (store.PlatformConnection, error) {
-	now := time.Now().UTC()
-	conn := store.PlatformConnection{
-		ID:             uuid.New(),
-		AccountID:      accountID,
-		Platform:       platform,
-		PlatformUserID: "user-" + code,
-		DisplayName:    strPtr("Test User"),
-		AccessToken:    "access-token",
-		Status:         "active",
-		Scopes:         store.StringArray{"read", "write"},
-		ConnectedAt:    now,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-	m.connections[conn.ID] = conn
-	return conn, nil
-}
-
-func (m *mockPlatformProcessor) ConnectBluesky(_ context.Context, accountID uuid.UUID, handle, appPassword string) (store.PlatformConnection, error) {
-	now := time.Now().UTC()
-	conn := store.PlatformConnection{
-		ID:             uuid.New(),
-		AccountID:      accountID,
-		Platform:       "bluesky",
-		PlatformUserID: handle,
-		DisplayName:    strPtr(handle),
-		AccessToken:    "bsky-token",
-		Status:         "active",
-		Scopes:         store.StringArray{},
-		ConnectedAt:    now,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-	m.connections[conn.ID] = conn
-	return conn, nil
-}
-
-func (m *mockPlatformProcessor) DisconnectPlatform(_ context.Context, accountID uuid.UUID, connectionID uuid.UUID) error {
-	conn, ok := m.connections[connectionID]
-	if !ok || conn.AccountID != accountID {
-		return platformsProcessor.ErrConnectionNotFound
-	}
-	delete(m.connections, connectionID)
-	return nil
-}
-
-func (m *mockPlatformProcessor) ListConnections(_ context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error) {
-	result := make([]store.PlatformConnection, 0)
-	for _, c := range m.connections {
-		if c.AccountID == accountID {
-			result = append(result, c)
-		}
-	}
-	return result, nil
-}
-
-func (m *mockPlatformProcessor) ConnectWithToken(_ context.Context, accountID uuid.UUID, platform string) (store.PlatformConnection, error) {
-	now := time.Now().UTC()
-	conn := store.PlatformConnection{
-		ID:          uuid.New(),
-		AccountID:   accountID,
-		Platform:    platform,
-		AccessToken: "manual-token",
-		Status:      "active",
-		Scopes:      store.StringArray{},
-		ConnectedAt: now,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}
-	m.connections[conn.ID] = conn
-	return conn, nil
-}
-
-func (m *mockPlatformProcessor) EnsureFreshConnection(_ context.Context, conn store.PlatformConnection) (store.PlatformConnection, error) {
-	return conn, nil
-}
-
-// setupPlatformsRouter sets up a Gin router with the platforms handler.
-func setupPlatformsRouter(accountID uuid.UUID) (*gin.Engine, *mockPlatformProcessor) {
-	mockProc := newMockPlatformProcessor()
-	logger := testLogger()
-
-	handler := platformsHandler.New(mockProc, logger, "http://localhost:3000")
-
-	router := setupTestRouter()
-	protected := router.Group("/api/protected", mockAuthMiddleware(accountID))
-	{
-		protected.GET("/platforms", handler.HandleListConnections)
-		protected.DELETE("/platforms/:id", handler.HandleDisconnect)
-	}
-
-	return router, mockProc
-}
-
-func TestPlatformsAPI_ListConnections_Empty(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupPlatformsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/platforms", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var connections []store.PlatformConnection
-	parseResponseBody(t, w, &connections)
-	assert.Empty(t, connections)
-}
 
 func TestPlatformsAPI_ListConnections(t *testing.T) {
 	t.Parallel()
+	srv := setupTestServer(t)
 
-	accountID := uuid.New()
-	router, mockProc := setupPlatformsRouter(accountID)
-
-	// Seed connections
-	for _, platform := range []string{"twitter", "linkedin"} {
-		connID := uuid.New()
-		mockProc.connections[connID] = store.PlatformConnection{
-			ID:             connID,
-			AccountID:      accountID,
-			Platform:       platform,
-			PlatformUserID: "user-123",
-			Status:         "active",
-			Scopes:         store.StringArray{},
-			ConnectedAt:    time.Now().UTC(),
-			CreatedAt:      time.Now().UTC(),
-			UpdatedAt:      time.Now().UTC(),
-		}
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) string // returns token
+		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name: "200 returns empty array when no connections",
+			setup: func(t *testing.T) string {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var conns []store.PlatformConnection
+				require.NoError(t, json.Unmarshal(body, &conns))
+				assert.Empty(t, conns)
+			},
+		},
+		{
+			name: "200 returns connections for account",
+			setup: func(t *testing.T) string {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				seedPlatformConnection(t, srv.Store, accountID, "x")
+				seedPlatformConnection(t, srv.Store, accountID, "linkedin")
+				return newJWT(t, userID, accountID)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var conns []store.PlatformConnection
+				require.NoError(t, json.Unmarshal(body, &conns))
+				assert.Len(t, conns, 2)
+			},
+		},
+		{
+			name: "200 does not return other accounts connections",
+			setup: func(t *testing.T) string {
+				myUserID, myAccountID := seedUserAndAccount(t, srv.Store)
+				_, theirAccountID := seedUserAndAccount(t, srv.Store)
+				seedPlatformConnection(t, srv.Store, theirAccountID, "x")
+				return newJWT(t, myUserID, myAccountID)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var conns []store.PlatformConnection
+				require.NoError(t, json.Unmarshal(body, &conns))
+				assert.Empty(t, conns)
+			},
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) string {
+				return ""
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
 	}
 
-	w := makeRequest(t, router, http.MethodGet, "/api/protected/platforms", nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var connections []store.PlatformConnection
-	parseResponseBody(t, w, &connections)
-	assert.Len(t, connections, 2)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token := tt.setup(t)
+			resp, body := srv.Request(t, http.MethodGet, "/api/protected/platforms", nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.wantBody != nil {
+				tt.wantBody(t, body)
+			}
+		})
+	}
 }
 
 func TestPlatformsAPI_DisconnectPlatform(t *testing.T) {
 	t.Parallel()
+	srv := setupTestServer(t)
 
-	accountID := uuid.New()
-	router, mockProc := setupPlatformsRouter(accountID)
-
-	connID := uuid.New()
-	mockProc.connections[connID] = store.PlatformConnection{
-		ID:             connID,
-		AccountID:      accountID,
-		Platform:       "twitter",
-		PlatformUserID: "user-123",
-		Status:         "active",
-		Scopes:         store.StringArray{},
-		ConnectedAt:    time.Now().UTC(),
-		CreatedAt:      time.Now().UTC(),
-		UpdatedAt:      time.Now().UTC(),
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (token string, path string, connID uuid.UUID, accountID uuid.UUID)
+		wantStatus  int
+		afterAssert func(t *testing.T, connID, accountID uuid.UUID)
+	}{
+		{
+			name: "200 disconnects platform connection",
+			setup: func(t *testing.T) (string, string, uuid.UUID, uuid.UUID) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				conn := seedPlatformConnection(t, srv.Store, accountID, "x")
+				return newJWT(t, userID, accountID),
+					"/api/protected/platforms/" + conn.ID.String(),
+					conn.ID, accountID
+			},
+			wantStatus: http.StatusOK,
+			afterAssert: func(t *testing.T, connID, accountID uuid.UUID) {
+				// After disconnect the connection should no longer be retrievable
+				_, err := srv.Store.GetPlatformConnectionByID(context.Background(), accountID, connID)
+				assert.Error(t, err, "connection should be deleted/not found")
+			},
+		},
+		{
+			name: "400 when id is not a uuid",
+			setup: func(t *testing.T) (string, string, uuid.UUID, uuid.UUID) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID), "/api/protected/platforms/not-a-uuid", uuid.Nil, uuid.Nil
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string, uuid.UUID, uuid.UUID) {
+				return "", "/api/protected/platforms/" + uuid.New().String(), uuid.Nil, uuid.Nil
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "404 when connection does not exist",
+			setup: func(t *testing.T) (string, string, uuid.UUID, uuid.UUID) {
+				userID, accountID := seedUserAndAccount(t, srv.Store)
+				return newJWT(t, userID, accountID),
+					"/api/protected/platforms/" + uuid.New().String(),
+					uuid.Nil, uuid.Nil
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "404 when connection belongs to another account",
+			setup: func(t *testing.T) (string, string, uuid.UUID, uuid.UUID) {
+				myUserID, myAccountID := seedUserAndAccount(t, srv.Store)
+				_, theirAccountID := seedUserAndAccount(t, srv.Store)
+				theirConn := seedPlatformConnection(t, srv.Store, theirAccountID, "linkedin")
+				return newJWT(t, myUserID, myAccountID),
+					"/api/protected/platforms/" + theirConn.ID.String(),
+					theirConn.ID, theirAccountID
+			},
+			wantStatus: http.StatusNotFound,
+		},
 	}
 
-	w := makeRequest(t, router, http.MethodDelete, "/api/protected/platforms/"+connID.String(), nil)
-	assertStatus(t, w, http.StatusOK)
-
-	var resp messageResponse
-	parseResponseBody(t, w, &resp)
-	assert.Contains(t, resp.Message, "disconnected")
-
-	_, exists := mockProc.connections[connID]
-	assert.False(t, exists)
-}
-
-func TestPlatformsAPI_DisconnectPlatform_NotFound(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupPlatformsRouter(accountID)
-
-	fakeID := uuid.New()
-	w := makeRequest(t, router, http.MethodDelete, "/api/protected/platforms/"+fakeID.String(), nil)
-	assertNotFound(t, w)
-}
-
-func TestPlatformsAPI_DisconnectPlatform_InvalidID(t *testing.T) {
-	t.Parallel()
-
-	accountID := uuid.New()
-	router, _ := setupPlatformsRouter(accountID)
-
-	w := makeRequest(t, router, http.MethodDelete, "/api/protected/platforms/not-a-uuid", nil)
-	assertStatus(t, w, http.StatusBadRequest)
-}
-
-func TestPlatformsAPI_DisconnectPlatform_CrossAccountIsolation(t *testing.T) {
-	t.Parallel()
-
-	accountA := uuid.New()
-	accountB := uuid.New()
-
-	_, mockProcA := setupPlatformsRouter(accountA)
-	routerB, _ := setupPlatformsRouter(accountB)
-
-	connID := uuid.New()
-	mockProcA.connections[connID] = store.PlatformConnection{
-		ID:             connID,
-		AccountID:      accountA,
-		Platform:       "twitter",
-		PlatformUserID: "user-123",
-		Status:         "active",
-		Scopes:         store.StringArray{},
-		ConnectedAt:    time.Now().UTC(),
-		CreatedAt:      time.Now().UTC(),
-		UpdatedAt:      time.Now().UTC(),
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, path, connID, accountID := tt.setup(t)
+			resp, _ := srv.Request(t, http.MethodDelete, path, nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.afterAssert != nil && connID != uuid.Nil {
+				tt.afterAssert(t, connID, accountID)
+			}
+		})
 	}
-
-	// Account B tries to disconnect account A's platform
-	w := makeRequest(t, routerB, http.MethodDelete, "/api/protected/platforms/"+connID.String(), nil)
-	assertNotFound(t, w)
 }
