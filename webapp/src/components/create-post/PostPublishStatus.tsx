@@ -5,6 +5,7 @@ import {
 	Loader,
 	RefreshCw,
 } from "lucide-react";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
@@ -67,8 +68,8 @@ export function PostPublishStatus({
 	);
 
 	return (
-		<div className={styles.container}>
-			<div className={styles.header}>
+		<Stack gap="sm">
+			<Stack direction="row" justify="between" align="center">
 				<Text size="md" weight="semibold">
 					Publish Status
 				</Text>
@@ -83,7 +84,7 @@ export function PostPublishStatus({
 						Retry failed
 					</Button>
 				)}
-			</div>
+			</Stack>
 			<div className={styles.list}>
 				{platformPosts.map((pp) => {
 					const platformName =
@@ -123,6 +124,6 @@ export function PostPublishStatus({
 					);
 				})}
 			</div>
-		</div>
+		</Stack>
 	);
 }

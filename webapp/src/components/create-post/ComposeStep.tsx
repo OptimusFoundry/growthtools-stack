@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { type ReactNode, useCallback } from "react";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
 import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
 import { FileUpload } from "@/proto-design-system/components/composite/FileUpload";
@@ -42,6 +42,22 @@ interface ComposeStepProps {
 	onPublish: () => void;
 	onSchedule: () => void;
 	onSaveDraft: () => void;
+}
+
+/**
+ * Section — shared wrapper for every block in the wizard (Your message,
+ * Platforms, Post Config, Media, Publish). Gives the form a consistent
+ * rhythm: same title weight, same inner gap, same distance to siblings.
+ */
+function Section({ title, children }: { title: string; children: ReactNode }) {
+	return (
+		<Stack gap="sm">
+			<Text size="md" weight="semibold">
+				{title}
+			</Text>
+			{children}
+		</Stack>
+	);
 }
 
 export function ComposeStep({
@@ -96,23 +112,19 @@ export function ComposeStep({
 
 	return (
 		<Stack gap="lg">
-			{/* Blurb */}
-			<TextArea
-				label="Your message"
-				placeholder="What do you want to share? Describe your topic, achievement, or idea..."
-				rows={6}
-				value={blurb}
-				onChange={(e) => onBlurbChange(e.target.value)}
-				fullWidth
-				required
-				disabled={readOnly}
-			/>
+			<Section title="Your message">
+				<TextArea
+					placeholder="What do you want to share? Describe your topic, achievement, or idea..."
+					rows={6}
+					value={blurb}
+					onChange={(e) => onBlurbChange(e.target.value)}
+					fullWidth
+					required
+					disabled={readOnly}
+				/>
+			</Section>
 
-			{/* Platforms */}
-			<Stack gap="sm">
-				<Text size="md" weight="semibold">
-					Platforms
-				</Text>
+			<Section title="Platforms">
 				{activeConnections.length > 0 ? (
 					<Stack direction="row" gap="md" wrap>
 						{activeConnections.map((conn) => (
@@ -131,14 +143,10 @@ export function ComposeStep({
 						No connected platforms. Connect platforms in Settings.
 					</Text>
 				)}
-			</Stack>
+			</Section>
 
-			{/* Post config */}
 			{threadSupported && (
-				<Stack gap="sm">
-					<Text size="md" weight="semibold">
-						Post Config
-					</Text>
+				<Section title="Post Config">
 					<Switch
 						label="Thread mode"
 						description="Generate as multi-part posts"
@@ -164,16 +172,12 @@ export function ComposeStep({
 							</div>
 						</Stack>
 					)}
-				</Stack>
+				</Section>
 			)}
 
-			{/* Media — hidden when read-only */}
 			{!readOnly && (
 				<>
-					<Stack gap="sm">
-						<Text size="md" weight="semibold">
-							Media
-						</Text>
+					<Section title="Media">
 						<FileUpload
 							accept="image/*,video/*"
 							multiple
@@ -184,9 +188,8 @@ export function ComposeStep({
 							label="Drag & drop files here"
 							description="or click to browse"
 						/>
-					</Stack>
+					</Section>
 
-					{/* Generate */}
 					<Stack
 						direction="row"
 						gap="sm"
@@ -205,13 +208,8 @@ export function ComposeStep({
 				</>
 			)}
 
-			{/* Publish options — shown after content is generated, hidden when read-only */}
 			{generated && !readOnly && (
-				<>
-					<Text size="md" weight="semibold">
-						Publish
-					</Text>
-
+				<Section title="Publish">
 					{platformsChanged && (
 						<Alert variant="warning">
 							Platforms changed since last generation. Regenerate content before
@@ -302,7 +300,7 @@ export function ComposeStep({
 							Save as Draft
 						</Button>
 					</Stack>
-				</>
+				</Section>
 			)}
 		</Stack>
 	);
