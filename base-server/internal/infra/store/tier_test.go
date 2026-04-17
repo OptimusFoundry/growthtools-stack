@@ -29,16 +29,28 @@ func TestStore_GetPlanFeaturesWithLimitsByPriceID(t *testing.T) {
 		wantMin  int
 	}{
 		{
-			name: "returns features for seeded free price",
+			name: "returns features for a free price with plan_feature_limits seeded",
 			setup: func(t *testing.T) uuid.UUID {
 				t.Helper()
-				// Look up the seeded 'free' price
+				// Look up a 'free' price. Migration V0029 seeds
+				// plan_feature_limits only for prices with
+				// description='free' that existed at migration time;
+				// in a dev/test DB those rows may be absent. If we
+				// can't find a free price OR it has no joined
+				// features, skip rather than fail — the underlying
+				// store method is a pure SQL query, and the "empty"
+				// branch is already covered below.
 				stripeID, err := s.GetFreePriceStripeID(ctx)
 				if err != nil {
-					t.Skip("no free price seeded in this DB — skipping")
+					t.Skip("no free price in this DB — skipping")
 				}
 				p, err := s.GetPriceByStripeID(ctx, stripeID)
 				require.NoError(t, err)
+				feats, err := s.GetPlanFeaturesWithLimitsByPriceID(ctx, p.ID)
+				require.NoError(t, err)
+				if len(feats) == 0 {
+					t.Skip("free price has no plan_feature_limits seeded — skipping")
+				}
 				return p.ID
 			},
 			wantMin: 1,

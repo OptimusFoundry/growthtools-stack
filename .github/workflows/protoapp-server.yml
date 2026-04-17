@@ -22,9 +22,11 @@ env:
   DEPLOY_ROLE: arn:aws:iam::339713122183:role/github-actions-admin-aws
 
 jobs:
-  # Three test jobs run in parallel on separate runners so the race
-  # detector isn't serialized behind store + integration.
-  # ECR prep / docker build / deploy gate on all three.
+  # Two test jobs run in parallel on separate runners:
+  #  - test-race: pure Go, race detector + unit tests, no docker needed.
+  #  - test-db: spins up the docker stack once and runs store + integration
+  #    tests against the same DB/server, avoiding a redundant bring-up.
+  # ECR prep / docker build / deploy gate on both.
 
   test-race:
     name: Unit + Race (go test -race -short)
@@ -47,64 +49,32 @@ jobs:
       - name: Unit tests + race detector
         run: go test -race -short ./...
 
-  test-store:
-    name: Store tests (real Postgres)
+  test-db:
+    name: Store + Integration (shared Docker stack)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: base-server
+    env:
+      DOCKER_BUILDKIT: 1
+      COMPOSE_DOCKER_CLI_BUILD: 1
+      BUILDKIT_INLINE_CACHE: 1
     steps:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Cache Docker images
-        uses: actions/cache@v4
-        with:
-          path: /tmp/docker-cache
-          key: docker-store-${{ runner.os }}-${{ hashFiles('base-server/docker-compose.test.yml', 'base-server/Dockerfile.test') }}
-          restore-keys: |
-            docker-store-${{ runner.os }}-
-      - name: Load cached Docker images
-        run: |
-          if [ -d /tmp/docker-cache ]; then
-            for image in /tmp/docker-cache/*.tar; do
-              [ -f "$image" ] && docker load -i "$image" || true
-            done
-          fi
-      - name: Bring up DB + Kafka + Flyway (no server needed)
-        run: |
-          docker compose -f docker-compose.test.yml up -d --wait db kafka
-          docker compose -f docker-compose.test.yml up flyway
-      - name: Run store tests
-        run: docker compose -f docker-compose.test.yml run --rm --no-deps runner go test -race ./internal/infra/store/...
-      - name: Save Docker images to cache
-        if: always()
-        run: |
-          mkdir -p /tmp/docker-cache
-          docker save postgres:15-alpine -o /tmp/docker-cache/postgres.tar || true
-          docker save flyway/flyway -o /tmp/docker-cache/flyway.tar || true
-          docker save confluentinc/cp-kafka:latest -o /tmp/docker-cache/kafka.tar || true
-      - name: Dump Docker logs on failure
-        if: failure()
-        run: docker compose -f docker-compose.test.yml logs || true
 
-  test-integration:
-    name: Integration tests (real HTTP vs Dockerized server)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: base-server
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # Cache the base images (postgres/flyway/kafka — stable) and the
+      # locally-built server + runner images (keyed on Dockerfile + go.sum).
       - name: Cache Docker images
+        id: docker-cache
         uses: actions/cache@v4
         with:
           path: /tmp/docker-cache
-          key: docker-integration-${{ runner.os }}-${{ hashFiles('base-server/docker-compose.test.yml', 'base-server/Dockerfile', 'base-server/Dockerfile.test') }}
+          key: docker-${{ runner.os }}-${{ hashFiles('base-server/Dockerfile', 'base-server/Dockerfile.test', 'base-server/go.sum', 'base-server/docker-compose.test.yml') }}
           restore-keys: |
-            docker-integration-${{ runner.os }}-
+            docker-${{ runner.os }}-
+
       - name: Load cached Docker images
         run: |
           if [ -d /tmp/docker-cache ]; then
@@ -112,10 +82,17 @@ jobs:
               [ -f "$image" ] && docker load -i "$image" || true
             done
           fi
-      - name: Bring up full stack (db + kafka + flyway + server)
+
+      - name: Bring up full stack (db + kafka + flyway + server, one-shot)
         run: make docker-up
-      - name: Run integration tests
+
+      # Store tests first (lighter — doesn't talk to the server), then
+      # integration tests. Both share the same Postgres container.
+      - name: Store tests
+        run: make docker-test-store
+      - name: Integration tests
         run: make docker-test-integration
+
       - name: Save Docker images to cache
         if: always()
         run: |
@@ -123,6 +100,9 @@ jobs:
           docker save postgres:15-alpine -o /tmp/docker-cache/postgres.tar || true
           docker save flyway/flyway -o /tmp/docker-cache/flyway.tar || true
           docker save confluentinc/cp-kafka:latest -o /tmp/docker-cache/kafka.tar || true
+          docker save base-server-test-server:ci -o /tmp/docker-cache/server.tar || true
+          docker save base-server-test-runner:ci -o /tmp/docker-cache/runner.tar || true
+
       - name: Dump Docker logs on failure
         if: failure()
         run: make docker-logs || true
@@ -130,7 +110,7 @@ jobs:
   prepare-ecr:
     name: Prepare ECR Repository
     runs-on: ubuntu-latest
-    needs: [test-race, test-store, test-integration]
+    needs: [test-race, test-db]
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

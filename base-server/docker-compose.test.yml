@@ -59,9 +59,12 @@ services:
 
   server:
     container_name: base-server-test-server
+    image: base-server-test-server:ci
     build:
       context: .
       dockerfile: Dockerfile
+      cache_from:
+        - base-server-test-server:ci
     depends_on:
       db:
         condition: service_healthy
@@ -85,9 +88,12 @@ services:
   runner:
     container_name: base-server-test-runner
     hostname: test-runner
+    image: base-server-test-runner:ci
     build:
       context: .
       dockerfile: Dockerfile.test
+      cache_from:
+        - base-server-test-runner:ci
     # No depends_on - services should already be up via docker-up
     environment:
       TEST_DB_HOST: db
