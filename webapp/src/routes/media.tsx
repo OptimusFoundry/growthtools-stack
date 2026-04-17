@@ -9,7 +9,7 @@ import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import { formatFileSize, isImageType } from "@/types/media";
+import { formatFileSize, isImageType, isVideoType } from "@/types/media";
 import mediaStyles from "./media.module.scss";
 import styles from "./page.module.scss";
 
@@ -94,6 +94,16 @@ function MediaPage() {
 											alt={item.altText ?? item.filename}
 											className={mediaStyles.thumbnailImage}
 										/>
+									) : isVideoType(item.contentType) ? (
+										<video
+											src={item.url}
+											controls
+											preload="metadata"
+											className={mediaStyles.thumbnailImage}
+											aria-label={item.altText ?? item.filename}
+										>
+											<track kind="captions" />
+										</video>
 									) : (
 										<div className={mediaStyles.filePlaceholder}>
 											<FileIcon size={32} />

@@ -1,7 +1,7 @@
 import { ImageIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import type { MediaItem } from "@/types/media";
+import { isVideoType, type MediaItem } from "@/types/media";
 import {
 	PLATFORM_CHAR_LIMITS,
 	PLATFORM_DISPLAY_NAMES,
@@ -88,11 +88,23 @@ function MediaGrid({ media }: { media: MediaItem[] }) {
 			{media.slice(0, 4).map((item, i) => (
 				<div key={item.id} className={styles.mediaGridItem}>
 					{item.url ? (
-						<img
-							src={item.url}
-							alt={item.altText ?? item.filename}
-							className={styles.mediaGridImg}
-						/>
+						isVideoType(item.contentType) ? (
+							<video
+								src={item.url}
+								controls
+								preload="metadata"
+								className={styles.mediaGridImg}
+								aria-label={item.altText ?? item.filename}
+							>
+								<track kind="captions" />
+							</video>
+						) : (
+							<img
+								src={item.url}
+								alt={item.altText ?? item.filename}
+								className={styles.mediaGridImg}
+							/>
+						)
 					) : (
 						<div className={styles.mediaGridPlaceholder}>
 							<ImageIcon size={24} />

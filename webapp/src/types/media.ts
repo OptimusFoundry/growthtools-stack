@@ -1,4 +1,8 @@
-export type MediaSource = "upload" | "ai_generated" | "url_import";
+export type MediaSource =
+	| "upload"
+	| "ai_generated"
+	| "url_import"
+	| "github_capture";
 
 export interface MediaItem {
 	id: string;

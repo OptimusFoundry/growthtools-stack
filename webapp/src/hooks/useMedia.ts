@@ -21,9 +21,13 @@ export const useMedia = (filters?: MediaFilters) => {
 			setError(null);
 
 			try {
+				// Default to a generous page size — a single GitHub capture
+				// adds ~8 artefacts, so the 20-row backend default fills up
+				// after two commits. Callers that need pagination can pass
+				// their own `limit` / `offset`.
+				const limit = filters?.limit ?? 100;
 				const params = new URLSearchParams();
-				if (filters?.limit !== undefined)
-					params.set("limit", String(filters.limit));
+				params.set("limit", String(limit));
 				if (filters?.offset !== undefined)
 					params.set("offset", String(filters.offset));
 
