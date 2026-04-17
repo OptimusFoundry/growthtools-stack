@@ -792,3 +792,80 @@ func TestContentProcessor_SelectMeaningfulImages(t *testing.T) {
 		})
 	}
 }
+
+func TestContentProcessor_ClassifyCommit(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+
+	tests := []struct {
+		name    string
+		message string
+		diff    string
+		aiReply string
+		aiErr   error
+		want    CommitVerdict
+		wantErr error
+	}{
+		{
+			name:    "happy path worthwhile",
+			message: "feat: add pricing page",
+			diff:    "diff --git a/src/pages/Pricing.tsx",
+			aiReply: `{"worthwhile": true, "reason": "adds new /pricing page"}`,
+			want:    CommitVerdict{Worthwhile: true, Reason: "adds new /pricing page"},
+		},
+		{
+			name:    "happy path not worthwhile",
+			message: "chore: bump lockfile",
+			diff:    "diff --git a/package-lock.json",
+			aiReply: `{"worthwhile": false, "reason": "lockfile-only change"}`,
+			want:    CommitVerdict{Worthwhile: false, Reason: "lockfile-only change"},
+		},
+		{
+			name:    "empty reason is backfilled so logs are never blank",
+			message: "chore:",
+			diff:    "diff",
+			aiReply: `{"worthwhile": false, "reason": ""}`,
+			want:    CommitVerdict{Worthwhile: false, Reason: "classifier returned no reason"},
+		},
+		{
+			name:    "whitespace around response is tolerated",
+			message: "fix: UI",
+			diff:    "diff",
+			aiReply: "  \n{\"worthwhile\": true, \"reason\": \"fix UI\"}\n ",
+			want:    CommitVerdict{Worthwhile: true, Reason: "fix UI"},
+		},
+		{
+			name:    "AI error maps to ErrClassifyCommit",
+			message: "anything",
+			diff:    "anything",
+			aiErr:   errors.New("anthropic 500"),
+			wantErr: ErrClassifyCommit,
+		},
+		{
+			name:    "malformed JSON maps to ErrClassifyCommit",
+			message: "anything",
+			diff:    "anything",
+			aiReply: "not json at all",
+			wantErr: ErrClassifyCommit,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			ai := NewMockAIClient(ctrl)
+			ai.EXPECT().
+				CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(tt.aiReply, tt.aiErr)
+			proc := New(noVoiceStore(ctrl), ai, logger)
+			got, err := proc.ClassifyCommit(context.Background(), tt.message, tt.diff)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

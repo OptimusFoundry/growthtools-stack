@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	contentProc "base-server/internal/content/processor"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -1017,6 +1018,10 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 		name    string
 		commits func(repo store.GitHubRepo) []store.GitHubCommit
 		mocks   func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo)
+		// classifierMocks, when non-nil, wires a MockCommitClassifier into
+		// the processor with the given expectations. Leave nil to exercise
+		// the unfiltered path.
+		classifierMocks func(cl *MockCommitClassifier, s *MockGitHubStore)
 		// assertPublished records the CaptureRequest values passed to Publish
 		// for cases that need payload inspection. When nil, no payload
 		// assertions are made (publisher.Publish expectations are set in mocks).
@@ -1152,6 +1157,75 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			},
 		},
 		{
+			// Classifier flags commit as not worthwhile — should write
+			// skipped_reason and never call Publish.
+			name: "classifier skips commit — reason persisted, publisher never called",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("skipsha", "chore: bump lockfile")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "skipsha").
+					Return("lockfile diff", nil)
+				// No Publish expectation — strict controller fails if called.
+			},
+			classifierMocks: func(cl *MockCommitClassifier, s *MockGitHubStore) {
+				cl.EXPECT().
+					ClassifyCommit(gomock.Any(), "chore: bump lockfile", "lockfile diff").
+					Return(contentProc.CommitVerdict{Worthwhile: false, Reason: "lockfile-only change"}, nil)
+				s.EXPECT().
+					MarkGitHubCommitSkipped(gomock.Any(), gomock.Any(), "lockfile-only change").
+					Return(nil)
+			},
+		},
+		{
+			// Classifier errors — fail-open: proceed with capture.
+			name: "classifier error falls open — publish still happens",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("failopensha", "feat: add thing")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "failopensha").
+					Return("real diff", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					Return(nil)
+			},
+			classifierMocks: func(cl *MockCommitClassifier, s *MockGitHubStore) {
+				cl.EXPECT().ClassifyCommit(gomock.Any(), "feat: add thing", "real diff").
+					Return(contentProc.CommitVerdict{}, errors.New("anthropic timeout"))
+				// No MarkGitHubCommitSkipped — classifier failing must not
+				// mark the commit as skipped.
+			},
+		},
+		{
+			// Classifier picks the commit — Publish happens, skip is not
+			// persisted.
+			name: "classifier picks commit — publishes, no skip recorded",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("keepsha", "feat: new pricing page")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "keepsha").
+					Return("pricing diff", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					Return(nil)
+			},
+			classifierMocks: func(cl *MockCommitClassifier, s *MockGitHubStore) {
+				cl.EXPECT().ClassifyCommit(gomock.Any(), "feat: new pricing page", "pricing diff").
+					Return(contentProc.CommitVerdict{Worthwhile: true, Reason: "adds new /pricing page"}, nil)
+				// No MarkGitHubCommitSkipped — worthwhile commits don't get
+				// flagged in the DB.
+			},
+		},
+		{
 			// GetRepoReadme failure: AppURL="" but Publish is still called.
 			name: "readme failure – publishes with empty AppURL",
 			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
@@ -1194,6 +1268,11 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			tt.mocks(mockStore, mockClient, mockPublisher, connID, repo)
 
 			proc := NewWithOAuth(mockStore, mockClient, mockPublisher, testWebhookSecret, "client-id", "http://localhost", logger)
+			if tt.classifierMocks != nil {
+				mockClassifier := NewMockCommitClassifier(ctrl)
+				tt.classifierMocks(mockClassifier, mockStore)
+				proc.SetCommitClassifier(mockClassifier)
+			}
 			proc.enqueueCaptureRequests(context.Background(), repo, commits)
 			// enqueueCaptureRequests returns nothing; correctness is verified
 			// entirely through mock expectations and DoAndReturn assertions.

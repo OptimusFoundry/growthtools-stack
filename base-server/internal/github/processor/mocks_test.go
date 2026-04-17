@@ -10,6 +10,7 @@
 package processor
 
 import (
+	processor "base-server/internal/content/processor"
 	github "base-server/internal/infra/clients/github"
 	store "base-server/internal/infra/store"
 	context "context"
@@ -301,6 +302,20 @@ func (mr *MockGitHubStoreMockRecorder) MarkGitHubCommitCaptureRequested(ctx, com
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkGitHubCommitCaptureRequested", reflect.TypeOf((*MockGitHubStore)(nil).MarkGitHubCommitCaptureRequested), ctx, commitID)
 }
 
+// MarkGitHubCommitSkipped mocks base method.
+func (m *MockGitHubStore) MarkGitHubCommitSkipped(ctx context.Context, commitID uuid.UUID, reason string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkGitHubCommitSkipped", ctx, commitID, reason)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkGitHubCommitSkipped indicates an expected call of MarkGitHubCommitSkipped.
+func (mr *MockGitHubStoreMockRecorder) MarkGitHubCommitSkipped(ctx, commitID, reason any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkGitHubCommitSkipped", reflect.TypeOf((*MockGitHubStore)(nil).MarkGitHubCommitSkipped), ctx, commitID, reason)
+}
+
 // MarkGitHubEventProcessed mocks base method.
 func (m *MockGitHubStore) MarkGitHubEventProcessed(ctx context.Context, id uuid.UUID, postID *uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -383,6 +398,45 @@ func (m *MockGitHubStore) UpdateGitHubRepoID(ctx context.Context, repoID uuid.UU
 func (mr *MockGitHubStoreMockRecorder) UpdateGitHubRepoID(ctx, repoID, githubRepoID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitHubRepoID", reflect.TypeOf((*MockGitHubStore)(nil).UpdateGitHubRepoID), ctx, repoID, githubRepoID)
+}
+
+// MockCommitClassifier is a mock of CommitClassifier interface.
+type MockCommitClassifier struct {
+	ctrl     *gomock.Controller
+	recorder *MockCommitClassifierMockRecorder
+	isgomock struct{}
+}
+
+// MockCommitClassifierMockRecorder is the mock recorder for MockCommitClassifier.
+type MockCommitClassifierMockRecorder struct {
+	mock *MockCommitClassifier
+}
+
+// NewMockCommitClassifier creates a new mock instance.
+func NewMockCommitClassifier(ctrl *gomock.Controller) *MockCommitClassifier {
+	mock := &MockCommitClassifier{ctrl: ctrl}
+	mock.recorder = &MockCommitClassifierMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCommitClassifier) EXPECT() *MockCommitClassifierMockRecorder {
+	return m.recorder
+}
+
+// ClassifyCommit mocks base method.
+func (m *MockCommitClassifier) ClassifyCommit(ctx context.Context, message, diff string) (processor.CommitVerdict, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClassifyCommit", ctx, message, diff)
+	ret0, _ := ret[0].(processor.CommitVerdict)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ClassifyCommit indicates an expected call of ClassifyCommit.
+func (mr *MockCommitClassifierMockRecorder) ClassifyCommit(ctx, message, diff any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClassifyCommit", reflect.TypeOf((*MockCommitClassifier)(nil).ClassifyCommit), ctx, message, diff)
 }
 
 // MockGitHubClient is a mock of GitHubClient interface.

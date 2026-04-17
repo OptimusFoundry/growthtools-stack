@@ -17,6 +17,7 @@ growth-tools/
 - **Go backend conventions:** [base-server/CLAUDE.md](base-server/CLAUDE.md)
 - **React frontend conventions:** [webapp/CLAUDE.md](webapp/CLAUDE.md)
 - **Design system & component patterns:** [webapp/docs/DESIGN-GUIDELINES.md](webapp/docs/DESIGN-GUIDELINES.md)
+- **Commit message convention:** [COMMITS.md](COMMITS.md) — Conventional Commits, enforced by the `.githooks/commit-msg` hook. Run `./.githooks/install.sh` once per clone to activate.
 
 ## Quick Reference
 

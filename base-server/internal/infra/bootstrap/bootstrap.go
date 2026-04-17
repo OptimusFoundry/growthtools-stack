@@ -337,6 +337,11 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 		logger,
 	)
 	githubProc.SetURLSigner(urlSigner)
+	// AI-filter pushed commits: only commits the content processor flags as
+	// worthwhile (user-visible change) survive into the capture pipeline.
+	// Fail-open inside the processor means a classifier outage doesn't drop
+	// user features on the floor.
+	githubProc.SetCommitClassifier(&contentProc)
 	deps.GitHubHandler = githubHandler.New(&githubProc, cfg.Services.WebAppURI, logger)
 
 	// Blog

@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	contentProc "base-server/internal/content/processor"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -75,6 +76,14 @@ type GitHubStore interface {
 	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, error)
 	CountGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID) (int, error)
 	GetGitHubCommitByIDForUser(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error)
+	MarkGitHubCommitSkipped(ctx context.Context, commitID uuid.UUID, reason string) error
+}
+
+// CommitClassifier decides whether a pushed commit is worth running the
+// capture + draft pipeline on. Returning an error is treated as fail-open
+// by callers — the commit proceeds rather than being silently dropped.
+type CommitClassifier interface {
+	ClassifyCommit(ctx context.Context, message, diff string) (contentProc.CommitVerdict, error)
 }
 
 // GitHubClient defines the GitHub API calls required by GitHubProcessor
@@ -131,6 +140,7 @@ type GitHubProcessor struct {
 	githubClient  GitHubClient
 	publisher     EventPublisher
 	urlSigner     URLSigner
+	classifier    CommitClassifier
 	webhookSecret string
 	webAppHost    string
 	oauthClientID string
@@ -146,6 +156,13 @@ type GitHubProcessor struct {
 // capture URLs unrewritten (local/dev storage).
 func (p *GitHubProcessor) SetURLSigner(signer URLSigner) {
 	p.urlSigner = signer
+}
+
+// SetCommitClassifier wires the classifier that decides which pushed
+// commits to run through capture + draft. Nil is allowed — the processor
+// falls back to capturing every commit, matching the pre-filter behaviour.
+func (p *GitHubProcessor) SetCommitClassifier(c CommitClassifier) {
+	p.classifier = c
 }
 
 func New(store GitHubStore, webhookSecret string, logger *observability.Logger) GitHubProcessor {
@@ -484,6 +501,24 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 		}
 		if len(diff) > maxDiffChars {
 			diff = diff[:maxDiffChars] + "\n… [truncated]"
+		}
+
+		// AI-driven filter: drop commits that aren't worth the capture +
+		// post cost. Nil classifier or classifier errors fall through —
+		// we'd rather capture noise than silently swallow a user feature.
+		if p.classifier != nil {
+			verdict, classifyErr := p.classifier.ClassifyCommit(ctx, commit.Message, diff)
+			if classifyErr != nil {
+				p.logger.Error(ctx, fmt.Sprintf("commit classifier failed for %s; proceeding with capture", commit.SHA), classifyErr)
+			} else if !verdict.Worthwhile {
+				p.logger.Info(ctx, fmt.Sprintf("skipping commit %s: %s", commit.SHA, verdict.Reason))
+				if markErr := p.store.MarkGitHubCommitSkipped(ctx, commit.ID, verdict.Reason); markErr != nil {
+					p.logger.Error(ctx, fmt.Sprintf("failed to persist skip reason for %s", commit.SHA), markErr)
+				}
+				continue
+			} else {
+				p.logger.Info(ctx, fmt.Sprintf("capturing commit %s: %s", commit.SHA, verdict.Reason))
+			}
 		}
 
 		req := CaptureRequest{

@@ -59,6 +59,7 @@ type GitHubCommit struct {
 	PostID             *uuid.UUID       `db:"post_id" json:"post_id,omitempty"`
 	CaptureOutput      *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
 	CaptureRequestedAt *time.Time       `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
+	SkippedReason      *string          `db:"skipped_reason" json:"skipped_reason,omitempty"`
 	ProcessedAt        *time.Time       `db:"processed_at" json:"processed_at,omitempty"`
 	CreatedAt          time.Time        `db:"created_at" json:"created_at"`
 	// Repo context — populated by ListGitHubCommitsByConnection so the UI can
@@ -83,6 +84,7 @@ type GitHubCommitSummary struct {
 	PushedAt             time.Time  `db:"pushed_at" json:"pushed_at"`
 	PostID               *uuid.UUID `db:"post_id" json:"post_id,omitempty"`
 	CaptureRequestedAt   *time.Time `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
+	SkippedReason        *string    `db:"skipped_reason" json:"skipped_reason,omitempty"`
 	ProcessedAt          *time.Time `db:"processed_at" json:"processed_at,omitempty"`
 	CreatedAt            time.Time  `db:"created_at" json:"created_at"`
 	RepoOwner            *string    `db:"repo_owner" json:"repo_owner,omitempty"`
@@ -387,11 +389,11 @@ const sqlInsertGitHubCommit = `
 INSERT INTO github_commits (repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (repo_id, sha) DO NOTHING
-RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, capture_requested_at, processed_at, created_at
+RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, capture_requested_at, skipped_reason, processed_at, created_at
 `
 
 const sqlGetGitHubCommitByRepoSHA = `
-SELECT id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, capture_requested_at, processed_at, created_at
+SELECT id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, capture_requested_at, skipped_reason, processed_at, created_at
 FROM github_commits
 WHERE repo_id = $1 AND sha = $2
 `
@@ -483,6 +485,30 @@ func (s *Store) MarkGitHubCommitCaptureRequested(ctx context.Context, commitID u
 	return rows > 0, nil
 }
 
+const sqlMarkGitHubCommitSkipped = `
+UPDATE github_commits
+SET skipped_reason = $2, processed_at = NOW()
+WHERE id = $1
+`
+
+// MarkGitHubCommitSkipped records the classifier's verdict on a commit that
+// will not be captured. processed_at is stamped so the row looks "finished"
+// in the UI alongside commits that did go through the worker.
+func (s *Store) MarkGitHubCommitSkipped(ctx context.Context, commitID uuid.UUID, reason string) error {
+	res, err := s.db.ExecContext(ctx, sqlMarkGitHubCommitSkipped, commitID, reason)
+	if err != nil {
+		return fmt.Errorf("failed to mark github commit skipped: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 const sqlUpdateGitHubCommitPostID = `
 UPDATE github_commits
 SET post_id = $2
@@ -546,7 +572,7 @@ func (s *Store) GetGitHubCommitForDraft(ctx context.Context, commitID uuid.UUID)
 }
 
 const sqlListGitHubCommitsByConnection = `
-SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.post_id, gc.capture_requested_at, gc.processed_at, gc.created_at,
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.post_id, gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name,
        COALESCE(jsonb_array_length(gc.capture_output->'uploaded'), 0) AS capture_artifact_count,
        gc.capture_output->>'error' AS capture_error
@@ -573,7 +599,7 @@ func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID 
 // it belongs to a repo under the given user's connection. Used by the
 // authenticated details endpoint.
 const sqlGetGitHubCommitByIDForUser = `
-SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.capture_requested_at, gc.processed_at, gc.created_at,
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# commit-msg hook: enforce Conventional Commits on non-merge, non-fixup messages.
+#
+# This matters because base-server's AI classifier reads the commit message
+# alongside the diff when deciding whether a commit is worth running the
+# capture + post pipeline on. Conventional prefixes are a strong hint:
+#   feat/fix  → likely user-visible, likely worth a post
+#   chore/ci/test/docs/style/refactor/build → usually skipped
+#
+# The classifier ultimately looks at the diff too, so the convention is a
+# helper, not a gate. But consistent prefixes make skip/keep decisions
+# predictable and make the audit log readable.
+
+set -e
+
+msg_file="$1"
+# Read the first non-empty, non-comment line — this is what Git commits.
+subject="$(grep -v '^#' "$msg_file" | awk 'NF { print; exit }')"
+
+# Merge commits from `git merge` start with "Merge ..." — always allow.
+if [[ "$subject" =~ ^Merge[[:space:]] ]]; then exit 0; fi
+# Revert commits written by `git revert` — allow (the reverted commit
+# already went through this hook the first time).
+if [[ "$subject" =~ ^Revert[[:space:]]\" ]]; then exit 0; fi
+# Interactive-rebase helpers — allow; the final commit that absorbs them
+# is what gets validated.
+if [[ "$subject" =~ ^(fixup|squash)! ]]; then exit 0; fi
+
+# Conventional Commits:
+#   <type>(<scope>)?!?: <subject>
+# <type> is one of the fixed list below, scope is any [a-z0-9-/] sequence,
+# optional ! flags a breaking change, subject is non-empty.
+pattern='^(feat|fix|chore|ci|docs|test|refactor|style|perf|build|revert)(\([a-z0-9][a-z0-9_/-]*\))?!?:[[:space:]].+'
+
+if [[ "$subject" =~ $pattern ]]; then
+    exit 0
+fi
+
+cat >&2 <<EOF
+✗ Commit message doesn't match the project convention.
+
+Subject line was:
+    $subject
+
+Expected format:
+    <type>(<scope>)?!?: <subject>
+
+Allowed <type> values:
+    feat      — user-visible new feature
+    fix       — user-visible bug fix
+    perf      — user-visible performance improvement
+    chore     — maintenance, tooling, dependency bumps
+    ci        — CI / workflow changes
+    docs      — documentation only
+    test      — tests only
+    refactor  — internal restructuring with no behaviour change
+    style     — formatting / lint-only
+    build     — build system / packaging
+    revert    — explicit revert
+
+Examples:
+    feat(webapp): show pricing page
+    fix(base-server): handle empty capture output
+    chore: bump deps
+    feat!: drop /v1 endpoints
+
+Why: base-server's AI classifier reads the message + diff to decide
+which commits are worth turning into social posts. Clear prefixes help
+it make the right call (and keep the skip/keep log explainable).
+
+See COMMITS.md for the full rationale.
+EOF
+exit 1
