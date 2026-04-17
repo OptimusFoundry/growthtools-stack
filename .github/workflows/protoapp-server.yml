@@ -76,10 +76,12 @@ jobs:
       # contention is small.
       #
       # The Dockerfiles use BuildKit cache mounts (/go/pkg/mod,
-      # /root/.cache/go-build), which persist across builds inside GHA's
-      # cache backend. `mode=min` keeps cache exports small — we only need
-      # the final-stage layers for test images; the prod push uses its own
-      # `mode=max` scope.
+      # /root/.cache/go-build) so partial dep bumps only rebuild the delta.
+      # test-server uses `mode=max` because docker-build-and-push reads the
+      # same scope and needs the builder-stage layers (where `go build`
+      # runs) — `mode=min` would only export the final alpine+binary stage.
+      # test-runner uses `mode=min`: nothing downstream reuses its cache,
+      # so exporting every intermediate layer is wasted bandwidth.
       - name: Build test images (parallel)
         run: |
           set -o pipefail
@@ -89,7 +91,7 @@ jobs:
             --tag base-server-test-server:ci \
             --load \
             --cache-from type=gha,scope=test-server \
-            --cache-to type=gha,mode=min,scope=test-server \
+            --cache-to type=gha,mode=max,scope=test-server \
             . > /tmp/build-server.log 2>&1 &
           SERVER_PID=$!
 
