@@ -73,6 +73,7 @@ type GitHubStore interface {
 	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
 	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommit, error)
+	CountGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID) (int, error)
 }
 
 // GitHubClient defines the GitHub API calls required by GitHubProcessor
@@ -752,8 +753,10 @@ func (p *GitHubProcessor) DisconnectRepo(ctx context.Context, userID uuid.UUID, 
 	return nil
 }
 
-// ListRecentCommits returns recent commits across all repos for a user's connection
-func (p *GitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit int) ([]store.GitHubCommit, error) {
+// ListRecentCommits returns a page of commits across all repos for a user's
+// connection along with the total row count so the UI can render full page
+// navigation.
+func (p *GitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommit, int, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "user_id", Value: userID.String()},
 		observability.Field{Key: "operation", Value: "list_recent_commits"},
@@ -762,16 +765,23 @@ func (p *GitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUI
 	conn, err := p.store.GetGitHubConnectionByUserID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return nil, ErrConnectionNotFound
+			return nil, 0, ErrConnectionNotFound
 		}
 		p.logger.Error(ctx, "failed to get github connection", err)
-		return nil, ErrConnectionNotFound
+		return nil, 0, ErrConnectionNotFound
 	}
 
-	commits, err := p.store.ListGitHubCommitsByConnection(ctx, conn.ID, limit, 0)
+	total, err := p.store.CountGitHubCommitsByConnection(ctx, conn.ID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to count github commits", err)
+		return nil, 0, ErrFailedDisconnect
+	}
+
+	commits, err := p.store.ListGitHubCommitsByConnection(ctx, conn.ID, limit, offset)
 	if err != nil {
 		p.logger.Error(ctx, "failed to list github commits", err)
-		return nil, ErrFailedDisconnect
+		return nil, 0, ErrFailedDisconnect
 	}
-	return commits, nil
+
+	return commits, total, nil
 }

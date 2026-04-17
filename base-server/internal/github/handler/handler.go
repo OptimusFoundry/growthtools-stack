@@ -29,7 +29,7 @@ type GitHubProcessor interface {
 	ListAvailableRepos(ctx context.Context, userID uuid.UUID, page int) ([]processor.AvailableRepo, error)
 	ConnectRepo(ctx context.Context, userID uuid.UUID, owner, name string) (store.GitHubRepo, error)
 	DisconnectRepo(ctx context.Context, userID uuid.UUID, owner, name string) error
-	ListRecentCommits(ctx context.Context, userID uuid.UUID, limit int) ([]store.GitHubCommit, error)
+	ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommit, int, error)
 }
 
 type Handler struct {
@@ -297,8 +297,16 @@ func (h *Handler) HandleDisconnectRepo(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// HandleListCommits returns recent commits across all connected repos
-// GET /api/protected/github/commits?limit=N
+// ListCommitsResponse is the paginated response for HandleListCommits.
+type ListCommitsResponse struct {
+	Commits []store.GitHubCommit `json:"commits"`
+	Total   int                  `json:"total"`
+	Limit   int                  `json:"limit"`
+	Offset  int                  `json:"offset"`
+}
+
+// HandleListCommits returns a page of commits across all connected repos.
+// GET /api/protected/github/commits?limit=N&offset=M
 func (h *Handler) HandleListCommits(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -315,11 +323,27 @@ func (h *Handler) HandleListCommits(c *gin.Context) {
 		}
 	}
 
-	commits, err := h.processor.ListRecentCommits(ctx, userID, limit)
+	offset := 0
+	if o := c.Query("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	commits, total, err := h.processor.ListRecentCommits(ctx, userID, limit, offset)
 	if err != nil {
 		h.handleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, commits)
+	if commits == nil {
+		commits = []store.GitHubCommit{}
+	}
+
+	c.JSON(http.StatusOK, ListCommitsResponse{
+		Commits: commits,
+		Total:   total,
+		Limit:   limit,
+		Offset:  offset,
+	})
 }

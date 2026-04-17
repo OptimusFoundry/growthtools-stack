@@ -20,6 +20,7 @@ import {
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Pagination } from "@/proto-design-system/components/navigation/Pagination";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
@@ -255,9 +256,15 @@ function StatusBadge({ state }: StatusBadgeProps) {
 
 // ---------- Page ----------
 
+const PAGE_SIZE = 25;
+
 function GitHubPage() {
 	const { connection, loading: connectionLoading } = useGitHubConnection();
-	const { commits, loading, refetch } = useGitHubCommits(!!connection, 50);
+	const { commits, total, loading, refetch, page, setPage } = useGitHubCommits(
+		!!connection,
+		PAGE_SIZE,
+	);
+	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
 	if (connectionLoading) {
 		return (
@@ -310,10 +317,27 @@ function GitHubPage() {
 					description="Push to a watched repository and it'll show up here within seconds."
 				/>
 			) : (
-				<Stack gap="sm">
-					{commits.map((commit, index) => (
-						<CommitRow key={commit.id} commit={commit} index={index} />
-					))}
+				<Stack gap="md">
+					<Stack gap="sm">
+						{commits.map((commit, index) => (
+							<CommitRow key={commit.id} commit={commit} index={index} />
+						))}
+					</Stack>
+					{totalPages > 1 && (
+						<Stack direction="row" justify="between" align="center" wrap>
+							<Text size="xs" color="muted">
+								{total} commit{total === 1 ? "" : "s"} · page {page} of{" "}
+								{totalPages}
+							</Text>
+							<Pagination
+								page={page}
+								totalPages={totalPages}
+								onPageChange={setPage}
+								size="sm"
+								disabled={loading}
+							/>
+						</Stack>
+					)}
 				</Stack>
 			)}
 		</Stack>

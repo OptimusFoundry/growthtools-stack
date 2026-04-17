@@ -45,6 +45,21 @@ func (m *MockGitHubStore) EXPECT() *MockGitHubStoreMockRecorder {
 	return m.recorder
 }
 
+// CountGitHubCommitsByConnection mocks base method.
+func (m *MockGitHubStore) CountGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountGitHubCommitsByConnection", ctx, connectionID)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountGitHubCommitsByConnection indicates an expected call of CountGitHubCommitsByConnection.
+func (mr *MockGitHubStoreMockRecorder) CountGitHubCommitsByConnection(ctx, connectionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountGitHubCommitsByConnection", reflect.TypeOf((*MockGitHubStore)(nil).CountGitHubCommitsByConnection), ctx, connectionID)
+}
+
 // CreateGitHubEvent mocks base method.
 func (m *MockGitHubStore) CreateGitHubEvent(ctx context.Context, params store.CreateGitHubEventParams) (store.GitHubEvent, error) {
 	m.ctrl.T.Helper()

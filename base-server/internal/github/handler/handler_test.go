@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -536,30 +538,81 @@ func TestHandler_HandleListCommits(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		path       string
 		mocks      func(m *MockGitHubProcessor)
 		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
 	}{
 		{
-			name: "200 happy path",
+			name: "200 happy path with defaults",
+			path: "/commits",
 			mocks: func(m *MockGitHubProcessor) {
-				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50).
-					Return([]store.GitHubCommit{}, nil)
+				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
+					Return([]store.GitHubCommit{}, 0, nil)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var got ListCommitsResponse
+				require.NoError(t, json.Unmarshal(body, &got))
+				assert.NotNil(t, got.Commits)
+				assert.Empty(t, got.Commits)
+				assert.Equal(t, 0, got.Total)
+				assert.Equal(t, 50, got.Limit)
+				assert.Equal(t, 0, got.Offset)
+			},
+		},
+		{
+			name: "200 forwards limit and offset and echoes them in response",
+			path: "/commits?limit=25&offset=50",
+			mocks: func(m *MockGitHubProcessor) {
+				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 25, 50).
+					Return([]store.GitHubCommit{{SHA: "abc"}}, 73, nil)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var got ListCommitsResponse
+				require.NoError(t, json.Unmarshal(body, &got))
+				require.Len(t, got.Commits, 1)
+				assert.Equal(t, "abc", got.Commits[0].SHA)
+				assert.Equal(t, 73, got.Total)
+				assert.Equal(t, 25, got.Limit)
+				assert.Equal(t, 50, got.Offset)
+			},
+		},
+		{
+			name: "200 ignores invalid limit and offset, falls back to defaults",
+			path: "/commits?limit=abc&offset=-5",
+			mocks: func(m *MockGitHubProcessor) {
+				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
+					Return([]store.GitHubCommit{}, 0, nil)
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "200 caps limit at 200",
+			path: "/commits?limit=500",
+			mocks: func(m *MockGitHubProcessor) {
+				// 500 is out of range so handler falls back to default 50.
+				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
+					Return([]store.GitHubCommit{}, 0, nil)
 			},
 			wantStatus: http.StatusOK,
 		},
 		{
 			name: "404 connection not found",
+			path: "/commits",
 			mocks: func(m *MockGitHubProcessor) {
-				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50).
-					Return(nil, processor.ErrConnectionNotFound)
+				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
+					Return(nil, 0, processor.ErrConnectionNotFound)
 			},
 			wantStatus: http.StatusNotFound,
 		},
 		{
 			name: "500 on list error",
+			path: "/commits",
 			mocks: func(m *MockGitHubProcessor) {
-				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50).
-					Return(nil, processor.ErrFailedDisconnect)
+				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
+					Return(nil, 0, processor.ErrFailedDisconnect)
 			},
 			wantStatus: http.StatusInternalServerError,
 		},
@@ -575,11 +628,14 @@ func TestHandler_HandleListCommits(t *testing.T) {
 			h := New(m, "http://localhost:3000", logger)
 			router := setupGitHubRouter(h, userID)
 
-			req := httptest.NewRequest(http.MethodGet, "/commits", nil)
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
 			assert.Equal(t, tt.wantStatus, w.Code)
+			if tt.wantBody != nil {
+				tt.wantBody(t, w.Body.Bytes())
+			}
 		})
 	}
 }

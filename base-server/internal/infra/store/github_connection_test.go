@@ -1107,3 +1107,59 @@ func TestStore_ListGitHubCommitsByConnection(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// CountGitHubCommitsByConnection
+// ============================================================================
+
+func TestStore_CountGitHubCommitsByConnection(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) uuid.UUID
+		wantMin int
+	}{
+		{
+			name: "counts commits across repos under the connection",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				for range 4 {
+					_, _, err := s.InsertGitHubCommit(ctx, repo.ID, "sha-cnt-"+uuid.New().String()[:20],
+						nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+					require.NoError(t, err)
+				}
+				return conn.ID
+			},
+			wantMin: 4,
+		},
+		{
+			name: "returns 0 when connection has no repos",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				return createTestGitHubConnection(t, s, userID).ID
+			},
+			wantMin: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			connID := tt.setup(t)
+			got, err := s.CountGitHubCommitsByConnection(ctx, connID)
+			require.NoError(t, err)
+			assert.GreaterOrEqual(t, got, tt.wantMin)
+		})
+	}
+}

@@ -571,19 +571,22 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 		name    string
 		mocks   func(s *MockGitHubStore)
 		wantErr error
-		assert  func(t *testing.T, commits []store.GitHubCommit)
+		assert  func(t *testing.T, commits []store.GitHubCommit, total int)
 	}{
 		{
-			name: "happy path",
+			name: "happy path returns commits with total",
 			mocks: func(s *MockGitHubStore) {
 				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), userID).
 					Return(store.GitHubConnection{ID: connID}, nil)
-				s.EXPECT().ListGitHubCommitsByConnection(gomock.Any(), connID, 10, 0).
+				s.EXPECT().CountGitHubCommitsByConnection(gomock.Any(), connID).
+					Return(42, nil)
+				s.EXPECT().ListGitHubCommitsByConnection(gomock.Any(), connID, 10, 20).
 					Return([]store.GitHubCommit{{ID: uuid.New(), SHA: "abc123"}}, nil)
 			},
-			assert: func(t *testing.T, commits []store.GitHubCommit) {
+			assert: func(t *testing.T, commits []store.GitHubCommit, total int) {
 				require.Len(t, commits, 1)
 				assert.Equal(t, "abc123", commits[0].SHA)
+				assert.Equal(t, 42, total)
 			},
 		},
 		{
@@ -595,11 +598,23 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 			wantErr: ErrConnectionNotFound,
 		},
 		{
+			name: "count store error returns ErrFailedDisconnect",
+			mocks: func(s *MockGitHubStore) {
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), userID).
+					Return(store.GitHubConnection{ID: connID}, nil)
+				s.EXPECT().CountGitHubCommitsByConnection(gomock.Any(), connID).
+					Return(0, errors.New("db error"))
+			},
+			wantErr: ErrFailedDisconnect,
+		},
+		{
 			name: "list commits store error returns ErrFailedDisconnect",
 			mocks: func(s *MockGitHubStore) {
 				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), userID).
 					Return(store.GitHubConnection{ID: connID}, nil)
-				s.EXPECT().ListGitHubCommitsByConnection(gomock.Any(), connID, 10, 0).
+				s.EXPECT().CountGitHubCommitsByConnection(gomock.Any(), connID).
+					Return(0, nil)
+				s.EXPECT().ListGitHubCommitsByConnection(gomock.Any(), connID, 10, 20).
 					Return(nil, errors.New("db error"))
 			},
 			wantErr: ErrFailedDisconnect,
@@ -614,7 +629,7 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 			tt.mocks(mockStore)
 
 			proc := New(mockStore, testWebhookSecret, logger)
-			commits, err := proc.ListRecentCommits(context.Background(), userID, 10)
+			commits, total, err := proc.ListRecentCommits(context.Background(), userID, 10, 20)
 
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -622,7 +637,7 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 			}
 			require.NoError(t, err)
 			if tt.assert != nil {
-				tt.assert(t, commits)
+				tt.assert(t, commits, total)
 			}
 		})
 	}

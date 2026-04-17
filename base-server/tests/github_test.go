@@ -141,7 +141,7 @@ func TestGitHubAPI_ListCommits(t *testing.T) {
 		wantBody   func(t *testing.T, body []byte)
 	}{
 		{
-			name: "200 returns empty list when connection has no repos",
+			name: "200 returns empty page when connection has no repos",
 			setup: func(t *testing.T) string {
 				u := seedUserWithAccount(t, c.Store)
 				seedGitHubConnection(t, c.Store, u.UserID)
@@ -149,9 +149,14 @@ func TestGitHubAPI_ListCommits(t *testing.T) {
 			},
 			wantStatus: http.StatusOK,
 			wantBody: func(t *testing.T, body []byte) {
-				var got []store.GitHubCommit
+				var got struct {
+					Commits []store.GitHubCommit `json:"commits"`
+					HasMore bool                 `json:"has_more"`
+				}
 				require.NoError(t, json.Unmarshal(body, &got))
-				assert.NotNil(t, got)
+				assert.NotNil(t, got.Commits)
+				assert.Empty(t, got.Commits)
+				assert.False(t, got.HasMore)
 			},
 		},
 		{

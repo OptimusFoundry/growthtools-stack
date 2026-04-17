@@ -7,23 +7,6 @@
 	min-height: var(--space-48);
 }
 
-// ─── Back link ───────────────────────────────────────────────────────────────
-
-.backLink {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-1);
-	font-size: var(--font-size-sm);
-	color: var(--color-muted);
-	text-decoration: none;
-	transition: color 0.15s ease;
-	width: fit-content;
-
-	&:hover {
-		color: var(--color-base-content);
-	}
-}
-
 // ─── Header meta row ─────────────────────────────────────────────────────────
 
 .meta {

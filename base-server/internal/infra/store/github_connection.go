@@ -502,3 +502,18 @@ func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID 
 	}
 	return commits, nil
 }
+
+const sqlCountGitHubCommitsByConnection = `
+SELECT COUNT(*)
+FROM github_commits gc
+JOIN github_repos gr ON gr.id = gc.repo_id
+WHERE gr.connection_id = $1 AND gr.deleted_at IS NULL
+`
+
+func (s *Store) CountGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID) (int, error) {
+	var total int
+	if err := s.db.GetContext(ctx, &total, sqlCountGitHubCommitsByConnection, connectionID); err != nil {
+		return 0, fmt.Errorf("failed to count github commits: %w", err)
+	}
+	return total, nil
+}

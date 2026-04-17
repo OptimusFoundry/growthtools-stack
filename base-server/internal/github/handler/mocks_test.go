@@ -161,16 +161,17 @@ func (mr *MockGitHubProcessorMockRecorder) ListAvailableRepos(ctx, userID, page 
 }
 
 // ListRecentCommits mocks base method.
-func (m *MockGitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit int) ([]store.GitHubCommit, error) {
+func (m *MockGitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommit, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRecentCommits", ctx, userID, limit)
+	ret := m.ctrl.Call(m, "ListRecentCommits", ctx, userID, limit, offset)
 	ret0, _ := ret[0].([]store.GitHubCommit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // ListRecentCommits indicates an expected call of ListRecentCommits.
-func (mr *MockGitHubProcessorMockRecorder) ListRecentCommits(ctx, userID, limit any) *gomock.Call {
+func (mr *MockGitHubProcessorMockRecorder) ListRecentCommits(ctx, userID, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecentCommits", reflect.TypeOf((*MockGitHubProcessor)(nil).ListRecentCommits), ctx, userID, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecentCommits", reflect.TypeOf((*MockGitHubProcessor)(nil).ListRecentCommits), ctx, userID, limit, offset)
 }

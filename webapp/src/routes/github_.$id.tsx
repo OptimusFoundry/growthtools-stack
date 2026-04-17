@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	ArrowLeft,
 	Download,
 	ExternalLink,
 	FileText,
@@ -19,8 +18,10 @@ import { useGitHubConnection } from "@/hooks/useGitHubConnection";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Card } from "@/proto-design-system/components/layout/Card";
+import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Grid } from "@/proto-design-system/components/layout/Grid";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
@@ -82,6 +83,8 @@ function CommitDetailsPage() {
 	if (connectionLoading || (loading && commits.length === 0)) {
 		return (
 			<Stack gap="lg" className={styles.page} animate>
+				<CommitBreadcrumb />
+				<Divider />
 				<Stack align="center" justify="center" className={styles.loading}>
 					<Spinner size="lg" />
 				</Stack>
@@ -92,7 +95,8 @@ function CommitDetailsPage() {
 	if (!commit) {
 		return (
 			<Stack gap="lg" className={styles.page} animate>
-				<BackLink />
+				<CommitBreadcrumb />
+				<Divider />
 				<EmptyState
 					icon={<GitCommit size={48} />}
 					title="Commit not found"
@@ -133,7 +137,8 @@ const CommitDetails = memo(function CommitDetails({
 
 	return (
 		<Stack gap="lg" className={styles.page} animate>
-			<BackLink />
+			<CommitBreadcrumb label={firstLine} />
+			<Divider />
 
 			<Stack gap="sm">
 				<Stack direction="row" align="center" gap="sm" wrap>
@@ -349,12 +354,20 @@ MetadataSection.displayName = "MetadataSection";
 // Bits
 // ============================================================================
 
-function BackLink() {
+interface CommitBreadcrumbProps {
+	label?: string;
+}
+
+function CommitBreadcrumb({ label }: CommitBreadcrumbProps = {}) {
+	const trail = label && label.length > 60 ? `${label.slice(0, 60)}…` : label;
 	return (
-		<Link to="/github" className={styles.backLink}>
-			<ArrowLeft size={14} />
-			Back to activity
-		</Link>
+		<Breadcrumb
+			size="lg"
+			items={[
+				{ label: "GitHub", href: "/github", icon: <Github size={18} /> },
+				{ label: trail ?? "Commit" },
+			]}
+		/>
 	);
 }
 
