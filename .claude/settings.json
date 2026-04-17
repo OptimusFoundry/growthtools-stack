@@ -7,8 +7,8 @@
       "Edit",
       "WebFetch",
       "WebSearch",
-      "mcp__claude-in-chrome__*"
-    ],
-    "deny": []
+      "mcp__claude-in-chrome__*",
+      "Read(//Users/shubh/Workspaces/first-saas-repo/.claude/agents/**)"
+    ]
   }
 }
