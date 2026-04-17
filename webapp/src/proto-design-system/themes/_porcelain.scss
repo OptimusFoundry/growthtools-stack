@@ -44,10 +44,10 @@
   --shadow-color: oklch(50% 0.01 250deg / 0.06);
   --shadow-color-strong: oklch(35% 0.01 250deg / 0.12);
 
-  // Primary — muted royal blue, confident but not loud
-  --color-primary: oklch(52% 0.14 255deg);
-  --color-primary-hover: oklch(47% 0.16 255deg);
-  --color-primary-active: oklch(42% 0.14 255deg);
+  // Primary — quiet denim / chambray blue
+  --color-primary: oklch(52% 0.08 255deg);
+  --color-primary-hover: oklch(47% 0.1 255deg);
+  --color-primary-active: oklch(42% 0.08 255deg);
   --color-primary-content: oklch(100% 0 0deg);
 
   // Secondary — soft cyan
@@ -81,7 +81,7 @@
   --color-info-content: oklch(100% 0 0deg);
 
   // Focus ring
-  --focus-ring-color: oklch(52% 0.14 255deg / 0.35);
+  --focus-ring-color: oklch(52% 0.08 255deg / 0.35);
 
   // Muted
   --color-muted: oklch(62% 0.01 255deg);
