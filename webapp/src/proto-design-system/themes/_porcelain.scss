@@ -56,10 +56,12 @@
   --color-secondary-active: oklch(52% 0.1 220deg);
   --color-secondary-content: oklch(100% 0 0deg);
 
-  // Accent — dusky sky blue
-  --color-accent: oklch(68% 0.09 230deg);
-  --color-accent-hover: oklch(63% 0.11 230deg);
-  --color-accent-active: oklch(58% 0.09 230deg);
+  // Accent — bold electric blue, the one place the palette is allowed to
+  // shout. Sits loud against the quiet chambray primary + soft cyan
+  // secondary, so it carves out visual hierarchy on highlights and CTAs.
+  --color-accent: oklch(60% 0.26 255deg);
+  --color-accent-hover: oklch(55% 0.28 255deg);
+  --color-accent-active: oklch(50% 0.26 255deg);
   --color-accent-content: oklch(100% 0 0deg);
 
   // Semantic colors
