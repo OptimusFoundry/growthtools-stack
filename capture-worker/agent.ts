@@ -20,7 +20,8 @@ import {
 	Type,
 } from "@google/genai";
 import { type Page, chromium } from "playwright";
-import { loginAs } from "./auth.ts";
+import { captureLoginStorageState } from "./auth.ts";
+import { resolveVideoSpeed, speedUpWebm } from "./video.ts";
 
 const execFileP = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -438,9 +439,21 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 			: await fetchCommitContext(commit, repoRoot);
 
 	const browser = await chromium.launch();
+
+	// Log in in a throwaway context so the /test-login page, credentials,
+	// and redirect never land on the recorded video. We then open a fresh
+	// recording context seeded with the resulting cookies + localStorage,
+	// so Playwright starts recording at the post-login landing page.
+	const storageState = await captureLoginStorageState(browser, {
+		appUrl,
+		email,
+		password,
+	});
+
 	const context = await browser.newContext({
 		viewport: { width: 1440, height: 900 },
 		recordVideo: { dir: captureDir, size: { width: 1440, height: 900 } },
+		storageState,
 	});
 
 	// Inject a visible cursor that follows mousemove events. Playwright's
@@ -458,7 +471,9 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 	const transcriptPath = path.join(captureDir, "transcript.json");
 
 	try {
-		await loginAs(page, { appUrl, email, password });
+		// Land the recording context on the app's post-login page so the
+		// video opens on something meaningful rather than about:blank.
+		await page.goto(`${appUrl}/`, { waitUntil: "networkidle" });
 
 		const initialSnap = await snapshot(
 			{ page, appUrl, captureDir, stepIndex, done: doneState },
@@ -600,7 +615,9 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		if (video) {
 			const raw = await video.path();
 			videoPath = path.join(captureDir, "recording.webm");
-			await fs.rename(raw, videoPath);
+			// Speed the raw clip up so the final demo feels snappy. Default
+			// is 2× real time; override with CAPTURE_VIDEO_SPEED (1 = raw).
+			await speedUpWebm(raw, videoPath, resolveVideoSpeed());
 		}
 
 		narrationPath = path.join(captureDir, "narration.json");

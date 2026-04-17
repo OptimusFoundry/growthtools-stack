@@ -13,7 +13,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { loginAs } from "./auth.ts";
+import { captureLoginStorageState } from "./auth.ts";
+import { resolveVideoSpeed, speedUpWebm } from "./video.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -88,17 +89,28 @@ export async function capture(input: CaptureInput): Promise<CaptureResult> {
 	await fs.mkdir(captureDir, { recursive: true });
 
 	const browser = await chromium.launch();
+
+	// Log in off-camera in a no-video context, hand the session cookies +
+	// localStorage to the recording context via storageState. The video
+	// starts fresh at the target page — no /test-login, no credentials,
+	// no login redirect on the clip.
+	const storageState = await captureLoginStorageState(browser, {
+		appUrl,
+		email,
+		password,
+		testLoginPath,
+	});
+
 	const context = await browser.newContext({
 		viewport: { width: 1440, height: 900 },
 		recordVideo: { dir: captureDir, size: { width: 1440, height: 900 } },
+		storageState,
 	});
 	const page = await context.newPage();
 
 	let screenshotPath = "";
 	let videoPath = "";
 	try {
-		await loginAs(page, { appUrl, email, password, testLoginPath });
-
 		await page.goto(`${appUrl}${pagePath}`, { waitUntil: "networkidle" });
 		await page.waitForLoadState("networkidle");
 
@@ -124,8 +136,9 @@ export async function capture(input: CaptureInput): Promise<CaptureResult> {
 		if (video) {
 			const rawPath = await video.path();
 			videoPath = path.join(captureDir, "recording.webm");
-			// Playwright writes to a tmp-ish path; move it to the well-known name.
-			await fs.rename(rawPath, videoPath);
+			// Playwright writes to a tmp path — re-encode at the configured
+			// playback speed (default 2×) as we move it into captureDir.
+			await speedUpWebm(rawPath, videoPath, resolveVideoSpeed());
 		}
 	} finally {
 		await browser.close();
