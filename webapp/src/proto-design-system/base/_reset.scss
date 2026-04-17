@@ -22,7 +22,12 @@ html {
 }
 
 body {
-  background-color: var(--color-surface);
+  // The page canvas uses --color-background. Surfaces (cards, sidebar,
+  // inputs) explicitly reference --color-surface so cards elevate on top
+  // of the canvas. Previously the body used --color-surface, which meant
+  // every theme's --color-background token was defined but never rendered
+  // — making themes like fog (gray canvas + white cards) impossible.
+  background-color: var(--color-background);
   color: var(--color-base-content);
   font-family: var(--font-family-sans);
   font-size: var(--font-size-base);
