@@ -252,39 +252,68 @@ function WizardInner({
 		uploadMedia,
 	]);
 
+	// Persist the wizard's current state as a draft and return the post id
+	// we should act on. In edit mode we update the draft the user opened —
+	// doing this any other way creates a brand-new row and leaves the
+	// original draft orphaned (see the github-draft "published as new
+	// post" regression). In create mode we POST a fresh draft.
+	const persistDraft = useCallback(async (): Promise<string> => {
+		const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
+			(platform) => {
+				const entry: PlatformContentInput = {
+					platform,
+					content: state.platformContent[platform],
+				};
+				const segments = state.threadContent[platform];
+				if (segments && segments.length > 0) {
+					entry.thread_segments = segments;
+				}
+				return entry;
+			},
+		);
+
+		const baseContentValue = sse.baseContent || initialBaseContent;
+		const draftData = {
+			content: state.blurb,
+			content_type: state.contentType,
+			ai_generated: state.generated,
+			base_content: baseContentValue || undefined,
+			media_ids:
+				state.uploadedMedia.length > 0
+					? state.uploadedMedia.map((m) => m.id)
+					: undefined,
+			platforms,
+		};
+
+		if (isEditMode && editPostId) {
+			await updateDraft(editPostId, draftData);
+			return editPostId;
+		}
+		const created = await saveDraft(draftData);
+		return created.id;
+	}, [
+		state.selectedPlatforms,
+		state.platformContent,
+		state.threadContent,
+		state.blurb,
+		state.contentType,
+		state.generated,
+		state.uploadedMedia,
+		sse,
+		initialBaseContent,
+		isEditMode,
+		editPostId,
+		saveDraft,
+		updateDraft,
+	]);
+
 	const handlePublish = useCallback(async () => {
 		wizard.setSubmitting(true);
 		wizard.setError(null);
 
 		try {
-			const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
-				(platform) => {
-					const entry: PlatformContentInput = {
-						platform,
-						content: state.platformContent[platform],
-					};
-					const segments = state.threadContent[platform];
-					if (segments && segments.length > 0) {
-						entry.thread_segments = segments;
-					}
-					return entry;
-				},
-			);
-
-			const baseContentValue = sse.baseContent || initialBaseContent;
-			const post = await saveDraft({
-				content: state.blurb,
-				content_type: state.contentType,
-				ai_generated: state.generated,
-				base_content: baseContentValue || undefined,
-				media_ids:
-					state.uploadedMedia.length > 0
-						? state.uploadedMedia.map((m) => m.id)
-						: undefined,
-				platforms,
-			});
-
-			await publishPost(post.id, [...state.selectedPlatforms]);
+			const postId = await persistDraft();
+			await publishPost(postId, [...state.selectedPlatforms]);
 			addBanner({
 				type: "success",
 				title: "Post published",
@@ -304,16 +333,8 @@ function WizardInner({
 		}
 	}, [
 		state.selectedPlatforms,
-		state.platformContent,
-		state.threadContent,
-		state.blurb,
-		state.contentType,
-		state.generated,
-		state.uploadedMedia,
 		wizard,
-		sse,
-		initialBaseContent,
-		saveDraft,
+		persistDraft,
 		publishPost,
 		navigate,
 		addBanner,
@@ -329,34 +350,8 @@ function WizardInner({
 		wizard.setError(null);
 
 		try {
-			const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
-				(platform) => {
-					const entry: PlatformContentInput = {
-						platform,
-						content: state.platformContent[platform],
-					};
-					const segments = state.threadContent[platform];
-					if (segments && segments.length > 0) {
-						entry.thread_segments = segments;
-					}
-					return entry;
-				},
-			);
-
-			const baseContentValue = sse.baseContent || initialBaseContent;
-			const post = await saveDraft({
-				content: state.blurb,
-				content_type: state.contentType,
-				ai_generated: state.generated,
-				base_content: baseContentValue || undefined,
-				media_ids:
-					state.uploadedMedia.length > 0
-						? state.uploadedMedia.map((m) => m.id)
-						: undefined,
-				platforms,
-			});
-
-			await schedulePost(post.id, state.scheduledAt);
+			const postId = await persistDraft();
+			await schedulePost(postId, state.scheduledAt);
 			addBanner({
 				type: "success",
 				title: "Post scheduled",
@@ -376,17 +371,8 @@ function WizardInner({
 		}
 	}, [
 		state.scheduledAt,
-		state.selectedPlatforms,
-		state.platformContent,
-		state.threadContent,
-		state.blurb,
-		state.contentType,
-		state.generated,
-		state.uploadedMedia,
 		wizard,
-		sse,
-		initialBaseContent,
-		saveDraft,
+		persistDraft,
 		schedulePost,
 		navigate,
 		addBanner,
@@ -397,48 +383,12 @@ function WizardInner({
 		wizard.setError(null);
 
 		try {
-			const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
-				(platform) => {
-					const entry: PlatformContentInput = {
-						platform,
-						content: state.platformContent[platform],
-					};
-					const segments = state.threadContent[platform];
-					if (segments && segments.length > 0) {
-						entry.thread_segments = segments;
-					}
-					return entry;
-				},
-			);
-
-			const baseContentValue = sse.baseContent || initialBaseContent;
-			const draftData = {
-				content: state.blurb,
-				content_type: state.contentType,
-				ai_generated: state.generated,
-				base_content: baseContentValue || undefined,
-				media_ids:
-					state.uploadedMedia.length > 0
-						? state.uploadedMedia.map((m) => m.id)
-						: undefined,
-				platforms,
-			};
-
-			if (isEditMode && editPostId) {
-				await updateDraft(editPostId, draftData);
-				addBanner({
-					type: "success",
-					title: "Draft updated",
-					dismissible: true,
-				});
-			} else {
-				await saveDraft(draftData);
-				addBanner({
-					type: "success",
-					title: "Draft saved",
-					dismissible: true,
-				});
-			}
+			await persistDraft();
+			addBanner({
+				type: "success",
+				title: isEditMode ? "Draft updated" : "Draft saved",
+				dismissible: true,
+			});
 			navigate({ to: "/posts" });
 		} catch {
 			addBanner({
@@ -450,24 +400,7 @@ function WizardInner({
 		} finally {
 			wizard.setSubmitting(false);
 		}
-	}, [
-		state.selectedPlatforms,
-		state.platformContent,
-		state.threadContent,
-		state.blurb,
-		state.contentType,
-		state.generated,
-		state.uploadedMedia,
-		wizard,
-		sse,
-		initialBaseContent,
-		saveDraft,
-		updateDraft,
-		isEditMode,
-		editPostId,
-		navigate,
-		addBanner,
-	]);
+	}, [wizard, persistDraft, isEditMode, navigate, addBanner]);
 
 	const [retrying, setRetrying] = useState(false);
 	const hasFailed =
