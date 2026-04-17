@@ -35,7 +35,12 @@ type CaptureRequest struct {
 	Owner    string    `json:"owner"`
 	Repo     string    `json:"repo"`
 	Message  string    `json:"message"`
-	AppURL   string    `json:"app_url,omitempty"`
+	// Diff is the unified diff fetched from GitHub server-side using the
+	// user's OAuth token, so the capture-worker doesn't need a local git
+	// checkout or any credentials of its own. May be empty for commits
+	// GitHub considers too large to render.
+	Diff   string `json:"diff,omitempty"`
+	AppURL string `json:"app_url,omitempty"`
 }
 
 // GitHubStore defines the database operations required by GitHubProcessor
@@ -49,6 +54,7 @@ type GitHubStore interface {
 	// OAuth connection operations
 	CreateOrUpdateGitHubConnection(ctx context.Context, userID uuid.UUID, githubUserID int64, username, token, scope string) (store.GitHubConnection, error)
 	GetGitHubConnectionByUserID(ctx context.Context, userID uuid.UUID) (store.GitHubConnection, error)
+	GetGitHubConnectionByID(ctx context.Context, id uuid.UUID) (store.GitHubConnection, error)
 	SoftDeleteGitHubConnection(ctx context.Context, userID uuid.UUID) error
 
 	// Repo operations
@@ -77,6 +83,7 @@ type GitHubClient interface {
 	CreateWebhook(ctx context.Context, token, owner, name, webhookURL, secret string) (int64, error)
 	DeleteWebhook(ctx context.Context, token, owner, name string, hookID int64) error
 	GetRepoReadme(ctx context.Context, token, owner, name string) (string, error)
+	GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error)
 }
 
 // EventPublisher is the Kafka producer dependency (post and github both
@@ -424,24 +431,44 @@ func appURLFromReadme(readme string) string {
 
 // enqueueCaptureRequests publishes one github.capture.requests message per
 // newly-inserted commit. The app URL (when derivable) comes from the repo
-// README, per the project convention that README always advertises it —
-// we look it up once per push, not once per commit.
+// README, and the unified diff comes from GitHub's API — both are fetched
+// server-side using the user's stored OAuth token so the capture-worker
+// never needs any credentials or a local git checkout of its own.
 func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store.GitHubRepo, commits []store.GitHubCommit) {
-	// Look up the connection to borrow the access token for README lookup.
-	var appURL string
-	if conn, err := p.store.GetGitHubConnectionByUserID(ctx, repo.ConnectionID); err == nil {
-		if readme, readmeErr := p.githubClient.GetRepoReadme(ctx, conn.AccessToken, repo.Owner, repo.Name); readmeErr == nil {
-			appURL = appURLFromReadme(readme)
-		}
+	// Borrow the user's token. connection_id on the repo points at the
+	// github_connections PK, not the user id — GetGitHubConnectionByID is
+	// the right lookup.
+	conn, err := p.store.GetGitHubConnectionByID(ctx, repo.ConnectionID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to load github connection for capture enqueue", err)
+		return
 	}
 
+	// One README lookup per push.
+	var appURL string
+	if readme, readmeErr := p.githubClient.GetRepoReadme(ctx, conn.AccessToken, repo.Owner, repo.Name); readmeErr == nil {
+		appURL = appURLFromReadme(readme)
+	}
+
+	const maxDiffChars = 40_000
 	for _, commit := range commits {
+		// Fetch the diff per commit. Failures are non-fatal — the capture
+		// agent can still work off just the commit message.
+		diff, diffErr := p.githubClient.GetCommitDiff(ctx, conn.AccessToken, repo.Owner, repo.Name, commit.SHA)
+		if diffErr != nil {
+			p.logger.Error(ctx, fmt.Sprintf("failed to fetch commit diff for %s", commit.SHA), diffErr)
+		}
+		if len(diff) > maxDiffChars {
+			diff = diff[:maxDiffChars] + "\n… [truncated]"
+		}
+
 		req := CaptureRequest{
 			CommitID: commit.ID,
 			SHA:      commit.SHA,
 			Owner:    repo.Owner,
 			Repo:     repo.Name,
 			Message:  commit.Message,
+			Diff:     diff,
 			AppURL:   appURL,
 		}
 		if err := p.publisher.Publish(ctx, TopicCaptureRequests, commit.ID.String(), req); err != nil {

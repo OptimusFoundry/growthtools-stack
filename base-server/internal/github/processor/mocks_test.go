@@ -105,6 +105,21 @@ func (mr *MockGitHubStoreMockRecorder) GetGitHubCommitByRepoSHA(ctx, repoID, sha
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubCommitByRepoSHA", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubCommitByRepoSHA), ctx, repoID, sha)
 }
 
+// GetGitHubConnectionByID mocks base method.
+func (m *MockGitHubStore) GetGitHubConnectionByID(ctx context.Context, id uuid.UUID) (store.GitHubConnection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitHubConnectionByID", ctx, id)
+	ret0, _ := ret[0].(store.GitHubConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubConnectionByID indicates an expected call of GetGitHubConnectionByID.
+func (mr *MockGitHubStoreMockRecorder) GetGitHubConnectionByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubConnectionByID", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubConnectionByID), ctx, id)
+}
+
 // GetGitHubConnectionByUserID mocks base method.
 func (m *MockGitHubStore) GetGitHubConnectionByUserID(ctx context.Context, userID uuid.UUID) (store.GitHubConnection, error) {
 	m.ctrl.T.Helper()
@@ -421,6 +436,21 @@ func (m *MockGitHubClient) GetAuthenticatedUser(ctx context.Context, token strin
 func (mr *MockGitHubClientMockRecorder) GetAuthenticatedUser(ctx, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatedUser", reflect.TypeOf((*MockGitHubClient)(nil).GetAuthenticatedUser), ctx, token)
+}
+
+// GetCommitDiff mocks base method.
+func (m *MockGitHubClient) GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCommitDiff", ctx, token, owner, name, sha)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCommitDiff indicates an expected call of GetCommitDiff.
+func (mr *MockGitHubClientMockRecorder) GetCommitDiff(ctx, token, owner, name, sha any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommitDiff", reflect.TypeOf((*MockGitHubClient)(nil).GetCommitDiff), ctx, token, owner, name, sha)
 }
 
 // GetRepoReadme mocks base method.

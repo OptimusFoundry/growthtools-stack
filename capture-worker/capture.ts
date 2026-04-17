@@ -14,6 +14,10 @@ export interface CaptureInput {
 	email: string;
 	password: string;
 	goal?: string;
+	/** Commit summary (message). If provided, the agent skips local git. */
+	summary?: string;
+	/** Unified diff text. If provided, the agent skips local git. */
+	diff?: string;
 }
 
 export interface CaptureUpload {
@@ -85,6 +89,8 @@ export async function runCapture(input: CaptureInput): Promise<CaptureOutput> {
 		password: input.password,
 		commit: input.commit,
 		goal: input.goal,
+		summary: input.summary,
+		diff: input.diff,
 	});
 
 	const keyPrefix = `captures/${input.commit.slice(0, 12)}/demo`;

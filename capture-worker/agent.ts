@@ -32,7 +32,16 @@ export interface DemoInput {
 	commit: string;
 	/** Override the goal derived from the diff. */
 	goal?: string;
-	/** Repo root for git diff. Defaults to this repo. */
+	/**
+	 * Pre-fetched commit summary (message). In prod the base-server fetches
+	 * this via the GitHub API and passes it through Kafka, so the container
+	 * doesn't need a local git clone. When both `summary` and `diff` are
+	 * supplied the agent skips the local `git show` fallback entirely.
+	 */
+	summary?: string;
+	/** Pre-fetched unified diff text. See `summary`. */
+	diff?: string;
+	/** Repo root for git diff. Only used when summary/diff aren't supplied. */
 	repoRoot?: string;
 	/** Output root. Defaults to ./captures. */
 	outDir?: string;
@@ -401,6 +410,8 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		password,
 		commit,
 		goal,
+		summary: providedSummary,
+		diff: providedDiff,
 		repoRoot = path.resolve(__dirname, ".."),
 		outDir = path.join(__dirname, "captures"),
 		maxSteps = 30,
@@ -418,7 +429,13 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 	const captureDir = path.join(outDir, commit.slice(0, 12), "demo");
 	await fs.mkdir(captureDir, { recursive: true });
 
-	const { summary, diff } = await fetchCommitContext(commit, repoRoot);
+	// In prod the caller (Kafka bridge) supplies summary + diff fetched from
+	// GitHub's API. In local dev they're usually omitted, in which case we
+	// fall back to shelling out to `git show` in the repo root.
+	const { summary, diff } =
+		providedSummary !== undefined || providedDiff !== undefined
+			? { summary: providedSummary ?? "", diff: providedDiff ?? "" }
+			: await fetchCommitContext(commit, repoRoot);
 
 	const browser = await chromium.launch();
 	const context = await browser.newContext({

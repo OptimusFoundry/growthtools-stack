@@ -225,6 +225,40 @@ func (c *Client) CreateWebhook(ctx context.Context, token, owner, name, webhookU
 	return hook.ID, nil
 }
 
+// GetCommitDiff returns the unified diff for a commit. Uses the diff media
+// type so we don't have to assemble patches from the per-file JSON view.
+// Returns "" (not error) when the commit is too large for GitHub to render a
+// diff, so callers can fall through with just the commit message.
+func (c *Client) GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error) {
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s", githubAPIBase, owner, name, sha)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create commit diff request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github.diff")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		c.logger.Error(ctx, "failed to get commit diff", err)
+		return "", fmt.Errorf("failed to get commit diff: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 422 is GitHub's "diff too large to render" — not an error, just skip.
+	if resp.StatusCode == http.StatusUnprocessableEntity {
+		return "", nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("github /commits/%s returned status %d", sha, resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read commit diff response: %w", err)
+	}
+	return string(body), nil
+}
+
 // GetRepoReadme returns the decoded README content for a repository.
 // Uses the /readme endpoint which returns the default-branch README in any
 // common format. Returns empty string (not error) if the repo has no README

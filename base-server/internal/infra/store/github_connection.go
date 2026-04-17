@@ -117,6 +117,27 @@ func (s *Store) GetGitHubConnectionByUserID(ctx context.Context, userID uuid.UUI
 	return conn, nil
 }
 
+const sqlGetGitHubConnectionByID = `
+SELECT id, user_id, github_user_id, github_username, access_token, scope, created_at, updated_at, deleted_at
+FROM github_connections
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+// GetGitHubConnectionByID looks up a connection by its primary key, which is
+// what github_repos.connection_id points at — useful in the webhook path
+// where we have a repo row but not a user id.
+func (s *Store) GetGitHubConnectionByID(ctx context.Context, id uuid.UUID) (GitHubConnection, error) {
+	var conn GitHubConnection
+	err := s.db.GetContext(ctx, &conn, sqlGetGitHubConnectionByID, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubConnection{}, ErrNotFound
+		}
+		return GitHubConnection{}, fmt.Errorf("failed to get github connection by id: %w", err)
+	}
+	return conn, nil
+}
+
 const sqlSoftDeleteGitHubConnection = `
 UPDATE github_connections
 SET deleted_at = NOW(), updated_at = NOW()

@@ -25,6 +25,8 @@ interface CaptureRequestMessage {
 	owner: string;
 	repo: string;
 	message: string;
+	/** Unified diff fetched server-side via the GitHub API. May be empty. */
+	diff?: string;
 	app_url?: string;
 }
 
@@ -125,6 +127,8 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 					email: defaultEmail,
 					password: defaultPassword,
 					goal: request.message,
+					summary: request.message,
+					diff: request.diff ?? "",
 				});
 				result.success = true;
 				result.step_count = output.stepCount;
