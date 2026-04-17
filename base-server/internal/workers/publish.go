@@ -43,6 +43,7 @@ type PublishWorker struct {
 	store          PublishStore
 	registry       *adapters.AdapterRegistry
 	tokenRefresher TokenRefresher
+	urlSigner      URLSigner
 	logger         *observability.Logger
 }
 
@@ -57,6 +58,13 @@ func NewPublishWorker(brokers, groupID string, publishStore PublishStore, regist
 
 	w.consumer = kafka.NewConsumer(brokers, groupID, "post.publish", w.handle, logger)
 	return w
+}
+
+// SetURLSigner wires the presigner used to turn s3:// media URLs into
+// HTTPS URLs the adapters can fetch. Nil leaves URLs untouched (local
+// storage mode).
+func (w *PublishWorker) SetURLSigner(signer URLSigner) {
+	w.urlSigner = signer
 }
 
 // platformResult tracks the outcome of a single platform publish attempt
@@ -103,16 +111,17 @@ func (w *PublishWorker) handle(ctx context.Context, key, value []byte) error {
 		connByPlatform[c.Platform] = c
 	}
 
-	// Resolve media URLs from post.MediaIDs
+	// Resolve media URLs from post.MediaIDs. S3 URLs are presigned so
+	// platform adapters (which either http.Get the URL themselves or pass
+	// it to the remote platform as an image_url) receive a fetchable
+	// HTTPS endpoint instead of a raw s3:// URI.
 	var mediaURLs []string
 	if len(post.MediaIDs) > 0 {
 		mediaItems, err := w.store.GetMediaByIDs(ctx, []uuid.UUID(post.MediaIDs))
 		if err != nil {
 			w.logger.Error(ctx, "failed to resolve media URLs", err)
 		} else {
-			for _, m := range mediaItems {
-				mediaURLs = append(mediaURLs, m.S3URL)
-			}
+			mediaURLs = mediaURLsForPublish(ctx, w.urlSigner, mediaItems, w.logger)
 		}
 	}
 

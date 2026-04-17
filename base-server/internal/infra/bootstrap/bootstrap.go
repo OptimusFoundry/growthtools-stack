@@ -365,6 +365,13 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	captureResultWorker := workers.NewCaptureResultWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, kafkaProducer, logger)
 	retryWorker := workers.NewRetryWorker(&deps.Store, registry, &platformsProc, logger)
 
+	// Presign s3:// media URLs before handing them to platform adapters
+	// so Bluesky/X can http.Get them and Threads accepts the image_url.
+	if urlSigner != nil {
+		publishWorker.SetURLSigner(urlSigner)
+		retryWorker.SetURLSigner(urlSigner)
+	}
+
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.
 	draftGen := githubProcessor.NewDraftGenerator(&deps.Store, &contentProc, &postsProc, s3Head, s3Fetch, cfg.S3.Bucket, logger)

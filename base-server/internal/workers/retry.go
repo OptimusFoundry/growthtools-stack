@@ -30,6 +30,7 @@ type RetryWorker struct {
 	store          RetryStore
 	registry       *adapters.AdapterRegistry
 	tokenRefresher TokenRefresher
+	urlSigner      URLSigner
 	logger         *observability.Logger
 	interval       time.Duration
 	stuckThreshold time.Duration
@@ -45,6 +46,12 @@ func NewRetryWorker(retryStore RetryStore, registry *adapters.AdapterRegistry, t
 		interval:       30 * time.Second,
 		stuckThreshold: 5 * time.Minute,
 	}
+}
+
+// SetURLSigner wires the presigner used to turn s3:// media URLs into
+// HTTPS URLs the adapters can fetch. Nil leaves URLs untouched.
+func (w *RetryWorker) SetURLSigner(signer URLSigner) {
+	w.urlSigner = signer
 }
 
 func (w *RetryWorker) Start(ctx context.Context) error {
@@ -109,16 +116,15 @@ func (w *RetryWorker) processRetries(ctx context.Context) error {
 			connByPlatform[c.Platform] = c
 		}
 
-		// Resolve media URLs
+		// Resolve media URLs; s3:// entries are presigned so the retried
+		// adapter call doesn't repeat the original failure mode.
 		var mediaURLs []string
 		if len(post.MediaIDs) > 0 {
 			mediaItems, err := w.store.GetMediaByIDs(ctx, []uuid.UUID(post.MediaIDs))
 			if err != nil {
 				w.logger.Error(ctx, "failed to resolve media URLs for retry", err)
 			} else {
-				for _, m := range mediaItems {
-					mediaURLs = append(mediaURLs, m.S3URL)
-				}
+				mediaURLs = mediaURLsForPublish(ctx, w.urlSigner, mediaItems, w.logger)
 			}
 		}
 
