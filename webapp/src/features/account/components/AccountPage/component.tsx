@@ -56,47 +56,39 @@ export const AccountPage = memo(function AccountPage() {
 	);
 
 	return (
-		<div className={styles.page}>
-			<Stack gap="lg">
-				<Stack gap="xs">
-					<Text as="h1" size="2xl" weight="semibold">
-						Settings
-					</Text>
-					<Text color="secondary">
-						Manage your account settings and billing
-					</Text>
-				</Stack>
-
-				<Tabs
-					activeTab={activeTab}
-					onTabChange={handleTabChange}
-					variant="line"
-				>
-					<TabList aria-label="Settings tabs">
-						<Tab id="billing" icon={<CreditCard size={16} />}>
-							Billing
-						</Tab>
-						<Tab id="voice-profile" icon={<Mic size={16} />}>
-							Voice Profile
-						</Tab>
-						<Tab id="platforms" icon={<Share2 size={16} />}>
-							Platforms
-						</Tab>
-					</TabList>
-					<TabPanels>
-						<TabPanel id="billing">
-							<BillingTab />
-						</TabPanel>
-						<TabPanel id="voice-profile">
-							<VoiceProfileTab />
-						</TabPanel>
-						<TabPanel id="platforms">
-							<PlatformConnectionsTab />
-						</TabPanel>
-					</TabPanels>
-				</Tabs>
+		<Stack gap="lg" className={styles.page} animate>
+			<Stack gap="xs">
+				<Text as="h1" size="2xl" weight="bold">
+					Settings
+				</Text>
+				<Text color="muted">Manage your account settings and billing</Text>
 			</Stack>
-		</div>
+
+			<Tabs activeTab={activeTab} onTabChange={handleTabChange} variant="line">
+				<TabList aria-label="Settings tabs">
+					<Tab id="billing" icon={<CreditCard size={16} />}>
+						Billing
+					</Tab>
+					<Tab id="voice-profile" icon={<Mic size={16} />}>
+						Voice Profile
+					</Tab>
+					<Tab id="platforms" icon={<Share2 size={16} />}>
+						Platforms
+					</Tab>
+				</TabList>
+				<TabPanels>
+					<TabPanel id="billing">
+						<BillingTab />
+					</TabPanel>
+					<TabPanel id="voice-profile">
+						<VoiceProfileTab />
+					</TabPanel>
+					<TabPanel id="platforms">
+						<PlatformConnectionsTab />
+					</TabPanel>
+				</TabPanels>
+			</Tabs>
+		</Stack>
 	);
 });
 

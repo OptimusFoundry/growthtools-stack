@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon, ImageIcon, Trash2, Upload } from "lucide-react";
-import { motion } from "motion/react";
 import { useCallback, useRef } from "react";
 import { useMedia } from "@/hooks/useMedia";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
@@ -9,6 +8,7 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text";
 import { formatFileSize, isImageType } from "@/types/media";
 import mediaStyles from "./media.module.scss";
 import styles from "./page.module.scss";
@@ -44,19 +44,14 @@ function MediaPage() {
 	);
 
 	return (
-		<motion.div
-			className={styles.page}
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.6 }}
-		>
-			<Stack direction="row" justify="between" align="center">
-				<div className={styles.pageHeader}>
-					<h1 className={styles.pageTitle}>Media Library</h1>
-					<p className={styles.pageDescription}>
-						Store and organize your media assets
-					</p>
-				</div>
+		<Stack gap="lg" className={styles.page} animate>
+			<Stack direction="row" justify="between" align="start" wrap>
+				<Stack gap="xs">
+					<Text as="h1" size="2xl" weight="bold">
+						Media Library
+					</Text>
+					<Text color="muted">Store and organize your media assets</Text>
+				</Stack>
 				<Button
 					variant="primary"
 					onClick={handleUploadClick}
@@ -74,7 +69,7 @@ function MediaPage() {
 				/>
 			</Stack>
 
-			<div className={styles.pageContent}>
+			<Stack gap="md">
 				{loading ? (
 					<Spinner />
 				) : media.length === 0 ? (
@@ -135,7 +130,7 @@ function MediaPage() {
 						))}
 					</div>
 				)}
-			</div>
-		</motion.div>
+			</Stack>
+		</Stack>
 	);
 }

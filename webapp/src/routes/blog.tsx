@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Plus } from "lucide-react";
-import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
@@ -10,6 +9,7 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { BlogStatus } from "@/types/blog";
 import styles from "./page.module.scss";
 
@@ -46,19 +46,14 @@ function BlogPage() {
 	const { blogPosts, loading } = useBlogPosts(filters);
 
 	return (
-		<motion.div
-			className={styles.page}
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.6 }}
-		>
-			<Stack direction="row" justify="between" align="center">
-				<div className={styles.pageHeader}>
-					<h1 className={styles.pageTitle}>Blog</h1>
-					<p className={styles.pageDescription}>
-						Write and manage your blog posts
-					</p>
-				</div>
+		<Stack gap="lg" className={styles.page} animate>
+			<Stack direction="row" justify="between" align="start" wrap>
+				<Stack gap="xs">
+					<Text as="h1" size="2xl" weight="bold">
+						Blog
+					</Text>
+					<Text color="muted">Write and manage your blog posts</Text>
+				</Stack>
 				<Link to="/blog/new">
 					<Button variant="primary">
 						<Plus size={16} /> New Post
@@ -75,7 +70,7 @@ function BlogPage() {
 				/>
 			</Stack>
 
-			<div className={styles.pageContent}>
+			<Stack gap="md">
 				{loading ? (
 					<Spinner />
 				) : blogPosts.length === 0 ? (
@@ -98,16 +93,20 @@ function BlogPage() {
 								<Card padding="md" interactive>
 									<Stack gap="xs">
 										<Stack direction="row" gap="xs" align="center">
-											<strong>{post.title}</strong>
+											<Text weight="semibold">{post.title}</Text>
 											<Badge variant={STATUS_BADGE_VARIANT[post.status]}>
 												{post.status}
 											</Badge>
 										</Stack>
-										{post.excerpt && <p>{post.excerpt}</p>}
+										{post.excerpt && (
+											<Text size="sm" color="muted">
+												{post.excerpt}
+											</Text>
+										)}
 										<Stack direction="row" gap="sm" align="center">
-											<span>
+											<Text size="xs" color="muted">
 												{new Date(post.createdAt).toLocaleDateString()}
-											</span>
+											</Text>
 											{post.keywords.length > 0 && (
 												<Stack direction="row" gap="xs" wrap>
 													{post.keywords.slice(0, 3).map((keyword) => (
@@ -124,7 +123,7 @@ function BlogPage() {
 						))}
 					</Stack>
 				)}
-			</div>
-		</motion.div>
+			</Stack>
+		</Stack>
 	);
 }

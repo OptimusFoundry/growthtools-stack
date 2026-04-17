@@ -138,25 +138,22 @@ function PostsPage() {
 	const draftCount = allPosts.filter((p) => p.status === "draft").length;
 
 	return (
-		<motion.div
-			className={styles.page}
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.3 }}
-		>
-			<div className={styles.header}>
-				<div>
-					<h1 className={styles.title}>Posts</h1>
-					<p className={styles.subtitle}>
+		<Stack gap="lg" className={styles.page} animate>
+			<Stack direction="row" justify="between" align="start" wrap>
+				<Stack gap="xs">
+					<Text as="h1" size="2xl" weight="bold">
+						Posts
+					</Text>
+					<Text color="muted">
 						Create, manage, and publish your social media posts
-					</p>
-				</div>
+					</Text>
+				</Stack>
 				<Link to="/posts/new">
 					<Button variant="primary">
 						<Plus size={16} /> Create Post
 					</Button>
 				</Link>
-			</div>
+			</Stack>
 
 			<div className={styles.stats}>
 				<div className={styles.statItem}>
@@ -417,6 +414,6 @@ function PostsPage() {
 					undone.
 				</Text>
 			</Modal>
-		</motion.div>
+		</Stack>
 	);
 }

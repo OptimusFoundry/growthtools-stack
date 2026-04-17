@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-import { motion } from "motion/react";
+import {
+	ArrowLeft,
+	CalendarDays,
+	ChevronLeft,
+	ChevronRight,
+	Trash2,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
@@ -206,20 +211,15 @@ function CalendarPage() {
 	};
 
 	return (
-		<motion.div
-			className={styles.page}
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.6 }}
-		>
-			<div className={styles.pageHeader}>
-				<h1 className={styles.pageTitle}>Content Calendar</h1>
-				<p className={styles.pageDescription}>
-					View your scheduled and published posts
-				</p>
-			</div>
+		<Stack gap="lg" className={styles.page} animate>
+			<Stack gap="xs">
+				<Text as="h1" size="2xl" weight="bold">
+					Content Calendar
+				</Text>
+				<Text color="muted">View your scheduled and published posts</Text>
+			</Stack>
 
-			<div className={styles.pageContent}>
+			<Stack gap="md">
 				{selectedDate ? (
 					<>
 						<Stack direction="row" align="center" gap="sm">
@@ -239,6 +239,7 @@ function CalendarPage() {
 							<Spinner />
 						) : selectedPosts.length === 0 ? (
 							<EmptyState
+								icon={<CalendarDays size={48} />}
 								title="No posts on this day"
 								description="There are no posts scheduled or published for this date."
 							/>
@@ -366,9 +367,9 @@ function CalendarPage() {
 							>
 								<ChevronLeft size={18} />
 							</Button>
-							<strong>
+							<Text weight="semibold">
 								{MONTHS[month]} {year}
-							</strong>
+							</Text>
 							<Button
 								variant="ghost"
 								onClick={() => navigateMonth(1)}
@@ -435,7 +436,7 @@ function CalendarPage() {
 						)}
 					</>
 				)}
-			</div>
+			</Stack>
 
 			<Modal
 				isOpen={deleteTargetId !== null}
@@ -462,6 +463,6 @@ function CalendarPage() {
 					undone.
 				</Text>
 			</Modal>
-		</motion.div>
+		</Stack>
 	);
 }

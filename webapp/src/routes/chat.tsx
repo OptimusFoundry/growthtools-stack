@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Bot, Send, User } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
@@ -142,14 +143,11 @@ function ChatPage() {
 		>
 			<div className={chatStyles.messageList}>
 				{messages.length === 0 && (
-					<div className={chatStyles.emptyChat}>
-						<Bot size={48} />
-						<h2>AI Content Assistant</h2>
-						<p>
-							Ask me to help generate social media posts, brainstorm ideas, or
-							refine your content.
-						</p>
-					</div>
+					<EmptyState
+						icon={<Bot size={48} />}
+						title="AI Content Assistant"
+						description="Ask me to help generate social media posts, brainstorm ideas, or refine your content."
+					/>
 				)}
 				{messages.map((msg) => (
 					<div

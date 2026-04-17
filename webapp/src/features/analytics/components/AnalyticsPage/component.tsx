@@ -41,10 +41,10 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 		return (
 			<Stack gap="lg" className={styles.page} animate>
 				<Stack gap="xs">
-					<Text as="h1" size="2xl" weight="semibold">
+					<Text as="h1" size="2xl" weight="bold">
 						Analytics
 					</Text>
-					<Text color="secondary">
+					<Text color="muted">
 						Track your social media performance across platforms
 					</Text>
 				</Stack>
@@ -106,7 +106,7 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 			{platformBreakdown.length > 0 && (
 				<Card padding="md">
 					<Stack gap="md">
-						<Text as="h2" size="lg" weight="semibold">
+						<Text as="h3" size="lg" weight="semibold">
 							Platform Breakdown
 						</Text>
 						<div className={styles.tableWrapper}>
