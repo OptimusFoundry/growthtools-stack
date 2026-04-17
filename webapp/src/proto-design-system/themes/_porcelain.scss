@@ -11,13 +11,15 @@
   // Background — barely-there cool off-white
   --color-background: oklch(99% 0.002 250deg);
 
-  // Base colors (neutral cool gray progression)
-  --color-base-50: oklch(99.2% 0.002 250deg);
-  --color-base-100: oklch(97% 0.003 250deg);
-  --color-base-200: oklch(94% 0.004 250deg);
-  --color-base-300: oklch(89% 0.005 250deg);
-  --color-base-400: oklch(74% 0.008 250deg);
-  --color-base-500: oklch(58% 0.01 250deg);
+  // Base colors — the top end (50-300) is lifted closer to the bg so the
+  // chrome (hover backgrounds, subtle fills) is a whisper rather than a
+  // visible grey panel. Dark end unchanged — those are for text/structure.
+  --color-base-50: oklch(99.3% 0.002 250deg);
+  --color-base-100: oklch(98% 0.003 250deg);
+  --color-base-200: oklch(96% 0.004 250deg);
+  --color-base-300: oklch(92% 0.005 250deg);
+  --color-base-400: oklch(78% 0.007 250deg);
+  --color-base-500: oklch(60% 0.008 250deg);
   --color-base-600: oklch(45% 0.008 250deg);
   --color-base-700: oklch(32% 0.006 250deg);
   --color-base-800: oklch(22% 0.006 250deg);
@@ -37,8 +39,8 @@
   --color-surface-overlay: oklch(20% 0.008 250deg / 0.35);
 
   // Borders — whisper-light, meant to hint at a shape without drawing a line
-  --color-border: oklch(95% 0.004 250deg);
-  --color-border-hover: oklch(90% 0.006 250deg);
+  --color-border: oklch(96.5% 0.004 250deg);
+  --color-border-hover: oklch(92% 0.006 250deg);
 
   // Shadow — soft, diffuse
   --shadow-color: oklch(50% 0.01 250deg / 0.06);
