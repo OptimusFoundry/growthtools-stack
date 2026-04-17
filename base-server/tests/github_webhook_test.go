@@ -7,6 +7,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -79,6 +80,75 @@ func (m *mockGitHubStore) MarkGitHubEventProcessed(_ context.Context, id uuid.UU
 	return store.ErrNotFound
 }
 
+// The webhook tests don't exercise OAuth / repo / commit paths — these
+// stubs exist solely so *mockGitHubStore satisfies the GitHubStore
+// interface. Repo lookups return ErrNotFound so HandleWebhookEvent
+// treats the payload as "unknown repo, fall back to global secret".
+
+func (m *mockGitHubStore) CreateOrUpdateGitHubConnection(_ context.Context, _ uuid.UUID, _ int64, _, _, _ string) (store.GitHubConnection, error) {
+	return store.GitHubConnection{}, nil
+}
+
+func (m *mockGitHubStore) GetGitHubConnectionByUserID(_ context.Context, _ uuid.UUID) (store.GitHubConnection, error) {
+	return store.GitHubConnection{}, store.ErrNotFound
+}
+
+func (m *mockGitHubStore) SoftDeleteGitHubConnection(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockGitHubStore) CreateGitHubRepo(_ context.Context, _ uuid.UUID, _ int64, _, _ string, _ *string, _ *int64, _ string) (store.GitHubRepo, error) {
+	return store.GitHubRepo{}, nil
+}
+
+func (m *mockGitHubStore) ListGitHubReposByConnection(_ context.Context, _ uuid.UUID) ([]store.GitHubRepo, error) {
+	return nil, nil
+}
+
+func (m *mockGitHubStore) GetGitHubRepoByConnectionAndName(_ context.Context, _ uuid.UUID, _, _ string) (store.GitHubRepo, error) {
+	return store.GitHubRepo{}, store.ErrNotFound
+}
+
+func (m *mockGitHubStore) GetGitHubRepoByGitHubID(_ context.Context, _ int64) (store.GitHubRepo, error) {
+	return store.GitHubRepo{}, store.ErrNotFound
+}
+
+func (m *mockGitHubStore) GetGitHubRepoByOwnerName(_ context.Context, _, _ string) (store.GitHubRepo, error) {
+	return store.GitHubRepo{}, store.ErrNotFound
+}
+
+func (m *mockGitHubStore) UpdateGitHubRepoID(_ context.Context, _ uuid.UUID, _ int64) error {
+	return nil
+}
+
+func (m *mockGitHubStore) SoftDeleteGitHubRepo(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockGitHubStore) InsertGitHubCommit(_ context.Context, _ uuid.UUID, _ string, _, _ *string, _ string, _, _ *string, _ time.Time, _ *json.RawMessage) (store.GitHubCommit, bool, error) {
+	return store.GitHubCommit{}, false, nil
+}
+
+func (m *mockGitHubStore) GetGitHubCommitByRepoSHA(_ context.Context, _ uuid.UUID, _ string) (store.GitHubCommit, error) {
+	return store.GitHubCommit{}, store.ErrNotFound
+}
+
+func (m *mockGitHubStore) MarkGitHubCommitCaptureRequested(_ context.Context, _ uuid.UUID) (bool, error) {
+	return false, nil
+}
+
+func (m *mockGitHubStore) UpdateGitHubCommitCapture(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+	return nil
+}
+
+func (m *mockGitHubStore) UpdateGitHubCommitPostID(_ context.Context, _, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockGitHubStore) ListGitHubCommitsByConnection(_ context.Context, _ uuid.UUID, _, _ int) ([]store.GitHubCommit, error) {
+	return nil, nil
+}
+
 // computeGitHubSignature computes the HMAC-SHA256 signature for a given payload.
 func computeGitHubSignature(payload []byte, secret string) string {
 	mac := hmac.New(sha256.New, []byte(secret))
@@ -92,7 +162,7 @@ func setupGitHubRouter() (*gin.Engine, *mockGitHubStore) {
 	logger := testLogger()
 
 	proc := githubProcessor.New(mockStore, testWebhookSecret, logger)
-	handler := githubHandler.New(proc, logger)
+	handler := githubHandler.New(proc, "http://localhost:3000", logger)
 
 	router := setupTestRouter()
 	router.POST("/api/github/webhook", handler.HandleWebhook)

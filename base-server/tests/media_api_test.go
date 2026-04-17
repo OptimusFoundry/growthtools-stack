@@ -91,7 +91,7 @@ func (m *mockMediaStore) CountMediaByAccount(_ context.Context, accountID uuid.U
 	return count, nil
 }
 
-// mockS3Client implements mediaProcessor.S3Client for testing.
+// mockS3Client implements mediaProcessor.FileStore for testing.
 type mockS3Client struct{}
 
 func (m *mockS3Client) UploadFile(_ context.Context, key string, _ io.Reader, _ string) (string, error) {
@@ -100,6 +100,10 @@ func (m *mockS3Client) UploadFile(_ context.Context, key string, _ io.Reader, _ 
 
 func (m *mockS3Client) DeleteFile(_ context.Context, _ string) error {
 	return nil
+}
+
+func (m *mockS3Client) GetFile(_ context.Context, _ string) (io.ReadCloser, string, error) {
+	return io.NopCloser(nil), "application/octet-stream", nil
 }
 
 func (m *mockS3Client) GeneratePresignedURL(_ context.Context, key string, _ time.Duration) (string, error) {
@@ -112,7 +116,7 @@ func setupMediaRouter(accountID uuid.UUID) (*gin.Engine, *mockMediaStore) {
 	s3Client := &mockS3Client{}
 	logger := testLogger()
 
-	proc := mediaProcessor.New(mockStore, s3Client, logger)
+	proc := mediaProcessor.New(mockStore, s3Client, "https://s3.example.com", logger)
 	handler := mediaHandler.New(proc, logger)
 
 	router := setupTestRouter()
@@ -151,14 +155,9 @@ func TestMediaAPI_ListMedia(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/media", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Media  []store.Media `json:"media"`
-		Limit  int           `json:"limit"`
-		Offset int           `json:"offset"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Len(t, resp.Media, 2)
-	assert.Equal(t, 20, resp.Limit)
+	var media []store.Media
+	parseResponseBody(t, w, &media)
+	assert.Len(t, media, 2)
 }
 
 func TestMediaAPI_ListMedia_Empty(t *testing.T) {
@@ -170,11 +169,9 @@ func TestMediaAPI_ListMedia_Empty(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/media", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Media []store.Media `json:"media"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Empty(t, resp.Media)
+	var media []store.Media
+	parseResponseBody(t, w, &media)
+	assert.Empty(t, media)
 }
 
 func TestMediaAPI_ListMedia_Pagination(t *testing.T) {
@@ -203,14 +200,9 @@ func TestMediaAPI_ListMedia_Pagination(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/media?limit=2&offset=0", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Media  []store.Media `json:"media"`
-		Limit  int           `json:"limit"`
-		Offset int           `json:"offset"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Len(t, resp.Media, 2)
-	assert.Equal(t, 2, resp.Limit)
+	var media []store.Media
+	parseResponseBody(t, w, &media)
+	assert.Len(t, media, 2)
 }
 
 func TestMediaAPI_DeleteMedia(t *testing.T) {

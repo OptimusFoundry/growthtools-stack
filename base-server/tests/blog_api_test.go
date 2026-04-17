@@ -291,14 +291,9 @@ func TestBlogAPI_ListBlogs(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/blog", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Posts  []store.BlogPost `json:"posts"`
-		Limit  int             `json:"limit"`
-		Offset int             `json:"offset"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Len(t, resp.Posts, 3)
-	assert.Equal(t, 20, resp.Limit)
+	var posts []store.BlogPost
+	parseResponseBody(t, w, &posts)
+	assert.Len(t, posts, 3)
 }
 
 func TestBlogAPI_GetBlog(t *testing.T) {

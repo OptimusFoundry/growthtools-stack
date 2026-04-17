@@ -82,16 +82,34 @@ func (m *mockPlatformProcessor) DisconnectPlatform(_ context.Context, accountID 
 }
 
 func (m *mockPlatformProcessor) ListConnections(_ context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error) {
-	var result []store.PlatformConnection
+	result := make([]store.PlatformConnection, 0)
 	for _, c := range m.connections {
 		if c.AccountID == accountID {
 			result = append(result, c)
 		}
 	}
-	if result == nil {
-		result = []store.PlatformConnection{}
-	}
 	return result, nil
+}
+
+func (m *mockPlatformProcessor) ConnectWithToken(_ context.Context, accountID uuid.UUID, platform string) (store.PlatformConnection, error) {
+	now := time.Now().UTC()
+	conn := store.PlatformConnection{
+		ID:          uuid.New(),
+		AccountID:   accountID,
+		Platform:    platform,
+		AccessToken: "manual-token",
+		Status:      "active",
+		Scopes:      store.StringArray{},
+		ConnectedAt: now,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	m.connections[conn.ID] = conn
+	return conn, nil
+}
+
+func (m *mockPlatformProcessor) EnsureFreshConnection(_ context.Context, conn store.PlatformConnection) (store.PlatformConnection, error) {
+	return conn, nil
 }
 
 // setupPlatformsRouter sets up a Gin router with the platforms handler.
@@ -99,7 +117,7 @@ func setupPlatformsRouter(accountID uuid.UUID) (*gin.Engine, *mockPlatformProces
 	mockProc := newMockPlatformProcessor()
 	logger := testLogger()
 
-	handler := platformsHandler.New(mockProc, logger)
+	handler := platformsHandler.New(mockProc, logger, "http://localhost:3000")
 
 	router := setupTestRouter()
 	protected := router.Group("/api/protected", mockAuthMiddleware(accountID))
@@ -120,11 +138,9 @@ func TestPlatformsAPI_ListConnections_Empty(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/platforms", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Connections []store.PlatformConnection `json:"connections"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Empty(t, resp.Connections)
+	var connections []store.PlatformConnection
+	parseResponseBody(t, w, &connections)
+	assert.Empty(t, connections)
 }
 
 func TestPlatformsAPI_ListConnections(t *testing.T) {
@@ -152,11 +168,9 @@ func TestPlatformsAPI_ListConnections(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/platforms", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Connections []store.PlatformConnection `json:"connections"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Len(t, resp.Connections, 2)
+	var connections []store.PlatformConnection
+	parseResponseBody(t, w, &connections)
+	assert.Len(t, connections, 2)
 }
 
 func TestPlatformsAPI_DisconnectPlatform(t *testing.T) {

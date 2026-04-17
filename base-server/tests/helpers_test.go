@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"base-server/internal/infra/observability"
@@ -16,9 +17,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// ginModeOnce ensures gin.SetMode — which writes package-global state —
+// runs exactly once across all parallel tests so the race detector
+// doesn't flag the concurrent writes.
+var ginModeOnce sync.Once
+
 // setupTestRouter creates a Gin router in test mode.
 func setupTestRouter() *gin.Engine {
-	gin.SetMode(gin.TestMode)
+	ginModeOnce.Do(func() {
+		gin.SetMode(gin.TestMode)
+	})
 	r := gin.New()
 	return r
 }

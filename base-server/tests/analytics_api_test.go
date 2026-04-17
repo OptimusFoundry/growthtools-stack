@@ -167,11 +167,9 @@ func TestAnalyticsAPI_GetTimeSeries(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/timeseries", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		TimeSeries []store.AnalyticsTimeSeries `json:"timeseries"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Len(t, resp.TimeSeries, 2)
+	var timeseries []store.AnalyticsTimeSeries
+	parseResponseBody(t, w, &timeseries)
+	assert.Len(t, timeseries, 2)
 }
 
 func TestAnalyticsAPI_GetTimeSeries_InvalidDateRange(t *testing.T) {
@@ -193,13 +191,11 @@ func TestAnalyticsAPI_GetPlatformBreakdown(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/analytics/platforms", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Platforms []store.PlatformAnalytics `json:"platforms"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Len(t, resp.Platforms, 2)
-	assert.Equal(t, "twitter", resp.Platforms[0].Platform)
-	assert.Equal(t, "linkedin", resp.Platforms[1].Platform)
+	var platforms []store.PlatformAnalytics
+	parseResponseBody(t, w, &platforms)
+	assert.Len(t, platforms, 2)
+	assert.Equal(t, "twitter", platforms[0].Platform)
+	assert.Equal(t, "linkedin", platforms[1].Platform)
 }
 
 func TestAnalyticsAPI_GetPlatformBreakdown_InvalidDateRange(t *testing.T) {

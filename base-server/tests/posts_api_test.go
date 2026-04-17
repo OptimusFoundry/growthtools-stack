@@ -152,12 +152,33 @@ func (m *mockPostStore) GetPlatformPostsByPostID(_ context.Context, postID uuid.
 	return m.platformPosts[postID], nil
 }
 
+func (m *mockPostStore) DeletePlatformPostsByPostID(_ context.Context, postID uuid.UUID) error {
+	delete(m.platformPosts, postID)
+	return nil
+}
+
+func (m *mockPostStore) ResetPlatformPostsForRetry(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockPostStore) GetMediaByIDs(_ context.Context, _ []uuid.UUID) ([]store.Media, error) {
+	return []store.Media{}, nil
+}
+
+// mockPostPublisher is a no-op EventPublisher used when the handler
+// doesn't exercise the publish path.
+type mockPostPublisher struct{}
+
+func (m *mockPostPublisher) Publish(_ context.Context, _ string, _ string, _ interface{}) error {
+	return nil
+}
+
 // setupPostsRouter sets up a Gin router with the posts handler and mock store.
 func setupPostsRouter(accountID uuid.UUID) (*gin.Engine, *mockPostStore) {
 	mockStore := newMockPostStore()
 	logger := testLogger()
 
-	proc := postsProcessor.New(mockStore, logger)
+	proc := postsProcessor.New(mockStore, &mockPostPublisher{}, logger)
 	handler := postsHandler.New(proc, logger)
 
 	router := setupTestRouter()
@@ -257,15 +278,9 @@ func TestPostsAPI_ListPosts(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/posts", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Posts  []store.Post `json:"posts"`
-		Limit  int         `json:"limit"`
-		Offset int         `json:"offset"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Equal(t, 3, len(resp.Posts))
-	assert.Equal(t, 20, resp.Limit)
-	assert.Equal(t, 0, resp.Offset)
+	var posts []store.Post
+	parseResponseBody(t, w, &posts)
+	assert.Equal(t, 3, len(posts))
 }
 
 func TestPostsAPI_ListPosts_Empty(t *testing.T) {
@@ -277,11 +292,9 @@ func TestPostsAPI_ListPosts_Empty(t *testing.T) {
 	w := makeRequest(t, router, http.MethodGet, "/api/protected/posts", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var resp struct {
-		Posts []store.Post `json:"posts"`
-	}
-	parseResponseBody(t, w, &resp)
-	assert.Empty(t, resp.Posts)
+	var posts []store.Post
+	parseResponseBody(t, w, &posts)
+	assert.Empty(t, posts)
 }
 
 func TestPostsAPI_GetPost(t *testing.T) {
@@ -613,10 +626,8 @@ func TestPostsAPI_CreateAndGet_RoundTrip(t *testing.T) {
 	w = makeRequest(t, router, http.MethodGet, "/api/protected/posts", nil)
 	assertStatus(t, w, http.StatusOK)
 
-	var listResp struct {
-		Posts []store.Post `json:"posts"`
-	}
-	parseResponseBody(t, w, &listResp)
-	assert.GreaterOrEqual(t, len(listResp.Posts), 1)
+	var posts []store.Post
+	parseResponseBody(t, w, &posts)
+	assert.GreaterOrEqual(t, len(posts), 1)
 }
 
