@@ -4,6 +4,7 @@ package processor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -26,6 +27,7 @@ var (
 	ErrGenerateThread = errors.New("failed to generate thread")
 	ErrVoiceProfile   = errors.New("failed to get voice profile")
 	ErrStreamGenerate = errors.New("failed to stream generate and adapt")
+	ErrSelectImages   = errors.New("failed to select meaningful images")
 )
 
 // ContentStore defines the database operations required by ContentProcessor.
@@ -363,6 +365,87 @@ func (p *ContentProcessor) streamPlatform(
 	}
 
 	return nil
+}
+
+// SelectMeaningfulImages picks the subset of supplied images worth including
+// in a social post. Capture workers emit one frame per UI step, so the raw
+// set usually contains redundant shots (loading states, mid-transitions,
+// near-duplicate screens). This uses a multimodal AI call to keep only the
+// images that add distinct visual context and returns the chosen 1-based
+// indexes in ascending order. An empty slice means "no image is worth
+// attaching".
+func (p *ContentProcessor) SelectMeaningfulImages(ctx context.Context, images []aiclient.ImageData) ([]int, error) {
+	if len(images) == 0 {
+		return nil, nil
+	}
+
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "operation", Value: "select_meaningful_images"},
+		observability.Field{Key: "candidate_count", Value: fmt.Sprintf("%d", len(images))},
+	)
+
+	systemPrompt := `You are a visual editor for social media. You are reviewing a sequence of screenshots captured while someone was using a product. The sequence contains redundant frames — loading states, mid-transitions, duplicate views, screens that do not add new information. Your job is to keep only the frames that are genuinely worth showing to an audience.
+
+Return raw JSON (no markdown fences, no commentary) of the form:
+{"selected": [1, 3]}
+
+Rules:
+- Indexes are 1-based, referring to the order the images were given.
+- Err on the side of fewer — one or two strong frames usually beats five weak ones.
+- Skip frames that repeat a state already shown by an earlier selected frame.
+- Skip loading spinners, empty mid-animation states, blurred frames.
+- Prefer frames that show a distinct, finished UI state, an important result, or a visual highlight.
+- If every frame is redundant or uninteresting, return {"selected": []}.
+- Return indexes in ascending order, no duplicates.`
+
+	parts := make([]string, 0, len(images))
+	msgImages := make([]aiclient.ImageData, 0, len(images))
+	for i, img := range images {
+		parts = append(parts, fmt.Sprintf("Image %d:", i+1))
+		msgImages = append(msgImages, img)
+	}
+	messages := []aiclient.Message{
+		{
+			Role:    "user",
+			Content: "Here are the candidate frames, labelled in order:\n" + strings.Join(parts, "\n"),
+			Images:  msgImages,
+		},
+	}
+
+	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, messages, 512)
+	if err != nil {
+		p.logger.Error(ctx, "failed to select meaningful images via ai", err)
+		return nil, ErrSelectImages
+	}
+
+	var parsed struct {
+		Selected []int `json:"selected"`
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &parsed); err != nil {
+		p.logger.Error(ctx, "failed to parse image selection response", err)
+		return nil, ErrSelectImages
+	}
+
+	// Sanitize: drop out-of-range and duplicate indexes, sort ascending.
+	seen := make(map[int]struct{}, len(parsed.Selected))
+	cleaned := make([]int, 0, len(parsed.Selected))
+	for _, idx := range parsed.Selected {
+		if idx < 1 || idx > len(images) {
+			continue
+		}
+		if _, ok := seen[idx]; ok {
+			continue
+		}
+		seen[idx] = struct{}{}
+		cleaned = append(cleaned, idx)
+	}
+	// Ascending order for caller sanity.
+	for i := 1; i < len(cleaned); i++ {
+		for j := i; j > 0 && cleaned[j-1] > cleaned[j]; j-- {
+			cleaned[j-1], cleaned[j] = cleaned[j], cleaned[j-1]
+		}
+	}
+	return cleaned, nil
 }
 
 // ThreadWithMediaPlanResult holds the generated output for one platform when

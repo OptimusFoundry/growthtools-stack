@@ -708,3 +708,87 @@ func TestParseThreadSegmentsWithImages(t *testing.T) {
 		})
 	}
 }
+
+func TestContentProcessor_SelectMeaningfulImages(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+
+	threeImages := []aiclient.ImageData{
+		{MIMEType: "image/png", Data: []byte("a")},
+		{MIMEType: "image/png", Data: []byte("b")},
+		{MIMEType: "image/png", Data: []byte("c")},
+	}
+
+	tests := []struct {
+		name     string
+		images   []aiclient.ImageData
+		aiReply  string
+		aiErr    error
+		want     []int
+		wantErr  error
+		skipMock bool
+	}{
+		{
+			name:     "no images returns nil without calling AI",
+			images:   nil,
+			want:     nil,
+			skipMock: true,
+		},
+		{
+			name:    "AI picks a subset — indexes returned in ascending order",
+			images:  threeImages,
+			aiReply: `{"selected":[3,1]}`,
+			want:    []int{1, 3},
+		},
+		{
+			name:    "AI returns empty selection",
+			images:  threeImages,
+			aiReply: `{"selected":[]}`,
+			want:    []int{},
+		},
+		{
+			name:    "out-of-range and duplicate indexes are cleaned up",
+			images:  threeImages,
+			aiReply: `{"selected":[0, 2, 2, 99, 1]}`,
+			want:    []int{1, 2},
+		},
+		{
+			name:    "AI trims markdown fences and whitespace are tolerated",
+			images:  threeImages,
+			aiReply: "  {\"selected\":[2]}  \n",
+			want:    []int{2},
+		},
+		{
+			name:    "AI call fails maps to ErrSelectImages",
+			images:  threeImages,
+			aiErr:   errors.New("anthropic timeout"),
+			wantErr: ErrSelectImages,
+		},
+		{
+			name:    "unparseable response maps to ErrSelectImages",
+			images:  threeImages,
+			aiReply: "not json",
+			wantErr: ErrSelectImages,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			ai := NewMockAIClient(ctrl)
+			if !tt.skipMock {
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(tt.aiReply, tt.aiErr)
+			}
+			proc := New(noVoiceStore(ctrl), ai, logger)
+			got, err := proc.SelectMeaningfulImages(context.Background(), tt.images)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

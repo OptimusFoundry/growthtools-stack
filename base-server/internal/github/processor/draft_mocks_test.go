@@ -12,9 +12,11 @@ package processor
 import (
 	processor "base-server/internal/content/processor"
 	prompts "base-server/internal/content/prompts"
+	aiclient "base-server/internal/infra/clients/aiclient"
 	store "base-server/internal/infra/store"
 	processor0 "base-server/internal/posts/processor"
 	context "context"
+	io "io"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -144,6 +146,21 @@ func (mr *MockContentGeneratorMockRecorder) GenerateWithMediaPlan(ctx, accountID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWithMediaPlan", reflect.TypeOf((*MockContentGenerator)(nil).GenerateWithMediaPlan), ctx, accountID, prompt, platforms, maxThreadParts, plan)
 }
 
+// SelectMeaningfulImages mocks base method.
+func (m *MockContentGenerator) SelectMeaningfulImages(ctx context.Context, images []aiclient.ImageData) ([]int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectMeaningfulImages", ctx, images)
+	ret0, _ := ret[0].([]int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectMeaningfulImages indicates an expected call of SelectMeaningfulImages.
+func (mr *MockContentGeneratorMockRecorder) SelectMeaningfulImages(ctx, images any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectMeaningfulImages", reflect.TypeOf((*MockContentGenerator)(nil).SelectMeaningfulImages), ctx, images)
+}
+
 // MockPostsDrafter is a mock of PostsDrafter interface.
 type MockPostsDrafter struct {
 	ctrl     *gomock.Controller
@@ -221,4 +238,44 @@ func (m *MockS3HeadClient) HeadObject(ctx context.Context, key string) (int64, s
 func (mr *MockS3HeadClientMockRecorder) HeadObject(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HeadObject", reflect.TypeOf((*MockS3HeadClient)(nil).HeadObject), ctx, key)
+}
+
+// MockS3Fetcher is a mock of S3Fetcher interface.
+type MockS3Fetcher struct {
+	ctrl     *gomock.Controller
+	recorder *MockS3FetcherMockRecorder
+	isgomock struct{}
+}
+
+// MockS3FetcherMockRecorder is the mock recorder for MockS3Fetcher.
+type MockS3FetcherMockRecorder struct {
+	mock *MockS3Fetcher
+}
+
+// NewMockS3Fetcher creates a new mock instance.
+func NewMockS3Fetcher(ctrl *gomock.Controller) *MockS3Fetcher {
+	mock := &MockS3Fetcher{ctrl: ctrl}
+	mock.recorder = &MockS3FetcherMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockS3Fetcher) EXPECT() *MockS3FetcherMockRecorder {
+	return m.recorder
+}
+
+// GetFile mocks base method.
+func (m *MockS3Fetcher) GetFile(ctx context.Context, key string) (io.ReadCloser, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFile", ctx, key)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetFile indicates an expected call of GetFile.
+func (mr *MockS3FetcherMockRecorder) GetFile(ctx, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockS3Fetcher)(nil).GetFile), ctx, key)
 }

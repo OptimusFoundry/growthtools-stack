@@ -165,6 +165,9 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	// capture artifacts when creating media rows. Nil in localdir mode —
 	// draft generation only runs in deployments that have S3 anyway.
 	var s3Head githubProcessor.S3HeadClient
+	// s3Fetch lets the draft generator download capture screenshots so the
+	// multimodal AI can pick which ones actually belong in the post.
+	var s3Fetch githubProcessor.S3Fetcher
 	switch cfg.Storage.Type {
 	case "s3":
 		s3Client := s3.NewClient(s3.S3Config{
@@ -176,6 +179,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 		fileStore = s3Client
 		urlSigner = s3Client
 		s3Head = s3Client
+		s3Fetch = s3Client
 	default:
 		fileStore = localdir.NewClient(cfg.Storage.MediaDir, logger)
 	}
@@ -358,7 +362,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.
-	draftGen := githubProcessor.NewDraftGenerator(&deps.Store, &contentProc, &postsProc, s3Head, cfg.S3.Bucket, logger)
+	draftGen := githubProcessor.NewDraftGenerator(&deps.Store, &contentProc, &postsProc, s3Head, s3Fetch, cfg.S3.Bucket, logger)
 	draftGeneratorWorker := workers.NewDraftGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &draftGen, logger)
 
 	deps.WorkerManager = workers.NewManager(logger)

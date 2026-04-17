@@ -1,9 +1,11 @@
 package processor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"testing"
 
 	contentProc "base-server/internal/content/processor"
@@ -16,6 +18,23 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
+
+// expectImagesFetchedAndAllSelected sets up mock expectations for the S3
+// fetch + AI-selection step when every supplied image key should pass
+// through unchanged. Keys are handled in order.
+func expectImagesFetchedAndAllSelected(f *MockS3Fetcher, c *MockContentGenerator, keys ...string) {
+	for _, key := range keys {
+		body := io.NopCloser(bytes.NewReader([]byte("fake-image-bytes")))
+		f.EXPECT().GetFile(gomock.Any(), key).Return(body, "image/png", nil)
+	}
+	selection := make([]int, len(keys))
+	for i := range keys {
+		selection[i] = i + 1
+	}
+	c.EXPECT().
+		SelectMeaningfulImages(gomock.Any(), gomock.Len(len(keys))).
+		Return(selection, nil)
+}
 
 // newDraftFixture returns a commit fixture with a single video + two images
 // uploaded, ready for the happy-path test to exercise the whole pipeline.
@@ -53,12 +72,12 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		mocks   func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient)
+		mocks   func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher)
 		wantErr error
 	}{
 		{
 			name: "happy path creates media, generates threads, saves draft, links commit",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
@@ -70,7 +89,11 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 					{Platform: "x", Status: "expired"},       // filtered out — not active
 				}, nil)
 
-				// HEAD one video + two images.
+				// The draft generator fetches each candidate image and asks
+				// the AI which ones matter. Here we keep both.
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+
+				// HEAD one video + the two selected images.
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/demo.mp4").Return(int64(5_000_000), "video/mp4", nil)
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/step-1.png").Return(int64(150_000), "image/png", nil)
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/step-2.jpg").Return(int64(120_000), "image/jpeg", nil)
@@ -114,13 +137,15 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 						var segs []contentProc.ThreadSegment
 						require.NoError(t, json.Unmarshal(*draft.ThreadSegments, &segs))
 						require.Len(t, segs, 3)
-						// Video on segment 0, image1 on segment 1, image2 on segment 2.
+						// Video on segment 0, image1 on segment 1, image2 on
+						// segment 2. ImageIndex is 1-based into MediaIDs so the
+						// adapter's mediaURLForSegment resolves them correctly.
 						require.NotNil(t, segs[0].ImageIndex)
-						assert.Equal(t, 0, *segs[0].ImageIndex)
+						assert.Equal(t, 1, *segs[0].ImageIndex)
 						require.NotNil(t, segs[1].ImageIndex)
-						assert.Equal(t, 1, *segs[1].ImageIndex)
+						assert.Equal(t, 2, *segs[1].ImageIndex)
 						require.NotNil(t, segs[2].ImageIndex)
-						assert.Equal(t, 2, *segs[2].ImageIndex)
+						assert.Equal(t, 3, *segs[2].ImageIndex)
 					}
 					return store.Post{ID: postID}, nil
 				})
@@ -130,7 +155,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 		},
 		{
 			name: "commit already drafted skips silently",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, _ := newDraftFixture(t)
 				existingPostID := uuid.New()
 				commit.PostID = &existingPostID
@@ -140,7 +165,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 		},
 		{
 			name: "capture output missing skips silently",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, _ := newDraftFixture(t)
 				commit.CaptureOutput = nil
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
@@ -149,7 +174,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 		},
 		{
 			name: "capture reports error skips silently",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, _ := newDraftFixture(t)
 				raw := json.RawMessage(`{"error":"headless chrome crashed"}`)
 				commit.CaptureOutput = &raw
@@ -159,7 +184,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 		},
 		{
 			name: "no target platform connections skips silently",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
@@ -171,19 +196,20 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 		},
 		{
 			name: "commit lookup fails returns hard error",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(store.GitHubCommitForDraft{}, errors.New("db exploded"))
 			},
 			wantErr: ErrDraftGenerationFailed,
 		},
 		{
 			name: "content generation fails returns hard error",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "video/mp4", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
 				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -193,12 +219,13 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 		},
 		{
 			name: "save draft fails returns hard error",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
 				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -210,8 +237,124 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 			wantErr: ErrDraftGenerationFailed,
 		},
 		{
+			name: "redundant images are dropped so the post only gets AI-selected media",
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
+				// Four captured images; AI keeps only the first and the third.
+				commit, accountID := newDraftFixture(t)
+				capture := map[string]any{
+					"uploaded": []map[string]string{
+						{"key": "captures/abc/demo.mp4"},
+						{"key": "captures/abc/step-1.png"},
+						{"key": "captures/abc/step-2.png"}, // redundant — skipped by AI
+						{"key": "captures/abc/step-3.png"},
+						{"key": "captures/abc/step-4.png"}, // redundant — skipped by AI
+					},
+				}
+				raw, err := json.Marshal(capture)
+				require.NoError(t, err)
+				rawMsg := json.RawMessage(raw)
+				commit.CaptureOutput = &rawMsg
+
+				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
+				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
+					{Platform: "x", Status: "active"},
+				}, nil)
+
+				// Every image gets fetched; AI returns a subset.
+				for _, key := range []string{
+					"captures/abc/step-1.png",
+					"captures/abc/step-2.png",
+					"captures/abc/step-3.png",
+					"captures/abc/step-4.png",
+				} {
+					body := io.NopCloser(bytes.NewReader([]byte("fake")))
+					f.EXPECT().GetFile(gomock.Any(), key).Return(body, "image/png", nil)
+				}
+				c.EXPECT().SelectMeaningfulImages(gomock.Any(), gomock.Len(4)).Return([]int{1, 3}, nil)
+
+				// Only the video + the two AI-selected images should be
+				// materialized and attached to the post.
+				videoID := uuid.New()
+				img1ID := uuid.New()
+				img3ID := uuid.New()
+				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/demo.mp4").Return(int64(1), "video/mp4", nil)
+				s.EXPECT().CreateMedia(gomock.Any(), gomock.Cond(func(p store.CreateMediaParams) bool {
+					return p.S3Key == "captures/abc/demo.mp4"
+				})).Return(store.Media{ID: videoID}, nil)
+				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/step-1.png").Return(int64(1), "image/png", nil)
+				s.EXPECT().CreateMedia(gomock.Any(), gomock.Cond(func(p store.CreateMediaParams) bool {
+					return p.S3Key == "captures/abc/step-1.png"
+				})).Return(store.Media{ID: img1ID}, nil)
+				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/step-3.png").Return(int64(1), "image/png", nil)
+				s.EXPECT().CreateMedia(gomock.Any(), gomock.Cond(func(p store.CreateMediaParams) bool {
+					return p.S3Key == "captures/abc/step-3.png"
+				})).Return(store.Media{ID: img3ID}, nil)
+
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
+						"x": {
+							Content: "one\ntwo\nthree",
+							Segments: []contentProc.ThreadSegment{
+								{Content: "one"}, {Content: "two"}, {Content: "three"},
+							},
+						},
+					}, nil)
+
+				p.EXPECT().SaveDraft(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, params postsProc.SaveDraftParams) (store.Post, error) {
+					// Media IDs should contain exactly [video, img1, img3] — no img2/img4.
+					require.Len(t, params.MediaIDs, 3)
+					assert.Equal(t, videoID, params.MediaIDs[0])
+					assert.Equal(t, img1ID, params.MediaIDs[1])
+					assert.Equal(t, img3ID, params.MediaIDs[2])
+
+					// Video pinned to segment 0 with 1-based ImageIndex.
+					var segs []contentProc.ThreadSegment
+					require.NoError(t, json.Unmarshal(*params.Platforms[0].ThreadSegments, &segs))
+					require.NotNil(t, segs[0].ImageIndex)
+					assert.Equal(t, 1, *segs[0].ImageIndex)
+					require.NotNil(t, segs[1].ImageIndex)
+					assert.Equal(t, 2, *segs[1].ImageIndex)
+					require.NotNil(t, segs[2].ImageIndex)
+					assert.Equal(t, 3, *segs[2].ImageIndex)
+					return store.Post{ID: uuid.New()}, nil
+				})
+				s.EXPECT().UpdateGitHubCommitPostID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			},
+		},
+		{
+			name: "image-selection failure falls back to keeping every image",
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
+				commit, accountID := newDraftFixture(t)
+				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
+				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
+					{Platform: "x", Status: "active"},
+				}, nil)
+
+				for _, key := range []string{"captures/abc/step-1.png", "captures/abc/step-2.jpg"} {
+					body := io.NopCloser(bytes.NewReader([]byte("fake")))
+					f.EXPECT().GetFile(gomock.Any(), key).Return(body, "image/png", nil)
+				}
+				// AI call errors — fallback keeps every image.
+				c.EXPECT().SelectMeaningfulImages(gomock.Any(), gomock.Any()).Return(nil, errors.New("anthropic 500"))
+
+				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(1), "", nil).AnyTimes()
+				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).Times(3)
+
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
+						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
+					}, nil)
+				p.EXPECT().SaveDraft(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, params postsProc.SaveDraftParams) (store.Post, error) {
+					// Fallback keeps all: video + both original images.
+					assert.Len(t, params.MediaIDs, 3)
+					return store.Post{ID: uuid.New()}, nil
+				})
+				s.EXPECT().UpdateGitHubCommitPostID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			},
+		},
+		{
 			name: "commit with no artifacts still generates draft with no media",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				empty := json.RawMessage(`{"uploaded":[]}`)
 				commit.CaptureOutput = &empty
@@ -246,9 +389,10 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 			cg := NewMockContentGenerator(ctrl)
 			pd := NewMockPostsDrafter(ctrl)
 			s3h := NewMockS3HeadClient(ctrl)
-			tt.mocks(t, ds, cg, pd, s3h)
+			s3f := NewMockS3Fetcher(ctrl)
+			tt.mocks(t, ds, cg, pd, s3h, s3f)
 
-			g := NewDraftGenerator(ds, cg, pd, s3h, "https://cdn.example.com", logger)
+			g := NewDraftGenerator(ds, cg, pd, s3h, s3f, "https://cdn.example.com", logger)
 			err := g.GenerateDraftFromCommit(context.Background(), uuid.New())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -270,12 +414,12 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		mocks   func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient)
+		mocks   func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher)
 		wantErr error
 	}{
 		{
 			name: "ListPlatformConnectionsByAccount failing returns hard error",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).
@@ -285,12 +429,13 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 		},
 		{
 			name: "CreateMedia failing mid-way through artifact ingest returns hard error",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				// Video HEAD succeeds.
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/demo.mp4").Return(int64(1_000), "video/mp4", nil)
 				// Video CreateMedia succeeds.
@@ -304,12 +449,13 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 		},
 		{
 			name: "UpdateGitHubCommitPostID failing after successful SaveDraft is swallowed",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "video/mp4", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
 				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -326,7 +472,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 		},
 		{
 			name: "invalid JSON in capture_output returns hard error",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, _ := newDraftFixture(t)
 				bad := json.RawMessage(`{not valid json`)
 				commit.CaptureOutput = &bad
@@ -336,7 +482,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 		},
 		{
 			name: "mixed-extension artifacts where video sits after images",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				// Override capture output: images before video.
 				mixedCapture := map[string]any{
@@ -355,6 +501,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 
 				// Only the two images should be created (video listed after images but still picked up as video).
 				// bucketArtifacts puts images first, then skips the video (already assigned).
@@ -389,7 +536,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 		},
 		{
 			name: "s3 HeadObject returning error still creates media with fallback content-type",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				// Reduce to a single image for simplicity.
 				singleCapture := map[string]any{
@@ -406,6 +553,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
+				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png")
 
 				// HeadObject fails — should fall back to extension-derived content-type.
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/step-1.png").Return(int64(0), "", errors.New("s3 403"))
@@ -426,7 +574,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 		},
 		{
 			name: "nil s3Head still works with size=0",
-			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient) {
+			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				singleCapture := map[string]any{
 					"uploaded": []map[string]string{
@@ -467,14 +615,19 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 			cg := NewMockContentGenerator(ctrl)
 			pd := NewMockPostsDrafter(ctrl)
 			s3h := NewMockS3HeadClient(ctrl)
-			tt.mocks(t, ds, cg, pd, s3h)
+			s3f := NewMockS3Fetcher(ctrl)
+			tt.mocks(t, ds, cg, pd, s3h, s3f)
 
 			var s3HeadArg S3HeadClient = s3h
+			var s3FetchArg S3Fetcher = s3f
 			if tt.name == "nil s3Head still works with size=0" {
 				s3HeadArg = nil
+				// Leave the AI-driven selection off when S3 isn't wired so
+				// we don't need to mock a fetcher for the local-dir path.
+				s3FetchArg = nil
 			}
 
-			g := NewDraftGenerator(ds, cg, pd, s3HeadArg, "https://cdn.example.com", logger)
+			g := NewDraftGenerator(ds, cg, pd, s3HeadArg, s3FetchArg, "https://cdn.example.com", logger)
 			err := g.GenerateDraftFromCommit(context.Background(), uuid.New())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
