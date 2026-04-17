@@ -10,7 +10,6 @@ export type ThemeName =
 	| "forest"
 	| "forest-light"
 	| "ocean"
-	| "rose"
 	| "sunset"
 	| "brutal"
 	| "cyberpunk"
@@ -20,14 +19,10 @@ export type ThemeName =
 	| "bioluminescent"
 	| "cosmos"
 	| "claude"
-	| "acid"
-	| "retro"
 	| "lavender"
 	| "citrus"
 	| "pixel"
-	| "y2k"
 	| "neon"
-	| "lime"
 	| "blueprint"
 	| "paper";
 
@@ -48,7 +43,6 @@ export const themes: Record<ThemeName, Theme> = {
 		colorScheme: "light",
 	},
 	ocean: { name: "ocean", label: "Ocean", colorScheme: "light" },
-	rose: { name: "rose", label: "Rose", colorScheme: "light" },
 	sunset: { name: "sunset", label: "Sunset", colorScheme: "dark" },
 	brutal: { name: "brutal", label: "Brutal", colorScheme: "light" },
 	cyberpunk: { name: "cyberpunk", label: "Cyberpunk", colorScheme: "dark" },
@@ -66,14 +60,10 @@ export const themes: Record<ThemeName, Theme> = {
 	},
 	cosmos: { name: "cosmos", label: "Cosmos", colorScheme: "dark" },
 	claude: { name: "claude", label: "Claude", colorScheme: "light" },
-	acid: { name: "acid", label: "Acid", colorScheme: "light" },
-	retro: { name: "retro", label: "Retro", colorScheme: "light" },
 	lavender: { name: "lavender", label: "Lavender", colorScheme: "light" },
 	citrus: { name: "citrus", label: "Citrus", colorScheme: "light" },
 	pixel: { name: "pixel", label: "Pixel", colorScheme: "light" },
-	y2k: { name: "y2k", label: "Y2K", colorScheme: "light" },
 	neon: { name: "neon", label: "Neon", colorScheme: "light" },
-	lime: { name: "lime", label: "Lime", colorScheme: "light" },
 	blueprint: { name: "blueprint", label: "Blueprint", colorScheme: "light" },
 	paper: { name: "paper", label: "Paper", colorScheme: "light" },
 };
