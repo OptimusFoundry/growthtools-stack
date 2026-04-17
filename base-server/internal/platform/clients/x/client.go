@@ -93,9 +93,50 @@ func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, access
 	return CreateTweetResponse{ID: result.Data.ID}, nil
 }
 
-// UploadMedia uploads media to X via the v2 API with OAuth 2.0 Bearer auth.
-// Uses a single multipart POST for simple image uploads.
+// UploadMediaResult is what the async pipeline sees: the media_id,
+// plus the platform's current processing state so the reconciler can
+// decide whether to poll.
+type UploadMediaResult struct {
+	MediaID        string
+	ProcessingInfo *ProcessingInfo
+}
+
+// ProcessingInfo is the public view of X's processing_info block.
+// Exported so the async pipeline (outside this package) can read
+// state + check_after_secs directly.
+type ProcessingInfo struct {
+	State          string `json:"state"`
+	CheckAfterSecs int    `json:"check_after_secs"`
+	Error          *struct {
+		Code    int    `json:"code"`
+		Name    string `json:"name"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+}
+
+// UploadMedia is the blocking upload used by the legacy (synchronous)
+// publish path. It does the single-shot POST and, for video, polls
+// STATUS until the media is ready. Kept for callers that haven't moved
+// to the async pipeline yet.
 func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (string, error) {
+	res, err := c.UploadMediaAsync(ctx, req, accessToken, tokenSecret)
+	if err != nil {
+		return "", err
+	}
+	if res.ProcessingInfo != nil && res.ProcessingInfo.State != "" && res.ProcessingInfo.State != "succeeded" {
+		if err := c.waitForMediaReady(ctx, res.MediaID, accessToken, res.ProcessingInfo); err != nil {
+			return "", err
+		}
+	}
+	return res.MediaID, nil
+}
+
+// UploadMediaAsync does the single-shot POST and returns as soon as X
+// responds. For images the response carries no processing_info and the
+// result is ready to attach to a tweet immediately; for video the
+// returned ProcessingInfo is typically "pending" or "in_progress" and
+// the caller is expected to poll GetMediaStatus before attaching.
+func (c *Client) UploadMediaAsync(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (UploadMediaResult, error) {
 	mediaType := req.MediaType
 	if mediaType == "" {
 		mediaType = "image/jpeg"
@@ -114,7 +155,7 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 	writer := multipart.NewWriter(&body)
 
 	if err := writer.WriteField("media_category", mediaCategory); err != nil {
-		return "", fmt.Errorf("xapi: failed to write media_category: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: failed to write media_category: %w", err)
 	}
 
 	h := make(textproto.MIMEHeader)
@@ -122,31 +163,31 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 	h.Set("Content-Type", mediaType)
 	part, err := writer.CreatePart(h)
 	if err != nil {
-		return "", fmt.Errorf("xapi: failed to create media part: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: failed to create media part: %w", err)
 	}
 	if _, err := part.Write(req.MediaBytes); err != nil {
-		return "", fmt.Errorf("xapi: failed to write media bytes: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: failed to write media bytes: %w", err)
 	}
 	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("xapi: failed to close multipart writer: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: failed to close multipart writer: %w", err)
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &body)
 	if err != nil {
-		return "", fmt.Errorf("xapi: failed to create upload request: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: failed to create upload request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", writer.FormDataContentType())
 	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
-		return "", fmt.Errorf("xapi: upload request failed: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: upload request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("xapi: media upload failed with %d: %s", resp.StatusCode, string(respBody))
+		return UploadMediaResult{}, fmt.Errorf("xapi: media upload failed with %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	// v2 response shape: { "data": { "id": "...", "media_key": "...", "processing_info": {...} } }
@@ -155,13 +196,13 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 		Data struct {
 			ID             string          `json:"id"`
 			MediaKey       string          `json:"media_key"`
-			ProcessingInfo *processingInfo `json:"processing_info"`
+			ProcessingInfo *ProcessingInfo `json:"processing_info"`
 		} `json:"data"`
 		MediaIDString  string          `json:"media_id_string"`
-		ProcessingInfo *processingInfo `json:"processing_info"`
+		ProcessingInfo *ProcessingInfo `json:"processing_info"`
 	}
 	if err := json.Unmarshal(respBody, &v2Result); err != nil {
-		return "", fmt.Errorf("xapi: failed to parse upload response: %w", err)
+		return UploadMediaResult{}, fmt.Errorf("xapi: failed to parse upload response: %w", err)
 	}
 
 	mediaID := v2Result.Data.ID
@@ -169,35 +210,14 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 		mediaID = v2Result.MediaIDString
 	}
 	if mediaID == "" {
-		return "", fmt.Errorf("xapi: no media ID in response: %s", string(respBody))
+		return UploadMediaResult{}, fmt.Errorf("xapi: no media ID in response: %s", string(respBody))
 	}
 
-	// Videos come back with processing_info; X won't accept the media_id
-	// in a tweet until the transcode finishes. Poll STATUS until
-	// succeeded (or fail fast on failed/timeout). Images don't emit
-	// processing_info, so this short-circuits for them.
 	pi := v2Result.Data.ProcessingInfo
 	if pi == nil {
 		pi = v2Result.ProcessingInfo
 	}
-	if pi != nil && pi.State != "" && pi.State != "succeeded" {
-		if err := c.waitForMediaReady(ctx, mediaID, accessToken, pi); err != nil {
-			return "", err
-		}
-	}
-	return mediaID, nil
-}
-
-// processingInfo mirrors the subset of X's media processing status we
-// care about. X returns check_after_secs as a hint for the next poll.
-type processingInfo struct {
-	State          string `json:"state"`
-	CheckAfterSecs int    `json:"check_after_secs"`
-	Error          *struct {
-		Code    int    `json:"code"`
-		Name    string `json:"name"`
-		Message string `json:"message"`
-	} `json:"error,omitempty"`
+	return UploadMediaResult{MediaID: mediaID, ProcessingInfo: pi}, nil
 }
 
 // waitForMediaReady polls /2/media/upload?command=STATUS until the
@@ -205,7 +225,7 @@ type processingInfo struct {
 // to pace callers; we honor it but clamp to a sane range. Bounded by a
 // 2-minute overall timeout — capture clips are short, and anything
 // that's still transcoding after 2 minutes probably isn't coming back.
-func (c *Client) waitForMediaReady(ctx context.Context, mediaID, accessToken string, initial *processingInfo) error {
+func (c *Client) waitForMediaReady(ctx context.Context, mediaID, accessToken string, initial *ProcessingInfo) error {
 	const overallTimeout = 2 * time.Minute
 	deadline := time.Now().Add(overallTimeout)
 
@@ -230,7 +250,7 @@ func (c *Client) waitForMediaReady(ctx context.Context, mediaID, accessToken str
 			return fmt.Errorf("xapi: media %s still in state %s after %s", mediaID, pi.State, overallTimeout)
 		}
 
-		next, err := c.getMediaStatus(ctx, mediaID, accessToken)
+		next, err := c.GetMediaStatus(ctx, mediaID, accessToken)
 		if err != nil {
 			return err
 		}
@@ -247,7 +267,11 @@ func (c *Client) waitForMediaReady(ctx context.Context, mediaID, accessToken str
 	}
 }
 
-func (c *Client) getMediaStatus(ctx context.Context, mediaID, accessToken string) (*processingInfo, error) {
+// GetMediaStatus reads the platform-side processing state of a
+// previously uploaded media. Exposed so the async reconciler can
+// check readiness without triggering the blocking waitForMediaReady
+// loop.
+func (c *Client) GetMediaStatus(ctx context.Context, mediaID, accessToken string) (*ProcessingInfo, error) {
 	endpoint := fmt.Sprintf("https://api.x.com/2/media/upload?command=STATUS&media_id=%s", mediaID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -266,9 +290,9 @@ func (c *Client) getMediaStatus(ctx context.Context, mediaID, accessToken string
 	}
 	var result struct {
 		Data struct {
-			ProcessingInfo *processingInfo `json:"processing_info"`
+			ProcessingInfo *ProcessingInfo `json:"processing_info"`
 		} `json:"data"`
-		ProcessingInfo *processingInfo `json:"processing_info"`
+		ProcessingInfo *ProcessingInfo `json:"processing_info"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("xapi: failed to parse STATUS response: %w", err)

@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"base-server/internal/infra/store"
@@ -44,6 +45,50 @@ type PlatformAdapter interface {
 
 	// GetEngagement retrieves engagement metrics for a previously published post.
 	GetEngagement(ctx context.Context, postID string, conn store.PlatformConnection) (Engagement, error)
+}
+
+// PostSpec carries the post the async pipeline is trying to publish.
+// Segments is nil for single posts.
+type PostSpec struct {
+	Content   string
+	Segments  []ThreadSegment
+	MediaURLs []string // presigned HTTPS, positional — image_index points here
+}
+
+// AsyncPlatformAdapter is an opt-in extension of PlatformAdapter that
+// lets an adapter participate in the async publish pipeline:
+// StartPublish → (CheckReady loop, driven by the reconciler) → Finalize.
+//
+// Workers type-assert on this interface; adapters that don't implement
+// it fall back to the blocking PlatformAdapter.Publish /
+// PlatformAdapter.PublishThread path. Implement this when the
+// platform's flow has a legitimately async step (media transcode,
+// container processing) whose wait we don't want hogging a worker
+// goroutine.
+type AsyncPlatformAdapter interface {
+	PlatformAdapter
+
+	// StartPublish performs the parts of the flow that don't need to
+	// wait on platform-side processing: downloading local-ish media,
+	// uploading blobs, creating containers. Returns an opaque handle
+	// the pipeline will persist as platform_posts.media_handle. If
+	// readyNow is true the pipeline skips the reconciler and calls
+	// Finalize directly — use it when there's no async step.
+	StartPublish(ctx context.Context, spec PostSpec, conn store.PlatformConnection) (handle json.RawMessage, readyNow bool, err error)
+
+	// CheckReady polls the platform for the handle's processing state.
+	// Returns ready=true once the platform reports success; the
+	// returned updatedHandle replaces what's stored so the finalizer
+	// sees the latest per-platform fields (e.g. X's succeeded
+	// processing_info, Threads' FINISHED status).
+	CheckReady(ctx context.Context, handle json.RawMessage, conn store.PlatformConnection) (ready bool, updatedHandle json.RawMessage, err error)
+
+	// Finalize consumes a handle the reconciler (or StartPublish
+	// readyNow) has flagged as ready, creates the actual post(s), and
+	// returns the public result. Finalize may still block internally
+	// for work that isn't worth a second trip through Kafka — e.g.
+	// chaining the 2nd+ segments of a Threads thread.
+	Finalize(ctx context.Context, spec PostSpec, handle json.RawMessage, conn store.PlatformConnection) (PlatformPostResult, error)
 }
 
 // mediaURLForSegment returns the media URL for a segment's image_index, or empty string.
