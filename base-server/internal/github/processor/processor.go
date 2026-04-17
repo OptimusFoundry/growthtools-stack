@@ -62,6 +62,8 @@ type GitHubStore interface {
 
 	// Commit operations
 	InsertGitHubCommit(ctx context.Context, repoID uuid.UUID, sha string, authorName, authorEmail *string, message string, branch, commitURL *string, pushedAt time.Time, payload *json.RawMessage) (store.GitHubCommit, bool, error)
+	GetGitHubCommitByRepoSHA(ctx context.Context, repoID uuid.UUID, sha string) (store.GitHubCommit, error)
+	MarkGitHubCommitCaptureRequested(ctx context.Context, commitID uuid.UUID) (bool, error)
 	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
 	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommit, error)
@@ -172,6 +174,22 @@ type pushPayload struct {
 	} `json:"commits"`
 }
 
+// workflowRunPayload is the subset of GitHub's workflow_run-event payload we
+// care about. We gate capture on conclusion=="success" so the agent only
+// runs against commits the user has actually deployed.
+// Schema: https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
+type workflowRunPayload struct {
+	Action      string `json:"action"` // "requested" | "in_progress" | "completed"
+	WorkflowRun struct {
+		ID         int64  `json:"id"`
+		HeadSHA    string `json:"head_sha"`
+		HeadBranch string `json:"head_branch"`
+		Status     string `json:"status"`     // "queued" | "in_progress" | "completed"
+		Conclusion string `json:"conclusion"` // "success" | "failure" | ...
+		Name       string `json:"name"`
+	} `json:"workflow_run"`
+}
+
 // validateSignatureWith verifies the HMAC-SHA256 signature against an
 // explicit secret (the per-repo webhook_secret).
 func validateSignatureWith(payload []byte, signature, secret string) error {
@@ -265,8 +283,7 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		return err
 	}
 
-	// Only push events currently produce commits.
-	if eventType != "push" || !repoFound {
+	if !repoFound {
 		return nil
 	}
 
@@ -279,6 +296,20 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		}
 	}
 
+	switch eventType {
+	case "push":
+		return p.handlePush(ctx, repo, payload)
+	case "workflow_run":
+		return p.handleWorkflowRun(ctx, repo, payload)
+	}
+	return nil
+}
+
+// handlePush persists commits from a push delivery but does NOT enqueue
+// capture yet — we wait until workflow_run tells us CI finished, so the
+// Playwright agent runs against the deployed version of the code, not the
+// version from 30s ago that's still building.
+func (p *GitHubProcessor) handlePush(ctx context.Context, repo store.GitHubRepo, payload []byte) error {
 	var push pushPayload
 	if err := json.Unmarshal(payload, &push); err != nil {
 		p.logger.Error(ctx, "failed to parse push payload", err)
@@ -286,7 +317,6 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 	}
 
 	branch := strings.TrimPrefix(push.Ref, "refs/heads/")
-	inserted := make([]store.GitHubCommit, 0, len(push.Commits))
 	for _, c := range push.Commits {
 		pushedAt, timeErr := time.Parse(time.RFC3339, c.Timestamp)
 		if timeErr != nil {
@@ -297,7 +327,7 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		branchCopy := branch
 		urlCopy := c.URL
 
-		commit, isNew, insErr := p.store.InsertGitHubCommit(
+		if _, _, insErr := p.store.InsertGitHubCommit(
 			ctx,
 			repo.ID,
 			c.ID,
@@ -308,25 +338,61 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 			&urlCopy,
 			pushedAt,
 			nil,
-		)
-		if insErr != nil {
+		); insErr != nil {
 			p.logger.Error(ctx, fmt.Sprintf("failed to insert commit %s", c.ID), insErr)
-			continue
-		}
-		if isNew {
-			inserted = append(inserted, commit)
 		}
 	}
+	return nil
+}
 
-	// Hand the new commits off to the capture pipeline over Kafka. The
-	// capture-worker consumes github.capture.requests, runs Playwright,
-	// and publishes outcomes on github.capture.results for the result
-	// worker to persist. Webhook delivery returns as soon as the requests
-	// are enqueued.
-	if len(inserted) > 0 && p.publisher != nil {
-		p.enqueueCaptureRequests(context.WithoutCancel(ctx), repo, inserted)
+// handleWorkflowRun fires when a GitHub Actions run reports completed.
+// Only the first successful workflow_run per commit_sha kicks off the
+// capture pipeline — MarkGitHubCommitCaptureRequested enforces idempotency,
+// so multiple successful workflows on the same SHA still trigger one run.
+func (p *GitHubProcessor) handleWorkflowRun(ctx context.Context, repo store.GitHubRepo, payload []byte) error {
+	var run workflowRunPayload
+	if err := json.Unmarshal(payload, &run); err != nil {
+		p.logger.Error(ctx, "failed to parse workflow_run payload", err)
+		return nil
 	}
 
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "workflow_name", Value: run.WorkflowRun.Name},
+		observability.Field{Key: "workflow_conclusion", Value: run.WorkflowRun.Conclusion},
+		observability.Field{Key: "head_sha", Value: run.WorkflowRun.HeadSHA},
+	)
+
+	if run.Action != "completed" || run.WorkflowRun.Conclusion != "success" {
+		return nil
+	}
+
+	commit, err := p.store.GetGitHubCommitByRepoSHA(ctx, repo.ID, run.WorkflowRun.HeadSHA)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			// Workflow ran against a commit we never saw a push for (e.g.
+			// the repo was connected after it was pushed). Nothing to do.
+			p.logger.Warn(ctx, "workflow_run for unknown commit; skipping")
+			return nil
+		}
+		p.logger.Error(ctx, "failed to look up commit for workflow_run", err)
+		return nil
+	}
+
+	claimed, err := p.store.MarkGitHubCommitCaptureRequested(ctx, commit.ID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to mark commit capture_requested_at", err)
+		return nil
+	}
+	if !claimed {
+		// Another workflow_run:completed:success for the same commit
+		// already kicked this off.
+		return nil
+	}
+
+	if p.publisher == nil {
+		return nil
+	}
+	p.enqueueCaptureRequests(context.WithoutCancel(ctx), repo, []store.GitHubCommit{commit})
 	return nil
 }
 

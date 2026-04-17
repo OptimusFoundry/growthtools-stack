@@ -90,6 +90,21 @@ func (mr *MockGitHubStoreMockRecorder) CreateOrUpdateGitHubConnection(ctx, userI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdateGitHubConnection", reflect.TypeOf((*MockGitHubStore)(nil).CreateOrUpdateGitHubConnection), ctx, userID, githubUserID, username, token, scope)
 }
 
+// GetGitHubCommitByRepoSHA mocks base method.
+func (m *MockGitHubStore) GetGitHubCommitByRepoSHA(ctx context.Context, repoID uuid.UUID, sha string) (store.GitHubCommit, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitHubCommitByRepoSHA", ctx, repoID, sha)
+	ret0, _ := ret[0].(store.GitHubCommit)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubCommitByRepoSHA indicates an expected call of GetGitHubCommitByRepoSHA.
+func (mr *MockGitHubStoreMockRecorder) GetGitHubCommitByRepoSHA(ctx, repoID, sha any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubCommitByRepoSHA", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubCommitByRepoSHA), ctx, repoID, sha)
+}
+
 // GetGitHubConnectionByUserID mocks base method.
 func (m *MockGitHubStore) GetGitHubConnectionByUserID(ctx context.Context, userID uuid.UUID) (store.GitHubConnection, error) {
 	m.ctrl.T.Helper()
@@ -224,6 +239,21 @@ func (m *MockGitHubStore) ListUnprocessedGitHubEvents(ctx context.Context, limit
 func (mr *MockGitHubStoreMockRecorder) ListUnprocessedGitHubEvents(ctx, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUnprocessedGitHubEvents", reflect.TypeOf((*MockGitHubStore)(nil).ListUnprocessedGitHubEvents), ctx, limit)
+}
+
+// MarkGitHubCommitCaptureRequested mocks base method.
+func (m *MockGitHubStore) MarkGitHubCommitCaptureRequested(ctx context.Context, commitID uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkGitHubCommitCaptureRequested", ctx, commitID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkGitHubCommitCaptureRequested indicates an expected call of MarkGitHubCommitCaptureRequested.
+func (mr *MockGitHubStoreMockRecorder) MarkGitHubCommitCaptureRequested(ctx, commitID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkGitHubCommitCaptureRequested", reflect.TypeOf((*MockGitHubStore)(nil).MarkGitHubCommitCaptureRequested), ctx, commitID)
 }
 
 // MarkGitHubEventProcessed mocks base method.

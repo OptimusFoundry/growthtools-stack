@@ -30,6 +30,7 @@ export interface GitHubCommit {
 	created_at: string;
 	post_id?: string;
 	capture_output?: GitHubCaptureOutput;
+	capture_requested_at?: string;
 	processed_at?: string;
 	repo_owner?: string;
 	repo_name?: string;

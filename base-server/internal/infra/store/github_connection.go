@@ -42,20 +42,21 @@ type GitHubRepo struct {
 
 // GitHubCommit represents a persisted GitHub commit
 type GitHubCommit struct {
-	ID            uuid.UUID        `db:"id" json:"id"`
-	RepoID        uuid.UUID        `db:"repo_id" json:"repo_id"`
-	SHA           string           `db:"sha" json:"sha"`
-	AuthorName    *string          `db:"author_name" json:"author_name,omitempty"`
-	AuthorEmail   *string          `db:"author_email" json:"author_email,omitempty"`
-	Message       string           `db:"message" json:"message"`
-	Branch        *string          `db:"branch" json:"branch,omitempty"`
-	CommitURL     *string          `db:"commit_url" json:"commit_url,omitempty"`
-	PushedAt      time.Time        `db:"pushed_at" json:"pushed_at"`
-	Payload       *json.RawMessage `db:"payload" json:"payload,omitempty"`
-	PostID        *uuid.UUID       `db:"post_id" json:"post_id,omitempty"`
-	CaptureOutput *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
-	ProcessedAt   *time.Time       `db:"processed_at" json:"processed_at,omitempty"`
-	CreatedAt     time.Time        `db:"created_at" json:"created_at"`
+	ID                 uuid.UUID        `db:"id" json:"id"`
+	RepoID             uuid.UUID        `db:"repo_id" json:"repo_id"`
+	SHA                string           `db:"sha" json:"sha"`
+	AuthorName         *string          `db:"author_name" json:"author_name,omitempty"`
+	AuthorEmail        *string          `db:"author_email" json:"author_email,omitempty"`
+	Message            string           `db:"message" json:"message"`
+	Branch             *string          `db:"branch" json:"branch,omitempty"`
+	CommitURL          *string          `db:"commit_url" json:"commit_url,omitempty"`
+	PushedAt           time.Time        `db:"pushed_at" json:"pushed_at"`
+	Payload            *json.RawMessage `db:"payload" json:"payload,omitempty"`
+	PostID             *uuid.UUID       `db:"post_id" json:"post_id,omitempty"`
+	CaptureOutput      *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
+	CaptureRequestedAt *time.Time       `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
+	ProcessedAt        *time.Time       `db:"processed_at" json:"processed_at,omitempty"`
+	CreatedAt          time.Time        `db:"created_at" json:"created_at"`
 	// Repo context — populated by ListGitHubCommitsByConnection so the UI can
 	// group / label without a second round-trip.
 	RepoOwner *string `db:"repo_owner" json:"repo_owner,omitempty"`
@@ -326,11 +327,11 @@ const sqlInsertGitHubCommit = `
 INSERT INTO github_commits (repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (repo_id, sha) DO NOTHING
-RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, processed_at, created_at
+RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, capture_requested_at, processed_at, created_at
 `
 
 const sqlGetGitHubCommitByRepoSHA = `
-SELECT id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, processed_at, created_at
+SELECT id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, capture_requested_at, processed_at, created_at
 FROM github_commits
 WHERE repo_id = $1 AND sha = $2
 `
@@ -385,6 +386,43 @@ func (s *Store) UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUI
 	return nil
 }
 
+// GetGitHubCommitByRepoSHA looks up a stored commit by its repo + SHA.
+// Used by the workflow_run webhook path to find the commit we stored on the
+// prior push delivery.
+func (s *Store) GetGitHubCommitByRepoSHA(ctx context.Context, repoID uuid.UUID, sha string) (GitHubCommit, error) {
+	var commit GitHubCommit
+	err := s.db.GetContext(ctx, &commit, sqlGetGitHubCommitByRepoSHA, repoID, sha)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubCommit{}, ErrNotFound
+		}
+		return GitHubCommit{}, fmt.Errorf("failed to get github commit: %w", err)
+	}
+	return commit, nil
+}
+
+// MarkGitHubCommitCaptureRequested sets capture_requested_at atomically, but
+// ONLY if it was null. Returns (true, nil) when this call was the one that
+// set the timestamp — the caller should enqueue the Kafka request. Returns
+// (false, nil) when some other delivery already did it — caller should skip.
+const sqlMarkGitHubCommitCaptureRequested = `
+UPDATE github_commits
+SET capture_requested_at = NOW()
+WHERE id = $1 AND capture_requested_at IS NULL
+`
+
+func (s *Store) MarkGitHubCommitCaptureRequested(ctx context.Context, commitID uuid.UUID) (bool, error) {
+	res, err := s.db.ExecContext(ctx, sqlMarkGitHubCommitCaptureRequested, commitID)
+	if err != nil {
+		return false, fmt.Errorf("failed to mark github commit capture requested: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	return rows > 0, nil
+}
+
 const sqlUpdateGitHubCommitPostID = `
 UPDATE github_commits
 SET post_id = $2
@@ -408,7 +446,7 @@ func (s *Store) UpdateGitHubCommitPostID(ctx context.Context, commitID, postID u
 }
 
 const sqlListGitHubCommitsByConnection = `
-SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.processed_at, gc.created_at,
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.capture_requested_at, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id

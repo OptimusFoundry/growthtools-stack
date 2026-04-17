@@ -177,7 +177,9 @@ func (c *Client) CreateWebhook(ctx context.Context, token, owner, name, webhookU
 	payload := map[string]any{
 		"name":   "web",
 		"active": true,
-		"events": []string{"push"},
+		// push lands the commit; workflow_run tells us CI finished so we
+		// only fire the capture agent after the code is actually deployed.
+		"events": []string{"push", "workflow_run"},
 		"config": map[string]string{
 			"url":          webhookURL,
 			"content_type": "json",

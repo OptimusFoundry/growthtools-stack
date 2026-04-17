@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	CheckCircle2,
+	Clock,
 	ExternalLink,
 	FileImage,
 	GitCommit,
@@ -47,6 +48,7 @@ function timeAgo(iso: string): string {
 }
 
 type CommitState =
+	| { kind: "waiting" }
 	| { kind: "processing" }
 	| { kind: "failed"; error: string }
 	| { kind: "captured"; output: GitHubCaptureOutput }
@@ -54,6 +56,9 @@ type CommitState =
 
 function commitState(commit: GitHubCommitType): CommitState {
 	if (commit.post_id) return { kind: "post", postID: commit.post_id };
+	// Capture only fires after workflow_run:completed:success — until then
+	// capture_requested_at stays null and we show "Waiting for CI".
+	if (!commit.capture_requested_at) return { kind: "waiting" };
 	if (!commit.processed_at) return { kind: "processing" };
 	const output = commit.capture_output;
 	if (output?.error) return { kind: "failed", error: output.error };
@@ -197,6 +202,13 @@ interface StatusBadgeProps {
 
 function StatusBadge({ state }: StatusBadgeProps) {
 	switch (state.kind) {
+		case "waiting":
+			return (
+				<Badge variant="secondary" size="sm">
+					<Clock size={12} />
+					Waiting for CI
+				</Badge>
+			);
 		case "processing":
 			return (
 				<Badge variant="secondary" size="sm">
