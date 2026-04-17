@@ -185,7 +185,7 @@ LIMIT 100
 `
 
 func (s *Store) GetDueScheduledPosts(ctx context.Context, now time.Time) ([]Post, error) {
-	var posts []Post
+	posts := make([]Post, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlGetDueScheduledPosts, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get due scheduled posts: %w", err)

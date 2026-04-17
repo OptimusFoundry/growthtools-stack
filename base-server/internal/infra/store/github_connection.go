@@ -203,7 +203,7 @@ ORDER BY owner, name
 `
 
 func (s *Store) ListGitHubReposByConnection(ctx context.Context, connectionID uuid.UUID) ([]GitHubRepo, error) {
-	var repos []GitHubRepo
+	repos := make([]GitHubRepo, 0)
 	err := s.db.SelectContext(ctx, &repos, sqlListGitHubReposByConnection, connectionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list github repos: %w", err)
@@ -421,7 +421,7 @@ func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID 
 	if limit <= 0 {
 		limit = 50
 	}
-	var commits []GitHubCommit
+	commits := make([]GitHubCommit, 0)
 	err := s.db.SelectContext(ctx, &commits, sqlListGitHubCommitsByConnection, connectionID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list github commits: %w", err)

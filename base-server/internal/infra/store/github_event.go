@@ -64,7 +64,7 @@ func (s *Store) ListUnprocessedGitHubEvents(ctx context.Context, limit int) ([]G
 	if limit <= 0 {
 		limit = 50
 	}
-	var events []GitHubEvent
+	events := make([]GitHubEvent, 0)
 	err := s.db.SelectContext(ctx, &events, sqlListUnprocessedGitHubEvents, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list unprocessed github events: %w", err)

@@ -73,7 +73,7 @@ WHERE pfl.plan_id = $1
 
 // GetPlanFeaturesWithLimitsByPriceID retrieves all features and their limits for a given price
 func (s *Store) GetPlanFeaturesWithLimitsByPriceID(ctx context.Context, priceID uuid.UUID) ([]PlanFeatureWithLimit, error) {
-	var results []PlanFeatureWithLimit
+	results := make([]PlanFeatureWithLimit, 0)
 	err := s.db.SelectContext(ctx, &results, sqlGetPlanFeaturesWithLimitsByPriceID, priceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get plan features with limits: %w", err)

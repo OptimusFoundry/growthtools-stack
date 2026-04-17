@@ -71,7 +71,7 @@ func (s *Store) ListMediaByAccount(ctx context.Context, accountID uuid.UUID, lim
 	if limit <= 0 {
 		limit = 20
 	}
-	var items []Media
+	items := make([]Media, 0)
 	err := s.db.SelectContext(ctx, &items, sqlListMediaByAccount, accountID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list media: %w", err)
@@ -100,9 +100,9 @@ WHERE id = ANY($1) AND deleted_at IS NULL
 
 func (s *Store) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]Media, error) {
 	if len(ids) == 0 {
-		return nil, nil
+		return []Media{}, nil
 	}
-	var items []Media
+	items := make([]Media, 0)
 	err := s.db.SelectContext(ctx, &items, sqlGetMediaByIDs, UUIDArray(ids))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get media by ids: %w", err)

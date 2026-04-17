@@ -263,13 +263,14 @@ func (p *PostProcessor) GetPostWithPlatformPosts(ctx context.Context, accountID,
 		return PostWithPlatformPosts{}, ErrFailedCreatePost
 	}
 
-	var media []store.Media
+	media := make([]store.Media, 0)
 	if len(post.MediaIDs) > 0 {
-		media, err = p.store.GetMediaByIDs(ctx, []uuid.UUID(post.MediaIDs))
+		fetched, err := p.store.GetMediaByIDs(ctx, []uuid.UUID(post.MediaIDs))
 		if err != nil {
 			p.logger.Error(ctx, "failed to get media for post", err)
 			// Non-fatal: return post without media rather than failing entirely
-			media = nil
+		} else {
+			media = fetched
 		}
 	}
 

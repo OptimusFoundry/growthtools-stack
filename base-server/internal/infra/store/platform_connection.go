@@ -94,7 +94,7 @@ ORDER BY created_at DESC
 `
 
 func (s *Store) ListPlatformConnectionsByAccount(ctx context.Context, accountID uuid.UUID) ([]PlatformConnection, error) {
-	var connections []PlatformConnection
+	connections := make([]PlatformConnection, 0)
 	err := s.db.SelectContext(ctx, &connections, sqlListPlatformConnectionsByAccount, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list platform connections: %w", err)

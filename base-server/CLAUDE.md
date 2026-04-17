@@ -463,6 +463,33 @@ func (s *Store) GetUserByExternalID(ctx context.Context, externalID uuid.UUID) (
 }
 ```
 
+### List/Query Operations Pattern
+**IMPORTANT:** Any store method that returns a slice (`[]T`) MUST initialize the destination with `make([]T, 0)`, not `var xs []T`.
+
+Why: sqlx's `SelectContext` only appends scanned rows to the destination; it does not re-initialize the slice. When the query returns zero rows, a `var`-declared slice stays nil. A nil slice serializes to JSON as `null`, not `[]`, which breaks frontend code that expects an iterable array.
+
+```go
+// ❌ BAD — returns null on empty result
+func (s *Store) ListThings(ctx context.Context, accountID uuid.UUID) ([]Thing, error) {
+    var things []Thing
+    if err := s.db.SelectContext(ctx, &things, sqlListThings, accountID); err != nil {
+        return nil, fmt.Errorf("failed to list things: %w", err)
+    }
+    return things, nil
+}
+
+// ✅ GOOD — always returns [] on empty result
+func (s *Store) ListThings(ctx context.Context, accountID uuid.UUID) ([]Thing, error) {
+    things := make([]Thing, 0)
+    if err := s.db.SelectContext(ctx, &things, sqlListThings, accountID); err != nil {
+        return nil, fmt.Errorf("failed to list things: %w", err)
+    }
+    return things, nil
+}
+```
+
+The same rule applies to any slice built in a processor or handler before it is serialized to JSON — early-return paths must use `[]T{}` / `make([]T, 0)`, never a bare `nil`. Error paths may still `return nil, err` since the slice is not serialized.
+
 ### Update/Delete Operations Pattern
 **IMPORTANT:** All UPDATE and DELETE operations MUST check rows affected and return `ErrNotFound` if no rows were modified.
 

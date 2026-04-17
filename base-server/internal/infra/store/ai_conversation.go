@@ -54,7 +54,7 @@ func (s *Store) ListAIConversations(ctx context.Context, accountID uuid.UUID, li
 	if limit <= 0 {
 		limit = 20
 	}
-	var conversations []AIConversation
+	conversations := make([]AIConversation, 0)
 	err := s.db.SelectContext(ctx, &conversations, sqlListAIConversations, accountID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list ai conversations: %w", err)
@@ -129,7 +129,7 @@ ORDER BY created_at ASC
 `
 
 func (s *Store) GetAIMessagesByConversation(ctx context.Context, conversationID uuid.UUID) ([]AIMessage, error) {
-	var messages []AIMessage
+	messages := make([]AIMessage, 0)
 	err := s.db.SelectContext(ctx, &messages, sqlGetAIMessagesByConversation, conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ai messages: %w", err)

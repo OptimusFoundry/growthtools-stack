@@ -43,7 +43,7 @@ ORDER BY created_at ASC
 `
 
 func (s *Store) GetPlatformPostsByPostID(ctx context.Context, postID uuid.UUID) ([]PlatformPost, error) {
-	var posts []PlatformPost
+	posts := make([]PlatformPost, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlGetPlatformPostsByPostID, postID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get platform posts: %w", err)
@@ -148,7 +148,7 @@ LIMIT $2
 `
 
 func (s *Store) GetRetryablePlatformPosts(ctx context.Context, now time.Time, limit int) ([]RetryablePlatformPost, error) {
-	var posts []RetryablePlatformPost
+	posts := make([]RetryablePlatformPost, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlGetRetryablePlatformPosts, now, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get retryable platform posts: %w", err)
@@ -171,7 +171,7 @@ LIMIT $2
 `
 
 func (s *Store) GetStuckPublishingPlatformPosts(ctx context.Context, stuckBefore time.Time, limit int) ([]RetryablePlatformPost, error) {
-	var posts []RetryablePlatformPost
+	posts := make([]RetryablePlatformPost, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlGetStuckPublishingPlatformPosts, stuckBefore, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stuck publishing platform posts: %w", err)

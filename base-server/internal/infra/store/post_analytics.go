@@ -44,7 +44,7 @@ ORDER BY collected_at DESC
 `
 
 func (s *Store) GetAnalyticsByPlatformPost(ctx context.Context, platformPostID uuid.UUID) ([]PostAnalytics, error) {
-	var analytics []PostAnalytics
+	analytics := make([]PostAnalytics, 0)
 	err := s.db.SelectContext(ctx, &analytics, sqlGetAnalyticsByPlatformPost, platformPostID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get analytics by platform post: %w", err)
@@ -112,7 +112,7 @@ ORDER BY date ASC
 `
 
 func (s *Store) GetAnalyticsTimeSeries(ctx context.Context, accountID uuid.UUID, from, to time.Time) ([]AnalyticsTimeSeries, error) {
-	var series []AnalyticsTimeSeries
+	series := make([]AnalyticsTimeSeries, 0)
 	err := s.db.SelectContext(ctx, &series, sqlGetAnalyticsTimeSeries, accountID, from, to)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get analytics time series: %w", err)
@@ -148,7 +148,7 @@ ORDER BY impressions DESC
 `
 
 func (s *Store) GetAnalyticsByPlatform(ctx context.Context, accountID uuid.UUID, from, to time.Time) ([]PlatformAnalytics, error) {
-	var analytics []PlatformAnalytics
+	analytics := make([]PlatformAnalytics, 0)
 	err := s.db.SelectContext(ctx, &analytics, sqlGetAnalyticsByPlatform, accountID, from, to)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get analytics by platform: %w", err)

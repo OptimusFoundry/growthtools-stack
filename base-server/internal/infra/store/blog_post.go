@@ -92,7 +92,7 @@ func (s *Store) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *
 	if limit <= 0 {
 		limit = 20
 	}
-	var posts []BlogPost
+	posts := make([]BlogPost, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlListBlogPosts, accountID, status, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list blog posts: %w", err)

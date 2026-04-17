@@ -96,7 +96,7 @@ ORDER BY created_at DESC
 
 // GetAccountsByOwnerUserID retrieves all accounts owned by a user
 func (s *Store) GetAccountsByOwnerUserID(ctx context.Context, userID uuid.UUID) ([]Account, error) {
-	var accounts []Account
+	accounts := make([]Account, 0)
 	err := s.db.SelectContext(ctx, &accounts, sqlGetAccountsByOwnerUserID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts by owner user id: %w", err)
@@ -226,7 +226,7 @@ ORDER BY created_at DESC
 
 // GetTeamMembersByAccountID retrieves all team members for an account
 func (s *Store) GetTeamMembersByAccountID(ctx context.Context, accountID uuid.UUID) ([]TeamMember, error) {
-	var members []TeamMember
+	members := make([]TeamMember, 0)
 	err := s.db.SelectContext(ctx, &members, sqlGetTeamMembersByAccountID, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team members: %w", err)

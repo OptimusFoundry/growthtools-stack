@@ -73,7 +73,7 @@ FROM prices
 `
 
 func (s *Store) ListPrices(ctx context.Context) ([]Price, error) {
-	var prices []Price
+	prices := make([]Price, 0)
 	err := s.db.SelectContext(ctx, &prices, sqlGetAllPrices)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
