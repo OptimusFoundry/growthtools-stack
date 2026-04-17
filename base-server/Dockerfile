@@ -1,31 +1,36 @@
+# syntax=docker/dockerfile:1.7
 # Start from the official Golang base image
 FROM golang:1.24-alpine AS builder
 
-# Set the Current Working Directory inside the container
 WORKDIR /app
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
-RUN go mod download
+# Download deps. Layer is cache-keyed on go.mod/go.sum; the cache mount
+# persists the module cache across builds so partial bumps only download the
+# delta.
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-# Copy the source from the current directory to the Working Directory inside the container
+# Copy the source
 COPY . .
 
-# Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+# Build the Go app. Cache mounts on the Go build cache + module cache so
+# unchanged packages are not recompiled. No `-a`/`-installsuffix cgo`:
+# `-a` forces rebuild of every package incl. stdlib, defeating the cache;
+# `-installsuffix cgo` is a pre-modules relic.
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Start a new stage from scratch
 FROM alpine:latest
 
-# Install curl
 RUN apk --no-cache add curl
 
 WORKDIR /root/
 
-# Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .
 
-# Command to run the executable
 CMD ["./main"]

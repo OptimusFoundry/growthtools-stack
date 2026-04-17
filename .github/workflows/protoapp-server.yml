@@ -60,34 +60,74 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build the two locally-built images with buildx + GHA layer cache.
-      # `load: true` pushes them into the runner's Docker daemon so the
-      # subsequent `docker compose up` / `docker compose run` see them and
-      # skip the (now redundant) build step in docker-compose.test.yml.
-      #
-      # GHA layer cache replaces the old `docker save`/`docker load` tarball
-      # dance (which round-tripped ~GB of images through actions/cache on
-      # every run). Layer cache is granular: unchanged Dockerfile layers
-      # upload/download in milliseconds.
-      - name: Build test-server image
-        uses: docker/build-push-action@v6
-        with:
-          context: base-server
-          file: base-server/Dockerfile
-          load: true
-          tags: base-server-test-server:ci
-          cache-from: type=gha,scope=test-server
-          cache-to: type=gha,mode=max,scope=test-server
+      # Pre-pull the compose base images (postgres/kafka/flyway) in the
+      # background while buildx builds the local images. The pulls land in
+      # the shared Docker daemon before `compose up` runs, knocking ~15s
+      # off bring-up that would otherwise sit waiting on docker.io.
+      - name: Pre-pull compose base images (background)
+        run: |
+          nohup docker compose -f docker-compose.test.yml pull --quiet db kafka flyway \
+            > /tmp/compose-pull.log 2>&1 &
+          echo $! > /tmp/compose-pull.pid
 
-      - name: Build test-runner image
-        uses: docker/build-push-action@v6
-        with:
-          context: base-server
-          file: base-server/Dockerfile.test
-          load: true
-          tags: base-server-test-runner:ci
-          cache-from: type=gha,scope=test-runner
-          cache-to: type=gha,mode=max,scope=test-runner
+      # Build test-server and test-runner in parallel. They hit disjoint
+      # GHA cache scopes and, within the runner, one is CPU-bound (go build)
+      # while the other is I/O-bound (apk + go mod download), so CPU
+      # contention is small.
+      #
+      # The Dockerfiles use BuildKit cache mounts (/go/pkg/mod,
+      # /root/.cache/go-build), which persist across builds inside GHA's
+      # cache backend. `mode=min` keeps cache exports small — we only need
+      # the final-stage layers for test images; the prod push uses its own
+      # `mode=max` scope.
+      - name: Build test images (parallel)
+        run: |
+          set -o pipefail
+
+          docker buildx build \
+            --file Dockerfile \
+            --tag base-server-test-server:ci \
+            --load \
+            --cache-from type=gha,scope=test-server \
+            --cache-to type=gha,mode=min,scope=test-server \
+            . > /tmp/build-server.log 2>&1 &
+          SERVER_PID=$!
+
+          docker buildx build \
+            --file Dockerfile.test \
+            --tag base-server-test-runner:ci \
+            --load \
+            --cache-from type=gha,scope=test-runner \
+            --cache-to type=gha,mode=min,scope=test-runner \
+            . > /tmp/build-runner.log 2>&1 &
+          RUNNER_PID=$!
+
+          SERVER_RC=0; wait "$SERVER_PID" || SERVER_RC=$?
+          RUNNER_RC=0; wait "$RUNNER_PID" || RUNNER_RC=$?
+
+          echo "::group::test-server build log"
+          cat /tmp/build-server.log
+          echo "::endgroup::"
+          echo "::group::test-runner build log"
+          cat /tmp/build-runner.log
+          echo "::endgroup::"
+
+          [ "$SERVER_RC" -eq 0 ] || { echo "test-server build failed ($SERVER_RC)"; exit "$SERVER_RC"; }
+          [ "$RUNNER_RC" -eq 0 ] || { echo "test-runner build failed ($RUNNER_RC)"; exit "$RUNNER_RC"; }
+
+      # Wait for the background compose pull started earlier so `up --wait`
+      # does not have to fetch anything from docker.io. `wait` only works on
+      # children of the current shell; the pre-pull ran in an earlier step,
+      # so we poll with `kill -0` instead.
+      - name: Wait for compose pre-pull
+        run: |
+          PID=$(cat /tmp/compose-pull.pid)
+          while kill -0 "$PID" 2>/dev/null; do
+            sleep 1
+          done
+          echo "::group::compose pull log"
+          cat /tmp/compose-pull.log
+          echo "::endgroup::"
 
       # One-shot stack bring-up. `--wait server` lets compose handle the
       # dependency graph (db+kafka start in parallel → flyway runs on healthy

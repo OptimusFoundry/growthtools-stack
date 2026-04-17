@@ -53,9 +53,10 @@ services:
       CLUSTER_ID: 'TestCluster12345678901'
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   server:
     container_name: base-server-test-server
@@ -81,9 +82,10 @@ services:
       GO_ENV: test
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 3s
 
   runner:
     container_name: base-server-test-runner
