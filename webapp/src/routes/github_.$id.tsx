@@ -141,9 +141,14 @@ const CommitDetails = memo(function CommitDetails({
 					<Text as="h1" size="2xl" weight="bold">
 						{firstLine}
 					</Text>
-					{commit.post_id && (
+					{commit.post_id && !commit.post_deleted && (
 						<Badge variant="primary" size="sm">
 							Post created
+						</Badge>
+					)}
+					{commit.post_id && commit.post_deleted && (
+						<Badge variant="secondary" size="sm">
+							Post deleted
 						</Badge>
 					)}
 				</Stack>
@@ -190,7 +195,7 @@ const CommitDetails = memo(function CommitDetails({
 				</Alert>
 			)}
 
-			{commit.post_id && (
+			{commit.post_id && !commit.post_deleted && (
 				<div>
 					<Link to="/posts/$id" params={{ id: commit.post_id }}>
 						<Button variant="primary" size="sm">
@@ -198,6 +203,12 @@ const CommitDetails = memo(function CommitDetails({
 						</Button>
 					</Link>
 				</div>
+			)}
+
+			{commit.post_id && commit.post_deleted && (
+				<Alert variant="info" title="Post deleted">
+					The draft post created from this commit was deleted.
+				</Alert>
 			)}
 
 			{!hasAnyMedia && !output?.error && (

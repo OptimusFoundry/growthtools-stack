@@ -19,6 +19,45 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockURLSigner is a mock of URLSigner interface.
+type MockURLSigner struct {
+	ctrl     *gomock.Controller
+	recorder *MockURLSignerMockRecorder
+	isgomock struct{}
+}
+
+// MockURLSignerMockRecorder is the mock recorder for MockURLSigner.
+type MockURLSignerMockRecorder struct {
+	mock *MockURLSigner
+}
+
+// NewMockURLSigner creates a new mock instance.
+func NewMockURLSigner(ctrl *gomock.Controller) *MockURLSigner {
+	mock := &MockURLSigner{ctrl: ctrl}
+	mock.recorder = &MockURLSignerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockURLSigner) EXPECT() *MockURLSignerMockRecorder {
+	return m.recorder
+}
+
+// PresignGetURL mocks base method.
+func (m *MockURLSigner) PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresignGetURL", ctx, key, ttl)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresignGetURL indicates an expected call of PresignGetURL.
+func (mr *MockURLSignerMockRecorder) PresignGetURL(ctx, key, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresignGetURL", reflect.TypeOf((*MockURLSigner)(nil).PresignGetURL), ctx, key, ttl)
+}
+
 // MockPostStore is a mock of PostStore interface.
 type MockPostStore struct {
 	ctrl     *gomock.Controller

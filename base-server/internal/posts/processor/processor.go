@@ -176,6 +176,9 @@ func (p *PostProcessor) DeletePost(ctx context.Context, accountID, postID uuid.U
 		}
 		return ErrFailedDeletePost
 	}
+	// Leave github_commits.post_id intact — the commit detail UI
+	// differentiates "linked to a post that was then deleted" from
+	// "no post was ever created" by joining on posts.deleted_at.
 	return nil
 }
 

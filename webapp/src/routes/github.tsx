@@ -8,6 +8,7 @@ import {
 	Github,
 	Image as ImageIcon,
 	Loader2,
+	Trash2,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { memo } from "react";
@@ -51,9 +52,14 @@ type CommitState =
 	| { kind: "processing" }
 	| { kind: "failed"; error: string }
 	| { kind: "captured"; artifactCount: number }
-	| { kind: "post"; postID: string };
+	| { kind: "post"; postID: string }
+	| { kind: "post_deleted" };
 
 function commitState(commit: GitHubCommitSummary): CommitState {
+	// post_deleted is only true when post_id is set AND the linked post has
+	// been soft-deleted — distinct from the in-progress "not drafted yet"
+	// state where post_id is still null.
+	if (commit.post_id && commit.post_deleted) return { kind: "post_deleted" };
 	if (commit.post_id) return { kind: "post", postID: commit.post_id };
 	// Capture only fires after workflow_run:completed:success — until then
 	// capture_requested_at stays null and we show "Waiting for CI".
@@ -154,6 +160,12 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 						</Button>
 					</Link>
 				)}
+
+				{state.kind === "post_deleted" && (
+					<Text size="xs" color="muted">
+						The draft created from this commit was deleted.
+					</Text>
+				)}
 			</Stack>
 		</>
 	);
@@ -225,6 +237,13 @@ function StatusBadge({ state }: StatusBadgeProps) {
 				<Badge variant="primary" size="sm">
 					<CheckCircle2 size={12} />
 					Post created
+				</Badge>
+			);
+		case "post_deleted":
+			return (
+				<Badge variant="secondary" size="sm">
+					<Trash2 size={12} />
+					Post deleted
 				</Badge>
 			);
 	}

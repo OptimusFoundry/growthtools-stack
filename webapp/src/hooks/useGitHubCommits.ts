@@ -29,6 +29,8 @@ export interface GitHubCommit {
 	pushed_at: string;
 	created_at: string;
 	post_id?: string;
+	/** True when post_id points at a soft-deleted post. */
+	post_deleted?: boolean;
 	capture_output?: GitHubCaptureOutput;
 	capture_requested_at?: string;
 	processed_at?: string;
@@ -54,6 +56,8 @@ export interface GitHubCommitSummary {
 	pushed_at: string;
 	created_at: string;
 	post_id?: string;
+	/** True when post_id points at a soft-deleted post. */
+	post_deleted?: boolean;
 	capture_requested_at?: string;
 	processed_at?: string;
 	repo_owner?: string;
