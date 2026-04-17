@@ -33,11 +33,11 @@
   --color-base-content-secondary: oklch(58% 0.012 255deg);
   --color-base-content-tertiary: oklch(70% 0.01 255deg);
 
-  // Surfaces — more gray, less blue. Widens the L gap from 1 to 3 points
-  // so form fields read clearly as a panel, while chroma drops from 0.007
-  // to 0.003 so the tint is closer to neutral gray than cool blue.
-  --color-surface: oklch(97% 0.003 250deg);
-  --color-surface-elevated: oklch(98.5% 0.002 250deg);
+  // Surfaces — soft neutral gray panel. 2.5 L-point gap from the white
+  // canvas is enough for form fields and cards to register without the
+  // gray drawing too much attention. Chroma 0.003 reads near-neutral.
+  --color-surface: oklch(97.5% 0.003 250deg);
+  --color-surface-elevated: oklch(98.7% 0.002 250deg);
   --color-surface-overlay: oklch(20% 0.008 250deg / 0.4);
 
   // Borders — transparent. Spatial hierarchy comes from the gray canvas
