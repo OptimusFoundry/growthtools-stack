@@ -156,6 +156,15 @@
   width: var(--space-8);
 }
 
+.thumbnail {
+  background-color: var(--color-base-200);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  height: var(--space-12);
+  object-fit: cover;
+  width: var(--space-12);
+}
+
 .successIcon {
   color: var(--color-success);
   flex-shrink: 0;

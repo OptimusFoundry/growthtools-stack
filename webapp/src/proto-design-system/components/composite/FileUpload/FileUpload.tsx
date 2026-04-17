@@ -36,8 +36,10 @@ export interface ExistingFile {
 	id: string;
 	name: string;
 	size: number;
-	/** MIME type — used to pick the file icon. */
+	/** MIME type — drives the thumbnail renderer (img vs video) and the fallback icon. */
 	contentType?: string;
+	/** Fetchable URL for the asset. Used to render an inline thumbnail preview. */
+	url?: string;
 }
 
 export interface FileUploadProps {
@@ -268,27 +270,51 @@ export function FileUpload({
 
 			{showFileList && (existingFiles.length > 0 || files.length > 0) && (
 				<ul className={styles.fileList}>
-					{existingFiles.map((existing) => (
-						<li key={`existing-${existing.id}`} className={styles.fileItem}>
-							<CheckCircle className={styles.successIcon} />
-							<div className={styles.fileInfo}>
-								<span className={styles.fileName}>{existing.name}</span>
-								<span className={styles.fileSize}>
-									{formatFileSize(existing.size)}
-								</span>
-							</div>
-							{onRemoveExisting && (
-								<button
-									type="button"
-									className={styles.removeButton}
-									onClick={() => onRemoveExisting(existing.id)}
-									aria-label={`Remove ${existing.name}`}
-								>
-									<X />
-								</button>
-							)}
-						</li>
-					))}
+					{existingFiles.map((existing) => {
+						const isImage = existing.contentType?.startsWith("image/");
+						const isVideo = existing.contentType?.startsWith("video/");
+						const FallbackIcon = getFileIcon(existing.contentType ?? "");
+						return (
+							<li key={`existing-${existing.id}`} className={styles.fileItem}>
+								{existing.url && isImage ? (
+									<img
+										src={existing.url}
+										alt={existing.name}
+										className={styles.thumbnail}
+									/>
+								) : existing.url && isVideo ? (
+									<video
+										src={existing.url}
+										preload="metadata"
+										muted
+										playsInline
+										className={styles.thumbnail}
+										aria-label={existing.name}
+									>
+										<track kind="captions" />
+									</video>
+								) : (
+									<FallbackIcon className={styles.fileIcon} />
+								)}
+								<div className={styles.fileInfo}>
+									<span className={styles.fileName}>{existing.name}</span>
+									<span className={styles.fileSize}>
+										{formatFileSize(existing.size)}
+									</span>
+								</div>
+								{onRemoveExisting && (
+									<button
+										type="button"
+										className={styles.removeButton}
+										onClick={() => onRemoveExisting(existing.id)}
+										aria-label={`Remove ${existing.name}`}
+									>
+										<X />
+									</button>
+								)}
+							</li>
+						);
+					})}
 					{files.map((uploadedFile) => {
 						const FileIcon = getFileIcon(uploadedFile.file.type);
 						const isReady =

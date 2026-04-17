@@ -545,6 +545,7 @@ function WizardInner({
 							name: m.filename,
 							size: m.sizeBytes,
 							contentType: m.contentType,
+							url: m.url,
 						}))}
 						onRemoveExistingMedia={wizard.removeUploadedMedia}
 						generating={state.generating}
