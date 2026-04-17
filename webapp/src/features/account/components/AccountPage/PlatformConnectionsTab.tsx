@@ -4,13 +4,13 @@
  */
 
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { useConnectBluesky } from "@/hooks/useConnectBluesky";
 import { useConnectPlatform } from "@/hooks/useConnectPlatform";
 import { useConnectWithToken } from "@/hooks/useConnectWithToken";
 import { useDisconnectPlatform } from "@/hooks/useDisconnectPlatform";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
 import { Container } from "@/proto-design-system/components/layout/Container";
@@ -314,7 +314,7 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 	const { connectWithToken, loading: tokenLoading } = useConnectWithToken();
 	const { disconnectPlatform, loading: disconnectLoading } =
 		useDisconnectPlatform();
-	const [actionError, setActionError] = useState<string | null>(null);
+	const { addBanner } = useBannerCenter();
 	const [connectingPlatform, setConnectingPlatform] =
 		useState<PlatformType | null>(null);
 	const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
@@ -333,6 +333,21 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 		});
 	}, [navigate]);
 
+	const isNotFoundError =
+		error?.toLowerCase().includes("not found") ||
+		error?.toLowerCase().includes("404");
+
+	useEffect(() => {
+		if (error && !isNotFoundError) {
+			addBanner({
+				type: "error",
+				title: "Couldn't load platform connections",
+				description: error,
+				dismissible: true,
+			});
+		}
+	}, [error, isNotFoundError, addBanner]);
+
 	const connectionMap = new Map(connections.map((c) => [c.platform, c]));
 	const connectedPlatforms = ENABLED_PLATFORMS.filter((p) =>
 		connectionMap.has(p),
@@ -343,8 +358,6 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 
 	const handleConnect = useCallback(
 		async (platform: PlatformType) => {
-			setActionError(null);
-
 			if (platform === "bluesky") {
 				setBlueskyModalOpen(true);
 				return;
@@ -356,36 +369,67 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 					await connectWithToken(platform);
 					setConnectingPlatform(null);
 					refetch();
+					addBanner({
+						type: "success",
+						title: `Connected ${PLATFORM_DISPLAY_NAMES[platform]}`,
+						dismissible: true,
+					});
 				} else {
 					const response = await connectPlatform(platform);
 					window.location.href = response.auth_url;
 				}
 			} catch (err: unknown) {
-				const message =
+				const description =
 					err instanceof Error && err.message.includes("already connected")
 						? `${PLATFORM_DISPLAY_NAMES[platform]} is already connected.`
-						: `Failed to connect ${PLATFORM_DISPLAY_NAMES[platform]}. Please try again.`;
-				setActionError(message);
+						: "Please try again.";
+				addBanner({
+					type: "error",
+					title: `Couldn't connect ${PLATFORM_DISPLAY_NAMES[platform]}`,
+					description,
+					dismissible: true,
+				});
 				setConnectingPlatform(null);
 			}
 		},
-		[connectPlatform, connectWithToken, refetch],
+		[connectPlatform, connectWithToken, refetch, addBanner],
 	);
 
 	const handleDisconnect = useCallback(
 		async (connectionId: string) => {
-			setActionError(null);
 			setDisconnectingId(connectionId);
 			try {
 				await disconnectPlatform(connectionId);
 				refetch();
+				addBanner({
+					type: "success",
+					title: "Platform disconnected",
+					dismissible: true,
+				});
 			} catch {
-				setActionError("Failed to disconnect platform. Please try again.");
+				addBanner({
+					type: "error",
+					title: "Couldn't disconnect platform",
+					description: "Please try again.",
+					dismissible: true,
+				});
 			} finally {
 				setDisconnectingId(null);
 			}
 		},
-		[disconnectPlatform, refetch],
+		[disconnectPlatform, refetch, addBanner],
+	);
+
+	const handleBlueskyError = useCallback(
+		(message: string) => {
+			addBanner({
+				type: "error",
+				title: "Couldn't connect BlueSky",
+				description: message,
+				dismissible: true,
+			});
+		},
+		[addBanner],
 	);
 
 	if (loading) {
@@ -398,33 +442,9 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 		);
 	}
 
-	const isNotFoundError =
-		error?.toLowerCase().includes("not found") ||
-		error?.toLowerCase().includes("404");
-
-	if (error && !isNotFoundError) {
-		return (
-			<Container size="lg" padded={false} className={styles.container}>
-				<Alert variant="error" title="Error">
-					{error}
-				</Alert>
-			</Container>
-		);
-	}
-
 	return (
 		<Container size="lg" padded={false} className={styles.container}>
 			<Stack gap="xl">
-				{actionError && (
-					<Alert
-						variant="error"
-						dismissible
-						onDismiss={() => setActionError(null)}
-					>
-						{actionError}
-					</Alert>
-				)}
-
 				{/* Connected Platforms */}
 				{connectedPlatforms.length > 0 && (
 					<Stack gap="md">
@@ -497,7 +517,7 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 				isOpen={blueskyModalOpen}
 				onClose={() => setBlueskyModalOpen(false)}
 				onSuccess={refetch}
-				onError={setActionError}
+				onError={handleBlueskyError}
 			/>
 		</Container>
 	);

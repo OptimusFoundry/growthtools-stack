@@ -1,5 +1,5 @@
 import { GitBranch, Github } from "lucide-react";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { useConnectGitHubRepo } from "@/hooks/useConnectGitHubRepo";
 import { useDisconnectGitHub } from "@/hooks/useDisconnectGitHub";
 import { useGitHubCommits } from "@/hooks/useGitHubCommits";
@@ -10,7 +10,7 @@ import {
 import { useGitHubRepos } from "@/hooks/useGitHubRepos";
 import { useInitGitHubOAuth } from "@/hooks/useInitGitHubOAuth";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
 import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
@@ -127,32 +127,56 @@ const RepoList = memo(function RepoList({ connectionId }: RepoListProps) {
 		disconnectRepo,
 		loading: mutating,
 	} = useConnectGitHubRepo();
+	const { addBanner } = useBannerCenter();
 	const [busyRepo, setBusyRepo] = useState<string | null>(null);
-	const [actionError, setActionError] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (error) {
+			addBanner({
+				type: "error",
+				title: "Couldn't load repositories",
+				description: error,
+				dismissible: true,
+			});
+		}
+	}, [error, addBanner]);
 
 	const handleToggle = useCallback(
 		async (owner: string, name: string, isConnected: boolean) => {
 			const key = `${owner}/${name}`;
 			setBusyRepo(key);
-			setActionError(null);
 			try {
 				if (isConnected) {
 					await disconnectRepo(owner, name);
+					addBanner({
+						type: "success",
+						title: `Disconnected ${key}`,
+						dismissible: true,
+					});
 				} else {
 					await connectRepo(owner, name);
+					addBanner({
+						type: "success",
+						title: `Connected ${key}`,
+						description: "We'll watch this repo for new commits.",
+						dismissible: true,
+					});
 				}
 				refetch();
 			} catch {
-				setActionError(
-					isConnected
-						? `Failed to disconnect ${key}. Please try again.`
-						: `Failed to connect ${key}. Please try again.`,
-				);
+				addBanner({
+					type: "error",
+					title: isConnected
+						? `Couldn't disconnect ${key}`
+						: `Couldn't connect ${key}`,
+					description: "Please try again.",
+					dismissible: true,
+				});
 			} finally {
 				setBusyRepo(null);
 			}
 		},
-		[connectRepo, disconnectRepo, refetch],
+		[connectRepo, disconnectRepo, refetch, addBanner],
 	);
 
 	if (loading && repos.length === 0) {
@@ -160,14 +184,6 @@ const RepoList = memo(function RepoList({ connectionId }: RepoListProps) {
 			<Stack align="center" justify="center" className={styles.loading}>
 				<Spinner size="md" />
 			</Stack>
-		);
-	}
-
-	if (error) {
-		return (
-			<Alert variant="error" title="Error loading repositories">
-				{error}
-			</Alert>
 		);
 	}
 
@@ -184,15 +200,6 @@ const RepoList = memo(function RepoList({ connectionId }: RepoListProps) {
 
 	return (
 		<Stack gap="sm">
-			{actionError && (
-				<Alert
-					variant="error"
-					dismissible
-					onDismiss={() => setActionError(null)}
-				>
-					{actionError}
-				</Alert>
-			)}
 			<Card variant="outlined">
 				<CardBody>
 					<Stack gap="xs">
@@ -271,20 +278,24 @@ const CommitsList = memo(function CommitsList({
 	connectionId,
 }: CommitsListProps) {
 	const { commits, loading, error } = useGitHubCommits(!!connectionId, 10);
+	const { addBanner } = useBannerCenter();
+
+	useEffect(() => {
+		if (error) {
+			addBanner({
+				type: "error",
+				title: "Couldn't load commits",
+				description: error,
+				dismissible: true,
+			});
+		}
+	}, [error, addBanner]);
 
 	if (loading && commits.length === 0) {
 		return (
 			<Stack align="center" justify="center" className={styles.loading}>
 				<Spinner size="md" />
 			</Stack>
-		);
-	}
-
-	if (error) {
-		return (
-			<Alert variant="error" title="Error loading commits">
-				{error}
-			</Alert>
 		);
 	}
 
@@ -363,27 +374,62 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 	const { connection, loading, refetch } = useGitHubConnection();
 	const { initOAuth, loading: initLoading } = useInitGitHubOAuth();
 	const { disconnect, loading: disconnectLoading } = useDisconnectGitHub();
-	const [actionError, setActionError] = useState<string | null>(null);
+	const { addBanner } = useBannerCenter();
+
+	// One-shot banner after OAuth callback — surface via global notification
+	// center, then strip the query param so it doesn't re-fire on navigation.
+	useEffect(() => {
+		if (!callbackStatus) return;
+		if (callbackStatus === "connected") {
+			addBanner({
+				type: "success",
+				title: "GitHub connected",
+				description: "We'll watch your selected repos for new commits.",
+				dismissible: true,
+			});
+		} else {
+			addBanner({
+				type: "error",
+				title: "GitHub connection failed",
+				description: "Please try again.",
+				dismissible: true,
+			});
+		}
+		onClearCallbackStatus?.();
+	}, [callbackStatus, addBanner, onClearCallbackStatus]);
 
 	const handleConnect = useCallback(async () => {
-		setActionError(null);
 		try {
 			const url = await initOAuth();
 			window.location.href = url;
 		} catch {
-			setActionError("Failed to start GitHub OAuth. Please try again.");
+			addBanner({
+				type: "error",
+				title: "Couldn't start GitHub OAuth",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		}
-	}, [initOAuth]);
+	}, [initOAuth, addBanner]);
 
 	const handleDisconnect = useCallback(async () => {
-		setActionError(null);
 		try {
 			await disconnect();
 			refetch();
+			addBanner({
+				type: "success",
+				title: "GitHub disconnected",
+				dismissible: true,
+			});
 		} catch {
-			setActionError("Failed to disconnect GitHub. Please try again.");
+			addBanner({
+				type: "error",
+				title: "Couldn't disconnect GitHub",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		}
-	}, [disconnect, refetch]);
+	}, [disconnect, refetch, addBanner]);
 
 	if (loading && !connection) {
 		return (
@@ -413,26 +459,6 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 					Connect your GitHub account to auto-generate posts from commits.
 				</Text>
 			</Stack>
-
-			{callbackStatus === "connected" && (
-				<Alert variant="success" dismissible onDismiss={onClearCallbackStatus}>
-					GitHub connected successfully.
-				</Alert>
-			)}
-			{callbackStatus === "error" && (
-				<Alert variant="error" dismissible onDismiss={onClearCallbackStatus}>
-					GitHub connection failed. Please try again.
-				</Alert>
-			)}
-			{actionError && (
-				<Alert
-					variant="error"
-					dismissible
-					onDismiss={() => setActionError(null)}
-				>
-					{actionError}
-				</Alert>
-			)}
 
 			{connection ? (
 				<Stack gap="md">
