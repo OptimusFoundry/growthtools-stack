@@ -10,7 +10,6 @@ import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { FormField } from "@/proto-design-system/components/forms/FormField";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Container } from "@/proto-design-system/components/layout/Container";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown";
@@ -189,11 +188,13 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 
 	if (loading && !tone) {
 		return (
-			<Container size="md" padded={false}>
-				<Stack align="center" justify="center" className={styles.loadingState}>
-					<Spinner size="lg" />
-				</Stack>
-			</Container>
+			<Stack
+				align="center"
+				justify="center"
+				className={`${styles.settings} ${styles.loadingState}`}
+			>
+				<Spinner size="lg" />
+			</Stack>
 		);
 	}
 
@@ -203,136 +204,130 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 
 	if (error && !tone && !isNotFoundError) {
 		return (
-			<Container size="md" padded={false}>
+			<Stack className={styles.settings}>
 				<Alert variant="error" title="Error">
 					{error}
 				</Alert>
-			</Container>
+			</Stack>
 		);
 	}
 
 	return (
-		<Container size="md" padded={false}>
-			<Stack gap="xl">
-				{/* Page Header */}
-				<Stack gap="xs">
-					<Text as="h2" size="xl">
-						Voice Profile
-					</Text>
-					<Text size="md" color="secondary">
-						Configure your AI writing tone, style, and personality
-					</Text>
-				</Stack>
-
-				{successMessage ? (
-					<Alert
-						variant="success"
-						dismissible
-						onDismiss={() => setSuccessMessage(null)}
-					>
-						{successMessage}
-					</Alert>
-				) : null}
-
-				{saveError ? (
-					<Alert
-						variant="error"
-						dismissible
-						onDismiss={() => setSaveError(null)}
-					>
-						{saveError}
-					</Alert>
-				) : null}
-
-				<Section
-					title="Tone & Style"
-					description="Set the overall voice for AI-generated content"
-				>
-					<FormField label="Tone">
-						<Dropdown
-							items={toneDropdownItems}
-							value={tone}
-							onChange={setTone}
-							placeholder="Select a tone"
-							size="md"
-							fullWidth
-						/>
-					</FormField>
-
-					<FormField label="Style">
-						<Dropdown
-							items={styleDropdownItems}
-							value={style}
-							onChange={setStyle}
-							placeholder="Select a style"
-							size="md"
-							fullWidth
-						/>
-					</FormField>
-				</Section>
-
-				<Divider />
-
-				<Section
-					title="Audience"
-					description="Help AI tailor content to your industry and audience"
-				>
-					<TextField
-						label="Industry"
-						value={industry}
-						onChange={(e) => setIndustry(e.target.value)}
-						placeholder="e.g. SaaS, E-commerce, FinTech"
-						isFullWidth
-					/>
-
-					<TextField
-						label="Target Audience"
-						value={targetAudience}
-						onChange={(e) => setTargetAudience(e.target.value)}
-						placeholder="e.g. Startup founders, developers"
-						isFullWidth
-					/>
-				</Section>
-
-				<Divider />
-
-				<Section
-					title="Examples & Instructions"
-					description="Provide reference posts and custom guidance for the AI"
-				>
-					<TextArea
-						label="Example Posts"
-						value={examplePosts}
-						onChange={(e) => setExamplePosts(e.target.value)}
-						placeholder="Paste example posts, one per line"
-						rows={4}
-						helperText="Add example posts that reflect your writing voice, one per line"
-						fullWidth
-					/>
-
-					<TextArea
-						label="Custom Instructions"
-						value={customInstructions}
-						onChange={(e) => setCustomInstructions(e.target.value)}
-						placeholder="Any additional instructions for AI content generation"
-						rows={4}
-						fullWidth
-					/>
-				</Section>
-
-				<Divider />
-
-				<Stack direction="row" justify="end">
-					<Button
-						onClick={handleSave}
-						isLoading={saving}
-						leftIcon={<Check size={16} />}
-					>
-						{saving ? "Saving..." : "Save"}
-					</Button>
-				</Stack>
+		<Stack gap="xl" className={styles.settings}>
+			{/* Page Header */}
+			<Stack gap="xs">
+				<Text as="h2" size="xl">
+					Voice Profile
+				</Text>
+				<Text size="md" color="secondary">
+					Configure your AI writing tone, style, and personality
+				</Text>
 			</Stack>
-		</Container>
+
+			{successMessage ? (
+				<Alert
+					variant="success"
+					dismissible
+					onDismiss={() => setSuccessMessage(null)}
+				>
+					{successMessage}
+				</Alert>
+			) : null}
+
+			{saveError ? (
+				<Alert variant="error" dismissible onDismiss={() => setSaveError(null)}>
+					{saveError}
+				</Alert>
+			) : null}
+
+			<Section
+				title="Tone & Style"
+				description="Set the overall voice for AI-generated content"
+			>
+				<FormField label="Tone">
+					<Dropdown
+						items={toneDropdownItems}
+						value={tone}
+						onChange={setTone}
+						placeholder="Select a tone"
+						size="md"
+						fullWidth
+					/>
+				</FormField>
+
+				<FormField label="Style">
+					<Dropdown
+						items={styleDropdownItems}
+						value={style}
+						onChange={setStyle}
+						placeholder="Select a style"
+						size="md"
+						fullWidth
+					/>
+				</FormField>
+			</Section>
+
+			<Divider />
+
+			<Section
+				title="Audience"
+				description="Help AI tailor content to your industry and audience"
+			>
+				<TextField
+					label="Industry"
+					value={industry}
+					onChange={(e) => setIndustry(e.target.value)}
+					placeholder="e.g. SaaS, E-commerce, FinTech"
+					isFullWidth
+				/>
+
+				<TextField
+					label="Target Audience"
+					value={targetAudience}
+					onChange={(e) => setTargetAudience(e.target.value)}
+					placeholder="e.g. Startup founders, developers"
+					isFullWidth
+				/>
+			</Section>
+
+			<Divider />
+
+			<Section
+				title="Examples & Instructions"
+				description="Provide reference posts and custom guidance for the AI"
+			>
+				<TextArea
+					label="Example Posts"
+					value={examplePosts}
+					onChange={(e) => setExamplePosts(e.target.value)}
+					placeholder="Paste example posts, one per line"
+					rows={4}
+					helperText="Add example posts that reflect your writing voice, one per line"
+					fullWidth
+				/>
+
+				<TextArea
+					label="Custom Instructions"
+					value={customInstructions}
+					onChange={(e) => setCustomInstructions(e.target.value)}
+					placeholder="Any additional instructions for AI content generation"
+					rows={4}
+					fullWidth
+				/>
+			</Section>
+
+			<Divider />
+
+			<Stack direction="row" justify="end">
+				<Button
+					onClick={handleSave}
+					isLoading={saving}
+					leftIcon={<Check size={16} />}
+				>
+					{saving ? "Saving..." : "Save"}
+				</Button>
+			</Stack>
+		</Stack>
 	);
 });
 
