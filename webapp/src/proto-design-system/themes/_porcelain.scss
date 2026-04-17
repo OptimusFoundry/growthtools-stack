@@ -56,13 +56,13 @@
   --color-secondary-active: oklch(52% 0.1 220deg);
   --color-secondary-content: oklch(100% 0 0deg);
 
-  // Accent — bold electric blue, the one place the palette is allowed to
-  // shout. Sits loud against the quiet chambray primary + soft cyan
-  // secondary, so it carves out visual hierarchy on highlights and CTAs.
-  --color-accent: oklch(60% 0.26 255deg);
-  --color-accent-hover: oklch(55% 0.28 255deg);
-  --color-accent-active: oklch(50% 0.26 255deg);
-  --color-accent-content: oklch(100% 0 0deg);
+  // Accent — bold citrus orange, the one warm note that cuts through the
+  // cool blue-slate palette. Sits loud on highlights and CTAs; content
+  // color is deep ink rather than white since L~70 + white fails contrast.
+  --color-accent: oklch(72% 0.2 60deg);
+  --color-accent-hover: oklch(67% 0.22 60deg);
+  --color-accent-active: oklch(62% 0.2 60deg);
+  --color-accent-content: oklch(18% 0.04 55deg);
 
   // Semantic colors
   --color-success: oklch(55% 0.14 155deg);
