@@ -7,7 +7,7 @@ import { Check } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useVoiceProfile } from "@/hooks/useVoiceProfile";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Label } from "@/proto-design-system/components/forms/Label";
+import { FormField } from "@/proto-design-system/components/forms/FormField";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Container } from "@/proto-design-system/components/layout/Container";
@@ -126,6 +126,40 @@ const styleDropdownItems = STYLE_OPTIONS.map((s) => ({
 }));
 
 // ============================================================================
+// Sub-components
+// ============================================================================
+
+/**
+ * Section — title + optional description + body content. Used to give the
+ * page a consistent rhythm (three sections: tone, audience, examples).
+ */
+function Section({
+	title,
+	description,
+	children,
+}: {
+	title: string;
+	description?: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<Stack gap="md">
+			<Stack gap="xs">
+				<Text as="h3" size="lg">
+					{title}
+				</Text>
+				{description ? (
+					<Text size="sm" color="secondary">
+						{description}
+					</Text>
+				) : null}
+			</Stack>
+			{children}
+		</Stack>
+	);
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -179,10 +213,10 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 
 	return (
 		<Container size="md" padded={false}>
-			<Stack gap="lg">
+			<Stack gap="xl">
 				{/* Page Header */}
 				<Stack gap="xs">
-					<Text as="h2" size="xl" weight="semibold">
+					<Text as="h2" size="xl">
 						Voice Profile
 					</Text>
 					<Text size="md" color="secondary">
@@ -190,7 +224,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 					</Text>
 				</Stack>
 
-				{successMessage && (
+				{successMessage ? (
 					<Alert
 						variant="success"
 						dismissible
@@ -198,9 +232,9 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 					>
 						{successMessage}
 					</Alert>
-				)}
+				) : null}
 
-				{saveError && (
+				{saveError ? (
 					<Alert
 						variant="error"
 						dismissible
@@ -208,21 +242,13 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 					>
 						{saveError}
 					</Alert>
-				)}
+				) : null}
 
-				{/* Tone & Style Section */}
-				<Stack gap="md">
-					<Stack gap="xs">
-						<Text as="h3" size="lg" weight="semibold">
-							Tone & Style
-						</Text>
-						<Text color="muted" size="sm">
-							Set the overall voice for AI-generated content
-						</Text>
-					</Stack>
-
-					<Stack gap="xs">
-						<Label>Tone</Label>
+				<Section
+					title="Tone & Style"
+					description="Set the overall voice for AI-generated content"
+				>
+					<FormField label="Tone">
 						<Dropdown
 							items={toneDropdownItems}
 							value={tone}
@@ -231,10 +257,9 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 							size="md"
 							fullWidth
 						/>
-					</Stack>
+					</FormField>
 
-					<Stack gap="xs">
-						<Label>Style</Label>
+					<FormField label="Style">
 						<Dropdown
 							items={styleDropdownItems}
 							value={style}
@@ -243,27 +268,21 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 							size="md"
 							fullWidth
 						/>
-					</Stack>
-				</Stack>
+					</FormField>
+				</Section>
 
 				<Divider />
 
-				{/* Audience Section */}
-				<Stack gap="md">
-					<Stack gap="xs">
-						<Text as="h3" size="lg" weight="semibold">
-							Audience
-						</Text>
-						<Text color="muted" size="sm">
-							Help AI tailor content to your industry and audience
-						</Text>
-					</Stack>
-
+				<Section
+					title="Audience"
+					description="Help AI tailor content to your industry and audience"
+				>
 					<TextField
 						label="Industry"
 						value={industry}
 						onChange={(e) => setIndustry(e.target.value)}
 						placeholder="e.g. SaaS, E-commerce, FinTech"
+						isFullWidth
 					/>
 
 					<TextField
@@ -271,22 +290,16 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 						value={targetAudience}
 						onChange={(e) => setTargetAudience(e.target.value)}
 						placeholder="e.g. Startup founders, developers"
+						isFullWidth
 					/>
-				</Stack>
+				</Section>
 
 				<Divider />
 
-				{/* Examples & Instructions Section */}
-				<Stack gap="md">
-					<Stack gap="xs">
-						<Text as="h3" size="lg" weight="semibold">
-							Examples & Instructions
-						</Text>
-						<Text color="muted" size="sm">
-							Provide reference posts and custom guidance for the AI
-						</Text>
-					</Stack>
-
+				<Section
+					title="Examples & Instructions"
+					description="Provide reference posts and custom guidance for the AI"
+				>
 					<TextArea
 						label="Example Posts"
 						value={examplePosts}
@@ -305,11 +318,10 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 						rows={4}
 						fullWidth
 					/>
-				</Stack>
+				</Section>
 
 				<Divider />
 
-				{/* Save */}
 				<Stack direction="row" justify="end">
 					<Button
 						onClick={handleSave}
