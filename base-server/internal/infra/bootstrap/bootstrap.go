@@ -22,6 +22,7 @@ import (
 	"base-server/internal/infra/tiers"
 
 	// Growth Tools clients
+	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/clients/gemini"
 	"base-server/internal/platform/clients/bluesky"
 	"base-server/internal/platform/clients/facebook"
@@ -297,8 +298,16 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	deps.MediaHandler = mediaHandler.New(mediaProc, logger)
 
 	// GitHub integration
-	githubProc := githubProcessor.New(&deps.Store, cfg.GitHub.WebhookSecret, logger)
-	deps.GitHubHandler = githubHandler.New(githubProc, logger)
+	ghClient := githubclient.NewClient(cfg.GitHub.OAuthClientID, cfg.GitHub.OAuthClientSecret, logger)
+	githubProc := githubProcessor.NewWithOAuth(
+		&deps.Store,
+		ghClient,
+		cfg.GitHub.WebhookSecret,
+		cfg.GitHub.OAuthClientID,
+		cfg.Services.WebAppURI,
+		logger,
+	)
+	deps.GitHubHandler = githubHandler.New(githubProc, cfg.Services.WebAppURI, logger)
 
 	// Blog
 	blogProc := blogProcessor.New(&deps.Store, logger)

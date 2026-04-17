@@ -82,6 +82,9 @@ func (a *API) RegisterRoutes() {
 		// GitHub webhook (public, uses signature validation)
 		apiGroup.POST("/github/webhook", a.githubHandler.HandleWebhook)
 
+		// GitHub OAuth callback (public — OAuth redirects cannot carry JWT)
+		apiGroup.GET("/github/oauth/callback", a.githubHandler.HandleOAuthCallback)
+
 		// Platform OAuth callback (public — OAuth redirects can't carry JWT)
 		apiGroup.GET("/platforms/oauth/callback/:platform", a.platformsHandler.HandleOAuthCallback)
 
@@ -164,6 +167,15 @@ func (a *API) RegisterRoutes() {
 		// Settings
 		protectedGroup.GET("/settings/voice", a.settingsHandler.HandleGetVoiceProfile)
 		protectedGroup.PUT("/settings/voice", a.settingsHandler.HandleUpdateVoiceProfile)
+
+		// GitHub OAuth + repo management
+		protectedGroup.GET("/github/oauth/init", a.githubHandler.HandleInitOAuth)
+		protectedGroup.GET("/github/connection", a.githubHandler.HandleGetConnection)
+		protectedGroup.DELETE("/github/connection", a.githubHandler.HandleDisconnect)
+		protectedGroup.GET("/github/repos", a.githubHandler.HandleListAvailableRepos)
+		protectedGroup.POST("/github/repos/:owner/:name/connect", a.githubHandler.HandleConnectRepo)
+		protectedGroup.DELETE("/github/repos/:owner/:name", a.githubHandler.HandleDisconnectRepo)
+		protectedGroup.GET("/github/commits", a.githubHandler.HandleListCommits)
 
 	}
 

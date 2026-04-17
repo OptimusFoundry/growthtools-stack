@@ -77,7 +77,9 @@ type StorageConfig struct {
 
 // GitHubConfig holds GitHub integration configuration
 type GitHubConfig struct {
-	WebhookSecret string
+	WebhookSecret     string
+	OAuthClientID     string
+	OAuthClientSecret string
 }
 
 // KafkaConfig holds Kafka configuration
@@ -186,6 +188,8 @@ func Load() (*Config, error) {
 
 	// GitHub configuration (optional in dev)
 	cfg.GitHub.WebhookSecret = getEnvWithDefault("GITHUB_WEBHOOK_SECRET", "")
+	cfg.GitHub.OAuthClientID = getEnvWithDefault("GITHUB_OAUTH_CLIENT_ID", "")
+	cfg.GitHub.OAuthClientSecret = getEnvWithDefault("GITHUB_OAUTH_CLIENT_SECRET", "")
 
 	// Kafka configuration
 	cfg.Kafka.Brokers = getEnvWithDefault("KAFKA_BROKERS", "localhost:9092")

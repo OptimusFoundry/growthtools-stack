@@ -1,0 +1,293 @@
+package store
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// GitHubConnection represents a user's GitHub OAuth connection
+type GitHubConnection struct {
+	ID             uuid.UUID  `db:"id" json:"id"`
+	UserID         uuid.UUID  `db:"user_id" json:"user_id"`
+	GitHubUserID   int64      `db:"github_user_id" json:"github_user_id"`
+	GitHubUsername string     `db:"github_username" json:"github_username"`
+	AccessToken    string     `db:"access_token" json:"-"`
+	Scope          string     `db:"scope" json:"scope"`
+	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt      *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
+// GitHubRepo represents a connected GitHub repository
+type GitHubRepo struct {
+	ID            uuid.UUID  `db:"id" json:"id"`
+	ConnectionID  uuid.UUID  `db:"connection_id" json:"connection_id"`
+	GitHubRepoID  int64      `db:"github_repo_id" json:"github_repo_id"`
+	Owner         string     `db:"owner" json:"owner"`
+	Name          string     `db:"name" json:"name"`
+	DefaultBranch *string    `db:"default_branch" json:"default_branch,omitempty"`
+	WebhookID     *int64     `db:"webhook_id" json:"webhook_id,omitempty"`
+	WebhookSecret string     `db:"webhook_secret" json:"-"`
+	Enabled       bool       `db:"enabled" json:"enabled"`
+	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt     *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
+// GitHubCommit represents a persisted GitHub commit
+type GitHubCommit struct {
+	ID          uuid.UUID        `db:"id" json:"id"`
+	RepoID      uuid.UUID        `db:"repo_id" json:"repo_id"`
+	SHA         string           `db:"sha" json:"sha"`
+	AuthorName  *string          `db:"author_name" json:"author_name,omitempty"`
+	AuthorEmail *string          `db:"author_email" json:"author_email,omitempty"`
+	Message     string           `db:"message" json:"message"`
+	Branch      *string          `db:"branch" json:"branch,omitempty"`
+	CommitURL   *string          `db:"commit_url" json:"commit_url,omitempty"`
+	PushedAt    time.Time        `db:"pushed_at" json:"pushed_at"`
+	Payload     *json.RawMessage `db:"payload" json:"payload,omitempty"`
+	CreatedAt   time.Time        `db:"created_at" json:"created_at"`
+}
+
+// ============================================================================
+// GitHub Connections
+// ============================================================================
+
+const sqlUpsertGitHubConnection = `
+INSERT INTO github_connections (user_id, github_user_id, github_username, access_token, scope)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (user_id) DO UPDATE
+  SET github_user_id   = EXCLUDED.github_user_id,
+      github_username  = EXCLUDED.github_username,
+      access_token     = EXCLUDED.access_token,
+      scope            = EXCLUDED.scope,
+      updated_at       = NOW(),
+      deleted_at       = NULL
+RETURNING id, user_id, github_user_id, github_username, access_token, scope, created_at, updated_at, deleted_at
+`
+
+func (s *Store) CreateOrUpdateGitHubConnection(
+	ctx context.Context,
+	userID uuid.UUID,
+	githubUserID int64,
+	username, token, scope string,
+) (GitHubConnection, error) {
+	var conn GitHubConnection
+	err := s.db.GetContext(ctx, &conn, sqlUpsertGitHubConnection,
+		userID, githubUserID, username, token, scope)
+	if err != nil {
+		return GitHubConnection{}, fmt.Errorf("failed to upsert github connection: %w", err)
+	}
+	return conn, nil
+}
+
+const sqlGetGitHubConnectionByUserID = `
+SELECT id, user_id, github_user_id, github_username, access_token, scope, created_at, updated_at, deleted_at
+FROM github_connections
+WHERE user_id = $1 AND deleted_at IS NULL
+`
+
+func (s *Store) GetGitHubConnectionByUserID(ctx context.Context, userID uuid.UUID) (GitHubConnection, error) {
+	var conn GitHubConnection
+	err := s.db.GetContext(ctx, &conn, sqlGetGitHubConnectionByUserID, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubConnection{}, ErrNotFound
+		}
+		return GitHubConnection{}, fmt.Errorf("failed to get github connection: %w", err)
+	}
+	return conn, nil
+}
+
+const sqlSoftDeleteGitHubConnection = `
+UPDATE github_connections
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE user_id = $1 AND deleted_at IS NULL
+`
+
+const sqlSoftDeleteReposByConnection = `
+UPDATE github_repos
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE connection_id = $1 AND deleted_at IS NULL
+`
+
+func (s *Store) SoftDeleteGitHubConnection(ctx context.Context, userID uuid.UUID) error {
+	// First find the connection ID so we can cascade to repos
+	conn, err := s.GetGitHubConnectionByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if _, err = tx.ExecContext(ctx, sqlSoftDeleteReposByConnection, conn.ID); err != nil {
+		return fmt.Errorf("failed to soft-delete github repos: %w", err)
+	}
+
+	res, err := tx.ExecContext(ctx, sqlSoftDeleteGitHubConnection, userID)
+	if err != nil {
+		return fmt.Errorf("failed to soft-delete github connection: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+
+	return tx.Commit()
+}
+
+// ============================================================================
+// GitHub Repos
+// ============================================================================
+
+const sqlCreateGitHubRepo = `
+INSERT INTO github_repos (connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (connection_id, owner, name) DO UPDATE
+  SET github_repo_id  = EXCLUDED.github_repo_id,
+      default_branch  = EXCLUDED.default_branch,
+      webhook_id      = EXCLUDED.webhook_id,
+      webhook_secret  = EXCLUDED.webhook_secret,
+      updated_at      = NOW(),
+      deleted_at      = NULL
+RETURNING id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+`
+
+func (s *Store) CreateGitHubRepo(
+	ctx context.Context,
+	connectionID uuid.UUID,
+	ghRepoID int64,
+	owner, name string,
+	defaultBranch *string,
+	webhookID *int64,
+	webhookSecret string,
+) (GitHubRepo, error) {
+	var repo GitHubRepo
+	err := s.db.GetContext(ctx, &repo, sqlCreateGitHubRepo,
+		connectionID, ghRepoID, owner, name, defaultBranch, webhookID, webhookSecret)
+	if err != nil {
+		return GitHubRepo{}, fmt.Errorf("failed to create github repo: %w", err)
+	}
+	return repo, nil
+}
+
+const sqlListGitHubReposByConnection = `
+SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+FROM github_repos
+WHERE connection_id = $1 AND deleted_at IS NULL
+ORDER BY owner, name
+`
+
+func (s *Store) ListGitHubReposByConnection(ctx context.Context, connectionID uuid.UUID) ([]GitHubRepo, error) {
+	var repos []GitHubRepo
+	err := s.db.SelectContext(ctx, &repos, sqlListGitHubReposByConnection, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list github repos: %w", err)
+	}
+	return repos, nil
+}
+
+const sqlGetGitHubRepoByConnectionAndName = `
+SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+FROM github_repos
+WHERE connection_id = $1 AND owner = $2 AND name = $3 AND deleted_at IS NULL
+`
+
+func (s *Store) GetGitHubRepoByConnectionAndName(ctx context.Context, connectionID uuid.UUID, owner, name string) (GitHubRepo, error) {
+	var repo GitHubRepo
+	err := s.db.GetContext(ctx, &repo, sqlGetGitHubRepoByConnectionAndName, connectionID, owner, name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubRepo{}, ErrNotFound
+		}
+		return GitHubRepo{}, fmt.Errorf("failed to get github repo: %w", err)
+	}
+	return repo, nil
+}
+
+const sqlSoftDeleteGitHubRepo = `
+UPDATE github_repos
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (s *Store) SoftDeleteGitHubRepo(ctx context.Context, repoID uuid.UUID) error {
+	res, err := s.db.ExecContext(ctx, sqlSoftDeleteGitHubRepo, repoID)
+	if err != nil {
+		return fmt.Errorf("failed to soft-delete github repo: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// ============================================================================
+// GitHub Commits
+// ============================================================================
+
+const sqlInsertGitHubCommit = `
+INSERT INTO github_commits (repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (repo_id, sha) DO NOTHING
+`
+
+func (s *Store) InsertGitHubCommit(
+	ctx context.Context,
+	repoID uuid.UUID,
+	sha string,
+	authorName, authorEmail *string,
+	message string,
+	branch, commitURL *string,
+	pushedAt time.Time,
+	payload *json.RawMessage,
+) error {
+	_, err := s.db.ExecContext(ctx, sqlInsertGitHubCommit,
+		repoID, sha, authorName, authorEmail, message, branch, commitURL, pushedAt, payload)
+	if err != nil {
+		return fmt.Errorf("failed to insert github commit: %w", err)
+	}
+	return nil
+}
+
+const sqlListGitHubCommitsByConnection = `
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.created_at
+FROM github_commits gc
+JOIN github_repos gr ON gr.id = gc.repo_id
+WHERE gr.connection_id = $1 AND gr.deleted_at IS NULL
+ORDER BY gc.pushed_at DESC
+LIMIT $2 OFFSET $3
+`
+
+func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]GitHubCommit, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	var commits []GitHubCommit
+	err := s.db.SelectContext(ctx, &commits, sqlListGitHubCommitsByConnection, connectionID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list github commits: %w", err)
+	}
+	return commits, nil
+}
