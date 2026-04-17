@@ -82,7 +82,20 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 	// on subsequent joins regardless of this flag; it only matters for the
 	// first join of a consumer group. Using `true` protects us from the
 	// race where a message lands before the very first subscribe lands.
-	const consumer: Consumer = kafka.consumer({ groupId });
+	//
+	// Session/rebalance timeouts are bumped well past the capture duration.
+	// A full Playwright run can take 60–90s; the kafkajs defaults are
+	// sessionTimeout=30s / rebalanceTimeout=60s, which means the broker
+	// evicts the consumer mid-capture, never commits the offset, and
+	// redelivers the same request as soon as it rejoins. The explicit
+	// heartbeat loop below keeps the session alive even on the slowest
+	// captures — the timeouts are a belt-and-braces ceiling.
+	const consumer: Consumer = kafka.consumer({
+		groupId,
+		sessionTimeout: 300_000, // 5 min — at broker-side group.max.session.timeout.ms default
+		rebalanceTimeout: 300_000,
+		heartbeatInterval: 10_000,
+	});
 
 	await producer.connect();
 	await consumer.connect();
@@ -93,7 +106,7 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 	await consumer.run({
 		// One capture at a time per partition; Playwright is heavyweight
 		// and the host is memory-constrained.
-		eachMessage: async ({ message }) => {
+		eachMessage: async ({ message, heartbeat }) => {
 			const raw = message.value?.toString();
 			if (!raw) return;
 
@@ -107,6 +120,17 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 
 			const commitLog = `${request.owner}/${request.repo}@${request.sha.slice(0, 7)}`;
 			console.log(`[kafka] capture start ${commitLog}`);
+
+			// Keep the consumer-group session alive while the long-running
+			// capture executes. kafkajs does NOT heartbeat in the
+			// background during eachMessage — the runner loop is blocked
+			// until we return — so we fire our own interval. Firing every
+			// 10s is well under the 300s sessionTimeout.
+			const heartbeatTimer = setInterval(() => {
+				heartbeat().catch((err) => {
+					console.error("[kafka] heartbeat failed during capture", err);
+				});
+			}, 10_000);
 
 			const result: CaptureResultMessage = {
 				commit_id: request.commit_id,
@@ -140,6 +164,8 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 			} catch (err) {
 				result.error = err instanceof Error ? err.message : String(err);
 				console.error(`[kafka] capture failed ${commitLog}:`, result.error);
+			} finally {
+				clearInterval(heartbeatTimer);
 			}
 
 			try {
