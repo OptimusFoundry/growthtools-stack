@@ -52,18 +52,20 @@
   --color-primary-active: oklch(62% 0.2 60deg);
   --color-primary-content: oklch(18% 0.04 55deg);
 
-  // Secondary — soft cyan
-  --color-secondary: oklch(62% 0.1 220deg);
-  --color-secondary-hover: oklch(57% 0.12 220deg);
-  --color-secondary-active: oklch(52% 0.1 220deg);
+  // Secondary — deep rust / terracotta. Same warm family as the primary
+  // orange but pulled darker and more saturated so it reads as grounded
+  // rather than competing.
+  --color-secondary: oklch(50% 0.13 30deg);
+  --color-secondary-hover: oklch(45% 0.15 30deg);
+  --color-secondary-active: oklch(40% 0.13 30deg);
   --color-secondary-content: oklch(100% 0 0deg);
 
-  // Accent — quiet chambray, used for subtle highlights so the orange
-  // primary doesn't have to compete with another saturated color.
-  --color-accent: oklch(52% 0.08 255deg);
-  --color-accent-hover: oklch(47% 0.1 255deg);
-  --color-accent-active: oklch(42% 0.08 255deg);
-  --color-accent-content: oklch(100% 0 0deg);
+  // Accent — soft cream / gold highlight. Analogous to the primary,
+  // slightly lighter, used for subtle washes (selected states, pills).
+  --color-accent: oklch(80% 0.1 85deg);
+  --color-accent-hover: oklch(75% 0.12 85deg);
+  --color-accent-active: oklch(70% 0.1 85deg);
+  --color-accent-content: oklch(22% 0.04 55deg);
 
   // Semantic colors
   --color-success: oklch(55% 0.14 155deg);
