@@ -149,26 +149,138 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 		return "", fmt.Errorf("xapi: media upload failed with %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	// v2 response shape: { "data": { "id": "...", "media_key": "..." } }
-	// Fallback to v1.1-style: { "media_id_string": "..." }
+	// v2 response shape: { "data": { "id": "...", "media_key": "...", "processing_info": {...} } }
+	// Fallback to v1.1-style: { "media_id_string": "...", "processing_info": {...} }
 	var v2Result struct {
 		Data struct {
-			ID       string `json:"id"`
-			MediaKey string `json:"media_key"`
+			ID             string          `json:"id"`
+			MediaKey       string          `json:"media_key"`
+			ProcessingInfo *processingInfo `json:"processing_info"`
 		} `json:"data"`
-		MediaIDString string `json:"media_id_string"`
+		MediaIDString  string          `json:"media_id_string"`
+		ProcessingInfo *processingInfo `json:"processing_info"`
 	}
 	if err := json.Unmarshal(respBody, &v2Result); err != nil {
 		return "", fmt.Errorf("xapi: failed to parse upload response: %w", err)
 	}
 
-	if v2Result.Data.ID != "" {
-		return v2Result.Data.ID, nil
+	mediaID := v2Result.Data.ID
+	if mediaID == "" {
+		mediaID = v2Result.MediaIDString
 	}
-	if v2Result.MediaIDString != "" {
-		return v2Result.MediaIDString, nil
+	if mediaID == "" {
+		return "", fmt.Errorf("xapi: no media ID in response: %s", string(respBody))
 	}
-	return "", fmt.Errorf("xapi: no media ID in response: %s", string(respBody))
+
+	// Videos come back with processing_info; X won't accept the media_id
+	// in a tweet until the transcode finishes. Poll STATUS until
+	// succeeded (or fail fast on failed/timeout). Images don't emit
+	// processing_info, so this short-circuits for them.
+	pi := v2Result.Data.ProcessingInfo
+	if pi == nil {
+		pi = v2Result.ProcessingInfo
+	}
+	if pi != nil && pi.State != "" && pi.State != "succeeded" {
+		if err := c.waitForMediaReady(ctx, mediaID, accessToken, pi); err != nil {
+			return "", err
+		}
+	}
+	return mediaID, nil
+}
+
+// processingInfo mirrors the subset of X's media processing status we
+// care about. X returns check_after_secs as a hint for the next poll.
+type processingInfo struct {
+	State          string `json:"state"`
+	CheckAfterSecs int    `json:"check_after_secs"`
+	Error          *struct {
+		Code    int    `json:"code"`
+		Name    string `json:"name"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+}
+
+// waitForMediaReady polls /2/media/upload?command=STATUS until the
+// media's processing state is "succeeded". X exposes check_after_secs
+// to pace callers; we honor it but clamp to a sane range. Bounded by a
+// 2-minute overall timeout — capture clips are short, and anything
+// that's still transcoding after 2 minutes probably isn't coming back.
+func (c *Client) waitForMediaReady(ctx context.Context, mediaID, accessToken string, initial *processingInfo) error {
+	const overallTimeout = 2 * time.Minute
+	deadline := time.Now().Add(overallTimeout)
+
+	pi := initial
+	for {
+		// Honor check_after_secs, clamped to [1, 10] so we don't stall
+		// on a zero or unreasonably large hint.
+		wait := time.Duration(pi.CheckAfterSecs) * time.Second
+		if wait < time.Second {
+			wait = time.Second
+		}
+		if wait > 10*time.Second {
+			wait = 10 * time.Second
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(wait):
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("xapi: media %s still in state %s after %s", mediaID, pi.State, overallTimeout)
+		}
+
+		next, err := c.getMediaStatus(ctx, mediaID, accessToken)
+		if err != nil {
+			return err
+		}
+		switch next.State {
+		case "succeeded":
+			return nil
+		case "failed":
+			if next.Error != nil {
+				return fmt.Errorf("xapi: media %s processing failed: %s (%d)", mediaID, next.Error.Message, next.Error.Code)
+			}
+			return fmt.Errorf("xapi: media %s processing failed", mediaID)
+		}
+		pi = next
+	}
+}
+
+func (c *Client) getMediaStatus(ctx context.Context, mediaID, accessToken string) (*processingInfo, error) {
+	endpoint := fmt.Sprintf("https://api.x.com/2/media/upload?command=STATUS&media_id=%s", mediaID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("xapi: failed to build STATUS request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("xapi: STATUS request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("xapi: STATUS returned %d: %s", resp.StatusCode, string(body))
+	}
+	var result struct {
+		Data struct {
+			ProcessingInfo *processingInfo `json:"processing_info"`
+		} `json:"data"`
+		ProcessingInfo *processingInfo `json:"processing_info"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("xapi: failed to parse STATUS response: %w", err)
+	}
+	pi := result.Data.ProcessingInfo
+	if pi == nil {
+		pi = result.ProcessingInfo
+	}
+	if pi == nil {
+		return nil, fmt.Errorf("xapi: STATUS response missing processing_info: %s", string(body))
+	}
+	return pi, nil
 }
 
 // uploadMediaLegacy is the old v1.1 chunked flow, kept for reference.
