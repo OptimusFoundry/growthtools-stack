@@ -380,6 +380,17 @@ func (g *DraftGenerator) materializeMedia(
 				contentType = ct
 			}
 		}
+		// The file extension is authoritative for capture artifacts — we
+		// produced them ourselves, so we know a `.mp4` is `video/mp4` no
+		// matter what S3 records. Override whenever the extension maps to
+		// a known media mime: this undoes cases where the uploader stamped
+		// the object with `application/octet-stream` (the previous
+		// capture-worker behaviour for unlabelled types), which otherwise
+		// trips the webapp's `contentType.startsWith("video/")` check and
+		// renders the video as a generic file icon.
+		if extType := contentTypeFor(key); extType != "application/octet-stream" {
+			contentType = extType
+		}
 		if contentType == "" {
 			contentType = fallbackContentType
 		}

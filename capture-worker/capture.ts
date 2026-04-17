@@ -49,6 +49,9 @@ const s3 = s3Bucket
 
 function guessContentType(file: string): string {
 	if (file.endsWith(".png")) return "image/png";
+	if (file.endsWith(".jpg") || file.endsWith(".jpeg")) return "image/jpeg";
+	if (file.endsWith(".mp4")) return "video/mp4";
+	if (file.endsWith(".mov")) return "video/quicktime";
 	if (file.endsWith(".webm")) return "video/webm";
 	if (file.endsWith(".json")) return "application/json";
 	return "application/octet-stream";
