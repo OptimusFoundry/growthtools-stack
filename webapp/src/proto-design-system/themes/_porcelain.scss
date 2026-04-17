@@ -44,11 +44,13 @@
   --shadow-color: oklch(50% 0.01 250deg / 0.06);
   --shadow-color-strong: oklch(35% 0.01 250deg / 0.12);
 
-  // Primary — quiet denim / chambray blue
-  --color-primary: oklch(52% 0.08 255deg);
-  --color-primary-hover: oklch(47% 0.1 255deg);
-  --color-primary-active: oklch(42% 0.08 255deg);
-  --color-primary-content: oklch(100% 0 0deg);
+  // Primary — bold citrus orange. Main buttons / CTAs cut through the
+  // cool blue-slate palette as the one warm note. Content color is deep
+  // ink rather than white (L~70 + white fails WCAG contrast on orange).
+  --color-primary: oklch(72% 0.2 60deg);
+  --color-primary-hover: oklch(67% 0.22 60deg);
+  --color-primary-active: oklch(62% 0.2 60deg);
+  --color-primary-content: oklch(18% 0.04 55deg);
 
   // Secondary — soft cyan
   --color-secondary: oklch(62% 0.1 220deg);
@@ -56,13 +58,12 @@
   --color-secondary-active: oklch(52% 0.1 220deg);
   --color-secondary-content: oklch(100% 0 0deg);
 
-  // Accent — bold citrus orange, the one warm note that cuts through the
-  // cool blue-slate palette. Sits loud on highlights and CTAs; content
-  // color is deep ink rather than white since L~70 + white fails contrast.
-  --color-accent: oklch(72% 0.2 60deg);
-  --color-accent-hover: oklch(67% 0.22 60deg);
-  --color-accent-active: oklch(62% 0.2 60deg);
-  --color-accent-content: oklch(18% 0.04 55deg);
+  // Accent — quiet chambray, used for subtle highlights so the orange
+  // primary doesn't have to compete with another saturated color.
+  --color-accent: oklch(52% 0.08 255deg);
+  --color-accent-hover: oklch(47% 0.1 255deg);
+  --color-accent-active: oklch(42% 0.08 255deg);
+  --color-accent-content: oklch(100% 0 0deg);
 
   // Semantic colors
   --color-success: oklch(55% 0.14 155deg);
@@ -83,7 +84,7 @@
   --color-info-content: oklch(100% 0 0deg);
 
   // Focus ring
-  --focus-ring-color: oklch(52% 0.08 255deg / 0.35);
+  --focus-ring-color: oklch(72% 0.2 60deg / 0.45);
 
   // Muted
   --color-muted: oklch(70% 0.01 255deg);
