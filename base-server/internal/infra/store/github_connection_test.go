@@ -184,6 +184,77 @@ func TestStore_GetGitHubConnectionByUserID(t *testing.T) {
 }
 
 // ============================================================================
+// GetGitHubConnectionByID
+// ============================================================================
+
+func TestStore_GetGitHubConnectionByID(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) (uuid.UUID, uuid.UUID) // returns (connectionID, lookupID)
+		wantErr error
+		assert  func(t *testing.T, got GitHubConnection, connID uuid.UUID)
+	}{
+		{
+			name: "found returns connection with matching fields",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				return conn.ID, conn.ID
+			},
+			assert: func(t *testing.T, got GitHubConnection, connID uuid.UUID) {
+				assert.Equal(t, connID, got.ID)
+				assert.Nil(t, got.DeletedAt)
+			},
+		},
+		{
+			name: "not found for random uuid",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				return uuid.Nil, uuid.New()
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			name: "soft-deleted row is excluded",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				// Soft-delete via userID — this sets deleted_at on the connection row.
+				require.NoError(t, s.SoftDeleteGitHubConnection(ctx, userID))
+				return conn.ID, conn.ID
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			connID, lookupID := tt.setup(t)
+			got, err := s.GetGitHubConnectionByID(ctx, lookupID)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assert != nil {
+				tt.assert(t, got, connID)
+			}
+		})
+	}
+}
+
+// ============================================================================
 // SoftDeleteGitHubConnection
 // ============================================================================
 
@@ -983,7 +1054,7 @@ func TestStore_ListGitHubCommitsByConnection(t *testing.T) {
 				userID := createTestUser(t, s)
 				conn := createTestGitHubConnection(t, s, userID)
 				repo := createTestGitHubRepo(t, s, conn.ID)
-				for i := 0; i < 3; i++ {
+				for range 3 {
 					_, _, err := s.InsertGitHubCommit(ctx, repo.ID, "sha"+uuid.New().String()[:20],
 						nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
 					require.NoError(t, err)
@@ -1013,7 +1084,7 @@ func TestStore_ListGitHubCommitsByConnection(t *testing.T) {
 				userID := createTestUser(t, s)
 				conn := createTestGitHubConnection(t, s, userID)
 				repo := createTestGitHubRepo(t, s, conn.ID)
-				for i := 0; i < 3; i++ {
+				for range 3 {
 					_, _, err := s.InsertGitHubCommit(ctx, repo.ID, "sha-pg-"+uuid.New().String()[:20],
 						nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
 					require.NoError(t, err)

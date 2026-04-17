@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -788,4 +789,215 @@ func TestGitHubProcessor_InitOAuth(t *testing.T) {
 // expiresInFuture returns a time 10 minutes in the future for OAuth state entries.
 func expiresInFuture() time.Time {
 	return time.Now().Add(10 * time.Minute)
+}
+
+// makeRepo builds a minimal store.GitHubRepo for enqueueCaptureRequests tests.
+func makeRepo(connID uuid.UUID) store.GitHubRepo {
+	return store.GitHubRepo{
+		ID:           uuid.New(),
+		ConnectionID: connID,
+		Owner:        "alice",
+		Name:         "myrepo",
+	}
+}
+
+// makeCommit builds a minimal store.GitHubCommit.
+func makeCommit(sha, message string) store.GitHubCommit {
+	return store.GitHubCommit{
+		ID:      uuid.New(),
+		SHA:     sha,
+		Message: message,
+	}
+}
+
+func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+
+	tests := []struct {
+		name    string
+		commits func(repo store.GitHubRepo) []store.GitHubCommit
+		mocks   func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo)
+		// assertPublished records the CaptureRequest values passed to Publish
+		// for cases that need payload inspection. When nil, no payload
+		// assertions are made (publisher.Publish expectations are set in mocks).
+	}{
+		{
+			// Happy path: connection lookup succeeds, README returns an app URL,
+			// diff is fetched; Publish is called once with fully-populated request.
+			name: "happy path – publishes CaptureRequest with diff and app URL",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("abc123", "feat: add thing")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("# My App\n\nSee it live at https://myapp.example.com for details.", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "abc123").
+					Return("diff --git a/foo.go b/foo.go\n+added line", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						if req.Diff != "diff --git a/foo.go b/foo.go\n+added line" {
+							t.Errorf("unexpected Diff: %q", req.Diff)
+						}
+						if req.AppURL != "https://myapp.example.com" {
+							t.Errorf("unexpected AppURL: %q", req.AppURL)
+						}
+						if req.Message != "feat: add thing" {
+							t.Errorf("unexpected Message: %q", req.Message)
+						}
+						if req.SHA != "abc123" {
+							t.Errorf("unexpected SHA: %q", req.SHA)
+						}
+						if req.Owner != "alice" {
+							t.Errorf("unexpected Owner: %q", req.Owner)
+						}
+						if req.Repo != "myrepo" {
+							t.Errorf("unexpected Repo: %q", req.Repo)
+						}
+						return nil
+					})
+			},
+		},
+		{
+			// GetGitHubConnectionByID error → early return, publisher never called.
+			// This is the key behavior change in commit 21861279: the function now
+			// looks up by connection ID (not user ID) and returns early on error
+			// rather than silently continuing per-commit.
+			name: "connection lookup error – publisher never called",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("def456", "fix: bug")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{}, errors.New("db exploded"))
+				// No GetRepoReadme, no GetCommitDiff, no Publish — strict controller
+				// will fail the test if any of those are called.
+			},
+		},
+		{
+			// GetCommitDiff error → non-fatal: Publish is still called with Diff="".
+			name: "diff error – publishes request with empty diff",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("ghi789", "chore: update deps")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("https://myapp.example.com", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "ghi789").
+					Return("", errors.New("diff API error"))
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						if req.Diff != "" {
+							t.Errorf("expected empty Diff on diff error, got %q", req.Diff)
+						}
+						return nil
+					})
+			},
+		},
+		{
+			// Multiple commits: diff error on first does not prevent second from publishing.
+			name: "diff error on one commit does not block other commits",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{
+					makeCommit("sha-first", "first commit"),
+					makeCommit("sha-second", "second commit"),
+				}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "sha-first").
+					Return("", errors.New("timeout"))
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "sha-second").
+					Return("diff for second", nil)
+				// Both commits must reach Publish.
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					Times(2)
+			},
+		},
+		{
+			// Diff longer than 40_000 chars is truncated and the truncation
+			// marker is appended before Publish is called.
+			name: "long diff is truncated to 40_000 chars + marker",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("longsha", "big change")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				longDiff := strings.Repeat("x", 50_000)
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "longsha").
+					Return(longDiff, nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						const wantSuffix = "\n… [truncated]"
+						const maxChars = 40_000
+						want := strings.Repeat("x", maxChars) + wantSuffix
+						if req.Diff != want {
+							t.Errorf("truncated diff mismatch: len=%d, suffix=%q",
+								len(req.Diff), req.Diff[len(req.Diff)-len(wantSuffix):])
+						}
+						return nil
+					})
+			},
+		},
+		{
+			// GetRepoReadme failure: AppURL="" but Publish is still called.
+			name: "readme failure – publishes with empty AppURL",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("readme-err-sha", "add feature")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("", errors.New("readme not found"))
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "readme-err-sha").
+					Return("some diff", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						if req.AppURL != "" {
+							t.Errorf("expected empty AppURL on readme error, got %q", req.AppURL)
+						}
+						if req.Diff != "some diff" {
+							t.Errorf("unexpected Diff: %q", req.Diff)
+						}
+						return nil
+					})
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mockStore := NewMockGitHubStore(ctrl)
+			mockClient := NewMockGitHubClient(ctrl)
+			mockPublisher := NewMockEventPublisher(ctrl)
+
+			connID := uuid.New()
+			repo := makeRepo(connID)
+			commits := tt.commits(repo)
+
+			tt.mocks(mockStore, mockClient, mockPublisher, connID, repo)
+
+			proc := NewWithOAuth(mockStore, mockClient, mockPublisher, testWebhookSecret, "client-id", "http://localhost", logger)
+			proc.enqueueCaptureRequests(context.Background(), repo, commits)
+			// enqueueCaptureRequests returns nothing; correctness is verified
+			// entirely through mock expectations and DoAndReturn assertions.
+		})
+	}
 }
