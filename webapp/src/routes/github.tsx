@@ -91,13 +91,10 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 	const imageUploads = uploaded.filter((u) => u.url && isImageKey(u.key));
 	const otherUploads = uploaded.filter((u) => !imageUploads.includes(u));
 
-	return (
-		<motion.article
-			className={styles.commitCard}
-			initial={{ opacity: 0, y: 8 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.2, delay: index * 0.03 }}
-		>
+	const hasDetails = state.kind === "captured" || state.kind === "failed";
+
+	const body = (
+		<>
 			<div className={styles.commitIcon}>
 				<GitCommit size={18} />
 			</div>
@@ -135,6 +132,7 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 							target="_blank"
 							rel="noreferrer"
 							className={styles.metaLink}
+							onClick={(e) => e.stopPropagation()}
 						>
 							<ExternalLink size={12} />
 						</a>
@@ -144,15 +142,9 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 				{state.kind === "captured" && imageUploads.length > 0 && (
 					<div className={styles.mediaGrid}>
 						{imageUploads.slice(0, 6).map((item) => (
-							<a
-								key={item.key}
-								href={item.url ?? undefined}
-								target="_blank"
-								rel="noreferrer"
-								className={styles.mediaThumb}
-							>
+							<div key={item.key} className={styles.mediaThumb}>
 								<img src={item.url ?? ""} alt={item.key} loading="lazy" />
-							</a>
+							</div>
 						))}
 					</div>
 				)}
@@ -160,16 +152,10 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 				{state.kind === "captured" && otherUploads.length > 0 && (
 					<div className={styles.mediaList}>
 						{otherUploads.map((item) => (
-							<a
-								key={item.key}
-								href={item.url ?? undefined}
-								target="_blank"
-								rel="noreferrer"
-								className={styles.mediaFile}
-							>
+							<span key={item.key} className={styles.mediaFile}>
 								<FileImage size={14} />
 								<span>{item.key.split("/").pop()}</span>
-							</a>
+							</span>
 						))}
 					</div>
 				)}
@@ -181,15 +167,42 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 				)}
 
 				{state.kind === "post" && (
-					<Link to="/posts/$id" params={{ id: state.postID }}>
+					<Link
+						to="/posts/$id"
+						params={{ id: state.postID }}
+						onClick={(e) => e.stopPropagation()}
+					>
 						<Button variant="ghost" size="sm">
 							View post →
 						</Button>
 					</Link>
 				)}
 			</Stack>
-		</motion.article>
+		</>
 	);
+
+	const motionProps = {
+		className: `${styles.commitCard} ${hasDetails ? styles.commitCardClickable : ""}`,
+		initial: { opacity: 0, y: 8 },
+		animate: { opacity: 1, y: 0 },
+		transition: { duration: 0.2, delay: index * 0.03 },
+	};
+
+	if (hasDetails) {
+		return (
+			<motion.div {...motionProps}>
+				<Link
+					to="/github/$id"
+					params={{ id: commit.id }}
+					className={styles.commitCardLink}
+				>
+					{body}
+				</Link>
+			</motion.div>
+		);
+	}
+
+	return <motion.article {...motionProps}>{body}</motion.article>;
 });
 
 CommitRow.displayName = "CommitRow";
