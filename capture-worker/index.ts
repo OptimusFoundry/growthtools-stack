@@ -14,7 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { captureLoginStorageState } from "./auth.ts";
-import { resolveVideoSpeed, speedUpWebm } from "./video.ts";
+import { finalizeRecording, resolveVideoSpeed } from "./video.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -135,10 +135,12 @@ export async function capture(input: CaptureInput): Promise<CaptureResult> {
 
 		if (video) {
 			const rawPath = await video.path();
-			videoPath = path.join(captureDir, "recording.webm");
-			// Playwright writes to a tmp path — re-encode at the configured
-			// playback speed (default 2×) as we move it into captureDir.
-			await speedUpWebm(rawPath, videoPath, resolveVideoSpeed());
+			// Final clip is MP4 (H.264, CRF 20) — sharper than Playwright's
+			// VP8 default and plays on every social platform without
+			// transcoding. finalizeRecording also drops idle frames and
+			// applies the configured playback speed (default 2×).
+			videoPath = path.join(captureDir, "recording.mp4");
+			await finalizeRecording(rawPath, videoPath, resolveVideoSpeed());
 		}
 	} finally {
 		await browser.close();

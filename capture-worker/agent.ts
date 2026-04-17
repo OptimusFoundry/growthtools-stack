@@ -21,7 +21,7 @@ import {
 } from "@google/genai";
 import { type Page, chromium } from "playwright";
 import { captureLoginStorageState } from "./auth.ts";
-import { resolveVideoSpeed, speedUpWebm } from "./video.ts";
+import { finalizeRecording, resolveVideoSpeed } from "./video.ts";
 
 const execFileP = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -614,10 +614,12 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		await context.close();
 		if (video) {
 			const raw = await video.path();
-			videoPath = path.join(captureDir, "recording.webm");
-			// Speed the raw clip up so the final demo feels snappy. Default
-			// is 2× real time; override with CAPTURE_VIDEO_SPEED (1 = raw).
-			await speedUpWebm(raw, videoPath, resolveVideoSpeed());
+			// Final clip is MP4 (H.264) — sharper than Playwright's VP8
+			// default and plays on every social platform without
+			// transcoding. finalizeRecording also drops idle frames so
+			// Gemini-thinking pauses don't show up as dead air.
+			videoPath = path.join(captureDir, "recording.mp4");
+			await finalizeRecording(raw, videoPath, resolveVideoSpeed());
 		}
 
 		narrationPath = path.join(captureDir, "narration.json");
