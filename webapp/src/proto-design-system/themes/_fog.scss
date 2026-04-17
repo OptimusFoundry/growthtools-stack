@@ -39,13 +39,11 @@
   --color-surface-elevated: oklch(100% 0 0deg);
   --color-surface-overlay: oklch(20% 0.008 250deg / 0.4);
 
-  // Borders — soft slate line. Kept visible because form controls
-  // (Input, Select, TextArea) rely on --color-border for their outline;
-  // fully transparent borders made fields dissolve into the canvas.
-  // Cards still get most of their elevation from the bg/surface contrast
-  // so this border reads as supporting detail, not structure.
-  --color-border: oklch(86% 0.006 250deg);
-  --color-border-hover: oklch(78% 0.008 250deg);
+  // Borders — transparent. Spatial hierarchy comes from the gray canvas
+  // (91% L) vs pure-white surfaces (100% L) — a 9-point gap that handles
+  // both cards AND form controls (<Input> uses --color-surface for its bg).
+  --color-border: oklch(0% 0 0deg / 0);
+  --color-border-hover: oklch(50% 0.01 250deg / 0.1);
 
   // Shadow — a little more present than porcelain since there are no
   // borders to hint at card edges
