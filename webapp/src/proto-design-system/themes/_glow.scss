@@ -79,9 +79,11 @@
   --color-info-bg: oklch(96% 0.05 260deg);
   --color-info-content: oklch(100% 0 0deg);
 
-  // Focus ring — 1px hairline in magenta. Minimal, not a halo.
+  // Focus ring — 0.5px subpixel hairline in magenta. Renders as a true
+  // half-pixel on HiDPI displays; on standard DPI the browser rounds up
+  // to 1px, so effectively "1px or less".
   --focus-ring-color: oklch(62% 0.3 330deg / 0.3);
-  --focus-ring-width: 1px;
+  --focus-ring-width: 0.5px;
 
   // Muted
   --color-muted: oklch(50% 0 0deg);
