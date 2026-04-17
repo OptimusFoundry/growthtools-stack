@@ -46,27 +46,26 @@
   --shadow-color: oklch(50% 0.01 250deg / 0.06);
   --shadow-color-strong: oklch(35% 0.01 250deg / 0.12);
 
-  // Primary — bold citrus orange. Main buttons / CTAs cut through the
-  // cool blue-slate palette as the one warm note. Content color is deep
-  // ink rather than white (L~70 + white fails WCAG contrast on orange).
-  --color-primary: oklch(72% 0.2 60deg);
-  --color-primary-hover: oklch(67% 0.22 60deg);
-  --color-primary-active: oklch(62% 0.2 60deg);
+  // Primary — vivid citrus, peak saturation. This is the ONE place the
+  // whole muted palette gets to explode with color; everything else (text,
+  // borders, chrome) stays whispered so the button really lands.
+  --color-primary: oklch(70% 0.24 55deg);
+  --color-primary-hover: oklch(65% 0.26 55deg);
+  --color-primary-active: oklch(60% 0.24 55deg);
   --color-primary-content: oklch(18% 0.04 55deg);
 
-  // Secondary — deep rust / terracotta. Same warm family as the primary
-  // orange but pulled darker and more saturated so it reads as grounded
-  // rather than competing.
-  --color-secondary: oklch(50% 0.13 30deg);
-  --color-secondary-hover: oklch(45% 0.15 30deg);
-  --color-secondary-active: oklch(40% 0.13 30deg);
+  // Secondary — rich rust / terracotta, cranked so it holds its own next
+  // to the bright primary without disappearing into the muted surroundings.
+  --color-secondary: oklch(52% 0.17 30deg);
+  --color-secondary-hover: oklch(47% 0.19 30deg);
+  --color-secondary-active: oklch(42% 0.17 30deg);
   --color-secondary-content: oklch(100% 0 0deg);
 
-  // Accent — soft cream / gold highlight. Analogous to the primary,
-  // slightly lighter, used for subtle washes (selected states, pills).
-  --color-accent: oklch(80% 0.1 85deg);
-  --color-accent-hover: oklch(75% 0.12 85deg);
-  --color-accent-active: oklch(70% 0.1 85deg);
+  // Accent — honey gold, analogous to the primary but lighter and still
+  // vivid. For pills, selected states, highlights that want to sparkle.
+  --color-accent: oklch(82% 0.16 85deg);
+  --color-accent-hover: oklch(77% 0.18 85deg);
+  --color-accent-active: oklch(72% 0.16 85deg);
   --color-accent-content: oklch(22% 0.04 55deg);
 
   // Semantic colors
@@ -88,7 +87,7 @@
   --color-info-content: oklch(100% 0 0deg);
 
   // Focus ring
-  --focus-ring-color: oklch(72% 0.2 60deg / 0.45);
+  --focus-ring-color: oklch(70% 0.24 55deg / 0.5);
 
   // Muted — used by the sidebar nav for default (unselected) item text,
   // so it needs to clear WCAG AA against surface. Tertiary stays softer
