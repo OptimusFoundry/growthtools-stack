@@ -12,6 +12,7 @@ import {
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
@@ -136,6 +137,7 @@ function WizardInner({
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
 	const { uploadMedia } = useUploadMedia();
+	const { addBanner } = useBannerCenter();
 
 	// Sync SSE platform completions into wizard state
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
@@ -283,9 +285,20 @@ function WizardInner({
 			});
 
 			await publishPost(post.id, [...state.selectedPlatforms]);
+			addBanner({
+				type: "success",
+				title: "Post published",
+				description: "We're pushing it out to your selected platforms.",
+				dismissible: true,
+			});
 			navigate({ to: "/posts" });
 		} catch {
-			wizard.setError("Failed to publish. Please try again.");
+			addBanner({
+				type: "error",
+				title: "Couldn't publish post",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		} finally {
 			wizard.setSubmitting(false);
 		}
@@ -303,6 +316,7 @@ function WizardInner({
 		saveDraft,
 		publishPost,
 		navigate,
+		addBanner,
 	]);
 
 	const handleSchedule = useCallback(async () => {
@@ -343,9 +357,20 @@ function WizardInner({
 			});
 
 			await schedulePost(post.id, state.scheduledAt);
+			addBanner({
+				type: "success",
+				title: "Post scheduled",
+				description: `It'll go out on ${new Date(state.scheduledAt).toLocaleString()}.`,
+				dismissible: true,
+			});
 			navigate({ to: "/posts" });
 		} catch {
-			wizard.setError("Failed to schedule. Please try again.");
+			addBanner({
+				type: "error",
+				title: "Couldn't schedule post",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		} finally {
 			wizard.setSubmitting(false);
 		}
@@ -364,6 +389,7 @@ function WizardInner({
 		saveDraft,
 		schedulePost,
 		navigate,
+		addBanner,
 	]);
 
 	const handleSaveDraft = useCallback(async () => {
@@ -400,12 +426,27 @@ function WizardInner({
 
 			if (isEditMode && editPostId) {
 				await updateDraft(editPostId, draftData);
+				addBanner({
+					type: "success",
+					title: "Draft updated",
+					dismissible: true,
+				});
 			} else {
 				await saveDraft(draftData);
+				addBanner({
+					type: "success",
+					title: "Draft saved",
+					dismissible: true,
+				});
 			}
 			navigate({ to: "/posts" });
 		} catch {
-			wizard.setError("Failed to save draft. Please try again.");
+			addBanner({
+				type: "error",
+				title: "Couldn't save draft",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		} finally {
 			wizard.setSubmitting(false);
 		}
@@ -425,6 +466,7 @@ function WizardInner({
 		isEditMode,
 		editPostId,
 		navigate,
+		addBanner,
 	]);
 
 	const [retrying, setRetrying] = useState(false);
@@ -437,13 +479,23 @@ function WizardInner({
 		try {
 			const url = `${import.meta.env.VITE_API_URL}/api/protected/posts/${editPostId}/retry`;
 			await fetch(url, { method: "POST", credentials: "include" });
+			addBanner({
+				type: "success",
+				title: "Retrying failed platforms",
+				dismissible: true,
+			});
 			navigate({ to: "/posts" });
 		} catch {
-			wizard.setError("Failed to retry. Please try again.");
+			addBanner({
+				type: "error",
+				title: "Couldn't retry post",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		} finally {
 			setRetrying(false);
 		}
-	}, [editPostId, navigate, wizard]);
+	}, [editPostId, navigate, addBanner]);
 
 	return (
 		<div className={styles.page}>
