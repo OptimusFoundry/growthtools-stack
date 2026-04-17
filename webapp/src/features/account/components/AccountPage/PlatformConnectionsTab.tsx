@@ -3,6 +3,7 @@
  * Connect and disconnect social media platforms
  */
 
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { memo, useCallback, useState } from "react";
 import { useConnectBluesky } from "@/hooks/useConnectBluesky";
 import { useConnectPlatform } from "@/hooks/useConnectPlatform";
@@ -13,6 +14,7 @@ import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
 import { Container } from "@/proto-design-system/components/layout/Container";
+import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
@@ -25,6 +27,7 @@ import {
 	type PlatformConnection,
 	type PlatformType,
 } from "@/types/platform";
+import { GitHubConnectionSection } from "./GitHubConnectionSection";
 import styles from "./PlatformConnectionsTab.module.scss";
 
 // ============================================================================
@@ -317,6 +320,19 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 	const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
 	const [blueskyModalOpen, setBlueskyModalOpen] = useState(false);
 
+	const search = useSearch({ from: "/account" });
+	const navigate = useNavigate();
+	const githubCallbackStatus =
+		(search as { github?: "connected" | "error" }).github ?? null;
+
+	const clearGitHubCallback = useCallback(() => {
+		navigate({
+			to: "/account",
+			search: { tab: "platforms" },
+			replace: true,
+		});
+	}, [navigate]);
+
 	const connectionMap = new Map(connections.map((c) => [c.platform, c]));
 	const connectedPlatforms = ENABLED_PLATFORMS.filter((p) =>
 		connectionMap.has(p),
@@ -468,6 +484,13 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 				{connectedPlatforms.length === 0 && availablePlatforms.length === 0 && (
 					<Text color="secondary">No platforms available.</Text>
 				)}
+
+				<Divider />
+
+				<GitHubConnectionSection
+					callbackStatus={githubCallbackStatus}
+					onClearCallbackStatus={clearGitHubCallback}
+				/>
 			</Stack>
 
 			<BlueskyModal

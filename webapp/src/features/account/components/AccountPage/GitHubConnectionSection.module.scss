@@ -1,0 +1,79 @@
+.availableCard {
+	display: flex;
+	align-items: center;
+	gap: var(--space-4);
+}
+
+.availableCardIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+	border-radius: var(--radius-lg);
+	background: var(--color-surface-secondary);
+	color: var(--color-text-secondary);
+}
+
+.availableCardContent {
+	flex: 1;
+	min-width: 0;
+}
+
+.connectedCard {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-rows: auto auto;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.connectedCardIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+	border-radius: var(--radius-md);
+	background: var(--color-surface-secondary);
+	color: var(--color-text-primary);
+}
+
+.connectedCardFooter {
+	grid-column: 1 / -1;
+	display: flex;
+	justify-content: flex-end;
+	padding-top: var(--space-2);
+	border-top: 1px solid var(--color-border);
+}
+
+.repoRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-2) 0;
+}
+
+.repoInfo {
+	min-width: 0;
+	flex: 1;
+}
+
+.commitRow {
+	padding: var(--space-2) 0;
+}
+
+.commitMessage {
+	min-width: 0;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.loading {
+	min-height: var(--space-32);
+}
