@@ -428,7 +428,7 @@ Rules:
 
 	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMessage},
-	}, 512)
+	}, 1024)
 	if err != nil {
 		p.logger.Error(ctx, "failed to classify commit via ai", err)
 		return CommitVerdict{}, ErrClassifyCommit
