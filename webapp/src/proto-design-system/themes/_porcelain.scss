@@ -24,12 +24,13 @@
   --color-base-900: oklch(15% 0.005 250deg);
   --color-base-950: oklch(9% 0.004 250deg);
 
-  // Content colors — softened from pure near-black so the type feels
-  // relaxed rather than pushy. Still clears WCAG AA on the near-white bg.
-  // Hint of blue tracks the primary hue (255°) for a unified feel.
-  --color-base-content: oklch(28% 0.014 255deg);
-  --color-base-content-secondary: oklch(48% 0.012 255deg);
-  --color-base-content-tertiary: oklch(62% 0.01 255deg);
+  // Content colors — relaxed ink, not pushy near-black. Headings sit at
+  // ~33% L so the page feels contemplative even when the main copy
+  // (base-content) is applied without a color override. All three still
+  // clear WCAG AA on the 99% bg. Hue tracks the primary (255°).
+  --color-base-content: oklch(33% 0.015 255deg);
+  --color-base-content-secondary: oklch(52% 0.012 255deg);
+  --color-base-content-tertiary: oklch(65% 0.01 255deg);
 
   // Surface — cards sit slightly brighter than bg so they read as elevated
   --color-surface: oklch(100% 0 0deg);
@@ -84,5 +85,5 @@
   --focus-ring-color: oklch(52% 0.08 255deg / 0.35);
 
   // Muted
-  --color-muted: oklch(62% 0.01 255deg);
+  --color-muted: oklch(65% 0.01 255deg);
 }
