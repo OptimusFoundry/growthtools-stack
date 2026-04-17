@@ -23,6 +23,7 @@ export type ThemeName =
 	| "citrus"
 	| "pixel"
 	| "neon"
+	| "glow"
 	| "blueprint"
 	| "paper"
 	| "porcelain"
@@ -66,6 +67,7 @@ export const themes: Record<ThemeName, Theme> = {
 	citrus: { name: "citrus", label: "Citrus", colorScheme: "light" },
 	pixel: { name: "pixel", label: "Pixel", colorScheme: "light" },
 	neon: { name: "neon", label: "Neon", colorScheme: "light" },
+	glow: { name: "glow", label: "Glow", colorScheme: "light" },
 	blueprint: { name: "blueprint", label: "Blueprint", colorScheme: "light" },
 	paper: { name: "paper", label: "Paper", colorScheme: "light" },
 	porcelain: { name: "porcelain", label: "Porcelain", colorScheme: "light" },
