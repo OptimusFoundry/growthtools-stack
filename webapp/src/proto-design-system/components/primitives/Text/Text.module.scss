@@ -95,8 +95,12 @@
   color: var(--color-primary);
 }
 
+// `color="secondary"` is used throughout the app for subtitles and captions,
+// so it maps to the text-hierarchy token — NOT the brand secondary accent
+// (which is a surface-fill color and can be near-white in light themes,
+// producing invisible text e.g. in forest-light).
 .color-secondary {
-  color: var(--color-secondary);
+  color: var(--color-base-content-secondary);
 }
 
 .color-success {
