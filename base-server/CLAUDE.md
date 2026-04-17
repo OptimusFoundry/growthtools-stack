@@ -813,7 +813,7 @@ func TestStore_CreatePost(t *testing.T) {
 
 **Coverage requirement: every public method on every processor and handler has happy + sad path tests.**
 
-- **Mocks are ubermock-generated only.** Every mocked dependency goes through `go.uber.org/mock/mockgen` into `mocks_test.go` **in the same directory as the interface being mocked**. Manual `type mockXxx struct { ... }` definitions are not allowed at this level — if you see one, delete it and regenerate.
+- **Mocks are gomock-generated only.** Every mocked dependency goes through `go.uber.org/mock/mockgen` into `mocks_test.go` **in the same directory as the interface being mocked**. Manual `type mockXxx struct { ... }` definitions are not allowed at this level — if you see one, delete it and regenerate.
 - Each processor and handler file carries a `go:generate` directive at the top:
   ```go
   //go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor

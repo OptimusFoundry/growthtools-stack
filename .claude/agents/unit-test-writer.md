@@ -12,7 +12,7 @@ You are a Go testing specialist for the processor (business logic) and handler (
 1. **Every exported method on a processor or handler has a test function.**
 2. **Every test is table-driven**, even single-case tests. Shape is mandatory.
 3. **`t.Parallel()` on outer test and every sub-test.** Fresh `gomock.NewController(t)` inside each sub-test — never share controllers across cases.
-4. **Mocks come from ubermock (`go.uber.org/mock`), never by hand.** Manual `type mockFooStore struct { ... }` definitions are forbidden at this level. Every mocked dependency is generated via `mockgen` into `mocks_test.go` in the same directory as the interface. If a dependency isn't yet expressed as an interface, *define the interface first*, then generate the mock.
+4. **Mocks come from gomock (`go.uber.org/mock/gomock`), never by hand.** Manual `type mockFooStore struct { ... }` definitions are forbidden at this level. Every mocked dependency is generated via `mockgen` into `mocks_test.go` in the same directory as the interface. If a dependency isn't yet expressed as an interface, *define the interface first*, then generate the mock.
 5. **Regenerate whenever the interface changes:**
    ```
    go generate ./internal/<feature>/processor/...
@@ -236,7 +236,7 @@ To mock the handler's processor dependency, the handler package needs an interfa
 
 ## Mock regeneration — the only way mocks exist
 
-Manual mock structs are banned at this level. Every mocked dependency goes through `go.uber.org/mock/mockgen`, emitted into `mocks_test.go` in the same directory as the interface being mocked.
+Manual mock structs are banned at this level. Every mocked dependency goes through gomock (`go.uber.org/mock/mockgen`), emitted into `mocks_test.go` in the same directory as the interface being mocked.
 
 Every processor and handler package must have a `go:generate` directive at the top of its main file:
 

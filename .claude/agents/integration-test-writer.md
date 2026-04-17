@@ -262,16 +262,134 @@ When the endpoint writes to the DB, assert the DB row directly via `srv.Store` a
 },
 ```
 
-## Third-party services
+## Third-party services — fake upstream servers, not interface mocks
 
-Stripe, Resend, GitHub — these DO get mocked at the integration level because we can't hit them from CI. The standard pattern:
+When an endpoint makes outbound HTTP calls (Stripe, Resend, GitHub API, OAuth providers, etc.), the integration test stands up a **fake HTTP server** that impersonates the third party. This is not an interface-level fake — it's a real `httptest.NewServer` that speaks the third party's wire protocol, and the production client code points at its URL.
 
-1. Define an interface in the client package (`Stripe`, `Resender`, etc.).
-2. Bootstrap accepts either a real client or a fake.
-3. `setupTestServer` injects a fake implementation that returns canned responses.
-4. Tests assert the fake was called with the expected args for the mutation cases.
+Why: interface fakes skip serialization, HTTP status handling, header parsing, and retry/timeout logic. A fake upstream exercises the full client code path, matching what happens in production.
 
-This is the only place mocks appear in integration tests.
+**Pattern:**
+
+```go
+// tests/fake_github_test.go
+//go:build integration
+
+package tests
+
+import (
+    "encoding/json"
+    "net/http"
+    "net/http/httptest"
+    "sync"
+    "testing"
+)
+
+type fakeGitHub struct {
+    Server *httptest.Server
+
+    mu       sync.Mutex
+    handlers map[string]http.HandlerFunc // "METHOD /path" → response handler
+    calls    []fakeCall
+}
+
+type fakeCall struct {
+    Method string
+    Path   string
+    Body   []byte
+}
+
+func newFakeGitHub(t *testing.T) *fakeGitHub {
+    f := &fakeGitHub{handlers: map[string]http.HandlerFunc{}}
+    f.Server = httptest.NewServer(http.HandlerFunc(f.route))
+    t.Cleanup(f.Server.Close)
+    return f
+}
+
+func (f *fakeGitHub) route(w http.ResponseWriter, r *http.Request) {
+    f.mu.Lock()
+    h, ok := f.handlers[r.Method+" "+r.URL.Path]
+    f.calls = append(f.calls, fakeCall{Method: r.Method, Path: r.URL.Path})
+    f.mu.Unlock()
+    if !ok {
+        http.NotFound(w, r)
+        return
+    }
+    h(w, r)
+}
+
+// Register canned responses per test case.
+func (f *fakeGitHub) On(method, path string, h http.HandlerFunc) {
+    f.mu.Lock()
+    defer f.mu.Unlock()
+    f.handlers[method+" "+path] = h
+}
+
+// Helpers to make canned responses terse.
+func jsonResp(status int, body any) http.HandlerFunc {
+    return func(w http.ResponseWriter, _ *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        _ = json.NewEncoder(w).Encode(body)
+    }
+}
+```
+
+**Wiring:** the production client is constructed with a `baseURL` (or equivalent). Config / bootstrap must allow tests to override it. If today the client hardcodes `https://api.github.com`, refactor first: add a `BaseURL` field to the client config, default it to the real URL, override to `fakeGitHub.Server.URL` in tests.
+
+Then the test does:
+
+```go
+fakeGH := newFakeGitHub(t)
+srv := setupTestServer(t, withGitHubBaseURL(fakeGH.Server.URL))
+```
+
+**Covering scenarios:** each test case sets up the exact upstream response it needs:
+
+```go
+tests := []struct {
+    name       string
+    setupFake  func(f *fakeGitHub)
+    wantStatus int
+}{
+    {
+        name: "200 when GitHub returns user + repo",
+        setupFake: func(f *fakeGitHub) {
+            f.On("GET", "/user", jsonResp(200, map[string]any{"id": 42, "login": "octo"}))
+            f.On("GET", "/user/repos", jsonResp(200, []any{
+                map[string]any{"id": 1, "name": "r", "owner": map[string]any{"login": "octo"}},
+            }))
+        },
+        wantStatus: http.StatusOK,
+    },
+    {
+        name: "502 when GitHub returns 500",
+        setupFake: func(f *fakeGitHub) {
+            f.On("GET", "/user", jsonResp(500, map[string]any{"message": "boom"}))
+        },
+        wantStatus: http.StatusBadGateway,
+    },
+    {
+        name: "401 when GitHub returns 401 (bad token)",
+        setupFake: func(f *fakeGitHub) {
+            f.On("GET", "/user", jsonResp(401, map[string]any{"message": "bad credentials"}))
+        },
+        wantStatus: http.StatusUnauthorized,
+    },
+    {
+        name: "504 when GitHub is slow",
+        setupFake: func(f *fakeGitHub) {
+            f.On("GET", "/user", func(w http.ResponseWriter, r *http.Request) {
+                <-r.Context().Done()
+            })
+        },
+        wantStatus: http.StatusGatewayTimeout,
+    },
+}
+```
+
+**Required scenarios per third party:** happy path, 4xx from upstream, 5xx from upstream, timeout/network error, malformed response body. If the production code retries, verify the retry count by inspecting `fakeGH.calls`.
+
+**Never use interface mocks for third-party clients at this level.** Interface mocks hide the real failure modes (malformed JSON, chunked transfer quirks, unexpected status codes).
 
 ## Common pitfalls
 
