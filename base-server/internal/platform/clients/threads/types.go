@@ -9,8 +9,9 @@ var ErrAPIError = errors.New("threads api error")
 type CreateThreadRequest struct {
 	UserID    string
 	Text      string
-	MediaType string // "TEXT" or "IMAGE"
+	MediaType string // "TEXT", "IMAGE", or "VIDEO"
 	ImageURL  string // only when MediaType is "IMAGE"
+	VideoURL  string // only when MediaType is "VIDEO"
 	ReplyToID string // if set, this post is a reply to the given thread ID
 }
 

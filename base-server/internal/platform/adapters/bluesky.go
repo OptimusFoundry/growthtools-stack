@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"base-server/internal/platform/clients/bluesky"
 	"base-server/internal/infra/observability"
@@ -35,7 +36,12 @@ func (a *BlueskyAdapter) Publish(ctx context.Context, content string, mediaURLs 
 		return PlatformPostResult{}, fmt.Errorf("bluesky adapter: auth failed: %w", err)
 	}
 
-	// Upload blobs for media
+	// Upload blobs for media. Bluesky's post embed is a oneof: we can
+	// attach either app.bsky.embed.images (up to 4) or
+	// app.bsky.embed.video (exactly 1) — not both. Prefer video when
+	// present (the capture pipeline typically hands us one video OR
+	// images, never mixed, so this is a safe priority).
+	var videoBlob map[string]any
 	var images []map[string]any
 	for _, mediaURL := range mediaURLs {
 		mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
@@ -47,6 +53,12 @@ func (a *BlueskyAdapter) Publish(ctx context.Context, content string, mediaURLs 
 		blob, err := a.client.UploadBlob(ctx, session.AccessJwt, mediaBytes, contentType)
 		if err != nil {
 			a.logger.Error(ctx, "failed to upload blob to bluesky", err)
+			continue
+		}
+		if strings.HasPrefix(contentType, "video/") {
+			if videoBlob == nil {
+				videoBlob = blob
+			}
 			continue
 		}
 		images = append(images, map[string]any{
@@ -61,7 +73,13 @@ func (a *BlueskyAdapter) Publish(ctx context.Context, content string, mediaURLs 
 		"text":      content,
 		"createdAt": fmt.Sprintf("%s", nowUTC()),
 	}
-	if len(images) > 0 {
+	if videoBlob != nil {
+		record["embed"] = map[string]any{
+			"$type": "app.bsky.embed.video",
+			"video": videoBlob,
+			"alt":   "",
+		}
+	} else if len(images) > 0 {
 		record["embed"] = map[string]any{
 			"$type":  "app.bsky.embed.images",
 			"images": images,
@@ -101,7 +119,10 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 	var parentURI, parentCID string
 
 	for i, seg := range segments {
-		// Upload media for this segment if it references one
+		// Upload media for this segment if it references one. A segment
+		// has at most one media attachment (one video OR one image) so
+		// we pick the right embed lexicon based on content-type.
+		var videoBlob map[string]any
 		var images []map[string]any
 		if mediaURL := mediaURLForSegment(seg, mediaURLs); mediaURL != "" {
 			mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
@@ -111,6 +132,8 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 				blob, err := a.client.UploadBlob(ctx, session.AccessJwt, mediaBytes, contentType)
 				if err != nil {
 					a.logger.Error(ctx, "failed to upload blob to bluesky for thread segment", err)
+				} else if strings.HasPrefix(contentType, "video/") {
+					videoBlob = blob
 				} else {
 					images = append(images, map[string]any{
 						"alt":   "",
@@ -125,7 +148,13 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 			"text":      seg.Content,
 			"createdAt": fmt.Sprintf("%s", nowUTC()),
 		}
-		if len(images) > 0 {
+		if videoBlob != nil {
+			record["embed"] = map[string]any{
+				"$type": "app.bsky.embed.video",
+				"video": videoBlob,
+				"alt":   "",
+			}
+		} else if len(images) > 0 {
 			record["embed"] = map[string]any{
 				"$type":  "app.bsky.embed.images",
 				"images": images,

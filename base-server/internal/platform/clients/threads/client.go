@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"base-server/internal/infra/observability"
 )
@@ -37,6 +38,9 @@ func (c *Client) CreateThread(ctx context.Context, accessToken string, req Creat
 	if req.MediaType == "IMAGE" && req.ImageURL != "" {
 		params.Set("image_url", req.ImageURL)
 	}
+	if req.MediaType == "VIDEO" && req.VideoURL != "" {
+		params.Set("video_url", req.VideoURL)
+	}
 	if req.ReplyToID != "" {
 		params.Set("reply_to_id", req.ReplyToID)
 	}
@@ -60,6 +64,69 @@ func (c *Client) CreateThread(ctx context.Context, accessToken string, req Creat
 	}
 
 	return CreateThreadResponse{ID: result.ID}, nil
+}
+
+// GetContainerStatus reads the container's current processing status.
+// Threads returns one of: IN_PROGRESS, FINISHED, ERROR, PUBLISHED, EXPIRED.
+// Videos need to reach FINISHED before they can be published; images are
+// usually finished almost immediately.
+func (c *Client) GetContainerStatus(ctx context.Context, containerID, accessToken string) (string, error) {
+	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s?fields=status&access_token=%s",
+		containerID, url.QueryEscape(accessToken))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("threadsapi: failed to create status request: %w", err)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("threadsapi: status request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("threadsapi: status API returned %d: %s", resp.StatusCode, string(body))
+	}
+	var result struct {
+		Status string `json:"status"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", fmt.Errorf("threadsapi: failed to parse status response: %w", err)
+	}
+	return result.Status, nil
+}
+
+// WaitForContainerReady polls GetContainerStatus until the container is
+// FINISHED (ready to publish) or a terminal failure state, respecting
+// the provided timeout. Used for VIDEO containers, whose server-side
+// transcode can take 5-15 seconds and which the publish endpoint
+// rejects if called before processing completes.
+func (c *Client) WaitForContainerReady(ctx context.Context, containerID, accessToken string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	// Poll at 2s — Meta's docs show typical video processing in the
+	// 5-15s range for short clips, and this cadence keeps us at most
+	// two seconds behind FINISHED without hammering the API.
+	const interval = 2 * time.Second
+	for {
+		status, err := c.GetContainerStatus(ctx, containerID, accessToken)
+		if err != nil {
+			return err
+		}
+		switch status {
+		case "FINISHED":
+			return nil
+		case "ERROR", "EXPIRED":
+			return fmt.Errorf("threadsapi: container %s entered terminal state %s", containerID, status)
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("threadsapi: container %s still in state %s after %s", containerID, status, timeout)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(interval):
+		}
+	}
 }
 
 // PublishThread publishes a previously created thread container (step 2).

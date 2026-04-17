@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
+	"strings"
 	"time"
 
 	"base-server/internal/platform/clients/threads"
@@ -12,6 +15,30 @@ import (
 )
 
 const threadsCharacterLimit = 500
+
+// threadsVideoReadyTimeout bounds how long we wait for Meta to finish
+// transcoding a video container before publishing. Short capture clips
+// (10-30s) usually finish in under 15s; 60s gives headroom without
+// tying up the publish worker on a stuck container.
+const threadsVideoReadyTimeout = 60 * time.Second
+
+// isVideoMediaURL decides whether a media URL points at a video we
+// should hand to Meta as video_url instead of image_url. We look at
+// the URL path's extension — the capture-worker produces .mp4 and we
+// control the S3 key, so a conservative list of video extensions is
+// safe. Query params (presigner signatures) don't affect the path
+// parse.
+func isVideoMediaURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(path.Ext(u.Path)) {
+	case ".mp4", ".mov", ".webm", ".m4v":
+		return true
+	}
+	return false
+}
 
 // ThreadsAdapter implements PlatformAdapter for Threads (Meta).
 type ThreadsAdapter struct {
@@ -32,26 +59,39 @@ func NewThreadsAdapter(client *threads.Client, logger *observability.Logger) *Th
 func (a *ThreadsAdapter) Publish(ctx context.Context, content string, mediaURLs []string, conn store.PlatformConnection) (PlatformPostResult, error) {
 	userID := conn.PlatformUserID
 
-	mediaType := "TEXT"
-	imageURL := ""
+	req := threads.CreateThreadRequest{
+		UserID:    userID,
+		Text:      content,
+		MediaType: "TEXT",
+	}
+	isVideo := false
 	if len(mediaURLs) > 0 {
-		mediaType = "IMAGE"
-		imageURL = mediaURLs[0]
+		if isVideoMediaURL(mediaURLs[0]) {
+			req.MediaType = "VIDEO"
+			req.VideoURL = mediaURLs[0]
+			isVideo = true
+		} else {
+			req.MediaType = "IMAGE"
+			req.ImageURL = mediaURLs[0]
+		}
 	}
 
 	// Step 1: Create thread container
-	container, err := a.client.CreateThread(ctx, conn.AccessToken, threads.CreateThreadRequest{
-		UserID:    userID,
-		Text:      content,
-		MediaType: mediaType,
-		ImageURL:  imageURL,
-	})
+	container, err := a.client.CreateThread(ctx, conn.AccessToken, req)
 	if err != nil {
 		return PlatformPostResult{}, fmt.Errorf("threads adapter: %w", err)
 	}
 
-	// Brief wait for container processing
-	time.Sleep(2 * time.Second)
+	// Wait for container processing. Images are usually ready within
+	// the historical 2s; videos need a transcode pass — poll
+	// GET /{container_id}?fields=status until FINISHED.
+	if isVideo {
+		if err := a.client.WaitForContainerReady(ctx, container.ID, conn.AccessToken, threadsVideoReadyTimeout); err != nil {
+			return PlatformPostResult{}, fmt.Errorf("threads adapter: %w", err)
+		}
+	} else {
+		time.Sleep(2 * time.Second)
+	}
 
 	// Step 2: Publish the thread
 	published, err := a.client.PublishThread(ctx, userID, conn.AccessToken, container.ID)
@@ -80,27 +120,38 @@ func (a *ThreadsAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 	var previousPostID string
 
 	for i, seg := range segments {
-		mediaType := "TEXT"
-		imageURL := ""
+		req := threads.CreateThreadRequest{
+			UserID:    userID,
+			Text:      seg.Content,
+			MediaType: "TEXT",
+			ReplyToID: previousPostID,
+		}
+		isVideo := false
 		if mu := mediaURLForSegment(seg, mediaURLs); mu != "" {
-			mediaType = "IMAGE"
-			imageURL = mu
+			if isVideoMediaURL(mu) {
+				req.MediaType = "VIDEO"
+				req.VideoURL = mu
+				isVideo = true
+			} else {
+				req.MediaType = "IMAGE"
+				req.ImageURL = mu
+			}
 		}
 
 		// Step 1: Create container (with reply_to_id for segments after the first)
-		container, err := a.client.CreateThread(ctx, conn.AccessToken, threads.CreateThreadRequest{
-			UserID:    userID,
-			Text:      seg.Content,
-			MediaType: mediaType,
-			ImageURL:  imageURL,
-			ReplyToID: previousPostID,
-		})
+		container, err := a.client.CreateThread(ctx, conn.AccessToken, req)
 		if err != nil {
 			return firstResult, fmt.Errorf("threads adapter: failed to create thread segment %d: %w", i+1, err)
 		}
 
-		// Brief wait for container processing
-		time.Sleep(2 * time.Second)
+		// Wait for container. Videos need a transcode; images are ~instant.
+		if isVideo {
+			if err := a.client.WaitForContainerReady(ctx, container.ID, conn.AccessToken, threadsVideoReadyTimeout); err != nil {
+				return firstResult, fmt.Errorf("threads adapter: segment %d video container not ready: %w", i+1, err)
+			}
+		} else {
+			time.Sleep(2 * time.Second)
+		}
 
 		// Step 2: Publish the container
 		published, err := a.client.PublishThread(ctx, userID, conn.AccessToken, container.ID)
