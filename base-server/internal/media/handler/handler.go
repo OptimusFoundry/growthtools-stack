@@ -105,6 +105,9 @@ func (h *Handler) HandleList(c *gin.Context) {
 		h.handleError(c, err)
 		return
 	}
+	if mediaList == nil {
+		mediaList = []store.Media{}
+	}
 
 	c.JSON(http.StatusOK, mediaList)
 }

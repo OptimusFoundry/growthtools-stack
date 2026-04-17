@@ -231,6 +231,9 @@ func (h *Handler) HandleListConnections(c *gin.Context) {
 		h.handleError(c, err)
 		return
 	}
+	if connections == nil {
+		connections = []store.PlatformConnection{}
+	}
 
 	c.JSON(http.StatusOK, connections)
 }

@@ -886,30 +886,34 @@ Handler tests follow the same table pattern but fire an HTTP request through the
 
 ### Level 3: Integration Tests
 
-**These are real API tests.** Real HTTP client → real Gin router → real Postgres. No store mocks, no recorder — the only mocks allowed are for third-party services we can't hit from CI (Stripe, Resend, GitHub API).
+**These are real API tests against a server that is already running.** Real HTTP client → real server (in docker or `go run main.go`) → real Postgres. The test process does NOT boot its own server — no `httptest.NewServer`, no `bootstrap.Initialize`, no in-process Gin router. If you need an in-process router, you're writing a handler unit test, not an integration test.
 
 - Tests live in `base-server/tests/*_test.go` with `//go:build integration` so they only run when explicitly requested.
-- Boot the router once per test binary via `setupTestServer(t)` — returns `*httptest.Server` with the real dependency graph wired up (real store, real processors, real handlers).
-- Seed the DB **directly through the store** in setup helpers, not via HTTP. Example: `seedPost(t, store, accountID, opts)` — faster, clearer intent, doesn't couple the test to the Create endpoint.
-- **Cover every status code the endpoint can return.** If the endpoint returns 200/400/401/403/404/409/500 under different conditions, each one has a test row.
+- The target server runs out-of-band. Locally: `make dev-up` plus `go run main.go` in another shell. In CI/docker: `make docker-up` brings up the `server` compose service.
+- Tests read `TEST_API_HOST` / `TEST_API_PORT` (defaults `localhost:8080`) to form the base URL and fire real HTTP requests via `http.DefaultClient`.
+- Seed the DB **directly through the store package** (same DB container — `TEST_DB_*` env vars). The store handle is for fixture setup and post-mutation assertions; it is not for driving behavior.
+- `JWT_SECRET` for minting test tokens MUST match what the running server was started with. Both read it from env; tests default to the value in `base-server/env.test`.
+- **Cover every status code the endpoint can return.** 200/201/204 happy paths plus 400/401/403/404/409/422 sad paths as applicable.
+- **Do not integration-test paths that call third-party services** (Stripe, Resend, GitHub API, OAuth providers, social platforms). Those are covered by processor/handler unit tests with gomock. Integration tests stay fast and deterministic by only exercising DB-backed behavior.
 - Assert both the HTTP response and, when the endpoint mutates state, the DB row directly via the store.
 
 ```go
 func TestPostsAPI_GetPost(t *testing.T) {
     t.Parallel()
-    srv := setupTestServer(t)
+    c := testClient(t) // reads TEST_API_HOST/PORT + TEST_DB_*
 
     tests := []struct {
         name       string
-        setup      func(t *testing.T) (token string, postID string)
+        setup      func(t *testing.T) (token, postID string)
         wantStatus int
         wantBody   func(t *testing.T, body []byte)
     }{
         {
             name: "200 returns the post",
             setup: func(t *testing.T) (string, string) {
-                user := seedUser(t, srv.Store)
-                post := seedPost(t, srv.Store, user.AccountID, seedPostOpts{Content: "hello"})
+                user := seedUser(t, c.Store)
+                acct := seedAccount(t, c.Store, user.ID)
+                post := seedPost(t, c.Store, acct.ID, seedPostOpts{Content: "hello"})
                 return newJWT(t, user.ID), post.ID.String()
             },
             wantStatus: http.StatusOK,
@@ -929,35 +933,17 @@ func TestPostsAPI_GetPost(t *testing.T) {
         {
             name: "404 for post that does not exist",
             setup: func(t *testing.T) (string, string) {
-                user := seedUser(t, srv.Store)
+                user := seedUser(t, c.Store)
                 return newJWT(t, user.ID), uuid.New().String()
             },
             wantStatus: http.StatusNotFound,
-        },
-        {
-            name: "404 for post owned by another account",
-            setup: func(t *testing.T) (string, string) {
-                me := seedUser(t, srv.Store)
-                other := seedUser(t, srv.Store)
-                theirPost := seedPost(t, srv.Store, other.AccountID, seedPostOpts{})
-                return newJWT(t, me.ID), theirPost.ID.String()
-            },
-            wantStatus: http.StatusNotFound,
-        },
-        {
-            name: "400 for malformed UUID",
-            setup: func(t *testing.T) (string, string) {
-                user := seedUser(t, srv.Store)
-                return newJWT(t, user.ID), "not-a-uuid"
-            },
-            wantStatus: http.StatusBadRequest,
         },
     }
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             t.Parallel()
             token, postID := tt.setup(t)
-            resp, body := srv.Request(t, http.MethodGet, "/api/protected/posts/"+postID, nil, token)
+            resp, body := c.Request(t, http.MethodGet, "/api/protected/posts/"+postID, nil, token)
             assert.Equal(t, tt.wantStatus, resp.StatusCode)
             if tt.wantBody != nil {
                 tt.wantBody(t, body)

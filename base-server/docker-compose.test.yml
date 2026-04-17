@@ -98,6 +98,8 @@ services:
       TEST_API_HOST: server
       TEST_API_PORT: 8080
       KAFKA_BROKERS: kafka:9092
+      # Must match env.test so newJWT signs tokens the server will accept
+      JWT_SECRET: test-jwt-secret-for-testing-only
       # For mock webhook server - use container hostname so server can reach it
       TEST_WEBHOOK_HOST: test-runner
     volumes:
