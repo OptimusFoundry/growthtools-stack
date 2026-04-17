@@ -67,6 +67,30 @@ type GitHubCommit struct {
 	RepoName  *string `db:"repo_name" json:"repo_name,omitempty"`
 }
 
+// GitHubCommitSummary is the lightweight row returned by list endpoints. It
+// drops the heavy payload + full capture_output blob and exposes just the
+// two fields the UI needs to render a status badge — a capture artifact count
+// and the capture error string if the worker failed.
+type GitHubCommitSummary struct {
+	ID                   uuid.UUID  `db:"id" json:"id"`
+	RepoID               uuid.UUID  `db:"repo_id" json:"repo_id"`
+	SHA                  string     `db:"sha" json:"sha"`
+	AuthorName           *string    `db:"author_name" json:"author_name,omitempty"`
+	AuthorEmail          *string    `db:"author_email" json:"author_email,omitempty"`
+	Message              string     `db:"message" json:"message"`
+	Branch               *string    `db:"branch" json:"branch,omitempty"`
+	CommitURL            *string    `db:"commit_url" json:"commit_url,omitempty"`
+	PushedAt             time.Time  `db:"pushed_at" json:"pushed_at"`
+	PostID               *uuid.UUID `db:"post_id" json:"post_id,omitempty"`
+	CaptureRequestedAt   *time.Time `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
+	ProcessedAt          *time.Time `db:"processed_at" json:"processed_at,omitempty"`
+	CreatedAt            time.Time  `db:"created_at" json:"created_at"`
+	RepoOwner            *string    `db:"repo_owner" json:"repo_owner,omitempty"`
+	RepoName             *string    `db:"repo_name" json:"repo_name,omitempty"`
+	CaptureArtifactCount int        `db:"capture_artifact_count" json:"capture_artifact_count"`
+	CaptureError         *string    `db:"capture_error" json:"capture_error,omitempty"`
+}
+
 // ============================================================================
 // GitHub Connections
 // ============================================================================
@@ -482,8 +506,10 @@ func (s *Store) UpdateGitHubCommitPostID(ctx context.Context, commitID, postID u
 }
 
 const sqlListGitHubCommitsByConnection = `
-SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.capture_requested_at, gc.processed_at, gc.created_at,
-       gr.owner AS repo_owner, gr.name AS repo_name
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.post_id, gc.capture_requested_at, gc.processed_at, gc.created_at,
+       gr.owner AS repo_owner, gr.name AS repo_name,
+       COALESCE(jsonb_array_length(gc.capture_output->'uploaded'), 0) AS capture_artifact_count,
+       gc.capture_output->>'error' AS capture_error
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id
 WHERE gr.connection_id = $1 AND gr.deleted_at IS NULL
@@ -491,16 +517,43 @@ ORDER BY gc.pushed_at DESC
 LIMIT $2 OFFSET $3
 `
 
-func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]GitHubCommit, error) {
+func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]GitHubCommitSummary, error) {
 	if limit <= 0 {
 		limit = 50
 	}
-	commits := make([]GitHubCommit, 0)
+	commits := make([]GitHubCommitSummary, 0)
 	err := s.db.SelectContext(ctx, &commits, sqlListGitHubCommitsByConnection, connectionID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list github commits: %w", err)
 	}
 	return commits, nil
+}
+
+// GetGitHubCommitByIDForUser looks up a single commit by id and verifies that
+// it belongs to a repo under the given user's connection. Used by the
+// authenticated details endpoint.
+const sqlGetGitHubCommitByIDForUser = `
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.capture_requested_at, gc.processed_at, gc.created_at,
+       gr.owner AS repo_owner, gr.name AS repo_name
+FROM github_commits gc
+JOIN github_repos gr ON gr.id = gc.repo_id
+JOIN github_connections conn ON conn.id = gr.connection_id
+WHERE gc.id = $1
+  AND conn.user_id = $2
+  AND gr.deleted_at IS NULL
+  AND conn.deleted_at IS NULL
+`
+
+func (s *Store) GetGitHubCommitByIDForUser(ctx context.Context, userID, commitID uuid.UUID) (GitHubCommit, error) {
+	var commit GitHubCommit
+	err := s.db.GetContext(ctx, &commit, sqlGetGitHubCommitByIDForUser, commitID, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubCommit{}, ErrNotFound
+		}
+		return GitHubCommit{}, fmt.Errorf("failed to get github commit by id: %w", err)
+	}
+	return commit, nil
 }
 
 const sqlCountGitHubCommitsByConnection = `

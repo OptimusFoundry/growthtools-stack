@@ -4,7 +4,6 @@ import {
 	CheckCircle2,
 	Clock,
 	ExternalLink,
-	FileImage,
 	GitCommit,
 	Github,
 	Image as ImageIcon,
@@ -13,8 +12,7 @@ import {
 import { motion } from "motion/react";
 import { memo } from "react";
 import {
-	type GitHubCaptureOutput,
-	type GitHubCommit as GitHubCommitType,
+	type GitHubCommitSummary,
 	useGitHubCommits,
 } from "@/hooks/useGitHubCommits";
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
@@ -52,31 +50,27 @@ type CommitState =
 	| { kind: "waiting" }
 	| { kind: "processing" }
 	| { kind: "failed"; error: string }
-	| { kind: "captured"; output: GitHubCaptureOutput }
+	| { kind: "captured"; artifactCount: number }
 	| { kind: "post"; postID: string };
 
-function commitState(commit: GitHubCommitType): CommitState {
+function commitState(commit: GitHubCommitSummary): CommitState {
 	if (commit.post_id) return { kind: "post", postID: commit.post_id };
 	// Capture only fires after workflow_run:completed:success — until then
 	// capture_requested_at stays null and we show "Waiting for CI".
 	if (!commit.capture_requested_at) return { kind: "waiting" };
 	if (!commit.processed_at) return { kind: "processing" };
-	const output = commit.capture_output;
-	if (output?.error) return { kind: "failed", error: output.error };
-	if (output?.uploaded && output.uploaded.length > 0) {
-		return { kind: "captured", output };
+	if (commit.capture_error)
+		return { kind: "failed", error: commit.capture_error };
+	if (commit.capture_artifact_count > 0) {
+		return { kind: "captured", artifactCount: commit.capture_artifact_count };
 	}
 	return { kind: "processing" };
-}
-
-function isImageKey(key: string): boolean {
-	return /\.(png|jpe?g|gif|webp|svg)$/i.test(key);
 }
 
 // ---------- Row ----------
 
 interface CommitRowProps {
-	commit: GitHubCommitType;
+	commit: GitHubCommitSummary;
 	index: number;
 }
 
@@ -87,10 +81,6 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 		commit.repo_owner && commit.repo_name
 			? `${commit.repo_owner}/${commit.repo_name}`
 			: "";
-	const uploaded =
-		state.kind === "captured" ? (state.output.uploaded ?? []) : [];
-	const imageUploads = uploaded.filter((u) => u.url && isImageKey(u.key));
-	const otherUploads = uploaded.filter((u) => !imageUploads.includes(u));
 
 	const hasDetails = state.kind === "captured" || state.kind === "failed";
 
@@ -140,25 +130,11 @@ const CommitRow = memo(function CommitRow({ commit, index }: CommitRowProps) {
 					)}
 				</div>
 
-				{state.kind === "captured" && imageUploads.length > 0 && (
-					<div className={styles.mediaGrid}>
-						{imageUploads.slice(0, 6).map((item) => (
-							<div key={item.key} className={styles.mediaThumb}>
-								<img src={item.url ?? ""} alt={item.key} loading="lazy" />
-							</div>
-						))}
-					</div>
-				)}
-
-				{state.kind === "captured" && otherUploads.length > 0 && (
-					<div className={styles.mediaList}>
-						{otherUploads.map((item) => (
-							<span key={item.key} className={styles.mediaFile}>
-								<FileImage size={14} />
-								<span>{item.key.split("/").pop()}</span>
-							</span>
-						))}
-					</div>
+				{state.kind === "captured" && (
+					<Text size="xs" color="muted">
+						{state.artifactCount} artifact
+						{state.artifactCount === 1 ? "" : "s"} — click to view
+					</Text>
 				)}
 
 				{state.kind === "failed" && (

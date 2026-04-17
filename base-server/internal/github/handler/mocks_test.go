@@ -101,6 +101,21 @@ func (mr *MockGitHubProcessorMockRecorder) DisconnectRepo(ctx, userID, owner, na
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisconnectRepo", reflect.TypeOf((*MockGitHubProcessor)(nil).DisconnectRepo), ctx, userID, owner, name)
 }
 
+// GetCommit mocks base method.
+func (m *MockGitHubProcessor) GetCommit(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCommit", ctx, userID, commitID)
+	ret0, _ := ret[0].(store.GitHubCommit)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCommit indicates an expected call of GetCommit.
+func (mr *MockGitHubProcessorMockRecorder) GetCommit(ctx, userID, commitID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommit", reflect.TypeOf((*MockGitHubProcessor)(nil).GetCommit), ctx, userID, commitID)
+}
+
 // GetConnection mocks base method.
 func (m *MockGitHubProcessor) GetConnection(ctx context.Context, userID uuid.UUID) (store.GitHubConnection, error) {
 	m.ctrl.T.Helper()
@@ -161,10 +176,10 @@ func (mr *MockGitHubProcessorMockRecorder) ListAvailableRepos(ctx, userID, page 
 }
 
 // ListRecentCommits mocks base method.
-func (m *MockGitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommit, int, error) {
+func (m *MockGitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRecentCommits", ctx, userID, limit, offset)
-	ret0, _ := ret[0].([]store.GitHubCommit)
+	ret0, _ := ret[0].([]store.GitHubCommitSummary)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2

@@ -38,6 +38,7 @@ func setupGitHubRouter(h Handler, userID uuid.UUID) *gin.Engine {
 	r.POST("/repos/:owner/:name/connect", h.HandleConnectRepo)
 	r.DELETE("/repos/:owner/:name", h.HandleDisconnectRepo)
 	r.GET("/commits", h.HandleListCommits)
+	r.GET("/commits/:id", h.HandleGetCommit)
 	return r
 }
 
@@ -548,7 +549,7 @@ func TestHandler_HandleListCommits(t *testing.T) {
 			path: "/commits",
 			mocks: func(m *MockGitHubProcessor) {
 				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
-					Return([]store.GitHubCommit{}, 0, nil)
+					Return([]store.GitHubCommitSummary{}, 0, nil)
 			},
 			wantStatus: http.StatusOK,
 			wantBody: func(t *testing.T, body []byte) {
@@ -566,7 +567,7 @@ func TestHandler_HandleListCommits(t *testing.T) {
 			path: "/commits?limit=25&offset=50",
 			mocks: func(m *MockGitHubProcessor) {
 				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 25, 50).
-					Return([]store.GitHubCommit{{SHA: "abc"}}, 73, nil)
+					Return([]store.GitHubCommitSummary{{SHA: "abc"}}, 73, nil)
 			},
 			wantStatus: http.StatusOK,
 			wantBody: func(t *testing.T, body []byte) {
@@ -584,7 +585,7 @@ func TestHandler_HandleListCommits(t *testing.T) {
 			path: "/commits?limit=abc&offset=-5",
 			mocks: func(m *MockGitHubProcessor) {
 				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
-					Return([]store.GitHubCommit{}, 0, nil)
+					Return([]store.GitHubCommitSummary{}, 0, nil)
 			},
 			wantStatus: http.StatusOK,
 		},
@@ -594,7 +595,7 @@ func TestHandler_HandleListCommits(t *testing.T) {
 			mocks: func(m *MockGitHubProcessor) {
 				// 500 is out of range so handler falls back to default 50.
 				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
-					Return([]store.GitHubCommit{}, 0, nil)
+					Return([]store.GitHubCommitSummary{}, 0, nil)
 			},
 			wantStatus: http.StatusOK,
 		},
@@ -613,6 +614,82 @@ func TestHandler_HandleListCommits(t *testing.T) {
 			mocks: func(m *MockGitHubProcessor) {
 				m.EXPECT().ListRecentCommits(gomock.Any(), userID, 50, 0).
 					Return(nil, 0, processor.ErrFailedDisconnect)
+			},
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := NewMockGitHubProcessor(ctrl)
+			tt.mocks(m)
+
+			h := New(m, "http://localhost:3000", logger)
+			router := setupGitHubRouter(h, userID)
+
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.wantStatus, w.Code)
+			if tt.wantBody != nil {
+				tt.wantBody(t, w.Body.Bytes())
+			}
+		})
+	}
+}
+
+func TestHandler_HandleGetCommit(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	userID := uuid.New()
+	commitID := uuid.New()
+
+	tests := []struct {
+		name       string
+		path       string
+		mocks      func(m *MockGitHubProcessor)
+		wantStatus int
+		wantBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name: "200 returns the commit",
+			path: "/commits/" + commitID.String(),
+			mocks: func(m *MockGitHubProcessor) {
+				m.EXPECT().GetCommit(gomock.Any(), userID, commitID).
+					Return(store.GitHubCommit{ID: commitID, SHA: "abc123"}, nil)
+			},
+			wantStatus: http.StatusOK,
+			wantBody: func(t *testing.T, body []byte) {
+				var got store.GitHubCommit
+				require.NoError(t, json.Unmarshal(body, &got))
+				assert.Equal(t, commitID, got.ID)
+				assert.Equal(t, "abc123", got.SHA)
+			},
+		},
+		{
+			name:       "400 when id is not a uuid",
+			path:       "/commits/not-a-uuid",
+			mocks:      func(m *MockGitHubProcessor) {},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "404 when processor returns ErrCommitNotFound",
+			path: "/commits/" + commitID.String(),
+			mocks: func(m *MockGitHubProcessor) {
+				m.EXPECT().GetCommit(gomock.Any(), userID, commitID).
+					Return(store.GitHubCommit{}, processor.ErrCommitNotFound)
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "500 on generic processor error",
+			path: "/commits/" + commitID.String(),
+			mocks: func(m *MockGitHubProcessor) {
+				m.EXPECT().GetCommit(gomock.Any(), userID, commitID).
+					Return(store.GitHubCommit{}, processor.ErrFailedGetCommit)
 			},
 			wantStatus: http.StatusInternalServerError,
 		},

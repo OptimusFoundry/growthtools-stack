@@ -36,15 +36,41 @@ export interface GitHubCommit {
 	repo_name?: string;
 }
 
+/**
+ * Lightweight row returned by the list endpoint. Drops capture_output (heavy
+ * blob) in favour of two derived fields: a count of uploaded artifacts and
+ * the capture error string when the worker failed. Use GitHubCommit (and the
+ * /commits/:id endpoint) when you need the full artifact list.
+ */
+export interface GitHubCommitSummary {
+	id: string;
+	repo_id: string;
+	sha: string;
+	author_name?: string;
+	author_email?: string;
+	message: string;
+	branch?: string;
+	commit_url?: string;
+	pushed_at: string;
+	created_at: string;
+	post_id?: string;
+	capture_requested_at?: string;
+	processed_at?: string;
+	repo_owner?: string;
+	repo_name?: string;
+	capture_artifact_count: number;
+	capture_error?: string;
+}
+
 interface ListCommitsResponse {
-	commits: GitHubCommit[];
+	commits: GitHubCommitSummary[];
 	total: number;
 	limit: number;
 	offset: number;
 }
 
 interface UseGitHubCommitsResult {
-	commits: GitHubCommit[];
+	commits: GitHubCommitSummary[];
 	total: number;
 	loading: boolean;
 	error: string | null;
@@ -63,7 +89,7 @@ export const useGitHubCommits = (
 	enabled: boolean,
 	limit = 10,
 ): UseGitHubCommitsResult => {
-	const [commits, setCommits] = useState<GitHubCommit[]>([]);
+	const [commits, setCommits] = useState<GitHubCommitSummary[]>([]);
 	const [total, setTotal] = useState<number>(0);
 	const [page, setPage] = useState<number>(1);
 	const [loading, setLoading] = useState<boolean>(false);

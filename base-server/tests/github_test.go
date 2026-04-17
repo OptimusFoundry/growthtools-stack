@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"base-server/internal/infra/store"
 
@@ -150,13 +151,15 @@ func TestGitHubAPI_ListCommits(t *testing.T) {
 			wantStatus: http.StatusOK,
 			wantBody: func(t *testing.T, body []byte) {
 				var got struct {
-					Commits []store.GitHubCommit `json:"commits"`
-					HasMore bool                 `json:"has_more"`
+					Commits []store.GitHubCommitSummary `json:"commits"`
+					Total   int                         `json:"total"`
+					Limit   int                         `json:"limit"`
+					Offset  int                         `json:"offset"`
 				}
 				require.NoError(t, json.Unmarshal(body, &got))
 				assert.NotNil(t, got.Commits)
 				assert.Empty(t, got.Commits)
-				assert.False(t, got.HasMore)
+				assert.Equal(t, 0, got.Total)
 			},
 		},
 		{
@@ -184,6 +187,71 @@ func TestGitHubAPI_ListCommits(t *testing.T) {
 			if tt.wantBody != nil {
 				tt.wantBody(t, body)
 			}
+		})
+	}
+}
+
+// TestGitHubAPI_GetCommit tests GET /api/protected/github/commits/:id.
+func TestGitHubAPI_GetCommit(t *testing.T) {
+	t.Parallel()
+	c := testClient(t)
+
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) (token, path string)
+		wantStatus int
+	}{
+		{
+			name: "200 returns the commit when owned by user",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				conn := seedGitHubConnection(t, c.Store, u.UserID)
+				commit := seedGitHubCommit(t, c.Store, conn.ID)
+				return u.Token, "/api/protected/github/commits/" + commit.ID.String()
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "404 when commit belongs to a different user",
+			setup: func(t *testing.T) (string, string) {
+				owner := seedUserWithAccount(t, c.Store)
+				conn := seedGitHubConnection(t, c.Store, owner.UserID)
+				commit := seedGitHubCommit(t, c.Store, conn.ID)
+				stranger := seedUserWithAccount(t, c.Store)
+				return stranger.Token, "/api/protected/github/commits/" + commit.ID.String()
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "404 when commit does not exist",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				return u.Token, "/api/protected/github/commits/" + uuid.New().String()
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "400 when id is not a uuid",
+			setup: func(t *testing.T) (string, string) {
+				return seedUserWithAccount(t, c.Store).Token, "/api/protected/github/commits/not-a-uuid"
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string) {
+				return "", "/api/protected/github/commits/" + uuid.New().String()
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, path := tt.setup(t)
+			resp, _ := c.Request(t, http.MethodGet, path, nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
 		})
 	}
 }
@@ -265,6 +333,22 @@ func TestGitHubAPI_Webhook(t *testing.T) {
 // ============================================================================
 // Helpers for GitHub tests
 // ============================================================================
+
+// seedGitHubCommit creates a repo + commit scoped to the given connection.
+// Returns the commit row so tests can reference its id.
+func seedGitHubCommit(t *testing.T, s *store.Store, connID uuid.UUID) store.GitHubCommit {
+	t.Helper()
+	ctx := context.Background()
+	ghRepoID := int64(2000000000) + int64(uuid.New().ID())
+	defaultBranch := "main"
+	repo, err := s.CreateGitHubRepo(ctx, connID, ghRepoID, "owner", "repo-"+uuid.New().String()[:8], &defaultBranch, nil, "hook-secret")
+	require.NoError(t, err)
+
+	sha := "sha-" + uuid.New().String()
+	commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha, nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+	require.NoError(t, err)
+	return commit
+}
 
 // seedGitHubConnection creates a fake GitHub connection row for userID.
 func seedGitHubConnection(t *testing.T, s *store.Store, userID uuid.UUID) store.GitHubConnection {

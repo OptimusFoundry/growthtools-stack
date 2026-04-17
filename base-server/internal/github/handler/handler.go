@@ -29,7 +29,8 @@ type GitHubProcessor interface {
 	ListAvailableRepos(ctx context.Context, userID uuid.UUID, page int) ([]processor.AvailableRepo, error)
 	ConnectRepo(ctx context.Context, userID uuid.UUID, owner, name string) (store.GitHubRepo, error)
 	DisconnectRepo(ctx context.Context, userID uuid.UUID, owner, name string) error
-	ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommit, int, error)
+	ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, int, error)
+	GetCommit(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error)
 }
 
 type Handler struct {
@@ -97,6 +98,10 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 	case errors.Is(err, processor.ErrRepoAlreadyLinked):
 		apierrors.Conflict(c, "REPO_ALREADY_LINKED", "Repository is already connected")
 	case errors.Is(err, processor.ErrFailedDisconnect):
+		apierrors.InternalError(c, err)
+	case errors.Is(err, processor.ErrCommitNotFound):
+		apierrors.NotFound(c, "GitHub commit not found")
+	case errors.Is(err, processor.ErrFailedGetCommit):
 		apierrors.InternalError(c, err)
 	default:
 		apierrors.InternalError(c, err)
@@ -297,12 +302,14 @@ func (h *Handler) HandleDisconnectRepo(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// ListCommitsResponse is the paginated response for HandleListCommits.
+// ListCommitsResponse is the paginated response for HandleListCommits. List
+// rows drop the heavy capture_output blob; hit GET /commits/:id for the full
+// payload including uploaded artifacts.
 type ListCommitsResponse struct {
-	Commits []store.GitHubCommit `json:"commits"`
-	Total   int                  `json:"total"`
-	Limit   int                  `json:"limit"`
-	Offset  int                  `json:"offset"`
+	Commits []store.GitHubCommitSummary `json:"commits"`
+	Total   int                         `json:"total"`
+	Limit   int                         `json:"limit"`
+	Offset  int                         `json:"offset"`
 }
 
 // HandleListCommits returns a page of commits across all connected repos.
@@ -337,7 +344,7 @@ func (h *Handler) HandleListCommits(c *gin.Context) {
 	}
 
 	if commits == nil {
-		commits = []store.GitHubCommit{}
+		commits = []store.GitHubCommitSummary{}
 	}
 
 	c.JSON(http.StatusOK, ListCommitsResponse{
@@ -346,4 +353,34 @@ func (h *Handler) HandleListCommits(c *gin.Context) {
 		Limit:   limit,
 		Offset:  offset,
 	})
+}
+
+// HandleGetCommit returns a single commit by id, scoped to the current user.
+// GET /api/protected/github/commits/:id
+func (h *Handler) HandleGetCommit(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+
+	commitID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", "Invalid commit id")
+		return
+	}
+
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "user_id", Value: userID.String()},
+		observability.Field{Key: "commit_id", Value: commitID.String()},
+	)
+
+	commit, err := h.processor.GetCommit(ctx, userID, commitID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, commit)
 }

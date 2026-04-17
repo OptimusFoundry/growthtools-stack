@@ -176,6 +176,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.POST("/github/repos/:owner/:name/connect", a.githubHandler.HandleConnectRepo)
 		protectedGroup.DELETE("/github/repos/:owner/:name", a.githubHandler.HandleDisconnectRepo)
 		protectedGroup.GET("/github/commits", a.githubHandler.HandleListCommits)
+		protectedGroup.GET("/github/commits/:id", a.githubHandler.HandleGetCommit)
 
 	}
 

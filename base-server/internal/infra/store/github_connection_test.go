@@ -1163,3 +1163,82 @@ func TestStore_CountGitHubCommitsByConnection(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// GetGitHubCommitByIDForUser
+// ============================================================================
+
+func TestStore_GetGitHubCommitByIDForUser(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) (userID, commitID uuid.UUID)
+		wantErr error
+		assert  func(t *testing.T, commit GitHubCommit)
+	}{
+		{
+			name: "happy path returns commit owned by user",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, "sha-owned-"+uuid.New().String()[:16],
+					nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				return userID, commit.ID
+			},
+			assert: func(t *testing.T, commit GitHubCommit) {
+				assert.NotEqual(t, uuid.Nil, commit.ID)
+				assert.Equal(t, "msg", commit.Message)
+			},
+		},
+		{
+			name: "returns ErrNotFound for commit owned by a different user",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				ownerID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, ownerID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, "sha-other-"+uuid.New().String()[:16],
+					nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				// A different user asks for the same commit id.
+				strangerID := createTestUser(t, s)
+				return strangerID, commit.ID
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			name: "returns ErrNotFound for unknown commit id",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				return createTestUser(t, s), uuid.New()
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			userID, commitID := tt.setup(t)
+			got, err := s.GetGitHubCommitByIDForUser(ctx, userID, commitID)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assert != nil {
+				tt.assert(t, got)
+			}
+		})
+	}
+}
