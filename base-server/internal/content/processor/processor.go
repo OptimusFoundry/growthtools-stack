@@ -428,17 +428,32 @@ Rules:
 
 	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMessage},
-	}, 256)
+	}, 512)
 	if err != nil {
 		p.logger.Error(ctx, "failed to classify commit via ai", err)
 		return CommitVerdict{}, ErrClassifyCommit
+	}
+
+	// The provider occasionally returns a blank body (rate-limited /
+	// truncated / token ran out). Treat that as "no verdict, let the
+	// commit through" without an error — the caller already treats
+	// errors as fail-open, but returning success here keeps the log at
+	// info level instead of firing "commit classifier failed" on what
+	// is really a transient provider blip.
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		p.logger.Info(ctx, "commit classifier returned empty response; defaulting to include")
+		return CommitVerdict{
+			Worthwhile: true,
+			Reason:     "classifier returned empty response; defaulting to include",
+		}, nil
 	}
 
 	var parsed struct {
 		Worthwhile bool   `json:"worthwhile"`
 		Reason     string `json:"reason"`
 	}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &parsed); err != nil {
+	if err := json.Unmarshal([]byte(trimmed), &parsed); err != nil {
 		p.logger.Error(ctx, "failed to parse commit classifier response", err)
 		return CommitVerdict{}, ErrClassifyCommit
 	}

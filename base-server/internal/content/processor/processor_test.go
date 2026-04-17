@@ -848,6 +848,26 @@ func TestContentProcessor_ClassifyCommit(t *testing.T) {
 			aiReply: "not json at all",
 			wantErr: ErrClassifyCommit,
 		},
+		{
+			name:    "empty response defaults to include without erroring",
+			message: "feat: new page",
+			diff:    "diff",
+			aiReply: "",
+			want: CommitVerdict{
+				Worthwhile: true,
+				Reason:     "classifier returned empty response; defaulting to include",
+			},
+		},
+		{
+			name:    "whitespace-only response is treated as empty",
+			message: "feat: new page",
+			diff:    "diff",
+			aiReply: "   \n\t  ",
+			want: CommitVerdict{
+				Worthwhile: true,
+				Reason:     "classifier returned empty response; defaulting to include",
+			},
+		},
 	}
 
 	for _, tt := range tests {
