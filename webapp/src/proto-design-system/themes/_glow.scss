@@ -8,9 +8,11 @@
 [data-theme="glow"] {
   color-scheme: light;
 
-  // Typography — Space Grotesk for headings/display sizes (kicks in on
-  // Text size=xl and up). Body stays on Geist via --font-family-sans.
+  // Typography — Space Grotesk for headings, Hanken Grotesk for body.
+  // Same grotesk family so the pair reads as "display vs text cuts of one
+  // typeface" rather than a clash of personalities.
   --font-family-display: "Space Grotesk", "Geist", "Inter", -apple-system, sans-serif;
+  --font-family-sans: "Hanken Grotesk", "Geist", "Inter", -apple-system, sans-serif;
 
   // Background
   --color-background: oklch(100% 0 0deg);
