@@ -33,11 +33,10 @@
   --color-base-content-secondary: oklch(58% 0.012 255deg);
   --color-base-content-tertiary: oklch(70% 0.01 255deg);
 
-  // Surfaces — cool gray panels, lightly blue. Chroma 0.005 at hue 250°
-  // gives just enough tint to read as "cool" without the surfaces feeling
-  // blue-washed. Elevated nudges up one L-point for popovers to float.
-  --color-surface: oklch(98% 0.005 250deg);
-  --color-surface-elevated: oklch(99% 0.003 250deg);
+  // Surfaces — nearly-neutral gray with just a breath of cool. Chroma
+  // 0.003 reads as "not warm" without ever looking visibly blue.
+  --color-surface: oklch(98% 0.003 250deg);
+  --color-surface-elevated: oklch(99% 0.002 250deg);
   --color-surface-overlay: oklch(20% 0.008 250deg / 0.4);
 
   // Borders — transparent. Spatial hierarchy comes from the gray canvas
