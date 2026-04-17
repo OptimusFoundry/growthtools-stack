@@ -245,6 +245,11 @@ type PlatformPost struct {
 	Status         string           `db:"status" json:"status"`
 	Content        *string          `db:"content" json:"content,omitempty"`
 	ThreadSegments *json.RawMessage `db:"thread_segments" json:"thread_segments,omitempty"`
+	// MediaHandle carries whatever the platform returned during media
+	// upload (container_id, media_id + processing state, blob ref,
+	// jobId, etc.). Shape is adapter-owned — the pipeline workers pass
+	// it through without cracking it open. Nil for text-only rows.
+	MediaHandle    *json.RawMessage `db:"media_handle" json:"media_handle,omitempty"`
 	PublishedAt    *time.Time       `db:"published_at" json:"published_at,omitempty"`
 	ErrorMessage   *string          `db:"error_message" json:"error_message,omitempty"`
 	Engagement     JSONB            `db:"engagement" json:"engagement"`

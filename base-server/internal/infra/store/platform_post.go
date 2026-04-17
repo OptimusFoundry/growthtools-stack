@@ -19,7 +19,7 @@ type CreatePlatformPostParams struct {
 	ThreadSegments *json.RawMessage
 }
 
-const platformPostColumns = `id, post_id, platform, platform_post_id, status, content, thread_segments, published_at, error_message, engagement, attempt_count, max_attempts, next_retry_at, last_attempt_at, created_at, updated_at`
+const platformPostColumns = `id, post_id, platform, platform_post_id, status, content, thread_segments, media_handle, published_at, error_message, engagement, attempt_count, max_attempts, next_retry_at, last_attempt_at, created_at, updated_at`
 
 const sqlCreatePlatformPost = `
 INSERT INTO platform_posts (post_id, platform, content, thread_segments)
@@ -133,7 +133,7 @@ func (s *Store) DeletePlatformPostsByPostID(ctx context.Context, postID uuid.UUI
 
 // GetRetryablePlatformPosts finds failed platform posts that are ready for retry
 const sqlGetRetryablePlatformPosts = `
-SELECT pp.id, pp.post_id, pp.platform, pp.platform_post_id, pp.status, pp.content, pp.thread_segments,
+SELECT pp.id, pp.post_id, pp.platform, pp.platform_post_id, pp.status, pp.content, pp.thread_segments, pp.media_handle,
        pp.published_at, pp.error_message, pp.engagement, pp.attempt_count, pp.max_attempts,
        pp.next_retry_at, pp.last_attempt_at, pp.created_at, pp.updated_at,
        p.account_id
@@ -158,7 +158,7 @@ func (s *Store) GetRetryablePlatformPosts(ctx context.Context, now time.Time, li
 
 // GetStuckPublishingPlatformPosts finds platform posts stuck in publishing state
 const sqlGetStuckPublishingPlatformPosts = `
-SELECT pp.id, pp.post_id, pp.platform, pp.platform_post_id, pp.status, pp.content, pp.thread_segments,
+SELECT pp.id, pp.post_id, pp.platform, pp.platform_post_id, pp.status, pp.content, pp.thread_segments, pp.media_handle,
        pp.published_at, pp.error_message, pp.engagement, pp.attempt_count, pp.max_attempts,
        pp.next_retry_at, pp.last_attempt_at, pp.created_at, pp.updated_at,
        p.account_id
@@ -175,6 +175,113 @@ func (s *Store) GetStuckPublishingPlatformPosts(ctx context.Context, stuckBefore
 	err := s.db.SelectContext(ctx, &posts, sqlGetStuckPublishingPlatformPosts, stuckBefore, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stuck publishing platform posts: %w", err)
+	}
+	return posts, nil
+}
+
+// -----------------------------------------------------------------------------
+// Async publish pipeline — state transitions owned by the new workers
+// (dispatcher, uploader, reconciler, finalizer). These share a few
+// primitives that the old blocking PublishWorker didn't need.
+// -----------------------------------------------------------------------------
+
+const sqlSetPlatformPostQueued = `
+UPDATE platform_posts
+SET status = 'queued',
+    error_message = NULL,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`
+
+// SetPlatformPostQueued moves a row into the async pipeline. Called by
+// the dispatcher right after writing platform.publish.requested.
+func (s *Store) SetPlatformPostQueued(ctx context.Context, id uuid.UUID) error {
+	res, err := s.db.ExecContext(ctx, sqlSetPlatformPostQueued, id)
+	if err != nil {
+		return fmt.Errorf("failed to mark platform post queued: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+const sqlSetPlatformPostAwaitingMedia = `
+UPDATE platform_posts
+SET status = 'awaiting_media',
+    media_handle = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`
+
+// SetPlatformPostAwaitingMedia stores the platform-returned handle and
+// flips status into the reconciler-owned state. handle is an opaque
+// JSON blob — the uploader adapter decides the shape.
+func (s *Store) SetPlatformPostAwaitingMedia(ctx context.Context, id uuid.UUID, handle json.RawMessage) error {
+	res, err := s.db.ExecContext(ctx, sqlSetPlatformPostAwaitingMedia, id, handle)
+	if err != nil {
+		return fmt.Errorf("failed to mark platform post awaiting_media: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+const sqlSetPlatformPostMediaReady = `
+UPDATE platform_posts
+SET status = 'media_ready',
+    media_handle = COALESCE($2, media_handle),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`
+
+// SetPlatformPostMediaReady signals the finalizer that media is ready
+// to attach. handle may be nil (e.g. Bluesky images that were never in
+// awaiting_media) or updated (X returns a refreshed processing_info
+// block on STATUS calls — keeping it for debugability).
+func (s *Store) SetPlatformPostMediaReady(ctx context.Context, id uuid.UUID, handle json.RawMessage) error {
+	res, err := s.db.ExecContext(ctx, sqlSetPlatformPostMediaReady, id, handle)
+	if err != nil {
+		return fmt.Errorf("failed to mark platform post media_ready: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+const sqlListPlatformPostsAwaitingMedia = `
+SELECT pp.id, pp.post_id, pp.platform, pp.platform_post_id, pp.status, pp.content, pp.thread_segments, pp.media_handle,
+       pp.published_at, pp.error_message, pp.engagement, pp.attempt_count, pp.max_attempts,
+       pp.next_retry_at, pp.last_attempt_at, pp.created_at, pp.updated_at,
+       p.account_id
+FROM platform_posts pp
+JOIN posts p ON p.id = pp.post_id
+WHERE pp.status = 'awaiting_media'
+ORDER BY pp.updated_at ASC
+LIMIT $1
+`
+
+// ListPlatformPostsAwaitingMedia is the reconciler's primary query.
+// Returns rows oldest-first so slow-moving platforms get pressure
+// before fresh ones. Limit keeps each tick bounded.
+func (s *Store) ListPlatformPostsAwaitingMedia(ctx context.Context, limit int) ([]RetryablePlatformPost, error) {
+	posts := make([]RetryablePlatformPost, 0)
+	if err := s.db.SelectContext(ctx, &posts, sqlListPlatformPostsAwaitingMedia, limit); err != nil {
+		return nil, fmt.Errorf("failed to list platform posts awaiting media: %w", err)
 	}
 	return posts, nil
 }
