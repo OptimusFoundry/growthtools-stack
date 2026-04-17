@@ -13,7 +13,7 @@
 //   APP_URL, APP_EMAIL, APP_PASSWORD — fallback values when the request
 //                                       payload omits them
 
-import { Consumer, Kafka, Producer } from "kafkajs";
+import { Admin, Consumer, Kafka, Producer } from "kafkajs";
 import { runCapture } from "./capture.ts";
 
 const TOPIC_REQUESTS = "github.capture.requests";
@@ -62,12 +62,29 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 		brokers,
 	});
 
+	// Make sure both topics exist before we subscribe. kafkajs' consumer
+	// aborts startup with UNKNOWN_TOPIC_OR_PARTITION if the request topic
+	// isn't there yet; segmentio/kafka-go (base-server) is more forgiving,
+	// so without this the first capture after a clean deploy is silently
+	// lost because capture-worker bails before base-server ever writes.
+	const admin: Admin = kafka.admin();
+	await admin.connect();
+	await admin.createTopics({
+		topics: [{ topic: TOPIC_REQUESTS }, { topic: TOPIC_RESULTS }],
+		waitForLeaders: true,
+	});
+	await admin.disconnect();
+
 	const producer: Producer = kafka.producer();
+	// fromBeginning: true is safe — kafkajs resumes from committed offsets
+	// on subsequent joins regardless of this flag; it only matters for the
+	// first join of a consumer group. Using `true` protects us from the
+	// race where a message lands before the very first subscribe lands.
 	const consumer: Consumer = kafka.consumer({ groupId });
 
 	await producer.connect();
 	await consumer.connect();
-	await consumer.subscribe({ topic: TOPIC_REQUESTS, fromBeginning: false });
+	await consumer.subscribe({ topic: TOPIC_REQUESTS, fromBeginning: true });
 
 	console.log(`[kafka] bridge up — group=${groupId} brokers=${brokers.join(",")}`);
 
