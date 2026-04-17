@@ -223,6 +223,41 @@ func (c *Client) CreateWebhook(ctx context.Context, token, owner, name, webhookU
 	return hook.ID, nil
 }
 
+// GetRepoReadme returns the decoded README content for a repository.
+// Uses the /readme endpoint which returns the default-branch README in any
+// common format. Returns empty string (not error) if the repo has no README
+// so callers can fall through to defaults.
+func (c *Client) GetRepoReadme(ctx context.Context, token, owner, name string) (string, error) {
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/readme", githubAPIBase, owner, name)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create readme request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	// Ask for the raw content so we don't have to base64-decode.
+	req.Header.Set("Accept", "application/vnd.github.raw")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		c.logger.Error(ctx, "failed to get repo readme", err)
+		return "", fmt.Errorf("failed to get repo readme: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return "", nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("github /readme returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read readme response: %w", err)
+	}
+	return string(body), nil
+}
+
 // DeleteWebhook deletes the specified webhook from the given repo
 func (c *Client) DeleteWebhook(ctx context.Context, token, owner, name string, hookID int64) error {
 	reqURL := fmt.Sprintf("%s/repos/%s/%s/hooks/%s", githubAPIBase, owner, name, strconv.FormatInt(hookID, 10))

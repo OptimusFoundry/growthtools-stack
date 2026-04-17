@@ -8,12 +8,15 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	captureclient "base-server/internal/infra/clients/capture"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -38,9 +41,15 @@ type GitHubStore interface {
 	CreateGitHubRepo(ctx context.Context, connectionID uuid.UUID, ghRepoID int64, owner, name string, defaultBranch *string, webhookID *int64, webhookSecret string) (store.GitHubRepo, error)
 	ListGitHubReposByConnection(ctx context.Context, connectionID uuid.UUID) ([]store.GitHubRepo, error)
 	GetGitHubRepoByConnectionAndName(ctx context.Context, connectionID uuid.UUID, owner, name string) (store.GitHubRepo, error)
+	GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64) (store.GitHubRepo, error)
+	GetGitHubRepoByOwnerName(ctx context.Context, owner, name string) (store.GitHubRepo, error)
+	UpdateGitHubRepoID(ctx context.Context, repoID uuid.UUID, githubRepoID int64) error
 	SoftDeleteGitHubRepo(ctx context.Context, repoID uuid.UUID) error
 
 	// Commit operations
+	InsertGitHubCommit(ctx context.Context, repoID uuid.UUID, sha string, authorName, authorEmail *string, message string, branch, commitURL *string, pushedAt time.Time, payload *json.RawMessage) (store.GitHubCommit, bool, error)
+	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
+	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
 	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommit, error)
 }
 
@@ -51,6 +60,13 @@ type GitHubClient interface {
 	ListUserRepos(ctx context.Context, token string, page int) ([]githubclient.GitHubRepo, error)
 	CreateWebhook(ctx context.Context, token, owner, name, webhookURL, secret string) (int64, error)
 	DeleteWebhook(ctx context.Context, token, owner, name string, hookID int64) error
+	GetRepoReadme(ctx context.Context, token, owner, name string) (string, error)
+}
+
+// CaptureClient defines the capture-worker calls required by GitHubProcessor
+type CaptureClient interface {
+	Enabled() bool
+	Capture(ctx context.Context, req captureclient.Request) (captureclient.Response, error)
 }
 
 var (
@@ -74,6 +90,7 @@ type oauthStateEntry struct {
 type GitHubProcessor struct {
 	store         GitHubStore
 	githubClient  GitHubClient
+	captureClient CaptureClient
 	webhookSecret string
 	webAppHost    string
 	oauthClientID string
@@ -93,10 +110,13 @@ func New(store GitHubStore, webhookSecret string, logger *observability.Logger) 
 	}
 }
 
-// NewWithOAuth creates a GitHubProcessor with OAuth and webhook capabilities
+// NewWithOAuth creates a GitHubProcessor with OAuth and webhook capabilities.
+// captureClient may be nil; when nil (or when Enabled() is false) commits are
+// still persisted but no Playwright capture is kicked off.
 func NewWithOAuth(
 	store GitHubStore,
 	githubClient GitHubClient,
+	captureClient CaptureClient,
 	webhookSecret string,
 	oauthClientID string,
 	webAppHost string,
@@ -105,6 +125,7 @@ func NewWithOAuth(
 	return GitHubProcessor{
 		store:         store,
 		githubClient:  githubClient,
+		captureClient: captureClient,
 		webhookSecret: webhookSecret,
 		oauthClientID: oauthClientID,
 		webAppHost:    webAppHost,
@@ -113,24 +134,52 @@ func NewWithOAuth(
 	}
 }
 
-// ValidateSignature verifies the HMAC-SHA256 signature from GitHub
-func (p *GitHubProcessor) ValidateSignature(payload []byte, signature string) error {
+// pushPayload is the subset of GitHub's push-event payload we actually use.
+// Full schema: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+type pushPayload struct {
+	Ref        string `json:"ref"` // e.g. refs/heads/main
+	Repository struct {
+		ID       int64  `json:"id"`
+		Name     string `json:"name"`
+		FullName string `json:"full_name"` // "owner/repo"
+		Owner    struct {
+			Login string `json:"login"`
+		} `json:"owner"`
+	} `json:"repository"`
+	Commits []struct {
+		ID        string `json:"id"` // SHA
+		Message   string `json:"message"`
+		URL       string `json:"url"`
+		Timestamp string `json:"timestamp"`
+		Author    struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		} `json:"author"`
+	} `json:"commits"`
+}
+
+// validateSignatureWith verifies the HMAC-SHA256 signature against an
+// explicit secret (the per-repo webhook_secret).
+func validateSignatureWith(payload []byte, signature, secret string) error {
 	if !strings.HasPrefix(signature, "sha256=") {
 		return ErrInvalidSignature
 	}
-
-	mac := hmac.New(sha256.New, []byte(p.webhookSecret))
+	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write(payload)
-	expectedMAC := hex.EncodeToString(mac.Sum(nil))
-	expectedSig := "sha256=" + expectedMAC
-
+	expectedSig := "sha256=" + hex.EncodeToString(mac.Sum(nil))
 	if !hmac.Equal([]byte(signature), []byte(expectedSig)) {
 		return ErrInvalidSignature
 	}
 	return nil
 }
 
-// HandleWebhookEvent validates the signature, deduplicates, and persists the event
+// HandleWebhookEvent routes a signed webhook delivery:
+//  1. Dedupe on delivery_id.
+//  2. Parse the payload enough to find the repo (untrusted until signature
+//     is verified against that repo's webhook_secret).
+//  3. Verify signature with the per-repo secret.
+//  4. Persist the raw event, then for push events write each commit and
+//     asynchronously fan out to the capture-worker.
 func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID string, eventType string, payload []byte, signature string) error {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "delivery_id", Value: deliveryID},
@@ -138,14 +187,9 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		observability.Field{Key: "operation", Value: "handle_webhook_event"},
 	)
 
-	if err := p.ValidateSignature(payload, signature); err != nil {
-		p.logger.Warn(ctx, "invalid webhook signature received")
-		return ErrInvalidSignature
-	}
-
+	// 1. Dedupe.
 	_, err := p.store.GetGitHubEventByDeliveryID(ctx, deliveryID)
 	if err == nil {
-		// Event already exists — duplicate delivery
 		p.logger.Warn(ctx, "duplicate webhook event received")
 		return ErrDuplicateEvent
 	}
@@ -154,19 +198,178 @@ func (p *GitHubProcessor) HandleWebhookEvent(ctx context.Context, deliveryID str
 		return err
 	}
 
-	params := store.CreateGitHubEventParams{
+	// 2. Find the repo. All of GitHub's event payloads include a
+	//    "repository" object, so we can pre-parse it to look up the
+	//    per-repo secret. If the event has no repository field (e.g.
+	//    meta / ping), fall back to the global secret.
+	var envelope struct {
+		Repository struct {
+			ID       int64  `json:"id"`
+			Name     string `json:"name"`
+			FullName string `json:"full_name"`
+			Owner    struct {
+				Login string `json:"login"`
+			} `json:"owner"`
+		} `json:"repository"`
+	}
+	_ = json.Unmarshal(payload, &envelope) // best-effort; zero-value is fine
+
+	var repo store.GitHubRepo
+	var repoFound bool
+	if envelope.Repository.ID > 0 {
+		if r, lookupErr := p.store.GetGitHubRepoByGitHubID(ctx, envelope.Repository.ID); lookupErr == nil {
+			repo = r
+			repoFound = true
+		}
+	}
+	if !repoFound && envelope.Repository.Owner.Login != "" && envelope.Repository.Name != "" {
+		if r, lookupErr := p.store.GetGitHubRepoByOwnerName(ctx, envelope.Repository.Owner.Login, envelope.Repository.Name); lookupErr == nil {
+			repo = r
+			repoFound = true
+		}
+	}
+
+	// 3. Verify signature. Prefer per-repo secret, fall back to the
+	//    global one so ping deliveries at App-install time still pass.
+	secret := p.webhookSecret
+	if repoFound && repo.WebhookSecret != "" {
+		secret = repo.WebhookSecret
+	}
+	if err := validateSignatureWith(payload, signature, secret); err != nil {
+		p.logger.Warn(ctx, "invalid webhook signature received")
+		return ErrInvalidSignature
+	}
+
+	// 4. Persist the raw event (payload stored as empty JSONB for now —
+	//    we keep the per-commit details on github_commits).
+	if _, err := p.store.CreateGitHubEvent(ctx, store.CreateGitHubEventParams{
 		EventType:  eventType,
 		DeliveryID: deliveryID,
 		Payload:    store.JSONB{},
-	}
-
-	_, err = p.store.CreateGitHubEvent(ctx, params)
-	if err != nil {
+	}); err != nil {
 		p.logger.Error(ctx, "failed to persist GitHub event", err)
 		return err
 	}
 
+	// Only push events currently produce commits.
+	if eventType != "push" || !repoFound {
+		return nil
+	}
+
+	// Backfill github_repo_id if we connected before knowing it.
+	if repo.GitHubRepoID == 0 && envelope.Repository.ID > 0 {
+		if err := p.store.UpdateGitHubRepoID(ctx, repo.ID, envelope.Repository.ID); err != nil {
+			p.logger.Error(ctx, "failed to backfill github_repo_id", err)
+		} else {
+			repo.GitHubRepoID = envelope.Repository.ID
+		}
+	}
+
+	var push pushPayload
+	if err := json.Unmarshal(payload, &push); err != nil {
+		p.logger.Error(ctx, "failed to parse push payload", err)
+		return nil // event is persisted; don't force GitHub to retry
+	}
+
+	branch := strings.TrimPrefix(push.Ref, "refs/heads/")
+	inserted := make([]store.GitHubCommit, 0, len(push.Commits))
+	for _, c := range push.Commits {
+		pushedAt, timeErr := time.Parse(time.RFC3339, c.Timestamp)
+		if timeErr != nil {
+			pushedAt = time.Now().UTC()
+		}
+		authorName := c.Author.Name
+		authorEmail := c.Author.Email
+		branchCopy := branch
+		urlCopy := c.URL
+
+		commit, isNew, insErr := p.store.InsertGitHubCommit(
+			ctx,
+			repo.ID,
+			c.ID,
+			&authorName,
+			&authorEmail,
+			c.Message,
+			&branchCopy,
+			&urlCopy,
+			pushedAt,
+			nil,
+		)
+		if insErr != nil {
+			p.logger.Error(ctx, fmt.Sprintf("failed to insert commit %s", c.ID), insErr)
+			continue
+		}
+		if isNew {
+			inserted = append(inserted, commit)
+		}
+	}
+
+	// Fire capture-worker asynchronously — we don't want GitHub's webhook
+	// delivery waiting on a ~5min Playwright run, and retries would
+	// re-hit ErrDuplicateEvent on delivery_id anyway.
+	if len(inserted) > 0 && p.captureClient != nil && p.captureClient.Enabled() {
+		go p.captureCommits(context.WithoutCancel(ctx), repo, inserted)
+	}
+
 	return nil
+}
+
+// appURLFromReadme extracts the first app URL advertised in a README.
+// Policy: README always contains the app URL (per project convention);
+// we scan for the first https:// token that points at something other
+// than github.com. Returns "" if nothing sensible is found so the
+// caller can fall through to APP_URL env default.
+var readmeURLRE = regexp.MustCompile(`https?://[^\s)>"']+`)
+
+func appURLFromReadme(readme string) string {
+	for _, candidate := range readmeURLRE.FindAllString(readme, -1) {
+		// Strip trailing punctuation that markdown likes to leave behind.
+		candidate = strings.TrimRight(candidate, ".,;:)")
+		lower := strings.ToLower(candidate)
+		if strings.Contains(lower, "github.com") || strings.Contains(lower, "githubusercontent.com") {
+			continue
+		}
+		if strings.Contains(lower, "shields.io") || strings.Contains(lower, "badge") {
+			continue
+		}
+		return candidate
+	}
+	return ""
+}
+
+// captureCommits triggers the capture-worker for each newly-inserted commit
+// and stores the response on the commit row. Best-effort; errors are logged.
+func (p *GitHubProcessor) captureCommits(ctx context.Context, repo store.GitHubRepo, commits []store.GitHubCommit) {
+	// Look up the connection to borrow the access token for README lookup.
+	var appURL string
+	conn, err := p.store.GetGitHubConnectionByUserID(ctx, repo.ConnectionID)
+	if err == nil {
+		if readme, readmeErr := p.githubClient.GetRepoReadme(ctx, conn.AccessToken, repo.Owner, repo.Name); readmeErr == nil {
+			appURL = appURLFromReadme(readme)
+		}
+	}
+
+	for _, commit := range commits {
+		req := captureclient.Request{
+			Commit: commit.SHA,
+			AppURL: appURL,
+			Goal:   commit.Message,
+		}
+		resp, captureErr := p.captureClient.Capture(ctx, req)
+		if captureErr != nil {
+			p.logger.Error(ctx, fmt.Sprintf("capture-worker failed for %s", commit.SHA), captureErr)
+			// Persist an error marker so UI can show "tried and failed".
+			failed, _ := json.Marshal(map[string]string{"error": captureErr.Error()})
+			if updateErr := p.store.UpdateGitHubCommitCapture(ctx, commit.ID, failed); updateErr != nil {
+				p.logger.Error(ctx, "failed to record capture failure", updateErr)
+			}
+			continue
+		}
+		raw, _ := json.Marshal(resp)
+		if updateErr := p.store.UpdateGitHubCommitCapture(ctx, commit.ID, raw); updateErr != nil {
+			p.logger.Error(ctx, "failed to record capture output", updateErr)
+		}
+	}
 }
 
 // ============================================================================

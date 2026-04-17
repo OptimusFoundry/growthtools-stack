@@ -10,10 +10,13 @@
 package processor
 
 import (
+	capture "base-server/internal/infra/clients/capture"
 	github "base-server/internal/infra/clients/github"
 	store "base-server/internal/infra/store"
 	context "context"
+	json "encoding/json"
 	reflect "reflect"
+	time "time"
 
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
@@ -133,6 +136,52 @@ func (mr *MockGitHubStoreMockRecorder) GetGitHubRepoByConnectionAndName(ctx, con
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubRepoByConnectionAndName", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubRepoByConnectionAndName), ctx, connectionID, owner, name)
 }
 
+// GetGitHubRepoByGitHubID mocks base method.
+func (m *MockGitHubStore) GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64) (store.GitHubRepo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitHubRepoByGitHubID", ctx, githubRepoID)
+	ret0, _ := ret[0].(store.GitHubRepo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubRepoByGitHubID indicates an expected call of GetGitHubRepoByGitHubID.
+func (mr *MockGitHubStoreMockRecorder) GetGitHubRepoByGitHubID(ctx, githubRepoID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubRepoByGitHubID", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubRepoByGitHubID), ctx, githubRepoID)
+}
+
+// GetGitHubRepoByOwnerName mocks base method.
+func (m *MockGitHubStore) GetGitHubRepoByOwnerName(ctx context.Context, owner, name string) (store.GitHubRepo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitHubRepoByOwnerName", ctx, owner, name)
+	ret0, _ := ret[0].(store.GitHubRepo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubRepoByOwnerName indicates an expected call of GetGitHubRepoByOwnerName.
+func (mr *MockGitHubStoreMockRecorder) GetGitHubRepoByOwnerName(ctx, owner, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubRepoByOwnerName", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubRepoByOwnerName), ctx, owner, name)
+}
+
+// InsertGitHubCommit mocks base method.
+func (m *MockGitHubStore) InsertGitHubCommit(ctx context.Context, repoID uuid.UUID, sha string, authorName, authorEmail *string, message string, branch, commitURL *string, pushedAt time.Time, payload *json.RawMessage) (store.GitHubCommit, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertGitHubCommit", ctx, repoID, sha, authorName, authorEmail, message, branch, commitURL, pushedAt, payload)
+	ret0, _ := ret[0].(store.GitHubCommit)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// InsertGitHubCommit indicates an expected call of InsertGitHubCommit.
+func (mr *MockGitHubStoreMockRecorder) InsertGitHubCommit(ctx, repoID, sha, authorName, authorEmail, message, branch, commitURL, pushedAt, payload any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertGitHubCommit", reflect.TypeOf((*MockGitHubStore)(nil).InsertGitHubCommit), ctx, repoID, sha, authorName, authorEmail, message, branch, commitURL, pushedAt, payload)
+}
+
 // ListGitHubCommitsByConnection mocks base method.
 func (m *MockGitHubStore) ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommit, error) {
 	m.ctrl.T.Helper()
@@ -220,6 +269,48 @@ func (mr *MockGitHubStoreMockRecorder) SoftDeleteGitHubRepo(ctx, repoID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteGitHubRepo", reflect.TypeOf((*MockGitHubStore)(nil).SoftDeleteGitHubRepo), ctx, repoID)
 }
 
+// UpdateGitHubCommitCapture mocks base method.
+func (m *MockGitHubStore) UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGitHubCommitCapture", ctx, commitID, captureOutput)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGitHubCommitCapture indicates an expected call of UpdateGitHubCommitCapture.
+func (mr *MockGitHubStoreMockRecorder) UpdateGitHubCommitCapture(ctx, commitID, captureOutput any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitHubCommitCapture", reflect.TypeOf((*MockGitHubStore)(nil).UpdateGitHubCommitCapture), ctx, commitID, captureOutput)
+}
+
+// UpdateGitHubCommitPostID mocks base method.
+func (m *MockGitHubStore) UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGitHubCommitPostID", ctx, commitID, postID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGitHubCommitPostID indicates an expected call of UpdateGitHubCommitPostID.
+func (mr *MockGitHubStoreMockRecorder) UpdateGitHubCommitPostID(ctx, commitID, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitHubCommitPostID", reflect.TypeOf((*MockGitHubStore)(nil).UpdateGitHubCommitPostID), ctx, commitID, postID)
+}
+
+// UpdateGitHubRepoID mocks base method.
+func (m *MockGitHubStore) UpdateGitHubRepoID(ctx context.Context, repoID uuid.UUID, githubRepoID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGitHubRepoID", ctx, repoID, githubRepoID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGitHubRepoID indicates an expected call of UpdateGitHubRepoID.
+func (mr *MockGitHubStoreMockRecorder) UpdateGitHubRepoID(ctx, repoID, githubRepoID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitHubRepoID", reflect.TypeOf((*MockGitHubStore)(nil).UpdateGitHubRepoID), ctx, repoID, githubRepoID)
+}
+
 // MockGitHubClient is a mock of GitHubClient interface.
 type MockGitHubClient struct {
 	ctrl     *gomock.Controller
@@ -303,6 +394,21 @@ func (mr *MockGitHubClientMockRecorder) GetAuthenticatedUser(ctx, token any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatedUser", reflect.TypeOf((*MockGitHubClient)(nil).GetAuthenticatedUser), ctx, token)
 }
 
+// GetRepoReadme mocks base method.
+func (m *MockGitHubClient) GetRepoReadme(ctx context.Context, token, owner, name string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepoReadme", ctx, token, owner, name)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepoReadme indicates an expected call of GetRepoReadme.
+func (mr *MockGitHubClientMockRecorder) GetRepoReadme(ctx, token, owner, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepoReadme", reflect.TypeOf((*MockGitHubClient)(nil).GetRepoReadme), ctx, token, owner, name)
+}
+
 // ListUserRepos mocks base method.
 func (m *MockGitHubClient) ListUserRepos(ctx context.Context, token string, page int) ([]github.GitHubRepo, error) {
 	m.ctrl.T.Helper()
@@ -316,4 +422,57 @@ func (m *MockGitHubClient) ListUserRepos(ctx context.Context, token string, page
 func (mr *MockGitHubClientMockRecorder) ListUserRepos(ctx, token, page any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRepos", reflect.TypeOf((*MockGitHubClient)(nil).ListUserRepos), ctx, token, page)
+}
+
+// MockCaptureClient is a mock of CaptureClient interface.
+type MockCaptureClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockCaptureClientMockRecorder
+	isgomock struct{}
+}
+
+// MockCaptureClientMockRecorder is the mock recorder for MockCaptureClient.
+type MockCaptureClientMockRecorder struct {
+	mock *MockCaptureClient
+}
+
+// NewMockCaptureClient creates a new mock instance.
+func NewMockCaptureClient(ctrl *gomock.Controller) *MockCaptureClient {
+	mock := &MockCaptureClient{ctrl: ctrl}
+	mock.recorder = &MockCaptureClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCaptureClient) EXPECT() *MockCaptureClientMockRecorder {
+	return m.recorder
+}
+
+// Capture mocks base method.
+func (m *MockCaptureClient) Capture(ctx context.Context, req capture.Request) (capture.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Capture", ctx, req)
+	ret0, _ := ret[0].(capture.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Capture indicates an expected call of Capture.
+func (mr *MockCaptureClientMockRecorder) Capture(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Capture", reflect.TypeOf((*MockCaptureClient)(nil).Capture), ctx, req)
+}
+
+// Enabled mocks base method.
+func (m *MockCaptureClient) Enabled() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Enabled")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Enabled indicates an expected call of Enabled.
+func (mr *MockCaptureClientMockRecorder) Enabled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enabled", reflect.TypeOf((*MockCaptureClient)(nil).Enabled))
 }

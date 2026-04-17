@@ -42,17 +42,20 @@ type GitHubRepo struct {
 
 // GitHubCommit represents a persisted GitHub commit
 type GitHubCommit struct {
-	ID          uuid.UUID        `db:"id" json:"id"`
-	RepoID      uuid.UUID        `db:"repo_id" json:"repo_id"`
-	SHA         string           `db:"sha" json:"sha"`
-	AuthorName  *string          `db:"author_name" json:"author_name,omitempty"`
-	AuthorEmail *string          `db:"author_email" json:"author_email,omitempty"`
-	Message     string           `db:"message" json:"message"`
-	Branch      *string          `db:"branch" json:"branch,omitempty"`
-	CommitURL   *string          `db:"commit_url" json:"commit_url,omitempty"`
-	PushedAt    time.Time        `db:"pushed_at" json:"pushed_at"`
-	Payload     *json.RawMessage `db:"payload" json:"payload,omitempty"`
-	CreatedAt   time.Time        `db:"created_at" json:"created_at"`
+	ID            uuid.UUID        `db:"id" json:"id"`
+	RepoID        uuid.UUID        `db:"repo_id" json:"repo_id"`
+	SHA           string           `db:"sha" json:"sha"`
+	AuthorName    *string          `db:"author_name" json:"author_name,omitempty"`
+	AuthorEmail   *string          `db:"author_email" json:"author_email,omitempty"`
+	Message       string           `db:"message" json:"message"`
+	Branch        *string          `db:"branch" json:"branch,omitempty"`
+	CommitURL     *string          `db:"commit_url" json:"commit_url,omitempty"`
+	PushedAt      time.Time        `db:"pushed_at" json:"pushed_at"`
+	Payload       *json.RawMessage `db:"payload" json:"payload,omitempty"`
+	PostID        *uuid.UUID       `db:"post_id" json:"post_id,omitempty"`
+	CaptureOutput *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
+	ProcessedAt   *time.Time       `db:"processed_at" json:"processed_at,omitempty"`
+	CreatedAt     time.Time        `db:"created_at" json:"created_at"`
 }
 
 // ============================================================================
@@ -222,6 +225,71 @@ func (s *Store) GetGitHubRepoByConnectionAndName(ctx context.Context, connection
 	return repo, nil
 }
 
+// GetGitHubRepoByGitHubID finds a connected repo by the github.com numeric id.
+// Webhook payloads carry repository.id so we can look up the repo + its
+// per-hook secret without trusting any other field first.
+const sqlGetGitHubRepoByGitHubID = `
+SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+FROM github_repos
+WHERE github_repo_id = $1 AND deleted_at IS NULL
+`
+
+func (s *Store) GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64) (GitHubRepo, error) {
+	var repo GitHubRepo
+	err := s.db.GetContext(ctx, &repo, sqlGetGitHubRepoByGitHubID, githubRepoID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubRepo{}, ErrNotFound
+		}
+		return GitHubRepo{}, fmt.Errorf("failed to get github repo by github id: %w", err)
+	}
+	return repo, nil
+}
+
+// GetGitHubRepoByOwnerName finds a repo by owner/name across all connections.
+// Used as a fallback when github_repo_id hasn't been backfilled yet (still 0).
+const sqlGetGitHubRepoByOwnerName = `
+SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+FROM github_repos
+WHERE owner = $1 AND name = $2 AND deleted_at IS NULL
+`
+
+func (s *Store) GetGitHubRepoByOwnerName(ctx context.Context, owner, name string) (GitHubRepo, error) {
+	var repo GitHubRepo
+	err := s.db.GetContext(ctx, &repo, sqlGetGitHubRepoByOwnerName, owner, name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubRepo{}, ErrNotFound
+		}
+		return GitHubRepo{}, fmt.Errorf("failed to get github repo by owner/name: %w", err)
+	}
+	return repo, nil
+}
+
+// UpdateGitHubRepoID backfills the github.com numeric id on a repo row.
+// Called the first time a webhook delivers payload.repository.id for a repo
+// that was stored with github_repo_id=0 (we skip the API call on connect).
+const sqlUpdateGitHubRepoID = `
+UPDATE github_repos
+SET github_repo_id = $2, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (s *Store) UpdateGitHubRepoID(ctx context.Context, repoID uuid.UUID, githubRepoID int64) error {
+	res, err := s.db.ExecContext(ctx, sqlUpdateGitHubRepoID, repoID, githubRepoID)
+	if err != nil {
+		return fmt.Errorf("failed to update github repo id: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 const sqlSoftDeleteGitHubRepo = `
 UPDATE github_repos
 SET deleted_at = NOW(), updated_at = NOW()
@@ -247,10 +315,20 @@ func (s *Store) SoftDeleteGitHubRepo(ctx context.Context, repoID uuid.UUID) erro
 // GitHub Commits
 // ============================================================================
 
+// InsertGitHubCommit upserts a commit. Returns the row and a bool that is
+// true when the insert produced a new row (false means the commit already
+// existed — caller shouldn't re-trigger the capture pipeline on duplicates).
 const sqlInsertGitHubCommit = `
 INSERT INTO github_commits (repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (repo_id, sha) DO NOTHING
+RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, processed_at, created_at
+`
+
+const sqlGetGitHubCommitByRepoSHA = `
+SELECT id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, capture_output, processed_at, created_at
+FROM github_commits
+WHERE repo_id = $1 AND sha = $2
 `
 
 func (s *Store) InsertGitHubCommit(
@@ -262,17 +340,71 @@ func (s *Store) InsertGitHubCommit(
 	branch, commitURL *string,
 	pushedAt time.Time,
 	payload *json.RawMessage,
-) error {
-	_, err := s.db.ExecContext(ctx, sqlInsertGitHubCommit,
+) (GitHubCommit, bool, error) {
+	var commit GitHubCommit
+	err := s.db.GetContext(ctx, &commit, sqlInsertGitHubCommit,
 		repoID, sha, authorName, authorEmail, message, branch, commitURL, pushedAt, payload)
+	if err == nil {
+		return commit, true, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return GitHubCommit{}, false, fmt.Errorf("failed to insert github commit: %w", err)
+	}
+	// ON CONFLICT DO NOTHING returned no row — load the existing one.
+	err = s.db.GetContext(ctx, &commit, sqlGetGitHubCommitByRepoSHA, repoID, sha)
 	if err != nil {
-		return fmt.Errorf("failed to insert github commit: %w", err)
+		return GitHubCommit{}, false, fmt.Errorf("failed to load existing github commit: %w", err)
+	}
+	return commit, false, nil
+}
+
+const sqlUpdateGitHubCommitCapture = `
+UPDATE github_commits
+SET capture_output = $2, processed_at = NOW()
+WHERE id = $1
+`
+
+// UpdateGitHubCommitCapture stores the raw capture-worker response and marks
+// the commit as processed, regardless of success/failure.
+func (s *Store) UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error {
+	res, err := s.db.ExecContext(ctx, sqlUpdateGitHubCommitCapture, commitID, captureOutput)
+	if err != nil {
+		return fmt.Errorf("failed to update github commit capture: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+const sqlUpdateGitHubCommitPostID = `
+UPDATE github_commits
+SET post_id = $2
+WHERE id = $1
+`
+
+// UpdateGitHubCommitPostID links a commit to the post that was drafted from it.
+func (s *Store) UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error {
+	res, err := s.db.ExecContext(ctx, sqlUpdateGitHubCommitPostID, commitID, postID)
+	if err != nil {
+		return fmt.Errorf("failed to update github commit post_id: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
 	}
 	return nil
 }
 
 const sqlListGitHubCommitsByConnection = `
-SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.created_at
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.processed_at, gc.created_at
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id
 WHERE gr.connection_id = $1 AND gr.deleted_at IS NULL

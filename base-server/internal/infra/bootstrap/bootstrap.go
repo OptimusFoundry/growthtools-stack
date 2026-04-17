@@ -22,6 +22,7 @@ import (
 	"base-server/internal/infra/tiers"
 
 	// Growth Tools clients
+	captureclient "base-server/internal/infra/clients/capture"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/clients/gemini"
 	"base-server/internal/platform/clients/bluesky"
@@ -299,9 +300,11 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// GitHub integration
 	ghClient := githubclient.NewClient(cfg.GitHub.OAuthClientID, cfg.GitHub.OAuthClientSecret, logger)
+	captureClient := captureclient.NewClient(cfg.Capture.URL, cfg.Capture.SharedSecret, logger)
 	githubProc := githubProcessor.NewWithOAuth(
 		&deps.Store,
 		ghClient,
+		captureClient,
 		cfg.GitHub.WebhookSecret,
 		cfg.GitHub.OAuthClientID,
 		cfg.Services.WebAppURI,
