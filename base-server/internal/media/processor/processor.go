@@ -7,12 +7,24 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"time"
 
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 )
+
+// URLSigner turns an S3 key into a time-limited HTTPS URL the browser can
+// fetch directly. Mirrors the same-named interface in github/processor so
+// bootstrap can wire the S3 client to both.
+type URLSigner interface {
+	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
+}
+
+// mediaPresignTTL matches the commit-detail presign window so users see
+// consistent URL lifetimes across the app.
+const mediaPresignTTL = time.Hour
 
 // MediaStore defines the database operations required by MediaProcessor
 type MediaStore interface {
@@ -41,6 +53,7 @@ type MediaProcessor struct {
 	store         MediaStore
 	fileStore     FileStore
 	publicBaseURL string
+	urlSigner     URLSigner
 	logger        *observability.Logger
 }
 
@@ -51,6 +64,13 @@ func New(store MediaStore, fileStore FileStore, publicBaseURL string, logger *ob
 		publicBaseURL: publicBaseURL,
 		logger:        logger,
 	}
+}
+
+// SetURLSigner wires the presign dependency after construction so existing
+// callsites don't need to change. Pass nil to leave `s3://bucket/key` URLs
+// untouched (local/dev storage).
+func (p *MediaProcessor) SetURLSigner(signer URLSigner) {
+	p.urlSigner = signer
 }
 
 // Upload uploads a file to S3 and persists the media record to the store
@@ -140,7 +160,26 @@ func (p *MediaProcessor) List(ctx context.Context, accountID uuid.UUID, limit, o
 		p.logger.Error(ctx, "failed to list media", err)
 		return nil, ErrFailedUpload
 	}
+	for i := range media {
+		p.PresignIfNeeded(ctx, &media[i])
+	}
 	return media, nil
+}
+
+// PresignIfNeeded rewrites `s3://bucket/key` s3_url values to a time-limited
+// presigned HTTPS URL. Uploaded media (which already carry a direct https
+// URL) are left alone. Exposed so other processors that return Media rows
+// (e.g. posts.GetPostWithPlatformPosts) can apply the same rewrite.
+func (p *MediaProcessor) PresignIfNeeded(ctx context.Context, m *store.Media) {
+	if p.urlSigner == nil || m == nil || !strings.HasPrefix(m.S3URL, "s3://") {
+		return
+	}
+	signed, err := p.urlSigner.PresignGetURL(ctx, m.S3Key, mediaPresignTTL)
+	if err != nil {
+		p.logger.Error(ctx, "failed to presign media url", err)
+		return
+	}
+	m.S3URL = signed
 }
 
 // GetFile retrieves a file from storage by media ID

@@ -89,26 +89,32 @@ type S3HeadClient interface {
 // DraftGenerator turns a completed capture (video + screenshots in S3) into a
 // draft post with thread variants for every connected platform.
 type DraftGenerator struct {
-	store   DraftStore
-	content ContentGenerator
-	posts   PostsDrafter
-	s3Head  S3HeadClient
-	logger  *observability.Logger
+	store    DraftStore
+	content  ContentGenerator
+	posts    PostsDrafter
+	s3Head   S3HeadClient
+	s3Bucket string
+	logger   *observability.Logger
 }
 
+// NewDraftGenerator wires the dependencies. s3Bucket is recorded on each
+// media row's s3_url as `s3://bucket/key` so the media handler can presign
+// it on read — same pattern the commit detail page uses for capture_output.
 func NewDraftGenerator(
 	store DraftStore,
 	content ContentGenerator,
 	posts PostsDrafter,
 	s3Head S3HeadClient,
+	s3Bucket string,
 	logger *observability.Logger,
 ) DraftGenerator {
 	return DraftGenerator{
-		store:   store,
-		content: content,
-		posts:   posts,
-		s3Head:  s3Head,
-		logger:  logger,
+		store:    store,
+		content:  content,
+		posts:    posts,
+		s3Head:   s3Head,
+		s3Bucket: s3Bucket,
+		logger:   logger,
 	}
 }
 
@@ -284,7 +290,7 @@ func (g *DraftGenerator) materializeMedia(
 			Filename:    path.Base(key),
 			ContentType: contentType,
 			S3Key:       key,
-			S3URL:       fmt.Sprintf("s3://%s", key),
+			S3URL:       fmt.Sprintf("s3://%s/%s", g.s3Bucket, key),
 			SizeBytes:   size,
 			Source:      mediaSource,
 		})

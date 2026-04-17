@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"base-server/internal/infra/observability"
@@ -13,6 +14,15 @@ import (
 
 	"github.com/google/uuid"
 )
+
+// URLSigner turns an S3 key into a time-limited HTTPS URL. Mirrors the
+// same-named interface in media/processor and github/processor; bootstrap
+// wires the S3 client to all three.
+type URLSigner interface {
+	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
+}
+
+const postsMediaPresignTTL = time.Hour
 
 // PostStore defines the database operations required by PostProcessor
 type PostStore interface {
@@ -46,6 +56,7 @@ var (
 type PostProcessor struct {
 	store     PostStore
 	publisher EventPublisher
+	urlSigner URLSigner
 	logger    *observability.Logger
 }
 
@@ -55,6 +66,28 @@ func New(store PostStore, publisher EventPublisher, logger *observability.Logger
 		publisher: publisher,
 		logger:    logger,
 	}
+}
+
+// SetURLSigner wires the presign dependency after construction so existing
+// callsites don't need to change. Pass nil to leave `s3://bucket/key` URLs
+// untouched (local/dev storage).
+func (p *PostProcessor) SetURLSigner(signer URLSigner) {
+	p.urlSigner = signer
+}
+
+// presignMediaURL rewrites a single media row's s3:// URL to a presigned
+// https URL in place. Non-`s3://` URLs (e.g. uploaded media already carrying
+// a direct https URL) are left alone.
+func (p *PostProcessor) presignMediaURL(ctx context.Context, m *store.Media) {
+	if p.urlSigner == nil || m == nil || !strings.HasPrefix(m.S3URL, "s3://") {
+		return
+	}
+	signed, err := p.urlSigner.PresignGetURL(ctx, m.S3Key, postsMediaPresignTTL)
+	if err != nil {
+		p.logger.Error(ctx, "failed to presign media url for post response", err)
+		return
+	}
+	m.S3URL = signed
 }
 
 // PostWithPlatformPosts combines a post with its platform posts and attached media
@@ -270,6 +303,9 @@ func (p *PostProcessor) GetPostWithPlatformPosts(ctx context.Context, accountID,
 			p.logger.Error(ctx, "failed to get media for post", err)
 			// Non-fatal: return post without media rather than failing entirely
 		} else {
+			for i := range fetched {
+				p.presignMediaURL(ctx, &fetched[i])
+			}
 			media = fetched
 		}
 	}

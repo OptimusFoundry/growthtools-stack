@@ -248,7 +248,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 			s3h := NewMockS3HeadClient(ctrl)
 			tt.mocks(t, ds, cg, pd, s3h)
 
-			g := NewDraftGenerator(ds, cg, pd, s3h, logger)
+			g := NewDraftGenerator(ds, cg, pd, s3h, "https://cdn.example.com", logger)
 			err := g.GenerateDraftFromCommit(context.Background(), uuid.New())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -474,7 +474,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s3HeadArg = nil
 			}
 
-			g := NewDraftGenerator(ds, cg, pd, s3HeadArg, logger)
+			g := NewDraftGenerator(ds, cg, pd, s3HeadArg, "https://cdn.example.com", logger)
 			err := g.GenerateDraftFromCommit(context.Background(), uuid.New())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)

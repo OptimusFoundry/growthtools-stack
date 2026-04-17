@@ -299,6 +299,12 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// Posts
 	postsProc := postsProcessor.New(&deps.Store, kafkaProducer, logger)
+	// Capture-sourced media rows carry `s3://bucket/key` URLs; the posts
+	// processor presigns them on read so the draft preview can render the
+	// attached video and screenshots directly in the browser.
+	if urlSigner != nil {
+		postsProc.SetURLSigner(urlSigner)
+	}
 	deps.PostsHandler = postsHandler.New(&postsProc, logger)
 
 	// Media
@@ -306,6 +312,10 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	// URL (https://bucket.s3.region.amazonaws.com) for direct fetches, or to a proxy
 	// endpoint (https://api.example.com/public/media/file) when the bucket is private.
 	mediaProc := mediaProcessor.New(&deps.Store, fileStore, cfg.Storage.PublicURLBase, logger)
+	// Same presign hook as posts, for the /media list response.
+	if urlSigner != nil {
+		mediaProc.SetURLSigner(urlSigner)
+	}
 	deps.MediaHandler = mediaHandler.New(&mediaProc, logger)
 
 	// GitHub integration — the capture pipeline is fully async over Kafka:
@@ -348,7 +358,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.
-	draftGen := githubProcessor.NewDraftGenerator(&deps.Store, &contentProc, &postsProc, s3Head, logger)
+	draftGen := githubProcessor.NewDraftGenerator(&deps.Store, &contentProc, &postsProc, s3Head, cfg.S3.Bucket, logger)
 	draftGeneratorWorker := workers.NewDraftGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &draftGen, logger)
 
 	deps.WorkerManager = workers.NewManager(logger)
