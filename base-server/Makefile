@@ -1,5 +1,5 @@
 .PHONY: dev-up dev-down dev-test-unit dev-test-store dev-test-integration \
-       docker-up docker-down docker-test-unit docker-test-store docker-test-integration docker-test-all \
+       docker-up docker-down docker-test-unit docker-test-store docker-test-integration docker-test-db docker-test-all \
        docker-logs docker-clean help
 
 # =============================================================================
@@ -81,6 +81,17 @@ docker-test-integration:
 	@echo "Running integration tests in Docker..."
 	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
 		go test -v -race -tags=integration ./tests/...
+
+# CI: run store + integration tests in a single runner container.
+# One `go test` invocation; Go parallelizes the two packages. Saves the
+# container-startup overhead of a second `docker compose run` and lets Go
+# share the compiled std-lib / deps across both test binaries. The
+# `-tags=integration` flag is a no-op for the store package (no tagged files
+# there), so one call covers both.
+docker-test-db:
+	@echo "Running store + integration tests in Docker (single container)..."
+	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
+		go test -race -tags=integration ./internal/infra/store/... ./tests/...
 
 # Run all tests in isolated Docker environment
 docker-test-all:

@@ -35,9 +35,9 @@ jobs:
       run:
         working-directory: base-server
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.24'
           cache: true
@@ -55,53 +55,52 @@ jobs:
     defaults:
       run:
         working-directory: base-server
-    env:
-      DOCKER_BUILDKIT: 1
-      COMPOSE_DOCKER_CLI_BUILD: 1
-      BUILDKIT_INLINE_CACHE: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Cache the base images (postgres/flyway/kafka — stable) and the
-      # locally-built server + runner images (keyed on Dockerfile + go.sum).
-      - name: Cache Docker images
-        id: docker-cache
-        uses: actions/cache@v4
+      # Build the two locally-built images with buildx + GHA layer cache.
+      # `load: true` pushes them into the runner's Docker daemon so the
+      # subsequent `docker compose up` / `docker compose run` see them and
+      # skip the (now redundant) build step in docker-compose.test.yml.
+      #
+      # GHA layer cache replaces the old `docker save`/`docker load` tarball
+      # dance (which round-tripped ~GB of images through actions/cache on
+      # every run). Layer cache is granular: unchanged Dockerfile layers
+      # upload/download in milliseconds.
+      - name: Build test-server image
+        uses: docker/build-push-action@v6
         with:
-          path: /tmp/docker-cache
-          key: docker-${{ runner.os }}-${{ hashFiles('base-server/Dockerfile', 'base-server/Dockerfile.test', 'base-server/go.sum', 'base-server/docker-compose.test.yml') }}
-          restore-keys: |
-            docker-${{ runner.os }}-
+          context: base-server
+          file: base-server/Dockerfile
+          load: true
+          tags: base-server-test-server:ci
+          cache-from: type=gha,scope=test-server
+          cache-to: type=gha,mode=max,scope=test-server
 
-      - name: Load cached Docker images
-        run: |
-          if [ -d /tmp/docker-cache ]; then
-            for image in /tmp/docker-cache/*.tar; do
-              [ -f "$image" ] && docker load -i "$image" || true
-            done
-          fi
+      - name: Build test-runner image
+        uses: docker/build-push-action@v6
+        with:
+          context: base-server
+          file: base-server/Dockerfile.test
+          load: true
+          tags: base-server-test-runner:ci
+          cache-from: type=gha,scope=test-runner
+          cache-to: type=gha,mode=max,scope=test-runner
 
-      - name: Bring up full stack (db + kafka + flyway + server, one-shot)
-        run: make docker-up
+      # One-shot stack bring-up. `--wait server` lets compose handle the
+      # dependency graph (db+kafka start in parallel → flyway runs on healthy
+      # db → server waits for flyway completion + kafka health), replacing
+      # three sequential `docker compose up` calls.
+      - name: Bring up full stack
+        run: docker compose -f docker-compose.test.yml up -d --wait server
 
-      # Store tests first (lighter — doesn't talk to the server), then
-      # integration tests. Both share the same Postgres container.
-      - name: Store tests
-        run: make docker-test-store
-      - name: Integration tests
-        run: make docker-test-integration
-
-      - name: Save Docker images to cache
-        if: always()
-        run: |
-          mkdir -p /tmp/docker-cache
-          docker save postgres:15-alpine -o /tmp/docker-cache/postgres.tar || true
-          docker save flyway/flyway -o /tmp/docker-cache/flyway.tar || true
-          docker save confluentinc/cp-kafka:latest -o /tmp/docker-cache/kafka.tar || true
-          docker save base-server-test-server:ci -o /tmp/docker-cache/server.tar || true
-          docker save base-server-test-runner:ci -o /tmp/docker-cache/runner.tar || true
+      # Store + integration tests run in a single runner container. Go's
+      # package-level parallelism handles both test suites; `-tags=integration`
+      # is a no-op for store packages, so one `go test` invocation covers both.
+      - name: Store + Integration tests
+        run: make docker-test-db
 
       - name: Dump Docker logs on failure
         if: failure()
@@ -113,7 +112,7 @@ jobs:
     needs: [test-race, test-db]
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.DEPLOY_ROLE }}
@@ -130,13 +129,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-ecr
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.DEPLOY_ROLE }}
@@ -159,8 +158,13 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Share layer cache with the test-server build in test-db. Both use
+          # the same Dockerfile, so the production push reuses everything the
+          # test build already warmed up.
+          cache-from: |
+            type=gha,scope=test-server
+            type=gha,scope=prod-server
+          cache-to: type=gha,mode=max,scope=prod-server
 
   deploy-ecs:
     name: Deploy to protoapp
@@ -168,7 +172,7 @@ jobs:
     needs: docker-build-and-push
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.DEPLOY_ROLE }}
