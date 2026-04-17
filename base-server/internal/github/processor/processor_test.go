@@ -571,7 +571,7 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 		name    string
 		mocks   func(s *MockGitHubStore)
 		wantErr error
-		assert  func(t *testing.T, commits []store.GitHubCommit, total int)
+		assert  func(t *testing.T, commits []store.GitHubCommitSummary, total int)
 	}{
 		{
 			name: "happy path returns commits with total",
@@ -581,9 +581,9 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 				s.EXPECT().CountGitHubCommitsByConnection(gomock.Any(), connID).
 					Return(42, nil)
 				s.EXPECT().ListGitHubCommitsByConnection(gomock.Any(), connID, 10, 20).
-					Return([]store.GitHubCommit{{ID: uuid.New(), SHA: "abc123"}}, nil)
+					Return([]store.GitHubCommitSummary{{ID: uuid.New(), SHA: "abc123"}}, nil)
 			},
-			assert: func(t *testing.T, commits []store.GitHubCommit, total int) {
+			assert: func(t *testing.T, commits []store.GitHubCommitSummary, total int) {
 				require.Len(t, commits, 1)
 				assert.Equal(t, "abc123", commits[0].SHA)
 				assert.Equal(t, 42, total)
@@ -639,6 +639,190 @@ func TestGitHubProcessor_ListRecentCommits(t *testing.T) {
 			if tt.assert != nil {
 				tt.assert(t, commits, total)
 			}
+		})
+	}
+}
+
+func TestGitHubProcessor_GetCommit(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	userID := uuid.New()
+	commitID := uuid.New()
+
+	tests := []struct {
+		name    string
+		mocks   func(s *MockGitHubStore)
+		wantErr error
+		assert  func(t *testing.T, commit store.GitHubCommit)
+	}{
+		{
+			name: "happy path returns commit",
+			mocks: func(s *MockGitHubStore) {
+				s.EXPECT().GetGitHubCommitByIDForUser(gomock.Any(), userID, commitID).
+					Return(store.GitHubCommit{ID: commitID, SHA: "abc123"}, nil)
+			},
+			assert: func(t *testing.T, commit store.GitHubCommit) {
+				assert.Equal(t, commitID, commit.ID)
+				assert.Equal(t, "abc123", commit.SHA)
+			},
+		},
+		{
+			name: "not found maps to ErrCommitNotFound",
+			mocks: func(s *MockGitHubStore) {
+				s.EXPECT().GetGitHubCommitByIDForUser(gomock.Any(), userID, commitID).
+					Return(store.GitHubCommit{}, store.ErrNotFound)
+			},
+			wantErr: ErrCommitNotFound,
+		},
+		{
+			name: "generic store error maps to ErrFailedGetCommit",
+			mocks: func(s *MockGitHubStore) {
+				s.EXPECT().GetGitHubCommitByIDForUser(gomock.Any(), userID, commitID).
+					Return(store.GitHubCommit{}, errors.New("db error"))
+			},
+			wantErr: ErrFailedGetCommit,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mockStore := NewMockGitHubStore(ctrl)
+			tt.mocks(mockStore)
+
+			proc := New(mockStore, testWebhookSecret, logger)
+			got, err := proc.GetCommit(context.Background(), userID, commitID)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assert != nil {
+				tt.assert(t, got)
+			}
+		})
+	}
+}
+
+func TestGitHubProcessor_GetCommit_RewritesCaptureURLs(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	userID := uuid.New()
+	commitID := uuid.New()
+
+	captureOutput := func(t *testing.T, uploads []map[string]string) *json.RawMessage {
+		payload := map[string]any{
+			"commit":    "abc123",
+			"stepCount": 2,
+			"uploaded":  uploads,
+		}
+		raw, err := json.Marshal(payload)
+		require.NoError(t, err)
+		msg := json.RawMessage(raw)
+		return &msg
+	}
+
+	type uploadedGot struct {
+		Uploaded []struct {
+			Key string `json:"key"`
+			URL string `json:"url"`
+		} `json:"uploaded"`
+	}
+
+	tests := []struct {
+		name   string
+		output func(t *testing.T) *json.RawMessage
+		signer func(*MockURLSigner)
+		assert func(t *testing.T, commit store.GitHubCommit)
+	}{
+		{
+			name: "rewrites s3:// urls to presigned https urls",
+			output: func(t *testing.T) *json.RawMessage {
+				return captureOutput(t, []map[string]string{
+					{"key": "captures/abc/demo/step-01.png", "url": "s3://my-bucket/captures/abc/demo/step-01.png"},
+					{"key": "captures/abc/demo/recording.webm", "url": "s3://my-bucket/captures/abc/demo/recording.webm"},
+				})
+			},
+			signer: func(m *MockURLSigner) {
+				m.EXPECT().
+					PresignGetURL(gomock.Any(), "captures/abc/demo/step-01.png", presignTTL).
+					Return("https://presigned/step-01", nil)
+				m.EXPECT().
+					PresignGetURL(gomock.Any(), "captures/abc/demo/recording.webm", presignTTL).
+					Return("https://presigned/recording", nil)
+			},
+			assert: func(t *testing.T, commit store.GitHubCommit) {
+				require.NotNil(t, commit.CaptureOutput)
+				var got uploadedGot
+				require.NoError(t, json.Unmarshal(*commit.CaptureOutput, &got))
+				require.Len(t, got.Uploaded, 2)
+				assert.Equal(t, "https://presigned/step-01", got.Uploaded[0].URL)
+				assert.Equal(t, "https://presigned/recording", got.Uploaded[1].URL)
+			},
+		},
+		{
+			name: "leaves non-s3 urls untouched",
+			output: func(t *testing.T) *json.RawMessage {
+				return captureOutput(t, []map[string]string{
+					{"key": "captures/abc/demo/step-01.png", "url": "https://cdn.example.com/step-01.png"},
+				})
+			},
+			signer: func(_ *MockURLSigner) {},
+			assert: func(t *testing.T, commit store.GitHubCommit) {
+				require.NotNil(t, commit.CaptureOutput)
+				var got uploadedGot
+				require.NoError(t, json.Unmarshal(*commit.CaptureOutput, &got))
+				assert.Equal(t, "https://cdn.example.com/step-01.png", got.Uploaded[0].URL)
+			},
+		},
+		{
+			name: "presign error leaves original url intact",
+			output: func(t *testing.T) *json.RawMessage {
+				return captureOutput(t, []map[string]string{
+					{"key": "captures/abc/demo/step-01.png", "url": "s3://my-bucket/captures/abc/demo/step-01.png"},
+				})
+			},
+			signer: func(m *MockURLSigner) {
+				m.EXPECT().
+					PresignGetURL(gomock.Any(), "captures/abc/demo/step-01.png", presignTTL).
+					Return("", errors.New("boom"))
+			},
+			assert: func(t *testing.T, commit store.GitHubCommit) {
+				require.NotNil(t, commit.CaptureOutput)
+				var got uploadedGot
+				require.NoError(t, json.Unmarshal(*commit.CaptureOutput, &got))
+				assert.Equal(t, "s3://my-bucket/captures/abc/demo/step-01.png", got.Uploaded[0].URL)
+			},
+		},
+		{
+			name:   "nil capture_output is a no-op",
+			output: func(_ *testing.T) *json.RawMessage { return nil },
+			signer: func(_ *MockURLSigner) {},
+			assert: func(t *testing.T, commit store.GitHubCommit) {
+				assert.Nil(t, commit.CaptureOutput)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mockStore := NewMockGitHubStore(ctrl)
+			mockSigner := NewMockURLSigner(ctrl)
+			tt.signer(mockSigner)
+
+			mockStore.EXPECT().GetGitHubCommitByIDForUser(gomock.Any(), userID, commitID).
+				Return(store.GitHubCommit{ID: commitID, CaptureOutput: tt.output(t)}, nil)
+
+			proc := New(mockStore, testWebhookSecret, logger)
+			proc.SetURLSigner(mockSigner)
+
+			got, err := proc.GetCommit(context.Background(), userID, commitID)
+			require.NoError(t, err)
+			tt.assert(t, got)
 		})
 	}
 }

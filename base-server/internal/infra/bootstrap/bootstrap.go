@@ -157,14 +157,20 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// File storage client
 	var fileStore mediaProcessor.FileStore
+	// urlSigner is optional — only wired for S3 so GetCommit can presign
+	// capture artefacts for the browser. In localdir mode it stays nil and
+	// the github processor leaves capture URLs unchanged.
+	var urlSigner githubProcessor.URLSigner
 	switch cfg.Storage.Type {
 	case "s3":
-		fileStore = s3.NewClient(s3.S3Config{
+		s3Client := s3.NewClient(s3.S3Config{
 			Bucket:          cfg.S3.Bucket,
 			Region:          cfg.S3.Region,
 			AccessKeyID:     cfg.S3.AccessKeyID,
 			SecretAccessKey: cfg.S3.SecretAccessKey,
 		}, logger)
+		fileStore = s3Client
+		urlSigner = s3Client
 	default:
 		fileStore = localdir.NewClient(cfg.Storage.MediaDir, logger)
 	}
@@ -311,6 +317,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 		cfg.Services.WebAppURI,
 		logger,
 	)
+	githubProc.SetURLSigner(urlSigner)
 	deps.GitHubHandler = githubHandler.New(&githubProc, cfg.Services.WebAppURI, logger)
 
 	// Blog

@@ -72,8 +72,9 @@ type GitHubStore interface {
 	MarkGitHubCommitCaptureRequested(ctx context.Context, commitID uuid.UUID) (bool, error)
 	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
-	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommit, error)
+	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, error)
 	CountGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID) (int, error)
+	GetGitHubCommitByIDForUser(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error)
 }
 
 // GitHubClient defines the GitHub API calls required by GitHubProcessor
@@ -93,6 +94,18 @@ type EventPublisher interface {
 	Publish(ctx context.Context, topic, key string, payload any) error
 }
 
+// URLSigner turns a private storage key into a time-limited URL the browser
+// can fetch directly. The S3 client implements this via presigned GetObject;
+// bootstrap leaves it nil for local/dev storage.
+type URLSigner interface {
+	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
+}
+
+// presignTTL is how long the rewritten capture URLs stay valid. One hour is
+// plenty for a browsing session and short enough that a leaked URL from a log
+// doesn't hand out long-term access.
+const presignTTL = time.Hour
+
 var (
 	ErrInvalidSignature    = errors.New("invalid webhook signature")
 	ErrDuplicateEvent      = errors.New("duplicate webhook event")
@@ -102,6 +115,8 @@ var (
 	ErrRepoNotFound        = errors.New("github repo not found")
 	ErrRepoAlreadyLinked   = errors.New("github repo already linked")
 	ErrFailedDisconnect    = errors.New("failed to disconnect github")
+	ErrCommitNotFound      = errors.New("github commit not found")
+	ErrFailedGetCommit     = errors.New("failed to get github commit")
 )
 
 // oauthStateCache is a short-lived in-process store of state → userID.
@@ -115,6 +130,7 @@ type GitHubProcessor struct {
 	store         GitHubStore
 	githubClient  GitHubClient
 	publisher     EventPublisher
+	urlSigner     URLSigner
 	webhookSecret string
 	webAppHost    string
 	oauthClientID string
@@ -123,6 +139,13 @@ type GitHubProcessor struct {
 	// sync.noCopy and can't be copied).
 	oauthStates *sync.Map
 	logger      *observability.Logger
+}
+
+// SetURLSigner wires the presign dependency after construction so we don't
+// churn every existing New/NewWithOAuth callsite in tests. Pass nil to leave
+// capture URLs unrewritten (local/dev storage).
+func (p *GitHubProcessor) SetURLSigner(signer URLSigner) {
+	p.urlSigner = signer
 }
 
 func New(store GitHubStore, webhookSecret string, logger *observability.Logger) GitHubProcessor {
@@ -753,10 +776,31 @@ func (p *GitHubProcessor) DisconnectRepo(ctx context.Context, userID uuid.UUID, 
 	return nil
 }
 
+// GetCommit returns a single commit scoped to the requesting user's connection.
+// The store query filters on user_id so a mismatched owner reads as not-found.
+func (p *GitHubProcessor) GetCommit(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "user_id", Value: userID.String()},
+		observability.Field{Key: "commit_id", Value: commitID.String()},
+		observability.Field{Key: "operation", Value: "get_commit"},
+	)
+
+	commit, err := p.store.GetGitHubCommitByIDForUser(ctx, userID, commitID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return store.GitHubCommit{}, ErrCommitNotFound
+		}
+		p.logger.Error(ctx, "failed to get github commit", err)
+		return store.GitHubCommit{}, ErrFailedGetCommit
+	}
+	p.rewriteCaptureURLs(ctx, &commit)
+	return commit, nil
+}
+
 // ListRecentCommits returns a page of commits across all repos for a user's
 // connection along with the total row count so the UI can render full page
 // navigation.
-func (p *GitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommit, int, error) {
+func (p *GitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, int, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "user_id", Value: userID.String()},
 		observability.Field{Key: "operation", Value: "list_recent_commits"},
@@ -783,5 +827,76 @@ func (p *GitHubProcessor) ListRecentCommits(ctx context.Context, userID uuid.UUI
 		return nil, 0, ErrFailedDisconnect
 	}
 
+	// Summaries carry only a capture_artifact_count + capture_error; the full
+	// capture_output (and therefore url rewriting) is GetCommit's job.
 	return commits, total, nil
+}
+
+// captureOutputForRewrite mirrors the subset of capture_output we touch when
+// rewriting URLs. We read into this shape, swap the urls, and marshal back.
+type captureOutputForRewrite struct {
+	Commit     string                `json:"commit,omitempty"`
+	CaptureDir string                `json:"captureDir,omitempty"`
+	StepCount  int                   `json:"stepCount,omitempty"`
+	Uploaded   []captureUploadedItem `json:"uploaded,omitempty"`
+	Error      string                `json:"error,omitempty"`
+}
+
+type captureUploadedItem struct {
+	Key string `json:"key"`
+	URL string `json:"url,omitempty"`
+}
+
+// rewriteCaptureURLs replaces `s3://bucket/key` entries in the commit's
+// capture_output with presigned HTTPS URLs so the browser can fetch the
+// artefacts directly. Any failure to parse or presign is logged and the
+// original URL is left intact — a stale s3:// URL is no worse than dropping
+// the commit entirely.
+func (p *GitHubProcessor) rewriteCaptureURLs(ctx context.Context, commit *store.GitHubCommit) {
+	if p.urlSigner == nil || commit == nil || commit.CaptureOutput == nil {
+		return
+	}
+
+	var output captureOutputForRewrite
+	if err := json.Unmarshal(*commit.CaptureOutput, &output); err != nil {
+		p.logger.Error(ctx, "failed to decode capture_output for url rewrite", err)
+		return
+	}
+
+	changed := false
+	for i := range output.Uploaded {
+		item := &output.Uploaded[i]
+		if !strings.HasPrefix(item.URL, "s3://") {
+			continue
+		}
+		// s3://bucket/key → split on first "/" after the scheme prefix.
+		rest := strings.TrimPrefix(item.URL, "s3://")
+		slash := strings.IndexByte(rest, '/')
+		if slash < 0 {
+			continue
+		}
+		key := rest[slash+1:]
+		if key == "" {
+			continue
+		}
+		signed, err := p.urlSigner.PresignGetURL(ctx, key, presignTTL)
+		if err != nil {
+			p.logger.Error(ctx, "failed to presign capture url", err)
+			continue
+		}
+		item.URL = signed
+		changed = true
+	}
+
+	if !changed {
+		return
+	}
+
+	raw, err := json.Marshal(output)
+	if err != nil {
+		p.logger.Error(ctx, "failed to re-encode capture_output after url rewrite", err)
+		return
+	}
+	rawMsg := json.RawMessage(raw)
+	commit.CaptureOutput = &rawMsg
 }

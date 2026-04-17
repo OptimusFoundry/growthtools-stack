@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"base-server/internal/infra/observability"
 
@@ -22,9 +23,10 @@ type S3Config struct {
 
 // Client wraps the AWS S3 client.
 type Client struct {
-	config S3Config
-	s3     *awss3.Client
-	logger *observability.Logger
+	config    S3Config
+	s3        *awss3.Client
+	presigner *awss3.PresignClient
+	logger    *observability.Logger
 }
 
 // NewClient creates a new S3 Client. If creds are provided in config, they are used;
@@ -44,10 +46,12 @@ func NewClient(config S3Config, logger *observability.Logger) *Client {
 		logger.Error(context.Background(), "failed to load AWS config", err)
 	}
 
+	s3Client := awss3.NewFromConfig(awsCfg)
 	return &Client{
-		config: config,
-		s3:     awss3.NewFromConfig(awsCfg),
-		logger: logger,
+		config:    config,
+		s3:        s3Client,
+		presigner: awss3.NewPresignClient(s3Client),
+		logger:    logger,
 	}
 }
 
@@ -75,6 +79,27 @@ func (c *Client) DeleteFile(ctx context.Context, key string) error {
 		return fmt.Errorf("s3: DeleteObject failed: %w", err)
 	}
 	return nil
+}
+
+// PresignGetURL returns a time-limited HTTPS URL for a GetObject request,
+// letting the browser fetch a private S3 object directly without proxying
+// through the server.
+func (c *Client) PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	req, err := c.presigner.PresignGetObject(ctx, &awss3.GetObjectInput{
+		Bucket: &c.config.Bucket,
+		Key:    &key,
+	}, awss3.WithPresignExpires(ttl))
+	if err != nil {
+		return "", fmt.Errorf("s3: PresignGetObject failed: %w", err)
+	}
+	return req.URL, nil
+}
+
+// Bucket returns the bucket this client is configured against. Useful for
+// callers that need to verify an `s3://bucket/key` URL matches before
+// presigning.
+func (c *Client) Bucket() string {
+	return c.config.Bucket
 }
 
 // GetFile retrieves a file from S3 and returns a reader plus the content type.

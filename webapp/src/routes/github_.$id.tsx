@@ -9,12 +9,11 @@ import {
 	Image as ImageIcon,
 } from "lucide-react";
 import { memo, useMemo } from "react";
-import {
-	type GitHubCaptureUploaded,
-	type GitHubCommit,
-	useGitHubCommits,
+import { useGitHubCommit } from "@/hooks/useGitHubCommit";
+import type {
+	GitHubCaptureUploaded,
+	GitHubCommit,
 } from "@/hooks/useGitHubCommits";
-import { useGitHubConnection } from "@/hooks/useGitHubConnection";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Card } from "@/proto-design-system/components/layout/Card";
@@ -75,12 +74,9 @@ function bucketUploads(uploads: GitHubCaptureUploaded[]): BucketedUploads {
 
 function CommitDetailsPage() {
 	const { id } = Route.useParams();
-	const { connection, loading: connectionLoading } = useGitHubConnection();
-	const { commits, loading } = useGitHubCommits(!!connection, 200);
+	const { commit, loading } = useGitHubCommit(id);
 
-	const commit = useMemo(() => commits.find((c) => c.id === id), [commits, id]);
-
-	if (connectionLoading || (loading && commits.length === 0)) {
+	if (loading && !commit) {
 		return (
 			<Stack gap="lg" className={styles.page} animate>
 				<CommitBreadcrumb />
@@ -100,7 +96,7 @@ function CommitDetailsPage() {
 				<EmptyState
 					icon={<GitCommit size={48} />}
 					title="Commit not found"
-					description="This commit isn't in your recent activity — it may have scrolled off."
+					description="We couldn't find this commit — the link may be stale or belong to a disconnected repo."
 				/>
 			</Stack>
 		);

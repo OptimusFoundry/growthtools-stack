@@ -105,6 +105,21 @@ func (mr *MockGitHubStoreMockRecorder) CreateOrUpdateGitHubConnection(ctx, userI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdateGitHubConnection", reflect.TypeOf((*MockGitHubStore)(nil).CreateOrUpdateGitHubConnection), ctx, userID, githubUserID, username, token, scope)
 }
 
+// GetGitHubCommitByIDForUser mocks base method.
+func (m *MockGitHubStore) GetGitHubCommitByIDForUser(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitHubCommitByIDForUser", ctx, userID, commitID)
+	ret0, _ := ret[0].(store.GitHubCommit)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubCommitByIDForUser indicates an expected call of GetGitHubCommitByIDForUser.
+func (mr *MockGitHubStoreMockRecorder) GetGitHubCommitByIDForUser(ctx, userID, commitID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubCommitByIDForUser", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubCommitByIDForUser), ctx, userID, commitID)
+}
+
 // GetGitHubCommitByRepoSHA mocks base method.
 func (m *MockGitHubStore) GetGitHubCommitByRepoSHA(ctx context.Context, repoID uuid.UUID, sha string) (store.GitHubCommit, error) {
 	m.ctrl.T.Helper()
@@ -227,10 +242,10 @@ func (mr *MockGitHubStoreMockRecorder) InsertGitHubCommit(ctx, repoID, sha, auth
 }
 
 // ListGitHubCommitsByConnection mocks base method.
-func (m *MockGitHubStore) ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommit, error) {
+func (m *MockGitHubStore) ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListGitHubCommitsByConnection", ctx, connectionID, limit, offset)
-	ret0, _ := ret[0].([]store.GitHubCommit)
+	ret0, _ := ret[0].([]store.GitHubCommitSummary)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -534,4 +549,43 @@ func (m *MockEventPublisher) Publish(ctx context.Context, topic, key string, pay
 func (mr *MockEventPublisherMockRecorder) Publish(ctx, topic, key, payload any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockEventPublisher)(nil).Publish), ctx, topic, key, payload)
+}
+
+// MockURLSigner is a mock of URLSigner interface.
+type MockURLSigner struct {
+	ctrl     *gomock.Controller
+	recorder *MockURLSignerMockRecorder
+	isgomock struct{}
+}
+
+// MockURLSignerMockRecorder is the mock recorder for MockURLSigner.
+type MockURLSignerMockRecorder struct {
+	mock *MockURLSigner
+}
+
+// NewMockURLSigner creates a new mock instance.
+func NewMockURLSigner(ctrl *gomock.Controller) *MockURLSigner {
+	mock := &MockURLSigner{ctrl: ctrl}
+	mock.recorder = &MockURLSignerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockURLSigner) EXPECT() *MockURLSignerMockRecorder {
+	return m.recorder
+}
+
+// PresignGetURL mocks base method.
+func (m *MockURLSigner) PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresignGetURL", ctx, key, ttl)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresignGetURL indicates an expected call of PresignGetURL.
+func (mr *MockURLSignerMockRecorder) PresignGetURL(ctx, key, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresignGetURL", reflect.TypeOf((*MockURLSigner)(nil).PresignGetURL), ctx, key, ttl)
 }
