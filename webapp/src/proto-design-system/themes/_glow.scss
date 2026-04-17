@@ -79,10 +79,9 @@
   --color-info-bg: oklch(96% 0.05 260deg);
   --color-info-content: oklch(100% 0 0deg);
 
-  // Focus ring — thinner (2px vs neon's 3px) and lower alpha (0.3 vs 0.5)
-  // so the magenta glow around inputs reads as a hint rather than a halo.
+  // Focus ring — 1px hairline in magenta. Minimal, not a halo.
   --focus-ring-color: oklch(62% 0.3 330deg / 0.3);
-  --focus-ring-width: 2px;
+  --focus-ring-width: 1px;
 
   // Muted
   --color-muted: oklch(50% 0 0deg);
