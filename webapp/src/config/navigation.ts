@@ -51,6 +51,12 @@ export const navigationConfig: NavGroup[] = [
 				iconClass: "bar-chart-line",
 				allowedPersonas: ["admin", "marketing"],
 			},
+			{
+				label: "GitHub",
+				href: "/github",
+				iconClass: "git-commit-line",
+				allowedPersonas: ["admin", "marketing", "content_creator"],
+			},
 		],
 	},
 ];

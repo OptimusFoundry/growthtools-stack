@@ -14,6 +14,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as PostsRouteImport } from './routes/posts'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as MainRouteImport } from './routes/main'
+import { Route as GithubRouteImport } from './routes/github'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as BlogRouteImport } from './routes/blog'
@@ -54,6 +55,11 @@ const MediaRoute = MediaRouteImport.update({
 const MainRoute = MainRouteImport.update({
   id: '/main',
   path: '/main',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GithubRoute = GithubRouteImport.update({
+  id: '/github',
+  path: '/github',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
+  '/github': typeof GithubRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
+  '/github': typeof GithubRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
+  '/github': typeof GithubRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/calendar'
     | '/chat'
+    | '/github'
     | '/main'
     | '/media'
     | '/posts'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/calendar'
     | '/chat'
+    | '/github'
     | '/main'
     | '/media'
     | '/posts'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/calendar'
     | '/chat'
+    | '/github'
     | '/main'
     | '/media'
     | '/posts'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRoute
   CalendarRoute: typeof CalendarRoute
   ChatRoute: typeof ChatRoute
+  GithubRoute: typeof GithubRoute
   MainRoute: typeof MainRoute
   MediaRoute: typeof MediaRoute
   PostsRoute: typeof PostsRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/main'
       fullPath: '/main'
       preLoaderRoute: typeof MainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/github': {
+      id: '/github'
+      path: '/github'
+      fullPath: '/github'
+      preLoaderRoute: typeof GithubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -462,6 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRoute,
   CalendarRoute: CalendarRoute,
   ChatRoute: ChatRoute,
+  GithubRoute: GithubRoute,
   MainRoute: MainRoute,
   MediaRoute: MediaRoute,
   PostsRoute: PostsRoute,

@@ -4,6 +4,7 @@ import {
 	Calendar,
 	CreditCard,
 	Film,
+	GitCommit,
 	HelpCircle,
 	Image,
 	MessageSquare,
@@ -42,6 +43,7 @@ const iconMap: Record<string, React.ReactNode> = {
 	"film-line": <Film size={18} />,
 	"settings-line": <Settings size={18} />,
 	"bank-card-line": <CreditCard size={18} />,
+	"git-commit-line": <GitCommit size={18} />,
 };
 
 const getIcon = (iconClass?: string) => {

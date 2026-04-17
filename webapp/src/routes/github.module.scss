@@ -1,0 +1,169 @@
+.page {
+	padding: var(--space-5);
+}
+
+.loading {
+	min-height: var(--space-48);
+}
+
+// ─── Commit card ─────────────────────────────────────────────────────────────
+
+.commitCard {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-3);
+	padding: var(--space-4);
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-lg);
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
+
+	&:hover {
+		border-color: var(
+			--color-border-hover,
+			oklch(from var(--color-border) calc(l - 0.1) c h)
+		);
+		box-shadow: var(--shadow-sm);
+	}
+}
+
+.commitIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--space-9);
+	height: var(--space-9);
+	flex-shrink: 0;
+	border-radius: var(--radius-md);
+	background: oklch(from var(--color-info) l c h / 0.1);
+	color: var(--color-info);
+}
+
+.commitBody {
+	flex: 1;
+	min-width: 0;
+}
+
+.commitHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-3);
+}
+
+.commitMessage {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// ─── Meta row ────────────────────────────────────────────────────────────────
+
+.commitMeta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	font-size: var(--font-size-xs);
+	color: var(--color-muted);
+}
+
+.metaItem {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.metaLink {
+	display: inline-flex;
+	align-items: center;
+	color: var(--color-muted);
+	transition: color 0.15s ease;
+
+	&:hover {
+		color: var(--color-base-content);
+	}
+}
+
+.sha {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	background: var(--color-base-100);
+	padding: 0 var(--space-1);
+	border-radius: var(--radius-sm);
+}
+
+// ─── Media ───────────────────────────────────────────────────────────────────
+
+.mediaGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: var(--space-2);
+}
+
+.mediaThumb {
+	display: block;
+	aspect-ratio: 16 / 10;
+	overflow: hidden;
+	border-radius: var(--radius-md);
+	background: var(--color-base-100);
+	border: 1px solid var(--color-border);
+	transition: border-color 0.15s ease;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	&:hover {
+		border-color: var(
+			--color-border-hover,
+			oklch(from var(--color-border) calc(l - 0.1) c h)
+		);
+	}
+}
+
+.mediaList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.mediaFile {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	padding: var(--space-1) var(--space-2);
+	font-size: var(--font-size-xs);
+	color: var(--color-base-content);
+	background: var(--color-base-100);
+	border-radius: var(--radius-md);
+	text-decoration: none;
+	transition: background 0.15s ease;
+
+	&:hover {
+		background: var(--color-base-200, var(--color-surface));
+	}
+}
+
+// ─── Spinner ─────────────────────────────────────────────────────────────────
+
+.spin {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}

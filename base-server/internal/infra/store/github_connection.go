@@ -56,6 +56,10 @@ type GitHubCommit struct {
 	CaptureOutput *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
 	ProcessedAt   *time.Time       `db:"processed_at" json:"processed_at,omitempty"`
 	CreatedAt     time.Time        `db:"created_at" json:"created_at"`
+	// Repo context — populated by ListGitHubCommitsByConnection so the UI can
+	// group / label without a second round-trip.
+	RepoOwner *string `db:"repo_owner" json:"repo_owner,omitempty"`
+	RepoName  *string `db:"repo_name" json:"repo_name,omitempty"`
 }
 
 // ============================================================================
@@ -404,7 +408,8 @@ func (s *Store) UpdateGitHubCommitPostID(ctx context.Context, commitID, postID u
 }
 
 const sqlListGitHubCommitsByConnection = `
-SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.processed_at, gc.created_at
+SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id, gc.capture_output, gc.processed_at, gc.created_at,
+       gr.owner AS repo_owner, gr.name AS repo_name
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id
 WHERE gr.connection_id = $1 AND gr.deleted_at IS NULL

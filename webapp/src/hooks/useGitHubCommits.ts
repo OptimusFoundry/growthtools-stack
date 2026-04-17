@@ -2,6 +2,21 @@ import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
 import { getErrorMessage, isAbortError } from "@/utils";
 
+export interface GitHubCaptureUploaded {
+	key: string;
+	url?: string | null;
+}
+
+export interface GitHubCaptureOutput {
+	// Success payload
+	commit?: string;
+	captureDir?: string;
+	stepCount?: number;
+	uploaded?: GitHubCaptureUploaded[];
+	// Error payload (we stash { error } on failure)
+	error?: string;
+}
+
 export interface GitHubCommit {
 	id: string;
 	repo_id: string;
@@ -13,6 +28,11 @@ export interface GitHubCommit {
 	commit_url?: string;
 	pushed_at: string;
 	created_at: string;
+	post_id?: string;
+	capture_output?: GitHubCaptureOutput;
+	processed_at?: string;
+	repo_owner?: string;
+	repo_name?: string;
 }
 
 export const useGitHubCommits = (enabled: boolean, limit = 10) => {
