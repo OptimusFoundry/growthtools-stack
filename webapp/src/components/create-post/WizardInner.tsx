@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
@@ -13,7 +14,6 @@ import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import { ComposeStep } from "./ComposeStep";
 import styles from "./CreatePostWizard.module.scss";
@@ -334,24 +334,43 @@ export function WizardInner({
 		}
 	}, [editPostId, navigate, addBanner]);
 
+	const eyebrowLabel = !isEditMode
+		? "Composer · new post"
+		: postStatus === "draft"
+			? "Composer · edit draft"
+			: `Composer · ${postStatus}`;
+
+	const titleFragment: ReactNode = !isEditMode ? (
+		<>
+			A new <em>thought</em>, five platforms.
+		</>
+	) : postStatus === "draft" ? (
+		<>
+			Sharpen the <em>draft</em> before it ships.
+		</>
+	) : (
+		<>
+			<em>Shipped.</em> Here's how it landed.
+		</>
+	);
+
+	const subLine = !isEditMode
+		? "Write the idea once — AI adapts it for each platform and keeps the voice consistent."
+		: postStatus === "draft"
+			? "Update your post content and platform adaptations. Changes save automatically as you type."
+			: "View your published post and see how each platform rendered it.";
+
 	return (
 		<div className={styles.page}>
-			<Stack gap="xs">
-				<Text as="h1" size="xl" weight="semibold">
-					{!isEditMode
-						? "Create Post"
-						: postStatus === "draft"
-							? "Edit Post"
-							: "Post Details"}
-				</Text>
-				<Text size="sm" color="secondary">
-					{!isEditMode
-						? "Write a blurb and let AI adapt it for each platform"
-						: postStatus === "draft"
-							? "Update your post content and platform adaptations"
-							: "View your published post and platform statuses"}
-				</Text>
-			</Stack>
+			<header className={styles.header}>
+				<div className={styles.headerInner}>
+					<div>
+						<div className={styles.eyebrow}>{eyebrowLabel}</div>
+						<h1 className={styles.title}>{titleFragment}</h1>
+						<p className={styles.sub}>{subLine}</p>
+					</div>
+				</div>
+			</header>
 
 			{state.error && <Alert variant="error">{state.error}</Alert>}
 
