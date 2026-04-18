@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { toMediaItem } from "@/api/transforms/media";
 import type { ApiMediaItem } from "@/api/types/media";
 import type { MediaItem } from "@/types/media";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useUploadMedia = () => {
 	const [loading, setLoading] = useState<boolean>(false);

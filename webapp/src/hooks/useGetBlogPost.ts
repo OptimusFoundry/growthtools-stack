@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toBlogPost } from "@/api/transforms/blog";
 import type { ApiBlogPost } from "@/api/types/blog";
 import type { BlogPost } from "@/types/blog";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export const useGetBlogPost = (id: string | undefined) => {
 	const [blogPost, setBlogPost] = useState<BlogPost | null>(null);

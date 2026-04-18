@@ -4,7 +4,7 @@
  * Centralized HTTP client for all API calls
  */
 
-import { isAbortError, isApiError } from "@/utils";
+import { isAbortError } from "@/utils/errorHandler"; import { isApiError } from "@/utils/typeGuards";
 import type { ApiError } from "./types/common";
 
 interface FetcherOptions extends RequestInit {

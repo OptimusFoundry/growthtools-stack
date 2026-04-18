@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toPost } from "@/api/transforms/post";
 import type { ApiPost } from "@/api/types/post";
 import type { CreatePostRequest, Post } from "@/types/post";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useCreatePost = () => {
 	const [loading, setLoading] = useState<boolean>(false);

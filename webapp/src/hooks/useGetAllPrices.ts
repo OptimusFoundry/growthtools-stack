@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { type ApiPrice, fetcher, toUiPrices } from "@/api";
+import { fetcher } from "@/api/client"; import type { ApiPrice } from "@/api/types/billing"; import { toUiPrices } from "@/api/transforms/billing";
 import type { Price } from "@/types/billing";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export const useGetAllPrices = () => {
 	const [prices, setPrices] = useState<Price[]>();

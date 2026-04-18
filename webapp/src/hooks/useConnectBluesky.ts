@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { fetcher } from "@/api/client";
 import type { PlatformConnection } from "@/types/platform";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useConnectBluesky = () => {
 	const [loading, setLoading] = useState<boolean>(false);

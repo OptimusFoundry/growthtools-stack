@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export interface GitHubAvailableRepo {
 	id: number;

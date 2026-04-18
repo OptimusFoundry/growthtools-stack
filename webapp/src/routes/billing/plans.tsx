@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
-import { fetcher } from "@/api";
+import { fetcher } from "@/api/client";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
 import { Banner } from "@/proto-design-system/components/feedback/Banner";

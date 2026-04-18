@@ -6,7 +6,7 @@ import type { ApiMediaItem } from "@/api/types/media";
 import type { ApiPlatformPost, ApiPost } from "@/api/types/post";
 import type { MediaItem } from "@/types/media";
 import type { PlatformPost, Post } from "@/types/post";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 interface PostDetailsResponse {
 	post: ApiPost;
