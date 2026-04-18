@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import "highlight.js/styles/github.css";
-import { Edit, Globe, Trash2, X } from "lucide-react";
+import { BookOpen, Edit, Globe, Trash2, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -16,7 +16,9 @@ import { useGetBlogPost } from "@/hooks/useGetBlogPost";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
@@ -194,6 +196,14 @@ function EditBlogEditor({ id }: { id: string }) {
 				animate={{ opacity: 1 }}
 				transition={{ duration: 0.3 }}
 			>
+				<Breadcrumb
+					size="lg"
+					items={[
+						{ label: "Blog", href: "/blog", icon: <BookOpen size={18} /> },
+						{ label: "Edit Post" },
+					]}
+				/>
+				<Divider />
 				<Stack gap="md">
 					<Stack direction="row" justify="between" align="center" wrap>
 						<Stack gap="xs">
@@ -230,6 +240,14 @@ function EditBlogEditor({ id }: { id: string }) {
 			animate={{ opacity: 1 }}
 			transition={{ duration: 0.4 }}
 		>
+			<Breadcrumb
+				size="lg"
+				items={[
+					{ label: "Blog", href: "/blog", icon: <BookOpen size={18} /> },
+					{ label: blogPost.title },
+				]}
+			/>
+			<Divider />
 			<Stack gap="md">
 				<Stack direction="row" justify="between" align="start" wrap>
 					<Stack gap="xs">
