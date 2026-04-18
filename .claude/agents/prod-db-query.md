@@ -54,7 +54,7 @@ If the aws ec2 describe-instances command returns an error (not empty — an act
 Use local port 15432 to avoid conflicting with any local PostgreSQL.
 
 ```
-timeout 10 aws ssm start-session \
+aws ssm start-session \
   --target "$INSTANCE_ID" \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
   --parameters "host=$RDS_HOST,portNumber=5432,localPortNumber=15432" &
@@ -62,7 +62,7 @@ SSM_PID=$!
 sleep 4
 ```
 
-If the tunnel process exits within the sleep window (check with `kill -0 $SSM_PID 2>/dev/null || echo 'tunnel exited early'`), report 'SSM tunnel failed to start' and stop.
+If the tunnel process fails to start, kill it and report the error. The tunnel will stay alive until killed in Step 6.
 
 ## Step 3b: Verify the tunnel is working
 
@@ -92,16 +92,20 @@ If the query has no LIMIT clause, append LIMIT 50 before running.
 
 ## Step 5: Run the query
 
-The SQL query will be provided to you in the coordinator's prompt. Extract it, validate it (Step 4), then substitute it below in place of $SQL_QUERY.
+The SQL query will be provided to you in the coordinator's prompt. Extract it, validate it (Step 4), then write it to a temp file and run it via psql:
 
 ```
-PGPASSWORD="$DB_PASS" psql \
+echo "$SQL_QUERY" > /tmp/prod_debug_query.sql
+PGPASSWORD="$DB_PASS" timeout 30 psql \
   --host=127.0.0.1 \
   --port=15432 \
   --username="$DB_USER" \
   --dbname="$DB_NAME" \
-  --command="$SQL_QUERY"
+  -f /tmp/prod_debug_query.sql
+rm -f /tmp/prod_debug_query.sql
 ```
+
+The `timeout 30` protects against slow queries. The temp file avoids shell quoting issues with multi-line SQL.
 
 ## Step 6: Kill the tunnel
 
