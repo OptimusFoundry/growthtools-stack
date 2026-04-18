@@ -25,15 +25,15 @@
   .item {
     justify-content: center;
     padding: var(--space-2);
-    width: var(--space-10);
-    height: var(--space-10);
+    width: var(--space-7);
+    height: var(--space-7);
   }
 
   .groupButton {
     justify-content: center;
     padding: var(--space-2);
-    width: var(--space-10);
-    height: var(--space-10);
+    width: var(--space-7);
+    height: var(--space-7);
   }
 
   .sectionItems {
@@ -127,13 +127,13 @@
     }
 
     .item {
-      width: var(--space-9);
-      height: var(--space-9);
+      width: var(--space-6);
+      height: var(--space-6);
     }
 
     .groupButton {
-      width: var(--space-9);
-      height: var(--space-9);
+      width: var(--space-6);
+      height: var(--space-6);
     }
   }
 }
