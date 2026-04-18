@@ -19,21 +19,33 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// expectImagesFetchedAndAllSelected sets up mock expectations for the S3
-// fetch + AI-selection step when every supplied image key should pass
-// through unchanged. Keys are handled in order.
-func expectImagesFetchedAndAllSelected(f *MockS3Fetcher, c *MockContentGenerator, keys ...string) {
-	for _, key := range keys {
+// expectMediaAssessedKeepAll sets up mock expectations for the
+// fetch-media + AI-assessment step that happens before generation. It
+// fetches the video (if videoKey != "") plus every image, then returns a
+// decision that keeps everything in thread mode with 3 parts — the
+// closest behavioural equivalent to the old "select all images" helper.
+func expectMediaAssessedKeepAll(f *MockS3Fetcher, c *MockContentGenerator, videoKey string, imageKeys ...string) {
+	if videoKey != "" {
+		body := io.NopCloser(bytes.NewReader([]byte("fake-video-bytes")))
+		f.EXPECT().GetFile(gomock.Any(), videoKey).Return(body, "video/mp4", nil)
+	}
+	for _, key := range imageKeys {
 		body := io.NopCloser(bytes.NewReader([]byte("fake-image-bytes")))
 		f.EXPECT().GetFile(gomock.Any(), key).Return(body, "image/png", nil)
 	}
-	selection := make([]int, len(keys))
-	for i := range keys {
-		selection[i] = i + 1
+	indexes := make([]int, len(imageKeys))
+	for i := range imageKeys {
+		indexes[i] = i + 1
 	}
 	c.EXPECT().
-		SelectMeaningfulImages(gomock.Any(), gomock.Len(len(keys))).
-		Return(selection, nil)
+		SelectMediaAndMode(gomock.Any(), gomock.Any(), gomock.Len(len(imageKeys)), gomock.Any()).
+		Return(contentProc.MediaAndModeDecision{
+			UseVideo:     videoKey != "",
+			ImageIndexes: indexes,
+			Mode:         "thread",
+			ThreadParts:  3,
+			Reason:       "test fixture keeps everything",
+		}, nil)
 }
 
 // newDraftFixture returns a commit fixture with a single video + two images
@@ -91,7 +103,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 
 				// The draft generator fetches each candidate image and asks
 				// the AI which ones matter. Here we keep both.
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 
 				// HEAD one video + the two selected images.
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/demo.mp4").Return(int64(5_000_000), "video/mp4", nil)
@@ -105,8 +117,8 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: image1MediaID}, nil)
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: image2MediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Eq([]string{"x", "bluesky", "threads"}), gomock.Eq(defaultMaxThreadParts), gomock.Any()).
-					DoAndReturn(func(_ context.Context, _ uuid.UUID, _ string, platforms []string, _ int, _ any) (string, map[string]contentProc.ThreadWithMediaPlanResult, error) {
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Eq([]string{"x", "bluesky", "threads"}), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ uuid.UUID, _ string, platforms []string, _ any) (string, map[string]contentProc.ThreadWithMediaPlanResult, error) {
 						results := make(map[string]contentProc.ThreadWithMediaPlanResult, len(platforms))
 						for _, pl := range platforms {
 							results[pl] = contentProc.ThreadWithMediaPlanResult{
@@ -209,10 +221,10 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "video/mp4", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("", nil, errors.New("claude is down"))
 			},
 			wantErr: ErrDraftGenerationFailed,
@@ -225,10 +237,10 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -260,7 +272,10 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 					{Platform: "x", Status: "active"},
 				}, nil)
 
-				// Every image gets fetched; AI returns a subset.
+				// Video + every image gets fetched; assessor keeps video and
+				// a subset of images (1 and 3, dropping redundant 2 and 4).
+				videoBody := io.NopCloser(bytes.NewReader([]byte("video")))
+				f.EXPECT().GetFile(gomock.Any(), "captures/abc/demo.mp4").Return(videoBody, "video/mp4", nil)
 				for _, key := range []string{
 					"captures/abc/step-1.png",
 					"captures/abc/step-2.png",
@@ -270,7 +285,14 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 					body := io.NopCloser(bytes.NewReader([]byte("fake")))
 					f.EXPECT().GetFile(gomock.Any(), key).Return(body, "image/png", nil)
 				}
-				c.EXPECT().SelectMeaningfulImages(gomock.Any(), gomock.Len(4)).Return([]int{1, 3}, nil)
+				c.EXPECT().SelectMediaAndMode(gomock.Any(), gomock.Any(), gomock.Len(4), gomock.Any()).
+					Return(contentProc.MediaAndModeDecision{
+						UseVideo:     true,
+						ImageIndexes: []int{1, 3},
+						Mode:         "thread",
+						ThreadParts:  3,
+						Reason:       "video + two key screenshots tell the story",
+					}, nil)
 
 				// Only the video + the two AI-selected images should be
 				// materialized and attached to the post.
@@ -290,7 +312,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 					return p.S3Key == "captures/abc/step-3.png"
 				})).Return(store.Media{ID: img3ID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {
 							Content: "one\ntwo\nthree",
@@ -322,7 +344,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 			},
 		},
 		{
-			name: "image-selection failure falls back to keeping every image",
+			name: "media-assessment failure falls back to keeping all media in thread mode",
 			mocks: func(t *testing.T, s *MockDraftStore, c *MockContentGenerator, p *MockPostsDrafter, h *MockS3HeadClient, f *MockS3Fetcher) {
 				commit, accountID := newDraftFixture(t)
 				s.EXPECT().GetGitHubCommitForDraft(gomock.Any(), gomock.Any()).Return(commit, nil)
@@ -330,17 +352,21 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 					{Platform: "x", Status: "active"},
 				}, nil)
 
+				// Video + images fetched; assessor call errors — fallback
+				// keeps everything.
+				videoBody := io.NopCloser(bytes.NewReader([]byte("video")))
+				f.EXPECT().GetFile(gomock.Any(), "captures/abc/demo.mp4").Return(videoBody, "video/mp4", nil)
 				for _, key := range []string{"captures/abc/step-1.png", "captures/abc/step-2.jpg"} {
 					body := io.NopCloser(bytes.NewReader([]byte("fake")))
 					f.EXPECT().GetFile(gomock.Any(), key).Return(body, "image/png", nil)
 				}
-				// AI call errors — fallback keeps every image.
-				c.EXPECT().SelectMeaningfulImages(gomock.Any(), gomock.Any()).Return(nil, errors.New("anthropic 500"))
+				c.EXPECT().SelectMediaAndMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(contentProc.MediaAndModeDecision{}, errors.New("provider 500"))
 
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(1), "", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).Times(3)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -362,7 +388,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "one\ntwo", Segments: []contentProc.ThreadSegment{{Content: "one"}, {Content: "two"}}},
 					}, nil)
@@ -435,7 +461,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				// Video HEAD succeeds.
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/demo.mp4").Return(int64(1_000), "video/mp4", nil)
 				// Video CreateMedia succeeds.
@@ -455,10 +481,10 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "video/mp4", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -501,7 +527,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png", "captures/abc/step-2.jpg")
+				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 
 				// Only the two images should be created (video listed after images but still picked up as video).
 				// bucketArtifacts puts images first, then skips the video (already assigned).
@@ -519,7 +545,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				img2MediaID := uuid.New()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: img2MediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -553,7 +579,8 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				expectImagesFetchedAndAllSelected(f, c, "captures/abc/step-1.png")
+				// Single-image fixture — no video, just one image assessed.
+				expectMediaAssessedKeepAll(f, c, "", "captures/abc/step-1.png")
 
 				// HeadObject fails — should fall back to extension-derived content-type.
 				h.EXPECT().HeadObject(gomock.Any(), "captures/abc/step-1.png").Return(int64(0), "", errors.New("s3 403"))
@@ -564,7 +591,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 					return p.ContentType == "image/png" && p.SizeBytes == 0
 				})).Return(store.Media{ID: mediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -597,7 +624,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 					return p.ContentType == "image/png" && p.SizeBytes == 0
 				})).Return(store.Media{ID: mediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)

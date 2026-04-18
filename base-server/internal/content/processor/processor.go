@@ -22,13 +22,13 @@ import (
 )
 
 var (
-	ErrGeneratePost   = errors.New("failed to generate post")
-	ErrAdaptContent   = errors.New("failed to adapt content")
-	ErrGenerateThread = errors.New("failed to generate thread")
-	ErrVoiceProfile   = errors.New("failed to get voice profile")
-	ErrStreamGenerate = errors.New("failed to stream generate and adapt")
-	ErrSelectImages   = errors.New("failed to select meaningful images")
-	ErrClassifyCommit = errors.New("failed to classify commit")
+	ErrGeneratePost     = errors.New("failed to generate post")
+	ErrAdaptContent     = errors.New("failed to adapt content")
+	ErrGenerateThread   = errors.New("failed to generate thread")
+	ErrVoiceProfile     = errors.New("failed to get voice profile")
+	ErrStreamGenerate   = errors.New("failed to stream generate and adapt")
+	ErrSelectMediaAndMode = errors.New("failed to select media and mode")
+	ErrClassifyCommit   = errors.New("failed to classify commit")
 )
 
 // ContentStore defines the database operations required by ContentProcessor.
@@ -465,69 +465,141 @@ Rules:
 	return CommitVerdict{Worthwhile: parsed.Worthwhile, Reason: parsed.Reason}, nil
 }
 
-// SelectMeaningfulImages picks the subset of supplied images worth including
-// in a social post. Capture workers emit one frame per UI step, so the raw
-// set usually contains redundant shots (loading states, mid-transitions,
-// near-duplicate screens). This uses a multimodal AI call to keep only the
-// images that add distinct visual context and returns the chosen 1-based
-// indexes in ascending order. An empty slice means "no image is worth
-// attaching".
-func (p *ContentProcessor) SelectMeaningfulImages(ctx context.Context, images []aiclient.ImageData) ([]int, error) {
-	if len(images) == 0 {
-		return nil, nil
-	}
+// MediaAndModeDecision is the AI's call on what to attach to a generated
+// draft and whether it should be a single post or a thread.
+//
+// UseVideo is true only when the model actually watched the video and judged
+// it worth showing. ImageIndexes lists the 1-based positions of images (from
+// the input order) to keep — empty means no image adds enough to be worth
+// attaching. Mode is either "single" or "thread"; when "thread", ThreadParts
+// holds the part count the model asked for. Reason is a one-sentence
+// explanation logged on both sides of the decision for auditability.
+type MediaAndModeDecision struct {
+	UseVideo     bool
+	ImageIndexes []int
+	Mode         string
+	ThreadParts  int
+	Reason       string
+}
 
+// SelectMediaAndMode is a single multimodal call that evaluates a candidate
+// video + candidate images captured during a user's app session and returns
+// a verdict on (a) what's worth attaching and (b) whether the resulting post
+// should be a single post or a thread.
+//
+// The prompt leans toward video: a strong video almost always outperforms a
+// grid of screenshots, so the model only picks images when they genuinely
+// add information the video doesn't. Mode is biased toward "single" unless
+// there's enough substance + media to pace across multiple parts.
+//
+// Callers treat errors as fail-open — if this call fails, they should fall
+// back to attaching everything and defaulting to thread mode.
+func (p *ContentProcessor) SelectMediaAndMode(
+	ctx context.Context,
+	video *aiclient.ImageData,
+	images []aiclient.ImageData,
+	commitMessage string,
+) (MediaAndModeDecision, error) {
 	ctx = observability.WithFields(ctx,
-		observability.Field{Key: "operation", Value: "select_meaningful_images"},
-		observability.Field{Key: "candidate_count", Value: fmt.Sprintf("%d", len(images))},
+		observability.Field{Key: "operation", Value: "select_media_and_mode"},
+		observability.Field{Key: "has_video", Value: fmt.Sprintf("%t", video != nil)},
+		observability.Field{Key: "image_candidate_count", Value: fmt.Sprintf("%d", len(images))},
 	)
 
-	systemPrompt := `You are a visual editor for social media. You are reviewing a sequence of screenshots captured while someone was using a product. The sequence contains redundant frames — loading states, mid-transitions, duplicate views, screens that do not add new information. Your job is to keep only the frames that are genuinely worth showing to an audience.
+	systemPrompt := `You are the visual + editorial director for a solo founder's social posts. You are reviewing the raw media captured while they used their own product after a recent code change, and deciding two things:
 
-Return raw JSON (no markdown fences, no commentary) of the form:
-{"selected": [1, 3]}
+1. Which pieces of media are worth attaching.
+2. Whether the post should be a single post or a thread.
 
-Rules:
-- Indexes are 1-based, referring to the order the images were given.
-- Err on the side of fewer — one or two strong frames usually beats five weak ones.
-- Skip frames that repeat a state already shown by an earlier selected frame.
-- Skip loading spinners, empty mid-animation states, blurred frames.
-- Prefer frames that show a distinct, finished UI state, an important result, or a visual highlight.
-- If every frame is redundant or uninteresting, return {"selected": []}.
-- Return indexes in ascending order, no duplicates.`
+You will receive:
+- An optional short video clip of the app in action (MIME type tells you it's a video).
+- Zero or more screenshots, each labelled by 1-based index in the order provided.
+- The commit message describing the change.
 
-	parts := make([]string, 0, len(images))
-	msgImages := make([]aiclient.ImageData, 0, len(images))
-	for i, img := range images {
-		parts = append(parts, fmt.Sprintf("Image %d:", i+1))
-		msgImages = append(msgImages, img)
+Return raw JSON only (no markdown fences, no commentary):
+{
+  "use_video": true|false,
+  "image_indexes": [1, 3],
+  "mode": "single"|"thread",
+  "thread_parts": 0,
+  "reason": "one short sentence"
+}
+
+Media rules (lean toward video):
+- Video drives engagement far more than screenshots. If the video exists, watch it. If it actually shows the change in action — a working UI, a transition, a demo moment — use_video MUST be true, and you should generally drop images unless a screenshot reveals something the video does not (e.g. a static final-state detail or a result screen the video cuts away from).
+- If the video is broken, stuck on a loading state, mostly blank, or fails to show the change, set use_video=false.
+- Prefer fewer images. One or two strong static shots beats a reel of near-duplicates. Skip loading spinners, mid-animation frames, redundant views.
+- If neither video nor any image adds real value, use_video=false and image_indexes=[] are both valid answers. Better no media than bad media.
+
+Mode rules:
+- "single" when the change is small, the media is one strong video or one strong screenshot, or the commit message does not carry enough substance for multiple beats.
+- "thread" when there is enough to say across multiple posts AND there is enough media (or enough narrative) to pace it. Threads with one media item and thin copy feel padded — prefer single in that case.
+- When mode="thread", thread_parts is an integer 2–7. Do not exceed 7. When mode="single", thread_parts MUST be 0.
+
+General:
+- image_indexes are 1-based into the order provided. Ascending, no duplicates.
+- Keep reason concrete: "video demos the new editor cleanly; screenshots redundant" beats "media is good".`
+
+	parts := make([]string, 0, 2+len(images))
+	parts = append(parts, fmt.Sprintf("Commit message:\n%s", strings.TrimSpace(commitMessage)))
+	attached := make([]aiclient.ImageData, 0, 1+len(images))
+	if video != nil {
+		parts = append(parts, "Candidate video (next attachment).")
+		attached = append(attached, *video)
+	} else {
+		parts = append(parts, "No candidate video was captured.")
+	}
+	for i := range images {
+		parts = append(parts, fmt.Sprintf("Candidate image %d (next attachment):", i+1))
+		attached = append(attached, images[i])
 	}
 	messages := []aiclient.Message{
 		{
 			Role:    "user",
-			Content: "Here are the candidate frames, labelled in order:\n" + strings.Join(parts, "\n"),
-			Images:  msgImages,
+			Content: strings.Join(parts, "\n\n"),
+			Images:  attached,
 		},
 	}
 
-	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, messages, 512)
+	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, messages, 1024)
 	if err != nil {
-		p.logger.Error(ctx, "failed to select meaningful images via ai", err)
-		return nil, ErrSelectImages
+		p.logger.Error(ctx, "failed to select media and mode via ai", err)
+		return MediaAndModeDecision{}, ErrSelectMediaAndMode
 	}
 
 	var parsed struct {
-		Selected []int `json:"selected"`
+		UseVideo     bool   `json:"use_video"`
+		ImageIndexes []int  `json:"image_indexes"`
+		Mode         string `json:"mode"`
+		ThreadParts  int    `json:"thread_parts"`
+		Reason       string `json:"reason"`
 	}
 	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &parsed); err != nil {
-		p.logger.Error(ctx, "failed to parse image selection response", err)
-		return nil, ErrSelectImages
+		p.logger.Error(ctx, "failed to parse media/mode selection response", err)
+		return MediaAndModeDecision{}, ErrSelectMediaAndMode
 	}
 
-	// Sanitize: drop out-of-range and duplicate indexes, sort ascending.
-	seen := make(map[int]struct{}, len(parsed.Selected))
-	cleaned := make([]int, 0, len(parsed.Selected))
-	for _, idx := range parsed.Selected {
+	decision := MediaAndModeDecision{
+		UseVideo: parsed.UseVideo && video != nil, // clamp: can't use a video we don't have
+		Mode:     strings.ToLower(strings.TrimSpace(parsed.Mode)),
+		Reason:   strings.TrimSpace(parsed.Reason),
+	}
+	if decision.Mode != "thread" {
+		decision.Mode = "single"
+		decision.ThreadParts = 0
+	} else {
+		decision.ThreadParts = parsed.ThreadParts
+		if decision.ThreadParts < 2 {
+			decision.ThreadParts = 2
+		}
+		if decision.ThreadParts > 7 {
+			decision.ThreadParts = 7
+		}
+	}
+
+	seen := make(map[int]struct{}, len(parsed.ImageIndexes))
+	cleaned := make([]int, 0, len(parsed.ImageIndexes))
+	for _, idx := range parsed.ImageIndexes {
 		if idx < 1 || idx > len(images) {
 			continue
 		}
@@ -537,13 +609,14 @@ Rules:
 		seen[idx] = struct{}{}
 		cleaned = append(cleaned, idx)
 	}
-	// Ascending order for caller sanity.
 	for i := 1; i < len(cleaned); i++ {
 		for j := i; j > 0 && cleaned[j-1] > cleaned[j]; j-- {
 			cleaned[j-1], cleaned[j] = cleaned[j], cleaned[j-1]
 		}
 	}
-	return cleaned, nil
+	decision.ImageIndexes = cleaned
+
+	return decision, nil
 }
 
 // ThreadWithMediaPlanResult holds the generated output for one platform when
@@ -555,17 +628,18 @@ type ThreadWithMediaPlanResult struct {
 
 // GenerateWithMediaPlan is the non-streaming entry point used by background
 // workers (e.g. the GitHub draft generator). It produces base content and
-// per-platform threads in one call, with the prompt instructing the AI about
+// per-platform output in one call, with the prompt instructing the AI about
 // pre-assigned media layout so copy lines up with attachments.
 //
-// Only thread-capable platforms are accepted; single-post platforms should be
-// filtered out by the caller.
+// The plan's Mode field decides whether each platform is generated as a
+// single post or a thread. Single-post output is returned as a
+// ThreadWithMediaPlanResult with exactly one segment — callers treat the
+// shape uniformly.
 func (p *ContentProcessor) GenerateWithMediaPlan(
 	ctx context.Context,
 	accountID uuid.UUID,
 	prompt string,
 	platforms []string,
-	maxThreadParts int,
 	plan *prompts.MediaPlan,
 ) (string, map[string]ThreadWithMediaPlanResult, error) {
 	ctx = observability.WithFields(ctx,
@@ -574,6 +648,10 @@ func (p *ContentProcessor) GenerateWithMediaPlan(
 	)
 
 	voice := p.getVoiceContext(ctx, accountID)
+	mode := "thread"
+	if plan != nil && plan.Mode != "" {
+		mode = plan.Mode
+	}
 
 	baseSystem := prompts.SystemGenerate(platforms, voice)
 	baseContent, err := p.aiClient.CreateMessage(ctx, baseSystem, []aiclient.Message{
@@ -592,34 +670,55 @@ func (p *ContentProcessor) GenerateWithMediaPlan(
 	for _, platform := range platforms {
 		g.Go(func() error {
 			platformCfg := prompts.GetPlatform(platform)
-			sysPrompt := prompts.SystemThreadWithMediaPlan(platform, maxThreadParts, plan)
+
+			var sysPrompt string
+			isThread := mode == "thread" && platformCfg.SupportsThreads
+			if isThread {
+				parts := 0
+				if plan != nil {
+					parts = plan.ThreadParts
+				}
+				sysPrompt = prompts.SystemThreadWithMediaPlan(platform, parts, plan)
+			} else {
+				sysPrompt = prompts.SystemSingleWithMediaPlan(platform, voice, plan)
+			}
 
 			raw, err := p.aiClient.CreateMessage(gCtx, sysPrompt, []aiclient.Message{
 				{Role: "user", Content: baseContent},
 			}, 0)
 			if err != nil {
-				p.logger.Error(gCtx, "failed to generate thread for platform "+platform, err)
+				p.logger.Error(gCtx, "failed to generate content for platform "+platform, err)
 				return err
 			}
 
-			charLimit := platformCfg.ThreadCharLimit
-			if charLimit == 0 {
-				charLimit = platformCfg.CharLimit
+			if isThread {
+				charLimit := platformCfg.ThreadCharLimit
+				if charLimit == 0 {
+					charLimit = platformCfg.CharLimit
+				}
+				parts := parseThreadSegments(raw)
+				segments := make([]ThreadSegment, 0, len(parts))
+				joined := make([]string, 0, len(parts))
+				for _, s := range parts {
+					trimmed := truncateToCharLimit(s, charLimit)
+					segments = append(segments, ThreadSegment{Content: trimmed})
+					joined = append(joined, trimmed)
+				}
+				mu.Lock()
+				results[platform] = ThreadWithMediaPlanResult{
+					Content:  strings.Join(joined, "\n"),
+					Segments: segments,
+				}
+				mu.Unlock()
+				return nil
 			}
 
-			parts := parseThreadSegments(raw)
-			segments := make([]ThreadSegment, 0, len(parts))
-			joined := make([]string, 0, len(parts))
-			for _, s := range parts {
-				trimmed := truncateToCharLimit(s, charLimit)
-				segments = append(segments, ThreadSegment{Content: trimmed})
-				joined = append(joined, trimmed)
-			}
-
+			// Single-post mode: one segment carries everything.
+			content := truncateToCharLimit(strings.TrimSpace(raw), platformCfg.CharLimit)
 			mu.Lock()
 			results[platform] = ThreadWithMediaPlanResult{
-				Content:  strings.Join(joined, "\n"),
-				Segments: segments,
+				Content:  content,
+				Segments: []ThreadSegment{{Content: content}},
 			}
 			mu.Unlock()
 			return nil

@@ -232,16 +232,21 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 	logger := observability.NewLogger()
 	accountID := uuid.New()
 
-	// A plan with one video (index 1) and two images (indexes 2, 3).
-	basePlan := &prompts.MediaPlan{
-		VideoIndex:   1,
-		ImageIndexes: []int{2, 3},
+	// A plan with one video (index 1) and two images (indexes 2, 3). Defaults
+	// to thread mode because Mode is the empty string; tests that want
+	// single-post mode set it explicitly.
+	basePlan := func() *prompts.MediaPlan {
+		return &prompts.MediaPlan{
+			Mode:         "thread",
+			ThreadParts:  3,
+			VideoIndex:   1,
+			ImageIndexes: []int{2, 3},
+		}
 	}
 
 	tests := []struct {
 		name          string
 		platforms     []string
-		maxParts      int
 		plan          *prompts.MediaPlan
 		mocks         func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient)
 		wantErr       error
@@ -250,8 +255,7 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "happy path single platform produces base and thread segments",
 			platforms: []string{"x"},
-			maxParts:  3,
-			plan:      basePlan,
+			plan:      basePlan(),
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := noVoiceStore(ctrl)
 				ai := NewMockAIClient(ctrl)
@@ -279,7 +283,6 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "multi-platform results all populated",
 			platforms: []string{"x", "bluesky", "threads"},
-			maxParts:  7,
 			plan:      &prompts.MediaPlan{},
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := noVoiceStore(ctrl)
@@ -306,7 +309,6 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "thread segments respect char limit truncation",
 			platforms: []string{"bluesky"}, // bluesky has 300-char thread limit
-			maxParts:  3,
 			plan:      &prompts.MediaPlan{},
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := noVoiceStore(ctrl)
@@ -329,7 +331,6 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "thread count honored — maxParts applied via prompt",
 			platforms: []string{"x"},
-			maxParts:  2,
 			plan:      &prompts.MediaPlan{},
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := noVoiceStore(ctrl)
@@ -350,7 +351,6 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "base content AI call failure returns ErrStreamGenerate",
 			platforms: []string{"x"},
-			maxParts:  3,
 			plan:      &prompts.MediaPlan{},
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := noVoiceStore(ctrl)
@@ -364,7 +364,6 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "platform AI call failure returns ErrStreamGenerate",
 			platforms: []string{"x"},
-			maxParts:  3,
 			plan:      &prompts.MediaPlan{},
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := noVoiceStore(ctrl)
@@ -382,7 +381,6 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		{
 			name:      "voice lookup failure is tolerated — content generated anyway",
 			platforms: []string{"x"},
-			maxParts:  3,
 			plan:      &prompts.MediaPlan{},
 			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
 				ms := NewMockContentStore(ctrl)
@@ -414,7 +412,7 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 
 			base, results, err := proc.GenerateWithMediaPlan(
 				context.Background(), accountID, "test prompt",
-				tt.platforms, tt.maxParts, tt.plan,
+				tt.platforms, tt.plan,
 			)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -709,10 +707,11 @@ func TestParseThreadSegmentsWithImages(t *testing.T) {
 	}
 }
 
-func TestContentProcessor_SelectMeaningfulImages(t *testing.T) {
+func TestContentProcessor_SelectMediaAndMode(t *testing.T) {
 	t.Parallel()
 	logger := observability.NewLogger()
 
+	video := &aiclient.ImageData{MIMEType: "video/mp4", Data: []byte("vid")}
 	threeImages := []aiclient.ImageData{
 		{MIMEType: "image/png", Data: []byte("a")},
 		{MIMEType: "image/png", Data: []byte("b")},
@@ -720,55 +719,131 @@ func TestContentProcessor_SelectMeaningfulImages(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		images   []aiclient.ImageData
-		aiReply  string
-		aiErr    error
-		want     []int
-		wantErr  error
-		skipMock bool
+		name    string
+		video   *aiclient.ImageData
+		images  []aiclient.ImageData
+		aiReply string
+		aiErr   error
+		want    MediaAndModeDecision
+		wantErr error
 	}{
 		{
-			name:     "no images returns nil without calling AI",
-			images:   nil,
-			want:     nil,
-			skipMock: true,
-		},
-		{
-			name:    "AI picks a subset — indexes returned in ascending order",
+			name:    "video kept, images dropped, single mode",
+			video:   video,
 			images:  threeImages,
-			aiReply: `{"selected":[3,1]}`,
-			want:    []int{1, 3},
+			aiReply: `{"use_video": true, "image_indexes": [], "mode": "single", "thread_parts": 0, "reason": "video demos the change cleanly"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     true,
+				ImageIndexes: []int{},
+				Mode:         "single",
+				ThreadParts:  0,
+				Reason:       "video demos the change cleanly",
+			},
 		},
 		{
-			name:    "AI returns empty selection",
+			name:    "video rejected, images kept, thread mode with clamped parts",
+			video:   video,
 			images:  threeImages,
-			aiReply: `{"selected":[]}`,
-			want:    []int{},
+			aiReply: `{"use_video": false, "image_indexes": [2, 1], "mode": "thread", "thread_parts": 4, "reason": "video is blank; screenshots tell the story"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     false,
+				ImageIndexes: []int{1, 2},
+				Mode:         "thread",
+				ThreadParts:  4,
+				Reason:       "video is blank; screenshots tell the story",
+			},
 		},
 		{
-			name:    "out-of-range and duplicate indexes are cleaned up",
+			name:    "no media at all — empty decision is valid",
+			video:   nil,
+			images:  nil,
+			aiReply: `{"use_video": false, "image_indexes": [], "mode": "single", "thread_parts": 0, "reason": "nothing worth attaching"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     false,
+				ImageIndexes: []int{},
+				Mode:         "single",
+				ThreadParts:  0,
+				Reason:       "nothing worth attaching",
+			},
+		},
+		{
+			name:    "AI claims to use video we don't have — clamped to false",
+			video:   nil,
 			images:  threeImages,
-			aiReply: `{"selected":[0, 2, 2, 99, 1]}`,
-			want:    []int{1, 2},
+			aiReply: `{"use_video": true, "image_indexes": [1], "mode": "single", "thread_parts": 0, "reason": "hallucinating"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     false, // clamped
+				ImageIndexes: []int{1},
+				Mode:         "single",
+				ThreadParts:  0,
+				Reason:       "hallucinating",
+			},
 		},
 		{
-			name:    "AI trims markdown fences and whitespace are tolerated",
+			name:    "out-of-range and duplicate image indexes are cleaned",
+			video:   video,
 			images:  threeImages,
-			aiReply: "  {\"selected\":[2]}  \n",
-			want:    []int{2},
+			aiReply: `{"use_video": true, "image_indexes": [0, 2, 2, 99, 1], "mode": "single", "thread_parts": 0, "reason": "clean me"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     true,
+				ImageIndexes: []int{1, 2},
+				Mode:         "single",
+				ThreadParts:  0,
+				Reason:       "clean me",
+			},
 		},
 		{
-			name:    "AI call fails maps to ErrSelectImages",
+			name:    "thread_parts over max is clamped to 7",
+			video:   video,
 			images:  threeImages,
-			aiErr:   errors.New("anthropic timeout"),
-			wantErr: ErrSelectImages,
+			aiReply: `{"use_video": true, "image_indexes": [], "mode": "thread", "thread_parts": 99, "reason": "too many"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     true,
+				ImageIndexes: []int{},
+				Mode:         "thread",
+				ThreadParts:  7,
+				Reason:       "too many",
+			},
 		},
 		{
-			name:    "unparseable response maps to ErrSelectImages",
+			name:    "thread_parts below 2 is clamped up",
+			video:   video,
+			images:  threeImages,
+			aiReply: `{"use_video": true, "image_indexes": [], "mode": "thread", "thread_parts": 1, "reason": "one is single, not thread"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     true,
+				ImageIndexes: []int{},
+				Mode:         "thread",
+				ThreadParts:  2,
+				Reason:       "one is single, not thread",
+			},
+		},
+		{
+			name:    "unknown mode defaults to single",
+			video:   video,
+			images:  threeImages,
+			aiReply: `{"use_video": true, "image_indexes": [], "mode": "carousel", "thread_parts": 0, "reason": "weird"}`,
+			want: MediaAndModeDecision{
+				UseVideo:     true,
+				ImageIndexes: []int{},
+				Mode:         "single",
+				ThreadParts:  0,
+				Reason:       "weird",
+			},
+		},
+		{
+			name:    "AI call fails maps to ErrSelectMediaAndMode",
+			video:   video,
+			images:  threeImages,
+			aiErr:   errors.New("provider timeout"),
+			wantErr: ErrSelectMediaAndMode,
+		},
+		{
+			name:    "unparseable response maps to ErrSelectMediaAndMode",
+			video:   video,
 			images:  threeImages,
 			aiReply: "not json",
-			wantErr: ErrSelectImages,
+			wantErr: ErrSelectMediaAndMode,
 		},
 	}
 
@@ -777,12 +852,10 @@ func TestContentProcessor_SelectMeaningfulImages(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			ai := NewMockAIClient(ctrl)
-			if !tt.skipMock {
-				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(tt.aiReply, tt.aiErr)
-			}
+			ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(tt.aiReply, tt.aiErr)
 			proc := New(noVoiceStore(ctrl), ai, logger)
-			got, err := proc.SelectMeaningfulImages(context.Background(), tt.images)
+			got, err := proc.SelectMediaAndMode(context.Background(), tt.video, tt.images, "feat: ship the thing")
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

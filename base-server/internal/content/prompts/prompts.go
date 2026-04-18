@@ -184,11 +184,20 @@ type ImageDescription struct {
 	Description string
 }
 
-// MediaPlan describes pre-assigned media attachments for a thread. When set,
-// the thread prompt instructs the AI to write copy aware of exactly which
-// index sits on which segment (e.g. a demo video on segment 1). Indexes are
-// 1-based to match [IMAGE:N] marker semantics.
+// MediaPlan describes pre-assigned media attachments for a generated post.
+// When Mode is "thread", the prompt instructs the AI to write copy aware of
+// exactly which index sits on which segment (e.g. a demo video on segment 1).
+// When Mode is "single", all attached media rides on the one post and the
+// prompt just tells the AI what's attached so copy references it naturally.
+// Indexes are 1-based to match [IMAGE:N] marker semantics.
 type MediaPlan struct {
+	// Mode is "single" or "thread". Empty string is treated as "thread" for
+	// backwards compatibility with callers that predate mode selection.
+	Mode string
+	// ThreadParts is the exact number of parts to produce when Mode is
+	// "thread". Ignored when Mode is "single". 0 means "use the platform
+	// default or the caller-supplied override".
+	ThreadParts int
 	// VideoIndex is the 1-based index of an attached video clip, or 0 if none.
 	VideoIndex int
 	// ImageIndexes are the 1-based indexes of still images in order they
@@ -236,6 +245,33 @@ func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []Ima
 		sb.WriteString("- Reference every image naturally in the text, but do NOT describe them literally.\n")
 	}
 
+	return sb.String()
+}
+
+// SystemSingleWithMediaPlan builds a single-post adapt prompt that tells the
+// AI what media is attached to the one post. Unlike thread mode, there is no
+// per-segment layout to describe — the copy just needs to reference the
+// media naturally and not duplicate what the visuals already show.
+func SystemSingleWithMediaPlan(platformID string, voice *VoiceContext, plan *MediaPlan) string {
+	base := SystemAdapt(platformID, voice, nil)
+	if plan == nil || (plan.VideoIndex == 0 && len(plan.ImageIndexes) == 0) {
+		return base
+	}
+
+	var sb strings.Builder
+	sb.WriteString(base)
+	sb.WriteString("\n## Attached Media (pre-assigned, do NOT emit [IMAGE:N] markers)\n")
+	sb.WriteString("The following media is attached to this single post by the caller. Reference it naturally — don't describe it literally, don't list it, don't repeat what the visuals already show. Let the copy complement the media.\n")
+	if plan.VideoIndex > 0 {
+		sb.WriteString("- A short video clip demonstrating the change. Open with a hook that makes the viewer want to watch.\n")
+	}
+	if len(plan.ImageIndexes) > 0 {
+		if len(plan.ImageIndexes) == 1 {
+			sb.WriteString("- A screenshot of the change. Point at what matters in it without narrating the pixels.\n")
+		} else {
+			fmt.Fprintf(&sb, "- %d screenshots of the change. Call out what matters across them without narrating each one.\n", len(plan.ImageIndexes))
+		}
+	}
 	return sb.String()
 }
 

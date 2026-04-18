@@ -41,9 +41,12 @@ var (
 )
 
 const (
-	defaultMaxThreadParts = 7
-	draftPostSource       = "github_event"
-	mediaSource           = "github_capture"
+	// fallbackThreadParts is the part count used only when the media/mode
+	// assessor call fails AND we're falling back to thread mode. Happy-path
+	// generation uses the AI-chosen count.
+	fallbackThreadParts = 5
+	draftPostSource     = "github_event"
+	mediaSource         = "github_capture"
 )
 
 var (
@@ -62,22 +65,27 @@ type DraftStore interface {
 }
 
 // ContentGenerator is the non-streaming generation entrypoint on the content
-// processor. Accepts a prompt + a pre-computed media plan and returns base
-// content plus per-platform thread segments (ImageIndex unset — the caller
-// assigns it).
+// processor. It decides (via a multimodal assessor call) what media is worth
+// attaching and whether the post should be single or thread, then generates
+// per-platform content honouring that decision.
 type ContentGenerator interface {
 	GenerateWithMediaPlan(
 		ctx context.Context,
 		accountID uuid.UUID,
 		prompt string,
 		platforms []string,
-		maxThreadParts int,
 		plan *prompts.MediaPlan,
 	) (string, map[string]contentProc.ThreadWithMediaPlanResult, error)
 
-	// SelectMeaningfulImages picks the subset of supplied images worth
-	// attaching. Returns 1-based indexes into the input slice.
-	SelectMeaningfulImages(ctx context.Context, images []aiclient.ImageData) ([]int, error)
+	// SelectMediaAndMode evaluates a candidate video + candidate images and
+	// decides both what to attach and whether the output should be single or
+	// thread mode.
+	SelectMediaAndMode(
+		ctx context.Context,
+		video *aiclient.ImageData,
+		images []aiclient.ImageData,
+		commitMessage string,
+	) (contentProc.MediaAndModeDecision, error)
 }
 
 // PostsDrafter lets us persist a draft without depending on the whole posts
@@ -197,26 +205,40 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 	}
 
 	videoKey, imageKeys := bucketArtifacts(payload.Uploaded)
-	imageKeys = g.selectMeaningfulImageKeys(ctx, imageKeys)
+	decision := g.assessMediaAndMode(ctx, commit.Message, videoKey, imageKeys)
+	if decision.UseVideo {
+		g.logger.Info(ctx, "media/mode decision: "+decision.Reason)
+	} else {
+		videoKey = ""
+	}
+	imageKeys = pickImagesByIndex(imageKeys, decision.ImageIndexes)
+
 	mediaIDs, mediaPlan, err := g.materializeMedia(ctx, commit.AccountID, videoKey, imageKeys)
 	if err != nil {
 		return ErrDraftGenerationFailed
 	}
+	mediaPlan.Mode = decision.Mode
+	mediaPlan.ThreadParts = decision.ThreadParts
 
 	prompt := buildDraftPrompt(commit)
 	baseContent, perPlatform, err := g.content.GenerateWithMediaPlan(
-		ctx, commit.AccountID, prompt, targets, defaultMaxThreadParts, mediaPlan,
+		ctx, commit.AccountID, prompt, targets, mediaPlan,
 	)
 	if err != nil {
-		g.logger.Error(ctx, "failed to generate thread content", err)
+		g.logger.Error(ctx, "failed to generate draft content", err)
 		return ErrDraftGenerationFailed
+	}
+
+	contentType := store.ContentTypeText
+	if decision.Mode == "thread" {
+		contentType = store.ContentTypeThread
 	}
 
 	platforms := assemblePlatformDrafts(perPlatform, targets, mediaIDs, mediaPlan)
 	post, err := g.posts.SaveDraft(ctx, postsProc.SaveDraftParams{
 		AccountID:   commit.AccountID,
 		Content:     baseContent,
-		ContentType: "thread",
+		ContentType: contentType,
 		MediaIDs:    store.UUIDArray(mediaIDs),
 		AIGenerated: true,
 		BaseContent: &baseContent,
@@ -255,69 +277,89 @@ func filterTargetPlatforms(connections []store.PlatformConnection) []string {
 	return result
 }
 
-// selectMeaningfulImageKeys asks the content processor to pick which
-// captured images actually add value. Capture workers emit a frame per UI
-// step, so the raw set is typically peppered with loading spinners and
-// near-duplicate screens. We fetch the bytes, hand them to a multimodal AI
-// call, and keep only the frames it flags — preserving original order.
+// assessMediaAndMode fetches the candidate video + image bytes from S3 and
+// asks the content processor for a single verdict on (a) which media is
+// worth attaching and (b) whether the post should be single or thread.
 //
-// This step is best-effort: if the S3 fetcher is nil (e.g. in local-dir
-// deployments), any image fetch fails, or the AI call fails, we fall back
-// to the original list so the draft still makes it out the door.
-func (g *DraftGenerator) selectMeaningfulImageKeys(ctx context.Context, imageKeys []string) []string {
-	if len(imageKeys) == 0 {
-		return imageKeys
+// This step is best-effort: if the S3 fetcher is nil (local-dir deploys),
+// any fetch fails, or the AI call fails, we fall back to "keep everything,
+// use thread mode with the fallback part count" so the draft still makes
+// it out. Failing open preserves behaviour parity with the pre-assessor
+// pipeline when the multimodal provider is flaky.
+func (g *DraftGenerator) assessMediaAndMode(
+	ctx context.Context,
+	commitMessage, videoKey string,
+	imageKeys []string,
+) contentProc.MediaAndModeDecision {
+	fallbackIndexes := make([]int, len(imageKeys))
+	for i := range imageKeys {
+		fallbackIndexes[i] = i + 1
 	}
-	if g.s3Fetch == nil {
-		return imageKeys
+	fallback := contentProc.MediaAndModeDecision{
+		UseVideo:     videoKey != "",
+		ImageIndexes: fallbackIndexes,
+		Mode:         "thread",
+		ThreadParts:  fallbackThreadParts,
+		Reason:       "assessor unavailable; keeping all captured media",
+	}
+
+	if g.s3Fetch == nil || (videoKey == "" && len(imageKeys) == 0) {
+		return fallback
+	}
+
+	var video *aiclient.ImageData
+	if videoKey != "" {
+		v, err := g.fetchMedia(ctx, videoKey)
+		if err != nil {
+			g.logger.Error(ctx, "failed to fetch capture video for assessment; keeping all media", err)
+			return fallback
+		}
+		video = &v
 	}
 
 	images := make([]aiclient.ImageData, 0, len(imageKeys))
-	kept := make([]string, 0, len(imageKeys))
 	for _, key := range imageKeys {
-		img, err := g.fetchImage(ctx, key)
+		img, err := g.fetchMedia(ctx, key)
 		if err != nil {
-			g.logger.Error(ctx, "failed to fetch capture image for selection; keeping it", err)
-			// Keep the key in the output list so it stays attached even
-			// though the AI can't see it. This avoids silently dropping
-			// content on a transient S3 hiccup.
-			kept = append(kept, key)
-			continue
+			g.logger.Error(ctx, "failed to fetch capture image for assessment; keeping all media", err)
+			return fallback
 		}
 		images = append(images, img)
-		kept = append(kept, key)
 	}
 
-	if len(images) == 0 {
-		return kept
-	}
-
-	selected, err := g.content.SelectMeaningfulImages(ctx, images)
+	decision, err := g.content.SelectMediaAndMode(ctx, video, images, commitMessage)
 	if err != nil {
-		g.logger.Error(ctx, "image selection failed; keeping all captured images", err)
-		return kept
+		g.logger.Error(ctx, "media/mode assessment failed; keeping all captured media", err)
+		return fallback
 	}
-	if len(selected) == 0 {
-		// AI judged every frame redundant — return empty so the draft goes
-		// out with just the video (or no media at all).
-		return []string{}
+	if decision.Mode == "" {
+		decision.Mode = "single"
 	}
-
-	// selected is 1-based into the `images` slice, which aligned 1:1 with
-	// `kept` during fetch. Map back to the original keys, preserving order.
-	result := make([]string, 0, len(selected))
-	for _, idx := range selected {
-		if idx < 1 || idx > len(kept) {
-			continue
-		}
-		result = append(result, kept[idx-1])
-	}
-	return result
+	return decision
 }
 
-// fetchImage downloads an S3 object and returns it shaped for a multimodal
-// AI request.
-func (g *DraftGenerator) fetchImage(ctx context.Context, key string) (aiclient.ImageData, error) {
+// pickImagesByIndex returns the subset of imageKeys matching the 1-based
+// indexes in `selected`, preserving the order the caller provided. Invalid
+// indexes are silently dropped so a malformed AI response degrades to
+// "fewer images" rather than a crash.
+func pickImagesByIndex(imageKeys []string, selected []int) []string {
+	if len(imageKeys) == 0 || len(selected) == 0 {
+		return []string{}
+	}
+	out := make([]string, 0, len(selected))
+	for _, idx := range selected {
+		if idx < 1 || idx > len(imageKeys) {
+			continue
+		}
+		out = append(out, imageKeys[idx-1])
+	}
+	return out
+}
+
+// fetchMedia downloads an S3 object and returns it shaped for a multimodal
+// AI request. Works for both image and video keys — the MIME type is read
+// from S3 metadata and falls back to the extension.
+func (g *DraftGenerator) fetchMedia(ctx context.Context, key string) (aiclient.ImageData, error) {
 	body, contentType, err := g.s3Fetch.GetFile(ctx, key)
 	if err != nil {
 		return aiclient.ImageData{}, err
@@ -327,7 +369,7 @@ func (g *DraftGenerator) fetchImage(ctx context.Context, key string) (aiclient.I
 	if err != nil {
 		return aiclient.ImageData{}, err
 	}
-	if contentType == "" {
+	if contentType == "" || contentType == "application/octet-stream" {
 		contentType = contentTypeFor(key)
 	}
 	return aiclient.ImageData{MIMEType: contentType, Data: data}, nil
