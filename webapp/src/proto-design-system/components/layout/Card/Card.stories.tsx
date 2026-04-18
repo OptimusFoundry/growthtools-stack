@@ -250,7 +250,9 @@ export const Spec: Story = {
 					meta="line · pill · enclosed"
 				/>
 				<CardBody>
-					<p>Use the spec variant to wrap a labelled component or content block.</p>
+					<p>
+						Use the spec variant to wrap a labelled component or content block.
+					</p>
 				</CardBody>
 			</>
 		),

@@ -89,12 +89,8 @@ export function CardHeader({
 	if (name !== undefined || meta !== undefined) {
 		return (
 			<div className={cn(styles.header, styles.specHeader, className)}>
-				{name !== undefined && (
-					<span className={styles.specName}>{name}</span>
-				)}
-				{meta !== undefined && (
-					<span className={styles.specMeta}>{meta}</span>
-				)}
+				{name !== undefined && <span className={styles.specName}>{name}</span>}
+				{meta !== undefined && <span className={styles.specMeta}>{meta}</span>}
 			</div>
 		);
 	}
