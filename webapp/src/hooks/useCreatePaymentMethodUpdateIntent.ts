@@ -1,6 +1,7 @@
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { useCallback, useEffect, useState } from "react";
-import { fetcher } from "@/api/client"; import type { ApiPaymentMethodUpdateIntentResponse } from "@/api/types/billing";
+import { fetcher } from "@/api/client";
+import type { ApiPaymentMethodUpdateIntentResponse } from "@/api/types/billing";
 import type { PaymentMethodUpdateIntentResponse } from "@/types/billing";
 import { getErrorMessage } from "@/utils/errorHandler";
 

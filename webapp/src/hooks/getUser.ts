@@ -1,6 +1,6 @@
 import { fetcher } from "@/api/client";
-import type { ApiUser } from "@/api/types/user";
 import { toUiUser } from "@/api/transforms/user";
+import type { ApiUser } from "@/api/types/user";
 import type { User } from "@/types/user";
 
 export async function getUser(): Promise<User> {

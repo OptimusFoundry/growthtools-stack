@@ -5,12 +5,12 @@
 
 import { Github } from "lucide-react";
 import { memo } from "react";
+import type { GitHubConnection } from "@/hooks/useGitHubConnection";
 import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { GitHubConnection } from "@/hooks/useGitHubConnection";
 import styles from "./GitHubConnectionSection.module.scss";
 
 // ============================================================================
@@ -47,11 +47,7 @@ export const GitHubConnectedCard = memo(function GitHubConnectedCard({
 						connected
 					</Badge>
 					<div className={styles.connectedCardFooter}>
-						<Button
-							variant="destructive"
-							size="sm"
-							onClick={onDisconnect}
-						>
+						<Button variant="destructive" size="sm" onClick={onDisconnect}>
 							Disconnect
 						</Button>
 					</div>

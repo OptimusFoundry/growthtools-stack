@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetcher, type ApiError } from "@/api/client";
-import type { ApiSubscription } from "@/api/types/billing";
+import { type ApiError, fetcher } from "@/api/client";
 import { toUiSubscription } from "@/api/transforms/billing";
+import type { ApiSubscription } from "@/api/types/billing";
 import type { Subscription } from "@/types/billing";
 import { toApiError } from "@/utils/errorHandler";
 

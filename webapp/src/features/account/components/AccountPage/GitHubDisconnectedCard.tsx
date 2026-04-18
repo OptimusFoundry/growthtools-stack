@@ -35,11 +35,7 @@ export const GitHubDisconnectedCard = memo(function GitHubDisconnectedCard({
 							Auto-generate posts from repository activity
 						</Text>
 					</Stack>
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={onConnect}
-					>
+					<Button variant="secondary" size="sm" onClick={onConnect}>
 						Connect
 					</Button>
 				</div>

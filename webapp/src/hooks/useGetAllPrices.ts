@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
-import type { ApiPrice } from "@/api/types/billing";
 import { toUiPrices } from "@/api/transforms/billing";
+import type { ApiPrice } from "@/api/types/billing";
 import type { Price } from "@/types/billing";
 import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 

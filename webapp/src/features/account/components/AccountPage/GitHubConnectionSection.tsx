@@ -9,10 +9,10 @@ import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import { GitHubCommitsList } from "./GitHubCommitsList";
 import { GitHubConnectedCard } from "./GitHubConnectedCard";
+import styles from "./GitHubConnectionSection.module.scss";
 import { GitHubDisconnectedCard } from "./GitHubDisconnectedCard";
 import { GitHubRepoSelector } from "./GitHubRepoSelector";
 import { useGitHubConnectionFlow } from "./useGitHubConnectionFlow";
-import styles from "./GitHubConnectionSection.module.scss";
 
 // ============================================================================
 // Component

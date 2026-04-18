@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetcher, type ApiError } from "@/api/client";
+import { type ApiError, fetcher } from "@/api/client";
 import { toApiError } from "@/utils/errorHandler";
 
 interface CreateCheckoutSessionResponse {
