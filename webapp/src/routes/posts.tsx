@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
+import { Topbar } from "@/components/Layout/Topbar";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -138,282 +139,279 @@ function PostsPage() {
 	const draftCount = allPosts.filter((p) => p.status === "draft").length;
 
 	return (
-		<Stack gap="lg" className={styles.page} animate>
-			<Stack direction="row" justify="between" align="start" wrap>
-				<Stack gap="xs">
-					<Text as="h1" size="2xl" weight="bold">
-						Posts
-					</Text>
-					<Text color="muted">
-						Create, manage, and publish your social media posts
-					</Text>
-				</Stack>
-				<Link to="/posts/new">
-					<Button variant="primary">
-						<Plus size={16} /> Create Post
-					</Button>
-				</Link>
-			</Stack>
-
-			<div className={styles.stats}>
-				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">
-						{postCount}
-					</Text>
-					<Text size="xs" color="muted">
-						Total
-					</Text>
-				</div>
-				<div className={styles.statDivider} />
-				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">
-						{publishedCount}
-					</Text>
-					<Text size="xs" color="muted">
-						Published
-					</Text>
-				</div>
-				<div className={styles.statDivider} />
-				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">
-						{draftCount}
-					</Text>
-					<Text size="xs" color="muted">
-						Drafts
-					</Text>
-				</div>
-			</div>
-
-			<div className={styles.filters}>
-				<Dropdown
-					items={STATUS_ITEMS}
-					value={statusFilter}
-					onChange={setStatusFilter}
-					placeholder="Filter by status"
-					size="sm"
-					variant="outline"
-				/>
-				<Dropdown
-					items={CONTENT_TYPE_ITEMS}
-					value={contentTypeFilter}
-					onChange={setContentTypeFilter}
-					placeholder="Filter by type"
-					size="sm"
-					variant="outline"
-				/>
-			</div>
-
-			<div className={styles.content}>
-				{loading ? (
-					<div className={styles.loadingState}>
-						<Spinner />
+		<>
+			<Topbar
+				title="Posts"
+				eyebrow={`${postCount} total · ${draftCount} drafts · ${publishedCount} published`}
+				actions={
+					<Link to="/posts/new">
+						<Button variant="primary">
+							<Plus size={16} /> Create Post
+						</Button>
+					</Link>
+				}
+			/>
+			<Stack gap="lg" className={styles.page} animate>
+				<div className={styles.stats}>
+					<div className={styles.statItem}>
+						<Text size="2xl" weight="bold">
+							{postCount}
+						</Text>
+						<Text size="xs" color="muted">
+							Total
+						</Text>
 					</div>
-				) : posts.length === 0 && hasActiveFilter ? (
-					<EmptyState
-						title="No matching posts"
-						description="Try adjusting your filters to find what you're looking for."
-						icon={<SearchX size={48} />}
-						action={
-							<Button
-								variant="secondary"
-								onClick={() => {
-									setStatusFilter("");
-									setContentTypeFilter("");
-								}}
-							>
-								Clear filters
-							</Button>
-						}
+					<div className={styles.statDivider} />
+					<div className={styles.statItem}>
+						<Text size="2xl" weight="bold">
+							{publishedCount}
+						</Text>
+						<Text size="xs" color="muted">
+							Published
+						</Text>
+					</div>
+					<div className={styles.statDivider} />
+					<div className={styles.statItem}>
+						<Text size="2xl" weight="bold">
+							{draftCount}
+						</Text>
+						<Text size="xs" color="muted">
+							Drafts
+						</Text>
+					</div>
+				</div>
+
+				<div className={styles.filters}>
+					<Dropdown
+						items={STATUS_ITEMS}
+						value={statusFilter}
+						onChange={setStatusFilter}
+						placeholder="Filter by status"
+						size="sm"
+						variant="outline"
 					/>
-				) : posts.length === 0 ? (
-					<EmptyState
-						title="No posts yet"
-						description="Create your first post to get started."
-						icon={<FileText size={48} />}
-						action={
-							<Link to="/posts/new">
-								<Button variant="primary">
-									<Plus size={16} /> Create Post
-								</Button>
-							</Link>
-						}
+					<Dropdown
+						items={CONTENT_TYPE_ITEMS}
+						value={contentTypeFilter}
+						onChange={setContentTypeFilter}
+						placeholder="Filter by type"
+						size="sm"
+						variant="outline"
 					/>
-				) : (
-					<Stack gap="xs">
-						{posts.map((post, index) => {
-							const isThread = post.contentType === "thread";
-							return (
-								<motion.div
-									key={post.id}
-									initial={{ opacity: 0, y: 8 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.2, delay: index * 0.03 }}
+				</div>
+
+				<div className={styles.content}>
+					{loading ? (
+						<div className={styles.loadingState}>
+							<Spinner />
+						</div>
+					) : posts.length === 0 && hasActiveFilter ? (
+						<EmptyState
+							title="No matching posts"
+							description="Try adjusting your filters to find what you're looking for."
+							icon={<SearchX size={48} />}
+							action={
+								<Button
+									variant="secondary"
+									onClick={() => {
+										setStatusFilter("");
+										setContentTypeFilter("");
+									}}
 								>
-									<Link
-										to="/posts/$id"
-										params={{ id: post.id }}
-										className={styles.postLink}
+									Clear filters
+								</Button>
+							}
+						/>
+					) : posts.length === 0 ? (
+						<EmptyState
+							title="No posts yet"
+							description="Create your first post to get started."
+							icon={<FileText size={48} />}
+							action={
+								<Link to="/posts/new">
+									<Button variant="primary">
+										<Plus size={16} /> Create Post
+									</Button>
+								</Link>
+							}
+						/>
+					) : (
+						<Stack gap="xs">
+							{posts.map((post, index) => {
+								const isThread = post.contentType === "thread";
+								return (
+									<motion.div
+										key={post.id}
+										initial={{ opacity: 0, y: 8 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.2, delay: index * 0.03 }}
 									>
-										<div className={styles.postCard}>
-											<div className={styles.postCardLeft}>
-												<div
-													className={`${styles.postIcon} ${isThread ? styles.postIconThread : ""}`}
-												>
-													{isThread ? (
-														<List size={16} />
-													) : (
-														<FileText size={16} />
-													)}
-												</div>
-											</div>
-											<div className={styles.postCardBody}>
-												<div className={styles.postTitleRow}>
-													<Text
-														size="sm"
-														weight="medium"
-														className={styles.postTitle}
+										<Link
+											to="/posts/$id"
+											params={{ id: post.id }}
+											className={styles.postLink}
+										>
+											<div className={styles.postCard}>
+												<div className={styles.postCardLeft}>
+													<div
+														className={`${styles.postIcon} ${isThread ? styles.postIconThread : ""}`}
 													>
-														{truncate(post.title || post.content, 80)}
-													</Text>
-													<Badge
-														variant={STATUS_BADGE_VARIANT[post.status]}
-														size="sm"
-													>
-														{STATUS_LABELS[post.status]}
-													</Badge>
-												</div>
-												{post.tags.length > 0 && (
-													<div className={styles.postTags}>
-														{post.tags.slice(0, 4).map((tag) => (
-															<span key={tag} className={styles.tag}>
-																{tag}
-															</span>
-														))}
-														{post.tags.length > 4 && (
-															<span className={styles.tag}>
-																+{post.tags.length - 4}
-															</span>
-														)}
-													</div>
-												)}
-												<div className={styles.postFooter}>
-													<div className={styles.postMeta}>
-														{post.platforms.length > 0 && (
-															<span className={styles.platformIcons}>
-																{post.platforms.map((p) => (
-																	<span
-																		key={p}
-																		className={styles.platformIcon}
-																		title={p}
-																	>
-																		{getPlatformIcon(p, 14)}
-																	</span>
-																))}
-															</span>
-														)}
-														{post.publishedAt ? (
-															<span className={styles.metaItem}>
-																<Globe size={12} />
-																Published {timeAgo(post.publishedAt)}
-															</span>
-														) : post.scheduledAt ? (
-															<span className={styles.metaItem}>
-																<Clock size={12} />
-																Scheduled {timeAgo(post.scheduledAt)}
-															</span>
+														{isThread ? (
+															<List size={16} />
 														) : (
-															<span className={styles.metaItem}>
-																<Clock size={12} />
-																{timeAgo(post.createdAt)}
-															</span>
+															<FileText size={16} />
 														)}
 													</div>
-													<div className={styles.postActions}>
-														{post.status === "draft" && (
-															<Button
-																variant="primary"
-																size="sm"
-																isIconOnly
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	handlePublish(post.id);
-																}}
-																isLoading={publishing}
-																aria-label="Publish post"
-															>
-																<Globe size={14} />
-															</Button>
-														)}
-														{post.status === "failed" && (
-															<Button
-																variant="outline"
-																size="sm"
-																isIconOnly
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	handlePublish(post.id);
-																}}
-																isLoading={publishing}
-																aria-label="Retry publish"
-															>
-																<RefreshCw size={14} />
-															</Button>
-														)}
-														{post.status !== "published" &&
-															post.status !== "partially_published" && (
+												</div>
+												<div className={styles.postCardBody}>
+													<div className={styles.postTitleRow}>
+														<Text
+															size="sm"
+															weight="medium"
+															className={styles.postTitle}
+														>
+															{truncate(post.title || post.content, 80)}
+														</Text>
+														<Badge
+															variant={STATUS_BADGE_VARIANT[post.status]}
+															size="sm"
+														>
+															{STATUS_LABELS[post.status]}
+														</Badge>
+													</div>
+													{post.tags.length > 0 && (
+														<div className={styles.postTags}>
+															{post.tags.slice(0, 4).map((tag) => (
+																<span key={tag} className={styles.tag}>
+																	{tag}
+																</span>
+															))}
+															{post.tags.length > 4 && (
+																<span className={styles.tag}>
+																	+{post.tags.length - 4}
+																</span>
+															)}
+														</div>
+													)}
+													<div className={styles.postFooter}>
+														<div className={styles.postMeta}>
+															{post.platforms.length > 0 && (
+																<span className={styles.platformIcons}>
+																	{post.platforms.map((p) => (
+																		<span
+																			key={p}
+																			className={styles.platformIcon}
+																			title={p}
+																		>
+																			{getPlatformIcon(p, 14)}
+																		</span>
+																	))}
+																</span>
+															)}
+															{post.publishedAt ? (
+																<span className={styles.metaItem}>
+																	<Globe size={12} />
+																	Published {timeAgo(post.publishedAt)}
+																</span>
+															) : post.scheduledAt ? (
+																<span className={styles.metaItem}>
+																	<Clock size={12} />
+																	Scheduled {timeAgo(post.scheduledAt)}
+																</span>
+															) : (
+																<span className={styles.metaItem}>
+																	<Clock size={12} />
+																	{timeAgo(post.createdAt)}
+																</span>
+															)}
+														</div>
+														<div className={styles.postActions}>
+															{post.status === "draft" && (
 																<Button
-																	variant="ghost"
+																	variant="primary"
 																	size="sm"
 																	isIconOnly
 																	onClick={(e) => {
 																		e.preventDefault();
 																		e.stopPropagation();
-																		setDeleteTargetId(post.id);
+																		handlePublish(post.id);
 																	}}
-																	aria-label="Delete post"
+																	isLoading={publishing}
+																	aria-label="Publish post"
 																>
-																	<Trash2 size={14} />
+																	<Globe size={14} />
 																</Button>
 															)}
+															{post.status === "failed" && (
+																<Button
+																	variant="outline"
+																	size="sm"
+																	isIconOnly
+																	onClick={(e) => {
+																		e.preventDefault();
+																		e.stopPropagation();
+																		handlePublish(post.id);
+																	}}
+																	isLoading={publishing}
+																	aria-label="Retry publish"
+																>
+																	<RefreshCw size={14} />
+																</Button>
+															)}
+															{post.status !== "published" &&
+																post.status !== "partially_published" && (
+																	<Button
+																		variant="ghost"
+																		size="sm"
+																		isIconOnly
+																		onClick={(e) => {
+																			e.preventDefault();
+																			e.stopPropagation();
+																			setDeleteTargetId(post.id);
+																		}}
+																		aria-label="Delete post"
+																	>
+																		<Trash2 size={14} />
+																	</Button>
+																)}
+														</div>
 													</div>
 												</div>
 											</div>
-										</div>
-									</Link>
-								</motion.div>
-							);
-						})}
-					</Stack>
-				)}
-			</div>
+										</Link>
+									</motion.div>
+								);
+							})}
+						</Stack>
+					)}
+				</div>
 
-			<Modal
-				isOpen={deleteTargetId !== null}
-				onClose={() => setDeleteTargetId(null)}
-				title="Delete post"
-				size="sm"
-				footer={
-					<Stack direction="row" gap="sm" justify="end">
-						<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
-							Cancel
-						</Button>
-						<Button
-							variant="destructive"
-							onClick={handleDeleteConfirm}
-							isLoading={deleting}
-						>
-							Delete
-						</Button>
-					</Stack>
-				}
-			>
-				<Text color="secondary">
-					Are you sure you want to delete this post? This action cannot be
-					undone.
-				</Text>
-			</Modal>
-		</Stack>
+				<Modal
+					isOpen={deleteTargetId !== null}
+					onClose={() => setDeleteTargetId(null)}
+					title="Delete post"
+					size="sm"
+					footer={
+						<Stack direction="row" gap="sm" justify="end">
+							<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
+								Cancel
+							</Button>
+							<Button
+								variant="destructive"
+								onClick={handleDeleteConfirm}
+								isLoading={deleting}
+							>
+								Delete
+							</Button>
+						</Stack>
+					}
+				>
+					<Text color="secondary">
+						Are you sure you want to delete this post? This action cannot be
+						undone.
+					</Text>
+				</Modal>
+			</Stack>
+		</>
 	);
 }
