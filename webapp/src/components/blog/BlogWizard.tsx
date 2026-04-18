@@ -15,6 +15,7 @@ import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Card } from "@/proto-design-system/components/layout/Card";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import {
 	Tab,
 	TabList,
@@ -209,10 +210,29 @@ export function BlogWizard({
 
 	return (
 		<div className={styles.page}>
+			<Breadcrumb
+				size="lg"
+				items={[
+					{ label: "Blog", href: "/blog", icon: <BookOpen size={18} /> },
+					{ label: isEditMode ? "Edit Post" : "New Post" },
+				]}
+			/>
+			<Divider />
+			<Stack gap="xs">
+				<Text as="h1" size="xl" weight="semibold">
+					{isEditMode ? "Edit Blog Post" : "New Blog Post"}
+				</Text>
+				<Text size="sm" color="secondary">
+					{isEditMode
+						? "Update your post content and details"
+						: "Write a topic and let AI draft your blog post"}
+				</Text>
+			</Stack>
+
 			{error && <Alert variant="error">{error}</Alert>}
 
 			<div className={styles.twoColumn}>
-				{/* ── Left: compose ──────────────────────────────────────── */}
+				{/* ── Left: compose ──────────────────────────────────────────── */}
 				<Stack gap="lg">
 					<Stack gap="sm">
 						<Text size="md" weight="semibold">
@@ -343,7 +363,7 @@ export function BlogWizard({
 					</Stack>
 				</Stack>
 
-				{/* ── Right: preview ─────────────────────────────────────── */}
+				{/* ── Right: preview ──────────────────────────────────────────── */}
 				<div className={styles.previewPanel}>
 					<Tabs defaultTab="preview">
 						<TabList>

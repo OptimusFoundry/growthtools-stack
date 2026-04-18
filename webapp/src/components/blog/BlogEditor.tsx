@@ -30,33 +30,7 @@ export interface BlogEditorProps {
 
 function CreateBlogEditor() {
 	const navigate = useNavigate();
-
-	return (
-		<motion.div
-			className={styles.editor}
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.6 }}
-		>
-			<Breadcrumb
-				size="lg"
-				items={[
-					{ label: "Blog", href: "/blog", icon: <BookOpen size={18} /> },
-					{ label: "New Post" },
-				]}
-			/>
-			<Divider />
-			<Stack gap="xs">
-				<Text as="h1" size="xl" weight="semibold">
-					New Blog Post
-				</Text>
-				<Text size="sm" color="secondary">
-					Write a topic and let AI draft your blog post
-				</Text>
-			</Stack>
-			<BlogWizard onDone={() => navigate({ to: "/blog" })} />
-		</motion.div>
-	);
+	return <BlogWizard onDone={() => navigate({ to: "/blog" })} />;
 }
 
 // ── Edit / View mode ──────────────────────────────────────────────────────────
@@ -90,40 +64,17 @@ function EditBlogEditor({ id }: { id: string }) {
 	if (fetchError) return <Alert variant="error">{fetchError}</Alert>;
 	if (!blogPost) return <Alert variant="warning">Blog post not found.</Alert>;
 
-	// ── Edit mode ─────────────────────────────────────────────────────────────
+	// ── Edit mode: full-width wizard ──────────────────────────────────────────
 	if (isEditing) {
 		return (
-			<motion.div
-				className={styles.editor}
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				transition={{ duration: 0.3 }}
-			>
-				<Breadcrumb
-					size="lg"
-					items={[
-						{ label: "Blog", href: "/blog", icon: <BookOpen size={18} /> },
-						{ label: "Edit Post" },
-					]}
-				/>
-				<Divider />
-				<Stack gap="xs">
-					<Text as="h1" size="xl" weight="semibold">
-						Edit Blog Post
-					</Text>
-					<Text size="sm" color="secondary">
-						Update your post content and details
-					</Text>
-				</Stack>
-				<BlogWizard
-					initialBlogPost={blogPost}
-					onDone={() => {
-						setIsEditing(false);
-						refetch();
-					}}
-					onCancel={() => setIsEditing(false)}
-				/>
-			</motion.div>
+			<BlogWizard
+				initialBlogPost={blogPost}
+				onDone={() => {
+					setIsEditing(false);
+					refetch();
+				}}
+				onCancel={() => setIsEditing(false)}
+			/>
 		);
 	}
 
@@ -142,6 +93,8 @@ function EditBlogEditor({ id }: { id: string }) {
 		/>
 	);
 }
+
+// ── View-only page ────────────────────────────────────────────────────────────
 
 interface ViewBlogPageProps {
 	blogPost: BlogPost;
