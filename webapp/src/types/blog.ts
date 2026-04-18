@@ -14,6 +14,8 @@ export interface BlogPost {
 	ogTitle?: string;
 	ogDescription?: string;
 	featuredImageId?: string;
+	sourceInstruction?: string;
+	mediaIds: string[];
 	publishedAt?: string;
 	createdAt: string;
 	updatedAt: string;
@@ -39,6 +41,8 @@ export interface CreateBlogPostRequest {
 	og_title?: string;
 	og_description?: string;
 	featured_image_id?: string;
+	source_instruction?: string;
+	media_ids?: string[];
 }
 
 export interface UpdateBlogPostRequest {
@@ -53,4 +57,12 @@ export interface UpdateBlogPostRequest {
 	og_title?: string;
 	og_description?: string;
 	featured_image_id?: string;
+	source_instruction?: string;
+	media_ids?: string[];
+}
+
+export interface GenerateBlogRequest {
+	instruction: string;
+	keywords?: string[];
+	media_ids?: string[];
 }

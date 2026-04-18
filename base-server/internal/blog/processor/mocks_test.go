@@ -3,10 +3,27 @@ package processor
 import (
 	"context"
 
+	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 )
+
+// MockAIClient is a manual mock for aiclient.Client
+type MockAIClient struct {
+	CreateMessageFn func(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
+}
+
+func (m *MockAIClient) CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	if m.CreateMessageFn != nil {
+		return m.CreateMessageFn(ctx, systemPrompt, messages, maxTokens)
+	}
+	return "", nil
+}
+
+func (m *MockAIClient) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
+	return nil
+}
 
 // MockBlogStore is a manual mock for BlogStore
 type MockBlogStore struct {

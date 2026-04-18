@@ -22,6 +22,8 @@ export function toBlogPost(api: ApiBlogPost): BlogPost {
 		ogTitle: api.og_title,
 		ogDescription: api.og_description,
 		featuredImageId: api.featured_image_id,
+		sourceInstruction: api.source_instruction,
+		mediaIds: api.media_ids ?? [],
 		publishedAt: api.published_at,
 		createdAt: api.created_at,
 		updatedAt: api.updated_at,

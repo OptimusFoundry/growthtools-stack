@@ -160,6 +160,7 @@ func (a *API) RegisterRoutes() {
 		// Blog
 		protectedGroup.GET("/blog", a.blogHandler.HandleListBlogs)
 		protectedGroup.POST("/blog", a.blogHandler.HandleCreateBlog)
+		protectedGroup.POST("/blog/generate", a.blogHandler.HandleGenerateBlog)
 		protectedGroup.GET("/blog/:id", a.blogHandler.HandleGetBlog)
 		protectedGroup.PUT("/blog/:id", a.blogHandler.HandleUpdateBlog)
 		protectedGroup.DELETE("/blog/:id", a.blogHandler.HandleDeleteBlog)

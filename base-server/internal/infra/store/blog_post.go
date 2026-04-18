@@ -12,53 +12,62 @@ import (
 
 // BlogPost represents a blog post
 type BlogPost struct {
-	ID              uuid.UUID   `db:"id" json:"id"`
-	AccountID       uuid.UUID   `db:"account_id" json:"account_id"`
-	Title           string      `db:"title" json:"title"`
-	Slug            string      `db:"slug" json:"slug"`
-	Content         string      `db:"content" json:"content"`
-	Excerpt         *string     `db:"excerpt" json:"excerpt,omitempty"`
-	Status          string      `db:"status" json:"status"`
-	SEOTitle        *string     `db:"seo_title" json:"seo_title,omitempty"`
-	MetaDescription *string     `db:"meta_description" json:"meta_description,omitempty"`
-	Keywords        StringArray `db:"keywords" json:"keywords"`
-	OGTitle         *string     `db:"og_title" json:"og_title,omitempty"`
-	OGDescription   *string     `db:"og_description" json:"og_description,omitempty"`
-	FeaturedImageID *uuid.UUID  `db:"featured_image_id" json:"featured_image_id,omitempty"`
-	PublishedAt     *time.Time  `db:"published_at" json:"published_at,omitempty"`
-	CreatedAt       time.Time   `db:"created_at" json:"created_at"`
-	UpdatedAt       time.Time   `db:"updated_at" json:"updated_at"`
-	DeletedAt       *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
+	ID                uuid.UUID   `db:"id" json:"id"`
+	AccountID         uuid.UUID   `db:"account_id" json:"account_id"`
+	Title             string      `db:"title" json:"title"`
+	Slug              string      `db:"slug" json:"slug"`
+	Content           string      `db:"content" json:"content"`
+	Excerpt           *string     `db:"excerpt" json:"excerpt,omitempty"`
+	Status            string      `db:"status" json:"status"`
+	SEOTitle          *string     `db:"seo_title" json:"seo_title,omitempty"`
+	MetaDescription   *string     `db:"meta_description" json:"meta_description,omitempty"`
+	Keywords          StringArray `db:"keywords" json:"keywords"`
+	OGTitle           *string     `db:"og_title" json:"og_title,omitempty"`
+	OGDescription     *string     `db:"og_description" json:"og_description,omitempty"`
+	FeaturedImageID   *uuid.UUID  `db:"featured_image_id" json:"featured_image_id,omitempty"`
+	SourceInstruction *string     `db:"source_instruction" json:"source_instruction,omitempty"`
+	MediaIDs          UUIDArray   `db:"media_ids" json:"media_ids"`
+	PublishedAt       *time.Time  `db:"published_at" json:"published_at,omitempty"`
+	CreatedAt         time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time   `db:"updated_at" json:"updated_at"`
+	DeletedAt         *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
 }
 
 // CreateBlogPostParams represents parameters for creating a blog post
 type CreateBlogPostParams struct {
-	AccountID       uuid.UUID
-	Title           string
-	Slug            string
-	Content         string
-	Excerpt         *string
-	Status          string
-	SEOTitle        *string
-	MetaDescription *string
-	Keywords        StringArray
-	OGTitle         *string
-	OGDescription   *string
-	FeaturedImageID *uuid.UUID
+	AccountID         uuid.UUID
+	Title             string
+	Slug              string
+	Content           string
+	Excerpt           *string
+	Status            string
+	SEOTitle          *string
+	MetaDescription   *string
+	Keywords          StringArray
+	OGTitle           *string
+	OGDescription     *string
+	FeaturedImageID   *uuid.UUID
+	SourceInstruction *string
+	MediaIDs          UUIDArray
 }
 
 const sqlCreateBlogPost = `
-INSERT INTO blog_posts (account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, published_at, created_at, updated_at, deleted_at
+INSERT INTO blog_posts (account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
 `
 
 func (s *Store) CreateBlogPost(ctx context.Context, params CreateBlogPostParams) (BlogPost, error) {
 	var bp BlogPost
+	mediaIDs := params.MediaIDs
+	if mediaIDs == nil {
+		mediaIDs = UUIDArray{}
+	}
 	err := s.db.GetContext(ctx, &bp, sqlCreateBlogPost,
 		params.AccountID, params.Title, params.Slug, params.Content,
 		params.Excerpt, params.Status, params.SEOTitle, params.MetaDescription,
-		params.Keywords, params.OGTitle, params.OGDescription, params.FeaturedImageID)
+		params.Keywords, params.OGTitle, params.OGDescription, params.FeaturedImageID,
+		params.SourceInstruction, mediaIDs)
 	if err != nil {
 		return BlogPost{}, fmt.Errorf("failed to create blog post: %w", err)
 	}
@@ -66,7 +75,7 @@ func (s *Store) CreateBlogPost(ctx context.Context, params CreateBlogPostParams)
 }
 
 const sqlGetBlogPostByID = `
-SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, published_at, created_at, updated_at, deleted_at
+SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
 FROM blog_posts
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
 `
@@ -84,7 +93,7 @@ func (s *Store) GetBlogPostByID(ctx context.Context, accountID, id uuid.UUID) (B
 }
 
 const sqlGetBlogPostBySlug = `
-SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, published_at, created_at, updated_at, deleted_at
+SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
 FROM blog_posts
 WHERE account_id = $1 AND slug = $2 AND deleted_at IS NULL
 `
@@ -102,7 +111,7 @@ func (s *Store) GetBlogPostBySlug(ctx context.Context, accountID uuid.UUID, slug
 }
 
 const sqlListBlogPosts = `
-SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, published_at, created_at, updated_at, deleted_at
+SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
 FROM blog_posts
 WHERE account_id = $1 AND deleted_at IS NULL
 AND ($2::text IS NULL OR status = $2::blog_status)
@@ -124,17 +133,19 @@ func (s *Store) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *
 
 // UpdateBlogPostParams represents parameters for updating a blog post
 type UpdateBlogPostParams struct {
-	Title           *string
-	Slug            *string
-	Content         *string
-	Excerpt         *string
-	Status          *string
-	SEOTitle        *string
-	MetaDescription *string
-	Keywords        StringArray
-	OGTitle         *string
-	OGDescription   *string
-	FeaturedImageID *uuid.UUID
+	Title             *string
+	Slug              *string
+	Content           *string
+	Excerpt           *string
+	Status            *string
+	SEOTitle          *string
+	MetaDescription   *string
+	Keywords          StringArray
+	OGTitle           *string
+	OGDescription     *string
+	FeaturedImageID   *uuid.UUID
+	SourceInstruction *string
+	MediaIDs          UUIDArray
 }
 
 const sqlUpdateBlogPost = `
@@ -150,9 +161,11 @@ SET title = COALESCE($3, title),
     og_title = COALESCE($11, og_title),
     og_description = COALESCE($12, og_description),
     featured_image_id = COALESCE($13, featured_image_id),
+    source_instruction = COALESCE($14, source_instruction),
+    media_ids = COALESCE($15, media_ids),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
-RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, published_at, created_at, updated_at, deleted_at
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
 `
 
 func (s *Store) UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, params UpdateBlogPostParams) (BlogPost, error) {
@@ -160,7 +173,8 @@ func (s *Store) UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, par
 	err := s.db.GetContext(ctx, &bp, sqlUpdateBlogPost,
 		id, accountID, params.Title, params.Slug, params.Content,
 		params.Excerpt, params.Status, params.SEOTitle, params.MetaDescription,
-		params.Keywords, params.OGTitle, params.OGDescription, params.FeaturedImageID)
+		params.Keywords, params.OGTitle, params.OGDescription, params.FeaturedImageID,
+		params.SourceInstruction, params.MediaIDs)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return BlogPost{}, ErrNotFound
@@ -195,7 +209,7 @@ const sqlPublishBlogPost = `
 UPDATE blog_posts
 SET status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
-RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, published_at, created_at, updated_at, deleted_at
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
 `
 
 func (s *Store) PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (BlogPost, error) {

@@ -130,3 +130,18 @@ func (mr *MockBlogProcessorMockRecorder) UpdateBlogPost(ctx, accountID, postID, 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBlogPost", reflect.TypeOf((*MockBlogProcessor)(nil).UpdateBlogPost), ctx, accountID, postID, params)
 }
+
+// GenerateBlogPost mocks base method.
+func (m *MockBlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID) (store.BlogPost, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateBlogPost", ctx, accountID, instruction, keywords, mediaIDs)
+	ret0, _ := ret[0].(store.BlogPost)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateBlogPost indicates an expected call of GenerateBlogPost.
+func (mr *MockBlogProcessorMockRecorder) GenerateBlogPost(ctx, accountID, instruction, keywords, mediaIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateBlogPost", reflect.TypeOf((*MockBlogProcessor)(nil).GenerateBlogPost), ctx, accountID, instruction, keywords, mediaIDs)
+}

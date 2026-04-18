@@ -132,7 +132,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	p.github.SetCommitClassifier(&p.content)
 
 	// Blog
-	p.blog = blogProcessor.New(s, logger)
+	p.blog = blogProcessor.New(s, cl.gemini, logger)
 
 	// Analytics
 	p.analytics = analyticsProcessor.New(s, logger)

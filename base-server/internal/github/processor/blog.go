@@ -20,18 +20,41 @@ import (
 
 const (
 	blogMaxScreenshots = 5
-	blogExcerptMax     = 200
 	// blogMaxOutputTokens caps Gemini output. 2.5 Flash supports up to 65k
 	// output; 8k is enough for a long-form blog post and keeps latency +
 	// cost predictable.
 	blogMaxOutputTokens = 8192
-	blogSystemPrompt    = "You are a technical engineering blog author. Write detailed, first-person blog posts about software changes. Cover what was built, why architectural decisions were made, what tradeoffs existed, and what the implementation looks like. Be specific — reference actual code, file names, and design patterns from the diff. Output raw markdown only, starting with a `# Title` heading. Use H2 sections. No preamble, no meta-commentary."
+	blogSystemPrompt    = `You are a technical engineering blog author. Write detailed, first-person blog posts about software changes. Cover what was built, why architectural decisions were made, what tradeoffs existed, and what the implementation looks like. Be specific — reference actual code, file names, and design patterns from the diff.
+
+Respond with a single JSON object and nothing else. The object must have these fields:
+- "title": string — blog post title
+- "content": string — full blog post in Markdown, starting with a # heading, using H2 sections
+- "excerpt": string — one-sentence summary (max 200 chars)
+- "seo_title": string — SEO-optimised title (max 60 chars)
+- "meta_description": string — meta description (max 160 chars)
+- "keywords": array of strings — 3–8 relevant keywords
+- "og_title": string — Open Graph title (max 60 chars)
+- "og_description": string — Open Graph description (max 200 chars)
+
+No markdown fences, no preamble — raw JSON only.`
 )
 
 var (
 	ErrBlogGuardTripped     = errors.New("blog generation guard tripped")
 	ErrBlogGenerationFailed = errors.New("failed to generate blog from commit")
 )
+
+// blogJSONResponse is the expected JSON structure returned by the AI.
+type blogJSONResponse struct {
+	Title           string   `json:"title"`
+	Content         string   `json:"content"`
+	Excerpt         string   `json:"excerpt"`
+	SEOTitle        string   `json:"seo_title"`
+	MetaDescription string   `json:"meta_description"`
+	Keywords        []string `json:"keywords"`
+	OGTitle         string   `json:"og_title"`
+	OGDescription   string   `json:"og_description"`
+}
 
 // BlogDraftStore is the slice of the store the blog generator needs.
 type BlogDraftStore interface {
@@ -146,28 +169,51 @@ func (g *BlogDraftGenerator) GenerateBlogFromCommit(ctx context.Context, commitI
 		return ErrBlogGenerationFailed
 	}
 
-	title, excerpt, content := parseBlogResponse(rawOutput)
-	if title == "" || content == "" {
-		g.logger.Error(ctx, "gemini blog response missing title or content", fmt.Errorf("raw length=%d", len(rawOutput)))
+	var blogResp blogJSONResponse
+	if parseErr := json.Unmarshal([]byte(strings.TrimSpace(rawOutput)), &blogResp); parseErr != nil {
+		g.logger.Error(ctx, "failed to parse blog JSON response", fmt.Errorf("parse: %w, raw length=%d", parseErr, len(rawOutput)))
 		return ErrBlogGenerationFailed
 	}
 
-	slug, err := g.resolveUniqueSlug(ctx, commit.AccountID, slugify(title))
+	if blogResp.Title == "" || blogResp.Content == "" {
+		g.logger.Error(ctx, "blog JSON response missing title or content", fmt.Errorf("raw length=%d", len(rawOutput)))
+		return ErrBlogGenerationFailed
+	}
+
+	slug, err := g.resolveUniqueSlug(ctx, commit.AccountID, slugify(blogResp.Title))
 	if err != nil {
 		g.logger.Error(ctx, "failed to resolve unique slug", err)
 		return ErrBlogGenerationFailed
 	}
 
+	keywords := store.StringArray(blogResp.Keywords)
+	if keywords == nil {
+		keywords = store.StringArray{}
+	}
+
 	params := store.CreateBlogPostParams{
 		AccountID: commit.AccountID,
-		Title:     title,
+		Title:     blogResp.Title,
 		Slug:      slug,
-		Content:   content,
+		Content:   blogResp.Content,
 		Status:    store.BlogStatusDraft,
-		Keywords:  store.StringArray{},
+		Keywords:  keywords,
+		MediaIDs:  store.UUIDArray{},
 	}
-	if excerpt != "" {
-		params.Excerpt = &excerpt
+	if blogResp.Excerpt != "" {
+		params.Excerpt = &blogResp.Excerpt
+	}
+	if blogResp.SEOTitle != "" {
+		params.SEOTitle = &blogResp.SEOTitle
+	}
+	if blogResp.MetaDescription != "" {
+		params.MetaDescription = &blogResp.MetaDescription
+	}
+	if blogResp.OGTitle != "" {
+		params.OGTitle = &blogResp.OGTitle
+	}
+	if blogResp.OGDescription != "" {
+		params.OGDescription = &blogResp.OGDescription
 	}
 
 	bp, err := g.store.CreateBlogPost(ctx, params)
@@ -223,35 +269,6 @@ func buildBlogUserMessage(c store.GitHubCommitForBlog, diff string) string {
 	b.WriteString("\n\nFull diff:\n")
 	b.WriteString(diff)
 	return b.String()
-}
-
-// parseBlogResponse extracts (title, excerpt, content) from a markdown
-// response. Title: first `# ...` heading. Excerpt: first non-heading,
-// non-empty paragraph, truncated to blogExcerptMax chars. Content: the
-// full raw markdown, unchanged.
-func parseBlogResponse(raw string) (title, excerpt, content string) {
-	content = strings.TrimSpace(raw)
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "# ") {
-			title = strings.TrimSpace(strings.TrimPrefix(trimmed, "# "))
-			break
-		}
-	}
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
-			continue
-		}
-		excerpt = trimmed
-		break
-	}
-	if len([]rune(excerpt)) > blogExcerptMax {
-		runes := []rune(excerpt)
-		excerpt = string(runes[:blogExcerptMax])
-	}
-	return title, excerpt, content
 }
 
 // slugPattern strips everything that is not a-z0-9.

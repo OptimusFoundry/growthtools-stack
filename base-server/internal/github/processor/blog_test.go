@@ -85,7 +85,8 @@ func TestBlogDraftGenerator_GenerateBlogFromCommit(t *testing.T) {
 	t.Parallel()
 	logger := observability.NewLogger()
 
-	happyMarkdown := "# Ship the blog pipeline\n\nWe added an async blog generator that consumes Kafka events and produces drafts.\n\n## Architecture\n\nDetails here."
+	happyJSON := `{"title":"Ship the blog pipeline","content":"# Ship the blog pipeline\n\nWe added an async blog generator that consumes Kafka events and produces drafts.\n\n## Architecture\n\nDetails here.","excerpt":"We added an async blog generator that consumes Kafka events and produces drafts.","seo_title":"Ship the blog pipeline","meta_description":"How we built an async blog generator.","keywords":["blog","kafka","generator"],"og_title":"Ship the blog pipeline","og_description":"How we built an async blog generator."}`
+	happyMarkdown := happyJSON
 
 	tests := []struct {
 		name    string
@@ -318,19 +319,27 @@ func TestSlugify(t *testing.T) {
 	}
 }
 
-func TestParseBlogResponse(t *testing.T) {
+func TestBlogJSONResponse_Parse(t *testing.T) {
 	t.Parallel()
-	title, excerpt, content := parseBlogResponse("# My title\n\nFirst paragraph here.\n\n## Section\n\nMore.")
-	assert.Equal(t, "My title", title)
-	assert.Equal(t, "First paragraph here.", excerpt)
-	assert.Contains(t, content, "# My title")
 
-	// Excerpt truncation
-	longPara := strings.Repeat("a", 250)
-	_, longExcerpt, _ := parseBlogResponse("# T\n\n" + longPara)
-	assert.Len(t, []rune(longExcerpt), 200)
+	t.Run("valid JSON response", func(t *testing.T) {
+		t.Parallel()
+		raw := `{"title":"My Title","content":"# My Title\n\nContent here.","excerpt":"Short summary.","seo_title":"SEO Title","meta_description":"Meta desc","keywords":["go","blog"],"og_title":"OG Title","og_description":"OG desc"}`
+		var resp blogJSONResponse
+		err := json.Unmarshal([]byte(raw), &resp)
+		require.NoError(t, err)
+		assert.Equal(t, "My Title", resp.Title)
+		assert.Contains(t, resp.Content, "# My Title")
+		assert.Equal(t, "Short summary.", resp.Excerpt)
+		assert.Equal(t, "SEO Title", resp.SEOTitle)
+		assert.Equal(t, []string{"go", "blog"}, resp.Keywords)
+	})
 
-	// No title
-	title, _, _ = parseBlogResponse("Just prose, no heading.")
-	assert.Equal(t, "", title)
+	t.Run("invalid JSON returns error", func(t *testing.T) {
+		t.Parallel()
+		raw := "Just prose, no JSON."
+		var resp blogJSONResponse
+		err := json.Unmarshal([]byte(raw), &resp)
+		require.Error(t, err)
+	})
 }

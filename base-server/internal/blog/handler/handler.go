@@ -25,6 +25,7 @@ type BlogProcessor interface {
 	UpdateBlogPost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
+	GenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID) (store.BlogPost, error)
 }
 
 type Handler struct {
@@ -40,29 +41,39 @@ func New(processor BlogProcessor, logger *observability.Logger) Handler {
 }
 
 type CreateBlogRequest struct {
-	Title           string   `json:"title" binding:"required"`
-	Slug            string   `json:"slug" binding:"required"`
-	Content         string   `json:"content" binding:"required"`
-	Excerpt         *string  `json:"excerpt"`
-	SEOTitle        *string  `json:"seo_title"`
-	MetaDescription *string  `json:"meta_description"`
-	Keywords        []string `json:"keywords"`
-	OGTitle         *string  `json:"og_title"`
-	OGDescription   *string  `json:"og_description"`
-	FeaturedImageID *string  `json:"featured_image_id"`
+	Title             string   `json:"title" binding:"required"`
+	Slug              string   `json:"slug" binding:"required"`
+	Content           string   `json:"content" binding:"required"`
+	Excerpt           *string  `json:"excerpt"`
+	SEOTitle          *string  `json:"seo_title"`
+	MetaDescription   *string  `json:"meta_description"`
+	Keywords          []string `json:"keywords"`
+	OGTitle           *string  `json:"og_title"`
+	OGDescription     *string  `json:"og_description"`
+	FeaturedImageID   *string  `json:"featured_image_id"`
+	SourceInstruction *string  `json:"source_instruction"`
+	MediaIDs          []string `json:"media_ids"`
 }
 
 type UpdateBlogRequest struct {
-	Title           *string  `json:"title"`
-	Slug            *string  `json:"slug"`
-	Content         *string  `json:"content"`
-	Excerpt         *string  `json:"excerpt"`
-	SEOTitle        *string  `json:"seo_title"`
-	MetaDescription *string  `json:"meta_description"`
-	Keywords        []string `json:"keywords"`
-	OGTitle         *string  `json:"og_title"`
-	OGDescription   *string  `json:"og_description"`
-	FeaturedImageID *string  `json:"featured_image_id"`
+	Title             *string  `json:"title"`
+	Slug              *string  `json:"slug"`
+	Content           *string  `json:"content"`
+	Excerpt           *string  `json:"excerpt"`
+	SEOTitle          *string  `json:"seo_title"`
+	MetaDescription   *string  `json:"meta_description"`
+	Keywords          []string `json:"keywords"`
+	OGTitle           *string  `json:"og_title"`
+	OGDescription     *string  `json:"og_description"`
+	FeaturedImageID   *string  `json:"featured_image_id"`
+	SourceInstruction *string  `json:"source_instruction"`
+	MediaIDs          []string `json:"media_ids"`
+}
+
+type GenerateBlogRequest struct {
+	Instruction string   `json:"instruction" binding:"required"`
+	Keywords    []string `json:"keywords"`
+	MediaIDs    []string `json:"media_ids"`
 }
 
 func (h *Handler) HandleCreateBlog(c *gin.Context) {
@@ -81,17 +92,19 @@ func (h *Handler) HandleCreateBlog(c *gin.Context) {
 	}
 
 	params := store.CreateBlogPostParams{
-		AccountID:       accountID,
-		Title:           req.Title,
-		Slug:            req.Slug,
-		Content:         req.Content,
-		Excerpt:         req.Excerpt,
-		Status:          "draft",
-		SEOTitle:        req.SEOTitle,
-		MetaDescription: req.MetaDescription,
-		Keywords:        store.StringArray(req.Keywords),
-		OGTitle:         req.OGTitle,
-		OGDescription:   req.OGDescription,
+		AccountID:         accountID,
+		Title:             req.Title,
+		Slug:              req.Slug,
+		Content:           req.Content,
+		Excerpt:           req.Excerpt,
+		Status:            "draft",
+		SEOTitle:          req.SEOTitle,
+		MetaDescription:   req.MetaDescription,
+		Keywords:          store.StringArray(req.Keywords),
+		OGTitle:           req.OGTitle,
+		OGDescription:     req.OGDescription,
+		SourceInstruction: req.SourceInstruction,
+		MediaIDs:          store.UUIDArray{},
 	}
 
 	if req.FeaturedImageID != nil {
@@ -101,6 +114,15 @@ func (h *Handler) HandleCreateBlog(c *gin.Context) {
 			return
 		}
 		params.FeaturedImageID = &id
+	}
+
+	for _, idStr := range req.MediaIDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			apierrors.BadRequest(c, "INVALID_INPUT", "Invalid media_id format: "+idStr)
+			return
+		}
+		params.MediaIDs = append(params.MediaIDs, id)
 	}
 
 	created, err := h.processor.CreateBlogPost(ctx, params)
@@ -203,14 +225,15 @@ func (h *Handler) HandleUpdateBlog(c *gin.Context) {
 	}
 
 	updateParams := store.UpdateBlogPostParams{
-		Title:           req.Title,
-		Slug:            req.Slug,
-		Content:         req.Content,
-		Excerpt:         req.Excerpt,
-		SEOTitle:        req.SEOTitle,
-		MetaDescription: req.MetaDescription,
-		OGTitle:         req.OGTitle,
-		OGDescription:   req.OGDescription,
+		Title:             req.Title,
+		Slug:              req.Slug,
+		Content:           req.Content,
+		Excerpt:           req.Excerpt,
+		SEOTitle:          req.SEOTitle,
+		MetaDescription:   req.MetaDescription,
+		OGTitle:           req.OGTitle,
+		OGDescription:     req.OGDescription,
+		SourceInstruction: req.SourceInstruction,
 	}
 	if req.Keywords != nil {
 		updateParams.Keywords = store.StringArray(req.Keywords)
@@ -222,6 +245,16 @@ func (h *Handler) HandleUpdateBlog(c *gin.Context) {
 			return
 		}
 		updateParams.FeaturedImageID = &id
+	}
+	if req.MediaIDs != nil {
+		for _, idStr := range req.MediaIDs {
+			id, err := uuid.Parse(idStr)
+			if err != nil {
+				apierrors.BadRequest(c, "INVALID_INPUT", "Invalid media_id format: "+idStr)
+				return
+			}
+			updateParams.MediaIDs = append(updateParams.MediaIDs, id)
+		}
 	}
 
 	updated, err := h.processor.UpdateBlogPost(ctx, accountID, postID, updateParams)
@@ -288,12 +321,48 @@ func (h *Handler) HandlePublishBlog(c *gin.Context) {
 	c.JSON(http.StatusOK, published)
 }
 
+func (h *Handler) HandleGenerateBlog(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accountID, ok := h.getAccountID(c)
+	if !ok {
+		return
+	}
+	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
+
+	var req GenerateBlogRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		apierrors.ValidationError(c, err)
+		return
+	}
+
+	mediaIDs := make([]uuid.UUID, 0, len(req.MediaIDs))
+	for _, idStr := range req.MediaIDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			apierrors.BadRequest(c, "INVALID_INPUT", "Invalid media_id format: "+idStr)
+			return
+		}
+		mediaIDs = append(mediaIDs, id)
+	}
+
+	post, err := h.processor.GenerateBlogPost(ctx, accountID, req.Instruction, req.Keywords, mediaIDs)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, post)
+}
+
 func (h *Handler) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, processor.ErrBlogPostNotFound):
 		apierrors.NotFound(c, "Blog post not found")
 	case errors.Is(err, processor.ErrSlugAlreadyExists):
 		apierrors.Conflict(c, "SLUG_EXISTS", "A blog post with this slug already exists")
+	case errors.Is(err, processor.ErrBlogGenerationFailed):
+		apierrors.InternalError(c, err)
 	default:
 		apierrors.InternalError(c, err)
 	}

@@ -1,12 +1,9 @@
 import { useCallback, useState } from "react";
 import { fetcher } from "@/api/client";
+import { toBlogPost } from "@/api/transforms/blog";
+import type { ApiBlogPost } from "@/api/types/blog";
+import type { BlogPost } from "@/types/blog";
 import { getErrorMessage } from "@/utils/errorHandler";
-
-interface GenerateBlogResponse {
-	title: string;
-	content: string;
-	slug: string;
-}
 
 export const useGenerateBlog = () => {
 	const [loading, setLoading] = useState<boolean>(false);
@@ -14,22 +11,27 @@ export const useGenerateBlog = () => {
 
 	const generateBlog = useCallback(
 		async (
-			topic: string,
+			instruction: string,
 			keywords: string[],
-		): Promise<GenerateBlogResponse> => {
+			mediaIds?: string[],
+		): Promise<BlogPost> => {
 			setLoading(true);
 			setError(null);
 
 			try {
-				const response = await fetcher<GenerateBlogResponse>(
+				const response = await fetcher<ApiBlogPost>(
 					`${import.meta.env.VITE_API_URL}/api/protected/blog/generate`,
 					{
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ topic, keywords }),
+						body: JSON.stringify({
+							instruction,
+							keywords,
+							media_ids: mediaIds ?? [],
+						}),
 					},
 				);
-				return response;
+				return toBlogPost(response);
 			} catch (err: unknown) {
 				const message = getErrorMessage(err);
 				setError(message);

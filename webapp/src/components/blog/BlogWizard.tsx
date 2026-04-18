@@ -1,13 +1,19 @@
 import { BookOpen, RefreshCw, Sparkles } from "lucide-react";
 import "highlight.js/styles/github.css";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
+import { MediaUploadSection } from "@/components/create-post/compose/MediaUploadSection";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useGenerateBlog } from "@/hooks/useGenerateBlog";
+import { useMedia } from "@/hooks/useMedia";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
+import type {
+	ExistingFile,
+	UploadedFile,
+} from "@/proto-design-system/components/composite/FileUpload";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
@@ -49,7 +55,9 @@ export function BlogWizard({
 }: BlogWizardProps) {
 	const isEditMode = Boolean(initialBlogPost);
 
-	const [instruction, setInstruction] = useState(initialBlogPost?.title ?? "");
+	const [instruction, setInstruction] = useState(
+		initialBlogPost?.sourceInstruction ?? initialBlogPost?.title ?? "",
+	);
 	const [keywords, setKeywords] = useState(
 		initialBlogPost ? initialBlogPost.keywords.join(", ") : "",
 	);
@@ -65,6 +73,10 @@ export function BlogWizard({
 	const [ogDescription, setOgDescription] = useState(
 		initialBlogPost?.ogDescription ?? "",
 	);
+	const [existingMediaIds, setExistingMediaIds] = useState<string[]>(
+		initialBlogPost?.mediaIds ?? [],
+	);
+	const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
 	const [error, setError] = useState<string | null>(null);
 
 	const { generateBlog, loading: generating } = useGenerateBlog();
@@ -72,8 +84,24 @@ export function BlogWizard({
 	const { updateBlogPost, loading: updating } = useUpdateBlogPost();
 	const { publishBlog, loading: publishing } = usePublishBlog();
 	const { addBanner } = useBannerCenter();
+	const { media: allMedia } = useMedia({ limit: 100 });
 
 	const saving = creating || updating || publishing;
+
+	// Derive ExistingFile[] for the MediaUploadSection by matching
+	// existingMediaIds against the full media library.
+	const existingMedia = useMemo<ExistingFile[]>(() => {
+		return existingMediaIds
+			.map((id) => allMedia.find((m) => m.id === id))
+			.filter((m): m is NonNullable<typeof m> => m !== undefined)
+			.map((m) => ({
+				id: m.id,
+				name: m.filename,
+				size: m.sizeBytes,
+				contentType: m.contentType,
+				url: m.url ?? undefined,
+			}));
+	}, [existingMediaIds, allMedia]);
 
 	const handleTitleBlur = useCallback(() => {
 		if (title && !slug) {
@@ -92,14 +120,23 @@ export function BlogWizard({
 				.split(",")
 				.map((k) => k.trim())
 				.filter(Boolean);
-			const result = await generateBlog(instruction, parsedKeywords);
+			const result = await generateBlog(
+				instruction,
+				parsedKeywords,
+				existingMediaIds,
+			);
 			setTitle(result.title);
 			setContent(result.content);
 			setSlug(result.slug);
+			if (result.excerpt) setExcerpt(result.excerpt);
+			if (result.seoTitle) setSeoTitle(result.seoTitle);
+			if (result.metaDescription) setMetaDescription(result.metaDescription);
+			if (result.ogTitle) setOgTitle(result.ogTitle);
+			if (result.ogDescription) setOgDescription(result.ogDescription);
 		} catch {
 			// error surfaced via hook state
 		}
-	}, [instruction, keywords, generateBlog]);
+	}, [instruction, keywords, existingMediaIds, generateBlog]);
 
 	const validate = useCallback((): boolean => {
 		if (!title.trim()) {
@@ -129,6 +166,8 @@ export function BlogWizard({
 				: undefined,
 			og_title: ogTitle || undefined,
 			og_description: ogDescription || undefined,
+			source_instruction: instruction || undefined,
+			media_ids: existingMediaIds,
 		}),
 		[
 			title,
@@ -140,6 +179,8 @@ export function BlogWizard({
 			keywords,
 			ogTitle,
 			ogDescription,
+			instruction,
+			existingMediaIds,
 		],
 	);
 
@@ -269,6 +310,17 @@ export function BlogWizard({
 							)}
 						</Button>
 					</Stack>
+
+					<Divider />
+
+					<MediaUploadSection
+						pendingFiles={pendingFiles}
+						existingMedia={existingMedia}
+						onFilesChange={setPendingFiles}
+						onRemoveExisting={(id) =>
+							setExistingMediaIds((prev) => prev.filter((mid) => mid !== id))
+						}
+					/>
 
 					<Divider />
 

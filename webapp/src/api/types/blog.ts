@@ -20,6 +20,8 @@ export interface ApiBlogPost {
 	og_title?: string;
 	og_description?: string;
 	featured_image_id?: string;
+	source_instruction?: string;
+	media_ids: string[];
 	published_at?: string;
 	created_at: string;
 	updated_at: string;
