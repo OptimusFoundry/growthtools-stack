@@ -1,11 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	BarChart,
-	Calendar,
-	Image,
-	Newspaper,
-	PenSquare,
-} from "lucide-react";
+import { BarChart, Calendar, Image, Newspaper, PenSquare } from "lucide-react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useAuth } from "@/contexts/auth";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
