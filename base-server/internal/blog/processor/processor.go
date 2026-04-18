@@ -1,6 +1,7 @@
 package processor
 
-//go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor
+// mocks_test.go is hand-rolled (function-field style) — do not `go generate`
+// against this file, it would overwrite the mocks the tests rely on.
 
 import (
 	"context"
@@ -26,6 +27,7 @@ type BlogStore interface {
 	UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
+	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
 var (
@@ -37,6 +39,8 @@ var (
 const (
 	generateBlogMaxTokens = 8192
 	generateBlogSystemPrompt = `You are a technical blog author. Write engaging, first-person blog posts on the given topic. Cover the subject thoroughly with clear explanations, examples, and insights.
+
+If the user provides attached images, embed EVERY image inline in the "content" markdown using the exact syntax ` + "`![alt](url)`" + ` on its own line, placed at a natural spot in the narrative where it reinforces the surrounding prose. Write descriptive alt text. Do not skip images and do not invent URLs — use only the URLs the user provided.
 
 Respond with a single JSON object and nothing else. The object must have these fields:
 - "title": string — blog post title
@@ -236,7 +240,14 @@ func (p *BlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUI
 		observability.Field{Key: "operation", Value: "generate_blog_post"},
 	)
 
-	userMsg := buildGenerateBlogUserMessage(instruction, keywords)
+	// Fetch media referenced by the request and keep only images — videos
+	// can't be embedded in markdown and would waste prompt tokens. We pass
+	// the surviving URLs to the model and instruct it to inline them, which
+	// means the persisted content already has `![](url)` tags and the
+	// ReactMarkdown preview renders them on first load.
+	images := p.fetchImagesForPrompt(ctx, mediaIDs)
+
+	userMsg := buildGenerateBlogUserMessage(instruction, keywords, images)
 	rawOutput, err := p.ai.CreateMessage(ctx, generateBlogSystemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMsg},
 	}, generateBlogMaxTokens)
@@ -305,14 +316,62 @@ func (p *BlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUI
 	return post, nil
 }
 
-// buildGenerateBlogUserMessage formats the user instruction + keywords for the AI.
-func buildGenerateBlogUserMessage(instruction string, keywords []string) string {
+// promptImage is an image the model should inline into the generated markdown.
+type promptImage struct {
+	URL      string
+	Filename string
+	AltText  string
+}
+
+// fetchImagesForPrompt loads the referenced media and returns only images with
+// a browser-resolvable URL. Videos are skipped (markdown can't embed them) and
+// `s3://` URLs are skipped because writing them into markdown would 404 in the
+// reader's browser. Any error is logged and treated as "no images" — blog
+// generation should not fail just because media lookup did.
+func (p *BlogProcessor) fetchImagesForPrompt(ctx context.Context, mediaIDs []uuid.UUID) []promptImage {
+	if len(mediaIDs) == 0 {
+		return nil
+	}
+	media, err := p.store.GetMediaByIDs(ctx, mediaIDs)
+	if err != nil {
+		p.logger.Error(ctx, "failed to load media for blog prompt", err)
+		return nil
+	}
+	out := make([]promptImage, 0, len(media))
+	for _, m := range media {
+		if !strings.HasPrefix(m.ContentType, "image/") {
+			continue
+		}
+		if !strings.HasPrefix(m.S3URL, "http://") && !strings.HasPrefix(m.S3URL, "https://") {
+			continue
+		}
+		alt := ""
+		if m.AltText != nil {
+			alt = *m.AltText
+		}
+		out = append(out, promptImage{URL: m.S3URL, Filename: m.Filename, AltText: alt})
+	}
+	return out
+}
+
+// buildGenerateBlogUserMessage formats the user instruction + keywords + images for the AI.
+func buildGenerateBlogUserMessage(instruction string, keywords []string, images []promptImage) string {
 	var b strings.Builder
 	b.WriteString("Topic / Instructions:\n")
 	b.WriteString(instruction)
 	if len(keywords) > 0 {
 		b.WriteString("\n\nKeywords: ")
 		b.WriteString(strings.Join(keywords, ", "))
+	}
+	if len(images) > 0 {
+		b.WriteString("\n\nAttached images (embed EVERY one inline in the content markdown using `![alt](url)`):\n")
+		for i, img := range images {
+			fmt.Fprintf(&b, "%d. url=%s filename=%s", i+1, img.URL, img.Filename)
+			if img.AltText != "" {
+				fmt.Fprintf(&b, " alt=%q", img.AltText)
+			}
+			b.WriteString("\n")
+		}
 	}
 	return b.String()
 }
