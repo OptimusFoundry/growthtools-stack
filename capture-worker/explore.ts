@@ -1,0 +1,670 @@
+// Pass 1: Exploration agent.
+//
+// Drives Playwright WITHOUT recording to understand the app and produce a
+// structured ExplorationPlan. The plan is then handed to the Record pass
+// (agent.ts) so every recorded step is intentional.
+//
+// callWithRetry, extractRetryMs, cursorOverlayScript, resolveLocator, and
+// animateMouseToLocator are copied verbatim from agent.ts to avoid circular
+// dependencies (agent.ts → explore.ts is fine; a shared utils.ts would also
+// be fine but adds a file the plan asks us not to create).
+
+import fs from "node:fs/promises";
+import path from "node:path";
+import {
+	type Content,
+	type FunctionCall,
+	FunctionCallingConfigMode,
+	type FunctionDeclaration,
+	GoogleGenAI,
+	Type,
+} from "@google/genai";
+import { type Page, chromium } from "playwright";
+import { captureLoginStorageState } from "./auth.ts";
+import type { DemoStep, ExplorationPlan } from "./types.ts";
+
+// ---------------------------------------------------------------------------
+// Shared helpers — copied verbatim from agent.ts to avoid circular deps
+// ---------------------------------------------------------------------------
+
+// Gemini free tier throttles at 5 req/min. On a 429 the API returns the
+// exact retry delay in the RetryInfo detail; honour it, clamped to a sane
+// ceiling and our overall wall clock budget.
+async function callWithRetry<T>(
+	fn: () => Promise<T>,
+	deadline: number,
+	maxAttempts = 4,
+): Promise<T> {
+	let lastErr: unknown;
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		try {
+			return await fn();
+		} catch (err) {
+			lastErr = err;
+			const status = (err as { status?: number }).status;
+			if (status !== 429) throw err;
+			const retryMs = extractRetryMs(err) ?? 15_000;
+			const remaining = deadline - Date.now();
+			if (remaining <= 0) throw err;
+			const sleepMs = Math.min(retryMs, remaining - 500);
+			console.log(`[explore] 429; sleeping ${sleepMs}ms (attempt ${attempt + 1})`);
+			if (sleepMs <= 0) throw err;
+			await new Promise((resolve) => setTimeout(resolve, sleepMs));
+		}
+	}
+	throw lastErr;
+}
+
+function extractRetryMs(err: unknown): number | null {
+	const msg = (err as { message?: string }).message ?? "";
+	const match = msg.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
+	if (!match?.[1]) return null;
+	return Math.ceil(Number.parseFloat(match[1]) * 1000);
+}
+
+// Runs inside the browser on every navigation. Creates a floating cursor
+// element that tracks the latest mousemove — gives the recorded video
+// something to show while the agent is "thinking" and animates clicks.
+const cursorOverlayScript = `
+(() => {
+  if (window.__pwCursorInstalled) return;
+  window.__pwCursorInstalled = true;
+
+  const cursor = document.createElement('div');
+  cursor.id = '__pw_cursor';
+  cursor.style.cssText = [
+    'position:fixed',
+    'top:0',
+    'left:0',
+    'width:22px',
+    'height:22px',
+    'border-radius:50%',
+    'background:radial-gradient(circle,rgba(255,40,60,0.9) 0%,rgba(255,40,60,0.45) 55%,transparent 80%)',
+    'border:2px solid rgba(255,255,255,0.9)',
+    'box-shadow:0 0 10px rgba(0,0,0,0.35)',
+    'pointer-events:none',
+    'z-index:2147483647',
+    'transform:translate(-50%,-50%)',
+    'transition:transform 40ms linear,opacity 120ms',
+    'opacity:0'
+  ].join(';');
+
+  const attach = () => {
+    if (document.body && !cursor.isConnected) document.body.appendChild(cursor);
+  };
+  if (document.body) attach();
+  else document.addEventListener('DOMContentLoaded', attach, { once: true });
+
+  let currentX = 0;
+  let currentY = 0;
+  document.addEventListener('mousemove', (e) => {
+    currentX = e.clientX;
+    currentY = e.clientY;
+    cursor.style.opacity = '1';
+    cursor.style.transform = 'translate(' + (currentX) + 'px,' + (currentY) + 'px) translate(-50%,-50%)';
+  }, true);
+
+  // Pulse when clicked so the video shows something happening.
+  document.addEventListener('mousedown', () => {
+    cursor.animate(
+      [
+        { boxShadow: '0 0 0 0 rgba(255,40,60,0.6)' },
+        { boxShadow: '0 0 0 16px rgba(255,40,60,0)' },
+      ],
+      { duration: 350, easing: 'ease-out' },
+    );
+  }, true);
+})();
+`;
+
+interface LocatorSpec {
+	by: string;
+	value: string;
+	name?: string;
+}
+
+// Animate the real mouse pointer from its current position to the center of
+// the target element with many small steps — the injected cursor overlay
+// renders the motion in the video.
+async function animateMouseToLocator(
+	page: Page,
+	loc: Awaited<ReturnType<Page["locator"]>>,
+): Promise<void> {
+	try {
+		const box = await loc.boundingBox({ timeout: 3000 });
+		if (!box) return;
+		const targetX = box.x + box.width / 2;
+		const targetY = box.y + box.height / 2;
+		// 25 steps over ~400ms gives a visible but snappy glide.
+		await page.mouse.move(targetX, targetY, { steps: 25 });
+		await page.waitForTimeout(120);
+	} catch {
+		// Element not visible / detached — fall through and let the click retry.
+	}
+}
+
+function resolveLocator(page: Page, spec: LocatorSpec) {
+	switch (spec.by) {
+		case "testid":
+			return page.getByTestId(spec.value);
+		case "text":
+			return page.getByText(spec.value);
+		case "role":
+			return page.getByRole(
+				spec.value as Parameters<typeof page.getByRole>[0],
+				spec.name ? { name: spec.name } : undefined,
+			);
+		case "label":
+			return page.getByLabel(spec.value);
+		case "placeholder":
+			return page.getByPlaceholder(spec.value);
+		default:
+			throw new Error(`Unknown locator strategy: ${spec.by}`);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Explore-pass tool set
+// ---------------------------------------------------------------------------
+
+const exploreTools: FunctionDeclaration[] = [
+	{
+		name: "navigate",
+		description:
+			"Go to a URL. Use this freely — exploration is cheap. Accepts absolute URLs or leading-slash paths.",
+		parameters: {
+			type: Type.OBJECT,
+			properties: {
+				url: { type: Type.STRING },
+			},
+			required: ["url"],
+		},
+	},
+	{
+		name: "click",
+		description:
+			"Click an element to discover what happens. Same locator strategies as the record pass.",
+		parameters: {
+			type: Type.OBJECT,
+			properties: {
+				by: { type: Type.STRING, enum: ["testid", "text", "role", "label", "placeholder"] },
+				value: { type: Type.STRING },
+				name: { type: Type.STRING },
+			},
+			required: ["by", "value"],
+		},
+	},
+	{
+		name: "fill",
+		description: "Type into an input to explore a form.",
+		parameters: {
+			type: Type.OBJECT,
+			properties: {
+				by: { type: Type.STRING, enum: ["testid", "text", "role", "label", "placeholder"] },
+				value: { type: Type.STRING },
+				name: { type: Type.STRING },
+				text: { type: Type.STRING },
+			},
+			required: ["by", "value", "text"],
+		},
+	},
+	{
+		name: "press",
+		description: "Press a keyboard key.",
+		parameters: {
+			type: Type.OBJECT,
+			properties: { key: { type: Type.STRING } },
+			required: ["key"],
+		},
+	},
+	{
+		name: "scroll",
+		description: "Scroll to reveal more of the page.",
+		parameters: {
+			type: Type.OBJECT,
+			properties: { pixels: { type: Type.NUMBER } },
+			required: ["pixels"],
+		},
+	},
+	{
+		name: "wait",
+		description: "Wait for the UI to settle (max 5 s).",
+		parameters: {
+			type: Type.OBJECT,
+			properties: { ms: { type: Type.NUMBER } },
+			required: ["ms"],
+		},
+	},
+	{
+		name: "screenshot",
+		description: "Capture the current view to examine it more closely.",
+		parameters: { type: Type.OBJECT, properties: {} },
+	},
+	{
+		name: "list_elements",
+		description:
+			"Return a JSON list of interactive elements on the current page (buttons, links, inputs). " +
+			"Use this to understand what actions are available before deciding what to click.",
+		parameters: { type: Type.OBJECT, properties: {} },
+	},
+	{
+		name: "done",
+		description:
+			"Signal that exploration is complete. Provide the structured demo plan.",
+		parameters: {
+			type: Type.OBJECT,
+			properties: {
+				goal: {
+					type: Type.STRING,
+					description: "One sentence describing what this commit ships to users.",
+				},
+				startUrl: {
+					type: Type.STRING,
+					description:
+						"Absolute URL of the first page the Record agent should open (e.g. https://app.example.com/posts).",
+				},
+				steps: {
+					type: Type.ARRAY,
+					description:
+						"Ordered list of interactions the Record agent should execute. " +
+						"Each step: { label: string, tool: string, args: object }. " +
+						"tool must be one of: navigate, click, fill, press, scroll, wait, screenshot. " +
+						"args must match that tool's parameter schema.",
+					items: { type: Type.OBJECT },
+				},
+				narration: {
+					type: Type.STRING,
+					description: "1-3 sentence narration for the end of the video.",
+				},
+			},
+			required: ["goal", "startUrl", "steps", "narration"],
+		},
+	},
+];
+
+// ---------------------------------------------------------------------------
+// list_elements implementation
+// ---------------------------------------------------------------------------
+
+async function executeListElements(page: Page): Promise<string> {
+	const elements = await page.evaluate(() => {
+		const selectors = [
+			"button:not([disabled])",
+			"a[href]",
+			"input:not([type=hidden])",
+			"select",
+			"textarea",
+			"[role=button]",
+			"[data-testid]",
+		];
+		const seen = new Set<string>();
+		const result: Array<{ tag: string; text: string; testid?: string; role?: string; href?: string }> = [];
+		for (const sel of selectors) {
+			for (const el of Array.from(document.querySelectorAll(sel))) {
+				const key = el.outerHTML.slice(0, 120);
+				if (seen.has(key)) continue;
+				seen.add(key);
+				result.push({
+					tag: el.tagName.toLowerCase(),
+					text: (el.textContent ?? "").trim().slice(0, 80),
+					testid: (el as HTMLElement).dataset.testid,
+					role: el.getAttribute("role") ?? undefined,
+					href: el instanceof HTMLAnchorElement ? el.href : undefined,
+				});
+			}
+		}
+		return result.slice(0, 60); // cap to keep response size sane
+	});
+	return JSON.stringify(elements, null, 2);
+}
+
+// ---------------------------------------------------------------------------
+// Local ToolContext and snapshot helper
+// ---------------------------------------------------------------------------
+
+interface ExploreToolContext {
+	page: Page;
+	appUrl: string;
+	exploreDir: string;
+	stepIndex: { value: number };
+	done: { value: boolean; args?: Record<string, unknown> };
+}
+
+async function snapshot(ctx: ExploreToolContext, message: string) {
+	ctx.stepIndex.value += 1;
+	const fname = `step-${String(ctx.stepIndex.value).padStart(2, "0")}.png`;
+	const outPath = path.join(ctx.exploreDir, fname);
+	const buf = await ctx.page.screenshot({ path: outPath, fullPage: false });
+	return {
+		message,
+		screenshotBase64: buf.toString("base64"),
+		screenshotPath: outPath,
+	};
+}
+
+async function executeExploreTool(
+	call: FunctionCall,
+	ctx: ExploreToolContext,
+): Promise<{ message: string; screenshotBase64?: string; screenshotPath?: string }> {
+	const args = (call.args ?? {}) as Record<string, unknown>;
+	const { page, appUrl } = ctx;
+
+	switch (call.name) {
+		case "navigate": {
+			const rawUrl = String(args.url ?? "");
+			const url = rawUrl.startsWith("http") ? rawUrl : `${appUrl}${rawUrl}`;
+			await page.goto(url, { waitUntil: "networkidle" });
+			return snapshot(ctx, `navigated to ${url}`);
+		}
+		case "click": {
+			const loc = resolveLocator(page, args as unknown as LocatorSpec);
+			await animateMouseToLocator(page, loc);
+			await loc.click({ timeout: 5000 });
+			return snapshot(ctx, `clicked ${JSON.stringify(args)}`);
+		}
+		case "fill": {
+			const loc = resolveLocator(page, args as unknown as LocatorSpec);
+			await animateMouseToLocator(page, loc);
+			await loc.fill(String(args.text ?? ""), { timeout: 5000 });
+			return snapshot(ctx, `filled ${JSON.stringify({ ...args, text: "***" })}`);
+		}
+		case "press": {
+			await page.keyboard.press(String(args.key ?? ""));
+			return snapshot(ctx, `pressed ${args.key}`);
+		}
+		case "scroll": {
+			const pixels = Number(args.pixels ?? 0);
+			await page.evaluate((p) => window.scrollBy({ top: p, behavior: "smooth" }), pixels);
+			await page.waitForTimeout(400);
+			return snapshot(ctx, `scrolled ${pixels}px`);
+		}
+		case "wait": {
+			const ms = Math.min(Number(args.ms ?? 0), 5000);
+			await page.waitForTimeout(ms);
+			return snapshot(ctx, `waited ${ms}ms`);
+		}
+		case "screenshot":
+			return snapshot(ctx, "screenshot");
+		case "list_elements": {
+			// list_elements returns JSON as the tool response message string;
+			// no screenshot is appended to that turn (it would waste tokens).
+			const json = await executeListElements(page);
+			return { message: json };
+		}
+		case "done":
+			ctx.done.value = true;
+			ctx.done.args = args;
+			return { message: "done" };
+		default:
+			return { message: `unknown tool: ${call.name}` };
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Public interface
+// ---------------------------------------------------------------------------
+
+export interface ExploreInput {
+	appUrl: string;
+	email: string;
+	password: string;
+	commit: string;
+	summary: string;
+	diff: string;
+	captureDir: string;       // base capture dir; explore writes to {captureDir}/explore/
+	maxExploreSteps?: number; // default 40
+	wallClockMs?: number;     // default 4 * 60_000
+	model?: string;           // default "gemini-2.5-flash"
+}
+
+export interface ExploreResult {
+	plan: ExplorationPlan;
+	planPath: string;   // absolute path to plan.json
+	exploreDir: string; // directory where explore screenshots live
+	stepCount: number;
+}
+
+const VALID_RECORD_TOOLS = new Set([
+	"navigate",
+	"click",
+	"fill",
+	"press",
+	"scroll",
+	"wait",
+	"screenshot",
+]);
+
+export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
+	const {
+		appUrl,
+		email,
+		password,
+		commit,
+		summary,
+		diff,
+		captureDir,
+		maxExploreSteps = 40,
+		wallClockMs = 4 * 60_000,
+		model = "gemini-2.5-flash",
+	} = input;
+
+	const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_AI_API_KEY;
+	if (!apiKey) {
+		throw new Error("Set GEMINI_API_KEY (or GOOGLE_AI_API_KEY) to run the explore agent.");
+	}
+
+	// 1. Create explore dir
+	const exploreDir = path.join(captureDir, "explore");
+	await fs.mkdir(exploreDir, { recursive: true });
+
+	const browser = await chromium.launch();
+
+	// 2. Log in in a throwaway context — login is not recorded / on-camera
+	const storageState = await captureLoginStorageState(browser, {
+		appUrl,
+		email,
+		password,
+	});
+
+	// 3. Open a browser context WITHOUT recordVideo
+	const context = await browser.newContext({
+		viewport: { width: 1440, height: 900 },
+		storageState,
+	});
+
+	// Inject cursor overlay (consistent with record pass; not strictly needed
+	// for exploration but keeps screenshots look the same).
+	await context.addInitScript(cursorOverlayScript);
+
+	const page = await context.newPage();
+	const stepIndex = { value: 0 };
+	const doneState: { value: boolean; args?: Record<string, unknown> } = { value: false };
+
+	try {
+		// 4. Navigate to the app
+		await page.goto(`${appUrl}/`, { waitUntil: "networkidle" });
+
+		// 5. Take an initial snapshot
+		const ctx: ExploreToolContext = { page, appUrl, exploreDir, stepIndex, done: doneState };
+		const initialSnap = await snapshot(ctx, "initial state after login");
+
+		const ai = new GoogleGenAI({ apiKey });
+
+		// 6. Build Gemini history with system prompt + user prompt
+		const systemInstruction = [
+			"You are a demo planner. You drive a real browser to understand a web app and",
+			"produce a structured plan that a second agent will use to record a polished demo.",
+			"",
+			"SESSION STATE:",
+			"- The browser is ALREADY SIGNED IN. Do NOT visit /test-login or fill credentials.",
+			"- You may navigate anywhere in the app freely — nothing you do is recorded.",
+			"",
+			"YOUR JOB:",
+			"1. Read the commit diff to identify which user-visible feature changed.",
+			"2. Use navigate, click, scroll, list_elements, and screenshot to find the exact",
+			"   page and workflow that best showcases what the commit changed.",
+			"3. Try multiple paths if needed — exploration is free. Undo wrong turns with navigate.",
+			"4. Once you understand the ideal demo flow, call `done` with:",
+			"   - goal: one sentence describing the shipped feature",
+			"   - startUrl: the absolute URL where the Record agent should land first",
+			"   - steps: an ordered list of { label, tool, args } interactions that produce",
+			"     a clean, intentional demo. Keep it to 5-10 steps.",
+			"   - narration: 1-3 sentences for the end-of-video voiceover.",
+			"",
+			"LOCATOR PRIORITY: prefer testid (grep diff for data-testid). Fall back to",
+			"role+name, then visible text. Be specific — avoid selectors that match",
+			"multiple elements.",
+			"",
+			`HARD LIMITS: at most ${maxExploreSteps} tool calls. Aim to call done by step 30.`,
+		].join("\n");
+
+		const userPrompt = [
+			`Commit ${commit.slice(0, 12)} — ${summary}`,
+			"",
+			"Diff:",
+			"```",
+			diff,
+			"```",
+		].join("\n");
+
+		const history: Content[] = [
+			{
+				role: "user",
+				parts: [
+					{ text: userPrompt },
+					{
+						inlineData: {
+							mimeType: "image/png",
+							data: initialSnap.screenshotBase64 ?? "",
+						},
+					},
+				],
+			},
+		];
+
+		const deadline = Date.now() + wallClockMs;
+
+		const generate = () =>
+			ai.models.generateContent({
+				model,
+				contents: history,
+				config: {
+					systemInstruction,
+					tools: [{ functionDeclarations: exploreTools }],
+					toolConfig: {
+						functionCallingConfig: { mode: FunctionCallingConfigMode.ANY },
+					},
+				},
+			});
+
+		// 7. Run the tool-call loop
+		while (!doneState.value && stepIndex.value < maxExploreSteps && Date.now() < deadline) {
+			const response = await callWithRetry(generate, deadline);
+
+			const modelContent = response.candidates?.[0]?.content;
+			const parts = modelContent?.parts ?? [];
+			const functionCall = parts.find((p) => p.functionCall)?.functionCall;
+
+			if (!functionCall) {
+				const text = parts.map((p) => p.text ?? "").join("").trim();
+				console.log(`[explore] no tool call; model said: ${text || "(empty)"}`);
+				break;
+			}
+
+			const result: {
+				message: string;
+				screenshotBase64?: string;
+				screenshotPath?: string;
+			} = await executeExploreTool(functionCall, ctx).catch((err: unknown) => ({
+				message: `error: ${err instanceof Error ? err.message : String(err)}`,
+			}));
+
+			console.log(
+				`[explore] ${functionCall.name}(${JSON.stringify(functionCall.args)}) -> ${result.message.slice(0, 120)}`,
+			);
+
+			// Echo the model's full content so thought_signature parts round-trip correctly.
+			if (modelContent) {
+				history.push(modelContent);
+			}
+
+			const responseParts: Content["parts"] = [
+				{
+					functionResponse: {
+						name: functionCall.name ?? "",
+						response: { message: result.message },
+					},
+				},
+			];
+			if (result.screenshotBase64) {
+				responseParts.push({
+					inlineData: {
+						mimeType: "image/png",
+						data: result.screenshotBase64,
+					},
+				});
+			}
+			history.push({ role: "user", parts: responseParts });
+		}
+	} finally {
+		await page.close();
+		await context.close();
+		await browser.close();
+	}
+
+	// 8. Parse and validate the done args
+	if (!doneState.value || !doneState.args) {
+		throw new Error("[explore] explore agent did not call done() within the step/time budget");
+	}
+
+	const doneArgs = doneState.args;
+	const goal = String(doneArgs.goal ?? "");
+	const startUrl = String(doneArgs.startUrl ?? "");
+	const narration = String(doneArgs.narration ?? "");
+	const rawSteps = Array.isArray(doneArgs.steps) ? doneArgs.steps : [];
+
+	// Validate each step — skip entries with invalid tool field.
+	const steps: DemoStep[] = [];
+	for (const raw of rawSteps) {
+		const step = raw as Record<string, unknown>;
+		const label = String(step.label ?? "");
+		const tool = String(step.tool ?? "");
+		const args = (step.args != null && typeof step.args === "object" && !Array.isArray(step.args))
+			? (step.args as Record<string, unknown>)
+			: {};
+
+		if (!VALID_RECORD_TOOLS.has(tool)) {
+			console.warn(`[explore] skipping step with invalid tool="${tool}" label="${label}"`);
+			continue;
+		}
+		steps.push({
+			label,
+			tool: tool as DemoStep["tool"],
+			args,
+		});
+	}
+
+	const plan: ExplorationPlan = {
+		commit,
+		summary,
+		goal,
+		startUrl,
+		steps,
+		narration,
+		generatedAt: new Date().toISOString(),
+		exploreStepCount: stepIndex.value,
+	};
+
+	// 9. Write plan.json
+	const planPath = path.join(exploreDir, "plan.json");
+	await fs.writeFile(planPath, `${JSON.stringify(plan, null, 2)}\n`);
+
+	console.log(`[explore] plan written to ${planPath} (${steps.length} steps)`);
+
+	return {
+		plan,
+		planPath,
+		exploreDir,
+		stepCount: stepIndex.value,
+	};
+}

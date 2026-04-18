@@ -28,6 +28,8 @@ interface CaptureRequestMessage {
 	/** Unified diff fetched server-side via the GitHub API. May be empty. */
 	diff?: string;
 	app_url?: string;
+	/** If true, the worker runs the explore pass before recording. */
+	two_pass?: boolean;
 }
 
 interface CaptureResultMessage {
@@ -153,6 +155,7 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 					goal: request.message,
 					summary: request.message,
 					diff: request.diff ?? "",
+					twoPass: request.two_pass === true,
 				});
 				result.success = true;
 				result.step_count = output.stepCount;

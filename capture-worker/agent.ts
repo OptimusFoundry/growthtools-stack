@@ -21,6 +21,8 @@ import {
 } from "@google/genai";
 import { type Page, chromium } from "playwright";
 import { captureLoginStorageState } from "./auth.ts";
+import { runExplore } from "./explore.ts";
+import type { ExplorationPlan } from "./types.ts";
 import { finalizeRecording, resolveVideoSpeed } from "./video.ts";
 
 const execFileP = promisify(execFile);
@@ -51,6 +53,19 @@ export interface DemoInput {
 	wallClockMs?: number;
 	/** Gemini model id. Defaults to gemini-2.5-flash. */
 	model?: string;
+	/**
+	 * If provided, skip Pass 1 and use this plan directly.
+	 * When omitted AND twoPass is true, runExplore is called first.
+	 */
+	plan?: ExplorationPlan;
+	/**
+	 * Whether to run the Explore pass before recording.
+	 * Default false for backward compat; ignored when `plan` is already supplied.
+	 */
+	twoPass?: boolean;
+	/** Caps on the explore pass (only used when twoPass=true and plan is absent). */
+	maxExploreSteps?: number;
+	exploreWallClockMs?: number;
 }
 
 export interface DemoResult {
@@ -59,6 +74,10 @@ export interface DemoResult {
 	narrationPath: string;
 	transcriptPath: string;
 	stepCount: number;
+	/** Present when the Explore pass ran. */
+	plan?: ExplorationPlan;
+	/** Absolute path to explore/plan.json when explore ran. */
+	planPath?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -415,7 +434,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		diff: providedDiff,
 		repoRoot = path.resolve(__dirname, ".."),
 		outDir = path.join(__dirname, "captures"),
-		maxSteps = 30,
+		maxSteps,
 		// Generous budget because Gemini free tier caps at 5 RPM so a 20-step
 		// run will likely spend a couple of minutes waiting out 429s.
 		wallClockMs = 5 * 60_000,
@@ -437,6 +456,33 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		providedSummary !== undefined || providedDiff !== undefined
 			? { summary: providedSummary ?? "", diff: providedDiff ?? "" }
 			: await fetchCommitContext(commit, repoRoot);
+
+	// The base dir for this commit run is one level above the demo dir.
+	// e.g. captures/06fdc6f123ab/  (demo/ and explore/ are siblings under it)
+	const commitBaseDir = path.dirname(captureDir);
+
+	// --- Two-pass: run Explore if requested and no plan supplied ---
+	let activePlan: ExplorationPlan | undefined = input.plan;
+	if (!activePlan && input.twoPass) {
+		console.log("[agent] two-pass mode: starting explore pass");
+		const exploreResult = await runExplore({
+			appUrl,
+			email,
+			password,
+			commit,
+			summary,
+			diff,
+			captureDir: commitBaseDir,
+			maxExploreSteps: input.maxExploreSteps,
+			wallClockMs: input.exploreWallClockMs,
+			model,
+		});
+		activePlan = exploreResult.plan;
+		console.log(`[agent] explore done in ${exploreResult.stepCount} steps → ${exploreResult.planPath}`);
+	}
+
+	// If following a plan, we know the step count up front — cap tightly.
+	const effectiveMaxSteps = maxSteps ?? (activePlan ? activePlan.steps.length + 5 : 30);
 
 	const browser = await chromium.launch();
 
@@ -483,6 +529,27 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		const ai = new GoogleGenAI({ apiKey });
 
 		const currentUrl = page.url();
+
+		const planSection = activePlan
+			? [
+					"",
+					"DEMO PLAN — FOLLOW THIS EXACTLY:",
+					`Goal: ${activePlan.goal}`,
+					`Start URL: ${activePlan.startUrl}`,
+					"",
+					"Steps to execute IN ORDER:",
+					...activePlan.steps.map(
+						(s, i) =>
+							`  ${i + 1}. [${s.label}] → tool=${s.tool} args=${JSON.stringify(s.args)}`,
+					),
+					"",
+					`Narration for done(): "${activePlan.narration}"`,
+					"",
+					"Do NOT improvise. Execute steps 1-N in order, then call done() with the narration above.",
+					"If a step fails, try once with a slightly different locator, then skip it and continue.",
+				].join("\n")
+			: "";
+
 		const systemInstruction = [
 			"You are a product demo agent. You drive a real browser via tools to record a short, marketing-quality clip showing off what a commit changed.",
 			"",
@@ -500,21 +567,33 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 			"",
 			"LOCATOR PRIORITY: prefer testid (grep the diff for `data-testid`). Fall back to role+name, then visible text.",
 			"IF a click or fill fails with 'strict mode violation ... resolved to N elements', the text is not unique. Switch to `by=role` with a specific `name` (e.g. by=role value=button name='Publish') or pick a more specific label. Don't retry the same ambiguous locator.",
-			`HARD LIMITS: at most ${maxSteps} tool calls. Aim for 5-10 for a clean clip.`,
+			`HARD LIMITS: at most ${effectiveMaxSteps} tool calls. Aim for 5-10 for a clean clip.`,
+			planSection,
 		].join("\n");
 
-		const userPrompt = [
-			`Goal: ${goal ?? "Demonstrate the user-visible change introduced in this commit."}`,
-			"",
-			`Current browser URL: ${currentUrl}  (already authenticated — start from here)`,
-			"",
-			`Commit ${commit.slice(0, 12)} — ${summary}`,
-			"",
-			"Diff:",
-			"```",
-			diff,
-			"```",
-		].join("\n");
+		const userPrompt = activePlan
+			? [
+					`Goal: ${activePlan.goal}`,
+					"",
+					`Navigate first to: ${activePlan.startUrl}`,
+					"",
+					`Commit ${commit.slice(0, 12)} — ${summary}`,
+					"",
+					"A demo plan has been pre-computed. Your system prompt contains the exact steps.",
+					"Execute them in order, then call done().",
+				].join("\n")
+			: [
+					`Goal: ${goal ?? "Demonstrate the user-visible change introduced in this commit."}`,
+					"",
+					`Current browser URL: ${currentUrl}  (already authenticated — start from here)`,
+					"",
+					`Commit ${commit.slice(0, 12)} — ${summary}`,
+					"",
+					"Diff:",
+					"```",
+					diff,
+					"```",
+				].join("\n");
 
 		const history: Content[] = [
 			{
@@ -550,7 +629,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 				},
 			});
 
-		while (!doneState.value && stepIndex.value < maxSteps && Date.now() < deadline) {
+		while (!doneState.value && stepIndex.value < effectiveMaxSteps && Date.now() < deadline) {
 			const response = await callWithRetry(generate, deadline);
 
 			const modelContent = response.candidates?.[0]?.content;
@@ -633,7 +712,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 					narration: doneState.narration ?? null,
 					endedBy: doneState.value
 						? "done"
-						: stepIndex.value >= maxSteps
+						: stepIndex.value >= effectiveMaxSteps
 							? "max-steps"
 							: "wall-clock",
 					stepCount: stepIndex.value,
@@ -653,6 +732,10 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		narrationPath,
 		transcriptPath,
 		stepCount: stepIndex.value,
+		plan: activePlan,
+		planPath: activePlan
+			? path.join(commitBaseDir, "explore", "plan.json")
+			: undefined,
 	};
 }
 
@@ -704,6 +787,11 @@ async function main(): Promise<void> {
 	const password = process.env.APP_PASSWORD ?? config.credentials.password;
 
 	const modelArg = stringArg(args, "model");
+	const planArg = stringArg(args, "plan");
+	const plan: ExplorationPlan | undefined = planArg
+		? (JSON.parse(await fs.readFile(planArg, "utf8")) as ExplorationPlan)
+		: undefined;
+
 	console.log(
 		`→ demo run for commit ${commit} on ${appUrl} (model=${modelArg ?? "default"})`,
 	);
@@ -714,6 +802,11 @@ async function main(): Promise<void> {
 		commit,
 		goal: stringArg(args, "goal"),
 		model: modelArg,
+		twoPass: args["two-pass"] === true || plan !== undefined,
+		plan,
+		maxExploreSteps: args["max-explore-steps"]
+			? Number(args["max-explore-steps"])
+			: undefined,
 	});
 	console.log("✓ done");
 	console.log(JSON.stringify(result, null, 2));

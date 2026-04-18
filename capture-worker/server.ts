@@ -24,6 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isS3Enabled, runCapture, s3BucketName } from "./capture.ts";
 import { startKafkaBridge } from "./kafka.ts";
+import type { ExplorationPlan } from "./types.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,10 @@ interface CaptureBody {
 	appUrl?: string;
 	email?: string;
 	password?: string;
+	/** Enable two-pass mode for this request. */
+	twoPass?: boolean;
+	/** Supply a pre-computed plan (skips explore). Must be a valid ExplorationPlan JSON object. */
+	plan?: unknown;
 }
 
 interface GuineaPig {
@@ -125,12 +130,15 @@ async function handle(
 		email,
 		password,
 		goal: body.goal,
+		twoPass: body.twoPass === true,
+		plan: body.plan as ExplorationPlan | undefined,
 	});
 	send(res, 200, {
 		commit: output.commit,
 		captureDir: output.captureDir,
 		stepCount: output.stepCount,
 		uploaded: output.uploaded.map((u) => ({ key: u.key, url: u.url ?? null })),
+		...(output.planPath ? { planPath: output.planPath } : {}),
 	});
 }
 

@@ -7,6 +7,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { runDemo } from "./agent.ts";
+import type { ExplorationPlan } from "./types.ts";
 
 export interface CaptureInput {
 	commit: string;
@@ -18,6 +19,12 @@ export interface CaptureInput {
 	summary?: string;
 	/** Unified diff text. If provided, the agent skips local git. */
 	diff?: string;
+	/** Pass a pre-computed plan to skip the Explore pass. */
+	plan?: ExplorationPlan;
+	/** Enable two-pass mode (explore then record). Ignored when plan is supplied. */
+	twoPass?: boolean;
+	maxExploreSteps?: number;
+	exploreWallClockMs?: number;
 }
 
 export interface CaptureUpload {
@@ -30,6 +37,8 @@ export interface CaptureOutput {
 	captureDir: string;
 	stepCount: number;
 	uploaded: CaptureUpload[];
+	/** Set when an explore pass ran or a plan was supplied. */
+	planPath?: string;
 }
 
 const s3Bucket = process.env.S3_BUCKET ?? "";
@@ -94,6 +103,10 @@ export async function runCapture(input: CaptureInput): Promise<CaptureOutput> {
 		goal: input.goal,
 		summary: input.summary,
 		diff: input.diff,
+		plan: input.plan,
+		twoPass: input.twoPass,
+		maxExploreSteps: input.maxExploreSteps,
+		exploreWallClockMs: input.exploreWallClockMs,
 	});
 
 	const keyPrefix = `captures/${input.commit.slice(0, 12)}/demo`;
@@ -109,6 +122,7 @@ export async function runCapture(input: CaptureInput): Promise<CaptureOutput> {
 		captureDir: result.captureDir,
 		stepCount: result.stepCount,
 		uploaded,
+		planPath: result.planPath,
 	};
 }
 
