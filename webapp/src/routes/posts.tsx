@@ -16,14 +16,14 @@ import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
+import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { ContentType, PostStatus } from "@/types/post";
+import type { PostStatus } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
 import pageStyles from "./page.module.scss";
 import styles from "./posts.module.scss";
@@ -32,21 +32,13 @@ export const Route = createFileRoute("/posts")({
 	component: PostsPage,
 });
 
-const STATUS_ITEMS = [
-	{ id: "", label: "All Statuses" },
-	{ id: "draft", label: "Draft" },
+const FILTER_KEYS = [
+	{ id: "", label: "All" },
+	{ id: "draft", label: "Drafts" },
 	{ id: "scheduled", label: "Scheduled" },
 	{ id: "published", label: "Published" },
-	{ id: "failed", label: "Failed" },
-];
-
-const CONTENT_TYPE_ITEMS = [
-	{ id: "", label: "All Types" },
-	{ id: "text", label: "Text" },
-	{ id: "thread", label: "Thread" },
-	{ id: "image", label: "Image" },
-	{ id: "video", label: "Video" },
-];
+	{ id: "failed", label: "Needs retry" },
+] as const;
 
 const STATUS_BADGE_VARIANT: Record<
 	PostStatus,
@@ -96,14 +88,12 @@ function truncate(text: string, maxLen: number): string {
 
 function PostsPage() {
 	const [statusFilter, setStatusFilter] = useState<string>("");
-	const [contentTypeFilter, setContentTypeFilter] = useState<string>("");
 
 	const filters = useMemo(
 		() => ({
 			status: (statusFilter || undefined) as PostStatus | undefined,
-			contentType: (contentTypeFilter || undefined) as ContentType | undefined,
 		}),
-		[statusFilter, contentTypeFilter],
+		[statusFilter],
 	);
 
 	const { posts: allPosts } = useGetPosts();
@@ -132,12 +122,31 @@ function PostsPage() {
 		}
 	};
 
-	const hasActiveFilter = statusFilter !== "" || contentTypeFilter !== "";
+	const hasActiveFilter = statusFilter !== "";
 	const postCount = allPosts.length;
 	const publishedCount = allPosts.filter(
 		(p) => p.status === "published",
 	).length;
 	const draftCount = allPosts.filter((p) => p.status === "draft").length;
+	const scheduledCount = allPosts.filter(
+		(p) => p.status === "scheduled",
+	).length;
+	const failedCount = allPosts.filter((p) => p.status === "failed").length;
+
+	const filterItems = FILTER_KEYS.map((f) => ({
+		id: f.id,
+		label: f.label,
+		count:
+			f.id === ""
+				? postCount
+				: f.id === "draft"
+					? draftCount
+					: f.id === "scheduled"
+						? scheduledCount
+						: f.id === "published"
+							? publishedCount
+							: failedCount,
+	}));
 
 	return (
 		<>
@@ -197,24 +206,12 @@ function PostsPage() {
 					</div>
 				</div>
 
-				<div className={styles.filters}>
-					<Dropdown
-						items={STATUS_ITEMS}
-						value={statusFilter}
-						onChange={setStatusFilter}
-						placeholder="Filter by status"
-						size="sm"
-						variant="outline"
-					/>
-					<Dropdown
-						items={CONTENT_TYPE_ITEMS}
-						value={contentTypeFilter}
-						onChange={setContentTypeFilter}
-						placeholder="Filter by type"
-						size="sm"
-						variant="outline"
-					/>
-				</div>
+				<FilterTabs
+					value={statusFilter}
+					onChange={setStatusFilter}
+					items={filterItems}
+					aria-label="Filter posts by status"
+				/>
 
 				<div className={styles.content}>
 					{loading ? (
@@ -227,13 +224,7 @@ function PostsPage() {
 							description="Try adjusting your filters to find what you're looking for."
 							icon={<SearchX size={48} />}
 							action={
-								<Button
-									variant="secondary"
-									onClick={() => {
-										setStatusFilter("");
-										setContentTypeFilter("");
-									}}
-								>
+								<Button variant="secondary" onClick={() => setStatusFilter("")}>
 									Clear filters
 								</Button>
 							}

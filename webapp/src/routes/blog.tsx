@@ -7,8 +7,8 @@ import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
+import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
@@ -22,12 +22,12 @@ export const Route = createFileRoute("/blog")({
 	component: BlogPage,
 });
 
-const STATUS_ITEMS = [
-	{ id: "", label: "All Statuses" },
-	{ id: "draft", label: "Draft" },
+const FILTER_KEYS = [
+	{ id: "", label: "All" },
+	{ id: "draft", label: "Drafts" },
 	{ id: "published", label: "Published" },
 	{ id: "archived", label: "Archived" },
-];
+] as const;
 
 const STATUS_BADGE_VARIANT: Record<
 	BlogStatus,
@@ -111,6 +111,20 @@ function BlogPage() {
 		(p) => p.status === "published",
 	).length;
 	const draftCount = allPosts.filter((p) => p.status === "draft").length;
+	const archivedCount = allPosts.filter((p) => p.status === "archived").length;
+
+	const filterItems = FILTER_KEYS.map((f) => ({
+		id: f.id,
+		label: f.label,
+		count:
+			f.id === ""
+				? postCount
+				: f.id === "draft"
+					? draftCount
+					: f.id === "published"
+						? publishedCount
+						: archivedCount,
+	}));
 
 	return (
 		<>
@@ -170,16 +184,12 @@ function BlogPage() {
 					</div>
 				</div>
 
-				<div className={styles.filters}>
-					<Dropdown
-						items={STATUS_ITEMS}
-						value={statusFilter}
-						onChange={setStatusFilter}
-						placeholder="Filter by status"
-						size="sm"
-						variant="outline"
-					/>
-				</div>
+				<FilterTabs
+					value={statusFilter}
+					onChange={setStatusFilter}
+					items={filterItems}
+					aria-label="Filter blog posts by status"
+				/>
 
 				<div className={styles.content}>
 					{loading ? (

@@ -1,0 +1,92 @@
+// =============================================================================
+// FILTER TABS — pill chip group with active state and mono count badge
+// =============================================================================
+@use "../../../mixins" as *;
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tab {
+  align-items: center;
+  appearance: none;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-base-content-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-2);
+  letter-spacing: var(--letter-spacing-normal);
+  white-space: nowrap;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    border-color: var(--color-border-hover);
+    color: var(--color-base-content);
+  }
+}
+
+.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-content);
+
+  &:hover {
+    background-color: oklch(from var(--color-primary) calc(l - 0.05) c h);
+    border-color: oklch(from var(--color-primary) calc(l - 0.05) c h);
+    color: var(--color-primary-content);
+  }
+}
+
+.icon {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.label {
+  display: inline-block;
+}
+
+.count {
+  color: inherit;
+  font-family: var(--font-family-mono, var(--font-family-sans));
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wider);
+  opacity: 0.65;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  .tab {
+    font-size: var(--font-size-sm);
+    height: var(--space-6);
+    padding: 0 var(--space-3);
+  }
+
+  .count {
+    font-size: var(--font-size-xs);
+  }
+}
+
+.size-md {
+  .tab {
+    font-size: var(--font-size-base);
+    height: var(--space-7);
+    padding: 0 var(--space-4);
+  }
+
+  .count {
+    font-size: var(--font-size-sm);
+  }
+}
