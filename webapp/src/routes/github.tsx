@@ -8,6 +8,7 @@ import {
 	Github,
 	Image as ImageIcon,
 	Loader2,
+	MinusCircle,
 	Trash2,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -50,6 +51,7 @@ function timeAgo(iso: string): string {
 type CommitState =
 	| { kind: "waiting" }
 	| { kind: "processing" }
+	| { kind: "skipped"; reason: string }
 	| { kind: "failed"; error: string }
 	| { kind: "captured"; artifactCount: number }
 	| { kind: "post"; postID: string }
@@ -61,6 +63,11 @@ function commitState(commit: GitHubCommitSummary): CommitState {
 	// state where post_id is still null.
 	if (commit.post_id && commit.post_deleted) return { kind: "post_deleted" };
 	if (commit.post_id) return { kind: "post", postID: commit.post_id };
+	// The classifier can decide a commit isn't worth capturing. When it does
+	// it stamps skipped_reason + processed_at without ever queueing work, so
+	// the row would otherwise look indistinguishable from a processing one.
+	if (commit.skipped_reason)
+		return { kind: "skipped", reason: commit.skipped_reason };
 	// Capture only fires after workflow_run:completed:success — until then
 	// capture_requested_at stays null and we show "Waiting for CI".
 	if (!commit.capture_requested_at) return { kind: "waiting" };
@@ -216,6 +223,13 @@ function StatusBadge({ state }: StatusBadgeProps) {
 				<Badge variant="secondary" size="sm">
 					<Loader2 size={12} className={styles.spin} />
 					Processing
+				</Badge>
+			);
+		case "skipped":
+			return (
+				<Badge variant="secondary" size="sm" title={state.reason}>
+					<MinusCircle size={12} />
+					Skipped
 				</Badge>
 			);
 		case "failed":

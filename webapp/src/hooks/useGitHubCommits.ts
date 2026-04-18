@@ -60,6 +60,8 @@ export interface GitHubCommitSummary {
 	post_deleted?: boolean;
 	capture_requested_at?: string;
 	processed_at?: string;
+	/** Set when the commit classifier chose not to capture the commit. */
+	skipped_reason?: string;
 	repo_owner?: string;
 	repo_name?: string;
 	capture_artifact_count: number;
