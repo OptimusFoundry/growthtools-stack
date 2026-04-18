@@ -9,7 +9,7 @@ import (
 )
 
 func nowUTC() string {
-	return time.Now().UTC().Format(time.RFC3339Nano)
+	return time.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00")
 }
 
 // downloadMedia fetches media bytes from a URL (typically S3) and returns the bytes and content type.
