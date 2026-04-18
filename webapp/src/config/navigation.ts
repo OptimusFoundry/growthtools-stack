@@ -22,12 +22,6 @@ export const navigationConfig: NavGroup[] = [
 				allowedPersonas: ["admin", "marketing", "content_creator"],
 			},
 			{
-				label: "AI Chat",
-				href: "/chat",
-				iconClass: "chat-line",
-				allowedPersonas: ["admin", "marketing", "content_creator"],
-			},
-			{
 				label: "Media",
 				href: "/media",
 				iconClass: "image-line",

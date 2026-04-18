@@ -1,11 +1,13 @@
-import { BookOpen, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, RefreshCw, Send, Sparkles, Trash2 } from "lucide-react";
 import "highlight.js/styles/github.css";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { toBlogPost } from "@/api/transforms/blog";
 import { MediaUploadSection } from "@/components/create-post/compose/MediaUploadSection";
+import { Topbar } from "@/components/Layout/Topbar";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useMedia } from "@/hooks/useMedia";
@@ -50,12 +52,9 @@ const slugify = (text: string): string =>
 		.replace(/\s+/g, "-")
 		.replace(/-+/g, "-");
 
-export function BlogWizard({
-	initialBlogPost,
-	onDone,
-	onCancel,
-}: BlogWizardProps) {
+export function BlogWizard({ initialBlogPost, onDone }: BlogWizardProps) {
 	const isEditMode = Boolean(initialBlogPost);
+	const postStatus = initialBlogPost?.status;
 
 	const [instruction, setInstruction] = useState(
 		initialBlogPost?.sourceInstruction ?? initialBlogPost?.title ?? "",
@@ -99,6 +98,7 @@ export function BlogWizard({
 	const { media: allMedia } = useMedia({ limit: 100 });
 
 	const saving = creating || updating || publishing;
+	const busy = saving || generating;
 
 	// Populate form fields when the SSE done payload arrives.
 	useEffect(() => {
@@ -117,6 +117,7 @@ export function BlogWizard({
 	// During streaming, show accumulated chunks. After done, show persisted content.
 	const previewContent = streamingContent || content;
 	const isStreaming = phase === "generating";
+	const hasPreview = Boolean(streamingContent || content);
 
 	// Derive ExistingFile[] for the MediaUploadSection by matching
 	// existingMediaIds against the full media library.
@@ -266,7 +267,40 @@ export function BlogWizard({
 	// Suppress unused warning — reset is available for future use (e.g. cancel button)
 	void resetSSE;
 
-	const handleConfirmDelete = useCallback(async () => {
+	const eyebrowLabel = !isEditMode
+		? "Editor · new post"
+		: postStatus === "draft"
+			? "Editor · edit draft"
+			: `Editor · ${postStatus ?? "edit"}`;
+
+	const titleFragment: ReactNode = !isEditMode ? (
+		<>
+			One <em>idea</em>, a full post.
+		</>
+	) : postStatus === "published" ? (
+		<>
+			<em>Published.</em> Edit with care.
+		</>
+	) : (
+		<>
+			Refine the <em>story</em>.
+		</>
+	);
+
+	const subLine = !isEditMode
+		? "Write a topic — AI drafts a full post in your voice, complete with SEO metadata and an excerpt."
+		: postStatus === "published"
+			? "Changes save when you publish again, and your live post updates in place."
+			: "Update content, media, and SEO. Save as draft or publish when it's ready.";
+
+	const breadcrumbs = [
+		{ label: "Blog", href: "/blog" as const },
+		{ label: isEditMode ? "Edit" : "New" },
+	];
+
+	const canDelete = isEditMode && postStatus === "draft" && !!initialBlogPost;
+
+	const handleConfirmDelete = async () => {
 		if (!initialBlogPost) return;
 		try {
 			await deleteBlog(initialBlogPost.id);
@@ -285,230 +319,233 @@ export function BlogWizard({
 				dismissible: true,
 			});
 		}
-	}, [initialBlogPost, deleteBlog, addBanner, onDone]);
+	};
+
+	const topbarActions = (
+		<>
+			{canDelete && (
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => setDeleteOpen(true)}
+					disabled={busy || deleting}
+					aria-label="Delete blog post"
+				>
+					<Trash2 size={14} /> Delete
+				</Button>
+			)}
+			<Button
+				variant="ghost"
+				size="sm"
+				onClick={handleSaveDraft}
+				isLoading={creating || updating}
+				disabled={busy}
+			>
+				Save draft
+			</Button>
+			<Button
+				variant="primary"
+				size="sm"
+				onClick={handlePublish}
+				isLoading={publishing}
+				disabled={busy}
+			>
+				<Send size={14} /> Publish
+			</Button>
+		</>
+	);
 
 	return (
-		<div className={styles.page}>
-			<Stack gap="xs">
-				<Text as="h1" size="xl" weight="semibold">
-					{isEditMode ? "Edit Blog Post" : "New Blog Post"}
-				</Text>
-				<Text size="sm" color="secondary">
-					{isEditMode
-						? "Update your post content and details"
-						: "Write a topic and let AI draft your blog post"}
-				</Text>
-			</Stack>
-
-			{error && <Alert variant="error">{error}</Alert>}
-			{generateError && <Alert variant="error">{generateError}</Alert>}
-
-			<div className={styles.twoColumn}>
-				{/* ── Left: compose ──────────────────────────────────────────── */}
-				<Stack gap="lg">
-					<Stack gap="sm">
-						<Text size="md" weight="semibold">
-							Idea or Instructions for post
-						</Text>
-						<TextArea
-							placeholder="What should this blog post be about? Give the AI a topic or detailed instructions..."
-							rows={5}
-							value={instruction}
-							onChange={(e) => setInstruction(e.target.value)}
-							fullWidth
-						/>
-						<TextField
-							label="Keywords"
-							placeholder="Comma-separated keywords"
-							value={keywords}
-							onChange={(e) => setKeywords(e.target.value)}
-							helperText="Used to guide AI generation"
-						/>
-						<Button
-							variant={content ? "secondary" : "primary"}
-							onClick={handleRegenerate}
-							isLoading={generating}
-							disabled={generating || saving}
-						>
-							{content ? (
-								<>
-									<RefreshCw size={16} /> Regenerate
-								</>
-							) : (
-								<>
-									<Sparkles size={16} /> Generate
-								</>
-							)}
-						</Button>
-					</Stack>
-
-					<Divider />
-
-					<MediaUploadSection
-						pendingFiles={pendingFiles}
-						existingMedia={existingMedia}
-						onFilesChange={setPendingFiles}
-						onRemoveExisting={(id) =>
-							setExistingMediaIds((prev) => prev.filter((mid) => mid !== id))
-						}
-					/>
-
-					<Divider />
-
-					<Stack gap="sm">
-						<Text size="md" weight="semibold">
-							Details
-						</Text>
-						<TextField
-							label="Title"
-							placeholder="Blog post title"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							onBlur={handleTitleBlur}
-							required
-						/>
-						<TextField
-							label="Slug"
-							placeholder="url-friendly-slug"
-							value={slug}
-							onChange={(e) => setSlug(e.target.value)}
-							helperText="URL path for this post"
-						/>
-						<TextArea
-							label="Excerpt"
-							placeholder="Brief summary of the post..."
-							rows={3}
-							value={excerpt}
-							onChange={(e) => setExcerpt(e.target.value)}
-						/>
-					</Stack>
-
-					<Divider />
-
-					<Stack gap="sm">
-						<Text size="md" weight="semibold">
-							SEO
-						</Text>
-						<TextField
-							label="SEO Title"
-							placeholder="SEO title"
-							value={seoTitle}
-							onChange={(e) => setSeoTitle(e.target.value)}
-						/>
-						<TextArea
-							label="Meta Description"
-							placeholder="Meta description for search engines..."
-							rows={3}
-							value={metaDescription}
-							onChange={(e) => setMetaDescription(e.target.value)}
-						/>
-						<TextField
-							label="OG Title"
-							placeholder="Open Graph title"
-							value={ogTitle}
-							onChange={(e) => setOgTitle(e.target.value)}
-						/>
-						<TextArea
-							label="OG Description"
-							placeholder="Open Graph description..."
-							rows={3}
-							value={ogDescription}
-							onChange={(e) => setOgDescription(e.target.value)}
-						/>
-					</Stack>
-
-					<Stack direction="row" gap="sm" justify="end">
-						{isEditMode && initialBlogPost?.status === "draft" && (
-							<Button
-								variant="ghost"
-								onClick={() => setDeleteOpen(true)}
-								disabled={saving || generating || deleting}
-								aria-label="Delete blog post"
-							>
-								<Trash2 size={14} /> Delete
-							</Button>
-						)}
-						{onCancel && (
-							<Button
-								variant="ghost"
-								onClick={onCancel}
-								disabled={saving || generating}
-							>
-								Cancel
-							</Button>
-						)}
-						<Button
-							variant="secondary"
-							onClick={handleSaveDraft}
-							isLoading={creating || updating}
-							disabled={saving || generating}
-						>
-							Save Draft
-						</Button>
-						<Button
-							variant="primary"
-							onClick={handlePublish}
-							isLoading={publishing}
-							disabled={saving || generating}
-						>
-							Publish
-						</Button>
-					</Stack>
-				</Stack>
-
-				{/* ── Right: preview ──────────────────────────────────────────── */}
-				<div className={styles.previewPanel}>
-					{/* Phase-aware loader: shown before first chunk arrives */}
-					{generating && !streamingContent && (
-						<Stack gap="sm" align="center" className={styles.generatingLoader}>
-							<Spinner size="lg" />
-							<Text size="sm" color="secondary" weight="medium">
-								Generating your blog post...
-							</Text>
-						</Stack>
-					)}
-
-					{/* Live streaming preview — renders as chunks arrive */}
-					{(streamingContent || content) && (
-						<Tabs defaultTab="preview">
-							<TabList>
-								<Tab id="preview">Preview</Tab>
-								<Tab id="markdown">Markdown</Tab>
-							</TabList>
-							<TabPanels>
-								<TabPanel id="preview">
-									<div className={styles.markdown}>
-										<ReactMarkdown
-											remarkPlugins={[remarkGfm]}
-											rehypePlugins={[rehypeHighlight]}
-										>
-											{previewContent}
-										</ReactMarkdown>
-										{isStreaming && <span className={styles.streamingCursor} />}
-									</div>
-								</TabPanel>
-								<TabPanel id="markdown">
-									<TextArea
-										placeholder="Blog post content will appear here after generation, or type directly..."
-										rows={30}
-										value={isStreaming ? streamingContent : content}
-										onChange={(e) => !isStreaming && setContent(e.target.value)}
-										fullWidth
-									/>
-								</TabPanel>
-							</TabPanels>
-						</Tabs>
-					)}
-
-					{/* Empty state: nothing generated yet and not currently generating */}
-					{!generating && !streamingContent && !content && (
-						<div className={styles.emptyPreview}>
-							<BookOpen size={40} className={styles.emptyPreviewIcon} />
-							<Text size="sm" color="muted">
-								Enter a topic and click Generate to create your blog post.
-							</Text>
+		<>
+			<Topbar breadcrumbs={breadcrumbs} actions={topbarActions} />
+			<div className={styles.page}>
+				<header className={styles.header}>
+					<div className={styles.headerInner}>
+						<div>
+							<div className={styles.eyebrow}>{eyebrowLabel}</div>
+							<h1 className={styles.title}>{titleFragment}</h1>
+							<p className={styles.sub}>{subLine}</p>
 						</div>
-					)}
+					</div>
+				</header>
+
+				{error && <Alert variant="error">{error}</Alert>}
+				{generateError && <Alert variant="error">{generateError}</Alert>}
+
+				<div className={styles.twoColumn}>
+					{/* ── Left: compose ──────────────────────────────────────────── */}
+					<Stack gap="lg">
+						<Stack gap="sm">
+							<Text size="md" weight="semibold">
+								Idea or instructions
+							</Text>
+							<TextArea
+								placeholder="What should this blog post be about? Give the AI a topic or detailed instructions..."
+								rows={5}
+								value={instruction}
+								onChange={(e) => setInstruction(e.target.value)}
+								fullWidth
+							/>
+							<TextField
+								label="Keywords"
+								placeholder="Comma-separated keywords"
+								value={keywords}
+								onChange={(e) => setKeywords(e.target.value)}
+								helperText="Used to guide AI generation"
+							/>
+							<Button
+								variant={content ? "secondary" : "primary"}
+								onClick={handleRegenerate}
+								isLoading={generating}
+								disabled={busy}
+							>
+								{content ? (
+									<>
+										<RefreshCw size={16} /> Regenerate
+									</>
+								) : (
+									<>
+										<Sparkles size={16} /> Generate
+									</>
+								)}
+							</Button>
+						</Stack>
+
+						<Divider />
+
+						<MediaUploadSection
+							pendingFiles={pendingFiles}
+							existingMedia={existingMedia}
+							onFilesChange={setPendingFiles}
+							onRemoveExisting={(id) =>
+								setExistingMediaIds((prev) => prev.filter((mid) => mid !== id))
+							}
+						/>
+
+						<Divider />
+
+						<Stack gap="sm">
+							<Text size="md" weight="semibold">
+								Details
+							</Text>
+							<TextField
+								label="Title"
+								placeholder="Blog post title"
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								onBlur={handleTitleBlur}
+								required
+							/>
+							<TextField
+								label="Slug"
+								placeholder="url-friendly-slug"
+								value={slug}
+								onChange={(e) => setSlug(e.target.value)}
+								helperText="URL path for this post"
+							/>
+							<TextArea
+								label="Excerpt"
+								placeholder="Brief summary of the post..."
+								rows={3}
+								value={excerpt}
+								onChange={(e) => setExcerpt(e.target.value)}
+							/>
+						</Stack>
+
+						<Divider />
+
+						<Stack gap="sm">
+							<Text size="md" weight="semibold">
+								SEO
+							</Text>
+							<TextField
+								label="SEO title"
+								placeholder="SEO title"
+								value={seoTitle}
+								onChange={(e) => setSeoTitle(e.target.value)}
+							/>
+							<TextArea
+								label="Meta description"
+								placeholder="Meta description for search engines..."
+								rows={3}
+								value={metaDescription}
+								onChange={(e) => setMetaDescription(e.target.value)}
+							/>
+							<TextField
+								label="OG title"
+								placeholder="Open Graph title"
+								value={ogTitle}
+								onChange={(e) => setOgTitle(e.target.value)}
+							/>
+							<TextArea
+								label="OG description"
+								placeholder="Open Graph description..."
+								rows={3}
+								value={ogDescription}
+								onChange={(e) => setOgDescription(e.target.value)}
+							/>
+						</Stack>
+					</Stack>
+
+					{/* ── Right: preview ──────────────────────────────────────────── */}
+					<div className={styles.previewPanel}>
+						{generating && !streamingContent && (
+							<Stack
+								gap="sm"
+								align="center"
+								className={styles.generatingLoader}
+							>
+								<Spinner size="lg" />
+								<Text size="sm" color="secondary" weight="medium">
+									Generating your blog post...
+								</Text>
+							</Stack>
+						)}
+
+						{hasPreview && (
+							<Tabs defaultTab="preview">
+								<TabList>
+									<Tab id="preview">Preview</Tab>
+									<Tab id="markdown">Markdown</Tab>
+								</TabList>
+								<TabPanels>
+									<TabPanel id="preview">
+										<div className={styles.markdown}>
+											<ReactMarkdown
+												remarkPlugins={[remarkGfm]}
+												rehypePlugins={[rehypeHighlight]}
+											>
+												{previewContent}
+											</ReactMarkdown>
+											{isStreaming && (
+												<span className={styles.streamingCursor} />
+											)}
+										</div>
+									</TabPanel>
+									<TabPanel id="markdown">
+										<TextArea
+											placeholder="Blog post content will appear here after generation, or type directly..."
+											rows={30}
+											value={isStreaming ? streamingContent : content}
+											onChange={(e) =>
+												!isStreaming && setContent(e.target.value)
+											}
+											fullWidth
+										/>
+									</TabPanel>
+								</TabPanels>
+							</Tabs>
+						)}
+
+						{!generating && !hasPreview && (
+							<div className={styles.emptyPreview}>
+								<BookOpen size={40} className={styles.emptyPreviewIcon} />
+								<Text size="sm" color="muted">
+									Enter a topic and click Generate to draft your blog post.
+								</Text>
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 
@@ -537,7 +574,7 @@ export function BlogWizard({
 					undone.
 				</Text>
 			</Modal>
-		</div>
+		</>
 	);
 }
 
