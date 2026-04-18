@@ -5,18 +5,17 @@
 //   • Fraunces (variable, opsz 9–144, wght 300–900, SOFT 0–100) — display + serif
 //   • Geist — UI + body sans
 //   • Geist Mono — data, eyebrows, code
-//
 // Load fonts once per app. The import below is safe to duplicate across
 // stylesheets — browsers dedupe by URL.
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap";
 
 :root {
 	// Font families -----------------------------------------------------------
-	--font-family-sans:    "Geist", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-	--font-family-mono:    "Geist Mono", "JetBrains Mono", "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
-	--font-family-serif:   "Fraunces", "Times New Roman", Georgia, serif;
-	--font-family-display: "Fraunces", "Times New Roman", Georgia, serif;
+	--font-family-sans:    "Geist", "Inter", "SF Pro Display", -apple-system, blinkmacsystemfont, "Segoe UI", roboto, sans-serif;
+	--font-family-mono:    "Geist Mono", "JetBrains Mono", "SF Mono", "Fira Code", consolas, "Courier New", monospace;
+	--font-family-serif:   "Fraunces", "Times New Roman", georgia, serif;
+	--font-family-display: "Fraunces", "Times New Roman", georgia, serif;
 
 	// Fraunces variable-font settings ------------------------------------------
 	// Use via: font-variation-settings: var(--fvs-display);

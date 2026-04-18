@@ -32,16 +32,16 @@ export interface Theme {
 
 export const themes: Record<ThemeName, Theme> = {
 	editorial: { name: "editorial", label: "Editorial", colorScheme: "light" },
-	light:     { name: "light",     label: "Light",     colorScheme: "light" },
-	dark:      { name: "dark",      label: "Dark",      colorScheme: "dark"  },
-	brutal:    { name: "brutal",    label: "Brutal",    colorScheme: "light" },
-	cosmos:    { name: "cosmos",    label: "Cosmos",    colorScheme: "dark"  },
-	cyberpunk: { name: "cyberpunk", label: "Cyberpunk", colorScheme: "dark"  },
-	sunset:    { name: "sunset",    label: "Sunset",    colorScheme: "dark"  },
-	claude:    { name: "claude",    label: "Claude",    colorScheme: "light" },
-	ocean:     { name: "ocean",     label: "Ocean",     colorScheme: "light" },
-	glow:      { name: "glow",      label: "Glow",      colorScheme: "dark"  },
-	fog:       { name: "fog",       label: "Fog",       colorScheme: "light" },
+	light: { name: "light", label: "Light", colorScheme: "light" },
+	dark: { name: "dark", label: "Dark", colorScheme: "dark" },
+	brutal: { name: "brutal", label: "Brutal", colorScheme: "light" },
+	cosmos: { name: "cosmos", label: "Cosmos", colorScheme: "dark" },
+	cyberpunk: { name: "cyberpunk", label: "Cyberpunk", colorScheme: "dark" },
+	sunset: { name: "sunset", label: "Sunset", colorScheme: "dark" },
+	claude: { name: "claude", label: "Claude", colorScheme: "light" },
+	ocean: { name: "ocean", label: "Ocean", colorScheme: "light" },
+	glow: { name: "glow", label: "Glow", colorScheme: "dark" },
+	fog: { name: "fog", label: "Fog", colorScheme: "light" },
 	porcelain: { name: "porcelain", label: "Porcelain", colorScheme: "light" },
 };
 
