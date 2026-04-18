@@ -21,6 +21,8 @@ These agents read a doc then execute a mechanical task. Safe to fire in parallel
 | `backend-test-scaffold` | `docs/TESTING.md` | Determine and generate tests at all levels |
 | `frontend-style-checker` | `webapp/docs/DESIGN-GUIDELINES.md` | Validate SCSS against design tokens |
 | `frontend-test-fixer` | `webapp/docs/REACT19-PATTERNS.md`, `webapp/docs/TESTING-PATTERNS.md` | Fix failing frontend tests |
+| `prod-db-query` | — | Run read-only SQL against prod RDS via SSM port-forward (dispatched by prod-debug) |
+| `prod-logs` | — | Filter CloudWatch log events from `api-logs` (dispatched by prod-debug) |
 | `pre-commit` | — | Run CI checks, auto-fix build/lint issues |
 
 ### sonnet — orchestrators + judgment
@@ -36,6 +38,7 @@ These agents coordinate other agents or need broad codebase understanding. Run i
 | `backend-code-reviewer` | Go backend pattern validation |
 | `frontend-code-reviewer` | React/TypeScript/design-system pattern validation |
 | `backend-debug-helper` | Trace execution paths, identify root causes |
+| `prod-debug` | Investigate production errors and anomalous DB values (SSM + CloudWatch) |
 | `backend-go-specialist` | Idiomatic Go guidance, architectural patterns |
 | `pr-prep` | Full pre-PR checklist across backend + frontend |
 | `frontend-page-builder` | Scaffold new routes, pages, tabs, and forms |
