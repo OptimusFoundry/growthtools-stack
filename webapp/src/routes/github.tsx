@@ -12,8 +12,8 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Pagination } from "@/proto-design-system/components/navigation/Pagination";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import pageStyles from "./page.module.scss";
 import styles from "./github.module.scss";
+import pageStyles from "./page.module.scss";
 
 export const Route = createFileRoute("/github")({
 	component: GitHubPage,
@@ -210,8 +210,7 @@ function GitHubPage() {
 										<div className={styles.postRow}>
 											<div className={styles.titleRow}>
 												<span className={styles.idx}>
-													№{" "}
-													{String(startIdx + index + 1).padStart(2, "0")}
+													№ {String(startIdx + index + 1).padStart(2, "0")}
 												</span>
 												<div className={styles.postBody}>
 													<div className={styles.postTitleText}>

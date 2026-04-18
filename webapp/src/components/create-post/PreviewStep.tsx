@@ -68,6 +68,16 @@ function BaseContentBody({
 	);
 }
 
+/**
+ * Renders the base content in an accordion panel.
+ *
+ * Lifecycle note: This component is rendered in two distinct JSX positions
+ * (streaming phase and review phase). Because React reconciles by position,
+ * each position gets an independent instance with its own expanded state.
+ * The streaming instance auto-expands; the review instance defaults collapsed.
+ * This is intentional — do not unify into a single conditional render without
+ * verifying the accordion state reset behavior.
+ */
 function BaseAccordion({
 	content,
 	isStreaming,

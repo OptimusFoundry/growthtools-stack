@@ -1,7 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { CalendarClock, Send } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import { fetcher } from "@/api/client";
 import { Topbar } from "@/components/Layout/Topbar";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
@@ -22,79 +23,139 @@ import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
-import { ComposeStep } from "./ComposeStep";
 import styles from "./CreatePostWizard.module.scss";
+import { ComposeStep } from "./compose/ComposeStep";
 import { PostPublishStatus } from "./PostPublishStatus";
 import { PreviewStep } from "./PreviewStep";
 import type { WizardState } from "./useCreatePostWizard";
 import { useCreatePostWizard } from "./useCreatePostWizard";
 import { useWizardSSESync } from "./useWizardSSESync";
 
-export interface WizardInnerProps {
-	editPostId?: string;
-	initialOverrides?: Partial<WizardState>;
-	initialBaseContent?: string;
-	readOnly?: boolean;
-	platformPosts?: PlatformPost[];
-	postStatus?: string;
+// ---------------------------------------------------------------------------
+// useScheduleDrawer
+// Manages the schedule drawer's open state, date, time, and confirm logic.
+// ---------------------------------------------------------------------------
+
+function useScheduleDrawer(
+	initialScheduledAt: string,
+	setScheduledAt: (iso: string) => void,
+	handleSchedule: (whenOverride?: string) => Promise<void>,
+	addBanner: ReturnType<typeof useBannerCenter>["addBanner"],
+) {
+	const [scheduleOpen, setScheduleOpen] = useState(false);
+	const [scheduleDate, setScheduleDate] = useState<Date | null>(() =>
+		initialScheduledAt ? new Date(initialScheduledAt) : null,
+	);
+	const [scheduleTime, setScheduleTime] = useState<string>(() => {
+		if (initialScheduledAt) {
+			const d = new Date(initialScheduledAt);
+			return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+		}
+		return "09:00";
+	});
+
+	const scheduledLabel = scheduleDate
+		? `Scheduled for ${scheduleDate.toLocaleDateString(undefined, {
+				weekday: "long",
+				month: "long",
+				day: "numeric",
+			})} at ${scheduleTime}`
+		: "Pick a date and time below.";
+
+	const handleConfirmSchedule = async () => {
+		if (!scheduleDate) {
+			addBanner({
+				type: "error",
+				title: "Please pick a date",
+				dismissible: true,
+			});
+			return;
+		}
+		const [h, m] = scheduleTime.split(":").map(Number);
+		const combined = new Date(scheduleDate);
+		combined.setHours(h ?? 9, m ?? 0, 0, 0);
+		const iso = combined.toISOString();
+		setScheduledAt(iso);
+		setScheduleOpen(false);
+		await handleSchedule(iso);
+	};
+
+	return {
+		scheduleOpen,
+		setScheduleOpen,
+		scheduleDate,
+		setScheduleDate,
+		scheduleTime,
+		setScheduleTime,
+		scheduledLabel,
+		handleConfirmSchedule,
+	};
 }
 
-export function WizardInner({
-	editPostId,
-	initialOverrides,
+// ---------------------------------------------------------------------------
+// useWizardActions
+// Encapsulates all async post actions: generate, persist draft, publish,
+// schedule, save draft, and retry. Keeps WizardInner's body readable.
+// ---------------------------------------------------------------------------
+
+interface UseWizardActionsParams {
+	state: WizardState;
+	wizard: ReturnType<typeof useCreatePostWizard>;
+	sse: ReturnType<typeof useSSEContentGenerate>;
+	initialBaseContent: string | undefined;
+	editPostId: string | undefined;
+	isEditMode: boolean;
+	saveDraft: ReturnType<typeof useSaveDraft>["saveDraft"];
+	savingDraft: boolean;
+	updateDraft: ReturnType<typeof useUpdateDraft>["updateDraft"];
+	updatingDraft: boolean;
+	publishPost: ReturnType<typeof usePublishPost>["publishPost"];
+	schedulePost: ReturnType<typeof useSchedulePost>["schedulePost"];
+	uploadMedia: ReturnType<typeof useUploadMedia>["uploadMedia"];
+	unlinkMedia: ReturnType<typeof useUnlinkMedia>["unlinkMedia"];
+	addBanner: ReturnType<typeof useBannerCenter>["addBanner"];
+	navigate: ReturnType<typeof useNavigate>;
+}
+
+function useWizardActions({
+	state,
+	wizard,
+	sse,
 	initialBaseContent,
-	readOnly = false,
-	platformPosts,
-	postStatus,
-}: WizardInnerProps = {}) {
-	const isEditMode = Boolean(editPostId);
-	const navigate = useNavigate();
-	const wizard = useCreatePostWizard(initialOverrides);
-	const { state } = wizard;
-
-	const sse = useSSEContentGenerate();
-	const { publishPost } = usePublishPost();
-	const { saveDraft, loading: savingDraft } = useSaveDraft();
-	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
-	const { schedulePost } = useSchedulePost();
-	const { uploadMedia } = useUploadMedia();
-	const { unlinkMedia } = useUnlinkMedia();
-	const { addBanner } = useBannerCenter();
-
-	// Sync SSE content into wizard state
-	useWizardSSESync(sse, state, {
-		setPlatformContent: wizard.setPlatformContent,
-		setPlatformProgress: wizard.setPlatformProgress,
-		setThreadContent: wizard.setThreadContent,
-		generationComplete: wizard.generationComplete,
-		generationFailed: wizard.generationFailed,
-		setError: wizard.setError,
-	});
+	editPostId,
+	isEditMode,
+	saveDraft,
+	updateDraft,
+	publishPost,
+	schedulePost,
+	uploadMedia,
+	unlinkMedia,
+	addBanner,
+	navigate,
+}: UseWizardActionsParams) {
+	const [retrying, setRetrying] = useState(false);
 
 	// Removing a media item from an already-persisted post must unlink it
 	// server-side first; otherwise Save Draft and Publish would still see
 	// the original media_ids array. For unsaved drafts there's no post row
 	// yet, so the removal is local-only.
-	const handleRemoveUploadedMedia = useCallback(
-		async (mediaID: string) => {
-			if (editPostId) {
-				try {
-					await unlinkMedia(editPostId, mediaID);
-				} catch (err) {
-					wizard.setError(
-						err instanceof Error
-							? err.message
-							: "Failed to remove media from post",
-					);
-					return;
-				}
+	const handleRemoveUploadedMedia = async (mediaID: string) => {
+		if (editPostId) {
+			try {
+				await unlinkMedia(editPostId, mediaID);
+			} catch (err) {
+				wizard.setError(
+					err instanceof Error
+						? err.message
+						: "Failed to remove media from post",
+				);
+				return;
 			}
-			wizard.removeUploadedMedia(mediaID);
-		},
-		[editPostId, unlinkMedia, wizard],
-	);
+		}
+		wizard.removeUploadedMedia(mediaID);
+	};
 
-	const handleGenerate = useCallback(() => {
+	const handleGenerate = () => {
 		if (!state.blurb.trim()) {
 			wizard.setError("Please write something to share.");
 			return;
@@ -151,24 +212,14 @@ export function WizardInner({
 		};
 
 		uploadAndGenerate();
-	}, [
-		state.blurb,
-		state.selectedPlatforms,
-		state.pendingFiles,
-		state.contentType,
-		state.maxThreadParts,
-		state.uploadedMedia,
-		wizard,
-		sse,
-		uploadMedia,
-	]);
+	};
 
 	// Persist the wizard's current state as a draft and return the post id
 	// we should act on. In edit mode we update the draft the user opened —
 	// doing this any other way creates a brand-new row and leaves the
 	// original draft orphaned (see the github-draft "published as new
 	// post" regression). In create mode we POST a fresh draft.
-	const persistDraft = useCallback(async (): Promise<string> => {
+	const persistDraft = async (): Promise<string> => {
 		const platforms: PlatformContentInput[] = state.selectedPlatforms.map(
 			(platform) => {
 				const entry: PlatformContentInput = {
@@ -202,23 +253,9 @@ export function WizardInner({
 		}
 		const created = await saveDraft(draftData);
 		return created.id;
-	}, [
-		state.selectedPlatforms,
-		state.platformContent,
-		state.threadContent,
-		state.blurb,
-		state.contentType,
-		state.generated,
-		state.uploadedMedia,
-		sse.baseContent,
-		initialBaseContent,
-		isEditMode,
-		editPostId,
-		saveDraft,
-		updateDraft,
-	]);
+	};
 
-	const handlePublish = useCallback(async () => {
+	const handlePublish = async () => {
 		wizard.setSubmitting(true);
 		wizard.setError(null);
 
@@ -242,62 +279,45 @@ export function WizardInner({
 		} finally {
 			wizard.setSubmitting(false);
 		}
-	}, [
-		state.selectedPlatforms,
-		wizard,
-		persistDraft,
-		publishPost,
-		navigate,
-		addBanner,
-	]);
+	};
 
-	const handleSchedule = useCallback(
-		async (whenOverride?: string) => {
-			const when = whenOverride ?? state.scheduledAt;
-			if (!when) {
-				addBanner({
-					type: "error",
-					title: "Please pick a date and time",
-					dismissible: true,
-				});
-				return;
-			}
+	const handleSchedule = async (whenOverride?: string) => {
+		const when = whenOverride ?? state.scheduledAt;
+		if (!when) {
+			addBanner({
+				type: "error",
+				title: "Please pick a date and time",
+				dismissible: true,
+			});
+			return;
+		}
 
-			wizard.setSubmitting(true);
-			wizard.setError(null);
+		wizard.setSubmitting(true);
+		wizard.setError(null);
 
-			try {
-				const postId = await persistDraft();
-				await schedulePost(postId, when);
-				addBanner({
-					type: "success",
-					title: "Post scheduled",
-					description: `It'll go out on ${new Date(when).toLocaleString()}.`,
-					dismissible: true,
-				});
-				navigate({ to: "/posts" });
-			} catch {
-				addBanner({
-					type: "error",
-					title: "Couldn't schedule post",
-					description: "Please try again.",
-					dismissible: true,
-				});
-			} finally {
-				wizard.setSubmitting(false);
-			}
-		},
-		[
-			state.scheduledAt,
-			wizard,
-			persistDraft,
-			schedulePost,
-			navigate,
-			addBanner,
-		],
-	);
+		try {
+			const postId = await persistDraft();
+			await schedulePost(postId, when);
+			addBanner({
+				type: "success",
+				title: "Post scheduled",
+				description: `It'll go out on ${new Date(when).toLocaleString()}.`,
+				dismissible: true,
+			});
+			navigate({ to: "/posts" });
+		} catch {
+			addBanner({
+				type: "error",
+				title: "Couldn't schedule post",
+				description: "Please try again.",
+				dismissible: true,
+			});
+		} finally {
+			wizard.setSubmitting(false);
+		}
+	};
 
-	const handleSaveDraft = useCallback(async () => {
+	const handleSaveDraft = async () => {
 		wizard.setSubmitting(true);
 		wizard.setError(null);
 
@@ -319,18 +339,16 @@ export function WizardInner({
 		} finally {
 			wizard.setSubmitting(false);
 		}
-	}, [wizard, persistDraft, isEditMode, navigate, addBanner]);
+	};
 
-	const [retrying, setRetrying] = useState(false);
-	const hasFailed =
-		postStatus === "failed" || postStatus === "partially_published";
-
-	const handleRetry = useCallback(async () => {
+	const handleRetry = async () => {
 		if (!editPostId) return;
 		setRetrying(true);
 		try {
-			const url = `${import.meta.env.VITE_API_URL}/api/protected/posts/${editPostId}/retry`;
-			await fetch(url, { method: "POST", credentials: "include" });
+			await fetcher<void>(
+				`${import.meta.env.VITE_API_URL}/api/protected/posts/${editPostId}/retry`,
+				{ method: "POST" },
+			);
 			addBanner({
 				type: "success",
 				title: "Retrying failed platforms",
@@ -347,7 +365,95 @@ export function WizardInner({
 		} finally {
 			setRetrying(false);
 		}
-	}, [editPostId, navigate, addBanner]);
+	};
+
+	return {
+		handleRemoveUploadedMedia,
+		handleGenerate,
+		handlePublish,
+		handleSchedule,
+		handleSaveDraft,
+		handleRetry,
+		retrying,
+	};
+}
+
+// ---------------------------------------------------------------------------
+// WizardInner
+// ---------------------------------------------------------------------------
+
+export interface WizardInnerProps {
+	editPostId?: string;
+	initialOverrides?: Partial<WizardState>;
+	initialBaseContent?: string;
+	readOnly?: boolean;
+	platformPosts?: PlatformPost[];
+	postStatus?: string;
+}
+
+export function WizardInner({
+	editPostId,
+	initialOverrides,
+	initialBaseContent,
+	readOnly = false,
+	platformPosts,
+	postStatus,
+}: WizardInnerProps = {}) {
+	const isEditMode = Boolean(editPostId);
+	const navigate = useNavigate();
+	const wizard = useCreatePostWizard(initialOverrides);
+	const { state } = wizard;
+
+	const sse = useSSEContentGenerate();
+	const { publishPost } = usePublishPost();
+	const { saveDraft, loading: savingDraft } = useSaveDraft();
+	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
+	const { schedulePost } = useSchedulePost();
+	const { uploadMedia } = useUploadMedia();
+	const { unlinkMedia } = useUnlinkMedia();
+	const { addBanner } = useBannerCenter();
+
+	// Sync SSE content into wizard state — pass individual stable references
+	// so each useEffect dependency tracks a specific function, not the object.
+	useWizardSSESync(
+		sse,
+		state,
+		wizard.setPlatformContent,
+		wizard.setPlatformProgress,
+		wizard.setThreadContent,
+		wizard.generationComplete,
+		wizard.generationFailed,
+		wizard.setError,
+	);
+
+	const actions = useWizardActions({
+		state,
+		wizard,
+		sse,
+		initialBaseContent,
+		editPostId,
+		isEditMode,
+		saveDraft,
+		savingDraft,
+		updateDraft,
+		updatingDraft,
+		publishPost,
+		schedulePost,
+		uploadMedia,
+		unlinkMedia,
+		addBanner,
+		navigate,
+	});
+
+	const scheduleDrawer = useScheduleDrawer(
+		state.scheduledAt,
+		wizard.setScheduledAt,
+		actions.handleSchedule,
+		addBanner,
+	);
+
+	const hasFailed =
+		postStatus === "failed" || postStatus === "partially_published";
 
 	const eyebrowLabel = !isEditMode
 		? "Composer · new post"
@@ -381,44 +487,6 @@ export function WizardInner({
 				? "Review the post and platform adaptations before it goes live at the scheduled time."
 				: "View your published post and see how each platform rendered it.";
 
-	const [scheduleOpen, setScheduleOpen] = useState(false);
-	const [scheduleDate, setScheduleDate] = useState<Date | null>(() =>
-		state.scheduledAt ? new Date(state.scheduledAt) : null,
-	);
-	const [scheduleTime, setScheduleTime] = useState<string>(() => {
-		if (state.scheduledAt) {
-			const d = new Date(state.scheduledAt);
-			return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-		}
-		return "09:00";
-	});
-
-	const scheduledLabel = scheduleDate
-		? `Scheduled for ${scheduleDate.toLocaleDateString(undefined, {
-				weekday: "long",
-				month: "long",
-				day: "numeric",
-			})} at ${scheduleTime}`
-		: "Pick a date and time below.";
-
-	const handleConfirmSchedule = useCallback(async () => {
-		if (!scheduleDate) {
-			addBanner({
-				type: "error",
-				title: "Please pick a date",
-				dismissible: true,
-			});
-			return;
-		}
-		const [h, m] = scheduleTime.split(":").map(Number);
-		const combined = new Date(scheduleDate);
-		combined.setHours(h ?? 9, m ?? 0, 0, 0);
-		const iso = combined.toISOString();
-		wizard.setScheduledAt(iso);
-		setScheduleOpen(false);
-		await handleSchedule(iso);
-	}, [scheduleDate, scheduleTime, wizard, handleSchedule, addBanner]);
-
 	const busy = state.submitting || savingDraft || updatingDraft;
 	const canAct = state.generated && !readOnly;
 
@@ -432,7 +500,7 @@ export function WizardInner({
 			<Button
 				variant="ghost"
 				size="sm"
-				onClick={handleSaveDraft}
+				onClick={actions.handleSaveDraft}
 				isLoading={savingDraft || updatingDraft}
 				disabled={busy}
 			>
@@ -441,7 +509,7 @@ export function WizardInner({
 			<Button
 				variant="secondary"
 				size="sm"
-				onClick={() => setScheduleOpen(true)}
+				onClick={() => scheduleDrawer.setScheduleOpen(true)}
 				disabled={busy || !canAct}
 			>
 				<CalendarClock size={14} /> Schedule
@@ -449,7 +517,7 @@ export function WizardInner({
 			<Button
 				variant="primary"
 				size="sm"
-				onClick={handlePublish}
+				onClick={actions.handlePublish}
 				isLoading={state.submitting}
 				disabled={busy || !canAct}
 			>
@@ -489,7 +557,7 @@ export function WizardInner({
 								contentType: m.contentType,
 								url: m.url,
 							}))}
-							onRemoveExistingMedia={handleRemoveUploadedMedia}
+							onRemoveExistingMedia={actions.handleRemoveUploadedMedia}
 							mediaChanged={state.mediaChangedSinceGeneration}
 							generating={state.generating}
 							generated={state.generated}
@@ -500,13 +568,13 @@ export function WizardInner({
 							onMaxThreadPartsChange={wizard.setMaxThreadParts}
 							onTogglePlatform={wizard.togglePlatform}
 							onFilesChange={wizard.setPendingFiles}
-							onGenerate={handleGenerate}
+							onGenerate={actions.handleGenerate}
 						/>
 						{platformPosts && platformPosts.length > 0 && (
 							<PostPublishStatus
 								platformPosts={platformPosts}
-								onRetry={hasFailed ? handleRetry : undefined}
-								retrying={retrying}
+								onRetry={hasFailed ? actions.handleRetry : undefined}
+								retrying={actions.retrying}
 							/>
 						)}
 					</Stack>
@@ -529,21 +597,24 @@ export function WizardInner({
 			</div>
 
 			<Drawer
-				isOpen={scheduleOpen}
-				onClose={() => setScheduleOpen(false)}
+				isOpen={scheduleDrawer.scheduleOpen}
+				onClose={() => scheduleDrawer.setScheduleOpen(false)}
 				title="Schedule post"
-				description={scheduledLabel}
+				description={scheduleDrawer.scheduledLabel}
 				size="md"
 				footer={
 					<Stack direction="row" gap="sm" justify="end">
-						<Button variant="ghost" onClick={() => setScheduleOpen(false)}>
+						<Button
+							variant="ghost"
+							onClick={() => scheduleDrawer.setScheduleOpen(false)}
+						>
 							Cancel
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleConfirmSchedule}
+							onClick={scheduleDrawer.handleConfirmSchedule}
 							isLoading={state.submitting}
-							disabled={!scheduleDate}
+							disabled={!scheduleDrawer.scheduleDate}
 						>
 							Schedule
 						</Button>
@@ -552,8 +623,8 @@ export function WizardInner({
 			>
 				<Stack gap="md">
 					<DatePicker
-						value={scheduleDate}
-						onChange={setScheduleDate}
+						value={scheduleDrawer.scheduleDate}
+						onChange={scheduleDrawer.setScheduleDate}
 						minDate={new Date()}
 						inline
 					/>
@@ -561,8 +632,8 @@ export function WizardInner({
 						<Text size="sm">Time</Text>
 						<TextField
 							type="time"
-							value={scheduleTime}
-							onChange={(e) => setScheduleTime(e.target.value)}
+							value={scheduleDrawer.scheduleTime}
+							onChange={(e) => scheduleDrawer.setScheduleTime(e.target.value)}
 						/>
 					</Stack>
 				</Stack>
