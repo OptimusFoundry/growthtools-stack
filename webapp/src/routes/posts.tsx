@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, FileText, Plus, SearchX } from "lucide-react";
+import { ChevronRight, FileText, Plus, SearchX, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
@@ -252,6 +252,21 @@ function PostsPage() {
 											>
 												{STATUS_LABELS[post.status]}
 											</span>
+											{(post.status === "draft" ||
+												post.status === "scheduled") && (
+												<button
+													type="button"
+													className={styles.deleteBtn}
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														setDeleteTargetId(post.id);
+													}}
+													aria-label="Delete"
+												>
+													<Trash2 size={16} />
+												</button>
+											)}
 											<span className={styles.chevronBtn} aria-hidden>
 												<ChevronRight size={16} />
 											</span>
