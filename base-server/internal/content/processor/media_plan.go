@@ -138,13 +138,7 @@ General:
 		decision.Mode = "single"
 		decision.ThreadParts = 0
 	} else {
-		decision.ThreadParts = parsed.ThreadParts
-		if decision.ThreadParts < 2 {
-			decision.ThreadParts = 2
-		}
-		if decision.ThreadParts > 7 {
-			decision.ThreadParts = 7
-		}
+		decision.ThreadParts = max(2, min(7, parsed.ThreadParts))
 	}
 
 	seen := make(map[int]struct{}, len(parsed.ImageIndexes))
