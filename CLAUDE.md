@@ -19,6 +19,17 @@ growth-tools/
 - **Design system & component patterns:** [webapp/docs/DESIGN-GUIDELINES.md](webapp/docs/DESIGN-GUIDELINES.md)
 - **Commit message convention:** [COMMITS.md](COMMITS.md) — Conventional Commits, enforced by the `.githooks/commit-msg` hook. Run `./.githooks/install.sh` once per clone to activate.
 
+## Plugins & Skills
+
+> **IMPORTANT:** At the start of every session, check what skills and MCP tools are available and use them throughout.
+
+- **Superpowers skills** — invoke with the `Skill` tool. Check available skills before starting any task; there is likely a skill that applies. Key skills: `superpowers:subagent-driven-development`, `superpowers:writing-plans`, `superpowers:using-git-worktrees`, `superpowers:finishing-a-development-branch`.
+- **Language Server (LSP)** — use the `LSP` tool for precise Go and TypeScript navigation: go-to-definition, find-references, type information. Prefer this over grep when exploring types or tracing call chains.
+- **Browser automation** — `mcp__claude-in-chrome__*` tools available for testing frontend features in a real browser. Use for verifying UI changes end-to-end.
+- **Playwright MCP** — `mcp__plugin_playwright_*` tools for browser automation and E2E verification.
+
+When in doubt, run `ToolSearch` to discover available tools for a task before doing it manually.
+
 ## Agent Dispatch
 
 - **Dispatch guide:** [.claude/agents/README.md](.claude/agents/README.md) — read this before spinning up agents. Lists every agent, its model tier (haiku/sonnet/opus), which docs it reads, and parallelisation rules.
