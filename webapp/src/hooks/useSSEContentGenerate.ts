@@ -64,15 +64,20 @@ export function useSSEContentGenerate() {
 			contentType: WizardContentType = "text",
 			images?: ImagePayload[],
 			maxThreadParts?: number,
+			mediaIDs?: string[],
 		) => {
 			abortRef.current?.abort();
 			const controller = new AbortController();
 			abortRef.current = controller;
 
+			const hasMediaIDs = mediaIDs && mediaIDs.length > 0;
+			const hasImages = images && images.length > 0;
+
 			setState({
 				...initialState,
 				loading: true,
-				phase: images && images.length > 0 ? "describing" : "generating",
+				// Media-aware path doesn't do a separate "describing" phase client-side.
+				phase: !hasMediaIDs && hasImages ? "describing" : "generating",
 			});
 
 			try {
@@ -81,7 +86,11 @@ export function useSSEContentGenerate() {
 					platforms,
 					content_type: contentType,
 				};
-				if (images && images.length > 0) {
+				if (hasMediaIDs) {
+					body.media_ids = mediaIDs;
+					// If caller also sent images (shouldn't happen in normal usage),
+					// omit them — the backend prefers media_ids and we match that.
+				} else if (hasImages) {
 					body.images = images;
 				}
 				if (maxThreadParts && maxThreadParts > 0) {

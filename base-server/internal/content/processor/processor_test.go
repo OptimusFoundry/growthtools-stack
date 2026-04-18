@@ -3,6 +3,7 @@ package processor
 import (
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 
@@ -862,6 +863,261 @@ func TestContentProcessor_SelectMediaAndMode(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestContentProcessor_DecideMode(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+
+	video := &aiclient.ImageData{MIMEType: "video/mp4", Data: []byte("vid")}
+	twoImages := []aiclient.ImageData{
+		{MIMEType: "image/png", Data: []byte("a")},
+		{MIMEType: "image/png", Data: []byte("b")},
+	}
+
+	tests := []struct {
+		name    string
+		video   *aiclient.ImageData
+		images  []aiclient.ImageData
+		aiReply string
+		aiErr   error
+		want    ModeDecision
+		wantErr error
+	}{
+		{
+			name:    "single mode returned correctly",
+			video:   video,
+			images:  twoImages,
+			aiReply: `{"mode": "single", "thread_parts": 0, "reason": "one strong video"}`,
+			want:    ModeDecision{Mode: "single", ThreadParts: 0, Reason: "one strong video"},
+		},
+		{
+			name:    "thread mode with parts returned correctly",
+			video:   nil,
+			images:  twoImages,
+			aiReply: `{"mode": "thread", "thread_parts": 3, "reason": "enough content for 3 parts"}`,
+			want:    ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "enough content for 3 parts"},
+		},
+		{
+			name:    "thread_parts above max clamped to 7",
+			video:   video,
+			images:  twoImages,
+			aiReply: `{"mode": "thread", "thread_parts": 99, "reason": "overreaching"}`,
+			want:    ModeDecision{Mode: "thread", ThreadParts: 7, Reason: "overreaching"},
+		},
+		{
+			name:    "thread_parts below 2 clamped up to 2",
+			video:   video,
+			images:  twoImages,
+			aiReply: `{"mode": "thread", "thread_parts": 1, "reason": "needs at least 2"}`,
+			want:    ModeDecision{Mode: "thread", ThreadParts: 2, Reason: "needs at least 2"},
+		},
+		{
+			name:    "unknown mode defaults to single",
+			video:   video,
+			images:  twoImages,
+			aiReply: `{"mode": "carousel", "thread_parts": 0, "reason": "weird mode"}`,
+			want:    ModeDecision{Mode: "single", ThreadParts: 0, Reason: "weird mode"},
+		},
+		{
+			name:    "AI error maps to ErrDecideMode",
+			video:   video,
+			images:  twoImages,
+			aiErr:   errors.New("provider timeout"),
+			wantErr: ErrDecideMode,
+		},
+		{
+			name:    "unparseable response maps to ErrDecideMode",
+			video:   video,
+			images:  twoImages,
+			aiReply: "not json",
+			wantErr: ErrDecideMode,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			ai := NewMockAIClient(ctrl)
+			ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(tt.aiReply, tt.aiErr)
+			proc := New(noVoiceStore(ctrl), ai, logger)
+			got, err := proc.DecideMode(context.Background(), tt.video, tt.images, "feat: add feature")
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestContentProcessor_FetchAndBucketMedia(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	videoID := uuid.New()
+	imageID := uuid.New()
+
+	videoRow := store.Media{
+		ID:          videoID,
+		AccountID:   accountID,
+		ContentType: "video/mp4",
+		S3Key:       "capture/video.mp4",
+	}
+	imageRow := store.Media{
+		ID:          imageID,
+		AccountID:   accountID,
+		ContentType: "image/png",
+		S3Key:       "capture/image.png",
+	}
+
+	tests := []struct {
+		name         string
+		mediaIDs     []uuid.UUID
+		setupMocks   func(ms *MockMediaStore, s3 *MockS3Fetcher)
+		wantErr      error
+		assertResult func(t *testing.T, video *aiclient.ImageData, images []aiclient.ImageData, hasVideo bool)
+	}{
+		{
+			name:     "happy path buckets video and images correctly",
+			mediaIDs: []uuid.UUID{videoID, imageID},
+			setupMocks: func(ms *MockMediaStore, s3 *MockS3Fetcher) {
+				ms.EXPECT().GetMediaByIDs(gomock.Any(), []uuid.UUID{videoID, imageID}).
+					Return([]store.Media{videoRow, imageRow}, nil)
+				s3.EXPECT().GetFile(gomock.Any(), "capture/video.mp4").
+					Return(io.NopCloser(strings.NewReader("videodata")), "video/mp4", nil)
+				s3.EXPECT().GetFile(gomock.Any(), "capture/image.png").
+					Return(io.NopCloser(strings.NewReader("imgdata")), "image/png", nil)
+			},
+			assertResult: func(t *testing.T, video *aiclient.ImageData, images []aiclient.ImageData, hasVideo bool) {
+				t.Helper()
+				require.NotNil(t, video)
+				assert.Equal(t, "video/mp4", video.MIMEType)
+				assert.True(t, hasVideo)
+				require.Len(t, images, 1)
+				assert.Equal(t, "image/png", images[0].MIMEType)
+			},
+		},
+		{
+			name:     "images only — no video in result",
+			mediaIDs: []uuid.UUID{imageID},
+			setupMocks: func(ms *MockMediaStore, s3 *MockS3Fetcher) {
+				ms.EXPECT().GetMediaByIDs(gomock.Any(), []uuid.UUID{imageID}).
+					Return([]store.Media{imageRow}, nil)
+				s3.EXPECT().GetFile(gomock.Any(), "capture/image.png").
+					Return(io.NopCloser(strings.NewReader("imgdata")), "image/png", nil)
+			},
+			assertResult: func(t *testing.T, video *aiclient.ImageData, images []aiclient.ImageData, hasVideo bool) {
+				t.Helper()
+				assert.Nil(t, video)
+				assert.False(t, hasVideo)
+				require.Len(t, images, 1)
+			},
+		},
+		{
+			name:     "store error returns ErrFetchMedia",
+			mediaIDs: []uuid.UUID{videoID},
+			setupMocks: func(ms *MockMediaStore, s3 *MockS3Fetcher) {
+				ms.EXPECT().GetMediaByIDs(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("db error"))
+			},
+			wantErr: ErrFetchMedia,
+		},
+		{
+			name:     "s3 fetch error returns ErrFetchMedia",
+			mediaIDs: []uuid.UUID{videoID},
+			setupMocks: func(ms *MockMediaStore, s3 *MockS3Fetcher) {
+				ms.EXPECT().GetMediaByIDs(gomock.Any(), gomock.Any()).
+					Return([]store.Media{videoRow}, nil)
+				s3.EXPECT().GetFile(gomock.Any(), "capture/video.mp4").
+					Return(nil, "", errors.New("s3 unavailable"))
+			},
+			wantErr: ErrFetchMedia,
+		},
+		{
+			name:     "wrong-account media silently skipped",
+			mediaIDs: []uuid.UUID{videoID},
+			setupMocks: func(ms *MockMediaStore, s3 *MockS3Fetcher) {
+				wrongAccountRow := videoRow
+				wrongAccountRow.AccountID = uuid.New() // different account
+				ms.EXPECT().GetMediaByIDs(gomock.Any(), gomock.Any()).
+					Return([]store.Media{wrongAccountRow}, nil)
+			},
+			assertResult: func(t *testing.T, video *aiclient.ImageData, images []aiclient.ImageData, hasVideo bool) {
+				t.Helper()
+				assert.Nil(t, video)
+				assert.False(t, hasVideo)
+				assert.Len(t, images, 0)
+			},
+		},
+		{
+			name:     "media with no s3_key silently skipped",
+			mediaIDs: []uuid.UUID{videoID},
+			setupMocks: func(ms *MockMediaStore, s3 *MockS3Fetcher) {
+				noKeyRow := videoRow
+				noKeyRow.S3Key = ""
+				ms.EXPECT().GetMediaByIDs(gomock.Any(), gomock.Any()).
+					Return([]store.Media{noKeyRow}, nil)
+			},
+			assertResult: func(t *testing.T, video *aiclient.ImageData, images []aiclient.ImageData, hasVideo bool) {
+				t.Helper()
+				assert.Nil(t, video)
+				assert.False(t, hasVideo)
+				assert.Len(t, images, 0)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			ms := NewMockMediaStore(ctrl)
+			s3 := NewMockS3Fetcher(ctrl)
+			tt.setupMocks(ms, s3)
+
+			// Create proc without dependencies first, then wire them.
+			proc := New(noVoiceStore(ctrl), NewMockAIClient(ctrl), logger)
+			proc.WithMediaFetcher(ms, s3)
+
+			video, images, hasVideo, err := proc.FetchAndBucketMedia(context.Background(), accountID, tt.mediaIDs)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assertResult != nil {
+				tt.assertResult(t, video, images, hasVideo)
+			}
+		})
+	}
+}
+
+func TestContentProcessor_FetchAndBucketMedia_NoDependencies(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	tests := []struct {
+		name string
+	}{
+		{name: "returns ErrFetchMedia when media dependencies not wired"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			proc := New(noVoiceStore(ctrl), NewMockAIClient(ctrl), logger)
+			// Note: WithMediaFetcher NOT called.
+			_, _, _, err := proc.FetchAndBucketMedia(context.Background(), accountID, []uuid.UUID{uuid.New()})
+			require.ErrorIs(t, err, ErrFetchMedia)
 		})
 	}
 }

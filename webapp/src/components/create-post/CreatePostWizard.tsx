@@ -240,7 +240,8 @@ function WizardInner({
 				.filter((f) => !f.error)
 				.map((f) => f.file);
 
-			// S3 upload (for publishing) and base64 (for AI) run in parallel
+			// S3 upload (for publishing) and base64 (for AI) run in parallel.
+			// We only need base64 for the fresh-compose path (no uploaded media yet).
 			const [imagePayloads] = await Promise.all([
 				validFiles.length > 0 ? filesToBase64(validFiles) : Promise.resolve([]),
 				(async () => {
@@ -257,12 +258,30 @@ function WizardInner({
 				})(),
 			]);
 
+			// Media-aware path: when the post already has persisted media (edit-post
+			// draft or github-capture draft), send their IDs so the backend fetches
+			// them from S3 and runs the media-aware pipeline.  Do NOT also send the
+			// base64 blobs — the backend prefers media_ids and they would be wasted
+			// bytes.  Any newly-dropped pending files are uploaded above (so they'll
+			// be present in the next Save Draft call), but we skip them here because
+			// the server-side IDs are authoritative for AI generation.
+			const uploadedMediaIDs =
+				state.uploadedMedia.length > 0
+					? state.uploadedMedia.map((m) => m.id)
+					: undefined;
+
 			sse.generate(
 				state.blurb,
 				state.selectedPlatforms,
 				state.contentType,
-				imagePayloads.length > 0 ? imagePayloads : undefined,
+				// Pass base64 images only for fresh-compose (no persisted media).
+				uploadedMediaIDs
+					? undefined
+					: imagePayloads.length > 0
+						? imagePayloads
+						: undefined,
 				state.contentType === "thread" ? state.maxThreadParts : undefined,
+				uploadedMediaIDs,
 			);
 		};
 

@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 
 	"base-server/internal/content/prompts"
 	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
@@ -327,4 +329,177 @@ func imageDescriptionsForPrompts(descriptions []ImageDescription) []prompts.Imag
 		}
 	}
 	return result
+}
+
+// ModeDecision is the AI's verdict on whether a post with pre-selected media
+// should be a single post or a thread, and how many parts the thread needs.
+// Unlike SelectMediaAndMode it does NOT filter media — the caller trusts the
+// user's selection and only needs the layout decision.
+type ModeDecision struct {
+	Mode        string // "single" or "thread"
+	ThreadParts int    // 2–7 when Mode="thread", 0 otherwise
+	Reason      string
+}
+
+// DecideMode runs a lightweight AI call to choose single vs thread mode for a
+// post whose media has already been chosen by the user (trust-user-selection
+// path). It does not filter or drop any media.
+//
+// Callers should treat errors as fail-open — if this call fails, fall back to
+// thread mode with a reasonable part count.
+func (p *ContentProcessor) DecideMode(
+	ctx context.Context,
+	video *aiclient.ImageData,
+	images []aiclient.ImageData,
+	prompt string,
+) (ModeDecision, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "operation", Value: "decide_mode"},
+		observability.Field{Key: "has_video", Value: fmt.Sprintf("%t", video != nil)},
+		observability.Field{Key: "image_count", Value: fmt.Sprintf("%d", len(images))},
+	)
+
+	systemPrompt := `You are an editorial director for a solo founder's social posts. The user has already selected which media to include. You only need to decide:
+
+1. Whether the post should be a single post or a thread.
+2. If thread, how many parts.
+
+You will receive:
+- An optional short video clip (MIME type tells you it's a video).
+- Zero or more screenshots, each labelled by 1-based index.
+- The post prompt / commit message.
+
+Return raw JSON only (no markdown fences, no commentary):
+{
+  "mode": "single"|"thread",
+  "thread_parts": 0,
+  "reason": "one short sentence"
+}
+
+Mode rules:
+- "single" when the change is small, the media is one strong video or one strong screenshot, or the prompt does not carry enough substance for multiple beats.
+- "thread" when there is enough substance + enough media (or enough narrative) to pace it across multiple posts. Threads with thin copy feel padded — prefer single in that case.
+- When mode="thread", thread_parts is an integer 2–7. Do not exceed 7. When mode="single", thread_parts MUST be 0.`
+
+	parts := make([]string, 0, 2+len(images))
+	parts = append(parts, fmt.Sprintf("Post prompt:\n%s", strings.TrimSpace(prompt)))
+	attached := make([]aiclient.ImageData, 0, 1+len(images))
+	if video != nil {
+		parts = append(parts, "Attached video (next attachment).")
+		attached = append(attached, *video)
+	} else {
+		parts = append(parts, "No video attached.")
+	}
+	for i := range images {
+		parts = append(parts, fmt.Sprintf("Attached image %d (next attachment):", i+1))
+		attached = append(attached, images[i])
+	}
+	messages := []aiclient.Message{
+		{
+			Role:    "user",
+			Content: strings.Join(parts, "\n\n"),
+			Images:  attached,
+		},
+	}
+
+	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, messages, 512)
+	if err != nil {
+		p.logger.Error(ctx, "failed to decide mode via ai", err)
+		return ModeDecision{}, ErrDecideMode
+	}
+
+	var parsed struct {
+		Mode        string `json:"mode"`
+		ThreadParts int    `json:"thread_parts"`
+		Reason      string `json:"reason"`
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &parsed); err != nil {
+		p.logger.Error(ctx, "failed to parse mode decision response", err)
+		return ModeDecision{}, ErrDecideMode
+	}
+
+	decision := ModeDecision{
+		Mode:   strings.ToLower(strings.TrimSpace(parsed.Mode)),
+		Reason: strings.TrimSpace(parsed.Reason),
+	}
+	if decision.Mode != "thread" {
+		decision.Mode = "single"
+		decision.ThreadParts = 0
+	} else {
+		decision.ThreadParts = max(2, min(7, parsed.ThreadParts))
+	}
+	return decision, nil
+}
+
+// FetchAndBucketMedia fetches all media rows for the given IDs (must belong to
+// accountID) from the store, then downloads each S3 object and returns a
+// single video (first video/* MIME) plus remaining images. IDs not found in
+// the store are silently skipped. Returns ErrFetchMedia on store or S3 errors.
+func (p *ContentProcessor) FetchAndBucketMedia(
+	ctx context.Context,
+	accountID uuid.UUID,
+	mediaIDs []uuid.UUID,
+) (video *aiclient.ImageData, images []aiclient.ImageData, videoPresent bool, err error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "operation", Value: "fetch_and_bucket_media"},
+		observability.Field{Key: "media_count", Value: fmt.Sprintf("%d", len(mediaIDs))},
+	)
+
+	if p.mediaStore == nil || p.s3Fetch == nil {
+		p.logger.Error(ctx, "media-aware generation requested but media dependencies not wired", nil)
+		return nil, nil, false, ErrFetchMedia
+	}
+
+	rows, err := p.mediaStore.GetMediaByIDs(ctx, mediaIDs)
+	if err != nil {
+		p.logger.Error(ctx, "failed to load media rows for generation", err)
+		return nil, nil, false, ErrFetchMedia
+	}
+
+	rowByID := make(map[uuid.UUID]store.Media, len(rows))
+	for _, r := range rows {
+		rowByID[r.ID] = r
+	}
+
+	images = make([]aiclient.ImageData, 0, len(mediaIDs))
+	for _, id := range mediaIDs {
+		row, ok := rowByID[id]
+		if !ok {
+			continue
+		}
+		if row.AccountID != accountID {
+			continue
+		}
+		if row.S3Key == "" {
+			continue
+		}
+
+		body, ct, fetchErr := p.s3Fetch.GetFile(ctx, row.S3Key)
+		if fetchErr != nil {
+			p.logger.Error(ctx, "failed to fetch media from s3 for generation", fetchErr)
+			return nil, nil, false, ErrFetchMedia
+		}
+		data, readErr := io.ReadAll(body)
+		body.Close()
+		if readErr != nil {
+			p.logger.Error(ctx, "failed to read s3 media body", readErr)
+			return nil, nil, false, ErrFetchMedia
+		}
+
+		mimeType := row.ContentType
+		if mimeType == "" {
+			mimeType = ct
+		}
+
+		img := aiclient.ImageData{MIMEType: mimeType, Data: data}
+		if strings.HasPrefix(mimeType, "video/") {
+			if video == nil {
+				video = &img
+				videoPresent = true
+			}
+		} else if strings.HasPrefix(mimeType, "image/") {
+			images = append(images, img)
+		}
+	}
+	return video, images, videoPresent, nil
 }

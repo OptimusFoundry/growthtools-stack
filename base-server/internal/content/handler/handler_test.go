@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"base-server/internal/content/processor"
+	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
 
 	"github.com/gin-gonic/gin"
@@ -317,3 +318,166 @@ func TestHandler_HandleStreamGenerate(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_HandleStreamGenerate_MediaIDs(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	mediaID1 := uuid.New()
+	mediaID2 := uuid.New()
+
+	tests := []struct {
+		name           string
+		mocks          func(m *MockContentProcessor)
+		body           any
+		wantStatus     int
+		assertResponse func(t *testing.T, body string)
+	}{
+		{
+			name: "200 media-aware path emits base_done platform_done thread_done done events",
+			mocks: func(m *MockContentProcessor) {
+				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, []uuid.UUID{mediaID1, mediaID2}).
+					Return(&aiclient.ImageData{MIMEType: "video/mp4", Data: []byte("v")}, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, true, nil)
+				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), "my prompt").
+					Return(processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "ok"}, nil)
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, "my prompt", []string{"x"}, gomock.Any()).
+					Return("base content", map[string]processor.ThreadWithMediaPlanResult{
+						"x": {
+							Content:  "seg1\nseg2",
+							Segments: []processor.ThreadSegment{{Content: "seg1"}, {Content: "seg2"}},
+						},
+					}, nil)
+			},
+			body: map[string]any{
+				"prompt":    "my prompt",
+				"platforms": []string{"x"},
+				"media_ids": []string{mediaID1.String(), mediaID2.String()},
+			},
+			wantStatus: http.StatusOK,
+			assertResponse: func(t *testing.T, body string) {
+				t.Helper()
+				assert.Contains(t, body, "base_done")
+				assert.Contains(t, body, "platform_done")
+				assert.Contains(t, body, "thread_done")
+				assert.Contains(t, body, "done")
+			},
+		},
+		{
+			name: "200 media-aware path: DecideMode failure falls back to thread mode",
+			mocks: func(m *MockContentProcessor) {
+				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
+					Return(nil, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, false, nil)
+				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(processor.ModeDecision{}, processor.ErrDecideMode)
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base", map[string]processor.ThreadWithMediaPlanResult{
+						"x": {Content: "content", Segments: []processor.ThreadSegment{{Content: "content"}}},
+					}, nil)
+			},
+			body: map[string]any{
+				"prompt":    "my prompt",
+				"platforms": []string{"x"},
+				"media_ids": []string{mediaID1.String()},
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "200 SSE error event when FetchAndBucketMedia fails",
+			mocks: func(m *MockContentProcessor) {
+				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
+					Return(nil, nil, false, processor.ErrFetchMedia)
+			},
+			body: map[string]any{
+				"prompt":    "my prompt",
+				"platforms": []string{"x"},
+				"media_ids": []string{mediaID1.String()},
+			},
+			wantStatus: http.StatusOK, // SSE: headers already written
+			assertResponse: func(t *testing.T, body string) {
+				t.Helper()
+				assert.Contains(t, body, "error")
+			},
+		},
+		{
+			name: "200 SSE error event when GenerateWithMediaPlan fails",
+			mocks: func(m *MockContentProcessor) {
+				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
+					Return(nil, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, false, nil)
+				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(processor.ModeDecision{Mode: "single"}, nil)
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", nil, processor.ErrStreamGenerate)
+			},
+			body: map[string]any{
+				"prompt":    "my prompt",
+				"platforms": []string{"x"},
+				"media_ids": []string{mediaID1.String()},
+			},
+			wantStatus: http.StatusOK,
+			assertResponse: func(t *testing.T, body string) {
+				t.Helper()
+				assert.Contains(t, body, "error")
+			},
+		},
+		{
+			name: "200 media_ids path preferred when both media_ids and images supplied",
+			mocks: func(m *MockContentProcessor) {
+				// media_ids path is taken — FetchAndBucketMedia is called, NOT StreamGenerateAndAdapt
+				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
+					Return(nil, nil, false, nil)
+				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(processor.ModeDecision{Mode: "single"}, nil)
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base", map[string]processor.ThreadWithMediaPlanResult{
+						"x": {Content: "c", Segments: []processor.ThreadSegment{{Content: "c"}}},
+					}, nil)
+			},
+			body: map[string]any{
+				"prompt":    "my prompt",
+				"platforms": []string{"x"},
+				"media_ids": []string{mediaID1.String()},
+				"images":    []any{map[string]any{"mime_type": "image/png", "data": "aW1h"}},
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "200 error event when all media_ids are invalid UUIDs",
+			mocks: func(m *MockContentProcessor) {
+				// No methods should be called — invalid IDs drop to 0 valid IDs.
+			},
+			body: map[string]any{
+				"prompt":    "my prompt",
+				"platforms": []string{"x"},
+				"media_ids": []string{"not-a-uuid"},
+			},
+			wantStatus: http.StatusOK,
+			assertResponse: func(t *testing.T, body string) {
+				t.Helper()
+				assert.Contains(t, body, "error")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := NewMockContentProcessor(ctrl)
+			tt.mocks(m)
+
+			h := New(m, logger)
+			router := setupContentRouter(h, accountID)
+
+			req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.wantStatus, w.Code)
+			if tt.assertResponse != nil {
+				tt.assertResponse(t, w.Body.String())
+			}
+		})
+	}
+}
+
