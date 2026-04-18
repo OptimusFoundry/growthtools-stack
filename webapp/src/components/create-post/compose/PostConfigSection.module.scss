@@ -14,10 +14,25 @@
   }
 }
 
+// Length field stays mounted so toggling thread mode doesn't reflow the
+// section (which cascaded a jitter into the Media section below).
+// When disabled, it fades out, can't be interacted with, and hides from
+// assistive tech.
+.lengthDisabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+}
+
+.lengthFieldWrap {
+  // motion.div wrapper — overflow hidden so height 0 → auto animates
+  // cleanly without content leaking. Child handles the actual layout.
+  min-width: 0;
 }
 
 .lengthField {

@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { useCallback } from "react";
 import { Stepper } from "@/proto-design-system/components/forms/Stepper";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
@@ -51,27 +52,32 @@ export function PostConfigSection({
 					size="sm"
 					disabled={readOnly}
 				/>
-				{contentType === "thread" && (
-					<div className={styles.lengthField}>
-						<div className={styles.field}>
-							<Text size="sm" weight="medium">
-								Thread length
-							</Text>
-							<Text size="xs" color="muted">
-								3–25 posts
-							</Text>
-						</div>
-						<Stepper
-							value={maxThreadParts}
-							onChange={onMaxThreadPartsChange}
-							min={3}
-							max={25}
-							size="md"
-							disabled={readOnly}
-							aria-label="Thread length"
-						/>
+				<motion.div
+					className={styles.lengthField}
+					aria-hidden={contentType !== "thread"}
+					animate={{ opacity: contentType === "thread" ? 1 : 0 }}
+					initial={false}
+					transition={{ duration: 0.18, ease: "easeOut" }}
+					style={{
+						pointerEvents: contentType === "thread" ? "auto" : "none",
+					}}
+				>
+					<div className={styles.field}>
+						<Text size="sm">Thread length</Text>
+						<Text size="xs" color="muted">
+							3–25 posts
+						</Text>
 					</div>
-				)}
+					<Stepper
+						value={maxThreadParts}
+						onChange={onMaxThreadPartsChange}
+						min={3}
+						max={25}
+						size="md"
+						disabled={readOnly || contentType !== "thread"}
+						aria-label="Thread length"
+					/>
+				</motion.div>
 			</div>
 		</Stack>
 	);
