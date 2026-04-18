@@ -28,6 +28,9 @@ type GitHubCommit struct {
 	// See GitHubCommitSummary.PostDeleted for the why.
 	PostDeleted        bool             `db:"post_deleted" json:"post_deleted"`
 	BlogPostID         *uuid.UUID       `db:"blog_post_id" json:"blog_post_id,omitempty"`
+	// BlogDeleted mirrors PostDeleted: true only when BlogPostID is set AND the
+	// referenced blog_posts row has been soft-deleted.
+	BlogDeleted        bool             `db:"blog_deleted" json:"blog_deleted"`
 	CaptureOutput      *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
 	CaptureRequestedAt *time.Time       `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
 	SkippedReason      *string          `db:"skipped_reason" json:"skipped_reason,omitempty"`
@@ -99,7 +102,7 @@ const sqlInsertGitHubCommit = `
 INSERT INTO github_commits (repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (repo_id, sha) DO NOTHING
-RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, FALSE AS post_deleted, blog_post_id, capture_output, capture_requested_at, skipped_reason, processed_at, created_at
+RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, FALSE AS post_deleted, blog_post_id, FALSE AS blog_deleted, capture_output, capture_requested_at, skipped_reason, processed_at, created_at
 `
 
 // sqlGetGitHubCommitByRepoSHA joins posts so post_deleted reflects whether
@@ -110,9 +113,11 @@ const sqlGetGitHubCommitByRepoSHA = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id,
        (gc.post_id IS NOT NULL AND p.deleted_at IS NOT NULL) AS post_deleted,
        gc.blog_post_id,
+       (gc.blog_post_id IS NOT NULL AND bp.deleted_at IS NOT NULL) AS blog_deleted,
        gc.capture_output, gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at
 FROM github_commits gc
 LEFT JOIN posts p ON p.id = gc.post_id
+LEFT JOIN blog_posts bp ON bp.id = gc.blog_post_id
 WHERE gc.repo_id = $1 AND gc.sha = $2
 `
 
@@ -379,12 +384,14 @@ const sqlGetGitHubCommitByIDForUser = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id,
        (gc.post_id IS NOT NULL AND p.deleted_at IS NOT NULL) AS post_deleted,
        gc.blog_post_id,
+       (gc.blog_post_id IS NOT NULL AND bp.deleted_at IS NOT NULL) AS blog_deleted,
        gc.capture_output, gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id
 JOIN github_connections conn ON conn.id = gr.connection_id
 LEFT JOIN posts p ON p.id = gc.post_id
+LEFT JOIN blog_posts bp ON bp.id = gc.blog_post_id
 WHERE gc.id = $1
   AND conn.user_id = $2
   AND gr.deleted_at IS NULL
