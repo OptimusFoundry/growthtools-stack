@@ -1,33 +1,28 @@
 // =============================================================================
-// THEME LOADER
+// THEME REGISTRY
 // =============================================================================
-// Dynamic theme loading with code-splitting support.
+// The canonical list of themes available to the product. Each entry here
+// corresponds 1:1 with a `[data-theme="<name>"]` block in `themes/_<name>.scss`.
+//
+// To add a theme:
+//   1. Create `themes/_<name>.scss` with the full token set.
+//   2. `@use "<name>";` it from `themes/theme.scss`.
+//   3. Add a `Theme` entry to `themes` below.
+//   4. ThemeProvider + useTheme pick it up automatically.
 
 export type ThemeName =
+	| "editorial"
 	| "light"
 	| "dark"
-	| "midnight"
-	| "forest"
-	| "forest-light"
-	| "ocean"
-	| "sunset"
 	| "brutal"
-	| "cyberpunk"
-	| "terminal"
-	| "candy"
-	| "monochrome"
-	| "bioluminescent"
 	| "cosmos"
+	| "cyberpunk"
+	| "sunset"
 	| "claude"
-	| "lavender"
-	| "citrus"
-	| "pixel"
-	| "neon"
+	| "ocean"
 	| "glow"
-	| "blueprint"
-	| "paper"
-	| "porcelain"
-	| "fog";
+	| "fog"
+	| "porcelain";
 
 export interface Theme {
 	name: ThemeName;
@@ -36,69 +31,45 @@ export interface Theme {
 }
 
 export const themes: Record<ThemeName, Theme> = {
-	light: { name: "light", label: "Light", colorScheme: "light" },
-	dark: { name: "dark", label: "Dark", colorScheme: "dark" },
-	midnight: { name: "midnight", label: "Midnight", colorScheme: "dark" },
-	forest: { name: "forest", label: "Forest", colorScheme: "dark" },
-	"forest-light": {
-		name: "forest-light",
-		label: "Forest Light",
-		colorScheme: "light",
-	},
-	ocean: { name: "ocean", label: "Ocean", colorScheme: "light" },
-	sunset: { name: "sunset", label: "Sunset", colorScheme: "dark" },
-	brutal: { name: "brutal", label: "Brutal", colorScheme: "light" },
-	cyberpunk: { name: "cyberpunk", label: "Cyberpunk", colorScheme: "dark" },
-	terminal: { name: "terminal", label: "Terminal", colorScheme: "dark" },
-	candy: { name: "candy", label: "Candy", colorScheme: "light" },
-	monochrome: {
-		name: "monochrome",
-		label: "Monochrome",
-		colorScheme: "light",
-	},
-	bioluminescent: {
-		name: "bioluminescent",
-		label: "Bioluminescent",
-		colorScheme: "dark",
-	},
-	cosmos: { name: "cosmos", label: "Cosmos", colorScheme: "dark" },
-	claude: { name: "claude", label: "Claude", colorScheme: "light" },
-	lavender: { name: "lavender", label: "Lavender", colorScheme: "light" },
-	citrus: { name: "citrus", label: "Citrus", colorScheme: "light" },
-	pixel: { name: "pixel", label: "Pixel", colorScheme: "light" },
-	neon: { name: "neon", label: "Neon", colorScheme: "light" },
-	glow: { name: "glow", label: "Glow", colorScheme: "light" },
-	blueprint: { name: "blueprint", label: "Blueprint", colorScheme: "light" },
-	paper: { name: "paper", label: "Paper", colorScheme: "light" },
+	editorial: { name: "editorial", label: "Editorial", colorScheme: "light" },
+	light:     { name: "light",     label: "Light",     colorScheme: "light" },
+	dark:      { name: "dark",      label: "Dark",      colorScheme: "dark"  },
+	brutal:    { name: "brutal",    label: "Brutal",    colorScheme: "light" },
+	cosmos:    { name: "cosmos",    label: "Cosmos",    colorScheme: "dark"  },
+	cyberpunk: { name: "cyberpunk", label: "Cyberpunk", colorScheme: "dark"  },
+	sunset:    { name: "sunset",    label: "Sunset",    colorScheme: "dark"  },
+	claude:    { name: "claude",    label: "Claude",    colorScheme: "light" },
+	ocean:     { name: "ocean",     label: "Ocean",     colorScheme: "light" },
+	glow:      { name: "glow",      label: "Glow",      colorScheme: "dark"  },
+	fog:       { name: "fog",       label: "Fog",       colorScheme: "light" },
 	porcelain: { name: "porcelain", label: "Porcelain", colorScheme: "light" },
-	fog: { name: "fog", label: "Fog", colorScheme: "light" },
 };
 
 export const themeNames = Object.keys(themes) as ThemeName[];
 
 /**
- * Applies a theme to the document
+ * Applies a theme to the document.
  */
 export function applyTheme(theme: ThemeName): void {
 	document.documentElement.setAttribute("data-theme", theme);
 
-	// Update color-scheme meta for system UI
+	// Update color-scheme meta for system UI (scrollbars, form controls, etc.)
 	const colorScheme = themes[theme].colorScheme;
 	document.documentElement.style.colorScheme = colorScheme;
 }
 
 /**
- * Gets the currently active theme
+ * Gets the currently active theme.
  */
 export function getCurrentTheme(): ThemeName {
 	const theme = document.documentElement.getAttribute(
 		"data-theme",
 	) as ThemeName | null;
-	return theme && theme in themes ? theme : "light";
+	return theme && theme in themes ? theme : "editorial";
 }
 
 /**
- * Gets the system preferred color scheme
+ * Gets the system preferred color scheme.
  */
 export function getSystemTheme(): "light" | "dark" {
 	if (typeof window === "undefined") return "light";
@@ -108,7 +79,7 @@ export function getSystemTheme(): "light" | "dark" {
 }
 
 /**
- * Subscribes to system theme changes
+ * Subscribes to system theme changes.
  */
 export function subscribeToSystemTheme(
 	callback: (theme: "light" | "dark") => void,

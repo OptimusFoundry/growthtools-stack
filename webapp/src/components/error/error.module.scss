@@ -41,9 +41,14 @@
 
 .title {
   margin: 0 0 var(--space-4);
-  font-size: var(--font-size-2xl);
+  font-family: var(--font-family-serif, var(--font-family-display));
+  font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-semibold);
+  font-variation-settings: var(--fvs-display, normal);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
   color: var(--color-base-content);
+  text-wrap: balance;
 }
 
 .message {

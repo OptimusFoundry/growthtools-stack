@@ -11,7 +11,7 @@
 @forward "motion";
 @forward "breakpoints";
 @forward "z-index";
-@forward "platforms";
+// @forward "platforms"; // file doesn't exist in upstream — commented to avoid compile error
 
 // Re-export breakpoint variables for use in other SCSS files
 @use "breakpoints" as *;

@@ -1,116 +1,96 @@
 // =============================================================================
 // GLOW THEME
 // =============================================================================
-// Neon accents on pure white, but with the border turned way down so the
-// UI reads as the brand colors floating, rather than sitting in grey boxes.
-// Same magenta/cyan/yellow identity as neon; the chrome is quieter.
+// Sourced from compiled themes.bundle.css — reflects Phase 1 palette tuning.
+// Edit this file, then re-run scripts/scss_compiler.js to regenerate the bundle.
 
 [data-theme="glow"] {
-  color-scheme: light;
+  color-scheme: dark;
 
-  // Typography — Space Grotesk for headings, Hanken Grotesk for body.
-  // Same grotesk family so the pair reads as "display vs text cuts of one
-  // typeface" rather than a clash of personalities.
-  --font-family-display: "Space Grotesk", "Geist", "Inter", -apple-system, sans-serif;
-  --font-family-sans: "Hanken Grotesk", "Geist", "Inter", -apple-system, sans-serif;
+  --font-family-sans:    "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-serif:   "Fraunces", Georgia, serif;
+  --font-family-display: "Space Grotesk", "Fraunces", serif;
 
-  // Background
-  --color-background: oklch(100% 0 0deg);
+  --color-background: oklch(14% 0.035 285deg);
 
-  // Base colors (pure white, zero tint)
-  --color-base-50: oklch(100% 0 0deg);
-  --color-base-100: oklch(98% 0 0deg);
-  --color-base-200: oklch(96% 0 0deg);
-  --color-base-300: oklch(93% 0 0deg);
-  --color-base-400: oklch(75% 0 0deg);
-  --color-base-500: oklch(58% 0 0deg);
-  --color-base-600: oklch(42% 0 0deg);
-  --color-base-700: oklch(28% 0 0deg);
-  --color-base-800: oklch(18% 0 0deg);
-  --color-base-900: oklch(12% 0 0deg);
-  --color-base-950: oklch(5% 0 0deg);
+  --color-base-50:  oklch(18% 0.045 285deg);
+  --color-base-100: oklch(22% 0.050 285deg);
+  --color-base-200: oklch(26% 0.060 285deg);
+  --color-base-300: oklch(32% 0.070 285deg);
+  --color-base-400: oklch(44% 0.080 280deg);
+  --color-base-500: oklch(56% 0.090 275deg);
+  --color-base-600: oklch(66% 0.110 270deg);
+  --color-base-700: oklch(78% 0.120 260deg);
+  --color-base-800: oklch(88% 0.110 240deg);
+  --color-base-900: oklch(95% 0.040 200deg);
+  --color-base-950: oklch(99% 0.015 190deg);
 
-  // Content colors — even softer ink. Body lifts to 25% L so the page
-  // feels relaxed, not stark. Still ~8:1 against white (AAA for body).
-  --color-base-content: oklch(25% 0 0deg);
-  --color-base-content-secondary: oklch(48% 0 0deg);
-  --color-base-content-tertiary: oklch(64% 0 0deg);
+  --color-base-content:           oklch(97% 0.020 190deg);
+  --color-base-content-secondary: oklch(88% 0.030 190deg);
+  --color-base-content-tertiary:  oklch(68% 0.040 225deg);
+  --color-muted:                  oklch(52% 0.035 235deg);
 
-  // Surface colors
-  --color-surface: oklch(100% 0 0deg);
-  --color-surface-elevated: oklch(100% 0 0deg);
-  --color-surface-overlay: oklch(5% 0 0deg / 0.6);
+  --color-surface:          oklch(18% 0.045 285deg);
+  --color-surface-elevated: oklch(22% 0.055 285deg);
+  --color-surface-overlay:  oklch(0% 0 0deg / 0.75);
 
-  // Border colors — toned way down from neon's 92%. Default is a whisper
-  // (97% L); hover keeps a pink cast but muted so it doesn't scream.
-  --color-border: oklch(97% 0 0deg);
-  --color-border-hover: oklch(85% 0.08 330deg);
+  --color-border:       oklch(32% 0.080 285deg);
+  --color-border-hover: oklch(48% 0.120 280deg);
 
-  // Shadow colors (neon glow on hover/active)
-  --shadow-color: oklch(0% 0 0deg / 0.06);
-  --shadow-color-strong: oklch(0% 0 0deg / 0.12);
+  --color-primary:         oklch(72% 0.25 295deg);
+  --color-primary-hover:   oklch(82% 0.28 295deg);
+  --color-primary-active:  oklch(68% 0.24 295deg);
+  --color-primary-content: oklch(12% 0.04 295deg);
 
-  // Primary (neon magenta — same as neon)
-  --color-primary: oklch(62% 0.3 330deg);
-  --color-primary-hover: oklch(57% 0.32 330deg);
-  --color-primary-active: oklch(52% 0.3 330deg);
-  --color-primary-content: oklch(100% 0 0deg);
+  --color-secondary:         oklch(78% 0.22 195deg);
+  --color-secondary-hover:   oklch(86% 0.24 195deg);
+  --color-secondary-active:  oklch(72% 0.22 195deg);
+  --color-secondary-content: oklch(12% 0.04 200deg);
 
-  // Secondary (neon cyan)
-  --color-secondary: oklch(78% 0.2 195deg);
-  --color-secondary-hover: oklch(73% 0.22 195deg);
-  --color-secondary-active: oklch(68% 0.2 195deg);
-  --color-secondary-content: oklch(10% 0.04 195deg);
+  --color-accent:         oklch(76% 0.26 340deg);
+  --color-accent-hover:   oklch(84% 0.28 340deg);
+  --color-accent-active:  oklch(70% 0.26 340deg);
+  --color-accent-content: oklch(12% 0.04 340deg);
+  --color-accent-bg:      oklch(24% 0.08 340deg);
 
-  // Accent (neon yellow)
-  --color-accent: oklch(92% 0.2 100deg);
-  --color-accent-hover: oklch(87% 0.22 100deg);
-  --color-accent-active: oklch(82% 0.2 100deg);
-  --color-accent-content: oklch(10% 0.05 100deg);
+  --color-success:         oklch(80% 0.22 150deg);
+  --color-success-hover:   oklch(88% 0.24 150deg);
+  --color-success-active:  oklch(72% 0.22 150deg);
+  --color-success-bg:      oklch(24% 0.07 150deg);
+  --color-success-content: oklch(12% 0.04 150deg);
 
-  // Semantic colors (neon versions)
-  --color-success: oklch(72% 0.25 150deg);
-  --color-success-hover: oklch(67% 0.27 150deg);
-  --color-success-bg: oklch(96% 0.06 150deg);
-  --color-success-content: oklch(15% 0.05 150deg);
-  --color-warning: oklch(88% 0.2 90deg);
-  --color-warning-hover: oklch(83% 0.22 90deg);
-  --color-warning-bg: oklch(97% 0.05 90deg);
-  --color-warning-content: oklch(20% 0.06 90deg);
-  --color-error: oklch(62% 0.28 25deg);
-  --color-error-hover: oklch(57% 0.3 25deg);
-  --color-error-bg: oklch(96% 0.05 25deg);
-  --color-error-content: oklch(100% 0 0deg);
-  --color-info: oklch(62% 0.22 260deg);
-  --color-info-hover: oklch(57% 0.24 260deg);
-  --color-info-bg: oklch(96% 0.05 260deg);
-  --color-info-content: oklch(100% 0 0deg);
+  --color-warning:         oklch(86% 0.20 85deg);
+  --color-warning-hover:   oklch(94% 0.22 85deg);
+  --color-warning-active:  oklch(78% 0.20 85deg);
+  --color-warning-bg:      oklch(26% 0.08 75deg);
+  --color-warning-content: oklch(14% 0.04 75deg);
 
-  // Focus ring — 0.5px subpixel hairline in magenta. Renders as a true
-  // half-pixel on HiDPI displays; on standard DPI the browser rounds up
-  // to 1px, so effectively "1px or less".
-  --focus-ring-color: oklch(62% 0.3 330deg / 0.3);
-  --focus-ring-width: 0.5px;
+  --color-error:         oklch(70% 0.25 20deg);
+  --color-error-hover:   oklch(82% 0.28 20deg);
+  --color-error-active:  oklch(62% 0.25 20deg);
+  --color-error-bg:      oklch(24% 0.09 20deg);
+  --color-error-content: oklch(98% 0.02 20deg);
 
-  // Muted — used by sidebar nav default items; still darker than tertiary
-  // for readability (~4.4:1 on white — clears AA for regular text).
-  --color-muted: oklch(55% 0 0deg);
+  --color-info:         oklch(78% 0.20 220deg);
+  --color-info-hover:   oklch(88% 0.22 220deg);
+  --color-info-active:  oklch(70% 0.20 220deg);
+  --color-info-bg:      oklch(24% 0.08 220deg);
+  --color-info-content: oklch(12% 0.04 220deg);
 
-  // ==========================================================================
-  // GLOW DESIGN TOKENS (inherited from neon)
-  // ==========================================================================
+  
+  --shadow-color:        oklch(72% 0.25 295deg / 0.25);
+  --shadow-color-strong: oklch(72% 0.25 295deg / 0.55);
 
-  --shadow-xs: 0 1px 2px var(--shadow-color);
-  --shadow-sm: 0 2px 4px var(--shadow-color);
-  --shadow-md: 0 4px 8px var(--shadow-color);
-  --shadow-lg: 0 8px 16px var(--shadow-color);
-  --shadow-xl: 0 12px 24px var(--shadow-color-strong);
-  --shadow-2xl: 0 20px 40px var(--shadow-color-strong);
-  --shadow-neon-pink: 0 0 20px oklch(62% 0.3 330deg / 0.5), 0 0 40px oklch(62% 0.3 330deg / 0.3);
-  --shadow-neon-cyan: 0 0 20px oklch(78% 0.2 195deg / 0.5), 0 0 40px oklch(78% 0.2 195deg / 0.3);
-  --shadow-neon-yellow: 0 0 20px oklch(92% 0.2 100deg / 0.5), 0 0 40px oklch(92% 0.2 100deg / 0.3);
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
+  --shadow-xs: 0 0 12px 0 oklch(72% 0.25 295deg / 0.15);
+  --shadow-sm: 0 2px 10px -2px oklch(72% 0.25 295deg / 0.25), 0 1px 2px 0 oklch(0% 0 0deg / 0.5);
+  --shadow-md: 0 4px 24px -4px oklch(72% 0.25 295deg / 0.35), 0 0 40px -10px oklch(76% 0.26 340deg / 0.25);
+  --shadow-lg: 0 8px 40px -8px oklch(72% 0.25 295deg / 0.45), 0 0 80px -20px oklch(76% 0.26 340deg / 0.35);
+  --shadow-xl: 0 12px 60px -12px oklch(72% 0.25 295deg / 0.55), 0 0 120px -30px oklch(76% 0.26 340deg / 0.45);
+
+  --shadow-primary: 0 0 32px 0 oklch(72% 0.25 295deg / 0.60);
+  --shadow-accent:  0 0 32px 0 oklch(76% 0.26 340deg / 0.60);
+
+  --focus-ring-color: oklch(72% 0.25 295deg / 0.55);
+  --color-header-bg: var(--color-base-100);
 }

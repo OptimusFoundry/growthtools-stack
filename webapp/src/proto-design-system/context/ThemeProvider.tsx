@@ -31,7 +31,7 @@ export interface ThemeProviderProps {
 
 export function ThemeProvider({
 	children,
-	defaultTheme = "light",
+	defaultTheme = "editorial",
 	storageKey = "proto-theme",
 }: ThemeProviderProps) {
 	const [theme, setThemeState] = useState<ThemeName>(() => {
@@ -64,11 +64,7 @@ export function ThemeProvider({
 	}, []);
 
 	const toggleTheme = useCallback(() => {
-		setThemeState((current) => {
-			if (current === "light") return "dark";
-			if (current === "dark") return "midnight";
-			return "light";
-		});
+		setThemeState((current) => (current === "dark" ? "light" : "dark"));
 	}, []);
 
 	const useSystemTheme = useCallback(() => {

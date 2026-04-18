@@ -1,56 +1,73 @@
 // =============================================================================
-// TYPOGRAPHY TOKENS — 2026 TRENDS
+// TYPOGRAPHY TOKENS
 // =============================================================================
-// Fluid typography with generous sizing for better readability.
-// Larger base sizes, relaxed line heights, optical adjustments.
+// Editorial mixed-type system:
+//   • Fraunces (variable, opsz 9–144, wght 300–900, SOFT 0–100) — display + serif
+//   • Geist — UI + body sans
+//   • Geist Mono — data, eyebrows, code
+//
+// Load fonts once per app. The import below is safe to duplicate across
+// stylesheets — browsers dedupe by URL.
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
 
 :root {
-  // Font families
-  --font-family-sans: "Geist", "Inter", "SF Pro Display", -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, sans-serif;
-  --font-family-mono: "Geist Mono", "JetBrains Mono", "SF Mono", "Fira Code", consolas, "Courier New", monospace;
-  --font-family-display: "Geist", var(--font-family-sans);
+	// Font families -----------------------------------------------------------
+	--font-family-sans:    "Geist", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	--font-family-mono:    "Geist Mono", "JetBrains Mono", "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+	--font-family-serif:   "Fraunces", "Times New Roman", Georgia, serif;
+	--font-family-display: "Fraunces", "Times New Roman", Georgia, serif;
 
-  // Font sizes — SaaS optimized
-  --font-size-xs: 0.75rem;                                         // 12px - metadata, captions
-  --font-size-sm: 0.8125rem;                                       // 13px - labels, secondary
-  --font-size-base: 0.875rem;                                      // 14px - body text
-  --font-size-md: 0.9375rem;                                       // 15px - emphasized body
-  --font-size-lg: 1.0625rem;                                       // 17px - subheadings
-  --font-size-xl: 1.1875rem;                                       // 19px - card titles
-  --font-size-2xl: 1.3125rem;                                      // 21px - section headers
-  --font-size-3xl: 1.5625rem;                                      // 25px - page titles
-  --font-size-4xl: 1.9375rem;                                      // 31px - large headings
-  --font-size-5xl: 2.3125rem;                                      // 37px - hero text
-  --font-size-6xl: 3.0625rem;                                      // 49px - display
+	// Fraunces variable-font settings ------------------------------------------
+	// Use via: font-variation-settings: var(--fvs-display);
+	--fvs-display:   "opsz" 144, "SOFT" 30, "wght" 500;  // large, slightly soft display
+	--fvs-editorial: "opsz" 60,  "SOFT" 40, "wght" 400;  // article-like body serif
+	--fvs-tight:     "opsz" 144, "SOFT" 0,  "wght" 600;  // sharp, small tracking
 
-  // Font weights
-  --font-weight-thin: 100;
-  --font-weight-extralight: 200;
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-extrabold: 800;
-  --font-weight-black: 900;
+	// Font sizes — airier editorial scale --------------------------------------
+	--font-size-xs:   0.75rem;    // 12px - eyebrows, metadata, captions
+	--font-size-sm:   0.8125rem;  // 13px - secondary labels
+	--font-size-base: 0.9375rem;  // 15px - body text (bumped from 14 for more air)
+	--font-size-md:   1rem;       // 16px - emphasized body
+	--font-size-lg:   1.125rem;   // 18px - lede / subheads
+	--font-size-xl:   1.375rem;   // 22px - card titles
+	--font-size-2xl:  1.75rem;    // 28px - section headers
+	--font-size-3xl:  2.25rem;    // 36px - page titles
+	--font-size-4xl:  3rem;       // 48px - large headings
+	--font-size-5xl:  4rem;       // 64px - hero
+	--font-size-6xl:  5.5rem;     // 88px - editorial display
+	--font-size-7xl:  8rem;       // 128px - cover / cinematic
+	--font-size-8xl:  10rem;      // 160px - cover XL
 
-  // Line heights — 2026: More generous for readability
-  --line-height-none: 1;
-  --line-height-tight: 1.2;
-  --line-height-snug: 1.35;
-  --line-height-normal: 1.55;
-  --line-height-relaxed: 1.7;
-  --line-height-loose: 2;
+	// Font weights -------------------------------------------------------------
+	--font-weight-thin:       100;
+	--font-weight-extralight: 200;
+	--font-weight-light:      300;
+	--font-weight-normal:     400;
+	--font-weight-medium:     500;
+	--font-weight-semibold:   600;
+	--font-weight-bold:       700;
+	--font-weight-extrabold:  800;
+	--font-weight-black:      900;
 
-  // Letter spacing — 2026: Tighter for headings
-  --letter-spacing-tighter: -0.04em;
-  --letter-spacing-tight: -0.02em;
-  --letter-spacing-normal: -0.01em;
-  --letter-spacing-wide: 0.01em;
-  --letter-spacing-wider: 0.04em;
-  --letter-spacing-widest: 0.08em;
+	// Line heights -------------------------------------------------------------
+	--line-height-none:    1;
+	--line-height-tight:   1.05;
+	--line-height-snug:    1.2;
+	--line-height-normal:  1.5;
+	--line-height-relaxed: 1.7;
+	--line-height-loose:   2;
 
-  // Text decoration
-  --text-decoration-thickness: 1px;
-  --text-underline-offset: 3px;
+	// Letter spacing -----------------------------------------------------------
+	--letter-spacing-tightest: -0.055em;
+	--letter-spacing-tighter:  -0.04em;
+	--letter-spacing-tight:    -0.025em;
+	--letter-spacing-normal:   -0.005em;
+	--letter-spacing-wide:      0.02em;
+	--letter-spacing-wider:     0.08em;
+	--letter-spacing-widest:    0.18em;
+
+	// Text decoration ----------------------------------------------------------
+	--text-decoration-thickness: 1px;
+	--text-underline-offset:     3px;
 }
