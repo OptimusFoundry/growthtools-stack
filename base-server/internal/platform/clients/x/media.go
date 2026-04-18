@@ -268,10 +268,7 @@ func (c *Client) uploadMediaLegacy(ctx context.Context, req UploadMediaRequest, 
 
 	const chunkSize = 5 * 1024 * 1024
 	for i := 0; i < totalBytes; i += chunkSize {
-		end := i + chunkSize
-		if end > totalBytes {
-			end = totalBytes
-		}
+		end := min(i+chunkSize, totalBytes)
 		chunk := req.MediaBytes[i:end]
 		segmentIndex := i / chunkSize
 
