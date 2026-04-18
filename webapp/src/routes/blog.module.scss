@@ -1,0 +1,220 @@
+// =============================================================================
+// POSTS PAGE
+// =============================================================================
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-base-content);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin: var(--space-1) 0 0;
+}
+
+// ─── Stats ───────────────────────────────────────────────────────────────────
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-0-5);
+  min-width: var(--space-12);
+}
+
+.statDivider {
+  width: 1px;
+  height: var(--space-8);
+  background: var(--color-border);
+}
+
+// ─── Filters ─────────────────────────────────────────────────────────────────
+
+.filters {
+  display: flex;
+  gap: var(--space-3);
+}
+
+// ─── Content ─────────────────────────────────────────────────────────────────
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-16) 0;
+}
+
+// ─── Post List ───────────────────────────────────────────────────────────────
+
+
+.postLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.postCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-border-hover, oklch(from var(--color-border) calc(l - 0.1) c h));
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// ─── Post Card Layout ────────────────────────────────────────────────────────
+
+.postCardLeft {
+  flex-shrink: 0;
+  padding-top: var(--space-0-5);
+}
+
+.postIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-md);
+  background: oklch(from var(--color-info) l c h / 0.1);
+  color: var(--color-info);
+}
+
+.postIconThread {
+  background: oklch(from var(--color-primary) l c h / 0.1);
+  color: var(--color-primary);
+}
+
+.postCardBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+// ─── Post Footer (meta + actions on same row) ────────────────────────────────
+
+.postFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.postActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex-shrink: 0;
+}
+
+// ─── Post Title ──────────────────────────────────────────────────────────────
+
+.postTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.postTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
+
+.postTags {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  background: var(--color-base-100);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
+  line-height: 1.4;
+}
+
+// ─── Meta ────────────────────────────────────────────────────────────────────
+
+.postMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.platformIcons {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.platformIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-muted);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--color-base-content);
+  }
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}

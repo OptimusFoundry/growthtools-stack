@@ -1,27 +1,78 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import "highlight.js/styles/github.css";
+import { Edit, Globe, Trash2, X } from "lucide-react";
 import { motion } from "motion/react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import remarkGfm from "remark-gfm";
 import {
 	BlogPostForm,
 	type BlogPostFormData,
 } from "@/components/blog/BlogPostForm";
+import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useGetBlogPost } from "@/hooks/useGetBlogPost";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal";
+import { Badge } from "@/proto-design-system/components/primitives/Badge";
+import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text";
+import type { BlogPost } from "@/types/blog";
 import styles from "./editor.module.scss";
 
 export const Route = createFileRoute("/blog_/$id")({
-	component: EditBlogPostPage,
+	component: BlogDetailPage,
 });
 
-function EditBlogPostPage() {
+/**
+ * Maps a loaded BlogPost onto the shape BlogPostForm expects.
+ * Keywords are joined with ", " because BlogPostForm treats keywords as
+ * a comma-separated string (its `collectFormData` splits on ",").
+ */
+function toFormData(bp: BlogPost): BlogPostFormData {
+	return {
+		title: bp.title,
+		slug: bp.slug,
+		content: bp.content,
+		excerpt: bp.excerpt ?? "",
+		seoTitle: bp.seoTitle ?? "",
+		metaDescription: bp.metaDescription ?? "",
+		ogTitle: bp.ogTitle ?? "",
+		ogDescription: bp.ogDescription ?? "",
+		keywords: bp.keywords.join(", "),
+	};
+}
+
+function BlogDetailPage() {
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
-	const { blogPost, loading: fetching, error: fetchError } = useGetBlogPost(id);
-	const { updateBlogPost, loading: updating } = useUpdateBlogPost();
+	const {
+		blogPost,
+		loading: fetching,
+		error: fetchError,
+		refetch,
+	} = useGetBlogPost(id);
 	const { publishBlog, loading: publishing } = usePublishBlog();
+	const { deleteBlog, loading: deleting } = useDeleteBlog();
+	const { updateBlogPost, loading: saving } = useUpdateBlogPost();
+
+	const [isEditing, setIsEditing] = useState(false);
+	const [confirmDelete, setConfirmDelete] = useState(false);
+
+	const handlePublish = useCallback(async () => {
+		await publishBlog(id);
+		navigate({ to: "/blog" });
+	}, [id, publishBlog, navigate]);
+
+	const handleDelete = useCallback(async () => {
+		await deleteBlog(id);
+		setConfirmDelete(false);
+		navigate({ to: "/blog" });
+	}, [id, deleteBlog, navigate]);
 
 	const handleSaveDraft = useCallback(
 		async (data: BlogPostFormData) => {
@@ -30,19 +81,24 @@ function EditBlogPostPage() {
 				slug: data.slug,
 				content: data.content,
 				excerpt: data.excerpt || undefined,
-				status: "draft",
 				seo_title: data.seoTitle || undefined,
 				meta_description: data.metaDescription || undefined,
-				keywords: data.keywords ? data.keywords.split(", ") : undefined,
+				keywords: data.keywords
+					? data.keywords
+							.split(",")
+							.map((k) => k.trim())
+							.filter(Boolean)
+					: undefined,
 				og_title: data.ogTitle || undefined,
 				og_description: data.ogDescription || undefined,
 			});
-			navigate({ to: "/blog" });
+			setIsEditing(false);
+			refetch();
 		},
-		[id, updateBlogPost, navigate],
+		[id, updateBlogPost, refetch],
 	);
 
-	const handlePublish = useCallback(
+	const handleSaveAndPublish = useCallback(
 		async (data: BlogPostFormData) => {
 			await updateBlogPost(id, {
 				title: data.title,
@@ -51,7 +107,12 @@ function EditBlogPostPage() {
 				excerpt: data.excerpt || undefined,
 				seo_title: data.seoTitle || undefined,
 				meta_description: data.metaDescription || undefined,
-				keywords: data.keywords ? data.keywords.split(", ") : undefined,
+				keywords: data.keywords
+					? data.keywords
+							.split(",")
+							.map((k) => k.trim())
+							.filter(Boolean)
+					: undefined,
 				og_title: data.ogTitle || undefined,
 				og_description: data.ogDescription || undefined,
 			});
@@ -63,45 +124,161 @@ function EditBlogPostPage() {
 
 	if (fetching) return <Spinner />;
 	if (fetchError) return <Alert variant="error">{fetchError}</Alert>;
+	if (!blogPost) return <Alert variant="warning">Blog post not found.</Alert>;
 
-	const initialData = blogPost
-		? {
-				title: blogPost.title,
-				slug: blogPost.slug,
-				content: blogPost.content,
-				excerpt: blogPost.excerpt || "",
-				seoTitle: blogPost.seoTitle || "",
-				metaDescription: blogPost.metaDescription || "",
-				ogTitle: blogPost.ogTitle || "",
-				ogDescription: blogPost.ogDescription || "",
-				keywords: blogPost.keywords?.join(", ") || "",
-			}
-		: undefined;
+	// ------------------------------------------------------------------
+	// Edit mode: header shows Cancel; the form itself provides Save/Publish
+	// buttons via its built-in onSaveDraft / onPublish props.
+	// ------------------------------------------------------------------
+	if (isEditing) {
+		return (
+			<motion.div
+				className={styles.editor}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				transition={{ duration: 0.3 }}
+			>
+				<Stack gap="md">
+					<Stack direction="row" justify="between" align="center" wrap>
+						<Stack gap="xs">
+							<Text as="h1" size="2xl" weight="bold">
+								Edit blog post
+							</Text>
+							<Text size="sm" color="muted">
+								/{blogPost.slug}
+							</Text>
+						</Stack>
+						<Button
+							variant="ghost"
+							onClick={() => setIsEditing(false)}
+							aria-label="Cancel edit"
+						>
+							<X size={16} /> Cancel
+						</Button>
+					</Stack>
+					<BlogPostForm
+						initialData={toFormData(blogPost)}
+						onSaveDraft={handleSaveDraft}
+						onPublish={handleSaveAndPublish}
+						loading={saving || publishing}
+					/>
+				</Stack>
+			</motion.div>
+		);
+	}
 
+	// ------------------------------------------------------------------
+	// View mode: rendered markdown + header actions (Edit/Publish/Delete).
+	// ------------------------------------------------------------------
 	return (
 		<motion.div
 			className={styles.editor}
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
-			transition={{ duration: 0.6 }}
+			transition={{ duration: 0.4 }}
 		>
-			<div
-				style={{
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
-				}}
+			<Stack gap="md">
+				<Stack direction="row" justify="between" align="start" wrap>
+					<Stack gap="xs">
+						<Stack direction="row" gap="sm" align="center">
+							<Text as="h1" size="2xl" weight="bold">
+								{blogPost.title}
+							</Text>
+							<Badge
+								variant={
+									blogPost.status === "published"
+										? "success"
+										: blogPost.status === "archived"
+											? "secondary"
+											: "default"
+								}
+							>
+								{blogPost.status}
+							</Badge>
+						</Stack>
+						<Text size="sm" color="muted">
+							/{blogPost.slug}
+						</Text>
+						{blogPost.publishedAt && (
+							<Text size="xs" color="muted">
+								Published {new Date(blogPost.publishedAt).toLocaleString()}
+							</Text>
+						)}
+					</Stack>
+					<Stack direction="row" gap="sm">
+						<Button variant="secondary" onClick={() => setIsEditing(true)}>
+							<Edit size={16} /> Edit
+						</Button>
+						{blogPost.status !== "published" && (
+							<Button
+								variant="primary"
+								onClick={handlePublish}
+								isLoading={publishing}
+							>
+								<Globe size={16} /> Publish
+							</Button>
+						)}
+						<Button
+							variant="ghost"
+							onClick={() => setConfirmDelete(true)}
+							aria-label="Delete"
+						>
+							<Trash2 size={16} />
+						</Button>
+					</Stack>
+				</Stack>
+
+				{blogPost.excerpt && (
+					<Text color="secondary" size="sm">
+						{blogPost.excerpt}
+					</Text>
+				)}
+
+				{blogPost.keywords.length > 0 && (
+					<Stack direction="row" gap="xs" wrap>
+						{blogPost.keywords.map((kw) => (
+							<Badge key={kw} variant="outline" size="sm">
+								{kw}
+							</Badge>
+						))}
+					</Stack>
+				)}
+
+				<div className={styles.markdown}>
+					<ReactMarkdown
+						remarkPlugins={[remarkGfm]}
+						rehypePlugins={[rehypeHighlight]}
+					>
+						{blogPost.content}
+					</ReactMarkdown>
+				</div>
+			</Stack>
+
+			<Modal
+				isOpen={confirmDelete}
+				onClose={() => setConfirmDelete(false)}
+				title="Delete blog post"
+				size="sm"
+				footer={
+					<Stack direction="row" gap="sm" justify="end">
+						<Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleDelete}
+							isLoading={deleting}
+						>
+							Delete
+						</Button>
+					</Stack>
+				}
 			>
-				<Link to="/blog" style={{ textDecoration: "none" }}>
-					Edit Post
-				</Link>
-			</div>
-			<BlogPostForm
-				initialData={initialData}
-				onSaveDraft={handleSaveDraft}
-				onPublish={handlePublish}
-				loading={updating || publishing}
-			/>
+				<Text color="secondary">
+					Are you sure you want to delete this blog post? This action cannot be
+					undone.
+				</Text>
+			</Modal>
 		</motion.div>
 	);
 }
