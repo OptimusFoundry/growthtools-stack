@@ -107,11 +107,10 @@ func (p *GitHubProcessor) rewriteCaptureURLs(ctx context.Context, commit *store.
 		}
 		// s3://bucket/key → split on first "/" after the scheme prefix.
 		rest := strings.TrimPrefix(item.URL, "s3://")
-		slash := strings.IndexByte(rest, '/')
-		if slash < 0 {
+		_, key, ok := strings.Cut(rest, "/")
+		if !ok {
 			continue
 		}
-		key := rest[slash+1:]
 		if key == "" {
 			continue
 		}
