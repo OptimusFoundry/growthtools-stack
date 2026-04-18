@@ -5,9 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// GitHubEvent represents a received GitHub webhook event
+type GitHubEvent struct {
+	ID         uuid.UUID  `db:"id" json:"id"`
+	AccountID  uuid.UUID  `db:"account_id" json:"account_id"`
+	RepoName   string     `db:"repo_name" json:"repo_name"`
+	EventType  string     `db:"event_type" json:"event_type"`
+	Payload    JSONB      `db:"payload" json:"payload"`
+	DeliveryID string     `db:"delivery_id" json:"delivery_id"`
+	Processed  bool       `db:"processed" json:"processed"`
+	PostID     *uuid.UUID `db:"post_id" json:"post_id,omitempty"`
+	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
+}
 
 // CreateGitHubEventParams represents parameters for creating a GitHub event
 type CreateGitHubEventParams struct {

@@ -5,9 +5,24 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// VoiceProfile represents brand voice settings
+type VoiceProfile struct {
+	ID                 uuid.UUID   `db:"id" json:"id"`
+	AccountID          uuid.UUID   `db:"account_id" json:"account_id"`
+	Tone               string      `db:"tone" json:"tone"`
+	Style              string      `db:"style" json:"style"`
+	ExamplePosts       StringArray `db:"example_posts" json:"example_posts"`
+	Industry           *string     `db:"industry" json:"industry,omitempty"`
+	TargetAudience     *string     `db:"target_audience" json:"target_audience,omitempty"`
+	CustomInstructions *string     `db:"custom_instructions" json:"custom_instructions,omitempty"`
+	CreatedAt          time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time   `db:"updated_at" json:"updated_at"`
+}
 
 // CreateVoiceProfileParams represents parameters for creating a voice profile
 type CreateVoiceProfileParams struct {

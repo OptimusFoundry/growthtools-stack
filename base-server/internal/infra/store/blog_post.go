@@ -5,9 +5,31 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// BlogPost represents a blog post
+type BlogPost struct {
+	ID              uuid.UUID   `db:"id" json:"id"`
+	AccountID       uuid.UUID   `db:"account_id" json:"account_id"`
+	Title           string      `db:"title" json:"title"`
+	Slug            string      `db:"slug" json:"slug"`
+	Content         string      `db:"content" json:"content"`
+	Excerpt         *string     `db:"excerpt" json:"excerpt,omitempty"`
+	Status          string      `db:"status" json:"status"`
+	SEOTitle        *string     `db:"seo_title" json:"seo_title,omitempty"`
+	MetaDescription *string     `db:"meta_description" json:"meta_description,omitempty"`
+	Keywords        StringArray `db:"keywords" json:"keywords"`
+	OGTitle         *string     `db:"og_title" json:"og_title,omitempty"`
+	OGDescription   *string     `db:"og_description" json:"og_description,omitempty"`
+	FeaturedImageID *uuid.UUID  `db:"featured_image_id" json:"featured_image_id,omitempty"`
+	PublishedAt     *time.Time  `db:"published_at" json:"published_at,omitempty"`
+	CreatedAt       time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time   `db:"updated_at" json:"updated_at"`
+	DeletedAt       *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
+}
 
 // CreateBlogPostParams represents parameters for creating a blog post
 type CreateBlogPostParams struct {

@@ -5,9 +5,29 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// AIConversation represents an AI chat conversation
+type AIConversation struct {
+	ID        uuid.UUID  `db:"id" json:"id"`
+	AccountID uuid.UUID  `db:"account_id" json:"account_id"`
+	Title     *string    `db:"title" json:"title,omitempty"`
+	CreatedAt time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
+// AIMessage represents a message in an AI conversation
+type AIMessage struct {
+	ID             uuid.UUID `db:"id" json:"id"`
+	ConversationID uuid.UUID `db:"conversation_id" json:"conversation_id"`
+	Role           string    `db:"role" json:"role"`
+	Content        string    `db:"content" json:"content"`
+	CreatedAt      time.Time `db:"created_at" json:"created_at"`
+}
 
 const sqlCreateAIConversation = `
 INSERT INTO ai_conversations (account_id, title)

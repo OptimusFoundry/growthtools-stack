@@ -10,6 +10,24 @@ import (
 	"github.com/google/uuid"
 )
 
+// PlatformConnection represents an OAuth connection to a social platform
+type PlatformConnection struct {
+	ID             uuid.UUID   `db:"id" json:"id"`
+	AccountID      uuid.UUID   `db:"account_id" json:"account_id"`
+	Platform       string      `db:"platform" json:"platform"`
+	PlatformUserID string      `db:"platform_user_id" json:"platform_user_id"`
+	DisplayName    *string     `db:"display_name" json:"display_name,omitempty"`
+	AccessToken    string      `db:"access_token" json:"-"`
+	RefreshToken   *string     `db:"refresh_token" json:"-"`
+	TokenExpiresAt *time.Time  `db:"token_expires_at" json:"token_expires_at,omitempty"`
+	Scopes         StringArray `db:"scopes" json:"scopes"`
+	Status         string      `db:"status" json:"status"`
+	ConnectedAt    time.Time   `db:"connected_at" json:"connected_at"`
+	CreatedAt      time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time   `db:"updated_at" json:"updated_at"`
+	DeletedAt      *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
 // CreatePlatformConnectionParams represents parameters for creating a platform connection
 type CreatePlatformConnectionParams struct {
 	AccountID      uuid.UUID

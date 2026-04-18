@@ -5,9 +5,40 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// Account represents a customer account
+type Account struct {
+	ID               uuid.UUID  `db:"id" json:"id"`
+	Name             string     `db:"name" json:"name"`
+	Slug             string     `db:"slug" json:"slug"`
+	OwnerUserID      uuid.UUID  `db:"owner_user_id" json:"owner_user_id"`
+	Plan             string     `db:"plan" json:"plan"`
+	Status           string     `db:"status" json:"status"`
+	StripeCustomerID *string    `db:"stripe_customer_id" json:"stripe_customer_id,omitempty"`
+	TrialEndsAt      *time.Time `db:"trial_ends_at" json:"trial_ends_at,omitempty"`
+	Settings         JSONB      `db:"settings" json:"settings"`
+	CreatedAt        time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt        *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
+// TeamMember represents a member of an account team
+type TeamMember struct {
+	ID          uuid.UUID  `db:"id" json:"id"`
+	AccountID   uuid.UUID  `db:"account_id" json:"account_id"`
+	UserID      uuid.UUID  `db:"user_id" json:"user_id"`
+	Role        string     `db:"role" json:"role"`
+	Permissions JSONB      `db:"permissions" json:"permissions"`
+	InvitedBy   *uuid.UUID `db:"invited_by" json:"invited_by,omitempty"`
+	InvitedAt   *time.Time `db:"invited_at" json:"invited_at,omitempty"`
+	JoinedAt    *time.Time `db:"joined_at" json:"joined_at,omitempty"`
+	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
+}
 
 // CreateAccountParams represents parameters for creating an account
 type CreateAccountParams struct {
