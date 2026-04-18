@@ -358,7 +358,17 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 
 	// --- Workers ---
 
-	publishWorker := workers.NewPublishWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, registry, &platformsProc, logger)
+	// Async publish pipeline: dispatcher consumes post.publish and
+	// fans out per-platform onto platform.publish.requested, the
+	// uploader runs each platform's StartPublish and either hands
+	// media_ready rows to the finalizer or parks awaiting_media rows
+	// for the reconciler to poll. Replaces the old blocking
+	// PublishWorker; retry worker still handles permanent failures.
+	dispatchWorker := workers.NewDispatchWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, kafkaProducer, logger)
+	mediaUploadWorker := workers.NewMediaUploadWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, kafkaProducer, registry, &platformsProc, logger)
+	readyReconciler := workers.NewReadyReconciler(&deps.Store, kafkaProducer, registry, &platformsProc, logger)
+	finalizerWorker := workers.NewFinalizerWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, registry, &platformsProc, logger)
+
 	analyticsWorker := workers.NewAnalyticsWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &deps.Store, registry, &platformsProc, logger)
 	schedulerWorker := workers.NewSchedulerWorker(&deps.Store, kafkaProducer, logger)
 	githubWorker := workers.NewGitHubWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, logger)
@@ -368,7 +378,8 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	// Presign s3:// media URLs before handing them to platform adapters
 	// so Bluesky/X can http.Get them and Threads accepts the image_url.
 	if urlSigner != nil {
-		publishWorker.SetURLSigner(urlSigner)
+		mediaUploadWorker.SetURLSigner(urlSigner)
+		finalizerWorker.SetURLSigner(urlSigner)
 		retryWorker.SetURLSigner(urlSigner)
 	}
 
@@ -378,7 +389,10 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	draftGeneratorWorker := workers.NewDraftGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &draftGen, logger)
 
 	deps.WorkerManager = workers.NewManager(logger)
-	deps.WorkerManager.Register(publishWorker)
+	deps.WorkerManager.Register(dispatchWorker)
+	deps.WorkerManager.Register(mediaUploadWorker)
+	deps.WorkerManager.Register(readyReconciler)
+	deps.WorkerManager.Register(finalizerWorker)
 	deps.WorkerManager.Register(analyticsWorker)
 	deps.WorkerManager.Register(schedulerWorker)
 	deps.WorkerManager.Register(githubWorker)
