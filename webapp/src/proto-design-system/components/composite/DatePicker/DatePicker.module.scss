@@ -66,8 +66,8 @@
 .size-sm {
   .trigger {
     font-size: var(--font-size-xs);
-    height: var(--space-8);
-    min-width: var(--space-40);
+    height: var(--space-6);
+    min-width: var(--space-20);
     padding: 0 var(--space-2-5);
   }
 }
@@ -75,8 +75,8 @@
 .size-md {
   .trigger {
     font-size: var(--font-size-sm);
-    height: var(--space-10);
-    min-width: var(--space-48);
+    height: var(--space-7);
+    min-width: var(--space-24);
     padding: 0 var(--space-3);
   }
 }
@@ -84,8 +84,8 @@
 .size-lg {
   .trigger {
     font-size: var(--font-size-base);
-    height: var(--space-12);
-    min-width: var(--space-56);
+    height: var(--space-8);
+    min-width: var(--space-28);
     padding: 0 var(--space-4);
   }
 }
@@ -100,7 +100,7 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   margin-top: var(--space-1);
-  min-width: var(--space-72);
+  min-width: var(--space-36);
   overflow: hidden;
   padding: var(--space-4);
   position: absolute;
@@ -149,11 +149,11 @@
 }
 
 .monthSelect {
-  min-width: var(--space-24);
+  min-width: var(--space-14);
 }
 
 .yearSelect {
-  min-width: var(--space-16);
+  min-width: var(--space-10);
 }
 
 .navButton {
@@ -165,9 +165,9 @@
   color: var(--color-muted);
   cursor: pointer;
   display: flex;
-  height: var(--space-8);
+  height: var(--space-6);
   justify-content: center;
-  width: var(--space-8);
+  width: var(--space-6);
 
   @include transition-colors;
   @include focus-ring;

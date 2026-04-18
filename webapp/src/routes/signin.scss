@@ -9,8 +9,8 @@
   background-position: 0 0, 10px 10px;
 
   .centered-container {
-    padding: var(--space-12) var(--space-12);
-    max-height: calc(var(--space-14) * 2);
+    padding: var(--space-8) var(--space-8);
+    max-height: calc(var(--space-9) * 2);
     background: var(--color-white);
     align-items: center;
     display: flex;
@@ -21,9 +21,9 @@
   /* Tablet and up (medium screens) */
   @media (width <= 480px) {
     .centered-container {
-      padding: var(--space-5) var(--space-12);
-      max-width: calc(var(--space-14) * 2);
-      max-height: calc(var(--space-14) * 2);
+      padding: var(--space-5) var(--space-8);
+      max-width: calc(var(--space-9) * 2);
+      max-height: calc(var(--space-9) * 2);
     }
   }
 
@@ -32,9 +32,9 @@
     padding: var(--space-5);
 
     .centered-container {
-      padding: var(--space-10);
-      min-width: calc(var(--space-14) * 2);
-      max-height: calc(var(--space-14) * 2);
+      padding: var(--space-7);
+      min-width: calc(var(--space-9) * 2);
+      max-height: calc(var(--space-9) * 2);
     }
   }
 }

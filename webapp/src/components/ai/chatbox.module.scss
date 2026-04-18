@@ -33,7 +33,7 @@
 
 .chat-image {
   max-width: 100%;
-  max-height: var(--space-96);
+  max-height: var(--space-48);
 }
 
 .chat-bubble-user {
@@ -42,18 +42,18 @@
   border-style: solid;
   border-radius: var(--radius-lg);
   padding: var(--space-5);
-  min-height: var(--space-12);
+  min-height: var(--space-8);
   margin-bottom: var(--space-5);
   background: var(--color-base-100);
 }
 
 .chat-bubble-ai {
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 .chat-container {
   flex: 1;
-  padding-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
 }
 
 .chat-wrapper {

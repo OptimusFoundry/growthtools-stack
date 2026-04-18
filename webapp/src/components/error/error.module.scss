@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: var(--space-6);
+  padding: var(--space-5);
   background-color: var(--color-surface);
 }
 
@@ -27,9 +27,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-16);
-  height: var(--space-16);
-  margin-bottom: var(--space-6);
+  width: var(--space-10);
+  height: var(--space-10);
+  margin-bottom: var(--space-5);
   background-color: oklch(from var(--color-error) l c h / 0.15);
   border-radius: var(--radius-full);
 }
@@ -52,7 +52,7 @@
 }
 
 .message {
-  margin: 0 0 var(--space-6);
+  margin: 0 0 var(--space-5);
   font-size: var(--font-size-lg);
   color: var(--color-base-content-secondary);
   line-height: var(--line-height-relaxed);
@@ -60,7 +60,7 @@
 
 .details {
   width: 100%;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
   text-align: left;
 }
 

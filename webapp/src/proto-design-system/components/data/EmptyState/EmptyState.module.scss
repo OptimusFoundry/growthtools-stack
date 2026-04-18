@@ -65,14 +65,14 @@
 // =============================================================================
 
 .size-sm {
-  padding: var(--space-6);
+  padding: var(--space-5);
 
   .icon {
     padding: var(--space-3);
 
     svg {
-      height: var(--space-6);
-      width: var(--space-6);
+      height: var(--space-5);
+      width: var(--space-5);
     }
   }
 
@@ -86,14 +86,14 @@
 }
 
 .size-md {
-  padding: var(--space-10);
+  padding: var(--space-7);
 
   .icon {
     padding: var(--space-4);
 
     svg {
-      height: var(--space-8);
-      width: var(--space-8);
+      height: var(--space-6);
+      width: var(--space-6);
     }
   }
 
@@ -107,14 +107,14 @@
 }
 
 .size-lg {
-  padding: var(--space-16);
+  padding: var(--space-10);
 
   .icon {
     padding: var(--space-5);
 
     svg {
-      height: var(--space-10);
-      width: var(--space-10);
+      height: var(--space-7);
+      width: var(--space-7);
     }
   }
 

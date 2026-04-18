@@ -78,7 +78,7 @@
 
 .sm .item {
   font-size: var(--font-size-xs);
-  min-height: var(--space-7);
+  min-height: var(--space-5);
   padding: var(--space-1) var(--space-2);
 
   .leftIcon svg,
@@ -95,7 +95,7 @@
 
 .md .item {
   font-size: var(--font-size-sm);
-  min-height: var(--space-8);
+  min-height: var(--space-6);
   padding: var(--space-1-5) var(--space-3);
 
   .leftIcon svg,
@@ -112,7 +112,7 @@
 
 .lg .item {
   font-size: var(--font-size-base);
-  min-height: var(--space-10);
+  min-height: var(--space-7);
   padding: var(--space-2) var(--space-4);
 
   .leftIcon svg,

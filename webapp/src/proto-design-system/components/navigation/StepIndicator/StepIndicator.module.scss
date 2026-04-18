@@ -61,8 +61,8 @@
   }
 
   .stepContent {
-    padding-left: var(--space-10);
-    padding-bottom: var(--space-6);
+    padding-left: var(--space-7);
+    padding-bottom: var(--space-5);
     position: relative;
   }
 
@@ -71,7 +71,7 @@
     bottom: 0;
     left: calc(var(--space-5) - 1px);
     position: absolute;
-    top: var(--space-8);
+    top: var(--space-6);
     width: 2px;
   }
 
@@ -222,8 +222,8 @@
 .sm {
   .indicator {
     font-size: var(--font-size-xs);
-    height: var(--space-6);
-    width: var(--space-6);
+    height: var(--space-5);
+    width: var(--space-5);
   }
 
   .checkIcon {
@@ -243,8 +243,8 @@
 .md {
   .indicator {
     font-size: var(--font-size-sm);
-    height: var(--space-8);
-    width: var(--space-8);
+    height: var(--space-6);
+    width: var(--space-6);
   }
 
   .checkIcon {
@@ -264,8 +264,8 @@
 .lg {
   .indicator {
     font-size: var(--font-size-base);
-    height: var(--space-10);
-    width: var(--space-10);
+    height: var(--space-7);
+    width: var(--space-7);
   }
 
   .checkIcon {

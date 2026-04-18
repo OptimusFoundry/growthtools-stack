@@ -89,7 +89,7 @@
 }
 
 .columns-auto {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-64)), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
 }
 
 // =============================================================================

@@ -12,7 +12,7 @@
   --_btn-padding-x: var(--space-button-x);
   --_btn-padding-y: var(--space-button-y);
   --_btn-font-size: var(--font-size-sm);
-  --_btn-height: var(--space-10);
+  --_btn-height: var(--space-7);
 
   // Layout
   align-items: center;
@@ -159,16 +159,16 @@
   --_btn-padding-x: var(--space-3);
   --_btn-padding-y: var(--space-1);
   --_btn-font-size: var(--font-size-xs);
-  --_btn-height: var(--space-8);
+  --_btn-height: var(--space-6);
 
   gap: var(--space-1-5);
 }
 
 .lg {
-  --_btn-padding-x: var(--space-6);
+  --_btn-padding-x: var(--space-5);
   --_btn-padding-y: var(--space-3);
   --_btn-font-size: var(--font-size-base);
-  --_btn-height: var(--space-12);
+  --_btn-height: var(--space-8);
 
   gap: var(--space-2-5);
 }

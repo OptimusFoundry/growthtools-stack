@@ -33,8 +33,8 @@
   flex-direction: column;
   gap: var(--space-3);
   justify-content: center;
-  min-height: var(--space-40);
-  padding: var(--space-8);
+  min-height: var(--space-20);
+  padding: var(--space-6);
   width: 100%;
 
   @include transition-colors;
@@ -58,8 +58,8 @@
 
 .uploadIcon {
   color: var(--color-muted);
-  height: var(--space-10);
-  width: var(--space-10);
+  height: var(--space-7);
+  width: var(--space-7);
 }
 
 .dropzoneText {
@@ -105,7 +105,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   gap: var(--space-2);
-  height: var(--space-10);
+  height: var(--space-7);
   padding: 0 var(--space-4);
 
   @include transition-colors;
@@ -152,17 +152,17 @@
 .fileIcon {
   color: var(--color-muted);
   flex-shrink: 0;
-  height: var(--space-8);
-  width: var(--space-8);
+  height: var(--space-6);
+  width: var(--space-6);
 }
 
 .thumbnail {
   background-color: var(--color-base-200);
   border-radius: var(--radius-sm);
   flex-shrink: 0;
-  height: var(--space-12);
+  height: var(--space-8);
   object-fit: cover;
-  width: var(--space-12);
+  width: var(--space-8);
 }
 
 // =============================================================================
@@ -173,7 +173,7 @@
 .existingGrid {
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(var(--space-32), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--space-16), 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
@@ -205,12 +205,12 @@
 
 .existingFallbackIcon {
   color: var(--color-muted);
-  height: var(--space-10);
+  height: var(--space-7);
   left: 50%;
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: var(--space-10);
+  width: var(--space-7);
 }
 
 .existingRemoveButton {
@@ -222,14 +222,14 @@
   color: var(--color-base-content-inverse, #fff);
   cursor: pointer;
   display: flex;
-  height: var(--space-6);
+  height: var(--space-5);
   justify-content: center;
   opacity: 0;
   padding: 0;
   position: absolute;
   right: var(--space-1);
   top: var(--space-1);
-  width: var(--space-6);
+  width: var(--space-5);
 
   @include transition-colors;
   @include focus-ring;
@@ -261,8 +261,8 @@
 .successIcon {
   color: var(--color-success);
   flex-shrink: 0;
-  height: var(--space-8);
-  width: var(--space-8);
+  height: var(--space-6);
+  width: var(--space-6);
 }
 
 .fileInfo {

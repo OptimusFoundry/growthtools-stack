@@ -40,8 +40,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--space-9);
-	height: var(--space-9);
+	width: var(--space-6);
+	height: var(--space-6);
 	flex-shrink: 0;
 	border-radius: var(--radius-md);
 	background: oklch(from var(--color-info) l c h / 0.1);

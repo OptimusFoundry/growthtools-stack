@@ -104,10 +104,10 @@
 
 .size-sm {
   font-size: var(--font-size-sm);
-  height: var(--space-8);
+  height: var(--space-6);
 
   .select {
-    padding: var(--space-1) var(--space-8) var(--space-1) var(--space-2-5);
+    padding: var(--space-1) var(--space-6) var(--space-1) var(--space-2-5);
   }
 
   .icon {
@@ -117,19 +117,19 @@
 
 .size-md {
   font-size: var(--font-size-base);
-  height: var(--space-10);
+  height: var(--space-7);
 
   .select {
-    padding: var(--space-2) var(--space-10) var(--space-2) var(--space-3);
+    padding: var(--space-2) var(--space-7) var(--space-2) var(--space-3);
   }
 }
 
 .size-lg {
   font-size: var(--font-size-lg);
-  height: var(--space-12);
+  height: var(--space-8);
 
   .select {
-    padding: var(--space-2-5) var(--space-12) var(--space-2-5) var(--space-4);
+    padding: var(--space-2-5) var(--space-8) var(--space-2-5) var(--space-4);
   }
 
   .icon {

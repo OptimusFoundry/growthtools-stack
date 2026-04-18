@@ -46,7 +46,7 @@
   box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - var(--space-8));
+  max-height: calc(100vh - var(--space-6));
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -57,7 +57,7 @@
 // =============================================================================
 
 .size-sm .modal {
-  width: min(100%, var(--space-96));
+  width: min(100%, var(--space-48));
 }
 
 .size-md .modal {
@@ -73,8 +73,8 @@
 }
 
 .size-full .modal {
-  height: calc(100vh - var(--space-8));
-  width: calc(100vw - var(--space-8));
+  height: calc(100vh - var(--space-6));
+  width: calc(100vw - var(--space-6));
 }
 
 // =============================================================================
@@ -87,11 +87,11 @@
   display: flex;
   flex-shrink: 0;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-4) var(--space-5);
 }
 
 .headerWithIcon {
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 .headerContent {
@@ -127,9 +127,9 @@
   border-radius: var(--radius-full);
   display: flex;
   flex-shrink: 0;
-  height: var(--space-10);
+  height: var(--space-7);
   justify-content: center;
-  width: var(--space-10);
+  width: var(--space-7);
 
   svg {
     height: var(--space-5);
@@ -201,7 +201,7 @@
 .body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 // =============================================================================
@@ -215,5 +215,5 @@
   flex-shrink: 0;
   gap: var(--space-3);
   justify-content: flex-end;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-4) var(--space-5);
 }
