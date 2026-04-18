@@ -5,6 +5,11 @@ import type { GenerationStatus, WizardState } from "./useCreatePostWizard";
 /**
  * Syncs SSE content generation state into wizard state.
  * Manages platform content updates, thread completions, and generation progress.
+ *
+ * Individual function references are passed as separate parameters (rather than
+ * a single wizard object) so each useEffect dependency array tracks a specific
+ * stable function reference instead of the container object, which would cause
+ * every effect to fire on every render.
  */
 export function useWizardSSESync(
 	sse: {
@@ -18,54 +23,57 @@ export function useWizardSSESync(
 		baseContent: string | null;
 	},
 	state: WizardState,
-	wizard: {
-		setPlatformContent: (platform: PlatformType, content: string) => void;
-		setPlatformProgress: (
-			platform: PlatformType,
-			status: GenerationStatus,
-		) => void;
-		setThreadContent: (
-			platform: PlatformType,
-			segments: { content: string; imageIndex?: number }[],
-		) => void;
-		generationComplete: () => void;
-		generationFailed: () => void;
-		setError: (error: string | null) => void;
-	},
+	setPlatformContent: (platform: PlatformType, content: string) => void,
+	setPlatformProgress: (
+		platform: PlatformType,
+		status: GenerationStatus,
+	) => void,
+	setThreadContent: (
+		platform: PlatformType,
+		segments: { content: string; imageIndex?: number }[],
+	) => void,
+	generationComplete: () => void,
+	generationFailed: () => void,
+	setError: (error: string | null) => void,
 ) {
 	// Sync SSE platform completions into wizard state
 	useEffect(() => {
 		for (const [platform, content] of Object.entries(sse.platformContent)) {
 			if (content) {
-				wizard.setPlatformContent(platform as PlatformType, content);
-				wizard.setPlatformProgress(platform as PlatformType, "done");
+				setPlatformContent(platform as PlatformType, content);
+				setPlatformProgress(platform as PlatformType, "done");
 			}
 		}
-	}, [sse.platformContent, wizard]);
+	}, [sse.platformContent, setPlatformContent, setPlatformProgress]);
 
 	// When SSE phase changes, update platform progress accordingly
 	useEffect(() => {
 		if (sse.phase === "describing" || sse.phase === "generating") {
 			for (const platform of state.selectedPlatforms) {
-				wizard.setPlatformProgress(platform, "generating");
+				setPlatformProgress(platform, "generating");
 			}
 		} else if (sse.phase === "adapting") {
 			for (const platform of state.selectedPlatforms) {
 				if (state.generationProgress[platform] !== "done") {
-					wizard.setPlatformProgress(platform, "generating");
+					setPlatformProgress(platform, "generating");
 				}
 			}
 		}
-	}, [sse.phase, state.selectedPlatforms, state.generationProgress, wizard]);
+	}, [
+		sse.phase,
+		state.selectedPlatforms,
+		state.generationProgress,
+		setPlatformProgress,
+	]);
 
 	// Sync SSE thread completions into wizard state
 	useEffect(() => {
 		for (const [platform, segments] of Object.entries(sse.threadContent)) {
 			if (segments && segments.length > 0) {
-				wizard.setThreadContent(platform as PlatformType, segments);
+				setThreadContent(platform as PlatformType, segments);
 			}
 		}
-	}, [sse.threadContent, wizard]);
+	}, [sse.threadContent, setThreadContent]);
 
 	// When SSE finishes, mark generation complete
 	useEffect(() => {
@@ -74,15 +82,15 @@ export function useWizardSSESync(
 			sse.phase === "idle" &&
 			Object.keys(sse.platformContent).length > 0
 		) {
-			wizard.generationComplete();
+			generationComplete();
 		}
-	}, [sse.loading, sse.phase, sse.platformContent, wizard]);
+	}, [sse.loading, sse.phase, sse.platformContent, generationComplete]);
 
 	// Sync SSE errors to wizard
 	useEffect(() => {
 		if (sse.error) {
-			wizard.setError(sse.error);
-			wizard.generationFailed();
+			setError(sse.error);
+			generationFailed();
 		}
-	}, [sse.error, wizard]);
+	}, [sse.error, setError, generationFailed]);
 }
