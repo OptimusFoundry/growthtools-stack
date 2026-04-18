@@ -1,16 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, Globe, Plus, SearchX, Trash2 } from "lucide-react";
+import { ChevronRight, FileText, Plus, SearchX } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
-import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -29,13 +27,10 @@ const FILTER_KEYS = [
 	{ id: "archived", label: "Archived" },
 ] as const;
 
-const STATUS_BADGE_VARIANT: Record<
-	BlogStatus,
-	"default" | "success" | "secondary"
-> = {
-	draft: "default",
-	published: "success",
-	archived: "secondary",
+const STATUS_CLASS: Record<BlogStatus, string> = {
+	draft: "statusDraft",
+	published: "statusPublished",
+	archived: "statusArchived",
 };
 
 const STATUS_LABELS: Record<BlogStatus, string> = {
@@ -82,7 +77,6 @@ function BlogPage() {
 	const { blogPosts: allPosts } = useBlogPosts();
 	const { blogPosts, loading, refetch } = useBlogPosts(filters);
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
-	const { publishBlog, loading: publishing } = usePublishBlog();
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
 	const handleDeleteConfirm = useCallback(async () => {
@@ -95,15 +89,6 @@ function BlogPage() {
 			// error surfaced via hook state
 		}
 	}, [deleteTargetId, deleteBlog, refetch]);
-
-	const handlePublish = async (id: string) => {
-		try {
-			await publishBlog(id);
-			refetch();
-		} catch {
-			// error surfaced via hook state
-		}
-	};
 
 	const hasActiveFilter = statusFilter !== "";
 	const postCount = allPosts.length;
@@ -155,35 +140,6 @@ function BlogPage() {
 					</div>
 				</header>
 
-				<div className={styles.stats}>
-					<div className={styles.statItem}>
-						<Text size="2xl" weight="bold">
-							{postCount}
-						</Text>
-						<Text size="xs" color="muted">
-							Total
-						</Text>
-					</div>
-					<div className={styles.statDivider} />
-					<div className={styles.statItem}>
-						<Text size="2xl" weight="bold">
-							{publishedCount}
-						</Text>
-						<Text size="xs" color="muted">
-							Published
-						</Text>
-					</div>
-					<div className={styles.statDivider} />
-					<div className={styles.statItem}>
-						<Text size="2xl" weight="bold">
-							{draftCount}
-						</Text>
-						<Text size="xs" color="muted">
-							Drafts
-						</Text>
-					</div>
-				</div>
-
 				<FilterTabs
 					value={statusFilter}
 					onChange={setStatusFilter}
@@ -221,108 +177,49 @@ function BlogPage() {
 							}
 						/>
 					) : (
-						<Stack gap="xs">
+						<motion.div
+							initial={{ opacity: 0, y: 8 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.2 }}
+							className={styles.postList}
+						>
 							{blogPosts.map((post, index) => (
-								<motion.div
+								<Link
 									key={post.id}
-									initial={{ opacity: 0, y: 8 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.2, delay: index * 0.03 }}
+									to="/blog/$id"
+									params={{ id: post.id }}
+									className={styles.postLink}
 								>
-									<Link
-										to="/blog/$id"
-										params={{ id: post.id }}
-										className={styles.postLink}
-									>
-										<div className={styles.postCard}>
-											<div className={styles.postCardLeft}>
-												<div className={styles.postIcon}>
-													<FileText size={16} />
+									<div className={styles.postRow}>
+										<div className={styles.titleRow}>
+											<span className={styles.idx}>
+												№ {String(index + 1).padStart(2, "0")}
+											</span>
+											<div className={styles.postBody}>
+												<div className={styles.postTitleText}>
+													{truncate(post.title, 80)}
 												</div>
-											</div>
-											<div className={styles.postCardBody}>
-												<div className={styles.postTitleRow}>
-													<Text
-														size="sm"
-														weight="medium"
-														className={styles.postTitle}
-													>
-														{truncate(post.title, 80)}
-													</Text>
-													<Badge
-														variant={STATUS_BADGE_VARIANT[post.status]}
-														size="sm"
-													>
-														{STATUS_LABELS[post.status]}
-													</Badge>
-												</div>
-												{post.excerpt && (
-													<Text size="xs" color="muted">
-														{truncate(post.excerpt, 160)}
-													</Text>
-												)}
-												{post.keywords.length > 0 && (
-													<div className={styles.postTags}>
-														{post.keywords.slice(0, 4).map((kw) => (
-															<span key={kw} className={styles.tag}>
-																{kw}
-															</span>
-														))}
-														{post.keywords.length > 4 && (
-															<span className={styles.tag}>
-																+{post.keywords.length - 4}
-															</span>
-														)}
-													</div>
-												)}
-												<div className={styles.postFooter}>
-													<div className={styles.postMeta}>
-														<span className={styles.metaItem}>
-															{post.publishedAt
-																? `Published ${timeAgo(post.publishedAt)}`
-																: timeAgo(post.createdAt)}
-														</span>
-													</div>
-													<div className={styles.postActions}>
-														{post.status === "draft" && (
-															<Button
-																variant="primary"
-																size="sm"
-																isIconOnly
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	handlePublish(post.id);
-																}}
-																isLoading={publishing}
-																aria-label="Publish blog post"
-															>
-																<Globe size={14} />
-															</Button>
-														)}
-														{post.status !== "published" && (
-															<Button
-																variant="ghost"
-																size="sm"
-																isIconOnly
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	setDeleteTargetId(post.id);
-																}}
-																aria-label="Delete blog post"
-															>
-																<Trash2 size={14} />
-															</Button>
-														)}
-													</div>
+												<div className={styles.postMetaText}>
+													{post.publishedAt
+														? `Published · ${timeAgo(post.publishedAt)}`
+														: `Draft · edited ${timeAgo(post.createdAt)}`}
 												</div>
 											</div>
 										</div>
-									</Link>
-								</motion.div>
+										<div className={styles.metaRow}>
+											<span
+												className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
+											>
+												{STATUS_LABELS[post.status]}
+											</span>
+											<span className={styles.chevronBtn} aria-hidden>
+												<ChevronRight size={16} />
+											</span>
+										</div>
+									</div>
+								</Link>
 							))}
-						</Stack>
+						</motion.div>
 					)}
 				</div>
 
