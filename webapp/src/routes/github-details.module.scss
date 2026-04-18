@@ -1,6 +1,11 @@
 .page {
-	padding: var(--space-5);
-	max-width: var(--space-320, 80rem);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-9);
+	margin: 0 auto;
+	max-width: var(--max-width-7xl);
+	padding: var(--space-9) var(--space-9) var(--space-12);
+	width: 100%;
 }
 
 .loading {
