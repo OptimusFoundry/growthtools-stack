@@ -1,5 +1,5 @@
 ---
-name: code-reviewer
+name: backend-code-reviewer
 description: Use PROACTIVELY after writing significant code to ensure it follows project conventions. MUST BE USED when user asks to "review code", "check my implementation", "validate patterns", or before creating a pull request. This agent validates code against established patterns.
 tools: Read, Grep, Glob
 model: sonnet
@@ -81,7 +81,7 @@ import (
     "errors"
 
     // Internal packages (with aliases if needed)
-    "growth-server/internal/apierrors"
+    "base-server/internal/infra/apierrors"
 
     // Third-party packages
     "github.com/gin-gonic/gin"

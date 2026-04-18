@@ -1,5 +1,5 @@
 ---
-name: debug-helper
+name: backend-debug-helper
 description: Use PROACTIVELY when investigating issues or understanding code flow. MUST BE USED when user reports a bug, asks "why is X happening", "trace the flow", "debug this issue", or needs to understand error propagation. This agent traces code execution paths.
 tools: Read, Grep, Glob, Bash, LSP
 model: sonnet

@@ -120,7 +120,7 @@ git diff HEAD~1 | grep -iE "password|secret|api.?key|token" | grep -v "func\|typ
 ## Files Changed
 - `internal/feature/handler/handler.go`
 - `internal/feature/processor/processor.go`
-- `internal/store/feature.go`
+- `internal/infra/store/feature.go`
 
 ## Recommendations
 1. Consider adding integration tests for new endpoint

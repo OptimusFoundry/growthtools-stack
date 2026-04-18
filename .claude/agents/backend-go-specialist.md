@@ -1,5 +1,5 @@
 ---
-name: go-specialist
+name: backend-go-specialist
 description: Use PROACTIVELY when user has Go-specific questions about this codebase. MUST BE USED when user asks about "Go patterns", "idiomatic Go", "Go best practices", "dependency injection in Go", "Go interfaces", or needs Go language guidance specific to this project.
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: sonnet

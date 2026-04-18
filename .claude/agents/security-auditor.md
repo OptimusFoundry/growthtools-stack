@@ -117,7 +117,7 @@ Generate a security report:
 ## Critical Findings
 
 ### [CRITICAL-001] SQL Injection in Feature X
-**Location:** `internal/store/user.go:45`
+**Location:** `internal/infra/store/user.go:45`
 **Description:** Raw SQL concatenation with user input
 **Impact:** Full database compromise
 **Remediation:**

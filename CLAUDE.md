@@ -9,7 +9,7 @@ growth-tools/
 ├── base-server/    # Go backend (API, auth, billing, store)
 ├── webapp/         # React frontend (Vite, TanStack Router, Proto Design System)
 ├── docs/           # Product docs (PRD, tracker, platform API specs)
-└── .claude/        # Agent configs and settings for both codebases
+└── .claude/        # Agent configs, settings, and dispatch guide
 ```
 
 ## Codebase-Specific Docs
@@ -18,6 +18,42 @@ growth-tools/
 - **React frontend conventions:** [webapp/CLAUDE.md](webapp/CLAUDE.md)
 - **Design system & component patterns:** [webapp/docs/DESIGN-GUIDELINES.md](webapp/docs/DESIGN-GUIDELINES.md)
 - **Commit message convention:** [COMMITS.md](COMMITS.md) — Conventional Commits, enforced by the `.githooks/commit-msg` hook. Run `./.githooks/install.sh` once per clone to activate.
+
+## Agent Dispatch
+
+- **Dispatch guide:** [.claude/agents/README.md](.claude/agents/README.md) — read this before spinning up agents. Lists every agent, its model tier (haiku/sonnet/opus), which docs it reads, and parallelisation rules.
+
+> **IMPORTANT:** For any backend implementation task (new feature, endpoint, migration, etc.), ALWAYS use the `backend-supervisor` agent. Never implement backend code directly — dispatch `backend-supervisor` with the plan and let it orchestrate code, tests, quality checks, and commit.
+
+### Backend agents (`backend-*` prefix)
+Haiku — batch freely (pattern-backed, read docs then execute):
+
+| Agent | Task |
+|-------|------|
+| `backend-feature-scaffold` | Scaffold new handler/processor/store module |
+| `backend-api-endpoint` | Add endpoint to existing feature |
+| `backend-error-handler` | Add error types + handleError mapping |
+| `backend-store-crud` | Add store CRUD methods |
+| `backend-migration-gen` | Generate Flyway SQL migration |
+| `backend-unit-test-writer` | Write processor + handler unit tests |
+| `backend-store-test-writer` | Write store-layer tests |
+| `backend-integration-test-writer` | Write real-HTTP integration tests |
+| `backend-test-scaffold` | Generate tests at all levels |
+| `backend-kafka-integration` | Add Kafka producer + consumer/worker |
+
+Sonnet — run individually (judgment required):
+
+| Agent | Task |
+|-------|------|
+| `backend-supervisor` | Execute a full plan end-to-end: code → tests → build/vet/test → pre-commit → commit |
+| `backend-code-reviewer` | Go backend pattern validation |
+| `backend-debug-helper` | Trace execution paths, root cause analysis |
+| `backend-go-specialist` | Idiomatic Go + architectural guidance |
+
+### Other agents
+- `pre-commit` (haiku) — CI checks for both backend + frontend
+- `pr-prep`, `code-reviewer`, `security-auditor` (sonnet/opus) — cross-cutting
+- Frontend agents: `component-builder`, `page-builder`, `style-checker`, `playwright-e2e`, `test-fixer`, `code-reviewer-frontend` (sonnet)
 
 ## Quick Reference
 
