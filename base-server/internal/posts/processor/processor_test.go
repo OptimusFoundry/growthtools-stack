@@ -650,3 +650,57 @@ func TestPostProcessor_RetryFailedPlatformPosts(t *testing.T) {
 		assert.ErrorIs(t, err, ErrFailedRetryPost)
 	})
 }
+
+func TestPostProcessor_UnlinkMedia(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	postID := uuid.New()
+	mediaID := uuid.New()
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockStore.EXPECT().UnlinkMediaFromPost(gomock.Any(), accountID, postID, mediaID).Return(nil)
+		proc := New(mockStore, NewMockEventPublisher(ctrl), logger)
+
+		err := proc.UnlinkMedia(context.Background(), accountID, postID, mediaID)
+		require.NoError(t, err)
+	})
+
+	t.Run("not-found plus post missing maps to ErrPostNotFound", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockStore.EXPECT().UnlinkMediaFromPost(gomock.Any(), accountID, postID, mediaID).Return(store.ErrNotFound)
+		mockStore.EXPECT().GetPostByID(gomock.Any(), accountID, postID).Return(store.Post{}, store.ErrNotFound)
+		proc := New(mockStore, NewMockEventPublisher(ctrl), logger)
+
+		err := proc.UnlinkMedia(context.Background(), accountID, postID, mediaID)
+		require.ErrorIs(t, err, ErrPostNotFound)
+	})
+
+	t.Run("not-found but post exists maps to ErrMediaNotAttached", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockStore.EXPECT().UnlinkMediaFromPost(gomock.Any(), accountID, postID, mediaID).Return(store.ErrNotFound)
+		mockStore.EXPECT().GetPostByID(gomock.Any(), accountID, postID).Return(store.Post{ID: postID}, nil)
+		proc := New(mockStore, NewMockEventPublisher(ctrl), logger)
+
+		err := proc.UnlinkMedia(context.Background(), accountID, postID, mediaID)
+		require.ErrorIs(t, err, ErrMediaNotAttached)
+	})
+
+	t.Run("arbitrary store error maps to ErrFailedUnlinkMedia", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockStore.EXPECT().UnlinkMediaFromPost(gomock.Any(), accountID, postID, mediaID).Return(errors.New("db exploded"))
+		proc := New(mockStore, NewMockEventPublisher(ctrl), logger)
+
+		err := proc.UnlinkMedia(context.Background(), accountID, postID, mediaID)
+		require.ErrorIs(t, err, ErrFailedUnlinkMedia)
+	})
+}

@@ -26,6 +26,7 @@ type PostProcessor interface {
 	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error)
 	UpdatePost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdatePostParams) (store.Post, error)
 	DeletePost(ctx context.Context, accountID, postID uuid.UUID) error
+	UnlinkMedia(ctx context.Context, accountID, postID, mediaID uuid.UUID) error
 	PublishPost(ctx context.Context, accountID, postID uuid.UUID, platforms []string) error
 	SchedulePost(ctx context.Context, accountID, postID uuid.UUID, scheduledAt time.Time) (store.Post, error)
 	SaveDraft(ctx context.Context, params processor.SaveDraftParams) (store.Post, error)
@@ -277,6 +278,41 @@ func (h *Handler) HandleDeletePost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
+}
+
+// HandleUnlinkMedia removes a single media reference from a post. The media
+// row + S3 object are preserved; only this post's attachment is dropped.
+func (h *Handler) HandleUnlinkMedia(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accountID, ok := h.getAccountID(c)
+	if !ok {
+		return
+	}
+
+	postID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", "Invalid post ID format")
+		return
+	}
+	mediaID, err := uuid.Parse(c.Param("mediaID"))
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", "Invalid media ID format")
+		return
+	}
+
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "post_id", Value: postID.String()},
+		observability.Field{Key: "media_id", Value: mediaID.String()},
+	)
+
+	if err := h.processor.UnlinkMedia(ctx, accountID, postID, mediaID); err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Media unlinked from post"})
 }
 
 func (h *Handler) HandlePublishPost(c *gin.Context) {
@@ -535,6 +571,10 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 	case errors.Is(err, processor.ErrFailedUpdatePost):
 		apierrors.InternalError(c, err)
 	case errors.Is(err, processor.ErrFailedDeletePost):
+		apierrors.InternalError(c, err)
+	case errors.Is(err, processor.ErrMediaNotAttached):
+		apierrors.Conflict(c, "MEDIA_NOT_ATTACHED", "Media is not attached to this post")
+	case errors.Is(err, processor.ErrFailedUnlinkMedia):
 		apierrors.InternalError(c, err)
 	case errors.Is(err, processor.ErrFailedSaveDraft):
 		apierrors.InternalError(c, err)

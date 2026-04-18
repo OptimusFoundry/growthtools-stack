@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -301,3 +302,187 @@ func TestCountPostsByAccount(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 }
+
+func TestUnlinkMediaFromPost(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	// Helper that materializes a post with three media attachments and one
+	// platform_post whose thread_segments reference each slot by 1-based
+	// image_index. Returns account, post id, and the three media ids in
+	// attachment order.
+	seed := func(t *testing.T) (uuid.UUID, uuid.UUID, []uuid.UUID) {
+		t.Helper()
+		accountID := createTestAccount(t, s)
+
+		mediaIDs := make([]uuid.UUID, 0, 3)
+		for i := 0; i < 3; i++ {
+			m, err := s.CreateMedia(ctx, CreateMediaParams{
+				AccountID:   accountID,
+				Filename:    "m.png",
+				ContentType: "image/png",
+				S3Key:       "k/" + uuid.New().String(),
+				S3URL:       "s3://b/k",
+				SizeBytes:   10,
+				Source:      MediaSourceUpload,
+			})
+			require.NoError(t, err)
+			mediaIDs = append(mediaIDs, m.ID)
+		}
+
+		post, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "body",
+			ContentType: ContentTypeThread,
+			Status:      PostStatusDraft,
+			Source:      PostSourceManual,
+			MediaIDs:    UUIDArray(mediaIDs),
+		})
+		require.NoError(t, err)
+
+		segs := json.RawMessage(`[{"content":"first","image_index":1},{"content":"second","image_index":2},{"content":"third","image_index":3},{"content":"closer"}]`)
+		_, err = s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:         post.ID,
+			Platform:       "x",
+			Content:        strPtr("first\nsecond\nthird\ncloser"),
+			ThreadSegments: &segs,
+		})
+		require.NoError(t, err)
+
+		return accountID, post.ID, mediaIDs
+	}
+
+	t.Run("removes middle media and renumbers higher indexes", func(t *testing.T) {
+		t.Parallel()
+		accountID, postID, mediaIDs := seed(t)
+
+		require.NoError(t, s.UnlinkMediaFromPost(ctx, accountID, postID, mediaIDs[1]))
+
+		post, err := s.GetPostByID(ctx, accountID, postID)
+		require.NoError(t, err)
+		require.Len(t, post.MediaIDs, 2)
+		assert.Equal(t, mediaIDs[0], post.MediaIDs[0])
+		assert.Equal(t, mediaIDs[2], post.MediaIDs[1])
+
+		pps, err := s.GetPlatformPostsByPostID(ctx, postID)
+		require.NoError(t, err)
+		require.Len(t, pps, 1)
+		require.NotNil(t, pps[0].ThreadSegments)
+		var segs []map[string]any
+		require.NoError(t, json.Unmarshal(*pps[0].ThreadSegments, &segs))
+		require.Len(t, segs, 4)
+		// Slot 1 untouched.
+		assert.EqualValues(t, 1, segs[0]["image_index"])
+		// Slot that pointed at the removed index loses image_index.
+		_, hasIdx := segs[1]["image_index"]
+		assert.False(t, hasIdx, "expected image_index cleared for removed slot")
+		// Slot 3 → 2 after renumber.
+		assert.EqualValues(t, 2, segs[2]["image_index"])
+		// Slot without image_index stays clean.
+		_, hasIdx = segs[3]["image_index"]
+		assert.False(t, hasIdx)
+	})
+
+	t.Run("removes first media and shifts every higher index down", func(t *testing.T) {
+		t.Parallel()
+		accountID, postID, mediaIDs := seed(t)
+
+		require.NoError(t, s.UnlinkMediaFromPost(ctx, accountID, postID, mediaIDs[0]))
+
+		pps, err := s.GetPlatformPostsByPostID(ctx, postID)
+		require.NoError(t, err)
+		var segs []map[string]any
+		require.NoError(t, json.Unmarshal(*pps[0].ThreadSegments, &segs))
+		// First segment pointed at removed slot → cleared.
+		_, hasIdx := segs[0]["image_index"]
+		assert.False(t, hasIdx)
+		// Subsequent indexes shift: 2→1, 3→2.
+		assert.EqualValues(t, 1, segs[1]["image_index"])
+		assert.EqualValues(t, 2, segs[2]["image_index"])
+	})
+
+	t.Run("post not found returns ErrNotFound", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+		err := s.UnlinkMediaFromPost(ctx, accountID, uuid.New(), uuid.New())
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("wrong account returns ErrNotFound", func(t *testing.T) {
+		t.Parallel()
+		_, postID, mediaIDs := seed(t)
+		otherAccount := createTestAccount(t, s)
+		err := s.UnlinkMediaFromPost(ctx, otherAccount, postID, mediaIDs[0])
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("media not attached to post returns ErrNotFound", func(t *testing.T) {
+		t.Parallel()
+		accountID, postID, _ := seed(t)
+		err := s.UnlinkMediaFromPost(ctx, accountID, postID, uuid.New())
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("post with no platform posts still updates media_ids cleanly", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+		m, err := s.CreateMedia(ctx, CreateMediaParams{
+			AccountID: accountID, Filename: "m.png", ContentType: "image/png",
+			S3Key: "k/" + uuid.New().String(), S3URL: "s3://b/k",
+			SizeBytes: 1, Source: MediaSourceUpload,
+		})
+		require.NoError(t, err)
+		post, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID: accountID, Content: "x", ContentType: ContentTypeText,
+			Status: PostStatusDraft, Source: PostSourceManual,
+			MediaIDs: UUIDArray{m.ID},
+		})
+		require.NoError(t, err)
+
+		require.NoError(t, s.UnlinkMediaFromPost(ctx, accountID, post.ID, m.ID))
+
+		got, err := s.GetPostByID(ctx, accountID, post.ID)
+		require.NoError(t, err)
+		assert.Empty(t, got.MediaIDs)
+	})
+}
+
+// Assert that rewriteSegmentsAfterUnlink handles edge cases that would be a
+// pain to exercise through the DB (malformed inputs, non-numeric indexes).
+func TestRewriteSegmentsAfterUnlink(t *testing.T) {
+	t.Parallel()
+
+	t.Run("invalid json surfaces an error", func(t *testing.T) {
+		t.Parallel()
+		_, err := rewriteSegmentsAfterUnlink(json.RawMessage("not json"), 1)
+		require.Error(t, err)
+	})
+
+	t.Run("non-numeric image_index is left alone", func(t *testing.T) {
+		t.Parallel()
+		in := json.RawMessage(`[{"content":"a","image_index":"nope"}]`)
+		out, err := rewriteSegmentsAfterUnlink(in, 1)
+		require.NoError(t, err)
+		var segs []map[string]any
+		require.NoError(t, json.Unmarshal(out, &segs))
+		assert.Equal(t, "nope", segs[0]["image_index"])
+	})
+
+	t.Run("null image_index is a no-op", func(t *testing.T) {
+		t.Parallel()
+		in := json.RawMessage(`[{"content":"a","image_index":null}]`)
+		out, err := rewriteSegmentsAfterUnlink(in, 1)
+		require.NoError(t, err)
+		var segs []map[string]any
+		require.NoError(t, json.Unmarshal(out, &segs))
+		// Explicit null stays; nothing to renumber.
+		_, hasKey := segs[0]["image_index"]
+		assert.True(t, hasKey)
+	})
+}
+

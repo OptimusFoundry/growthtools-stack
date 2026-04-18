@@ -31,6 +31,7 @@ type PostStore interface {
 	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error)
 	UpdatePost(ctx context.Context, accountID, id uuid.UUID, params store.UpdatePostParams) (store.Post, error)
 	DeletePost(ctx context.Context, accountID, postID uuid.UUID) error
+	UnlinkMediaFromPost(ctx context.Context, accountID, postID, mediaID uuid.UUID) error
 	UpdatePostStatus(ctx context.Context, accountID, id uuid.UUID, status string, publishedAt *time.Time) error
 	CreatePlatformPost(ctx context.Context, params store.CreatePlatformPostParams) (store.PlatformPost, error)
 	GetPlatformPostsByPostID(ctx context.Context, postID uuid.UUID) ([]store.PlatformPost, error)
@@ -49,6 +50,8 @@ var (
 	ErrFailedCreatePost   = errors.New("failed to create post")
 	ErrFailedUpdatePost   = errors.New("failed to update post")
 	ErrFailedDeletePost   = errors.New("failed to delete post")
+	ErrMediaNotAttached   = errors.New("media is not attached to post")
+	ErrFailedUnlinkMedia  = errors.New("failed to unlink media from post")
 	ErrFailedSaveDraft    = errors.New("failed to save draft")
 	ErrFailedRetryPost    = errors.New("failed to retry post")
 )
@@ -179,6 +182,38 @@ func (p *PostProcessor) DeletePost(ctx context.Context, accountID, postID uuid.U
 	// Leave github_commits.post_id intact — the commit detail UI
 	// differentiates "linked to a post that was then deleted" from
 	// "no post was ever created" by joining on posts.deleted_at.
+	return nil
+}
+
+// UnlinkMedia removes a media attachment from a post. The media row + S3
+// object are preserved so the user can re-attach it later; only this post's
+// reference is dropped. Per-platform thread segments pointing at the removed
+// slot are rewritten by the store so image_index values stay in sync with
+// the new media_ids array.
+func (p *PostProcessor) UnlinkMedia(ctx context.Context, accountID, postID, mediaID uuid.UUID) error {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "post_id", Value: postID.String()},
+		observability.Field{Key: "media_id", Value: mediaID.String()},
+		observability.Field{Key: "operation", Value: "unlink_media_from_post"},
+	)
+
+	if err := p.store.UnlinkMediaFromPost(ctx, accountID, postID, mediaID); err != nil {
+		p.logger.Error(ctx, "failed to unlink media from post", err)
+		if errors.Is(err, store.ErrNotFound) {
+			// The store returns ErrNotFound both when the post is missing
+			// and when the media isn't in this post's media_ids. Verify
+			// the post itself so the handler can give the caller a useful
+			// 404 vs 409 distinction.
+			if _, getErr := p.store.GetPostByID(ctx, accountID, postID); getErr != nil {
+				if errors.Is(getErr, store.ErrNotFound) {
+					return ErrPostNotFound
+				}
+			}
+			return ErrMediaNotAttached
+		}
+		return ErrFailedUnlinkMedia
+	}
 	return nil
 }
 

@@ -28,6 +28,9 @@ interface ComposeStepProps {
 	pendingFiles: UploadedFile[];
 	existingMedia: ExistingFile[];
 	onRemoveExistingMedia: (id: string) => void;
+	/** True when the attached media set changed after the last successful
+	 * generation. Drives the "regenerate before publishing" banner. */
+	mediaChanged?: boolean;
 	maxThreadParts: number;
 	generating: boolean;
 	generated: boolean;
@@ -74,6 +77,7 @@ export function ComposeStep({
 	pendingFiles,
 	existingMedia,
 	onRemoveExistingMedia,
+	mediaChanged = false,
 	generating,
 	generated,
 	publishMode,
@@ -105,6 +109,11 @@ export function ComposeStep({
 		generatedPlatforms.length > 0 &&
 		(selectedPlatforms.length !== generatedPlatforms.length ||
 			selectedPlatforms.some((p) => !platformContent[p]));
+	const regenerateWarningVisible =
+		generated && (platformsChanged || mediaChanged);
+	const regenerateWarningMessage = platformsChanged
+		? "Platforms changed since last generation. Regenerate content before publishing."
+		: "Media changed since last generation. Regenerate so copy matches what's attached.";
 
 	const threadSupported = selectedPlatforms.some(
 		(p) => PLATFORM_SUPPORTS_THREADS[p],
@@ -219,11 +228,8 @@ export function ComposeStep({
 
 			{generated && !readOnly && (
 				<Section title="Publish">
-					{platformsChanged && (
-						<Alert variant="warning">
-							Platforms changed since last generation. Regenerate content before
-							publishing.
-						</Alert>
+					{regenerateWarningVisible && (
+						<Alert variant="warning">{regenerateWarningMessage}</Alert>
 					)}
 
 					<div className={styles.publishOptions}>

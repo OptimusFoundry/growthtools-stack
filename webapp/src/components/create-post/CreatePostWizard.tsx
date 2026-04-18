@@ -9,6 +9,7 @@ import {
 	filesToBase64,
 	useSSEContentGenerate,
 } from "@/hooks/useSSEContentGenerate";
+import { useUnlinkMedia } from "@/hooks/useUnlinkMedia";
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
@@ -137,7 +138,31 @@ function WizardInner({
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
 	const { uploadMedia } = useUploadMedia();
+	const { unlinkMedia } = useUnlinkMedia();
 	const { addBanner } = useBannerCenter();
+
+	// Removing a media item from an already-persisted post must unlink it
+	// server-side first; otherwise Save Draft and Publish would still see
+	// the original media_ids array. For unsaved drafts there's no post row
+	// yet, so the removal is local-only.
+	const handleRemoveUploadedMedia = useCallback(
+		async (mediaID: string) => {
+			if (editPostId) {
+				try {
+					await unlinkMedia(editPostId, mediaID);
+				} catch (err) {
+					wizard.setError(
+						err instanceof Error
+							? err.message
+							: "Failed to remove media from post",
+					);
+					return;
+				}
+			}
+			wizard.removeUploadedMedia(mediaID);
+		},
+		[editPostId, unlinkMedia, wizard.setError, wizard.removeUploadedMedia],
+	);
 
 	// Sync SSE platform completions into wizard state
 	// biome-ignore lint/correctness/useExhaustiveDependencies: wizard callbacks are stable reducer dispatches
@@ -480,7 +505,8 @@ function WizardInner({
 							contentType: m.contentType,
 							url: m.url,
 						}))}
-						onRemoveExistingMedia={wizard.removeUploadedMedia}
+						onRemoveExistingMedia={handleRemoveUploadedMedia}
+						mediaChanged={state.mediaChangedSinceGeneration}
 						generating={state.generating}
 						generated={state.generated}
 						publishMode={state.publishMode}

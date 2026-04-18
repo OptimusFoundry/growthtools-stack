@@ -16,6 +16,10 @@ export interface WizardState {
 	uploadedMedia: MediaItem[];
 	generating: boolean;
 	generated: boolean;
+	/** True when uploadedMedia has changed since the last successful generation.
+	 * Used to nudge the user toward regenerating so copy stays in sync with
+	 * attached media. Reset to false on every START_GENERATION. */
+	mediaChangedSinceGeneration: boolean;
 	generationProgress: Partial<Record<PlatformType, GenerationStatus>>;
 	platformContent: Partial<Record<PlatformType, string>>;
 	threadContent: Partial<Record<PlatformType, ThreadSegment[]>>;
@@ -68,6 +72,7 @@ const initialState: WizardState = {
 	uploadedMedia: [],
 	generating: false,
 	generated: false,
+	mediaChangedSinceGeneration: false,
 	generationProgress: {},
 	platformContent: {},
 	threadContent: {},
@@ -101,11 +106,15 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 			return {
 				...state,
 				uploadedMedia: [...state.uploadedMedia, action.media],
+				mediaChangedSinceGeneration:
+					state.mediaChangedSinceGeneration || state.generated,
 			};
 		case "REMOVE_UPLOADED_MEDIA":
 			return {
 				...state,
 				uploadedMedia: state.uploadedMedia.filter((m) => m.id !== action.id),
+				mediaChangedSinceGeneration:
+					state.mediaChangedSinceGeneration || state.generated,
 			};
 		case "START_GENERATION": {
 			const progress: Partial<Record<PlatformType, GenerationStatus>> = {};
@@ -116,6 +125,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 				...state,
 				generating: true,
 				generated: false,
+				mediaChangedSinceGeneration: false,
 				generationProgress: progress,
 				platformContent: {},
 				threadContent: {},

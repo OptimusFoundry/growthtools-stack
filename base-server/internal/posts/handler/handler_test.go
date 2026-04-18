@@ -35,6 +35,7 @@ func setupPostsRouter(h Handler, accountID uuid.UUID) *gin.Engine {
 	r.GET("/posts/:id", h.HandleGetPost)
 	r.PUT("/posts/:id", h.HandleUpdatePost)
 	r.DELETE("/posts/:id", h.HandleDeletePost)
+	r.DELETE("/posts/:id/media/:mediaID", h.HandleUnlinkMedia)
 	r.POST("/posts/:id/publish", h.HandlePublishPost)
 	r.POST("/posts/:id/schedule", h.HandleSchedulePost)
 	r.POST("/posts/draft", h.HandleSaveDraft)
@@ -698,6 +699,92 @@ func TestHandler_HandleRetryPost(t *testing.T) {
 			router := setupPostsRouter(h, accountID)
 
 			req := httptest.NewRequest(http.MethodPost, "/posts/"+tt.postID+"/retry", nil)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.wantStatus, w.Code)
+		})
+	}
+}
+
+
+func TestHandler_HandleUnlinkMedia(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	postID := uuid.New()
+	mediaID := uuid.New()
+
+	tests := []struct {
+		name       string
+		mocks      func(m *MockPostProcessor)
+		postID     string
+		mediaID    string
+		wantStatus int
+	}{
+		{
+			name: "200 happy path",
+			mocks: func(m *MockPostProcessor) {
+				m.EXPECT().UnlinkMedia(gomock.Any(), accountID, postID, mediaID).Return(nil)
+			},
+			postID:     postID.String(),
+			mediaID:    mediaID.String(),
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "400 invalid post UUID",
+			mocks:      func(m *MockPostProcessor) {},
+			postID:     "not-a-uuid",
+			mediaID:    mediaID.String(),
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "400 invalid media UUID",
+			mocks:      func(m *MockPostProcessor) {},
+			postID:     postID.String(),
+			mediaID:    "not-a-uuid",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "404 post not found",
+			mocks: func(m *MockPostProcessor) {
+				m.EXPECT().UnlinkMedia(gomock.Any(), accountID, postID, mediaID).Return(processor.ErrPostNotFound)
+			},
+			postID:     postID.String(),
+			mediaID:    mediaID.String(),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "409 media not attached to post",
+			mocks: func(m *MockPostProcessor) {
+				m.EXPECT().UnlinkMedia(gomock.Any(), accountID, postID, mediaID).Return(processor.ErrMediaNotAttached)
+			},
+			postID:     postID.String(),
+			mediaID:    mediaID.String(),
+			wantStatus: http.StatusConflict,
+		},
+		{
+			name: "500 on store error",
+			mocks: func(m *MockPostProcessor) {
+				m.EXPECT().UnlinkMedia(gomock.Any(), accountID, postID, mediaID).Return(processor.ErrFailedUnlinkMedia)
+			},
+			postID:     postID.String(),
+			mediaID:    mediaID.String(),
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := NewMockPostProcessor(ctrl)
+			tt.mocks(m)
+
+			h := New(m, logger)
+			router := setupPostsRouter(h, accountID)
+
+			req := httptest.NewRequest(http.MethodDelete, "/posts/"+tt.postID+"/media/"+tt.mediaID, nil)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 

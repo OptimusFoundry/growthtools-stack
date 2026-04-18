@@ -214,6 +214,20 @@ func (mr *MockPostStoreMockRecorder) ResetPlatformPostsForRetry(ctx, postID any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPlatformPostsForRetry", reflect.TypeOf((*MockPostStore)(nil).ResetPlatformPostsForRetry), ctx, postID)
 }
 
+// UnlinkMediaFromPost mocks base method.
+func (m *MockPostStore) UnlinkMediaFromPost(ctx context.Context, accountID, postID, mediaID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlinkMediaFromPost", ctx, accountID, postID, mediaID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnlinkMediaFromPost indicates an expected call of UnlinkMediaFromPost.
+func (mr *MockPostStoreMockRecorder) UnlinkMediaFromPost(ctx, accountID, postID, mediaID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlinkMediaFromPost", reflect.TypeOf((*MockPostStore)(nil).UnlinkMediaFromPost), ctx, accountID, postID, mediaID)
+}
+
 // UpdatePost mocks base method.
 func (m *MockPostStore) UpdatePost(ctx context.Context, accountID, id uuid.UUID, params store.UpdatePostParams) (store.Post, error) {
 	m.ctrl.T.Helper()

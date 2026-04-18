@@ -176,6 +176,20 @@ func (mr *MockPostProcessorMockRecorder) SchedulePost(ctx, accountID, postID, sc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SchedulePost", reflect.TypeOf((*MockPostProcessor)(nil).SchedulePost), ctx, accountID, postID, scheduledAt)
 }
 
+// UnlinkMedia mocks base method.
+func (m *MockPostProcessor) UnlinkMedia(ctx context.Context, accountID, postID, mediaID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlinkMedia", ctx, accountID, postID, mediaID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnlinkMedia indicates an expected call of UnlinkMedia.
+func (mr *MockPostProcessorMockRecorder) UnlinkMedia(ctx, accountID, postID, mediaID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlinkMedia", reflect.TypeOf((*MockPostProcessor)(nil).UnlinkMedia), ctx, accountID, postID, mediaID)
+}
+
 // UpdateDraft mocks base method.
 func (m *MockPostProcessor) UpdateDraft(ctx context.Context, params processor.UpdateDraftParams) (store.Post, error) {
 	m.ctrl.T.Helper()

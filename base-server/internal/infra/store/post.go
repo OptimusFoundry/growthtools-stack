@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -153,6 +154,127 @@ func (s *Store) UpdatePost(ctx context.Context, accountID, id uuid.UUID, params 
 		return Post{}, fmt.Errorf("failed to update post: %w", err)
 	}
 	return post, nil
+}
+
+// UnlinkMediaFromPost removes a single media ID from a post's media_ids
+// array and renumbers every platform_post's thread_segments so that
+// image_index values still line up with the new array: refs to the removed
+// slot are cleared, refs above it are decremented by one. All in one
+// transaction so a half-applied state can't leak out.
+//
+// Returns ErrNotFound if the post doesn't exist on the account, or if the
+// mediaID isn't in the post's media_ids.
+func (s *Store) UnlinkMediaFromPost(ctx context.Context, accountID, postID, mediaID uuid.UUID) error {
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var mediaIDs UUIDArray
+	err = tx.GetContext(ctx, &mediaIDs,
+		`SELECT media_ids FROM posts WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+		postID, accountID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("failed to load post for unlink: %w", err)
+	}
+
+	// 1-based position of the target media in the array. 0 means not
+	// present — treat as not-found so the caller can surface a clear error.
+	removedPosition := 0
+	newMediaIDs := make(UUIDArray, 0, len(mediaIDs))
+	for i, id := range mediaIDs {
+		if id == mediaID {
+			removedPosition = i + 1
+			continue
+		}
+		newMediaIDs = append(newMediaIDs, id)
+	}
+	if removedPosition == 0 {
+		return ErrNotFound
+	}
+
+	if _, err = tx.ExecContext(ctx,
+		`UPDATE posts SET media_ids = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+		newMediaIDs, postID); err != nil {
+		return fmt.Errorf("failed to update post media_ids: %w", err)
+	}
+
+	// Walk every platform_post and rewrite thread_segments in-place so
+	// image_index stays aligned with the new media_ids array.
+	type segmentRow struct {
+		ID             uuid.UUID        `db:"id"`
+		ThreadSegments *json.RawMessage `db:"thread_segments"`
+	}
+	rows := make([]segmentRow, 0)
+	if err = tx.SelectContext(ctx, &rows,
+		`SELECT id, thread_segments FROM platform_posts WHERE post_id = $1 AND thread_segments IS NOT NULL`,
+		postID); err != nil {
+		return fmt.Errorf("failed to load platform post segments: %w", err)
+	}
+
+	for _, row := range rows {
+		if row.ThreadSegments == nil {
+			continue
+		}
+		rewritten, rewriteErr := rewriteSegmentsAfterUnlink(*row.ThreadSegments, removedPosition)
+		if rewriteErr != nil {
+			err = fmt.Errorf("failed to rewrite segments for platform_post %s: %w", row.ID, rewriteErr)
+			return err
+		}
+		if _, err = tx.ExecContext(ctx,
+			`UPDATE platform_posts SET thread_segments = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+			rewritten, row.ID); err != nil {
+			return fmt.Errorf("failed to update platform_post segments: %w", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// rewriteSegmentsAfterUnlink adjusts image_index values in a serialized
+// ThreadSegment array after a media slot at `removedPosition` (1-based)
+// has been spliced out of the owning post's media_ids.
+//
+// - Segments with image_index == removedPosition lose their image_index
+//   (the segment stays; its text may still read fine).
+// - Segments with image_index > removedPosition get decremented by one.
+// - Segments with image_index < removedPosition, or no image_index, are
+//   untouched.
+func rewriteSegmentsAfterUnlink(raw json.RawMessage, removedPosition int) (json.RawMessage, error) {
+	var segments []map[string]any
+	if err := json.Unmarshal(raw, &segments); err != nil {
+		return nil, fmt.Errorf("invalid thread_segments json: %w", err)
+	}
+	for i, seg := range segments {
+		rawIdx, ok := seg["image_index"]
+		if !ok || rawIdx == nil {
+			continue
+		}
+		// JSON numbers decode to float64 under map[string]any.
+		idx, numOK := rawIdx.(float64)
+		if !numOK {
+			continue
+		}
+		switch {
+		case int(idx) == removedPosition:
+			delete(segments[i], "image_index")
+		case int(idx) > removedPosition:
+			segments[i]["image_index"] = int(idx) - 1
+		}
+	}
+	out, err := json.Marshal(segments)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal rewritten segments: %w", err)
+	}
+	return out, nil
 }
 
 const sqlDeletePost = `
