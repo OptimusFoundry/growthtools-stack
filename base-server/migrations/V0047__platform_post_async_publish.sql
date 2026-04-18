@@ -8,6 +8,12 @@
 --
 -- Handle shape is adapter-owned JSON; the workers pass it through
 -- without cracking it open.
+--
+-- This migration intentionally stops at "enum values added + column
+-- added". Postgres refuses to USE a new enum value inside the same
+-- transaction that declares it ("unsafe use of new value ... New
+-- enum values must be committed before they can be used"), so the
+-- partial index that references 'awaiting_media' lives in V0048.
 
 ALTER TABLE platform_posts
     ADD COLUMN media_handle JSONB;
@@ -21,9 +27,3 @@ ALTER TABLE platform_posts
 ALTER TYPE platform_post_status ADD VALUE IF NOT EXISTS 'queued';
 ALTER TYPE platform_post_status ADD VALUE IF NOT EXISTS 'awaiting_media';
 ALTER TYPE platform_post_status ADD VALUE IF NOT EXISTS 'media_ready';
-
--- Partial index for the reconciler's poll: it only cares about rows
--- still awaiting media, and only so it can LIMIT to a batch at a time.
-CREATE INDEX idx_platform_posts_awaiting_media
-    ON platform_posts (updated_at)
-    WHERE status = 'awaiting_media';
