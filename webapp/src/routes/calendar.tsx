@@ -4,25 +4,21 @@ import {
 	CalendarDays,
 	ChevronLeft,
 	ChevronRight,
-	Trash2,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
-import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { usePublishPost } from "@/hooks/usePublishPost";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { Post, PostSource, PostStatus } from "@/types/post";
+import type { Post, PostStatus } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
 import calendarStyles from "./calendar.module.scss";
 import styles from "./page.module.scss";
+import postStyles from "./posts.module.scss";
 
 export const Route = createFileRoute("/calendar")({
 	component: CalendarPage,
@@ -44,23 +40,22 @@ const MONTHS = [
 	"December",
 ];
 
-const STATUS_BADGE_VARIANT: Record<
-	PostStatus,
-	"success" | "warning" | "error" | "default" | "primary"
-> = {
-	draft: "default",
-	scheduled: "warning",
-	publishing: "primary",
-	published: "success",
-	failed: "error",
-	partially_published: "warning",
+const STATUS_CLASS: Record<PostStatus, string> = {
+	draft: "statusDraft",
+	scheduled: "statusScheduled",
+	publishing: "statusPublishing",
+	published: "statusPublished",
+	failed: "statusFailed",
+	partially_published: "statusPartial",
 };
 
-const SOURCE_LABELS: Record<PostSource, string> = {
-	manual: "Manual",
-	ai_generated: "AI Generated",
-	github_event: "GitHub",
-	bulk_import: "Import",
+const STATUS_ROW_LABELS: Record<PostStatus, string> = {
+	draft: "Draft",
+	scheduled: "Scheduled",
+	publishing: "Publishing",
+	published: "Published",
+	failed: "Failed",
+	partially_published: "Partial",
 };
 
 function getDaysInMonth(year: number, month: number): number {
@@ -75,21 +70,40 @@ function getPostDate(post: Post): string | undefined {
 	return post.scheduledAt ?? post.publishedAt ?? post.createdAt;
 }
 
-function formatDate(iso: string): string {
+function timeAgo(iso: string): string {
+	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+	if (seconds < 60) return "just now";
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	if (days < 7) return `${days}d ago`;
 	return new Date(iso).toLocaleDateString(undefined, {
 		month: "short",
 		day: "numeric",
-		year: "numeric",
 	});
 }
 
-function formatDateTime(iso: string): string {
-	return new Date(iso).toLocaleString(undefined, {
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	});
+function statusLine(post: Post): string {
+	const when = post.publishedAt ?? post.scheduledAt ?? post.createdAt;
+	const ago = timeAgo(when);
+	if (post.status === "published") return `Published · ${ago}`;
+	if (post.status === "scheduled") return `Queued · ${ago}`;
+	if (post.status === "failed") return `Failed · needs retry`;
+	if (post.status === "publishing") return `Publishing · ${ago}`;
+	if (post.status === "partially_published") return `Partial · ${ago}`;
+	return `Draft · edited ${ago}`;
+}
+
+function truncate(text: string, maxLen: number): string {
+	if (text.length <= maxLen) return text;
+	const truncated = text.slice(0, maxLen);
+	const lastSpace = truncated.lastIndexOf(" ");
+	return (
+		(lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) +
+		"..."
+	);
 }
 
 function formatDisplayDate(dateStr: string): string {
@@ -145,10 +159,7 @@ function CalendarPage() {
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();
 
-	const { posts, loading, refetch } = useGetPosts();
-	const { deletePost, loading: deleting } = useDeletePost();
-	const { publishPost, loading: publishing } = usePublishPost();
-	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+	const { posts, loading } = useGetPosts();
 
 	const navigateMonth = useCallback((delta: number) => {
 		setCurrentDate(
@@ -190,26 +201,6 @@ function CalendarPage() {
 	const selectedPosts = selectedDate
 		? (postsByDate.get(selectedDate) ?? [])
 		: [];
-
-	const handleDeleteConfirm = useCallback(async () => {
-		if (!deleteTargetId) return;
-		try {
-			await deletePost(deleteTargetId);
-			setDeleteTargetId(null);
-			refetch();
-		} catch {
-			// error surfaced via hook state
-		}
-	}, [deleteTargetId, deletePost, refetch]);
-
-	const handlePublish = async (id: string) => {
-		try {
-			await publishPost(id, []);
-			refetch();
-		} catch {
-			// error surfaced via hook state
-		}
-	};
 
 	const monthLabel = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 	const scheduledThisMonth = posts.filter(
@@ -282,121 +273,60 @@ function CalendarPage() {
 									description="There are no posts scheduled or published for this date."
 								/>
 							) : (
-								<Stack gap="sm">
-									{selectedPosts.map((post) => (
+								<motion.div
+									initial={{ opacity: 0, y: 8 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ duration: 0.2 }}
+									className={postStyles.postList}
+								>
+									{selectedPosts.map((post, index) => (
 										<Link
 											key={post.id}
 											to="/posts/$id"
 											params={{ id: post.id }}
+											className={postStyles.postLink}
 										>
-											<Card padding="md" interactive>
-												<Stack direction="row" justify="between" align="center">
-													<Stack gap="md">
-														<Stack direction="row" gap="sm" align="center">
-															<Text size="sm" weight="semibold">
-																{post.title || post.content.slice(0, 60)}
-															</Text>
-															<Badge
-																variant={STATUS_BADGE_VARIANT[post.status]}
-																size="sm"
-															>
-																{post.status}
-															</Badge>
-														</Stack>
-														<Stack direction="row" gap="md" align="center">
-															<Text size="xs" color="muted">
-																<Text
-																	as="span"
-																	size="xs"
-																	color="secondary"
-																	weight="medium"
+											<div className={postStyles.postRow}>
+												<div className={postStyles.titleRow}>
+													<span className={postStyles.idx}>
+														№ {String(index + 1).padStart(2, "0")}
+													</span>
+													<div className={postStyles.postBody}>
+														<div className={postStyles.postTitleText}>
+															{truncate(post.title || post.content, 80)}
+														</div>
+														<div className={postStyles.postMetaText}>
+															{statusLine(post)}
+														</div>
+													</div>
+												</div>
+												<div className={postStyles.metaRow}>
+													{post.platforms.length > 0 && (
+														<span className={postStyles.platformChips}>
+															{post.platforms.slice(0, 3).map((p) => (
+																<span
+																	key={p}
+																	className={postStyles.platformChip}
+																	title={p}
 																>
-																	Source:{" "}
-																</Text>
-																{SOURCE_LABELS[post.source] ?? post.source}
-															</Text>
-															<Text size="xs" color="muted">
-																<Text
-																	as="span"
-																	size="xs"
-																	color="secondary"
-																	weight="medium"
-																>
-																	Created:{" "}
-																</Text>
-																{formatDate(post.createdAt)}
-															</Text>
-															{post.scheduledAt && (
-																<Text size="xs" color="muted">
-																	<Text
-																		as="span"
-																		size="xs"
-																		color="secondary"
-																		weight="medium"
-																	>
-																		Scheduled:{" "}
-																	</Text>
-																	{formatDateTime(post.scheduledAt)}
-																</Text>
-															)}
-															{post.publishedAt && (
-																<Text size="xs" color="muted">
-																	<Text
-																		as="span"
-																		size="xs"
-																		color="secondary"
-																		weight="medium"
-																	>
-																		Published:{" "}
-																	</Text>
-																	{formatDateTime(post.publishedAt)}
-																</Text>
-															)}
-														</Stack>
-														{post.platforms.length > 0 && (
-															<Stack direction="row" gap="xs" align="center">
-																{post.platforms.map((p) => (
-																	<span key={p}>{getPlatformIcon(p, 14)}</span>
-																))}
-															</Stack>
-														)}
-													</Stack>
-													<Stack direction="row" gap="xs">
-														{post.status === "draft" && (
-															<Button
-																variant="primary"
-																size="sm"
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	handlePublish(post.id);
-																}}
-																isLoading={publishing}
-															>
-																Publish
-															</Button>
-														)}
-														{post.status !== "published" &&
-															post.status !== "partially_published" && (
-																<Button
-																	variant="destructive"
-																	size="sm"
-																	onClick={(e) => {
-																		e.preventDefault();
-																		e.stopPropagation();
-																		setDeleteTargetId(post.id);
-																	}}
-																	aria-label="Delete post"
-																>
-																	<Trash2 size={14} />
-																</Button>
-															)}
-													</Stack>
-												</Stack>
-											</Card>
+																	{getPlatformIcon(p, 14)}
+																</span>
+															))}
+														</span>
+													)}
+													<span
+														className={`${postStyles.statusBadge} ${postStyles[STATUS_CLASS[post.status]]}`}
+													>
+														{STATUS_ROW_LABELS[post.status]}
+													</span>
+													<span className={postStyles.chevronBtn} aria-hidden>
+														<ChevronRight size={16} />
+													</span>
+												</div>
+											</div>
 										</Link>
 									))}
-								</Stack>
+								</motion.div>
 							)}
 						</>
 					) : (
@@ -481,32 +411,6 @@ function CalendarPage() {
 						</>
 					)}
 				</Stack>
-
-				<Modal
-					isOpen={deleteTargetId !== null}
-					onClose={() => setDeleteTargetId(null)}
-					title="Delete post"
-					size="sm"
-					footer={
-						<Stack direction="row" gap="sm" justify="end">
-							<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
-								Cancel
-							</Button>
-							<Button
-								variant="destructive"
-								onClick={handleDeleteConfirm}
-								isLoading={deleting}
-							>
-								Delete
-							</Button>
-						</Stack>
-					}
-				>
-					<Text color="secondary">
-						Are you sure you want to delete this post? This action cannot be
-						undone.
-					</Text>
-				</Modal>
 			</Stack>
 		</>
 	);
