@@ -276,3 +276,25 @@
     color: var(--color-base-content);
   }
 }
+
+.deleteBtn {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-base-content-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: var(--space-6);
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+  width: var(--space-6);
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
+    color: var(--color-error);
+  }
+}
