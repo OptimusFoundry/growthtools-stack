@@ -20,14 +20,6 @@ function NewBlogPostPage() {
 	const { createBlogPost, loading: creating, error } = useCreateBlogPost();
 	const { publishBlog, loading: publishing } = usePublishBlog();
 
-	if (error) {
-		return (
-			<Container>
-				<Alert variant="error" title="Something went wrong">{error}</Alert>
-			</Container>
-		);
-	}
-
 	const handleSaveDraft = useCallback(
 		async (data: BlogPostFormData) => {
 			await createBlogPost({
@@ -66,6 +58,16 @@ function NewBlogPostPage() {
 		},
 		[createBlogPost, publishBlog, navigate],
 	);
+
+	if (error) {
+		return (
+			<Container>
+				<Alert variant="error" title="Something went wrong">
+					{error}
+				</Alert>
+			</Container>
+		);
+	}
 
 	return (
 		<motion.div

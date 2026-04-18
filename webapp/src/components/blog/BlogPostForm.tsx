@@ -33,7 +33,7 @@ export interface BlogPostFormProps {
 }
 
 // ============================================================================
-// Helper
+// Helpers
 // ============================================================================
 
 const slugify = (text: string): string =>
@@ -43,6 +43,47 @@ const slugify = (text: string): string =>
 		.replace(/[^\w\s-]/g, "")
 		.replace(/\s+/g, "-")
 		.replace(/-+/g, "-");
+
+const validateForm = (
+	title: string,
+	content: string,
+): { isValid: boolean; error: string | null } => {
+	if (!title.trim()) {
+		return { isValid: false, error: "Title is required." };
+	}
+	if (!content.trim()) {
+		return { isValid: false, error: "Content is required." };
+	}
+	return { isValid: true, error: null };
+};
+
+const collectFormData = (
+	title: string,
+	slug: string,
+	content: string,
+	excerpt: string,
+	seoTitle: string,
+	metaDescription: string,
+	ogTitle: string,
+	ogDescription: string,
+	keywords: string,
+): BlogPostFormData => {
+	const parsedKeywords = keywords
+		.split(",")
+		.map((k) => k.trim())
+		.filter(Boolean);
+	return {
+		title,
+		slug: slug || slugify(title),
+		content,
+		excerpt: excerpt || "",
+		seoTitle: seoTitle || "",
+		metaDescription: metaDescription || "",
+		ogTitle: ogTitle || "",
+		ogDescription: ogDescription || "",
+		keywords: parsedKeywords.join(", "),
+	};
+};
 
 // ============================================================================
 // Component
@@ -106,41 +147,26 @@ export function BlogPostForm({
 		}
 	}, [generateBlog, title, keywords]);
 
-	const validateForm = (): boolean => {
-		setError(null);
-		if (!title.trim()) {
-			setError("Title is required.");
-			return false;
-		}
-		if (!content.trim()) {
-			setError("Content is required.");
-			return false;
-		}
-		return true;
-	};
-
-	const collectFormData = (): BlogPostFormData => {
-		const parsedKeywords = keywords
-			.split(",")
-			.map((k) => k.trim())
-			.filter(Boolean);
-		return {
-			title,
-			slug: slug || slugify(title),
-			content,
-			excerpt: excerpt || "",
-			seoTitle: seoTitle || "",
-			metaDescription: metaDescription || "",
-			ogTitle: ogTitle || "",
-			ogDescription: ogDescription || "",
-			keywords: parsedKeywords.join(", "),
-		};
-	};
-
 	const handleSaveDraft = useCallback(async () => {
-		if (!validateForm()) return;
+		const validation = validateForm(title, content);
+		if (!validation.isValid) {
+			setError(validation.error);
+			return;
+		}
 		try {
-			await onSaveDraft(collectFormData());
+			await onSaveDraft(
+				collectFormData(
+					title,
+					slug,
+					content,
+					excerpt,
+					seoTitle,
+					metaDescription,
+					ogTitle,
+					ogDescription,
+					keywords,
+				),
+			);
 		} catch {
 			// error surfaced via hook
 		}
@@ -158,9 +184,25 @@ export function BlogPostForm({
 	]);
 
 	const handlePublish = useCallback(async () => {
-		if (!validateForm()) return;
+		const validation = validateForm(title, content);
+		if (!validation.isValid) {
+			setError(validation.error);
+			return;
+		}
 		try {
-			await onPublish(collectFormData());
+			await onPublish(
+				collectFormData(
+					title,
+					slug,
+					content,
+					excerpt,
+					seoTitle,
+					metaDescription,
+					ogTitle,
+					ogDescription,
+					keywords,
+				),
+			);
 		} catch {
 			// error surfaced via hook
 		}
