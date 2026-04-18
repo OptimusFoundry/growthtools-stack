@@ -19,21 +19,22 @@
 
   .nav {
     align-items: center;
-    padding: var(--space-4) var(--space-2);
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-2);
   }
 
   .item {
     justify-content: center;
-    padding: var(--space-2);
-    width: var(--space-7);
-    height: var(--space-7);
+    padding: var(--space-1-5);
+    width: var(--space-6);
+    height: var(--space-6);
   }
 
   .groupButton {
     justify-content: center;
-    padding: var(--space-2);
-    width: var(--space-7);
-    height: var(--space-7);
+    padding: var(--space-1-5);
+    width: var(--space-6);
+    height: var(--space-6);
   }
 
   .sectionItems {
@@ -292,8 +293,8 @@
   flex-shrink: 0;
 
   svg {
-    height: var(--space-5);
-    width: var(--space-5);
+    height: var(--space-4);
+    width: var(--space-4);
   }
 }
 
