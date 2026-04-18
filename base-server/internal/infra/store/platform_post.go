@@ -11,6 +11,37 @@ import (
 	"github.com/google/uuid"
 )
 
+// PlatformPost represents a per-platform publish record
+type PlatformPost struct {
+	ID             uuid.UUID        `db:"id" json:"id"`
+	PostID         uuid.UUID        `db:"post_id" json:"post_id"`
+	Platform       string           `db:"platform" json:"platform"`
+	PlatformPostID *string          `db:"platform_post_id" json:"platform_post_id,omitempty"`
+	Status         string           `db:"status" json:"status"`
+	Content        *string          `db:"content" json:"content,omitempty"`
+	ThreadSegments *json.RawMessage `db:"thread_segments" json:"thread_segments,omitempty"`
+	// MediaHandle carries whatever the platform returned during media
+	// upload (container_id, media_id + processing state, blob ref,
+	// jobId, etc.). Shape is adapter-owned — the pipeline workers pass
+	// it through without cracking it open. Nil for text-only rows.
+	MediaHandle    *json.RawMessage `db:"media_handle" json:"media_handle,omitempty"`
+	PublishedAt    *time.Time       `db:"published_at" json:"published_at,omitempty"`
+	ErrorMessage   *string          `db:"error_message" json:"error_message,omitempty"`
+	Engagement     JSONB            `db:"engagement" json:"engagement"`
+	AttemptCount   int              `db:"attempt_count" json:"attempt_count"`
+	MaxAttempts    int              `db:"max_attempts" json:"max_attempts"`
+	NextRetryAt    *time.Time       `db:"next_retry_at" json:"next_retry_at,omitempty"`
+	LastAttemptAt  *time.Time       `db:"last_attempt_at" json:"last_attempt_at,omitempty"`
+	CreatedAt      time.Time        `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time        `db:"updated_at" json:"updated_at"`
+}
+
+// RetryablePlatformPost extends PlatformPost with the parent post's account_id
+type RetryablePlatformPost struct {
+	PlatformPost
+	AccountID uuid.UUID `db:"account_id"`
+}
+
 // CreatePlatformPostParams represents parameters for creating a platform post
 type CreatePlatformPostParams struct {
 	PostID         uuid.UUID

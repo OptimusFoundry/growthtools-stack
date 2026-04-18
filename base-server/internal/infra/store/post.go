@@ -11,6 +11,28 @@ import (
 	"github.com/google/uuid"
 )
 
+// Post represents a content item
+type Post struct {
+	ID            uuid.UUID  `db:"id" json:"id"`
+	AccountID     uuid.UUID  `db:"account_id" json:"account_id"`
+	Title         *string    `db:"title" json:"title,omitempty"`
+	Content       string     `db:"content" json:"content"`
+	ContentType   string     `db:"content_type" json:"content_type"`
+	Status        string     `db:"status" json:"status"`
+	ScheduledAt   *time.Time `db:"scheduled_at" json:"scheduled_at,omitempty"`
+	PublishedAt   *time.Time `db:"published_at" json:"published_at,omitempty"`
+	MediaIDs      UUIDArray  `db:"media_ids" json:"media_ids"`
+	Tags          StringArray `db:"tags" json:"tags"`
+	AIGenerated   bool       `db:"ai_generated" json:"ai_generated"`
+	BaseContent   *string    `db:"base_content" json:"base_content,omitempty"`
+	Source        string     `db:"source" json:"source"`
+	GitHubEventID *uuid.UUID  `db:"github_event_id" json:"github_event_id,omitempty"`
+	Platforms     StringArray `db:"platforms" json:"platforms"`
+	CreatedAt     time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time   `db:"updated_at" json:"updated_at"`
+	DeletedAt     *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
 // CreatePostParams represents parameters for creating a post
 type CreatePostParams struct {
 	AccountID     uuid.UUID

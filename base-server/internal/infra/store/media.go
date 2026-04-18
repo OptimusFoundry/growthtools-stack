@@ -5,9 +5,28 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// Media represents an uploaded media file
+type Media struct {
+	ID          uuid.UUID  `db:"id" json:"id"`
+	AccountID   uuid.UUID  `db:"account_id" json:"account_id"`
+	Filename    string     `db:"filename" json:"filename"`
+	ContentType string     `db:"content_type" json:"content_type"`
+	S3Key       string     `db:"s3_key" json:"s3_key"`
+	S3URL       string     `db:"s3_url" json:"s3_url"`
+	SizeBytes   int64      `db:"size_bytes" json:"size_bytes"`
+	Width       *int       `db:"width" json:"width,omitempty"`
+	Height      *int       `db:"height" json:"height,omitempty"`
+	AltText     *string    `db:"alt_text" json:"alt_text,omitempty"`
+	Source      string     `db:"source" json:"source"`
+	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt   *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+}
 
 // CreateMediaParams represents parameters for creating a media record
 type CreateMediaParams struct {

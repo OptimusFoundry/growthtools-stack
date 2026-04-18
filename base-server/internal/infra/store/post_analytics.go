@@ -8,6 +8,20 @@ import (
 	"github.com/google/uuid"
 )
 
+// PostAnalytics represents an analytics snapshot for a platform post
+type PostAnalytics struct {
+	ID             uuid.UUID `db:"id" json:"id"`
+	PlatformPostID uuid.UUID `db:"platform_post_id" json:"platform_post_id"`
+	Platform       string    `db:"platform" json:"platform"`
+	Impressions    int       `db:"impressions" json:"impressions"`
+	Likes          int       `db:"likes" json:"likes"`
+	Comments       int       `db:"comments" json:"comments"`
+	Shares         int       `db:"shares" json:"shares"`
+	Clicks         int       `db:"clicks" json:"clicks"`
+	CollectedAt    time.Time `db:"collected_at" json:"collected_at"`
+	CreatedAt      time.Time `db:"created_at" json:"created_at"`
+}
+
 // RecordPostAnalyticsParams represents parameters for recording analytics
 type RecordPostAnalyticsParams struct {
 	PlatformPostID uuid.UUID
