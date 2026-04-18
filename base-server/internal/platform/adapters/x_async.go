@@ -65,6 +65,7 @@ func (a *XAdapter) StartPublish(ctx context.Context, spec PostSpec, conn store.P
 		if err != nil {
 			a.logger.Error(ctx, "failed to upload media to X", err)
 			handle.Items = append(handle.Items, xMediaItem{})
+			readyNow = false
 			continue
 		}
 

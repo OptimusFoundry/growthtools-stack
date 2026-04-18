@@ -54,21 +54,23 @@ func (c *Client) UploadMedia(ctx context.Context, req UploadMediaRequest, access
 	return res.MediaID, nil
 }
 
-// UploadMediaAsync does the single-shot POST and returns as soon as X
-// responds. For images the response carries no processing_info and the
-// result is ready to attach to a tweet immediately; for video the
-// returned ProcessingInfo is typically "pending" or "in_progress" and
-// the caller is expected to poll GetMediaStatus before attaching.
+// UploadMediaAsync uploads media to X and returns as soon as X responds.
+// Images are uploaded via a single-shot multipart POST. Videos require the
+// chunked INIT→APPEND→FINALIZE flow because the v2 single-shot endpoint
+// only accepts tweet_image/dm_image/subtitles — tweet_video is only valid
+// on the chunked path.
 func (c *Client) UploadMediaAsync(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (UploadMediaResult, error) {
 	mediaType := req.MediaType
 	if mediaType == "" {
 		mediaType = "image/jpeg"
 	}
 
-	mediaCategory := "tweet_image"
 	if strings.HasPrefix(mediaType, "video/") {
-		mediaCategory = "tweet_video"
-	} else if strings.HasPrefix(mediaType, "image/gif") {
+		return c.uploadVideoChunked(ctx, req.MediaBytes, mediaType, accessToken)
+	}
+
+	mediaCategory := "tweet_image"
+	if strings.HasPrefix(mediaType, "image/gif") {
 		mediaCategory = "tweet_gif"
 	}
 
@@ -113,8 +115,118 @@ func (c *Client) UploadMediaAsync(ctx context.Context, req UploadMediaRequest, a
 		return UploadMediaResult{}, fmt.Errorf("xapi: media upload failed with %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	// v2 response shape: { "data": { "id": "...", "media_key": "...", "processing_info": {...} } }
-	// Fallback to v1.1-style: { "media_id_string": "...", "processing_info": {...} }
+	return parseUploadResponse(respBody)
+}
+
+// uploadVideoChunked uploads a video using the X API v2 INIT→APPEND→FINALIZE
+// chunked flow. The v2 single-shot multipart endpoint rejects tweet_video —
+// chunked upload is the only supported path for video on v2.
+// tokenSecret is unused: video always authenticates with Bearer, not OAuth 1.0a.
+func (c *Client) uploadVideoChunked(ctx context.Context, videoBytes []byte, mediaType, accessToken string) (UploadMediaResult, error) {
+	if len(videoBytes) == 0 {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video upload requires non-empty bytes")
+	}
+
+	const endpoint = "https://api.x.com/2/media/upload"
+	const chunkSize = 5 * 1024 * 1024
+
+	// INIT
+	initBody, err := c.chunkedCommandRaw(ctx, endpoint, accessToken, []field{
+		{"command", "INIT"},
+		{"media_type", mediaType},
+		{"total_bytes", strconv.Itoa(len(videoBytes))},
+		{"media_category", "tweet_video"},
+	}, nil)
+	if err != nil {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video INIT failed: %w", err)
+	}
+	initResult, err := parseUploadResponse(initBody)
+	if err != nil {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video INIT parse failed: %w", err)
+	}
+	if initResult.MediaID == "" {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video INIT returned empty media_id")
+	}
+	mediaID := initResult.MediaID
+
+	// APPEND — mediaID returned by X is discarded; 204 No Content has no body
+	for i, seg := 0, 0; i < len(videoBytes); i, seg = i+chunkSize, seg+1 {
+		end := min(i+chunkSize, len(videoBytes))
+		if _, err := c.chunkedCommandRaw(ctx, endpoint, accessToken, []field{
+			{"command", "APPEND"},
+			{"media_id", mediaID},
+			{"segment_index", strconv.Itoa(seg)},
+		}, videoBytes[i:end]); err != nil {
+			return UploadMediaResult{}, fmt.Errorf("xapi: video APPEND segment %d failed: %w", seg, err)
+		}
+	}
+
+	// FINALIZE — returns processing_info for async polling
+	finalBody, err := c.chunkedCommandRaw(ctx, endpoint, accessToken, []field{
+		{"command", "FINALIZE"},
+		{"media_id", mediaID},
+	}, nil)
+	if err != nil {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video FINALIZE failed: %w", err)
+	}
+	return parseUploadResponse(finalBody)
+}
+
+// field is an ordered key-value pair for multipart form fields.
+// Using a slice instead of map guarantees deterministic field ordering.
+type field struct{ key, value string }
+
+// chunkedCommandRaw posts a multipart/form-data command and returns the raw
+// response body. chunk is written as the "media" field when non-nil.
+func (c *Client) chunkedCommandRaw(ctx context.Context, endpoint, accessToken string, fields []field, chunk []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	for _, f := range fields {
+		if err := w.WriteField(f.key, f.value); err != nil {
+			return nil, fmt.Errorf("xapi: write field %s: %w", f.key, err)
+		}
+	}
+	if chunk != nil {
+		h := make(textproto.MIMEHeader)
+		h.Set("Content-Disposition", `form-data; name="media"; filename="chunk"`)
+		h.Set("Content-Type", "application/octet-stream")
+		part, err := w.CreatePart(h)
+		if err != nil {
+			return nil, fmt.Errorf("xapi: create chunk part: %w", err)
+		}
+		if _, err := part.Write(chunk); err != nil {
+			return nil, fmt.Errorf("xapi: write chunk: %w", err)
+		}
+	}
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("xapi: close multipart writer: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &buf)
+	if err != nil {
+		return nil, fmt.Errorf("xapi: build request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", w.FormDataContentType())
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("xapi: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("xapi: command failed with %d: %s", resp.StatusCode, string(body))
+	}
+	return body, nil
+}
+
+// parseUploadResponse decodes a v2 (or v1.1 fallback) media upload response.
+func parseUploadResponse(respBody []byte) (UploadMediaResult, error) {
+	if len(respBody) == 0 {
+		return UploadMediaResult{}, nil
+	}
 	var v2Result struct {
 		Data struct {
 			ID             string          `json:"id"`
