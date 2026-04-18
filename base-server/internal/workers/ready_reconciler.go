@@ -149,7 +149,12 @@ func (w *ReadyReconciler) fail(ctx context.Context, row store.RetryablePlatformP
 	errMsg := cause.Error()
 	now := time.Now()
 	attempt := row.AttemptCount + 1
-	_ = w.store.UpdatePlatformPostStatus(ctx, row.ID, store.PlatformPostStatusFailed, nil, nil, &errMsg, &attempt, nil, &now)
+	var nextRetry *time.Time
+	if attempt < row.MaxAttempts {
+		t := computeNextRetryAt(attempt)
+		nextRetry = &t
+	}
+	_ = w.store.UpdatePlatformPostStatus(ctx, row.ID, store.PlatformPostStatusFailed, nil, nil, &errMsg, &attempt, nextRetry, &now)
 	reconcileParentStatus(ctx, w.store, row.AccountID, row.PostID, w.logger)
 }
 

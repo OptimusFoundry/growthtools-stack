@@ -34,7 +34,9 @@ When in doubt, run `ToolSearch` to discover available tools for a task before do
 
 - **Dispatch guide:** [.claude/agents/README.md](.claude/agents/README.md) — read this before spinning up agents. Lists every agent, its model tier (haiku/sonnet/opus), which docs it reads, and parallelisation rules.
 
-> **IMPORTANT — implementation workflow (always two steps):**
+> **IMPORTANT — implementation workflow (always three steps):**
+>
+> **Step 0 — Isolate:** Use the `superpowers:using-git-worktrees` skill to create an isolated git worktree before ANY work begins — features, bugfixes, refactors, migrations, or config changes. Never work directly on `main`.
 >
 > **Step 1 — Architect:** Use `plan-writer` to investigate the PRD, tracker, and docs, then produce a detailed implementation plan (DB changes, API contracts, UI changes). Only reads code to fill specific gaps the docs don't cover.
 >
@@ -43,7 +45,7 @@ When in doubt, run `ToolSearch` to discover available tools for a task before do
 > - Backend-only → `backend-supervisor`
 > - Frontend-only → `frontend-supervisor`
 >
-> Never write code directly. Always architect first, then supervise.
+> Never write code directly. Always isolate in a worktree first, then architect, then supervise.
 
 ### Backend agents (`backend-*` prefix)
 Haiku — batch freely (pattern-backed, read docs then execute):
