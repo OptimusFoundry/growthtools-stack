@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GitCommit, Github } from "lucide-react";
 import { CommitRow } from "@/components/github/CommitRow";
+import { Topbar } from "@/components/Layout/Topbar";
 import { useGitHubCommits } from "@/hooks/useGitHubCommits";
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
@@ -25,80 +26,87 @@ function GitHubPage() {
 	);
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+	const topbar = (
+		<Topbar
+			title="GitHub"
+			eyebrow={
+				connection
+					? `${total} commit${total === 1 ? "" : "s"} tracked`
+					: "Not connected"
+			}
+			actions={
+				connection ? (
+					<Button variant="ghost" size="sm" onClick={refetch}>
+						Refresh
+					</Button>
+				) : undefined
+			}
+		/>
+	);
+
 	if (connectionLoading) {
 		return (
-			<Stack gap="lg" className={styles.page} animate>
-				<Stack align="center" justify="center" className={styles.loading}>
-					<Spinner size="lg" />
+			<>
+				{topbar}
+				<Stack gap="lg" className={styles.page} animate>
+					<Stack align="center" justify="center" className={styles.loading}>
+						<Spinner size="lg" />
+					</Stack>
 				</Stack>
-			</Stack>
+			</>
 		);
 	}
 
 	return (
-		<Stack gap="lg" className={styles.page} animate>
-			<Stack direction="row" justify="between" align="start" wrap>
-				<Stack gap="xs">
-					<Text as="h1" size="2xl" weight="bold">
-						GitHub Activity
-					</Text>
-					<Text color="muted">
-						Every commit we received, what we captured, and what posts came out
-						of it
-					</Text>
-				</Stack>
-				{connection && (
-					<Button variant="ghost" size="sm" onClick={refetch}>
-						Refresh
-					</Button>
+		<>
+			{topbar}
+			<Stack gap="lg" className={styles.page} animate>
+				{!connection ? (
+					<EmptyState
+						icon={<Github size={48} />}
+						title="GitHub isn't connected"
+						description="Connect your GitHub account in Settings → Platforms to start watching for new commits."
+						action={
+							<Link to="/account" search={{ tab: "platforms" }}>
+								<Button variant="primary">Connect GitHub</Button>
+							</Link>
+						}
+					/>
+				) : loading && commits.length === 0 ? (
+					<Stack align="center" justify="center" className={styles.loading}>
+						<Spinner size="lg" />
+					</Stack>
+				) : commits.length === 0 ? (
+					<EmptyState
+						icon={<GitCommit size={48} />}
+						title="No commits yet"
+						description="Push to a watched repository and it'll show up here within seconds."
+					/>
+				) : (
+					<Stack gap="md">
+						<Stack gap="sm">
+							{commits.map((commit, index) => (
+								<CommitRow key={commit.id} commit={commit} index={index} />
+							))}
+						</Stack>
+						{totalPages > 1 && (
+							<Stack direction="row" justify="between" align="center" wrap>
+								<Text size="xs" color="muted">
+									{total} commit{total === 1 ? "" : "s"} · page {page} of{" "}
+									{totalPages}
+								</Text>
+								<Pagination
+									page={page}
+									totalPages={totalPages}
+									onPageChange={setPage}
+									size="sm"
+									disabled={loading}
+								/>
+							</Stack>
+						)}
+					</Stack>
 				)}
 			</Stack>
-
-			{!connection ? (
-				<EmptyState
-					icon={<Github size={48} />}
-					title="GitHub isn't connected"
-					description="Connect your GitHub account in Settings → Platforms to start watching for new commits."
-					action={
-						<Link to="/account" search={{ tab: "platforms" }}>
-							<Button variant="primary">Connect GitHub</Button>
-						</Link>
-					}
-				/>
-			) : loading && commits.length === 0 ? (
-				<Stack align="center" justify="center" className={styles.loading}>
-					<Spinner size="lg" />
-				</Stack>
-			) : commits.length === 0 ? (
-				<EmptyState
-					icon={<GitCommit size={48} />}
-					title="No commits yet"
-					description="Push to a watched repository and it'll show up here within seconds."
-				/>
-			) : (
-				<Stack gap="md">
-					<Stack gap="sm">
-						{commits.map((commit, index) => (
-							<CommitRow key={commit.id} commit={commit} index={index} />
-						))}
-					</Stack>
-					{totalPages > 1 && (
-						<Stack direction="row" justify="between" align="center" wrap>
-							<Text size="xs" color="muted">
-								{total} commit{total === 1 ? "" : "s"} · page {page} of{" "}
-								{totalPages}
-							</Text>
-							<Pagination
-								page={page}
-								totalPages={totalPages}
-								onPageChange={setPage}
-								size="sm"
-								disabled={loading}
-							/>
-						</Stack>
-					)}
-				</Stack>
-			)}
-		</Stack>
+		</>
 	);
 }

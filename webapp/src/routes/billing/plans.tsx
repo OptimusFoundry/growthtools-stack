@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { fetcher } from "@/api/client";
+import { Topbar } from "@/components/Layout/Topbar";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
 import { Banner } from "@/proto-design-system/components/feedback/Banner";
@@ -412,66 +413,79 @@ function PlansPage() {
 		return priceInfo?.priceId === currentSubscription.priceId;
 	};
 
+	const topbar = (
+		<Topbar title="Plans" eyebrow="Pick the plan that fits how you ship" />
+	);
+
 	if (loading || subscriptionLoading) {
 		return (
-			<div className={styles.page}>
-				<Stack gap="xl" align="center" justify="center">
-					<Spinner size="lg" />
-				</Stack>
-			</div>
+			<>
+				{topbar}
+				<div className={styles.page}>
+					<Stack gap="xl" align="center" justify="center">
+						<Spinner size="lg" />
+					</Stack>
+				</div>
+			</>
 		);
 	}
 
 	if (error) {
 		return (
-			<div className={styles.page}>
-				<Stack gap="xl" align="center">
-					<Text color="error">Failed to load pricing: {error}</Text>
-				</Stack>
-			</div>
+			<>
+				{topbar}
+				<div className={styles.page}>
+					<Stack gap="xl" align="center">
+						<Text color="error">Failed to load pricing: {error}</Text>
+					</Stack>
+				</div>
+			</>
 		);
 	}
 
 	return (
-		<div className={styles.page}>
-			<Stack gap="xl" align="center">
-				{portalError && (
-					<Banner
-						type="error"
-						variant="filled"
-						title="Error"
-						description={portalError}
-					/>
-				)}
-
-				{portalLoading && (
-					<Banner
-						type="info"
-						variant="filled"
-						title="Opening Billing Portal"
-						description="Redirecting you to manage your subscription..."
-					/>
-				)}
-
-				<BillingToggle
-					isYearly={isYearly}
-					onToggle={() => setIsYearly(!isYearly)}
-				/>
-
-				<div className={styles.cardsGrid}>
-					{PLANS.map((plan) => (
-						<PricingCard
-							key={plan.id}
-							plan={plan}
-							priceInfo={getPriceInfo(plan.id)}
-							onSelect={handleSelectPlan}
-							isCurrentPlan={isCurrentPlan(plan.id)}
-							isLoading={portalLoading}
+		<>
+			{topbar}
+			<div className={styles.page}>
+				<Stack gap="xl" align="center">
+					{portalError && (
+						<Banner
+							type="error"
+							variant="filled"
+							title="Error"
+							description={portalError}
 						/>
-					))}
-				</div>
-			</Stack>
-		</div>
+					)}
+
+					{portalLoading && (
+						<Banner
+							type="info"
+							variant="filled"
+							title="Opening Billing Portal"
+							description="Redirecting you to manage your subscription..."
+						/>
+					)}
+
+					<BillingToggle
+						isYearly={isYearly}
+						onToggle={() => setIsYearly(!isYearly)}
+					/>
+
+					<div className={styles.cardsGrid}>
+						{PLANS.map((plan) => (
+							<PricingCard
+								key={plan.id}
+								plan={plan}
+								priceInfo={getPriceInfo(plan.id)}
+								onSelect={handleSelectPlan}
+								isCurrentPlan={isCurrentPlan(plan.id)}
+								isLoading={portalLoading}
+							/>
+						))}
+					</div>
+				</Stack>
+			</div>
+		</>
 	);
 }
 

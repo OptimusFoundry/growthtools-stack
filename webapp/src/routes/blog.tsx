@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Globe, Plus, SearchX, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
+import { Topbar } from "@/components/Layout/Topbar";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
@@ -111,221 +112,220 @@ function BlogPage() {
 	const draftCount = allPosts.filter((p) => p.status === "draft").length;
 
 	return (
-		<Stack gap="lg" className={styles.page} animate>
-			<Stack direction="row" justify="between" align="start" wrap>
-				<Stack gap="xs">
-					<Text as="h1" size="2xl" weight="bold">
-						Blog
-					</Text>
-					<Text color="muted">Write and manage your long-form blog posts</Text>
-				</Stack>
-				<Link to="/blog/new">
-					<Button variant="primary">
-						<Plus size={16} /> New Post
-					</Button>
-				</Link>
-			</Stack>
-
-			<div className={styles.stats}>
-				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">
-						{postCount}
-					</Text>
-					<Text size="xs" color="muted">
-						Total
-					</Text>
-				</div>
-				<div className={styles.statDivider} />
-				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">
-						{publishedCount}
-					</Text>
-					<Text size="xs" color="muted">
-						Published
-					</Text>
-				</div>
-				<div className={styles.statDivider} />
-				<div className={styles.statItem}>
-					<Text size="2xl" weight="bold">
-						{draftCount}
-					</Text>
-					<Text size="xs" color="muted">
-						Drafts
-					</Text>
-				</div>
-			</div>
-
-			<div className={styles.filters}>
-				<Dropdown
-					items={STATUS_ITEMS}
-					value={statusFilter}
-					onChange={setStatusFilter}
-					placeholder="Filter by status"
-					size="sm"
-					variant="outline"
-				/>
-			</div>
-
-			<div className={styles.content}>
-				{loading ? (
-					<div className={styles.loadingState}>
-						<Spinner />
-					</div>
-				) : blogPosts.length === 0 && hasActiveFilter ? (
-					<EmptyState
-						title="No matching posts"
-						description="Try adjusting your filters to find what you're looking for."
-						icon={<SearchX size={48} />}
-						action={
-							<Button variant="secondary" onClick={() => setStatusFilter("")}>
-								Clear filters
-							</Button>
-						}
-					/>
-				) : blogPosts.length === 0 ? (
-					<EmptyState
-						title="No blog posts yet"
-						description="Create your first blog post to share long-form content."
-						icon={<FileText size={48} />}
-						action={
-							<Link to="/blog/new">
-								<Button variant="primary">
-									<Plus size={16} /> New Post
-								</Button>
-							</Link>
-						}
-					/>
-				) : (
-					<Stack gap="xs">
-						{blogPosts.map((post, index) => (
-							<motion.div
-								key={post.id}
-								initial={{ opacity: 0, y: 8 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.2, delay: index * 0.03 }}
-							>
-								<Link
-									to="/blog/$id"
-									params={{ id: post.id }}
-									className={styles.postLink}
-								>
-									<div className={styles.postCard}>
-										<div className={styles.postCardLeft}>
-											<div className={styles.postIcon}>
-												<FileText size={16} />
-											</div>
-										</div>
-										<div className={styles.postCardBody}>
-											<div className={styles.postTitleRow}>
-												<Text
-													size="sm"
-													weight="medium"
-													className={styles.postTitle}
-												>
-													{truncate(post.title, 80)}
-												</Text>
-												<Badge
-													variant={STATUS_BADGE_VARIANT[post.status]}
-													size="sm"
-												>
-													{STATUS_LABELS[post.status]}
-												</Badge>
-											</div>
-											{post.excerpt && (
-												<Text size="xs" color="muted">
-													{truncate(post.excerpt, 160)}
-												</Text>
-											)}
-											{post.keywords.length > 0 && (
-												<div className={styles.postTags}>
-													{post.keywords.slice(0, 4).map((kw) => (
-														<span key={kw} className={styles.tag}>
-															{kw}
-														</span>
-													))}
-													{post.keywords.length > 4 && (
-														<span className={styles.tag}>
-															+{post.keywords.length - 4}
-														</span>
-													)}
-												</div>
-											)}
-											<div className={styles.postFooter}>
-												<div className={styles.postMeta}>
-													<span className={styles.metaItem}>
-														{post.publishedAt
-															? `Published ${timeAgo(post.publishedAt)}`
-															: timeAgo(post.createdAt)}
-													</span>
-												</div>
-												<div className={styles.postActions}>
-													{post.status === "draft" && (
-														<Button
-															variant="primary"
-															size="sm"
-															isIconOnly
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																handlePublish(post.id);
-															}}
-															isLoading={publishing}
-															aria-label="Publish blog post"
-														>
-															<Globe size={14} />
-														</Button>
-													)}
-													{post.status !== "published" && (
-														<Button
-															variant="ghost"
-															size="sm"
-															isIconOnly
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																setDeleteTargetId(post.id);
-															}}
-															aria-label="Delete blog post"
-														>
-															<Trash2 size={14} />
-														</Button>
-													)}
-												</div>
-											</div>
-										</div>
-									</div>
-								</Link>
-							</motion.div>
-						))}
-					</Stack>
-				)}
-			</div>
-
-			<Modal
-				isOpen={deleteTargetId !== null}
-				onClose={() => setDeleteTargetId(null)}
-				title="Delete blog post"
-				size="sm"
-				footer={
-					<Stack direction="row" gap="sm" justify="end">
-						<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
-							Cancel
+		<>
+			<Topbar
+				title="Blog"
+				eyebrow={`${postCount} total · ${draftCount} drafts · ${publishedCount} published`}
+				actions={
+					<Link to="/blog/new">
+						<Button variant="primary">
+							<Plus size={16} /> New Post
 						</Button>
-						<Button
-							variant="destructive"
-							onClick={handleDeleteConfirm}
-							isLoading={deleting}
-						>
-							Delete
-						</Button>
-					</Stack>
+					</Link>
 				}
-			>
-				<Text color="secondary">
-					Are you sure you want to delete this blog post? This action cannot be
-					undone.
-				</Text>
-			</Modal>
-		</Stack>
+			/>
+			<Stack gap="lg" className={styles.page} animate>
+				<div className={styles.stats}>
+					<div className={styles.statItem}>
+						<Text size="2xl" weight="bold">
+							{postCount}
+						</Text>
+						<Text size="xs" color="muted">
+							Total
+						</Text>
+					</div>
+					<div className={styles.statDivider} />
+					<div className={styles.statItem}>
+						<Text size="2xl" weight="bold">
+							{publishedCount}
+						</Text>
+						<Text size="xs" color="muted">
+							Published
+						</Text>
+					</div>
+					<div className={styles.statDivider} />
+					<div className={styles.statItem}>
+						<Text size="2xl" weight="bold">
+							{draftCount}
+						</Text>
+						<Text size="xs" color="muted">
+							Drafts
+						</Text>
+					</div>
+				</div>
+
+				<div className={styles.filters}>
+					<Dropdown
+						items={STATUS_ITEMS}
+						value={statusFilter}
+						onChange={setStatusFilter}
+						placeholder="Filter by status"
+						size="sm"
+						variant="outline"
+					/>
+				</div>
+
+				<div className={styles.content}>
+					{loading ? (
+						<div className={styles.loadingState}>
+							<Spinner />
+						</div>
+					) : blogPosts.length === 0 && hasActiveFilter ? (
+						<EmptyState
+							title="No matching posts"
+							description="Try adjusting your filters to find what you're looking for."
+							icon={<SearchX size={48} />}
+							action={
+								<Button variant="secondary" onClick={() => setStatusFilter("")}>
+									Clear filters
+								</Button>
+							}
+						/>
+					) : blogPosts.length === 0 ? (
+						<EmptyState
+							title="No blog posts yet"
+							description="Create your first blog post to share long-form content."
+							icon={<FileText size={48} />}
+							action={
+								<Link to="/blog/new">
+									<Button variant="primary">
+										<Plus size={16} /> New Post
+									</Button>
+								</Link>
+							}
+						/>
+					) : (
+						<Stack gap="xs">
+							{blogPosts.map((post, index) => (
+								<motion.div
+									key={post.id}
+									initial={{ opacity: 0, y: 8 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ duration: 0.2, delay: index * 0.03 }}
+								>
+									<Link
+										to="/blog/$id"
+										params={{ id: post.id }}
+										className={styles.postLink}
+									>
+										<div className={styles.postCard}>
+											<div className={styles.postCardLeft}>
+												<div className={styles.postIcon}>
+													<FileText size={16} />
+												</div>
+											</div>
+											<div className={styles.postCardBody}>
+												<div className={styles.postTitleRow}>
+													<Text
+														size="sm"
+														weight="medium"
+														className={styles.postTitle}
+													>
+														{truncate(post.title, 80)}
+													</Text>
+													<Badge
+														variant={STATUS_BADGE_VARIANT[post.status]}
+														size="sm"
+													>
+														{STATUS_LABELS[post.status]}
+													</Badge>
+												</div>
+												{post.excerpt && (
+													<Text size="xs" color="muted">
+														{truncate(post.excerpt, 160)}
+													</Text>
+												)}
+												{post.keywords.length > 0 && (
+													<div className={styles.postTags}>
+														{post.keywords.slice(0, 4).map((kw) => (
+															<span key={kw} className={styles.tag}>
+																{kw}
+															</span>
+														))}
+														{post.keywords.length > 4 && (
+															<span className={styles.tag}>
+																+{post.keywords.length - 4}
+															</span>
+														)}
+													</div>
+												)}
+												<div className={styles.postFooter}>
+													<div className={styles.postMeta}>
+														<span className={styles.metaItem}>
+															{post.publishedAt
+																? `Published ${timeAgo(post.publishedAt)}`
+																: timeAgo(post.createdAt)}
+														</span>
+													</div>
+													<div className={styles.postActions}>
+														{post.status === "draft" && (
+															<Button
+																variant="primary"
+																size="sm"
+																isIconOnly
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	handlePublish(post.id);
+																}}
+																isLoading={publishing}
+																aria-label="Publish blog post"
+															>
+																<Globe size={14} />
+															</Button>
+														)}
+														{post.status !== "published" && (
+															<Button
+																variant="ghost"
+																size="sm"
+																isIconOnly
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	setDeleteTargetId(post.id);
+																}}
+																aria-label="Delete blog post"
+															>
+																<Trash2 size={14} />
+															</Button>
+														)}
+													</div>
+												</div>
+											</div>
+										</div>
+									</Link>
+								</motion.div>
+							))}
+						</Stack>
+					)}
+				</div>
+
+				<Modal
+					isOpen={deleteTargetId !== null}
+					onClose={() => setDeleteTargetId(null)}
+					title="Delete blog post"
+					size="sm"
+					footer={
+						<Stack direction="row" gap="sm" justify="end">
+							<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
+								Cancel
+							</Button>
+							<Button
+								variant="destructive"
+								onClick={handleDeleteConfirm}
+								isLoading={deleting}
+							>
+								Delete
+							</Button>
+						</Stack>
+					}
+				>
+					<Text color="secondary">
+						Are you sure you want to delete this blog post? This action cannot
+						be undone.
+					</Text>
+				</Modal>
+			</Stack>
+		</>
 	);
 }

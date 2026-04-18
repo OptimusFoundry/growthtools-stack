@@ -6,6 +6,7 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { CreditCard, Mic, Share2 } from "lucide-react";
 import { memo, useCallback } from "react";
+import { Topbar } from "@/components/Layout/Topbar";
 import { PageTransition } from "@/proto-design-system/components/layout/PageTransition/PageTransition";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import {
@@ -15,7 +16,6 @@ import {
 	TabPanels,
 	Tabs,
 } from "@/proto-design-system/components/navigation/Tabs";
-import { Text } from "@/proto-design-system/components/primitives/Text";
 import { BillingTab } from "./BillingTab";
 import styles from "./component.module.scss";
 import { PlatformConnectionsTab } from "./PlatformConnectionsTab";
@@ -57,41 +57,44 @@ export const AccountPage = memo(function AccountPage() {
 	);
 
 	return (
-		<Stack gap="lg" className={styles.page} animate>
-			<Stack gap="xs">
-				<Text as="h1" size="2xl" weight="bold">
-					Settings
-				</Text>
-				<Text color="muted">Manage your account settings and billing</Text>
+		<>
+			<Topbar
+				title="Settings"
+				eyebrow="Manage your account settings and billing"
+			/>
+			<Stack gap="lg" className={styles.page} animate>
+				<Tabs
+					activeTab={activeTab}
+					onTabChange={handleTabChange}
+					variant="line"
+				>
+					<TabList aria-label="Settings tabs">
+						<Tab id="billing" icon={<CreditCard size={16} />}>
+							Billing
+						</Tab>
+						<Tab id="voice-profile" icon={<Mic size={16} />}>
+							Voice Profile
+						</Tab>
+						<Tab id="platforms" icon={<Share2 size={16} />}>
+							Platforms
+						</Tab>
+					</TabList>
+					<PageTransition pageKey={activeTab} type="slideUp">
+						<TabPanels>
+							<TabPanel id="billing">
+								<BillingTab />
+							</TabPanel>
+							<TabPanel id="voice-profile">
+								<VoiceProfileTab />
+							</TabPanel>
+							<TabPanel id="platforms">
+								<PlatformConnectionsTab />
+							</TabPanel>
+						</TabPanels>
+					</PageTransition>
+				</Tabs>
 			</Stack>
-
-			<Tabs activeTab={activeTab} onTabChange={handleTabChange} variant="line">
-				<TabList aria-label="Settings tabs">
-					<Tab id="billing" icon={<CreditCard size={16} />}>
-						Billing
-					</Tab>
-					<Tab id="voice-profile" icon={<Mic size={16} />}>
-						Voice Profile
-					</Tab>
-					<Tab id="platforms" icon={<Share2 size={16} />}>
-						Platforms
-					</Tab>
-				</TabList>
-				<PageTransition pageKey={activeTab} type="slideUp">
-					<TabPanels>
-						<TabPanel id="billing">
-							<BillingTab />
-						</TabPanel>
-						<TabPanel id="voice-profile">
-							<VoiceProfileTab />
-						</TabPanel>
-						<TabPanel id="platforms">
-							<PlatformConnectionsTab />
-						</TabPanel>
-					</TabPanels>
-				</PageTransition>
-			</Tabs>
-		</Stack>
+		</>
 	);
 });
 
