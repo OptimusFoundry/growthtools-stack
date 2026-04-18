@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import { useCallback } from "react";
 import { Stepper } from "@/proto-design-system/components/forms/Stepper";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
@@ -29,12 +28,9 @@ export function PostConfigSection({
 		(p) => PLATFORM_SUPPORTS_THREADS[p],
 	);
 
-	const handleContentTypeToggle = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
-			onContentTypeChange(e.target.checked ? "thread" : "text");
-		},
-		[onContentTypeChange],
-	);
+	const handleContentTypeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+		onContentTypeChange(e.target.checked ? "thread" : "text");
+	};
 
 	if (!threadSupported) return null;
 
@@ -53,14 +49,11 @@ export function PostConfigSection({
 					disabled={readOnly}
 				/>
 				<motion.div
-					className={styles.lengthField}
+					className={`${styles.lengthField} ${contentType !== "thread" ? styles.lengthDisabled : ""}`}
 					aria-hidden={contentType !== "thread"}
 					animate={{ opacity: contentType === "thread" ? 1 : 0 }}
 					initial={false}
 					transition={{ duration: 0.18, ease: "easeOut" }}
-					style={{
-						pointerEvents: contentType === "thread" ? "auto" : "none",
-					}}
 				>
 					<div className={styles.field}>
 						<Text size="sm">Thread length</Text>

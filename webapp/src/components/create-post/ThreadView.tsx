@@ -80,11 +80,7 @@ export function ThreadView({
 								<div
 									key={`${platform}-segment-${i + 1}`}
 									className={styles.segment}
-									style={
-										{
-											"--platform-accent": platformAccent(platform),
-										} as React.CSSProperties
-									}
+									data-platform={platform}
 								>
 									<PlatformPostCard
 										platform={platform}
@@ -101,18 +97,4 @@ export function ThreadView({
 			</div>
 		</div>
 	);
-}
-
-function platformAccent(platform: PlatformType): string {
-	const accents: Record<PlatformType, string> = {
-		x: "var(--color-platform-x)",
-		linkedin: "var(--color-platform-linkedin)",
-		bluesky: "var(--color-platform-bluesky)",
-		facebook: "var(--color-platform-facebook)",
-		instagram: "var(--color-platform-instagram)",
-		threads: "var(--color-platform-threads)",
-		tiktok: "var(--color-platform-tiktok)",
-		pinterest: "var(--color-platform-pinterest)",
-	};
-	return accents[platform];
 }

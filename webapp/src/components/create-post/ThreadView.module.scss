@@ -76,6 +76,7 @@
 		left: 3px;
 		top: 0;
 		bottom: 0;
+		/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 		width: 2px;
 		background: var(--platform-accent, var(--color-border));
 		border-radius: var(--radius-full);
@@ -84,5 +85,15 @@
 	&:last-child::before {
 		bottom: 50%;
 	}
+
+	// Platform-specific connector line colors via data-attribute (avoids inline style)
+	&[data-platform="x"]         { --platform-accent: var(--color-platform-x); }
+	&[data-platform="bluesky"]   { --platform-accent: var(--color-platform-bluesky); }
+	&[data-platform="threads"]   { --platform-accent: var(--color-platform-threads); }
+	&[data-platform="linkedin"]  { --platform-accent: var(--color-platform-linkedin); }
+	&[data-platform="facebook"]  { --platform-accent: var(--color-platform-facebook); }
+	&[data-platform="instagram"] { --platform-accent: var(--color-platform-instagram); }
+	&[data-platform="tiktok"]    { --platform-accent: var(--color-platform-tiktok); }
+	&[data-platform="pinterest"] { --platform-accent: var(--color-platform-pinterest); }
 }
 

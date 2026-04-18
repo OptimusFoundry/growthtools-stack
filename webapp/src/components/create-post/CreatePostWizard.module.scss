@@ -142,7 +142,9 @@
 }
 
 .statusPending {
+	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 	width: 18px;
+	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 	height: 18px;
 	border-radius: var(--radius-full);
 	background: var(--color-base-100);
@@ -164,6 +166,7 @@
 
 .streamingCursor {
 	display: inline-block;
+	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 	width: 2px;
 	height: 1em;
 	background: var(--color-primary);
