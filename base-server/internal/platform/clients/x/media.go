@@ -118,16 +118,16 @@ func (c *Client) UploadMediaAsync(ctx context.Context, req UploadMediaRequest, a
 	return parseUploadResponse(respBody)
 }
 
-// uploadVideoChunked uploads a video using the X API v2 INIT→APPEND→FINALIZE
-// chunked flow. The v2 single-shot multipart endpoint rejects tweet_video —
-// chunked upload is the only supported path for video on v2.
+// uploadVideoChunked uploads a video using the X v1.1 INIT→APPEND→FINALIZE
+// chunked flow. The v2 API has no media upload endpoint — all media uploads
+// (including video) must use upload.twitter.com/1.1/media/upload.json.
 // tokenSecret is unused: video always authenticates with Bearer, not OAuth 1.0a.
 func (c *Client) uploadVideoChunked(ctx context.Context, videoBytes []byte, mediaType, accessToken string) (UploadMediaResult, error) {
 	if len(videoBytes) == 0 {
 		return UploadMediaResult{}, fmt.Errorf("xapi: video upload requires non-empty bytes")
 	}
 
-	const endpoint = "https://api.x.com/2/media/upload"
+	const endpoint = "https://upload.twitter.com/1.1/media/upload.json"
 	const chunkSize = 5 * 1024 * 1024
 
 	// INIT
