@@ -23,7 +23,8 @@ growth-tools/
 
 > **IMPORTANT:** At the start of every session, check what skills and MCP tools are available and use them throughout.
 
-- **Superpowers skills** — invoke with the `Skill` tool. Check available skills before starting any task; there is likely a skill that applies. Key skills: `superpowers:subagent-driven-development`, `superpowers:writing-plans`, `superpowers:using-git-worktrees`, `superpowers:finishing-a-development-branch`.
+- **Superpowers skills** — invoke with the `Skill` tool. Check available skills before starting any task; there is likely a skill that applies. Key skills: `superpowers:writing-plans`, `superpowers:using-git-worktrees`, `superpowers:finishing-a-development-branch`.
+- **Backend subagent coordination** — for Go backend work, use `backend-subagent-development` instead of `superpowers:subagent-driven-development`. It dispatches backend-* agents in parallel batches by phase (code agents first, then test agents), which is safe because agents write to isolated files.
 - **Language Server (LSP)** — use the `LSP` tool for precise Go and TypeScript navigation: go-to-definition, find-references, type information. Prefer this over grep when exploring types or tracing call chains.
 - **Browser automation** — `mcp__claude-in-chrome__*` tools available for testing frontend features in a real browser. Use for verifying UI changes end-to-end.
 - **Playwright MCP** — `mcp__plugin_playwright_*` tools for browser automation and E2E verification.
@@ -40,10 +41,10 @@ When in doubt, run `ToolSearch` to discover available tools for a task before do
 >
 > **Step 1 — Architect:** Use `plan-writer` to investigate the PRD, tracker, and docs, then produce a detailed implementation plan (DB changes, API contracts, UI changes). Only reads code to fill specific gaps the docs don't cover.
 >
-> **Step 2 — Execute:** Dispatch the right supervisor with the plan:
-> - Full-stack feature (both layers) → `fullstack-supervisor`
-> - Backend-only → `backend-supervisor`
-> - Frontend-only → `frontend-supervisor`
+> **Step 2 — Execute:** Choose the right executor for the plan:
+> - Full-stack feature (both layers) → dispatch `fullstack-supervisor` agent
+> - Backend-only → invoke `backend-subagent-development` skill (stays in main session, batches haiku agents directly)
+> - Frontend-only → dispatch `frontend-supervisor` agent
 >
 > Never write code directly. Always isolate in a worktree first, then architect, then supervise.
 

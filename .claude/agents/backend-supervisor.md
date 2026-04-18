@@ -1,6 +1,6 @@
 ---
 name: backend-supervisor
-description: Executes a backend implementation plan end-to-end. Dispatches parallel haiku agents to write code, then parallel haiku agents to write tests, then runs build/vet/test checks, runs pre-commit, and commits. MUST BE USED when executing a backend plan to completion autonomously.
+description: Executes a backend implementation plan end-to-end as an isolated subagent. Dispatches parallel haiku agents to write code, then parallel haiku agents to write tests, then runs build/vet/test checks, runs pre-commit, and commits. Invoked by fullstack-supervisor for the backend half of full-stack plans — not dispatched directly for backend-only work (use the backend-subagent-development skill instead).
 tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 model: sonnet
 ---
