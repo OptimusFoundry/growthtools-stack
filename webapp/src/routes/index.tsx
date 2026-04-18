@@ -3,7 +3,6 @@ import {
 	BarChart,
 	Calendar,
 	Image,
-	MessageSquare,
 	Newspaper,
 	PenSquare,
 } from "lucide-react";
@@ -17,7 +16,6 @@ import styles from "./page.module.scss";
 const quickLinks = [
 	{ label: "Calendar", href: "/calendar", icon: <Calendar size={18} /> },
 	{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
-	{ label: "AI Chat", href: "/chat", icon: <MessageSquare size={18} /> },
 	{ label: "Media", href: "/media", icon: <Image size={18} /> },
 	{ label: "Blog", href: "/blog", icon: <Newspaper size={18} /> },
 	{ label: "Analytics", href: "/analytics", icon: <BarChart size={18} /> },
