@@ -6,6 +6,7 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { CreditCard, Mic, Share2 } from "lucide-react";
 import { memo, useCallback } from "react";
+import { PageTransition } from "@/proto-design-system/components/layout/PageTransition/PageTransition";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import {
 	Tab,
@@ -76,17 +77,19 @@ export const AccountPage = memo(function AccountPage() {
 						Platforms
 					</Tab>
 				</TabList>
-				<TabPanels>
-					<TabPanel id="billing">
-						<BillingTab />
-					</TabPanel>
-					<TabPanel id="voice-profile">
-						<VoiceProfileTab />
-					</TabPanel>
-					<TabPanel id="platforms">
-						<PlatformConnectionsTab />
-					</TabPanel>
-				</TabPanels>
+				<PageTransition pageKey={activeTab} type="slideUp">
+					<TabPanels>
+						<TabPanel id="billing">
+							<BillingTab />
+						</TabPanel>
+						<TabPanel id="voice-profile">
+							<VoiceProfileTab />
+						</TabPanel>
+						<TabPanel id="platforms">
+							<PlatformConnectionsTab />
+						</TabPanel>
+					</TabPanels>
+				</PageTransition>
 			</Tabs>
 		</Stack>
 	);
