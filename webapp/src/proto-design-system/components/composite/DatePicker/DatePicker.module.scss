@@ -107,6 +107,19 @@
   z-index: var(--z-dropdown);
 }
 
+// Inline mode: the calendar lives in normal flow, no popup chrome.
+.inline {
+  width: 100%;
+
+  .calendar {
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    margin-top: 0;
+    position: static;
+    width: 100%;
+  }
+}
+
 // =============================================================================
 // HEADER
 // =============================================================================

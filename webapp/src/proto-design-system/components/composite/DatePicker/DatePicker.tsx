@@ -33,6 +33,8 @@ export interface DatePickerProps {
 	formatDate?: (date: Date) => string;
 	/** First day of week (0 = Sunday, 1 = Monday) */
 	firstDayOfWeek?: 0 | 1;
+	/** Render the calendar always-open, with no trigger button. */
+	inline?: boolean;
 	/** Additional className */
 	className?: string;
 }
@@ -97,9 +99,11 @@ export function DatePicker({
 	maxDate,
 	formatDate = defaultFormatDate,
 	firstDayOfWeek = 0,
+	inline = false,
 	className,
 }: DatePickerProps) {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isOpenState, setIsOpen] = useState(false);
+	const isOpen = inline || isOpenState;
 	const [viewDate, setViewDate] = useState(() => value || new Date());
 	const [focusedDate, setFocusedDate] = useState<Date | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -118,7 +122,7 @@ export function DatePicker({
 
 	// Handle click outside
 	useEffect(() => {
-		if (!isOpen) return;
+		if (!isOpen || inline) return;
 
 		const handleClickOutside = (e: MouseEvent | TouchEvent) => {
 			if (
@@ -136,7 +140,7 @@ export function DatePicker({
 			document.removeEventListener("mousedown", handleClickOutside);
 			document.removeEventListener("touchstart", handleClickOutside);
 		};
-	}, [isOpen]);
+	}, [isOpen, inline]);
 
 	// Update view date when value changes
 	useEffect(() => {
@@ -155,15 +159,18 @@ export function DatePicker({
 	}, [isOpen, value]);
 
 	// Handle focus leaving the container
-	const handleContainerBlur = useCallback((e: React.FocusEvent) => {
-		// Check if the new focus target is outside the container
-		if (
-			containerRef.current &&
-			!containerRef.current.contains(e.relatedTarget as Node)
-		) {
-			setIsOpen(false);
-		}
-	}, []);
+	const handleContainerBlur = useCallback(
+		(e: React.FocusEvent) => {
+			if (inline) return;
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(e.relatedTarget as Node)
+			) {
+				setIsOpen(false);
+			}
+		},
+		[inline],
+	);
 
 	// Get days in month
 	const calendarDays = useMemo(() => {
@@ -221,9 +228,9 @@ export function DatePicker({
 		(date: Date) => {
 			if (isDateDisabled(date, minDate, maxDate)) return;
 			onChange?.(date);
-			setIsOpen(false);
+			if (!inline) setIsOpen(false);
 		},
-		[onChange, minDate, maxDate],
+		[onChange, minDate, maxDate, inline],
 	);
 
 	const handlePrevMonth = useCallback(() => {
@@ -400,27 +407,34 @@ export function DatePicker({
 	return (
 		<div
 			ref={containerRef}
-			className={cn(styles.datePicker, styles[`size-${size}`], className)}
+			className={cn(
+				styles.datePicker,
+				styles[`size-${size}`],
+				inline && styles.inline,
+				className,
+			)}
 			onBlur={handleContainerBlur}
 		>
-			<button
-				type="button"
-				className={cn(
-					styles.trigger,
-					isOpen && styles.open,
-					disabled && styles.disabled,
-				)}
-				onClick={handleToggle}
-				onKeyDown={handleKeyDown}
-				disabled={disabled}
-				aria-haspopup="dialog"
-				aria-expanded={isOpen}
-			>
-				<Calendar className={styles.icon} />
-				<span className={cn(styles.value, !value && styles.placeholder)}>
-					{value ? formatDate(value) : placeholder}
-				</span>
-			</button>
+			{!inline && (
+				<button
+					type="button"
+					className={cn(
+						styles.trigger,
+						isOpen && styles.open,
+						disabled && styles.disabled,
+					)}
+					onClick={handleToggle}
+					onKeyDown={handleKeyDown}
+					disabled={disabled}
+					aria-haspopup="dialog"
+					aria-expanded={isOpen}
+				>
+					<Calendar className={styles.icon} />
+					<span className={cn(styles.value, !value && styles.placeholder)}>
+						{value ? formatDate(value) : placeholder}
+					</span>
+				</button>
+			)}
 
 			<AnimatePresence>
 				{isOpen && (

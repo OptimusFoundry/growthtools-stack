@@ -379,6 +379,14 @@ export function WizardInner({
 		return "09:00";
 	});
 
+	const scheduledLabel = scheduleDate
+		? `Scheduled for ${scheduleDate.toLocaleDateString(undefined, {
+				weekday: "long",
+				month: "long",
+				day: "numeric",
+			})} at ${scheduleTime}`
+		: "Pick a date and time below.";
+
 	const handleConfirmSchedule = useCallback(async () => {
 		if (!scheduleDate) {
 			wizard.setError("Please pick a date.");
@@ -505,7 +513,7 @@ export function WizardInner({
 				isOpen={scheduleOpen}
 				onClose={() => setScheduleOpen(false)}
 				title="Schedule post"
-				description="Pick when this post should publish."
+				description={scheduledLabel}
 				size="md"
 				footer={
 					<Stack direction="row" gap="sm" justify="end">
@@ -524,15 +532,12 @@ export function WizardInner({
 				}
 			>
 				<Stack gap="md">
-					<Stack gap="xs">
-						<Text size="sm">Date</Text>
-						<DatePicker
-							value={scheduleDate}
-							onChange={setScheduleDate}
-							minDate={new Date()}
-							placeholder="Pick a date"
-						/>
-					</Stack>
+					<DatePicker
+						value={scheduleDate}
+						onChange={setScheduleDate}
+						minDate={new Date()}
+						inline
+					/>
 					<Stack gap="xs">
 						<Text size="sm">Time</Text>
 						<TextField
