@@ -32,27 +32,27 @@
 	&[data-platform="linkedin"] {
 		--platform-accent: var(--color-platform-linkedin);
 
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-card);
 		box-shadow: var(--shadow-sm);
 	}
 
 	&[data-platform="facebook"] {
 		--platform-accent: var(--color-platform-facebook);
 
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-card);
 		box-shadow: var(--shadow-sm);
 	}
 
 	&[data-platform="instagram"] {
 		--platform-accent: var(--color-platform-instagram);
 
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-card);
 	}
 
 	&[data-platform="tiktok"] {
 		--platform-accent: var(--color-platform-tiktok);
 
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-card);
 		background: var(--color-base-50);
 	}
 
@@ -266,7 +266,7 @@
 .mediaGrid {
 	display: grid;
 	gap: var(--space-0-5, 2px);
-	border-radius: var(--radius-lg);
+	border-radius: var(--radius-card);
 	overflow: hidden;
 	margin-top: var(--space-3);
 	border: 1px solid var(--color-border);

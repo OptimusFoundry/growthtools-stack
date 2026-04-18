@@ -5,48 +5,52 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-9);
 }
 
 .quickAccess {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .sectionTitle {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
   color: var(--color-base-content);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
   margin: 0;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-5);
+  align-items: flex-start;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  justify-content: space-between;
+  min-height: var(--space-20);
+  padding: var(--space-6) var(--space-5);
   text-decoration: none;
   transition: all var(--duration-fast) var(--ease-out);
-  cursor: pointer;
 
   &:hover {
     background-color: var(--color-base-100);
     border-color: var(--color-border-hover);
-    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
   }
 
   &:active {
@@ -54,26 +58,27 @@
   }
 
   i {
-    font-size: var(--font-size-4xl);
     color: var(--color-base-content);
+    font-size: var(--font-size-4xl);
   }
 }
 
 .cardLabel {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
   color: var(--color-base-content);
-  text-align: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-tight);
+  text-align: left;
 }
 
 .personaInfo {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-5);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  padding: var(--space-6);
 }
 
 .personaBadge {

@@ -10,7 +10,7 @@
 
 .mediaCard {
 	border: 1px solid var(--color-border);
-	border-radius: var(--radius-lg);
+	border-radius: var(--radius-card);
 	overflow: hidden;
 	background: var(--color-surface);
 	transition: box-shadow var(--duration-fast) var(--ease-out);
