@@ -1,0 +1,141 @@
+// =============================================================================
+// DRAWER — side panel on desktop, bottom sheet on mobile
+// =============================================================================
+@use "../../../mixins" as *;
+
+.root {
+  inset: 0;
+  position: fixed;
+  z-index: var(--z-modal);
+}
+
+.backdrop {
+  appearance: none;
+  background: oklch(0% 0 0 / 0.5);
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  padding: 0;
+  position: absolute;
+  width: 100%;
+}
+
+// =============================================================================
+// PANEL
+// =============================================================================
+// Mobile-first: bottom sheet that slides up. Desktop: side drawer from right.
+
+.panel {
+  background-color: var(--color-surface);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  bottom: 0;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  max-height: 90vh;
+  position: absolute;
+  right: 0;
+
+  @include breakpoint(md) {
+    border-bottom-left-radius: 0;
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: 0;
+    bottom: 0;
+    left: auto;
+    max-height: 100vh;
+    right: 0;
+    top: 0;
+  }
+}
+
+.size-sm {
+  @include breakpoint(md) {
+    width: var(--space-28);
+  }
+}
+
+.size-md {
+  @include breakpoint(md) {
+    width: var(--max-width-md);
+  }
+}
+
+.size-lg {
+  @include breakpoint(md) {
+    width: var(--max-width-lg);
+  }
+}
+
+// =============================================================================
+// HEADER / BODY / FOOTER
+// =============================================================================
+
+.header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+}
+
+.titleBlock {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  color: var(--color-base-content);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.description {
+  color: var(--color-base-content-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.closeBtn {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: var(--space-6);
+  justify-content: center;
+  width: var(--space-6);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+}
+
+.footer {
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-6);
+}

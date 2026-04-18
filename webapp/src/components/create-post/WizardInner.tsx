@@ -18,7 +18,7 @@ import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
+import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
@@ -501,11 +501,12 @@ export function WizardInner({
 				</div>
 			</div>
 
-			<Modal
+			<Drawer
 				isOpen={scheduleOpen}
 				onClose={() => setScheduleOpen(false)}
 				title="Schedule post"
-				size="sm"
+				description="Pick when this post should publish."
+				size="md"
 				footer={
 					<Stack direction="row" gap="sm" justify="end">
 						<Button variant="ghost" onClick={() => setScheduleOpen(false)}>
@@ -524,9 +525,7 @@ export function WizardInner({
 			>
 				<Stack gap="md">
 					<Stack gap="xs">
-						<Text size="sm" weight="medium">
-							Date
-						</Text>
+						<Text size="sm">Date</Text>
 						<DatePicker
 							value={scheduleDate}
 							onChange={setScheduleDate}
@@ -535,9 +534,7 @@ export function WizardInner({
 						/>
 					</Stack>
 					<Stack gap="xs">
-						<Text size="sm" weight="medium">
-							Time
-						</Text>
+						<Text size="sm">Time</Text>
 						<TextField
 							type="time"
 							value={scheduleTime}
@@ -545,7 +542,7 @@ export function WizardInner({
 						/>
 					</Stack>
 				</Stack>
-			</Modal>
+			</Drawer>
 		</>
 	);
 }
