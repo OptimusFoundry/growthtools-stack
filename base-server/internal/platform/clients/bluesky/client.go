@@ -17,6 +17,7 @@ const pdsHost = "https://bsky.social"
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string // empty = use pdsHost
 }
 
 // NewClient creates a new Bluesky API client.
@@ -27,6 +28,23 @@ func NewClient(logger *observability.Logger) *Client {
 	}
 }
 
+// NewTestClient creates a Client that routes all requests to baseURL.
+func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+	return &Client{
+		httpClient: httpClient,
+		logger:     logger,
+		baseURL:    baseURL,
+	}
+}
+
+// host returns the PDS host to use for requests.
+func (c *Client) host() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return pdsHost
+}
+
 // CreateSession authenticates with Bluesky and returns an access JWT and DID.
 func (c *Client) CreateSession(ctx context.Context, handle, appPassword string) (SessionResponse, error) {
 	payload, _ := json.Marshal(map[string]string{
@@ -34,7 +52,7 @@ func (c *Client) CreateSession(ctx context.Context, handle, appPassword string) 
 		"password":   appPassword,
 	})
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pdsHost+"/xrpc/com.atproto.server.createSession", bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host()+"/xrpc/com.atproto.server.createSession", bytes.NewReader(payload))
 	if err != nil {
 		return SessionResponse{}, fmt.Errorf("blueskyapi: failed to create request: %w", err)
 	}
@@ -80,7 +98,7 @@ func (c *Client) CreateRecord(ctx context.Context, accessJwt string, req CreateR
 		return CreateRecordResponse{}, fmt.Errorf("blueskyapi: failed to marshal payload: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, pdsHost+"/xrpc/com.atproto.repo.createRecord", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host()+"/xrpc/com.atproto.repo.createRecord", bytes.NewReader(body))
 	if err != nil {
 		return CreateRecordResponse{}, fmt.Errorf("blueskyapi: failed to create request: %w", err)
 	}
@@ -116,7 +134,7 @@ func (c *Client) UploadBlob(ctx context.Context, accessJwt string, data []byte, 
 		contentType = "image/jpeg"
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pdsHost+"/xrpc/com.atproto.repo.uploadBlob", bytes.NewReader(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host()+"/xrpc/com.atproto.repo.uploadBlob", bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("blueskyapi: failed to create request: %w", err)
 	}

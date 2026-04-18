@@ -46,14 +46,12 @@ func (a *BlueskyAdapter) Publish(ctx context.Context, content string, mediaURLs 
 	for _, mediaURL := range mediaURLs {
 		mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
 		if err != nil {
-			a.logger.Error(ctx, "failed to download media for bluesky", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("bluesky adapter: download media: %w", err)
 		}
 
 		blob, err := a.client.UploadBlob(ctx, session.AccessJwt, mediaBytes, contentType)
 		if err != nil {
-			a.logger.Error(ctx, "failed to upload blob to bluesky", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("bluesky adapter: upload blob: %w", err)
 		}
 		if strings.HasPrefix(contentType, "video/") {
 			if videoBlob == nil {
@@ -127,19 +125,19 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 		if mediaURL := mediaURLForSegment(seg, mediaURLs); mediaURL != "" {
 			mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
 			if err != nil {
-				a.logger.Error(ctx, "failed to download media for bluesky thread segment", err)
+				return firstResult, fmt.Errorf("bluesky adapter: segment %d download media: %w", i+1, err)
+			}
+			blob, err := a.client.UploadBlob(ctx, session.AccessJwt, mediaBytes, contentType)
+			if err != nil {
+				return firstResult, fmt.Errorf("bluesky adapter: segment %d upload blob: %w", i+1, err)
+			}
+			if strings.HasPrefix(contentType, "video/") {
+				videoBlob = blob
 			} else {
-				blob, err := a.client.UploadBlob(ctx, session.AccessJwt, mediaBytes, contentType)
-				if err != nil {
-					a.logger.Error(ctx, "failed to upload blob to bluesky for thread segment", err)
-				} else if strings.HasPrefix(contentType, "video/") {
-					videoBlob = blob
-				} else {
-					images = append(images, map[string]any{
-						"alt":   "",
-						"image": blob,
-					})
-				}
+				images = append(images, map[string]any{
+					"alt":   "",
+					"image": blob,
+				})
 			}
 		}
 

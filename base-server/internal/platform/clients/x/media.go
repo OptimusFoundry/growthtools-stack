@@ -74,7 +74,7 @@ func (c *Client) UploadMediaAsync(ctx context.Context, req UploadMediaRequest, a
 		mediaCategory = "tweet_gif"
 	}
 
-	endpoint := "https://api.x.com/2/media/upload"
+	endpoint := c.apiBase() + "/2/media/upload"
 
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
@@ -127,7 +127,7 @@ func (c *Client) uploadVideoChunked(ctx context.Context, videoBytes []byte, medi
 		return UploadMediaResult{}, fmt.Errorf("xapi: video upload requires non-empty bytes")
 	}
 
-	const endpoint = "https://upload.twitter.com/1.1/media/upload.json"
+	endpoint := c.uploadBase() + "/1.1/media/upload.json"
 	const chunkSize = 5 * 1024 * 1024
 
 	// INIT
@@ -303,7 +303,7 @@ func (c *Client) waitForMediaReady(ctx context.Context, mediaID, accessToken str
 // check readiness without triggering the blocking waitForMediaReady
 // loop.
 func (c *Client) GetMediaStatus(ctx context.Context, mediaID, accessToken string) (*ProcessingInfo, error) {
-	endpoint := fmt.Sprintf("https://api.x.com/2/media/upload?command=STATUS&media_id=%s", mediaID)
+	endpoint := fmt.Sprintf("%s/2/media/upload?command=STATUS&media_id=%s", c.apiBase(), mediaID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("xapi: failed to build STATUS request: %w", err)
@@ -346,7 +346,7 @@ func (c *Client) uploadMediaLegacy(ctx context.Context, req UploadMediaRequest, 
 		mediaType = "image/jpeg"
 	}
 
-	uploadURL := "https://upload.twitter.com/1.1/media/upload.json"
+	uploadURL := c.uploadBase() + "/1.1/media/upload.json"
 
 	initParams := url.Values{}
 	initParams.Set("command", "INIT")

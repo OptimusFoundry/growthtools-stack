@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"base-server/internal/infra/store"
@@ -157,6 +158,133 @@ func (m *mockTokenRefresher) EnsureFreshConnection(ctx context.Context, conn sto
 		return m.ensureFreshFn(ctx, conn)
 	}
 	return conn, nil
+}
+
+// ─── Async publish mocks (used by T1–T5) ────────────────────────────────────
+
+// mockAsyncStore embeds mockPublishStore and adds the extra methods needed by
+// AsyncPublishStore (SetPlatformPostQueued, SetPlatformPostAwaitingMedia,
+// SetPlatformPostMediaReady, GetPlatformPostByID, ListPlatformPostsAwaitingMedia).
+type mockAsyncStore struct {
+	mockPublishStore
+
+	getPlatformPostByID            func(ctx context.Context, id uuid.UUID) (store.PlatformPost, error)
+	setPlatformPostQueued          func(ctx context.Context, id uuid.UUID) error
+	setPlatformPostAwaitingMedia   func(ctx context.Context, id uuid.UUID, handle json.RawMessage) error
+	setPlatformPostMediaReady      func(ctx context.Context, id uuid.UUID, handle json.RawMessage) error
+	listPlatformPostsAwaitingMedia func(ctx context.Context, limit int) ([]store.RetryablePlatformPost, error)
+
+	// call tracking
+	setPlatformPostQueuedCalls        []uuid.UUID
+	setPlatformPostAwaitingMediaCalls []uuid.UUID
+	setPlatformPostMediaReadyCalls    []uuid.UUID
+}
+
+func (m *mockAsyncStore) GetPlatformPostByID(ctx context.Context, id uuid.UUID) (store.PlatformPost, error) {
+	if m.getPlatformPostByID != nil {
+		return m.getPlatformPostByID(ctx, id)
+	}
+	return store.PlatformPost{}, nil
+}
+
+func (m *mockAsyncStore) SetPlatformPostQueued(ctx context.Context, id uuid.UUID) error {
+	m.setPlatformPostQueuedCalls = append(m.setPlatformPostQueuedCalls, id)
+	if m.setPlatformPostQueued != nil {
+		return m.setPlatformPostQueued(ctx, id)
+	}
+	return nil
+}
+
+func (m *mockAsyncStore) SetPlatformPostAwaitingMedia(ctx context.Context, id uuid.UUID, handle json.RawMessage) error {
+	m.setPlatformPostAwaitingMediaCalls = append(m.setPlatformPostAwaitingMediaCalls, id)
+	if m.setPlatformPostAwaitingMedia != nil {
+		return m.setPlatformPostAwaitingMedia(ctx, id, handle)
+	}
+	return nil
+}
+
+func (m *mockAsyncStore) SetPlatformPostMediaReady(ctx context.Context, id uuid.UUID, handle json.RawMessage) error {
+	m.setPlatformPostMediaReadyCalls = append(m.setPlatformPostMediaReadyCalls, id)
+	if m.setPlatformPostMediaReady != nil {
+		return m.setPlatformPostMediaReady(ctx, id, handle)
+	}
+	return nil
+}
+
+func (m *mockAsyncStore) ListPlatformPostsAwaitingMedia(ctx context.Context, limit int) ([]store.RetryablePlatformPost, error) {
+	if m.listPlatformPostsAwaitingMedia != nil {
+		return m.listPlatformPostsAwaitingMedia(ctx, limit)
+	}
+	return nil, nil
+}
+
+// mockEventPublisher records Publish calls for assertions.
+type mockEventPublisher struct {
+	publishFn    func(ctx context.Context, topic, key string, payload any) error
+	publishCalls []eventPublisherCall
+}
+
+type eventPublisherCall struct {
+	Topic   string
+	Key     string
+	Payload any
+}
+
+func (m *mockEventPublisher) Publish(ctx context.Context, topic, key string, payload any) error {
+	m.publishCalls = append(m.publishCalls, eventPublisherCall{Topic: topic, Key: key, Payload: payload})
+	if m.publishFn != nil {
+		return m.publishFn(ctx, topic, key, payload)
+	}
+	return nil
+}
+
+// mockAsyncAdapter implements AsyncPlatformAdapter on top of mockAdapter.
+type mockAsyncAdapter struct {
+	mockAdapter
+
+	startPublishFn func(ctx context.Context, spec adapters.PostSpec, conn store.PlatformConnection) (json.RawMessage, bool, error)
+	checkReadyFn   func(ctx context.Context, handle json.RawMessage, conn store.PlatformConnection) (bool, json.RawMessage, error)
+	finalizeFn     func(ctx context.Context, spec adapters.PostSpec, handle json.RawMessage, conn store.PlatformConnection) (adapters.PlatformPostResult, error)
+
+	startCalls    int
+	checkCalls    int
+	finalizeCalls int
+}
+
+func (m *mockAsyncAdapter) StartPublish(ctx context.Context, spec adapters.PostSpec, conn store.PlatformConnection) (json.RawMessage, bool, error) {
+	m.startCalls++
+	if m.startPublishFn != nil {
+		return m.startPublishFn(ctx, spec, conn)
+	}
+	return json.RawMessage(`{}`), true, nil
+}
+
+func (m *mockAsyncAdapter) CheckReady(ctx context.Context, handle json.RawMessage, conn store.PlatformConnection) (bool, json.RawMessage, error) {
+	m.checkCalls++
+	if m.checkReadyFn != nil {
+		return m.checkReadyFn(ctx, handle, conn)
+	}
+	return true, handle, nil
+}
+
+func (m *mockAsyncAdapter) Finalize(ctx context.Context, spec adapters.PostSpec, handle json.RawMessage, conn store.PlatformConnection) (adapters.PlatformPostResult, error) {
+	m.finalizeCalls++
+	if m.finalizeFn != nil {
+		return m.finalizeFn(ctx, spec, handle, conn)
+	}
+	return adapters.PlatformPostResult{PlatformPostID: "mock-post-id", URL: "https://mock.url"}, nil
+}
+
+// mockURLSigner implements URLSigner for testing.
+type mockURLSigner struct {
+	signFn func(ctx context.Context, key string, ttl time.Duration) (string, error)
+}
+
+func (m *mockURLSigner) PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	if m.signFn != nil {
+		return m.signFn(ctx, key, ttl)
+	}
+	return "https://presigned.example.com/" + key, nil
 }
 
 // helper

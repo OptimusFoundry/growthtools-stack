@@ -7,15 +7,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"base-server/internal/infra/observability"
 )
 
+const threadsAPIBase = "https://graph.threads.net"
+
 // Client handles HTTP communication with the Threads API.
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string // empty = use production
 }
 
 // NewClient creates a new Threads API client.
@@ -26,9 +30,25 @@ func NewClient(logger *observability.Logger) *Client {
 	}
 }
 
+// NewTestClient creates a Client that routes all requests to baseURL.
+func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+	return &Client{
+		httpClient: httpClient,
+		logger:     logger,
+		baseURL:    baseURL,
+	}
+}
+
+func (c *Client) apiBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return threadsAPIBase
+}
+
 // CreateThread creates a thread container (step 1 of the 2-step flow).
 func (c *Client) CreateThread(ctx context.Context, accessToken string, req CreateThreadRequest) (CreateThreadResponse, error) {
-	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s/threads", req.UserID)
+	endpoint := fmt.Sprintf(c.apiBase()+"/v1.0/%s/threads", req.UserID)
 
 	params := url.Values{}
 	params.Set("text", req.Text)
@@ -45,7 +65,12 @@ func (c *Client) CreateThread(ctx context.Context, accessToken string, req Creat
 		params.Set("reply_to_id", req.ReplyToID)
 	}
 
-	resp, err := http.PostForm(endpoint, params)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(params.Encode()))
+	if err != nil {
+		return CreateThreadResponse{}, fmt.Errorf("threadsapi: failed to create container request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return CreateThreadResponse{}, fmt.Errorf("threadsapi: container request failed: %w", err)
 	}
@@ -74,7 +99,7 @@ func (c *Client) CreateThread(ctx context.Context, accessToken string, req Creat
 // Returns (status, errorMessage, err). errorMessage is non-empty only when
 // status is ERROR — it carries Meta's human-readable reason for the failure.
 func (c *Client) GetContainerStatus(ctx context.Context, containerID, accessToken string) (status, errorMessage string, err error) {
-	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s?fields=status,error_message&access_token=%s",
+	endpoint := fmt.Sprintf(c.apiBase()+"/v1.0/%s?fields=status,error_message&access_token=%s",
 		containerID, url.QueryEscape(accessToken))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -138,13 +163,18 @@ func (c *Client) WaitForContainerReady(ctx context.Context, containerID, accessT
 
 // PublishThread publishes a previously created thread container (step 2).
 func (c *Client) PublishThread(ctx context.Context, userID, accessToken, containerID string) (PublishThreadResponse, error) {
-	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s/threads_publish", userID)
+	endpoint := fmt.Sprintf(c.apiBase()+"/v1.0/%s/threads_publish", userID)
 
 	params := url.Values{}
 	params.Set("creation_id", containerID)
 	params.Set("access_token", accessToken)
 
-	resp, err := http.PostForm(endpoint, params)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(params.Encode()))
+	if err != nil {
+		return PublishThreadResponse{}, fmt.Errorf("threadsapi: failed to create publish request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		return PublishThreadResponse{}, fmt.Errorf("threadsapi: publish request failed: %w", err)
 	}
@@ -167,7 +197,7 @@ func (c *Client) PublishThread(ctx context.Context, userID, accessToken, contain
 
 // GetThreadInsights retrieves engagement metrics for a Threads post.
 func (c *Client) GetThreadInsights(ctx context.Context, postID, accessToken string) (ThreadInsights, error) {
-	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s/insights?metric=views,likes,replies,reposts&access_token=%s",
+	endpoint := fmt.Sprintf(c.apiBase()+"/v1.0/%s/insights?metric=views,likes,replies,reposts&access_token=%s",
 		postID, accessToken)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
@@ -221,7 +251,7 @@ func (c *Client) GetThreadInsights(ctx context.Context, postID, accessToken stri
 
 // VerifyCredentials checks if an access token is still valid by calling GET /v1.0/me.
 func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) error {
-	endpoint := "https://graph.threads.net/v1.0/me?fields=id&access_token=" + accessToken
+	endpoint := c.apiBase()+"/v1.0/me?fields=id&access_token=" + accessToken
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -244,7 +274,7 @@ func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) erro
 
 // GetPermalink retrieves the permalink for a Threads post.
 func (c *Client) GetPermalink(ctx context.Context, threadID, accessToken string) (string, error) {
-	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s?fields=permalink&access_token=%s", threadID, accessToken)
+	endpoint := fmt.Sprintf(c.apiBase()+"/v1.0/%s?fields=permalink&access_token=%s", threadID, accessToken)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("threadsapi: failed to create request: %w", err)

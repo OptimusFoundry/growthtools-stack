@@ -49,13 +49,7 @@ func (a *XAdapter) StartPublish(ctx context.Context, spec PostSpec, conn store.P
 	for _, mediaURL := range spec.MediaURLs {
 		mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
 		if err != nil {
-			a.logger.Error(ctx, "failed to download media for X", err)
-			// Keep going — a failed media download shouldn't block
-			// other media. We skip this slot entirely; the finalizer
-			// maps image_index positionally so a missing item just
-			// means that thread part posts without media.
-			handle.Items = append(handle.Items, xMediaItem{})
-			continue
+			return nil, false, fmt.Errorf("x adapter: download media: %w", err)
 		}
 
 		res, err := a.client.UploadMediaAsync(ctx, x.UploadMediaRequest{
@@ -63,10 +57,7 @@ func (a *XAdapter) StartPublish(ctx context.Context, spec PostSpec, conn store.P
 			MediaType:  contentType,
 		}, accessToken, tokenSecret)
 		if err != nil {
-			a.logger.Error(ctx, "failed to upload media to X", err)
-			handle.Items = append(handle.Items, xMediaItem{State: "failed"})
-			readyNow = false
-			continue
+			return nil, false, fmt.Errorf("x adapter: upload media: %w", err)
 		}
 
 		item := xMediaItem{MediaID: res.MediaID, Info: res.ProcessingInfo}

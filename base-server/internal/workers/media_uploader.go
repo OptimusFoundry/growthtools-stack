@@ -10,6 +10,8 @@ import (
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 	"base-server/internal/platform/adapters"
+
+	"github.com/google/uuid"
 )
 
 // MediaUploadWorker consumes platform.publish.requested — one message
@@ -80,23 +82,23 @@ func (w *MediaUploadWorker) handle(ctx context.Context, key, value []byte) error
 	}
 	conn, err := lookupConnection(ctx, w.store, event.AccountID, pp.Platform)
 	if err != nil {
-		w.markFailed(ctx, pp, fmt.Errorf("connection lookup: %w", err))
+		w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("connection lookup: %w", err))
 		return nil
 	}
 	conn, err = w.tokenRefresher.EnsureFreshConnection(ctx, conn)
 	if err != nil {
-		w.markFailed(ctx, pp, fmt.Errorf("refresh token: %w", err))
+		w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("refresh token: %w", err))
 		return nil
 	}
 
 	adapter, err := w.registry.Get(pp.Platform)
 	if err != nil || adapter == nil {
-		w.markFailed(ctx, pp, fmt.Errorf("no adapter for platform %s: %w", pp.Platform, err))
+		w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("no adapter for platform %s: %w", pp.Platform, err))
 		return nil
 	}
 	spec, err := buildPostSpec(ctx, w.store, pp, post, w.urlSigner, w.logger)
 	if err != nil {
-		w.markFailed(ctx, pp, fmt.Errorf("build spec: %w", err))
+		w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("build spec: %w", err))
 		return nil
 	}
 
@@ -111,14 +113,14 @@ func (w *MediaUploadWorker) handle(ctx context.Context, key, value []byte) error
 
 	handle, readyNow, err := async.StartPublish(ctx, spec, conn)
 	if err != nil {
-		w.markFailed(ctx, pp, fmt.Errorf("StartPublish: %w", err))
+		w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("StartPublish: %w", err))
 		return nil
 	}
 
 	if readyNow {
 		// Short-circuit the reconciler — hand to the finalizer.
 		if err := w.store.SetPlatformPostMediaReady(ctx, pp.ID, handle); err != nil {
-			w.markFailed(ctx, pp, fmt.Errorf("mark media_ready: %w", err))
+			w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("mark media_ready: %w", err))
 			return nil
 		}
 		msg := asyncEvent{PlatformPostID: pp.ID, PostID: pp.PostID, AccountID: event.AccountID}
@@ -130,7 +132,7 @@ func (w *MediaUploadWorker) handle(ctx context.Context, key, value []byte) error
 
 	// Async: park the row for the reconciler.
 	if err := w.store.SetPlatformPostAwaitingMedia(ctx, pp.ID, handle); err != nil {
-		w.markFailed(ctx, pp, fmt.Errorf("mark awaiting_media: %w", err))
+		w.markFailed(ctx, pp, event.AccountID, fmt.Errorf("mark awaiting_media: %w", err))
 		return nil
 	}
 	w.logger.Info(ctx, fmt.Sprintf("platform post %s awaiting media", pp.ID))
@@ -152,7 +154,7 @@ func (w *MediaUploadWorker) publishSynchronously(
 		result, err = adapter.Publish(ctx, spec.Content, spec.MediaURLs, conn)
 	}
 	if err != nil {
-		w.markFailed(ctx, pp, fmt.Errorf("synchronous publish: %w", err))
+		w.markFailed(ctx, pp, conn.AccountID, fmt.Errorf("synchronous publish: %w", err))
 		return
 	}
 	now := time.Now()
@@ -163,13 +165,14 @@ func (w *MediaUploadWorker) publishSynchronously(
 	reconcileParentStatus(ctx, w.store, conn.AccountID, pp.PostID, w.logger)
 }
 
-func (w *MediaUploadWorker) markFailed(ctx context.Context, pp store.PlatformPost, cause error) {
+func (w *MediaUploadWorker) markFailed(ctx context.Context, pp store.PlatformPost, accountID uuid.UUID, cause error) {
 	w.logger.Error(ctx, "upload phase failed", cause)
 	errMsg := cause.Error()
 	now := time.Now()
 	attempt := pp.AttemptCount + 1
 	retry := now.Add(time.Minute)
 	_ = w.store.UpdatePlatformPostStatus(ctx, pp.ID, store.PlatformPostStatusFailed, nil, nil, &errMsg, &attempt, &retry, &now)
+	reconcileParentStatus(ctx, w.store, accountID, pp.PostID, w.logger)
 }
 
 // Start runs the consumer loop.

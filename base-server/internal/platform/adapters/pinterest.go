@@ -34,6 +34,9 @@ func (a *PinterestAdapter) Publish(ctx context.Context, content string, mediaURL
 	if err != nil {
 		return PlatformPostResult{}, fmt.Errorf("pinterest adapter: failed to get board: %w", err)
 	}
+	if len(boards) == 0 {
+		return PlatformPostResult{}, fmt.Errorf("pinterest adapter: account has no boards")
+	}
 
 	title := content
 	if len(title) > 100 {

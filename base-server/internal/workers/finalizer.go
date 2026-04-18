@@ -132,8 +132,12 @@ func (w *FinalizerWorker) markFailed(ctx context.Context, pp store.PlatformPost,
 	errMsg := cause.Error()
 	now := time.Now()
 	attempt := pp.AttemptCount + 1
-	retry := now.Add(time.Minute)
-	_ = w.store.UpdatePlatformPostStatus(ctx, pp.ID, store.PlatformPostStatusFailed, nil, nil, &errMsg, &attempt, &retry, &now)
+	var nextRetry *time.Time
+	if attempt < pp.MaxAttempts {
+		t := computeNextRetryAt(attempt)
+		nextRetry = &t
+	}
+	_ = w.store.UpdatePlatformPostStatus(ctx, pp.ID, store.PlatformPostStatusFailed, nil, nil, &errMsg, &attempt, nextRetry, &now)
 	reconcileParentStatus(ctx, w.store, accountID, pp.PostID, w.logger)
 }
 

@@ -18,6 +18,7 @@ type Client struct {
 	apiSecret  string
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string // empty = use production URLs
 }
 
 // NewClient creates a new X API client with app-level credentials.
@@ -28,6 +29,32 @@ func NewClient(apiKey, apiSecret string, logger *observability.Logger) *Client {
 		httpClient: &http.Client{},
 		logger:     logger,
 	}
+}
+
+// NewTestClient creates a Client that routes all requests to baseURL
+// using the provided http.Client. Use with httptest.Server in tests.
+func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+	return &Client{
+		httpClient: httpClient,
+		logger:     logger,
+		baseURL:    baseURL,
+	}
+}
+
+// apiBase returns the base URL for API calls. Falls back to production.
+func (c *Client) apiBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return "https://api.x.com"
+}
+
+// uploadBase returns the base URL for media upload calls. Falls back to production.
+func (c *Client) uploadBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return "https://upload.twitter.com"
 }
 
 // CreateTweet posts a tweet via the X v2 API.
@@ -51,7 +78,7 @@ func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, access
 		return CreateTweetResponse{}, fmt.Errorf("xapi: failed to marshal payload: %w", err)
 	}
 
-	endpoint := "https://api.x.com/2/tweets"
+	endpoint := c.apiBase() + "/2/tweets"
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
 	if err != nil {
 		return CreateTweetResponse{}, fmt.Errorf("xapi: failed to create request: %w", err)
@@ -86,7 +113,7 @@ func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, access
 
 // GetTweetMetrics retrieves public engagement metrics for a tweet.
 func (c *Client) GetTweetMetrics(ctx context.Context, tweetID, accessToken, tokenSecret string) (TweetMetrics, error) {
-	endpoint := fmt.Sprintf("https://api.x.com/2/tweets/%s?tweet.fields=public_metrics", tweetID)
+	endpoint := fmt.Sprintf("%s/2/tweets/%s?tweet.fields=public_metrics", c.apiBase(), tweetID)
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -95,7 +122,7 @@ func (c *Client) GetTweetMetrics(ctx context.Context, tweetID, accessToken, toke
 
 	params := url.Values{}
 	params.Set("tweet.fields", "public_metrics")
-	httpReq.Header.Set("Authorization", c.authHeader(http.MethodGet, fmt.Sprintf("https://api.x.com/2/tweets/%s", tweetID), params, accessToken, tokenSecret))
+	httpReq.Header.Set("Authorization", c.authHeader(http.MethodGet, fmt.Sprintf("%s/2/tweets/%s", c.apiBase(), tweetID), params, accessToken, tokenSecret))
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
@@ -138,7 +165,7 @@ func (c *Client) GetTweetMetrics(ctx context.Context, tweetID, accessToken, toke
 
 // VerifyCredentials checks if an OAuth 2.0 Bearer token is still valid by calling GET /2/users/me.
 func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.x.com/2/users/me", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.apiBase()+"/2/users/me", nil)
 	if err != nil {
 		return fmt.Errorf("xapi: failed to create request: %w", err)
 	}

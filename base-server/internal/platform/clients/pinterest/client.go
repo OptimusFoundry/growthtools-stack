@@ -15,6 +15,7 @@ import (
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string // empty = use production URLs
 }
 
 // NewClient creates a new Pinterest API client.
@@ -25,9 +26,26 @@ func NewClient(logger *observability.Logger) *Client {
 	}
 }
 
+// NewTestClient creates a Client that routes all requests to baseURL.
+// Use with httptest.Server in tests.
+func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+	return &Client{
+		httpClient: httpClient,
+		logger:     logger,
+		baseURL:    baseURL,
+	}
+}
+
+func (c *Client) apiBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return "https://api.pinterest.com"
+}
+
 // ListBoards retrieves the user's Pinterest boards (first page, 1 result).
 func (c *Client) ListBoards(ctx context.Context, accessToken string) ([]Board, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.pinterest.com/v5/boards?page_size=1", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.apiBase()+"/v5/boards?page_size=1", nil)
 	if err != nil {
 		return nil, fmt.Errorf("pinterestapi: failed to create request: %w", err)
 	}
@@ -84,7 +102,7 @@ func (c *Client) CreatePin(ctx context.Context, accessToken string, req CreatePi
 		return CreatePinResponse{}, fmt.Errorf("pinterestapi: failed to marshal payload: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.pinterest.com/v5/pins", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBase()+"/v5/pins", bytes.NewReader(body))
 	if err != nil {
 		return CreatePinResponse{}, fmt.Errorf("pinterestapi: failed to create request: %w", err)
 	}
@@ -115,7 +133,7 @@ func (c *Client) CreatePin(ctx context.Context, accessToken string, req CreatePi
 
 // GetPinAnalytics retrieves engagement metrics for a Pinterest Pin.
 func (c *Client) GetPinAnalytics(ctx context.Context, accessToken, pinID string) (PinAnalytics, error) {
-	endpoint := fmt.Sprintf("https://api.pinterest.com/v5/pins/%s/analytics?start_date=2020-01-01&end_date=2099-12-31&metric_types=IMPRESSION,PIN_CLICK,SAVE,OUTBOUND_CLICK", pinID)
+	endpoint := fmt.Sprintf(c.apiBase()+"/v5/pins/%s/analytics?start_date=2020-01-01&end_date=2099-12-31&metric_types=IMPRESSION,PIN_CLICK,SAVE,OUTBOUND_CLICK", pinID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
