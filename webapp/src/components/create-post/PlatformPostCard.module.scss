@@ -16,48 +16,48 @@
 
 	// Platform-specific overrides
 	&[data-platform="x"] {
-		--platform-accent: #000;
+		--platform-accent: var(--color-platform-x);
 
 		border-color: var(--color-border);
 	}
 
 	&[data-platform="bluesky"] {
-		--platform-accent: #0085ff;
+		--platform-accent: var(--color-platform-bluesky);
 	}
 
 	&[data-platform="threads"] {
-		--platform-accent: #000;
+		--platform-accent: var(--color-platform-threads);
 	}
 
 	&[data-platform="linkedin"] {
-		--platform-accent: #0a66c2;
+		--platform-accent: var(--color-platform-linkedin);
 
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-sm);
 	}
 
 	&[data-platform="facebook"] {
-		--platform-accent: #1877f2;
+		--platform-accent: var(--color-platform-facebook);
 
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-sm);
 	}
 
 	&[data-platform="instagram"] {
-		--platform-accent: #e4405f;
+		--platform-accent: var(--color-platform-instagram);
 
 		border-radius: var(--radius-lg);
 	}
 
 	&[data-platform="tiktok"] {
-		--platform-accent: #000;
+		--platform-accent: var(--color-platform-tiktok);
 
 		border-radius: var(--radius-lg);
 		background: var(--color-base-50);
 	}
 
 	&[data-platform="pinterest"] {
-		--platform-accent: #e60023;
+		--platform-accent: var(--color-platform-pinterest);
 
 		border-radius: var(--radius-2xl);
 		box-shadow: var(--shadow-sm);

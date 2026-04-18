@@ -105,14 +105,14 @@ export function ThreadView({
 
 function platformAccent(platform: PlatformType): string {
 	const accents: Record<PlatformType, string> = {
-		x: "#000",
-		linkedin: "#0A66C2",
-		bluesky: "#0085FF",
-		facebook: "#1877F2",
-		instagram: "#E4405F",
-		threads: "#000",
-		tiktok: "#000",
-		pinterest: "#E60023",
+		x: "var(--color-platform-x)",
+		linkedin: "var(--color-platform-linkedin)",
+		bluesky: "var(--color-platform-bluesky)",
+		facebook: "var(--color-platform-facebook)",
+		instagram: "var(--color-platform-instagram)",
+		threads: "var(--color-platform-threads)",
+		tiktok: "var(--color-platform-tiktok)",
+		pinterest: "var(--color-platform-pinterest)",
 	};
 	return accents[platform];
 }

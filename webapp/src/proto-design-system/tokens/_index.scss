@@ -11,6 +11,7 @@
 @forward "motion";
 @forward "breakpoints";
 @forward "z-index";
+@forward "platforms";
 
 // Re-export breakpoint variables for use in other SCSS files
 @use "breakpoints" as *;

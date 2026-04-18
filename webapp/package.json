@@ -41,6 +41,7 @@
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^5.1.2",
 		"msw": "^2.12.7",
+		"replace": "^1.2.2",
 		"sass-embedded": "^1.97.1",
 		"storybook": "^10.1.10",
 		"stylelint": "^16.26.1",
