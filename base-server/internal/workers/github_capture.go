@@ -20,8 +20,18 @@ const TopicCaptureResults = "github.capture.results"
 // produces an AI draft post from the commit + captured media.
 const TopicDraftGenerate = "github.draft.generate"
 
+// TopicBlogGenerate is published alongside TopicDraftGenerate on a
+// successful capture. BlogGeneratorWorker consumes it and produces a
+// long-form blog-post draft from the commit + captured artefacts.
+const TopicBlogGenerate = "github.blog.generate"
+
 // DraftGenerateEvent is the github.draft.generate message body.
 type DraftGenerateEvent struct {
+	CommitID uuid.UUID `json:"commit_id"`
+}
+
+// BlogGenerateEvent is the github.blog.generate message body.
+type BlogGenerateEvent struct {
 	CommitID uuid.UUID `json:"commit_id"`
 }
 
@@ -120,15 +130,18 @@ func (w *CaptureResultWorker) handle(ctx context.Context, key, value []byte) err
 		return err
 	}
 
-	// Fan out to the draft generator on success only — failed captures don't
-	// produce usable artifacts, and we don't want to burn AI spend generating
-	// a draft with no media.
+	// Fan out to both the draft and the blog generator on success only —
+	// failed captures don't produce usable artefacts. The two publishes are
+	// independent: a failure on one is logged but does not prevent the other.
 	if msg.Success && w.publisher != nil {
-		event := DraftGenerateEvent{CommitID: msg.CommitID}
-		if err := w.publisher.Publish(ctx, TopicDraftGenerate, msg.CommitID.String(), event); err != nil {
-			// Persistence already succeeded — log and move on. The user can
-			// re-trigger draft generation from the UI if the event is lost.
+		draftEvent := DraftGenerateEvent{CommitID: msg.CommitID}
+		if err := w.publisher.Publish(ctx, TopicDraftGenerate, msg.CommitID.String(), draftEvent); err != nil {
 			w.logger.Error(ctx, "failed to publish draft.generate event", err)
+		}
+
+		blogEvent := BlogGenerateEvent{CommitID: msg.CommitID}
+		if err := w.publisher.Publish(ctx, TopicBlogGenerate, msg.CommitID.String(), blogEvent); err != nil {
+			w.logger.Error(ctx, "failed to publish blog.generate event", err)
 		}
 	}
 	return nil

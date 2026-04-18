@@ -36,6 +36,7 @@ type procs struct {
 	analytics   analyticsProcessor.AnalyticsProcessor
 	settings    settingsProcessor.SettingsProcessor
 	draftGen    githubProcessor.DraftGenerator
+	blogGen     githubProcessor.BlogDraftGenerator
 }
 
 // buildProcessors constructs all processor and service instances.
@@ -142,6 +143,12 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.
 	p.draftGen = githubProcessor.NewDraftGenerator(s, &p.content, &p.posts, cl.s3Head, cl.s3Fetch, cfg.S3.Bucket, logger)
+
+	// Blog draft generator: consumes github.blog.generate, fetches the full
+	// commit diff from GitHub + capture screenshots from S3, calls Gemini,
+	// and persists a draft blog_posts row. cl.ghClient implements
+	// GetCommitDiff; cl.gemini implements aiclient.Client.
+	p.blogGen = githubProcessor.NewBlogDraftGenerator(s, cl.gemini, cl.s3Fetch, cl.ghClient, logger)
 
 	return p, nil
 }

@@ -27,6 +27,7 @@ type GitHubCommit struct {
 	// PostDeleted is true when PostID references a soft-deleted post.
 	// See GitHubCommitSummary.PostDeleted for the why.
 	PostDeleted        bool             `db:"post_deleted" json:"post_deleted"`
+	BlogPostID         *uuid.UUID       `db:"blog_post_id" json:"blog_post_id,omitempty"`
 	CaptureOutput      *json.RawMessage `db:"capture_output" json:"capture_output,omitempty"`
 	CaptureRequestedAt *time.Time       `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
 	SkippedReason      *string          `db:"skipped_reason" json:"skipped_reason,omitempty"`
@@ -94,7 +95,7 @@ const sqlInsertGitHubCommit = `
 INSERT INTO github_commits (repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (repo_id, sha) DO NOTHING
-RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, FALSE AS post_deleted, capture_output, capture_requested_at, skipped_reason, processed_at, created_at
+RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_url, pushed_at, payload, post_id, FALSE AS post_deleted, blog_post_id, capture_output, capture_requested_at, skipped_reason, processed_at, created_at
 `
 
 // sqlGetGitHubCommitByRepoSHA joins posts so post_deleted reflects whether
@@ -104,6 +105,7 @@ RETURNING id, repo_id, sha, author_name, author_email, message, branch, commit_u
 const sqlGetGitHubCommitByRepoSHA = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id,
        (gc.post_id IS NOT NULL AND p.deleted_at IS NOT NULL) AS post_deleted,
+       gc.blog_post_id,
        gc.capture_output, gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at
 FROM github_commits gc
 LEFT JOIN posts p ON p.id = gc.post_id
@@ -268,6 +270,74 @@ func (s *Store) GetGitHubCommitForDraft(ctx context.Context, commitID uuid.UUID)
 	return row, nil
 }
 
+// GitHubCommitForBlog is the commit + owning account + repo context + OAuth
+// token a background worker needs to generate a blog post. Includes the
+// connection's access token because the blog generator re-fetches the full
+// diff from GitHub — the one stored on the commit at webhook time is only the
+// message and metadata.
+type GitHubCommitForBlog struct {
+	ID                    uuid.UUID        `db:"id"`
+	SHA                   string           `db:"sha"`
+	Message               string           `db:"message"`
+	Branch                *string          `db:"branch"`
+	BlogPostID            *uuid.UUID       `db:"blog_post_id"`
+	CaptureOutput         *json.RawMessage `db:"capture_output"`
+	AccountID             uuid.UUID        `db:"account_id"`
+	RepoOwner             string           `db:"repo_owner"`
+	RepoName              string           `db:"repo_name"`
+	ConnectionAccessToken string           `db:"connection_access_token"`
+}
+
+const sqlGetGitHubCommitForBlog = `
+SELECT gc.id, gc.sha, gc.message, gc.branch, gc.blog_post_id, gc.capture_output,
+       a.id AS account_id,
+       gr.owner AS repo_owner, gr.name AS repo_name,
+       c.access_token AS connection_access_token
+FROM github_commits gc
+JOIN github_repos gr ON gr.id = gc.repo_id AND gr.deleted_at IS NULL
+JOIN github_connections c ON c.id = gr.connection_id AND c.deleted_at IS NULL
+JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
+WHERE gc.id = $1
+`
+
+// GetGitHubCommitForBlog resolves the account, repo metadata, and OAuth token
+// needed to generate a blog post from a commit id. Used by the blog-generator
+// worker which has only a commit id.
+func (s *Store) GetGitHubCommitForBlog(ctx context.Context, commitID uuid.UUID) (GitHubCommitForBlog, error) {
+	var row GitHubCommitForBlog
+	err := s.db.GetContext(ctx, &row, sqlGetGitHubCommitForBlog, commitID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubCommitForBlog{}, ErrNotFound
+		}
+		return GitHubCommitForBlog{}, fmt.Errorf("failed to get github commit for blog: %w", err)
+	}
+	return row, nil
+}
+
+const sqlUpdateGitHubCommitBlogPostID = `
+UPDATE github_commits
+SET blog_post_id = $2
+WHERE id = $1
+`
+
+// UpdateGitHubCommitBlogPostID links a commit to the blog post that was
+// generated from it. Mirrors UpdateGitHubCommitPostID.
+func (s *Store) UpdateGitHubCommitBlogPostID(ctx context.Context, commitID, blogPostID uuid.UUID) error {
+	res, err := s.db.ExecContext(ctx, sqlUpdateGitHubCommitBlogPostID, commitID, blogPostID)
+	if err != nil {
+		return fmt.Errorf("failed to update github commit blog_post_id: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 const sqlListGitHubCommitsByConnection = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.post_id,
        (gc.post_id IS NOT NULL AND p.deleted_at IS NOT NULL) AS post_deleted,
@@ -301,6 +371,7 @@ func (s *Store) ListGitHubCommitsByConnection(ctx context.Context, connectionID 
 const sqlGetGitHubCommitByIDForUser = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.payload, gc.post_id,
        (gc.post_id IS NOT NULL AND p.deleted_at IS NOT NULL) AS post_deleted,
+       gc.blog_post_id,
        gc.capture_output, gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name
 FROM github_commits gc

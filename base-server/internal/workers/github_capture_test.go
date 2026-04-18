@@ -78,22 +78,29 @@ func TestCaptureResultWorker_Handle(t *testing.T) {
 		assertPublish     func(t *testing.T, pub *mockDraftPublisher)
 	}{
 		{
-			name:  "happy path success=true persists and publishes event",
+			name:  "happy path success=true persists and publishes both draft and blog events",
 			value: successMsg(),
 			store: &mockCaptureStore{},
 			publisher: &mockDraftPublisher{
 				publishFn: func(_ context.Context, topic, key string, payload any) error {
-					assert.Equal(t, TopicDraftGenerate, topic)
+					assert.Contains(t, []string{TopicDraftGenerate, TopicBlogGenerate}, topic)
 					assert.Equal(t, commitID.String(), key)
-					evt, ok := payload.(DraftGenerateEvent)
-					require.True(t, ok)
-					assert.Equal(t, commitID, evt.CommitID)
+					switch topic {
+					case TopicDraftGenerate:
+						evt, ok := payload.(DraftGenerateEvent)
+						require.True(t, ok)
+						assert.Equal(t, commitID, evt.CommitID)
+					case TopicBlogGenerate:
+						evt, ok := payload.(BlogGenerateEvent)
+						require.True(t, ok)
+						assert.Equal(t, commitID, evt.CommitID)
+					}
 					return nil
 				},
 			},
 			assertPublish: func(t *testing.T, pub *mockDraftPublisher) {
 				t.Helper()
-				assert.Equal(t, 1, pub.publishCalled)
+				assert.Equal(t, 2, pub.publishCalled)
 			},
 		},
 		{
@@ -121,10 +128,10 @@ func TestCaptureResultWorker_Handle(t *testing.T) {
 					return errors.New("kafka unavailable")
 				},
 			},
-			wantErr: false, // persistence already done; publish failure is swallowed
+			wantErr: false, // persistence already done; both publish failures are swallowed
 			assertPublish: func(t *testing.T, pub *mockDraftPublisher) {
 				t.Helper()
-				assert.Equal(t, 1, pub.publishCalled)
+				assert.Equal(t, 2, pub.publishCalled)
 			},
 		},
 		{
