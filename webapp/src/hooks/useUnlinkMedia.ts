@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { fetcher } from "@/api/client";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useUnlinkMedia = () => {
 	const [loading, setLoading] = useState(false);

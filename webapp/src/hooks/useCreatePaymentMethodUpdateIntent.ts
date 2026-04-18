@@ -1,8 +1,8 @@
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { useCallback, useEffect, useState } from "react";
-import { type ApiPaymentMethodUpdateIntentResponse, fetcher } from "@/api";
+import { fetcher } from "@/api/client"; import type { ApiPaymentMethodUpdateIntentResponse } from "@/api/types/billing";
 import type { PaymentMethodUpdateIntentResponse } from "@/types/billing";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 async function createPaymentMethodUpdateIntent(): Promise<PaymentMethodUpdateIntentResponse> {
 	const response = await fetcher<ApiPaymentMethodUpdateIntentResponse>(

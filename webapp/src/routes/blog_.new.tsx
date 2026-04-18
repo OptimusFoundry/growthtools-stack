@@ -7,6 +7,8 @@ import {
 } from "@/components/blog/BlogPostForm";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
+import { Alert } from "@/proto-design-system/components/feedback/Alert";
+import { Container } from "@/proto-design-system/components/layout/Container";
 import styles from "./editor.module.scss";
 
 export const Route = createFileRoute("/blog_/new")({
@@ -15,8 +17,16 @@ export const Route = createFileRoute("/blog_/new")({
 
 function NewBlogPostPage() {
 	const navigate = useNavigate();
-	const { createBlogPost, loading: creating } = useCreateBlogPost();
+	const { createBlogPost, loading: creating, error } = useCreateBlogPost();
 	const { publishBlog, loading: publishing } = usePublishBlog();
+
+	if (error) {
+		return (
+			<Container>
+				<Alert variant="error" title="Something went wrong">{error}</Alert>
+			</Container>
+		);
+	}
 
 	const handleSaveDraft = useCallback(
 		async (data: BlogPostFormData) => {

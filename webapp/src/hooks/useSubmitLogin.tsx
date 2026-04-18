@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getErrorMessage, hasProperty, isCodedError } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler"; import { hasProperty, isCodedError } from "@/utils/typeGuards";
 
 interface ErrorResponse {
 	code: string;

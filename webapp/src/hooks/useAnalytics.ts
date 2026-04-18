@@ -15,7 +15,7 @@ import type {
 	PlatformBreakdown,
 	TimeSeriesDataPoint,
 } from "@/types/analytics";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 interface AnalyticsFilters {
 	from?: string;

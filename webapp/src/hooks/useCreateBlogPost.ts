@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toBlogPost } from "@/api/transforms/blog";
 import type { ApiBlogPost } from "@/api/types/blog";
 import type { BlogPost, CreateBlogPostRequest } from "@/types/blog";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useCreateBlogPost = () => {
 	const [loading, setLoading] = useState<boolean>(false);

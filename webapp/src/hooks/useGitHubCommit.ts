@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
 import type { GitHubCommit } from "@/hooks/useGitHubCommits";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 /**
  * Fetches a single commit with the full capture_output (including presigned
