@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"base-server/internal/platform/clients/bluesky"
 	"base-server/internal/infra/observability"
@@ -119,6 +120,8 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 	var rootURI, rootCID string
 	var parentURI, parentCID string
 
+	threadBase := time.Now().UTC()
+
 	for i, seg := range segments {
 		// Upload media for this segment if it references one. A segment
 		// has at most one media attachment (one video OR one image) so
@@ -147,7 +150,7 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 		record := map[string]any{
 			"$type":     "app.bsky.feed.post",
 			"text":      seg.Content,
-			"createdAt": nowUTC(),
+			"createdAt": threadBase.Add(time.Duration(i) * time.Millisecond).Format("2006-01-02T15:04:05.000Z07:00"),
 			"langs":     []string{"en"},
 		}
 		if videoBlob != nil {
