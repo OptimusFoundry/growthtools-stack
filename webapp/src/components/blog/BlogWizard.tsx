@@ -7,9 +7,9 @@ import remarkGfm from "remark-gfm";
 import { toBlogPost } from "@/api/transforms/blog";
 import { MediaUploadSection } from "@/components/create-post/compose/MediaUploadSection";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
-import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useMedia } from "@/hooks/useMedia";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
+import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
 import type {
 	ExistingFile,
@@ -458,9 +458,7 @@ export function BlogWizard({
 										>
 											{previewContent}
 										</ReactMarkdown>
-										{isStreaming && (
-											<span className={styles.streamingCursor} />
-										)}
+										{isStreaming && <span className={styles.streamingCursor} />}
 									</div>
 								</TabPanel>
 								<TabPanel id="markdown">
