@@ -63,19 +63,35 @@ function CommitDetailsPage() {
 					</Alert>
 				)}
 
-				{commit.post_id && !commit.post_deleted && (
-					<div>
-						<Link to="/posts/$id" params={{ id: commit.post_id }}>
-							<Button variant="primary" size="sm">
-								View generated post →
-							</Button>
-						</Link>
-					</div>
+				{((commit.post_id && !commit.post_deleted) ||
+					(commit.blog_post_id && !commit.blog_deleted)) && (
+					<Stack direction="row" gap="sm">
+						{commit.post_id && !commit.post_deleted && (
+							<Link to="/posts/$id" params={{ id: commit.post_id }}>
+								<Button variant="primary" size="sm">
+									View generated post →
+								</Button>
+							</Link>
+						)}
+						{commit.blog_post_id && !commit.blog_deleted && (
+							<Link to="/blog/$id" params={{ id: commit.blog_post_id }}>
+								<Button variant="secondary" size="sm">
+									View generated blog →
+								</Button>
+							</Link>
+						)}
+					</Stack>
 				)}
 
 				{commit.post_id && commit.post_deleted && (
 					<Alert variant="info" title="Post deleted">
 						The draft post created from this commit was deleted.
+					</Alert>
+				)}
+
+				{commit.blog_post_id && commit.blog_deleted && (
+					<Alert variant="info" title="Blog post deleted">
+						The draft blog post created from this commit was deleted.
 					</Alert>
 				)}
 

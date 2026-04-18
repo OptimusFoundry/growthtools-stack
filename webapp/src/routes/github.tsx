@@ -69,7 +69,7 @@ const STATUS_LABELS: Record<CommitState["kind"], string> = {
 	skipped: "Skipped",
 	failed: "Failed",
 	captured: "Captured",
-	post: "Posted",
+	post: "Generated",
 	post_deleted: "Post deleted",
 	blog: "Blogged",
 	blog_deleted: "Blog deleted",

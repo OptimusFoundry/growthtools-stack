@@ -31,6 +31,9 @@ export interface GitHubCommit {
 	post_id?: string;
 	/** True when post_id points at a soft-deleted post. */
 	post_deleted?: boolean;
+	blog_post_id?: string;
+	/** True when blog_post_id points at a soft-deleted blog post. */
+	blog_deleted?: boolean;
 	capture_output?: GitHubCaptureOutput;
 	capture_requested_at?: string;
 	processed_at?: string;
