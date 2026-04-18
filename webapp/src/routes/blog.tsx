@@ -115,7 +115,6 @@ function BlogPage() {
 		<>
 			<Topbar
 				title="Blog"
-				eyebrow={`${postCount} total · ${draftCount} drafts · ${publishedCount} published`}
 				actions={
 					<Link to="/blog/new">
 						<Button variant="primary">

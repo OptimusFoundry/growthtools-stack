@@ -142,7 +142,6 @@ function PostsPage() {
 		<>
 			<Topbar
 				title="Posts"
-				eyebrow={`${postCount} total · ${draftCount} drafts · ${publishedCount} published`}
 				actions={
 					<Link to="/posts/new">
 						<Button variant="primary">

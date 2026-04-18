@@ -6,7 +6,9 @@ import {
 import styles from "./topbar.module.scss";
 
 interface TopbarProps {
-	title: string;
+	/** Title shown when no breadcrumbs are provided. With breadcrumbs, the
+	 *  current crumb becomes the visual title. */
+	title?: string;
 	breadcrumbs?: BreadcrumbItem[];
 	eyebrow?: ReactNode;
 	actions?: ReactNode;
@@ -20,16 +22,23 @@ export function Topbar({
 	actions,
 	children,
 }: TopbarProps) {
+	const hasBreadcrumbs = !!breadcrumbs && breadcrumbs.length > 0;
+
 	return (
 		<header className={styles.topbar}>
 			<div className={styles.titleBlock}>
-				{breadcrumbs && breadcrumbs.length > 0 && (
-					<Breadcrumb items={breadcrumbs} size="sm" />
+				{hasBreadcrumbs ? (
+					<Breadcrumb
+						items={breadcrumbs}
+						size="lg"
+						className={styles.breadcrumb}
+					/>
+				) : (
+					<>
+						{eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
+						{title && <h1 className={styles.title}>{title}</h1>}
+					</>
 				)}
-				{eyebrow && !breadcrumbs && (
-					<div className={styles.eyebrow}>{eyebrow}</div>
-				)}
-				<h1 className={styles.title}>{title}</h1>
 			</div>
 			{children}
 			{actions && <div className={styles.actions}>{actions}</div>}
