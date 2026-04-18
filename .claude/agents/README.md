@@ -28,9 +28,11 @@ These agents coordinate other agents or need broad codebase understanding. Run i
 
 | Agent | Task |
 |-------|------|
+| `fullstack-supervisor` | Execute a full-stack plan: backend-supervisor first, then frontend-supervisor |
 | `backend-supervisor` | Execute a backend plan end-to-end: code → tests → build/vet/test → pre-commit → commit |
 | `frontend-supervisor` | Execute a frontend plan end-to-end: code → tests → build/lint → pre-commit → commit |
-| `code-reviewer` | General code quality review |
+| `plan-writer` | Write an implementation plan from PRD + tracker + codebase patterns (upgrade to opus for large features) |
+| `code-reviewer` | Full-stack code review across Go backend and React frontend |
 | `backend-code-reviewer` | Go backend pattern validation |
 | `frontend-code-reviewer` | React/TypeScript/design-system pattern validation |
 | `backend-debug-helper` | Trace execution paths, identify root causes |

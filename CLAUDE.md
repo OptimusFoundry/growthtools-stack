@@ -23,9 +23,12 @@ growth-tools/
 
 - **Dispatch guide:** [.claude/agents/README.md](.claude/agents/README.md) — read this before spinning up agents. Lists every agent, its model tier (haiku/sonnet/opus), which docs it reads, and parallelisation rules.
 
-> **IMPORTANT:** For any backend implementation task (new feature, endpoint, migration, etc.), ALWAYS use the `backend-supervisor` agent. Never implement backend code directly — dispatch `backend-supervisor` with the plan and let it orchestrate code, tests, quality checks, and commit.
-
-> **IMPORTANT:** For any frontend implementation task (new page, component, feature, etc.), ALWAYS use the `frontend-supervisor` agent. Never implement frontend code directly — dispatch `frontend-supervisor` with the plan and let it orchestrate code, tests, build/lint checks, and commit.
+> **IMPORTANT — implementation workflow:**
+> - **Full-stack feature** (touches both layers): use `plan-writer` to write the plan, then `fullstack-supervisor` to execute it
+> - **Backend-only**: use `plan-writer` then `backend-supervisor`
+> - **Frontend-only**: use `plan-writer` then `frontend-supervisor`
+>
+> Never implement code directly — always plan first, then dispatch the appropriate supervisor.
 
 ### Backend agents (`backend-*` prefix)
 Haiku — batch freely (pattern-backed, read docs then execute):
