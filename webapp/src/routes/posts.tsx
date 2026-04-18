@@ -1,25 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Clock,
-	FileText,
-	Globe,
-	List,
-	Plus,
-	RefreshCw,
-	SearchX,
-	Trash2,
-} from "lucide-react";
+import { ChevronRight, FileText, Plus, SearchX } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { usePublishPost } from "@/hooks/usePublishPost";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -40,16 +29,13 @@ const FILTER_KEYS = [
 	{ id: "failed", label: "Needs retry" },
 ] as const;
 
-const STATUS_BADGE_VARIANT: Record<
-	PostStatus,
-	"success" | "warning" | "error" | "default" | "primary"
-> = {
-	draft: "default",
-	scheduled: "warning",
-	publishing: "primary",
-	published: "success",
-	failed: "error",
-	partially_published: "warning",
+const STATUS_CLASS: Record<PostStatus, string> = {
+	draft: "statusDraft",
+	scheduled: "statusScheduled",
+	publishing: "statusPublishing",
+	published: "statusPublished",
+	failed: "statusFailed",
+	partially_published: "statusPartial",
 };
 
 const STATUS_LABELS: Record<PostStatus, string> = {
@@ -60,6 +46,22 @@ const STATUS_LABELS: Record<PostStatus, string> = {
 	failed: "Failed",
 	partially_published: "Partial",
 };
+
+function statusLine(post: {
+	status: PostStatus;
+	publishedAt?: string;
+	scheduledAt?: string;
+	createdAt: string;
+}): string {
+	const when = post.publishedAt ?? post.scheduledAt ?? post.createdAt;
+	const ago = timeAgo(when);
+	if (post.status === "published") return `Published · ${ago}`;
+	if (post.status === "scheduled") return `Queued · ${ago}`;
+	if (post.status === "failed") return `Failed · needs retry`;
+	if (post.status === "publishing") return `Publishing · ${ago}`;
+	if (post.status === "partially_published") return `Partial · ${ago}`;
+	return `Draft · edited ${ago}`;
+}
 
 function timeAgo(iso: string): string {
 	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -99,7 +101,6 @@ function PostsPage() {
 	const { posts: allPosts } = useGetPosts();
 	const { posts, loading, refetch } = useGetPosts(filters);
 	const { deletePost, loading: deleting } = useDeletePost();
-	const { publishPost, loading: publishing } = usePublishPost();
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
 	const handleDeleteConfirm = useCallback(async () => {
@@ -112,15 +113,6 @@ function PostsPage() {
 			// error is surfaced via hook state
 		}
 	}, [deleteTargetId, deletePost, refetch]);
-
-	const handlePublish = async (id: string) => {
-		try {
-			await publishPost(id, []);
-			refetch();
-		} catch {
-			// error is surfaced via hook state
-		}
-	};
 
 	const hasActiveFilter = statusFilter !== "";
 	const postCount = allPosts.length;
@@ -243,153 +235,56 @@ function PostsPage() {
 							}
 						/>
 					) : (
-						<Stack gap="xs">
-							{posts.map((post, index) => {
-								const isThread = post.contentType === "thread";
-								return (
-									<motion.div
-										key={post.id}
-										initial={{ opacity: 0, y: 8 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ duration: 0.2, delay: index * 0.03 }}
-									>
-										<Link
-											to="/posts/$id"
-											params={{ id: post.id }}
-											className={styles.postLink}
-										>
-											<div className={styles.postCard}>
-												<div className={styles.postCardLeft}>
-													<div
-														className={`${styles.postIcon} ${isThread ? styles.postIconThread : ""}`}
-													>
-														{isThread ? (
-															<List size={16} />
-														) : (
-															<FileText size={16} />
-														)}
-													</div>
-												</div>
-												<div className={styles.postCardBody}>
-													<div className={styles.postTitleRow}>
-														<Text
-															size="sm"
-															weight="medium"
-															className={styles.postTitle}
-														>
-															{truncate(post.title || post.content, 80)}
-														</Text>
-														<Badge
-															variant={STATUS_BADGE_VARIANT[post.status]}
-															size="sm"
-														>
-															{STATUS_LABELS[post.status]}
-														</Badge>
-													</div>
-													{post.tags.length > 0 && (
-														<div className={styles.postTags}>
-															{post.tags.slice(0, 4).map((tag) => (
-																<span key={tag} className={styles.tag}>
-																	{tag}
-																</span>
-															))}
-															{post.tags.length > 4 && (
-																<span className={styles.tag}>
-																	+{post.tags.length - 4}
-																</span>
-															)}
-														</div>
-													)}
-													<div className={styles.postFooter}>
-														<div className={styles.postMeta}>
-															{post.platforms.length > 0 && (
-																<span className={styles.platformIcons}>
-																	{post.platforms.map((p) => (
-																		<span
-																			key={p}
-																			className={styles.platformIcon}
-																			title={p}
-																		>
-																			{getPlatformIcon(p, 14)}
-																		</span>
-																	))}
-																</span>
-															)}
-															{post.publishedAt ? (
-																<span className={styles.metaItem}>
-																	<Globe size={12} />
-																	Published {timeAgo(post.publishedAt)}
-																</span>
-															) : post.scheduledAt ? (
-																<span className={styles.metaItem}>
-																	<Clock size={12} />
-																	Scheduled {timeAgo(post.scheduledAt)}
-																</span>
-															) : (
-																<span className={styles.metaItem}>
-																	<Clock size={12} />
-																	{timeAgo(post.createdAt)}
-																</span>
-															)}
-														</div>
-														<div className={styles.postActions}>
-															{post.status === "draft" && (
-																<Button
-																	variant="primary"
-																	size="sm"
-																	isIconOnly
-																	onClick={(e) => {
-																		e.preventDefault();
-																		e.stopPropagation();
-																		handlePublish(post.id);
-																	}}
-																	isLoading={publishing}
-																	aria-label="Publish post"
-																>
-																	<Globe size={14} />
-																</Button>
-															)}
-															{post.status === "failed" && (
-																<Button
-																	variant="outline"
-																	size="sm"
-																	isIconOnly
-																	onClick={(e) => {
-																		e.preventDefault();
-																		e.stopPropagation();
-																		handlePublish(post.id);
-																	}}
-																	isLoading={publishing}
-																	aria-label="Retry publish"
-																>
-																	<RefreshCw size={14} />
-																</Button>
-															)}
-															{post.status !== "published" &&
-																post.status !== "partially_published" && (
-																	<Button
-																		variant="ghost"
-																		size="sm"
-																		isIconOnly
-																		onClick={(e) => {
-																			e.preventDefault();
-																			e.stopPropagation();
-																			setDeleteTargetId(post.id);
-																		}}
-																		aria-label="Delete post"
-																	>
-																		<Trash2 size={14} />
-																	</Button>
-																)}
-														</div>
-													</div>
-												</div>
+						<motion.div
+							initial={{ opacity: 0, y: 8 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.2 }}
+							className={styles.postList}
+						>
+							{posts.map((post, index) => (
+								<Link
+									key={post.id}
+									to="/posts/$id"
+									params={{ id: post.id }}
+									className={styles.postLink}
+								>
+									<div className={styles.postRow}>
+										<span className={styles.idx}>
+											№ {String(index + 1).padStart(2, "0")}
+										</span>
+										<div className={styles.postBody}>
+											<div className={styles.postTitleText}>
+												{truncate(post.title || post.content, 80)}
 											</div>
-										</Link>
-									</motion.div>
-								);
-							})}
-						</Stack>
+											<div className={styles.postMetaText}>
+												{statusLine(post)}
+											</div>
+										</div>
+										{post.platforms.length > 0 && (
+											<span className={styles.platformChips}>
+												{post.platforms.slice(0, 3).map((p) => (
+													<span
+														key={p}
+														className={styles.platformChip}
+														title={p}
+													>
+														{getPlatformIcon(p, 14)}
+													</span>
+												))}
+											</span>
+										)}
+										<span
+											className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
+										>
+											{STATUS_LABELS[post.status]}
+										</span>
+										<span className={styles.chevronBtn} aria-hidden>
+											<ChevronRight size={16} />
+										</span>
+									</div>
+								</Link>
+							))}
+						</motion.div>
 					)}
 				</div>
 
