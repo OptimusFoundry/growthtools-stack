@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toPost } from "@/api/transforms/post";
 import type { ApiPost } from "@/api/types/post";
 import type { Post, UpdatePostRequest } from "@/types/post";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const useUpdatePost = () => {
 	const [loading, setLoading] = useState<boolean>(false);

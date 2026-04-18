@@ -6,7 +6,7 @@ import type {
 	UpdateVoiceProfileRequest,
 	VoiceProfile,
 } from "@/types/voiceProfile";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export const useVoiceProfile = () => {
 	const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);

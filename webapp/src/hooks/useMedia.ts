@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toMediaItems } from "@/api/transforms/media";
 import type { ApiMediaItem } from "@/api/types/media";
 import type { MediaItem } from "@/types/media";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 interface MediaFilters {
 	limit?: number;

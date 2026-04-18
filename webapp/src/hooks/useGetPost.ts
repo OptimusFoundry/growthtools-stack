@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toPost } from "@/api/transforms/post";
 import type { ApiPost } from "@/api/types/post";
 import type { Post } from "@/types/post";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export const useGetPost = (id: string | undefined) => {
 	const [post, setPost] = useState<Post | null>(null);

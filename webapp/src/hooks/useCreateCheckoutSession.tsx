@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { type ApiError, fetcher } from "@/api";
-import { toApiError } from "@/utils";
+import { fetcher, type ApiError } from "@/api/client";
+import { toApiError } from "@/utils/errorHandler";
 
 interface CreateCheckoutSessionResponse {
 	client_secret: string;

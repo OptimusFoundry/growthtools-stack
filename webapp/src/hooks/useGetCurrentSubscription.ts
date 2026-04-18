@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-	type ApiError,
-	type ApiSubscription,
-	fetcher,
-	toUiSubscription,
-} from "@/api";
+import { fetcher, type ApiError } from "@/api/client";
+import type { ApiSubscription } from "@/api/types/billing";
+import { toUiSubscription } from "@/api/transforms/billing";
 import type { Subscription } from "@/types/billing";
-import { toApiError } from "@/utils";
+import { toApiError } from "@/utils/errorHandler";
 
 async function getCurrentSubscription(): Promise<Subscription> {
 	const response = await fetcher<ApiSubscription>(

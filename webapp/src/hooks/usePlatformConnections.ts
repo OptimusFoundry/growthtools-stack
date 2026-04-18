@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toPlatformConnections } from "@/api/transforms/platform";
 import type { ApiPlatformConnection } from "@/api/types/platform";
 import type { PlatformConnection } from "@/types/platform";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export const usePlatformConnections = () => {
 	const [connections, setConnections] = useState<PlatformConnection[]>([]);

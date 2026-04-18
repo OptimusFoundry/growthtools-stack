@@ -3,7 +3,7 @@ import { fetcher } from "@/api/client";
 import { toBlogPosts } from "@/api/transforms/blog";
 import type { ApiBlogPost } from "@/api/types/blog";
 import type { BlogPost, BlogStatus } from "@/types/blog";
-import { getErrorMessage, isAbortError } from "@/utils";
+import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 interface BlogFilters {
 	status?: BlogStatus;

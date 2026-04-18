@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { fetcher } from "@/api/client";
 import type { PlatformType } from "@/types/platform";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 interface ConnectPlatformResponse {
 	auth_url: string;

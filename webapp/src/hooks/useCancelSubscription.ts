@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import { fetcher } from "@/api";
+import { fetcher } from "@/api/client";
 import { CancelSubscriptionResponse } from "@/types/billing";
-import { getErrorMessage } from "@/utils";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 async function cancelSubscription(): Promise<CancelSubscriptionResponse> {
 	const response = await fetcher<CancelSubscriptionResponse>(
