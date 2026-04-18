@@ -34,8 +34,9 @@ type CaptureRequest struct {
 	// user's OAuth token, so the capture-worker doesn't need a local git
 	// checkout or any credentials of its own. May be empty for commits
 	// GitHub considers too large to render.
-	Diff   string `json:"diff,omitempty"`
-	AppURL string `json:"app_url,omitempty"`
+	Diff    string `json:"diff,omitempty"`
+	AppURL  string `json:"app_url,omitempty"`
+	TwoPass bool   `json:"two_pass,omitempty"`
 }
 
 // pushPayload is the subset of GitHub's push-event payload we actually use.
@@ -369,6 +370,7 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 			Message:  commit.Message,
 			Diff:     diff,
 			AppURL:   appURL,
+			TwoPass:  true,
 		}
 		if err := p.publisher.Publish(ctx, TopicCaptureRequests, commit.ID.String(), req); err != nil {
 			p.logger.Error(ctx, fmt.Sprintf("failed to enqueue capture request for %s", commit.SHA), err)
