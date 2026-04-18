@@ -71,7 +71,8 @@ func (a *BlueskyAdapter) Publish(ctx context.Context, content string, mediaURLs 
 	record := map[string]any{
 		"$type":     "app.bsky.feed.post",
 		"text":      content,
-		"createdAt": fmt.Sprintf("%s", nowUTC()),
+		"createdAt": nowUTC(),
+		"langs":     []string{"en"},
 	}
 	if videoBlob != nil {
 		record["embed"] = map[string]any{
@@ -146,7 +147,8 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 		record := map[string]any{
 			"$type":     "app.bsky.feed.post",
 			"text":      seg.Content,
-			"createdAt": fmt.Sprintf("%s", nowUTC()),
+			"createdAt": nowUTC(),
+			"langs":     []string{"en"},
 		}
 		if videoBlob != nil {
 			record["embed"] = map[string]any{
