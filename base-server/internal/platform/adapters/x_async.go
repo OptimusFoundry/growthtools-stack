@@ -64,7 +64,7 @@ func (a *XAdapter) StartPublish(ctx context.Context, spec PostSpec, conn store.P
 		}, accessToken, tokenSecret)
 		if err != nil {
 			a.logger.Error(ctx, "failed to upload media to X", err)
-			handle.Items = append(handle.Items, xMediaItem{})
+			handle.Items = append(handle.Items, xMediaItem{State: "failed"})
 			readyNow = false
 			continue
 		}
@@ -98,8 +98,11 @@ func (a *XAdapter) CheckReady(ctx context.Context, raw json.RawMessage, conn sto
 	allReady := true
 	for i := range handle.Items {
 		item := &handle.Items[i]
-		if item.MediaID == "" || item.State == "succeeded" {
+		if item.State == "succeeded" {
 			continue
+		}
+		if item.MediaID == "" {
+			return false, raw, fmt.Errorf("x adapter: media slot %d failed to upload in StartPublish", i)
 		}
 		status, err := a.client.GetMediaStatus(ctx, item.MediaID, conn.AccessToken)
 		if err != nil {
