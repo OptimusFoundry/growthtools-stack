@@ -1,65 +1,12 @@
+# Component Patterns
+
+Patterns for building new components in the proto-design-system or as feature-level components.
+
 ---
-name: component-builder
-description: Creates React 19 components following design system patterns. Use PROACTIVELY when building new UI components. Enforces DESIGN-GUIDELINES.md standards.
-tools: Read, Write, Edit, Glob, Grep, Bash
-model: inherit
----
 
-# Component Builder Agent
+## File Structure
 
-## Your Role
-You are a senior frontend engineer specializing in React 19 and design systems. You create high-quality, accessible, and maintainable components that follow project conventions exactly.
-
-## Project Documentation
-
-**Always reference these docs before creating components:**
-@webapp/docs/DESIGN-GUIDELINES.md
-@webapp/CLAUDE.md
-
-**If you're building a feature-level component (a page section, a card
-rendered inside a route, etc.) — not a pure design-system primitive —
-also read the composition patterns:**
-@webapp/docs/PATTERNS.md
-@webapp/docs/PAGE-TEMPLATES.md
-
-These define the shell / header / section / empty-state rhythm. For
-reusable primitives (Button, Field, etc.) PATTERNS.md is informational
-only; you don't need to enforce it.
-
-## When to delegate to `page-builder`
-
-If the ask is really about a route / page / tab / form — stop and hand
-off to `page-builder`. Your job is primitives and feature-level reusable
-pieces, not whole-page composition.
-
-## Before Creating ANY Component
-
-Follow the "explore first" pattern:
-
-1. **Search existing components**: Check `webapp/webapp/src/proto-design-system/components/` for similar components
-2. **Read DESIGN-GUIDELINES.md**: Understand patterns and conventions
-3. **Find reference components**: Use existing components as templates
-4. **Confirm with user**: If unsure whether component exists, ask first
-
-```bash
-# Search for existing components
-find webapp/src/proto-design-system -name "*.tsx" | head -20
-grep -r "ComponentName" webapp/src/proto-design-system/
-```
-
-## Component Categories & Paths
-
-| Category | Path | Examples |
-|----------|------|----------|
-| primitives | `webapp/src/proto-design-system/components/primitives/` | Button, Badge, Text, Avatar |
-| forms | `webapp/src/proto-design-system/components/forms/` | TextField, Select, Checkbox |
-| layout | `webapp/src/proto-design-system/components/layout/` | Stack, Card, Grid, Container |
-| feedback | `webapp/src/proto-design-system/components/feedback/` | Alert, Toast, Progress |
-| overlays | `webapp/src/proto-design-system/components/overlays/` | Modal, Dropdown, Tooltip |
-| navigation | `webapp/src/proto-design-system/components/navigation/` | Tabs, Sidebar, Breadcrumb |
-| data | `webapp/src/proto-design-system/components/data/` | Table, StatCard, EmptyState |
-
-## Required File Structure
+Design system primitives live in `src/proto-design-system/components/{category}/{ComponentName}/`:
 
 ```
 ComponentName/
@@ -69,9 +16,25 @@ ComponentName/
 └── ComponentName.stories.tsx  # Storybook documentation
 ```
 
+Feature-level components live in `src/features/{feature}/components/{ComponentName}/` and use `component.tsx` / `component.module.scss` (lowercase).
+
+**Component categories in proto-design-system:**
+
+| Category | Path |
+|----------|------|
+| primitives | `components/primitives/` — Button, Badge, Text, Avatar |
+| forms | `components/forms/` — TextField, Select, Checkbox |
+| layout | `components/layout/` — Stack, Card, Grid, Container |
+| feedback | `components/feedback/` — Alert, Toast, Progress |
+| overlays | `components/overlays/` — Modal, Dropdown, Tooltip |
+| navigation | `components/navigation/` — Tabs, Sidebar, Breadcrumb |
+| data | `components/data/` — Table, StatCard, EmptyState |
+
+---
+
 ## React 19 Component Patterns
 
-### Basic Component (ref as prop - NO forwardRef!)
+### Basic Component — ref as prop, no forwardRef
 
 ```tsx
 import type { HTMLAttributes, Ref } from 'react';
@@ -84,7 +47,6 @@ export interface ComponentNameProps extends HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg';
   /** Ref to the root element */
   ref?: Ref<HTMLDivElement>;
-  /** Content */
   children: React.ReactNode;
 }
 
@@ -145,7 +107,7 @@ function SubmitButton() {
 }
 ```
 
-### Optimistic UI Component (React 19)
+### Optimistic UI (React 19)
 
 ```tsx
 import { useOptimistic } from 'react';
@@ -171,14 +133,14 @@ export function OptimisticList({ items, onAdd }: ListProps) {
 }
 ```
 
-### Context Provider (React 19 - NO .Provider!)
+### Context Provider — no .Provider!
 
 ```tsx
 import { createContext, use, useState } from 'react';
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-// React 19: Use <Context> directly
+// React 19: Use <Context> directly, NOT <Context.Provider>
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   return (
@@ -202,7 +164,7 @@ export function useTheme() {
 import { use, Suspense } from 'react';
 
 function DataContent({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise); // React 19: reads promise with Suspense
+  const data = use(dataPromise);
   return <div>{data.content}</div>;
 }
 
@@ -223,7 +185,7 @@ export function DataDisplay(props: { dataPromise: Promise<Data> }) {
     if (element) {
       const observer = new ResizeObserver(() => console.log('Resized'));
       observer.observe(element);
-      // React 19: Return cleanup function
+      // React 19: return cleanup function from ref callback
       return () => observer.disconnect();
     }
   }}
@@ -232,11 +194,12 @@ export function DataDisplay(props: { dataPromise: Promise<Data> }) {
 </div>
 ```
 
-## SCSS Template (Design Tokens Only!)
+---
+
+## SCSS Template
 
 ```scss
-// ComponentName.module.scss
-// NEVER use hardcoded values - always use design tokens
+// ComponentName.module.scss — NEVER hardcode values, always use design tokens
 
 .root {
   padding: var(--space-4);
@@ -259,12 +222,13 @@ export function DataDisplay(props: { dataPromise: Promise<Data> }) {
 .md { padding: var(--space-4); font-size: var(--font-size-base); }
 .lg { padding: var(--space-6); font-size: var(--font-size-lg); }
 
-// Accessibility: focus states
 .root:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 ```
+
+---
 
 ## Storybook Template
 
@@ -299,31 +263,35 @@ export const AllVariants: Story = {
 };
 ```
 
-## TypeScript 5.9 Patterns
+---
+
+## TypeScript Patterns
 
 ```typescript
 import type { ComponentProps } from 'react';
 
-// Use satisfies for config objects
+// satisfies for config objects
 const defaultConfig = {
   variant: 'primary',
   size: 'md',
 } satisfies Partial<ComponentNameProps>;
 
-// Use import type for type-only imports
+// import type for type-only imports
 import type { User } from '@/types';
 
 // Explicit type arguments when inference is ambiguous
 const items = createItems<Item>([...]);
 ```
 
+---
+
 ## Checklist Before Completing
 
-- [ ] Searched for existing components first
-- [ ] Used ref as prop (no forwardRef)
+- [ ] Searched for existing component before creating
+- [ ] Used `ref` as prop (no `forwardRef`)
 - [ ] Used design tokens (no hardcoded values)
-- [ ] Included TypeScript types with JSDoc comments
-- [ ] Added accessibility attributes (aria-label, role, etc.)
-- [ ] Created Storybook story
-- [ ] **NO index.ts barrel exports** - import directly from source files
-- [ ] Let React Compiler handle memoization (no manual useMemo/useCallback)
+- [ ] TypeScript types with JSDoc comments
+- [ ] Accessibility attributes (aria-label, role, etc.)
+- [ ] Storybook story
+- [ ] No `index.ts` barrel exports
+- [ ] React Compiler handles memoization (no manual `useMemo`/`useCallback`)

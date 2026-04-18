@@ -1,12 +1,33 @@
 # Webapp Architecture Patterns
 
-> Reference doc for building new features. Follow these patterns exactly.
+Reference for feature module structure, routing, data fetching, API layer, and file organization.
 
 ---
 
-## 1. Feature Module Structure
+## Directory Structure
 
-Each feature lives under `src/features/{feature-name}/` with this layout:
+```
+src/
+├── proto-design-system/  # Design system (50+ components) — do not modify
+│   ├── components/       # UI primitives by category
+│   ├── tokens/           # Design tokens (spacing, colors, etc.)
+│   ├── hooks/            # Design system hooks
+│   └── themes/           # Theme definitions
+├── features/             # Feature modules (see below)
+├── routes/               # TanStack Router file-based routes (thin wrappers)
+├── components/           # Shared app-level components (Layout, gating, etc.)
+├── hooks/                # Shared hooks (used by 2+ features)
+├── api/                  # fetcher, publicFetcher, transforms, types
+├── contexts/             # React contexts + providers
+├── config/               # App config (navigation, etc.)
+└── types/                # Shared TypeScript types
+```
+
+---
+
+## Feature Module Structure
+
+Each feature lives under `src/features/{feature-name}/`:
 
 ```
 src/features/{feature-name}/
@@ -15,10 +36,9 @@ src/features/{feature-name}/
 │   │   ├── component.tsx          # Main component
 │   │   ├── component.module.scss  # Scoped styles
 │   │   └── component.stories.ts   # Optional Storybook story
-│   ├── {SubComponent}/
-│   │   ├── component.tsx
-│   │   └── component.module.scss
-│   └── index.ts                   # Optional barrel (only for feature-internal use)
+│   └── {SubComponent}/
+│       ├── component.tsx
+│       └── component.module.scss
 ├── hooks/                         # Feature-specific hooks (optional)
 │   └── use{Something}.ts
 └── services/                      # Feature-specific API services (optional)
@@ -29,16 +49,9 @@ src/features/{feature-name}/
 
 ---
 
-## 2. Component Pattern
-
-All components follow this structure:
+## Component Pattern
 
 ```tsx
-/**
- * ComponentName Component
- * Brief description of what it does
- */
-
 // 1. React imports
 import { memo, useState, useCallback } from "react";
 
@@ -68,16 +81,14 @@ import styles from "./component.module.scss";
 export interface ComponentNameProps extends HTMLAttributes<HTMLDivElement> {
   /** Prop description */
   someProp: string;
-  /** Optional prop */
   loading?: boolean;
 }
 
 // ============================================================================
-// Custom Hooks (same file, above component, if used by one component only)
+// Custom Hooks (above component, if used by one component only)
 // ============================================================================
 
 function useComponentData() {
-  // ... hook logic
   return { data, loading, error };
 }
 
@@ -99,9 +110,6 @@ export const ComponentName = memo(function ComponentName({
   loading = false,
   ...props
 }: ComponentNameProps) {
-  // hooks
-  // handlers
-  // render
   return (
     <Stack gap="lg" className={styles.root} {...props}>
       ...
@@ -112,17 +120,13 @@ export const ComponentName = memo(function ComponentName({
 ComponentName.displayName = "ComponentName";
 ```
 
-**Key rules:**
-- Always `memo` wrap exported components
-- Always set `displayName`
-- Extract hooks above component, sub-components with their own `memo` + `displayName`
-- Use `// ============================================================================` section dividers
+**Rules:** always `memo` wrap, always set `displayName`, use section dividers.
 
 ---
 
-## 3. Route Pattern
+## Route Pattern
 
-Routes live in `src/routes/` and use TanStack Router file-based routing:
+Routes are thin wrappers in `src/routes/`. Business logic stays in features.
 
 ```tsx
 // src/routes/{route-name}.tsx
@@ -138,13 +142,9 @@ function RouteComponent() {
 }
 ```
 
-**Route → Feature mapping:** Routes are thin wrappers that import from features. Business logic stays in features.
-
 ---
 
-## 4. Hook Pattern (Data Fetching)
-
-Hooks live in `src/hooks/` (shared) or `src/features/{name}/hooks/` (feature-specific):
+## Hook Pattern (Data Fetching)
 
 ```tsx
 // src/hooks/use{Action}.ts
@@ -180,33 +180,49 @@ export const useSomething = () => {
 };
 ```
 
-**Key rules:**
-- Always return `{ data, loading, error, refetch }`
-- Use `toApiError()` for error conversion
-- Use `fetcher` (authenticated) or `publicFetcher` (public endpoints)
-- URL pattern: `` `${import.meta.env.VITE_API_URL}/api/protected/...` ``
+**Rules:** always return `{ data, loading, error, refetch }`, use `toApiError()`, never raw `fetch`.
+
+Hook placement:
+
+| Used by | Location |
+|---------|----------|
+| One component | Same file, above component |
+| Related components in one feature | `feature/hooks/` folder |
+| Multiple features | `src/hooks/` |
 
 ---
 
-## 5. API Layer
+## API Layer
 
 ```
 src/api/
 ├── client.ts       # fetcher() and publicFetcher() — cookie-based auth
-├── index.ts        # Barrel export for api layer
+├── index.ts        # Barrel export for api layer (only exception to no-barrel rule)
 ├── transforms/     # API → UI type converters (snake_case → camelCase)
 └── types/          # API response types (snake_case, matching backend)
 ```
 
 - `fetcher<T>(url, options)` — authenticated, sends cookies
 - `publicFetcher<T>(url, options)` — no auth, for public endpoints
-- Types in `api/types/` match the backend response (snake_case)
-- Transforms in `api/transforms/` convert to UI types (camelCase)
-- UI types in `src/types/` are camelCase
+- Types in `api/types/` use snake_case (matching backend)
+- Transforms in `api/transforms/` convert to camelCase UI types
+- UI types in `src/types/` use camelCase
 
 ---
 
-## 6. Navigation Config
+## Contexts
+
+| Context | File | Purpose |
+|---------|------|---------|
+| AuthProvider | `contexts/auth.tsx` | User auth state, login/logout |
+| PersonaProvider | `contexts/persona.tsx` | Role-based nav filtering |
+| TierProvider | `contexts/tier.tsx` | Subscription tier, feature gating |
+| SidebarProvider | `contexts/sidebar.tsx` | Sidebar open/collapsed state |
+| Providers | `contexts/providers.tsx` | Wraps all providers together |
+
+---
+
+## Navigation Config
 
 Navigation is driven by `src/config/navigation.ts`:
 
@@ -219,7 +235,7 @@ export const navigationConfig: NavGroup[] = [
       {
         label: "Page Name",
         href: "/route-path",
-        iconClass: "icon-name",        // maps to Lucide icon in Layout.tsx
+        iconClass: "icon-name",   // maps to Lucide icon in Layout.tsx
         allowedPersonas: ["admin"],
       },
     ],
@@ -227,53 +243,11 @@ export const navigationConfig: NavGroup[] = [
 ];
 ```
 
-The Layout component (`src/components/Layout/Layout.tsx`) reads this config via PersonaProvider and renders the sidebar. Icon mapping is in `iconMap` const.
+The Layout component reads this config via PersonaProvider and renders the sidebar. Icon mapping is in `iconMap` const in `Layout.tsx`.
 
 ---
 
-## 7. Contexts
-
-| Context | File | Purpose |
-|---------|------|---------|
-| AuthProvider | `contexts/auth.tsx` | User auth state, login/logout |
-| PersonaProvider | `contexts/persona.tsx` | Role-based nav filtering |
-| TierProvider | `contexts/tier.tsx` | Subscription tier, feature gating |
-| SidebarProvider | `contexts/sidebar.tsx` | Sidebar open/collapsed state |
-| Providers | `contexts/providers.tsx` | Wraps all providers together |
-
----
-
-## 8. Styling Pattern
-
-- **Always** use CSS Modules: `component.module.scss`
-- **Always** use design tokens: `var(--space-4)`, `var(--color-surface)`, etc.
-- **Never** hardcode colors, spacing, or font sizes
-- **Never** use inline styles for layout
-
-```scss
-// component.module.scss
-.root {
-  padding: var(--space-6);
-}
-
-.card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  padding: var(--space-4);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-```
-
----
-
-## 9. Loading / Error / Empty State Pattern
+## Loading / Error / Empty State Pattern
 
 ```tsx
 // Loading
@@ -298,34 +272,35 @@ if (!data || data.length === 0) {
   );
 }
 
-// Data
 return <DataDisplay data={data} />;
 ```
 
 ---
 
-## 10. Proto Design System Components (Quick Reference)
-
-| Category | Components |
-|----------|------------|
-| **Primitives** | `Button`, `Text`, `Badge`, `Avatar`, `Icon`, `Spinner`, `Skeleton`, `Tag` |
-| **Forms** | `Input`, `TextField`, `TextArea`, `Select`, `Checkbox`, `Radio`, `Switch`, `Slider`, `FormField` |
-| **Layout** | `Stack`, `Grid`, `Container`, `Card`, `Divider`, `AspectRatio` |
-| **Navigation** | `Tabs`, `Sidebar`, `Navbar`, `Breadcrumb`, `Pagination`, `StepIndicator` |
-| **Feedback** | `Alert`, `Toast`, `Progress`, `Banner` |
-| **Overlays** | `Modal`, `Dropdown`, `DropdownMenu`, `Popover`, `Tooltip` |
-| **Data** | `Table`, `DataGrid`, `List`, `StatCard`, `EmptyState` |
-
-Import pattern: `import { Button } from "@/proto-design-system/components/primitives/Button";`
-
----
-
-## 11. File Size & Extraction Guidelines
+## File Size & Extraction Guidelines
 
 | Metric | Limit | Action |
 |--------|-------|--------|
-| Component body | ~50 lines | Extract hooks/sub-components |
+| Component body | ~50 lines | Extract hooks / sub-components |
 | File length | ~200 lines | Split into sub-components |
-| useState calls | ~5 | Combine into hook or reducer |
-| useEffect calls | ~2 | Extract into hooks |
+| `useState` calls | ~5 | Combine into hook or reducer |
+| `useEffect` calls | ~2 | Extract into hooks |
 | Props count | ~8 | Consider composition |
+
+---
+
+## No Barrel Exports
+
+Do **not** create `index.ts` files to re-export modules — it slows builds, confuses tree-shaking, creates circular dependency risk.
+
+```typescript
+// ✅ Import directly from source
+import { Button } from '@/proto-design-system/components/primitives/Button';
+import { useAuth } from '@/hooks/useAuth';
+
+// ❌ Never from barrel
+import { Button } from '@/proto-design-system/components/primitives';
+import { useAuth } from '@/hooks';
+```
+
+Exception: `src/api/index.ts` is intentional.

@@ -19,6 +19,8 @@ These agents read a doc then execute a mechanical task. Safe to fire in parallel
 | `backend-integration-test-writer` | `docs/TESTING.md` | Write real-HTTP integration tests |
 | `backend-kafka-integration` | `docs/KAFKA.md`, `docs/ARCHITECTURE.md` | Add Kafka producer + consumer/worker |
 | `backend-test-scaffold` | `docs/TESTING.md` | Determine and generate tests at all levels |
+| `frontend-style-checker` | `webapp/docs/DESIGN-GUIDELINES.md` | Validate SCSS against design tokens |
+| `frontend-test-fixer` | `webapp/docs/REACT19-PATTERNS.md`, `webapp/docs/TESTING-PATTERNS.md` | Fix failing frontend tests |
 | `pre-commit` | — | Run CI checks, auto-fix build/lint issues |
 
 ### sonnet — orchestrators + judgment
@@ -27,17 +29,16 @@ These agents coordinate other agents or need broad codebase understanding. Run i
 | Agent | Task |
 |-------|------|
 | `backend-supervisor` | Execute a backend plan end-to-end: code → tests → build/vet/test → pre-commit → commit |
+| `frontend-supervisor` | Execute a frontend plan end-to-end: code → tests → build/lint → pre-commit → commit |
 | `code-reviewer` | General code quality review |
 | `backend-code-reviewer` | Go backend pattern validation |
-| `code-reviewer-frontend` | React/TypeScript pattern validation |
+| `frontend-code-reviewer` | React/TypeScript/design-system pattern validation |
 | `backend-debug-helper` | Trace execution paths, identify root causes |
 | `backend-go-specialist` | Idiomatic Go guidance, architectural patterns |
 | `pr-prep` | Full pre-PR checklist across backend + frontend |
-| `page-builder` | Scaffold new frontend pages/routes |
-| `component-builder` | Build React design system components |
-| `playwright-e2e` | Write exhaustive E2E test scenarios |
-| `test-fixer` | Debug and fix failing tests |
-| `style-checker` | Validate SCSS against design tokens |
+| `frontend-page-builder` | Scaffold new routes, pages, tabs, and forms |
+| `frontend-component-builder` | Build React 19 design system components |
+| `frontend-e2e-test-writer` | Write exhaustive Playwright E2E tests |
 
 ### opus — use sparingly
 Deep expertise tasks. Run one at a time.
@@ -57,7 +58,7 @@ Deep expertise tasks. Run one at a time.
 
 ## Docs Reference
 
-All haiku agents read from `base-server/docs/`:
+Backend haiku agents read from `base-server/docs/`:
 
 | Doc | Contents |
 |-----|----------|
@@ -68,3 +69,15 @@ All haiku agents read from `base-server/docs/`:
 | `CONFIGURATION.md` | Env vars, build commands, Docker, security |
 | `HANDLERS.md` | Request/response structs, handler/processor templates, routing |
 | `KAFKA.md` | Producer, consumer/worker, bootstrap integration |
+
+Frontend agents read from `webapp/docs/`:
+
+| Doc | Contents |
+|-----|----------|
+| `ARCHITECTURE.md` | Feature module structure, routes, hooks, API layer, contexts |
+| `COMPONENT-PATTERNS.md` | React 19 patterns, SCSS template, Storybook template |
+| `REACT19-PATTERNS.md` | New APIs, deprecated patterns, testing patterns |
+| `DESIGN-GUIDELINES.md` | Component reference (50+ components), design token tables |
+| `PATTERNS.md` | Page composition: shell, heading, section, empty state rhythm |
+| `PAGE-TEMPLATES.md` | Copy-paste scaffolds for 4 page shapes |
+| `TESTING-PATTERNS.md` | Vitest, RTL, Playwright, MSW patterns |

@@ -25,6 +25,8 @@ growth-tools/
 
 > **IMPORTANT:** For any backend implementation task (new feature, endpoint, migration, etc.), ALWAYS use the `backend-supervisor` agent. Never implement backend code directly — dispatch `backend-supervisor` with the plan and let it orchestrate code, tests, quality checks, and commit.
 
+> **IMPORTANT:** For any frontend implementation task (new page, component, feature, etc.), ALWAYS use the `frontend-supervisor` agent. Never implement frontend code directly — dispatch `frontend-supervisor` with the plan and let it orchestrate code, tests, build/lint checks, and commit.
+
 ### Backend agents (`backend-*` prefix)
 Haiku — batch freely (pattern-backed, read docs then execute):
 
@@ -50,10 +52,27 @@ Sonnet — run individually (judgment required):
 | `backend-debug-helper` | Trace execution paths, root cause analysis |
 | `backend-go-specialist` | Idiomatic Go + architectural guidance |
 
+### Frontend agents (`frontend-*` prefix)
+Sonnet — run individually (judgment required):
+
+| Agent | Task |
+|-------|------|
+| `frontend-supervisor` | Execute a full plan end-to-end: code → tests → build/lint → pre-commit → commit |
+| `frontend-page-builder` | Scaffold routes, pages, tabs, and forms |
+| `frontend-component-builder` | Build React 19 design system components |
+| `frontend-e2e-test-writer` | Write exhaustive Playwright E2E tests |
+| `frontend-code-reviewer` | React/TypeScript/design-system pattern validation |
+
+Haiku — batch freely:
+
+| Agent | Task |
+|-------|------|
+| `frontend-style-checker` | Validate SCSS against design tokens |
+| `frontend-test-fixer` | Fix failing frontend tests |
+
 ### Other agents
 - `pre-commit` (haiku) — CI checks for both backend + frontend
 - `pr-prep`, `code-reviewer`, `security-auditor` (sonnet/opus) — cross-cutting
-- Frontend agents: `component-builder`, `page-builder`, `style-checker`, `playwright-e2e`, `test-fixer`, `code-reviewer-frontend` (sonnet)
 
 ## Quick Reference
 
