@@ -4,9 +4,13 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"sync"
 
 	"base-server/internal/blog/processor"
 	"base-server/internal/infra/apierrors"
@@ -26,6 +30,7 @@ type BlogProcessor interface {
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
 	GenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID) (store.BlogPost, error)
+	StreamGenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID, cb processor.BlogStreamCallbacks) error
 }
 
 type Handler struct {
@@ -353,6 +358,101 @@ func (h *Handler) HandleGenerateBlog(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, post)
+}
+
+// HandleStreamGenerateBlog streams blog post generation via SSE.
+// Events emitted:
+//   - event: phase  data: {"phase":"generating"}
+//   - event: chunk  data: {"text":"...markdown delta..."}
+//   - event: done   data: {<full store.BlogPost JSON>}
+//   - event: error  data: "human-readable error message"
+//
+// The blog post is persisted atomically when the full AI response is validated.
+// The non-streaming /blog/generate endpoint is kept for backwards compatibility.
+func (h *Handler) HandleStreamGenerateBlog(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accountID, ok := h.getAccountID(c)
+	if !ok {
+		return
+	}
+	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
+
+	var req GenerateBlogRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		apierrors.ValidationError(c, err)
+		return
+	}
+
+	mediaIDs := make([]uuid.UUID, 0, len(req.MediaIDs))
+	for _, idStr := range req.MediaIDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			apierrors.BadRequest(c, "INVALID_INPUT", "Invalid media_id format: "+idStr)
+			return
+		}
+		mediaIDs = append(mediaIDs, id)
+	}
+
+	// Set SSE headers.
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
+
+	flusher, canFlush := c.Writer.(http.Flusher)
+
+	var mu sync.Mutex
+	writeSSE := func(event, data string) {
+		mu.Lock()
+		defer mu.Unlock()
+		fmt.Fprintf(c.Writer, "event: %s\n", event)
+		fmt.Fprintf(c.Writer, "data: %s\n\n", data)
+		if canFlush {
+			flusher.Flush()
+		}
+	}
+
+	mustMarshal := func(v any) string {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return "{}"
+		}
+		return string(b)
+	}
+
+	cb := processor.BlogStreamCallbacks{
+		OnPhase: func(phase string) {
+			writeSSE("phase", mustMarshal(map[string]string{"phase": phase}))
+		},
+		OnChunk: func(chunk string) {
+			writeSSE("chunk", mustMarshal(map[string]string{"text": chunk}))
+		},
+		OnDone: func(post store.BlogPost) {
+			writeSSE("done", mustMarshal(post))
+		},
+		OnError: func(err error) {
+			h.logger.Error(ctx, "blog stream generation error", err)
+			writeSSE("error", "blog generation failed")
+		},
+	}
+
+	if err := h.processor.StreamGenerateBlogPost(ctx, accountID, req.Instruction, parseKeywords(req.Keywords), mediaIDs, cb); err != nil {
+		// OnError already wrote the SSE error event; nothing else to do.
+		return
+	}
+}
+
+// parseKeywords normalises a raw keyword slice: trims whitespace and drops empties.
+func parseKeywords(raw []string) []string {
+	out := make([]string, 0, len(raw))
+	for _, k := range raw {
+		k = strings.TrimSpace(k)
+		if k != "" {
+			out = append(out, k)
+		}
+	}
+	return out
 }
 
 func (h *Handler) handleError(c *gin.Context, err error) {

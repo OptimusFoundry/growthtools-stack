@@ -118,3 +118,28 @@
 .emptyPreviewIcon {
 	color: var(--color-muted);
 }
+
+.streamingCursor {
+	display: inline-block;
+	width: 2px;
+	height: 1em;
+	background: var(--color-primary);
+	vertical-align: text-bottom;
+	animation: blink 0.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0;
+	}
+}
+
+.generatingLoader {
+	padding: var(--space-16) var(--space-6);
+	text-align: center;
+}
