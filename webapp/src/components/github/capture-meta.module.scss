@@ -1,0 +1,49 @@
+// ─── Header meta row ─────────────────────────────────────────────────────────
+
+.meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	font-size: var(--font-size-xs);
+	color: var(--color-muted);
+}
+
+.metaItem {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.metaLink {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	color: var(--color-muted);
+	text-decoration: none;
+	transition: color 0.15s ease;
+
+	&:hover {
+		color: var(--color-base-content);
+	}
+}
+
+.sha {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	background: var(--color-base-100);
+	padding: 0 var(--space-1);
+	border-radius: var(--radius-sm);
+}
+
+.commitBody {
+	margin: 0;
+	padding: var(--space-3);
+	background: var(--color-base-100);
+	border-radius: var(--radius-md);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	color: var(--color-base-content);
+	white-space: pre-wrap;
+	overflow-x: auto;
+}
