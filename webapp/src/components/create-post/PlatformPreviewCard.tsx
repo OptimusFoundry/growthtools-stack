@@ -1,7 +1,7 @@
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
-import { PlatformPostCard } from "./PlatformPostCard";
+import { PlatformPostCard } from "./platform-cards/PlatformPostCard";
 import { ThreadView } from "./ThreadView";
 
 interface PlatformPreviewCardProps {

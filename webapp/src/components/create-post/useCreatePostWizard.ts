@@ -6,7 +6,6 @@ import type { PlatformType } from "@/types/platform";
 
 export type WizardContentType = "text" | "thread";
 export type GenerationStatus = "pending" | "generating" | "done" | "error";
-export type PublishMode = "now" | "schedule" | null;
 
 export interface WizardState {
 	blurb: string;
@@ -24,7 +23,6 @@ export interface WizardState {
 	platformContent: Partial<Record<PlatformType, string>>;
 	threadContent: Partial<Record<PlatformType, ThreadSegment[]>>;
 	maxThreadParts: number;
-	publishMode: PublishMode;
 	scheduledAt: string;
 	error: string | null;
 	submitting: boolean;
@@ -52,7 +50,6 @@ type WizardAction =
 	  }
 	| { type: "GENERATION_COMPLETE" }
 	| { type: "GENERATION_FAILED" }
-	| { type: "SET_PUBLISH_MODE"; mode: PublishMode }
 	| { type: "SET_SCHEDULED_AT"; scheduledAt: string }
 	| { type: "SET_ERROR"; error: string | null }
 	| { type: "SET_SUBMITTING"; submitting: boolean }
@@ -77,7 +74,6 @@ const initialState: WizardState = {
 	platformContent: {},
 	threadContent: {},
 	maxThreadParts: 5,
-	publishMode: null,
 	scheduledAt: "",
 	error: null,
 	submitting: false,
@@ -160,8 +156,6 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 			return { ...state, generating: false, generated: true };
 		case "GENERATION_FAILED":
 			return { ...state, generating: false };
-		case "SET_PUBLISH_MODE":
-			return { ...state, publishMode: action.mode };
 		case "SET_SCHEDULED_AT":
 			return { ...state, scheduledAt: action.scheduledAt };
 		case "SET_ERROR":
@@ -260,10 +254,6 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		() => dispatch({ type: "GENERATION_FAILED" }),
 		[],
 	);
-	const setPublishMode = useCallback(
-		(mode: PublishMode) => dispatch({ type: "SET_PUBLISH_MODE", mode }),
-		[],
-	);
 	const setScheduledAt = useCallback(
 		(scheduledAt: string) =>
 			dispatch({ type: "SET_SCHEDULED_AT", scheduledAt }),
@@ -303,7 +293,6 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		setThreadContent,
 		generationComplete,
 		generationFailed,
-		setPublishMode,
 		setScheduledAt,
 		setError,
 		setSubmitting,

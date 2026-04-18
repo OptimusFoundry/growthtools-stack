@@ -162,38 +162,6 @@
 }
 
 
-// Publish radio options
-.publishOptions {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-2);
-}
-
-.publishOption {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--space-2);
-	padding: var(--space-3);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	transition: border-color var(--duration-normal) var(--ease-out);
-
-	&:hover {
-		border-color: var(--color-border-hover);
-	}
-
-	&.publishOptionActive {
-		border-color: var(--color-primary);
-	}
-}
-
-.publishOptionContent {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-0-5);
-}
-
 .streamingCursor {
 	display: inline-block;
 	width: 2px;
