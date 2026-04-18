@@ -41,7 +41,15 @@ func (m *mockAIClient) CreateMessage(ctx context.Context, systemPrompt string, m
 	return "", nil
 }
 
+func (m *mockAIClient) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	return m.CreateMessage(ctx, systemPrompt, messages, maxTokens)
+}
+
 func (m *mockAIClient) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
+	return nil
+}
+
+func (m *mockAIClient) StreamJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
 	return nil
 }
 
@@ -52,8 +60,16 @@ func (a aiAdapter) CreateMessage(ctx context.Context, systemPrompt string, messa
 	return a.m.CreateMessage(ctx, systemPrompt, messages, maxTokens)
 }
 
+func (a aiAdapter) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	return a.m.CreateJSONMessage(ctx, systemPrompt, messages, maxTokens)
+}
+
 func (a aiAdapter) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
 	return a.m.StreamMessage(ctx, systemPrompt, messages, maxTokens, onChunk)
+}
+
+func (a aiAdapter) StreamJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
+	return a.m.StreamJSONMessage(ctx, systemPrompt, messages, maxTokens, onChunk)
 }
 
 func newCommitForBlog(t *testing.T) store.GitHubCommitForBlog {

@@ -161,7 +161,7 @@ func (g *BlogDraftGenerator) GenerateBlogFromCommit(ctx context.Context, commitI
 	}
 
 	userMessage := buildBlogUserMessage(commit, diff)
-	rawOutput, err := g.ai.CreateMessage(ctx, blogSystemPrompt, []aiclient.Message{
+	rawOutput, err := g.ai.CreateJSONMessage(ctx, blogSystemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMessage, Images: images},
 	}, blogMaxOutputTokens)
 	if err != nil {

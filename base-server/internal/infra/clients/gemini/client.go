@@ -84,8 +84,21 @@ func buildConfig(systemPrompt string, maxTokens int) *genai.GenerateContentConfi
 
 // CreateMessage sends a message to the Gemini API and returns the full response text.
 func (c *Client) CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	return c.generate(ctx, systemPrompt, messages, maxTokens, false)
+}
+
+// CreateJSONMessage forces Gemini to return raw JSON via response_mime_type.
+// Eliminates the markdown-fence wrapping that breaks json.Unmarshal callers.
+func (c *Client) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	return c.generate(ctx, systemPrompt, messages, maxTokens, true)
+}
+
+func (c *Client) generate(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, jsonMode bool) (string, error) {
 	contents := buildContents(messages)
 	config := buildConfig(systemPrompt, maxTokens)
+	if jsonMode {
+		config.ResponseMIMEType = "application/json"
+	}
 
 	result, err := c.client.Models.GenerateContent(ctx, defaultModel, contents, config)
 	if err != nil {
@@ -104,8 +117,21 @@ func (c *Client) CreateMessage(ctx context.Context, systemPrompt string, message
 // StreamMessage sends a message to the Gemini API and streams the response,
 // calling onChunk for each text chunk received.
 func (c *Client) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
+	return c.stream(ctx, systemPrompt, messages, maxTokens, false, onChunk)
+}
+
+// StreamJSONMessage streams a Gemini response with response_mime_type=application/json,
+// guaranteeing the concatenated chunks form valid JSON (no markdown fences).
+func (c *Client) StreamJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
+	return c.stream(ctx, systemPrompt, messages, maxTokens, true, onChunk)
+}
+
+func (c *Client) stream(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, jsonMode bool, onChunk func(string)) error {
 	contents := buildContents(messages)
 	config := buildConfig(systemPrompt, maxTokens)
+	if jsonMode {
+		config.ResponseMIMEType = "application/json"
+	}
 
 	for result, err := range c.client.Models.GenerateContentStream(ctx, defaultModel, contents, config) {
 		if err != nil {

@@ -373,7 +373,7 @@ func (p *BlogProcessor) StreamGenerateBlogPost(
 
 	// Phase 2: stream the AI response, accumulating raw chunks.
 	var rawBuilder strings.Builder
-	err := p.ai.StreamMessage(ctx, generateBlogSystemPrompt, []aiclient.Message{
+	err := p.ai.StreamJSONMessage(ctx, generateBlogSystemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMsg},
 	}, generateBlogMaxTokens, func(chunk string) {
 		rawBuilder.WriteString(chunk)

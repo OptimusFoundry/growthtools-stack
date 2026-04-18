@@ -11,7 +11,8 @@ import (
 
 // MockAIClient is a manual mock for aiclient.Client
 type MockAIClient struct {
-	CreateMessageFn func(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
+	CreateMessageFn     func(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
+	CreateJSONMessageFn func(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
 }
 
 func (m *MockAIClient) CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
@@ -21,7 +22,21 @@ func (m *MockAIClient) CreateMessage(ctx context.Context, systemPrompt string, m
 	return "", nil
 }
 
+func (m *MockAIClient) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	if m.CreateJSONMessageFn != nil {
+		return m.CreateJSONMessageFn(ctx, systemPrompt, messages, maxTokens)
+	}
+	if m.CreateMessageFn != nil {
+		return m.CreateMessageFn(ctx, systemPrompt, messages, maxTokens)
+	}
+	return "", nil
+}
+
 func (m *MockAIClient) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
+	return nil
+}
+
+func (m *MockAIClient) StreamJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
 	return nil
 }
 
