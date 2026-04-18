@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from "react";
+import { useReducer } from "react";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
 import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
 import type { MediaItem } from "@/types/media";
@@ -53,7 +53,6 @@ type WizardAction =
 	| { type: "SET_SCHEDULED_AT"; scheduledAt: string }
 	| { type: "SET_ERROR"; error: string | null }
 	| { type: "SET_SUBMITTING"; submitting: boolean }
-	| { type: "UPDATE_PLATFORM_CONTENT"; platform: PlatformType; content: string }
 	| {
 			type: "UPDATE_THREAD_SEGMENT";
 			platform: PlatformType;
@@ -162,14 +161,6 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 			return { ...state, error: action.error };
 		case "SET_SUBMITTING":
 			return { ...state, submitting: action.submitting };
-		case "UPDATE_PLATFORM_CONTENT":
-			return {
-				...state,
-				platformContent: {
-					...state.platformContent,
-					[action.platform]: action.content,
-				},
-			};
 		case "UPDATE_THREAD_SEGMENT": {
 			const current = state.threadContent[action.platform] ?? [];
 			const updated = [...current];
@@ -198,85 +189,44 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		...initialOverrides,
 	});
 
-	const setBlurb = useCallback(
-		(blurb: string) => dispatch({ type: "SET_BLURB", blurb }),
-		[],
-	);
-	const setContentType = useCallback(
-		(contentType: WizardContentType) =>
-			dispatch({ type: "SET_CONTENT_TYPE", contentType }),
-		[],
-	);
-	const setMaxThreadParts = useCallback(
-		(value: number) => dispatch({ type: "SET_MAX_THREAD_PARTS", value }),
-		[],
-	);
-	const togglePlatform = useCallback(
-		(platform: PlatformType) => dispatch({ type: "TOGGLE_PLATFORM", platform }),
-		[],
-	);
-	const setPendingFiles = useCallback(
-		(files: UploadedFile[]) => dispatch({ type: "SET_PENDING_FILES", files }),
-		[],
-	);
-	const addUploadedMedia = useCallback(
-		(media: MediaItem) => dispatch({ type: "ADD_UPLOADED_MEDIA", media }),
-		[],
-	);
-	const removeUploadedMedia = useCallback(
-		(id: string) => dispatch({ type: "REMOVE_UPLOADED_MEDIA", id }),
-		[],
-	);
-	const startGeneration = useCallback(
-		() => dispatch({ type: "START_GENERATION" }),
-		[],
-	);
-	const setPlatformProgress = useCallback(
-		(platform: PlatformType, status: GenerationStatus) =>
-			dispatch({ type: "SET_PLATFORM_PROGRESS", platform, status }),
-		[],
-	);
-	const setPlatformContent = useCallback(
-		(platform: PlatformType, content: string) =>
-			dispatch({ type: "SET_PLATFORM_CONTENT", platform, content }),
-		[],
-	);
-	const setThreadContent = useCallback(
-		(platform: PlatformType, thread: ThreadSegment[]) =>
-			dispatch({ type: "SET_THREAD_CONTENT", platform, thread }),
-		[],
-	);
-	const generationComplete = useCallback(
-		() => dispatch({ type: "GENERATION_COMPLETE" }),
-		[],
-	);
-	const generationFailed = useCallback(
-		() => dispatch({ type: "GENERATION_FAILED" }),
-		[],
-	);
-	const setScheduledAt = useCallback(
-		(scheduledAt: string) =>
-			dispatch({ type: "SET_SCHEDULED_AT", scheduledAt }),
-		[],
-	);
-	const setError = useCallback(
-		(error: string | null) => dispatch({ type: "SET_ERROR", error }),
-		[],
-	);
-	const setSubmitting = useCallback(
-		(submitting: boolean) => dispatch({ type: "SET_SUBMITTING", submitting }),
-		[],
-	);
-	const updatePlatformContent = useCallback(
-		(platform: PlatformType, content: string) =>
-			dispatch({ type: "UPDATE_PLATFORM_CONTENT", platform, content }),
-		[],
-	);
-	const updateThreadSegment = useCallback(
-		(platform: PlatformType, index: number, content: string) =>
-			dispatch({ type: "UPDATE_THREAD_SEGMENT", platform, index, content }),
-		[],
-	);
+	const setBlurb = (blurb: string) => dispatch({ type: "SET_BLURB", blurb });
+	const setContentType = (contentType: WizardContentType) =>
+		dispatch({ type: "SET_CONTENT_TYPE", contentType });
+	const setMaxThreadParts = (value: number) =>
+		dispatch({ type: "SET_MAX_THREAD_PARTS", value });
+	const togglePlatform = (platform: PlatformType) =>
+		dispatch({ type: "TOGGLE_PLATFORM", platform });
+	const setPendingFiles = (files: UploadedFile[]) =>
+		dispatch({ type: "SET_PENDING_FILES", files });
+	const addUploadedMedia = (media: MediaItem) =>
+		dispatch({ type: "ADD_UPLOADED_MEDIA", media });
+	const removeUploadedMedia = (id: string) =>
+		dispatch({ type: "REMOVE_UPLOADED_MEDIA", id });
+	const startGeneration = () => dispatch({ type: "START_GENERATION" });
+	const setPlatformProgress = (
+		platform: PlatformType,
+		status: GenerationStatus,
+	) => dispatch({ type: "SET_PLATFORM_PROGRESS", platform, status });
+	const setPlatformContent = (platform: PlatformType, content: string) =>
+		dispatch({ type: "SET_PLATFORM_CONTENT", platform, content });
+	const setThreadContent = (platform: PlatformType, thread: ThreadSegment[]) =>
+		dispatch({ type: "SET_THREAD_CONTENT", platform, thread });
+	const generationComplete = () => dispatch({ type: "GENERATION_COMPLETE" });
+	const generationFailed = () => dispatch({ type: "GENERATION_FAILED" });
+	const setScheduledAt = (scheduledAt: string) =>
+		dispatch({ type: "SET_SCHEDULED_AT", scheduledAt });
+	const setError = (error: string | null) =>
+		dispatch({ type: "SET_ERROR", error });
+	const setSubmitting = (submitting: boolean) =>
+		dispatch({ type: "SET_SUBMITTING", submitting });
+	// updatePlatformContent dispatches SET_PLATFORM_CONTENT — same mutation, unified action
+	const updatePlatformContent = (platform: PlatformType, content: string) =>
+		dispatch({ type: "SET_PLATFORM_CONTENT", platform, content });
+	const updateThreadSegment = (
+		platform: PlatformType,
+		index: number,
+		content: string,
+	) => dispatch({ type: "UPDATE_THREAD_SEGMENT", platform, index, content });
 
 	return {
 		state,
