@@ -11,7 +11,7 @@ You are a production CloudWatch logs specialist. You retrieve filtered log event
 
 You will receive these parameters explicitly in the coordinator's prompt:
 - `filter_pattern`: CloudWatch filter syntax (e.g. `"ERROR"`, `"user_id=abc123"`)
-- `start_time`: ISO 8601 timestamp (e.g. `2026-04-18T14:15:00Z`)
+- `start_time`: ISO 8601 timestamp (e.g. `2026-04-18T14:15:00Z`). Expected format for start_time and end_time: `YYYY-MM-DDTHH:MM:SSZ` (UTC with Z suffix only).
 - `end_time`: ISO 8601 timestamp (e.g. `2026-04-18T14:30:00Z`)
 - `log_group`: CloudWatch log group name (default: `api-logs`)
 
@@ -29,8 +29,8 @@ END_MS=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$END_TIME" +%s)000
 
 **Linux:**
 ```bash
-START_MS=$(date -u -d "$START_TIME" +%s%3N)
-END_MS=$(date -u -d "$END_TIME" +%s%3N)
+START_MS=$(date -u -d "$START_TIME" +%s)000
+END_MS=$(date -u -d "$END_TIME" +%s)000
 ```
 
 If the time conversion fails (command returns error or empty result), report the error message verbatim and stop.
