@@ -23,11 +23,6 @@ import (
 // consumes this and publishes outcomes to TopicCaptureResults.
 const TopicCaptureRequests = "github.capture.requests"
 
-// presignTTL is how long the rewritten capture URLs stay valid. One hour is
-// plenty for a browsing session and short enough that a leaked URL from a log
-// doesn't hand out long-term access.
-const presignTTL = time.Hour
-
 // CaptureRequest is the github.capture.requests message body.
 type CaptureRequest struct {
 	CommitID uuid.UUID `json:"commit_id"`

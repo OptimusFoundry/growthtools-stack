@@ -5,12 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 )
+
+// presignTTL is how long the rewritten capture URLs stay valid. One hour is
+// plenty for a browsing session and short enough that a leaked URL from a log
+// doesn't hand out long-term access.
+const presignTTL = time.Hour
 
 // GetCommit returns a single commit scoped to the requesting user's connection.
 // The store query filters on user_id so a mismatched owner reads as not-found.
