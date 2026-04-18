@@ -270,12 +270,5 @@ func pkceChallenge(verifier string) string {
 
 // joinScopes joins scopes with a space separator for OAuth URL construction.
 func joinScopes(scopes []string) string {
-	result := ""
-	for i, s := range scopes {
-		if i > 0 {
-			result += "%20"
-		}
-		result += s
-	}
-	return result
+	return strings.Join(scopes, " ")
 }
