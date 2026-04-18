@@ -251,43 +251,51 @@ export function WizardInner({
 		addBanner,
 	]);
 
-	const handleSchedule = useCallback(async () => {
-		if (!state.scheduledAt) {
-			wizard.setError("Please select a date and time.");
-			return;
-		}
+	const handleSchedule = useCallback(
+		async (whenOverride?: string) => {
+			const when = whenOverride ?? state.scheduledAt;
+			if (!when) {
+				addBanner({
+					type: "error",
+					title: "Please pick a date and time",
+					dismissible: true,
+				});
+				return;
+			}
 
-		wizard.setSubmitting(true);
-		wizard.setError(null);
+			wizard.setSubmitting(true);
+			wizard.setError(null);
 
-		try {
-			const postId = await persistDraft();
-			await schedulePost(postId, state.scheduledAt);
-			addBanner({
-				type: "success",
-				title: "Post scheduled",
-				description: `It'll go out on ${new Date(state.scheduledAt).toLocaleString()}.`,
-				dismissible: true,
-			});
-			navigate({ to: "/posts" });
-		} catch {
-			addBanner({
-				type: "error",
-				title: "Couldn't schedule post",
-				description: "Please try again.",
-				dismissible: true,
-			});
-		} finally {
-			wizard.setSubmitting(false);
-		}
-	}, [
-		state.scheduledAt,
-		wizard,
-		persistDraft,
-		schedulePost,
-		navigate,
-		addBanner,
-	]);
+			try {
+				const postId = await persistDraft();
+				await schedulePost(postId, when);
+				addBanner({
+					type: "success",
+					title: "Post scheduled",
+					description: `It'll go out on ${new Date(when).toLocaleString()}.`,
+					dismissible: true,
+				});
+				navigate({ to: "/posts" });
+			} catch {
+				addBanner({
+					type: "error",
+					title: "Couldn't schedule post",
+					description: "Please try again.",
+					dismissible: true,
+				});
+			} finally {
+				wizard.setSubmitting(false);
+			}
+		},
+		[
+			state.scheduledAt,
+			wizard,
+			persistDraft,
+			schedulePost,
+			navigate,
+			addBanner,
+		],
+	);
 
 	const handleSaveDraft = useCallback(async () => {
 		wizard.setSubmitting(true);
@@ -389,16 +397,21 @@ export function WizardInner({
 
 	const handleConfirmSchedule = useCallback(async () => {
 		if (!scheduleDate) {
-			wizard.setError("Please pick a date.");
+			addBanner({
+				type: "error",
+				title: "Please pick a date",
+				dismissible: true,
+			});
 			return;
 		}
 		const [h, m] = scheduleTime.split(":").map(Number);
 		const combined = new Date(scheduleDate);
 		combined.setHours(h ?? 9, m ?? 0, 0, 0);
-		wizard.setScheduledAt(combined.toISOString());
+		const iso = combined.toISOString();
+		wizard.setScheduledAt(iso);
 		setScheduleOpen(false);
-		await handleSchedule();
-	}, [scheduleDate, scheduleTime, wizard, handleSchedule]);
+		await handleSchedule(iso);
+	}, [scheduleDate, scheduleTime, wizard, handleSchedule, addBanner]);
 
 	const busy = state.submitting || savingDraft || updatingDraft;
 	const canAct = state.generated && !readOnly;
