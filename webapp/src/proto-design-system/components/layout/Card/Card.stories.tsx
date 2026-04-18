@@ -11,7 +11,7 @@ const meta: Meta<typeof Card> = {
 	argTypes: {
 		variant: {
 			control: "select",
-			options: ["elevated", "outlined", "filled"],
+			options: ["elevated", "outlined", "filled", "spec"],
 		},
 		padding: {
 			control: "select",
@@ -227,6 +227,32 @@ export const ProfileCard: Story = {
 					Follow
 				</button>
 			</div>
+		),
+	},
+};
+
+// =============================================================================
+// SPEC — editorial showcase card with serif name + uppercase mono meta
+// =============================================================================
+
+export const Spec: Story = {
+	args: {
+		variant: "spec",
+		padding: "none",
+		children: (
+			<>
+				<CardHeader
+					name={
+						<>
+							Tabs <em>and more</em>
+						</>
+					}
+					meta="line · pill · enclosed"
+				/>
+				<CardBody>
+					<p>Use the spec variant to wrap a labelled component or content block.</p>
+				</CardBody>
+			</>
 		),
 	},
 };
