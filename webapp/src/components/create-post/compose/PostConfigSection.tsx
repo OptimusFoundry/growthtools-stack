@@ -5,6 +5,7 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import { PLATFORM_SUPPORTS_THREADS, type PlatformType } from "@/types/platform";
 import type { WizardContentType } from "../useCreatePostWizard";
+import styles from "./PostConfigSection.module.scss";
 
 interface PostConfigSectionProps {
 	contentType: WizardContentType;
@@ -37,39 +38,41 @@ export function PostConfigSection({
 	if (!threadSupported) return null;
 
 	return (
-		<Stack gap="sm">
+		<Stack gap="md">
 			<Text size="md" weight="semibold">
 				Post Config
 			</Text>
-			<Switch
-				label="Thread mode"
-				description="Generate as multi-part posts"
-				checked={contentType === "thread"}
-				onChange={handleContentTypeToggle}
-				size="sm"
-				disabled={readOnly}
-			/>
-			{contentType === "thread" && (
-				<Stack direction="row" gap="md" align="center">
-					<Stack gap="xs">
-						<Text size="sm" weight="medium">
-							Thread length
-						</Text>
-						<Text size="xs" color="muted">
-							3–25 posts
-						</Text>
-					</Stack>
-					<Stepper
-						value={maxThreadParts}
-						onChange={onMaxThreadPartsChange}
-						min={3}
-						max={25}
-						size="md"
-						disabled={readOnly}
-						aria-label="Thread length"
-					/>
-				</Stack>
-			)}
+			<div className={styles.row}>
+				<Switch
+					label="Thread mode"
+					description="Generate as multi-part posts"
+					checked={contentType === "thread"}
+					onChange={handleContentTypeToggle}
+					size="sm"
+					disabled={readOnly}
+				/>
+				{contentType === "thread" && (
+					<div className={styles.lengthField}>
+						<div className={styles.field}>
+							<Text size="sm" weight="medium">
+								Thread length
+							</Text>
+							<Text size="xs" color="muted">
+								3–25 posts
+							</Text>
+						</div>
+						<Stepper
+							value={maxThreadParts}
+							onChange={onMaxThreadPartsChange}
+							min={3}
+							max={25}
+							size="md"
+							disabled={readOnly}
+							aria-label="Thread length"
+						/>
+					</div>
+				)}
+			</div>
 		</Stack>
 	);
 }
