@@ -109,16 +109,24 @@ If a conclusion cannot be reached, output "What I searched" + "What came up empt
 
 ## Configuration (SSM Parameter Store paths)
 
-These paths must exist in AWS SSM Parameter Store before agents can run:
+All paths verified from `infra/platform/platform-ssm.tf`, `infra/products/protoapp/data.tf`, and `infra/products/protoapp/secrets.tf`:
 
-| Parameter | Description |
-|-----------|-------------|
-| `/growth-tools/prod/ssm-instance-id` | EC2 instance ID used as SSM tunnel target |
-| `/growth-tools/prod/rds-host` | RDS endpoint hostname |
-| `/growth-tools/prod/db-name` | Production database name |
-| `/growth-tools/prod/db-username` | DB username |
-| `/growth-tools/prod/db-password` | DB password (SecureString) |
-| `/growth-tools/prod/cloudwatch-log-group` | ECS service log group name |
+| Parameter | SSM Path | Notes |
+|-----------|----------|-------|
+| RDS host | `/platform/rds/host` | Hostname only |
+| RDS endpoint | `/platform/rds/endpoint` | host:port |
+| DB username | `/platform/rds/master_username` | SecureString |
+| DB password | `/platform/rds/master_password` | SecureString |
+| DB name | `/protoapp/db_name` | Product-scoped |
+| CloudWatch log group | `api-logs` | From `${container_name_api}-logs`; `container_name_api` defaults to `"api"` |
+
+**SSM instance ID:** Not stored in Parameter Store — discovered at runtime:
+```bash
+aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ECS AutoScaling Group" "Name=instance-state-name,Values=running" \
+  --query "Reservations[0].Instances[0].InstanceId" \
+  --output text
+```
 
 ## What Is Not in Scope
 
