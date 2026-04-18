@@ -1,188 +1,219 @@
+// =============================================================================
+// GITHUB ACTIVITY PAGE
+// =============================================================================
+@use "@/proto-design-system/mixins" as *;
+
 .page {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-9);
-	max-width: var(--max-width-7xl);
-	padding: var(--space-9) var(--space-9) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+  max-width: var(--max-width-7xl);
+  padding: var(--space-9) var(--space-9) var(--space-12);
 }
 
-.loading {
-	min-height: var(--space-24);
+// ─── Content ─────────────────────────────────────────────────────────────────
+
+.content {
+  display: flex;
+  flex-direction: column;
 }
 
-// ─── Commit card ─────────────────────────────────────────────────────────────
-
-.commitCard {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--space-3);
-	padding: var(--space-4);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-card);
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
-
-	&:hover {
-		border-color: var(
-			--color-border-hover,
-			oklch(from var(--color-border) calc(l - 0.1) c h)
-		);
-		box-shadow: var(--shadow-sm);
-	}
+.loadingState {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-7) 0;
 }
 
-.commitCardClickable {
-	padding: 0;
-	cursor: pointer;
+// ─── Commit list (mirrors posts/blog .post-list / .post-row) ─────────────────
+
+.postList {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.commitCardLink {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--space-3);
-	padding: var(--space-4);
-	width: 100%;
-	color: inherit;
-	text-decoration: none;
+.postLink {
+  color: inherit;
+  display: block;
+  text-decoration: none;
 }
 
-.commitIcon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: var(--space-6);
-	height: var(--space-6);
-	flex-shrink: 0;
-	border-radius: var(--radius-md);
-	background: oklch(from var(--color-info) l c h / 0.1);
-	color: var(--color-info);
+.postRow {
+  border-top: 1px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  transition: background-color var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    background-color: var(--color-base-100);
+  }
+
+  @include breakpoint(md) {
+    align-items: center;
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: var(--space-7) 1fr auto auto;
+    padding: var(--space-5) var(--space-6);
+  }
 }
 
-.commitBody {
-	flex: 1;
-	min-width: 0;
+.postLink:first-child .postRow {
+  border-top: 0;
 }
 
-.commitHeader {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: var(--space-3);
+.titleRow {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-3);
+  min-width: 0;
+
+  @include breakpoint(md) {
+    display: contents;
+  }
 }
 
-.commitMessage {
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+.idx {
+  color: var(--color-base-content-tertiary);
+  flex-shrink: 0;
+  font-family: var(--font-family-mono, var(--font-family-sans));
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wider);
 }
 
-// ─── Meta row ────────────────────────────────────────────────────────────────
-
-.commitMeta {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: var(--space-2);
-	font-size: var(--font-size-xs);
-	color: var(--color-muted);
+.postBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.metaItem {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-1);
+.postTitleText {
+  color: var(--color-base-content);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @include breakpoint(md) {
+    font-size: var(--font-size-lg);
+  }
 }
 
-.metaLink {
-	display: inline-flex;
-	align-items: center;
-	color: var(--color-muted);
-	transition: color 0.15s ease;
-
-	&:hover {
-		color: var(--color-base-content);
-	}
+.postMetaText {
+  color: var(--color-base-content-tertiary);
+  font-family: var(--font-family-mono, var(--font-family-sans));
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.sha {
-	font-family: var(--font-family-mono);
-	font-size: var(--font-size-xs);
-	background: var(--color-base-100);
-	padding: 0 var(--space-1);
-	border-radius: var(--radius-sm);
+.metaRow {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+
+  @include breakpoint(md) {
+    display: contents;
+  }
 }
 
-// ─── Media ───────────────────────────────────────────────────────────────────
+// ─── Status badge (outlined pill, mono caps, leading dot) ────────────────────
 
-.mediaGrid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-	gap: var(--space-2);
+.statusBadge {
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid currentcolor;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  font-family: var(--font-family-mono, var(--font-family-sans));
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-1-5);
+  letter-spacing: var(--letter-spacing-widest);
+  padding: var(--space-1) var(--space-3);
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &::before {
+    background-color: currentcolor;
+    border-radius: var(--radius-full);
+    content: "";
+    display: inline-block;
+    height: var(--space-1-5);
+    width: var(--space-1-5);
+  }
 }
 
-.mediaThumb {
-	display: block;
-	aspect-ratio: 16 / 10;
-	overflow: hidden;
-	border-radius: var(--radius-md);
-	background: var(--color-base-100);
-	border: 1px solid var(--color-border);
-	transition: border-color 0.15s ease;
-
-	img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-	}
-
-	&:hover {
-		border-color: var(
-			--color-border-hover,
-			oklch(from var(--color-border) calc(l - 0.1) c h)
-		);
-	}
+.statusWaiting {
+  color: var(--color-base-content-tertiary);
 }
 
-.mediaList {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-2);
+.statusProcessing {
+  color: var(--color-primary);
 }
 
-.mediaFile {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-1);
-	padding: var(--space-1) var(--space-2);
-	font-size: var(--font-size-xs);
-	color: var(--color-base-content);
-	background: var(--color-base-100);
-	border-radius: var(--radius-md);
-	text-decoration: none;
-	transition: background 0.15s ease;
-
-	&:hover {
-		background: var(--color-base-200, var(--color-surface));
-	}
+.statusSkipped {
+  color: var(--color-base-content-tertiary);
 }
 
-// ─── Spinner ─────────────────────────────────────────────────────────────────
-
-.spin {
-	animation: spin 1s linear infinite;
+.statusFailed {
+  color: var(--color-error);
 }
 
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
+.statusCaptured {
+  color: var(--color-warning);
+}
 
-	to {
-		transform: rotate(360deg);
-	}
+.statusPosted {
+  color: var(--color-success);
+}
+
+.statusBlogged {
+  color: var(--color-success);
+}
+
+.statusDeleted {
+  color: var(--color-base-content-secondary);
+}
+
+.chevronBtn {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-base-content-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: var(--space-6);
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+  width: var(--space-6);
+
+  &:hover {
+    background-color: var(--color-base-200);
+    color: var(--color-base-content);
+  }
+}
+
+// ─── Pagination row (centered) ───────────────────────────────────────────────
+
+.paginationRow {
+  display: flex;
+  justify-content: center;
 }
