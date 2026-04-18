@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
@@ -17,6 +18,19 @@ import (
 
 	"github.com/google/uuid"
 )
+
+// URLSigner turns an s3 object key into a time-limited HTTPS URL. Same shape
+// as media/processor.URLSigner — declared locally to avoid an import cycle.
+type URLSigner interface {
+	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
+}
+
+// blogMediaPresignTTL is intentionally long because the URL gets baked into
+// the stored markdown. One hour (the media-processor default) would make
+// images 404 almost immediately. Until we switch to a stable public-media
+// route, a 7-day window at least survives the authoring session and the
+// first day of the post being live.
+const blogMediaPresignTTL = 7 * 24 * time.Hour
 
 // BlogStore defines the database operations required by BlogProcessor
 type BlogStore interface {
@@ -99,9 +113,10 @@ func (p *BlogProcessor) blogResolveUniqueSlug(ctx context.Context, accountID uui
 }
 
 type BlogProcessor struct {
-	store  BlogStore
-	ai     aiclient.Client
-	logger *observability.Logger
+	store     BlogStore
+	ai        aiclient.Client
+	urlSigner URLSigner
+	logger    *observability.Logger
 }
 
 func New(store BlogStore, ai aiclient.Client, logger *observability.Logger) BlogProcessor {
@@ -110,6 +125,14 @@ func New(store BlogStore, ai aiclient.Client, logger *observability.Logger) Blog
 		ai:     ai,
 		logger: logger,
 	}
+}
+
+// SetURLSigner wires the presigner used to turn `s3://` media URLs into
+// browser-resolvable HTTPS URLs before they're baked into generated markdown.
+// Matches the setter pattern used by media/workers processors. Optional — if
+// nil, `s3://` URLs are skipped.
+func (p *BlogProcessor) SetURLSigner(signer URLSigner) {
+	p.urlSigner = signer
 }
 
 func (p *BlogProcessor) CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error) {
@@ -323,11 +346,13 @@ type promptImage struct {
 	AltText  string
 }
 
-// fetchImagesForPrompt loads the referenced media and returns only images with
-// a browser-resolvable URL. Videos are skipped (markdown can't embed them) and
-// `s3://` URLs are skipped because writing them into markdown would 404 in the
-// reader's browser. Any error is logged and treated as "no images" — blog
-// generation should not fail just because media lookup did.
+// fetchImagesForPrompt loads the referenced media and returns only images.
+// Videos are skipped (markdown can't embed them). `s3://` URLs are presigned
+// via urlSigner so the AI can reference a browser-resolvable URL. Note: the
+// presigned URL is baked into the stored markdown and will expire — see
+// blogMediaPresignTTL for the TTL rationale. Any error is logged and the
+// offending entry is dropped — blog generation should not fail because media
+// lookup or signing failed for one file.
 func (p *BlogProcessor) fetchImagesForPrompt(ctx context.Context, mediaIDs []uuid.UUID) []promptImage {
 	if len(mediaIDs) == 0 {
 		return nil
@@ -342,14 +367,23 @@ func (p *BlogProcessor) fetchImagesForPrompt(ctx context.Context, mediaIDs []uui
 		if !strings.HasPrefix(m.ContentType, "image/") {
 			continue
 		}
-		if !strings.HasPrefix(m.S3URL, "http://") && !strings.HasPrefix(m.S3URL, "https://") {
-			continue
+		url := m.S3URL
+		if strings.HasPrefix(url, "s3://") {
+			if p.urlSigner == nil {
+				continue
+			}
+			signed, err := p.urlSigner.PresignGetURL(ctx, m.S3Key, blogMediaPresignTTL)
+			if err != nil {
+				p.logger.Error(ctx, "failed to presign media url for blog prompt", err)
+				continue
+			}
+			url = signed
 		}
 		alt := ""
 		if m.AltText != nil {
 			alt = *m.AltText
 		}
-		out = append(out, promptImage{URL: m.S3URL, Filename: m.Filename, AltText: alt})
+		out = append(out, promptImage{URL: url, Filename: m.Filename, AltText: alt})
 	}
 	return out
 }

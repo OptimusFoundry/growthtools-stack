@@ -133,6 +133,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 
 	// Blog
 	p.blog = blogProcessor.New(s, cl.gemini, logger)
+	p.blog.SetURLSigner(cl.urlSigner)
 
 	// Analytics
 	p.analytics = analyticsProcessor.New(s, logger)
