@@ -59,6 +59,10 @@ type GitHubCommitSummary struct {
 	// (show a "Post deleted" badge) from a commit that simply hasn't been
 	// drafted yet (PostID still null).
 	PostDeleted          bool       `db:"post_deleted" json:"post_deleted"`
+	BlogPostID           *uuid.UUID `db:"blog_post_id" json:"blog_post_id,omitempty"`
+	// BlogDeleted mirrors PostDeleted: true only when BlogPostID is set AND the
+	// referenced blog_posts row has been soft-deleted.
+	BlogDeleted          bool       `db:"blog_deleted" json:"blog_deleted"`
 	CaptureRequestedAt   *time.Time `db:"capture_requested_at" json:"capture_requested_at,omitempty"`
 	SkippedReason        *string    `db:"skipped_reason" json:"skipped_reason,omitempty"`
 	ProcessedAt          *time.Time `db:"processed_at" json:"processed_at,omitempty"`
@@ -341,6 +345,8 @@ func (s *Store) UpdateGitHubCommitBlogPostID(ctx context.Context, commitID, blog
 const sqlListGitHubCommitsByConnection = `
 SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, gc.branch, gc.commit_url, gc.pushed_at, gc.post_id,
        (gc.post_id IS NOT NULL AND p.deleted_at IS NOT NULL) AS post_deleted,
+       gc.blog_post_id,
+       (gc.blog_post_id IS NOT NULL AND bp.deleted_at IS NOT NULL) AS blog_deleted,
        gc.capture_requested_at, gc.skipped_reason, gc.processed_at, gc.created_at,
        gr.owner AS repo_owner, gr.name AS repo_name,
        COALESCE(jsonb_array_length(gc.capture_output->'uploaded'), 0) AS capture_artifact_count,
@@ -348,6 +354,7 @@ SELECT gc.id, gc.repo_id, gc.sha, gc.author_name, gc.author_email, gc.message, g
 FROM github_commits gc
 JOIN github_repos gr ON gr.id = gc.repo_id
 LEFT JOIN posts p ON p.id = gc.post_id
+LEFT JOIN blog_posts bp ON bp.id = gc.blog_post_id
 WHERE gr.connection_id = $1 AND gr.deleted_at IS NULL
 ORDER BY gc.pushed_at DESC
 LIMIT $2 OFFSET $3

@@ -31,11 +31,15 @@ type CommitState =
 	| { kind: "failed"; error: string }
 	| { kind: "captured"; artifactCount: number }
 	| { kind: "post"; postID: string }
-	| { kind: "post_deleted" };
+	| { kind: "post_deleted" }
+	| { kind: "blog"; blogPostID: string }
+	| { kind: "blog_deleted" };
 
 function commitState(commit: GitHubCommitSummary): CommitState {
 	if (commit.post_id && commit.post_deleted) return { kind: "post_deleted" };
 	if (commit.post_id) return { kind: "post", postID: commit.post_id };
+	if (commit.blog_post_id && commit.blog_deleted) return { kind: "blog_deleted" };
+	if (commit.blog_post_id) return { kind: "blog", blogPostID: commit.blog_post_id };
 	if (commit.skipped_reason)
 		return { kind: "skipped", reason: commit.skipped_reason };
 	if (!commit.capture_requested_at) return { kind: "waiting" };
@@ -120,6 +124,20 @@ function StatusBadge({ state }: StatusBadgeProps) {
 				<Badge variant="secondary" size="sm">
 					<Trash2 size={12} />
 					Post deleted
+				</Badge>
+			);
+		case "blog":
+			return (
+				<Badge variant="primary" size="sm">
+					<CheckCircle2 size={12} />
+					Blog created
+				</Badge>
+			);
+		case "blog_deleted":
+			return (
+				<Badge variant="secondary" size="sm">
+					<Trash2 size={12} />
+					Blog deleted
 				</Badge>
 			);
 	}
@@ -221,6 +239,24 @@ export const CommitRow = memo(function CommitRow({
 				{state.kind === "post_deleted" && (
 					<Text size="xs" color="muted">
 						The draft created from this commit was deleted.
+					</Text>
+				)}
+
+				{state.kind === "blog" && (
+					<Link
+						to="/blog/$id"
+						params={{ id: state.blogPostID }}
+						onClick={(e) => e.stopPropagation()}
+					>
+						<Button variant="ghost" size="sm">
+							View blog →
+						</Button>
+					</Link>
+				)}
+
+				{state.kind === "blog_deleted" && (
+					<Text size="xs" color="muted">
+						The blog post created from this commit was deleted.
 					</Text>
 				)}
 			</Stack>
