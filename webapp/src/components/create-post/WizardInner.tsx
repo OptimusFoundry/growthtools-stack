@@ -1,9 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarClock, Send } from "lucide-react";
+import { CalendarClock, Send, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { fetcher } from "@/api/client";
 import { Topbar } from "@/components/Layout/Topbar";
+import { useDeletePost } from "@/hooks/useDeletePost";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
@@ -20,6 +21,7 @@ import { useBannerCenter } from "@/proto-design-system/components/feedback/Banne
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
+import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
@@ -406,6 +408,8 @@ export function WizardInner({
 
 	const sse = useSSEContentGenerate();
 	const { publishPost } = usePublishPost();
+	const { deletePost, loading: deleting } = useDeletePost();
+	const [deleteOpen, setDeleteOpen] = useState(false);
 	const { saveDraft, loading: savingDraft } = useSaveDraft();
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
@@ -489,6 +493,31 @@ export function WizardInner({
 
 	const busy = state.submitting || savingDraft || updatingDraft;
 	const canAct = state.generated && !readOnly;
+	const canDelete =
+		isEditMode &&
+		!!editPostId &&
+		(postStatus === "draft" || postStatus === "scheduled");
+
+	const handleConfirmDelete = async () => {
+		if (!editPostId) return;
+		try {
+			await deletePost(editPostId);
+			setDeleteOpen(false);
+			addBanner({
+				type: "success",
+				title: "Post deleted",
+				dismissible: true,
+			});
+			navigate({ to: "/posts" });
+		} catch {
+			addBanner({
+				type: "error",
+				title: "Couldn't delete post",
+				description: "Please try again.",
+				dismissible: true,
+			});
+		}
+	};
 
 	const breadcrumbs = [
 		{ label: "Posts", href: "/posts" as const },
@@ -497,6 +526,17 @@ export function WizardInner({
 
 	const topbarActions = readOnly ? undefined : (
 		<>
+			{canDelete && (
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => setDeleteOpen(true)}
+					disabled={busy || deleting}
+					aria-label="Delete post"
+				>
+					<Trash2 size={14} /> Delete
+				</Button>
+			)}
 			<Button
 				variant="ghost"
 				size="sm"
@@ -638,6 +678,32 @@ export function WizardInner({
 					</Stack>
 				</Stack>
 			</Drawer>
+
+			<Modal
+				isOpen={deleteOpen}
+				onClose={() => setDeleteOpen(false)}
+				title="Delete post"
+				size="sm"
+				footer={
+					<Stack direction="row" gap="sm" justify="end">
+						<Button variant="ghost" onClick={() => setDeleteOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleConfirmDelete}
+							isLoading={deleting}
+						>
+							Delete
+						</Button>
+					</Stack>
+				}
+			>
+				<Text color="secondary">
+					Are you sure you want to delete this post? This action cannot be
+					undone.
+				</Text>
+			</Modal>
 		</>
 	);
 }
