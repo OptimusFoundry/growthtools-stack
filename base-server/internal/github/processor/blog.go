@@ -192,13 +192,14 @@ func (g *BlogDraftGenerator) GenerateBlogFromCommit(ctx context.Context, commitI
 	}
 
 	params := store.CreateBlogPostParams{
-		AccountID: commit.AccountID,
-		Title:     blogResp.Title,
-		Slug:      slug,
-		Content:   blogResp.Content,
-		Status:    store.BlogStatusDraft,
-		Keywords:  keywords,
-		MediaIDs:  store.UUIDArray{},
+		AccountID:         commit.AccountID,
+		Title:             blogResp.Title,
+		Slug:              slug,
+		Content:           blogResp.Content,
+		Status:            store.BlogStatusDraft,
+		Keywords:          keywords,
+		MediaIDs:          store.UUIDArray{},
+		SourceInstruction: &userMessage,
 	}
 	if blogResp.Excerpt != "" {
 		params.Excerpt = &blogResp.Excerpt
