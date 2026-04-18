@@ -18,7 +18,6 @@ import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Card } from "@/proto-design-system/components/layout/Card";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
@@ -277,7 +276,7 @@ export function BlogWizard({
 				<Stack gap="lg">
 					<Stack gap="sm">
 						<Text size="md" weight="semibold">
-							Topic / Instructions
+							Idea or Instructions for post
 						</Text>
 						<TextArea
 							placeholder="What should this blog post be about? Give the AI a topic or detailed instructions..."
@@ -354,37 +353,37 @@ export function BlogWizard({
 
 					<Divider />
 
-					<Card padding="md">
-						<Stack gap="sm">
-							<p className={styles.sectionLabel}>SEO</p>
-							<TextField
-								label="SEO Title"
-								placeholder="SEO title"
-								value={seoTitle}
-								onChange={(e) => setSeoTitle(e.target.value)}
-							/>
-							<TextArea
-								label="Meta Description"
-								placeholder="Meta description for search engines..."
-								rows={3}
-								value={metaDescription}
-								onChange={(e) => setMetaDescription(e.target.value)}
-							/>
-							<TextField
-								label="OG Title"
-								placeholder="Open Graph title"
-								value={ogTitle}
-								onChange={(e) => setOgTitle(e.target.value)}
-							/>
-							<TextArea
-								label="OG Description"
-								placeholder="Open Graph description..."
-								rows={3}
-								value={ogDescription}
-								onChange={(e) => setOgDescription(e.target.value)}
-							/>
-						</Stack>
-					</Card>
+					<Stack gap="sm">
+						<Text size="md" weight="semibold">
+							SEO
+						</Text>
+						<TextField
+							label="SEO Title"
+							placeholder="SEO title"
+							value={seoTitle}
+							onChange={(e) => setSeoTitle(e.target.value)}
+						/>
+						<TextArea
+							label="Meta Description"
+							placeholder="Meta description for search engines..."
+							rows={3}
+							value={metaDescription}
+							onChange={(e) => setMetaDescription(e.target.value)}
+						/>
+						<TextField
+							label="OG Title"
+							placeholder="Open Graph title"
+							value={ogTitle}
+							onChange={(e) => setOgTitle(e.target.value)}
+						/>
+						<TextArea
+							label="OG Description"
+							placeholder="Open Graph description..."
+							rows={3}
+							value={ogDescription}
+							onChange={(e) => setOgDescription(e.target.value)}
+						/>
+					</Stack>
 
 					<Stack direction="row" gap="sm" justify="end">
 						{onCancel && (

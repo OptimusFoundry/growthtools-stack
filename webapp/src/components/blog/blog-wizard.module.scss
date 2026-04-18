@@ -23,6 +23,13 @@
 		gap: var(--space-6);
 		align-items: start;
 	}
+
+	// Ensure grid children can't overflow their column — otherwise
+	// wide markdown (code blocks with overflow-x: auto) or the markdown
+	// TextArea expand the column and shift widths when tabs are switched.
+	> * {
+		min-width: 0;
+	}
 }
 
 .previewPanel {
@@ -30,15 +37,6 @@
 		position: sticky;
 		top: var(--space-4);
 	}
-}
-
-.sectionLabel {
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-base-content-secondary);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	margin: 0;
 }
 
 .markdown {
