@@ -363,6 +363,10 @@ export function WizardInner({
 		<>
 			Sharpen the <em>draft</em> before it ships.
 		</>
+	) : postStatus === "scheduled" ? (
+		<>
+			<em>Scheduled.</em> Queued for liftoff.
+		</>
 	) : (
 		<>
 			<em>Shipped.</em> Here's how it landed.
@@ -373,7 +377,9 @@ export function WizardInner({
 		? "Write the idea once — AI adapts it for each platform and keeps the voice consistent."
 		: postStatus === "draft"
 			? "Update your post content and platform adaptations. Changes save automatically as you type."
-			: "View your published post and see how each platform rendered it.";
+			: postStatus === "scheduled"
+				? "Review the post and platform adaptations before it goes live at the scheduled time."
+				: "View your published post and see how each platform rendered it.";
 
 	const [scheduleOpen, setScheduleOpen] = useState(false);
 	const [scheduleDate, setScheduleDate] = useState<Date | null>(() =>
