@@ -79,7 +79,7 @@
 
 	&:empty::before {
 		content: attr(data-placeholder);
-		color: var(--color-base-content-tertiary);
+		color: var(--color-muted);
 	}
 
 	&:focus {
@@ -343,8 +343,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--color-surface-secondary);
-	color: var(--color-base-content-tertiary);
+	background: var(--color-base-200);
+	color: var(--color-muted);
 }
 
 .mediaGridOverflow {

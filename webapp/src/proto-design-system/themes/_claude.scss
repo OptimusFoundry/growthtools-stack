@@ -1,92 +1,99 @@
 // =============================================================================
 // CLAUDE THEME
 // =============================================================================
-// Inspired by Anthropic's Claude. Warm terracotta meets modern AI.
-// Friendly, intelligent, trustworthy. Human-centered technology.
-// The future is warm, not cold.
+// Sourced from compiled themes.bundle.css — reflects Phase 1 palette tuning.
+// Edit this file, then re-run scripts/scss_compiler.js to regenerate the bundle.
 
 [data-theme="claude"] {
   color-scheme: light;
 
-  // Background
-  --color-background: oklch(98% 0.008 55deg);
+  --font-family-sans:    "Geist", "Inter", system-ui, sans-serif;
+  --font-family-mono:    "Geist Mono", "JetBrains Mono", monospace;
+  --font-family-serif:   "Fraunces", "Times New Roman", Georgia, serif;
+  --font-family-display: "Fraunces", "Times New Roman", Georgia, serif;
 
-  // Base colors (warm cream with terracotta influence)
-  --color-base-50: oklch(98% 0.008 55deg);                              // Warm white
-  --color-base-100: oklch(96.5% 0.012 50deg);                           // Light cream
-  --color-base-200: oklch(94% 0.018 45deg);                             // Cream
-  --color-base-300: oklch(90% 0.022 42deg);                             // Warm tan
-  --color-base-400: oklch(74% 0.03 40deg);                              // Tan
-  --color-base-500: oklch(58% 0.035 38deg);                             // Medium brown
-  --color-base-600: oklch(45% 0.03 36deg);                              // Brown
-  --color-base-700: oklch(35% 0.025 35deg);                             // Dark brown
-  --color-base-800: oklch(25% 0.02 35deg);                              // Very dark
-  --color-base-900: oklch(18% 0.015 35deg);                             // Near black
-  --color-base-950: oklch(12% 0.01 35deg);                              // Black
+  --color-background: oklch(97% 0.012 55deg);
 
-  // Content colors (warm and readable)
-  --color-base-content: oklch(20% 0.015 40deg);                         // Warm black
-  --color-base-content-secondary: oklch(40% 0.02 42deg);                // Medium warm
-  --color-base-content-tertiary: oklch(55% 0.018 45deg);                // Light warm
+  --color-base-50:  oklch(99% 0.006 55deg);
+  --color-base-100: oklch(96% 0.012 55deg);
+  --color-base-200: oklch(93% 0.015 55deg);
+  --color-base-300: oklch(88% 0.018 55deg);
+  --color-base-400: oklch(74% 0.020 50deg);
+  --color-base-500: oklch(58% 0.022 45deg);
+  --color-base-600: oklch(44% 0.022 42deg);
+  --color-base-700: oklch(34% 0.022 40deg);
+  --color-base-800: oklch(26% 0.020 40deg);
+  --color-base-900: oklch(18% 0.020 40deg);
+  --color-base-950: oklch(12% 0.018 40deg);
 
-  // Surface colors
-  --color-surface: oklch(99.5% 0.005 55deg);                            // Near white warm
-  --color-surface-elevated: oklch(100% 0 0deg);                         // Pure white
-  --color-surface-overlay: oklch(20% 0.015 40deg / 0.5);
+  --color-base-content:           oklch(18% 0.020 40deg);
+  --color-base-content-secondary: oklch(24% 0.020 40deg);
+  --color-base-content-tertiary:  oklch(42% 0.022 42deg);
+  --color-muted:                  oklch(58% 0.018 45deg);
 
-  // Border colors (subtle warm)
-  --color-border: oklch(92% 0.012 50deg);
-  --color-border-hover: oklch(86% 0.018 45deg);
+  --color-surface:          oklch(99% 0.006 55deg);
+  --color-surface-elevated: oklch(100% 0 0deg);
+  --color-surface-overlay:  oklch(18% 0.020 40deg / 0.55);
 
-  // Shadow colors (warm and soft)
-  --shadow-color: oklch(40% 0.03 40deg / 0.1);
-  --shadow-color-strong: oklch(30% 0.03 40deg / 0.18);
+  --color-border:       oklch(90% 0.015 50deg);
+  --color-border-hover: oklch(80% 0.020 50deg);
 
-  // Primary (Claude terracotta/coral)
-  --color-primary: oklch(58% 0.14 35deg);
-  --color-primary-hover: oklch(53% 0.16 35deg);
-  --color-primary-active: oklch(48% 0.14 35deg);
+  --color-primary:         oklch(58% 0.15 35deg);
+  --color-primary-hover:   oklch(52% 0.17 35deg);
+  --color-primary-active:  oklch(46% 0.15 35deg);
   --color-primary-content: oklch(99% 0.005 35deg);
 
-  // Secondary (warm brown)
-  --color-secondary: oklch(45% 0.06 45deg);
-  --color-secondary-hover: oklch(40% 0.07 45deg);
-  --color-secondary-active: oklch(35% 0.06 45deg);
+  --color-secondary:         oklch(45% 0.08 45deg);
+  --color-secondary-hover:   oklch(38% 0.10 45deg);
+  --color-secondary-active:  oklch(32% 0.08 45deg);
   --color-secondary-content: oklch(99% 0.005 45deg);
 
-  // Accent (thoughtful blue)
-  --color-accent: oklch(55% 0.12 250deg);
-  --color-accent-hover: oklch(50% 0.14 250deg);
-  --color-accent-active: oklch(45% 0.12 250deg);
-  --color-accent-content: oklch(99% 0.01 250deg);
+  --color-accent:         oklch(62% 0.14 250deg);
+  --color-accent-hover:   oklch(56% 0.16 250deg);
+  --color-accent-active:  oklch(50% 0.14 250deg);
+  --color-accent-content: oklch(99% 0.010 250deg);
+  --color-accent-bg:      oklch(95% 0.03 250deg);
 
-  // Semantic colors
-  --color-success: oklch(55% 0.14 155deg);
-  --color-success-hover: oklch(50% 0.16 155deg);
-  --color-success-bg: oklch(96% 0.03 155deg);
-  --color-success-content: oklch(99% 0.01 155deg);
-  --color-warning: oklch(72% 0.12 75deg);
-  --color-warning-hover: oklch(67% 0.14 75deg);
-  --color-warning-bg: oklch(96% 0.03 75deg);
-  --color-warning-content: oklch(25% 0.04 75deg);
-  --color-error: oklch(55% 0.16 25deg);
-  --color-error-hover: oklch(50% 0.18 25deg);
-  --color-error-bg: oklch(96% 0.03 25deg);
-  --color-error-content: oklch(99% 0.01 25deg);
-  --color-info: oklch(55% 0.12 250deg);
-  --color-info-hover: oklch(50% 0.14 250deg);
-  --color-info-bg: oklch(96% 0.03 250deg);
-  --color-info-content: oklch(99% 0.01 250deg);
+  --color-success:         oklch(55% 0.14 155deg);
+  --color-success-hover:   oklch(50% 0.16 155deg);
+  --color-success-active:  oklch(44% 0.14 155deg);
+  --color-success-bg:      oklch(96% 0.03 155deg);
+  --color-success-content: oklch(99% 0.010 155deg);
 
-  // Focus ring
-  --focus-ring-color: oklch(58% 0.14 35deg / 0.4);
+  --color-warning:         oklch(72% 0.14 75deg);
+  --color-warning-hover:   oklch(66% 0.16 75deg);
+  --color-warning-active:  oklch(60% 0.14 75deg);
+  --color-warning-bg:      oklch(96% 0.03 75deg);
+  --color-warning-content: oklch(24% 0.04 75deg);
 
-  // Muted color
-  --color-muted: oklch(55% 0.018 45deg);
+  --color-error:         oklch(55% 0.20 25deg);
+  --color-error-hover:   oklch(50% 0.22 25deg);
+  --color-error-active:  oklch(44% 0.20 25deg);
+  --color-error-bg:      oklch(96% 0.03 25deg);
+  --color-error-content: oklch(99% 0.010 25deg);
 
-  // Friendly rounded corners
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --color-info:         oklch(55% 0.16 235deg);
+  --color-info-hover:   oklch(50% 0.18 235deg);
+  --color-info-active:  oklch(44% 0.16 235deg);
+  --color-info-bg:      oklch(96% 0.03 235deg);
+  --color-info-content: oklch(99% 0.010 235deg);
+
+  --shadow-color:        oklch(18% 0.020 40deg / 0.08);
+  --shadow-color-strong: oklch(18% 0.020 40deg / 0.16);
+
+  --shadow-xs: 0 1px 2px 0 oklch(18% 0.020 40deg / 0.06);
+  --shadow-sm: 0 2px 4px -1px oklch(18% 0.020 40deg / 0.07), 0 1px 2px -1px oklch(18% 0.020 40deg / 0.04);
+  --shadow-md: 0 8px 16px -4px oklch(18% 0.020 40deg / 0.08), 0 2px 4px -2px oklch(18% 0.020 40deg / 0.04);
+  --shadow-lg: 0 20px 32px -8px oklch(18% 0.020 40deg / 0.10), 0 4px 8px -4px oklch(18% 0.020 40deg / 0.05);
+  --shadow-xl: 0 32px 48px -12px oklch(18% 0.020 40deg / 0.14), 0 8px 16px -8px oklch(18% 0.020 40deg / 0.06);
+
+  --shadow-primary: 0 8px 24px 0 oklch(58% 0.15 35deg / 0.28);
+  --shadow-accent:  0 8px 24px 0 oklch(62% 0.14 250deg / 0.25);
+
+  --focus-ring-color: oklch(58% 0.15 35deg / 0.40);
+  --color-header-bg: var(--color-base-100);
+
+  
+  --radius-xs: 4px; --radius-sm: 6px; --radius-md: 10px;
+  --radius-lg: 16px; --radius-xl: 24px;
 }

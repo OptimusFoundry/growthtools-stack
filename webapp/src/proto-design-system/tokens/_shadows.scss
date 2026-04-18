@@ -1,46 +1,55 @@
 // =============================================================================
 // SHADOW TOKENS
 // =============================================================================
-// Elevation system using layered shadows for depth perception.
+// Atmospheric layered shadows with warm indigo ink tint — more poetic
+// than flat grey drop-shadows. Brutal theme overrides with chunky offsets.
+// Glow theme overrides with colored bloom.
 
 :root {
-  // Shadow colors
-  --shadow-color: oklch(0% 0 0deg / 0.08);
-  --shadow-color-strong: oklch(0% 0 0deg / 0.15);
+	// Shadow color — warm indigo ink (not pure black) --------------------------
+	--shadow-color:        oklch(18% 0.02 275deg / 0.08);
+	--shadow-color-strong: oklch(18% 0.02 275deg / 0.14);
 
-  // Shadow scale
-  --shadow-none: none;
-  --shadow-xs:
-    0 1px 2px 0 var(--shadow-color);
-  --shadow-sm:
-    0 1px 3px 0 var(--shadow-color),
-    0 1px 2px -1px var(--shadow-color);
-  --shadow-md:
-    0 4px 6px -1px var(--shadow-color),
-    0 2px 4px -2px var(--shadow-color);
-  --shadow-lg:
-    0 10px 15px -3px var(--shadow-color),
-    0 4px 6px -4px var(--shadow-color);
-  --shadow-xl:
-    0 20px 25px -5px var(--shadow-color),
-    0 8px 10px -6px var(--shadow-color);
-  --shadow-2xl:
-    0 25px 50px -12px var(--shadow-color-strong);
-  --shadow-inner:
-    inset 0 2px 4px 0 var(--shadow-color);
+	// Shadow scale — atmospheric, airy ----------------------------------------
+	--shadow-none: none;
 
-  // Colored shadows (for buttons, cards)
-  --shadow-primary:
-    0 4px 14px 0 oklch(55% 0.25 265deg / 0.25);
-  --shadow-error:
-    0 4px 14px 0 oklch(55% 0.22 25deg / 0.25);
+	--shadow-xs:
+		0 1px 2px 0 var(--shadow-color);
 
-  // Component-specific
-  --shadow-button: var(--shadow-sm);
-  --shadow-button-hover: var(--shadow-md);
-  --shadow-card: var(--shadow-sm);
-  --shadow-card-hover: var(--shadow-md);
-  --shadow-dropdown: var(--shadow-lg);
-  --shadow-modal: var(--shadow-2xl);
-  --shadow-tooltip: var(--shadow-md);
+	--shadow-sm:
+		0 2px 4px -1px var(--shadow-color),
+		0 1px 2px -1px oklch(18% 0.02 275deg / 0.04);
+
+	--shadow-md:
+		0 8px 16px -4px var(--shadow-color),
+		0 2px 4px -2px oklch(18% 0.02 275deg / 0.04);
+
+	--shadow-lg:
+		0 20px 32px -8px oklch(18% 0.02 275deg / 0.10),
+		0 4px 8px -4px oklch(18% 0.02 275deg / 0.05);
+
+	--shadow-xl:
+		0 32px 48px -12px var(--shadow-color-strong),
+		0 8px 16px -8px oklch(18% 0.02 275deg / 0.06);
+
+	--shadow-2xl:
+		0 40px 80px -16px oklch(18% 0.02 275deg / 0.18),
+		0 12px 24px -8px oklch(18% 0.02 275deg / 0.08);
+
+	--shadow-inner:
+		inset 0 2px 4px 0 var(--shadow-color);
+
+	// Colored shadows (primary/accent bloom — signature glow moments) ----------
+	--shadow-primary: 0 8px 24px 0 oklch(48% 0.20 275deg / 0.28);
+	--shadow-accent:  0 8px 24px 0 oklch(72% 0.17 55deg / 0.30);
+	--shadow-error:   0 8px 24px 0 oklch(56% 0.22 25deg / 0.25);
+
+	// Component-specific -------------------------------------------------------
+	--shadow-button:       var(--shadow-sm);
+	--shadow-button-hover: var(--shadow-md);
+	--shadow-card:         var(--shadow-sm);
+	--shadow-card-hover:   var(--shadow-md);
+	--shadow-dropdown:     var(--shadow-lg);
+	--shadow-modal:        var(--shadow-2xl);
+	--shadow-tooltip:      var(--shadow-md);
 }
