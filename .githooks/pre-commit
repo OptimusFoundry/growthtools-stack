@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Pre-commit: run webapp lints (biome + stylelint) when webapp files are staged.
+# Keeps backend commits fast by skipping when nothing in webapp/ changed.
+
+set -e
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# Only lint if something under webapp/ is staged. Diff against the index for
+# added/copied/modified/renamed files — deletes don't need linting.
+staged_webapp=$(git diff --cached --name-only --diff-filter=ACMR | grep '^webapp/' || true)
+
+if [ -z "$staged_webapp" ]; then
+	exit 0
+fi
+
+echo "→ webapp files staged — running lints"
+cd webapp
+
+echo "  • biome check"
+npm run -s lint
+
+echo "  • stylelint"
+npm run -s lint:scss
+
+echo "✓ lints passed"
