@@ -2,15 +2,16 @@ import type {
 	ExistingFile,
 	UploadedFile,
 } from "@/proto-design-system/components/composite/FileUpload";
+import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformType } from "@/types/platform";
 import styles from "../CreatePostWizard.module.scss";
-import type { PublishMode, WizardContentType } from "../useCreatePostWizard";
+import type { WizardContentType } from "../useCreatePostWizard";
 import { MediaUploadSection } from "./MediaUploadSection";
 import { PlatformSelectionSection } from "./PlatformSelectionSection";
 import { PostConfigSection } from "./PostConfigSection";
-import { PublishModeSection } from "./PublishModeSection";
 import { YourMessageSection } from "./YourMessageSection";
 
 export interface ComposeStepProps {
@@ -27,10 +28,6 @@ export interface ComposeStepProps {
 	maxThreadParts: number;
 	generating: boolean;
 	generated: boolean;
-	publishMode: PublishMode;
-	scheduledAt: string;
-	submitting: boolean;
-	savingDraft: boolean;
 	readOnly?: boolean;
 	onBlurbChange: (blurb: string) => void;
 	onContentTypeChange: (contentType: WizardContentType) => void;
@@ -38,16 +35,11 @@ export interface ComposeStepProps {
 	onTogglePlatform: (platform: PlatformType) => void;
 	onFilesChange: (files: UploadedFile[]) => void;
 	onGenerate: () => void;
-	onSetPublishMode: (mode: PublishMode) => void;
-	onSetScheduledAt: (scheduledAt: string) => void;
-	onPublish: () => void;
-	onSchedule: () => void;
-	onSaveDraft: () => void;
 }
 
 /**
  * ComposeStep is a container that renders the form sections for creating/editing a post.
- * It orchestrates the blurb input, platform selection, post config, media upload, and publish mode.
+ * Publish/schedule/save-draft actions live in the Topbar, not in-page.
  */
 export function ComposeStep({
 	blurb,
@@ -61,10 +53,6 @@ export function ComposeStep({
 	mediaChanged = false,
 	generating,
 	generated,
-	publishMode,
-	scheduledAt,
-	submitting,
-	savingDraft,
 	readOnly = false,
 	onBlurbChange,
 	onContentTypeChange,
@@ -72,11 +60,6 @@ export function ComposeStep({
 	onTogglePlatform,
 	onFilesChange,
 	onGenerate,
-	onSetPublishMode,
-	onSetScheduledAt,
-	onPublish,
-	onSchedule,
-	onSaveDraft,
 }: ComposeStepProps) {
 	const canGenerate = blurb.trim().length > 0 && selectedPlatforms.length > 0;
 
@@ -143,23 +126,17 @@ export function ComposeStep({
 				</>
 			)}
 
-			{generated && !readOnly && (
-				<PublishModeSection
-					publishMode={publishMode}
-					scheduledAt={scheduledAt}
-					submitting={submitting}
-					savingDraft={savingDraft}
-					selectedPlatformsCount={selectedPlatforms.length}
-					regenerateWarningVisible={regenerateWarningVisible}
-					regenerateWarningMessage={regenerateWarningMessage}
-					platformsChanged={platformsChanged}
-					onSetPublishMode={onSetPublishMode}
-					onSetScheduledAt={onSetScheduledAt}
-					onPublish={onPublish}
-					onSchedule={onSchedule}
-					onSaveDraft={onSaveDraft}
-				/>
+			{generated && !readOnly && regenerateWarningVisible && (
+				<RegenerateWarning message={regenerateWarningMessage} />
 			)}
 		</Stack>
+	);
+}
+
+function RegenerateWarning({ message }: { message: string }) {
+	return (
+		<Alert variant="warning">
+			<Text size="sm">{message}</Text>
+		</Alert>
 	);
 }

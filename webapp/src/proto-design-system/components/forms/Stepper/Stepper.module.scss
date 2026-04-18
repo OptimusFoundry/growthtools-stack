@@ -1,0 +1,92 @@
+// =============================================================================
+// STEPPER — numeric input with [−] [value] [+] buttons
+// =============================================================================
+@use "../../../mixins" as *;
+
+.stepper {
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.btn {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--color-base-content-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+.value {
+  color: var(--color-base-content);
+  font-family: var(--font-family-mono, var(--font-family-sans));
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-tight);
+  text-align: center;
+  user-select: none;
+}
+
+// =============================================================================
+// SIZES
+// =============================================================================
+
+.size-sm {
+  .btn {
+    height: var(--space-6);
+    width: var(--space-6);
+  }
+
+  .value {
+    font-size: var(--font-size-sm);
+    min-width: var(--space-6);
+    padding: 0 var(--space-1);
+  }
+}
+
+.size-md {
+  .btn {
+    height: var(--space-7);
+    width: var(--space-7);
+  }
+
+  .value {
+    font-size: var(--font-size-base);
+    min-width: var(--space-7);
+    padding: 0 var(--space-2);
+  }
+}
+
+.size-lg {
+  .btn {
+    height: var(--space-8);
+    width: var(--space-8);
+  }
+
+  .value {
+    font-size: var(--font-size-lg);
+    min-width: var(--space-8);
+    padding: 0 var(--space-3);
+  }
+}

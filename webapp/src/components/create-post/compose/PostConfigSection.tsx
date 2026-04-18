@@ -1,10 +1,9 @@
 import { useCallback } from "react";
+import { Stepper } from "@/proto-design-system/components/forms/Stepper";
 import { Switch } from "@/proto-design-system/components/forms/Switch";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import { PLATFORM_SUPPORTS_THREADS, type PlatformType } from "@/types/platform";
-import styles from "../CreatePostWizard.module.scss";
 import type { WizardContentType } from "../useCreatePostWizard";
 
 interface PostConfigSectionProps {
@@ -51,20 +50,24 @@ export function PostConfigSection({
 				disabled={readOnly}
 			/>
 			{contentType === "thread" && (
-				<Stack direction="row" gap="md" align="end">
-					<div className={styles.threadLengthField}>
-						<TextField
-							label="Thread length"
-							type="number"
-							value={String(maxThreadParts)}
-							onChange={(e) => {
-								const val = Number.parseInt(e.target.value, 10);
-								if (val >= 3 && val <= 25) onMaxThreadPartsChange(val);
-							}}
-							helperText="3–25 posts"
-							disabled={readOnly}
-						/>
-					</div>
+				<Stack direction="row" gap="md" align="center">
+					<Stack gap="xs">
+						<Text size="sm" weight="medium">
+							Thread length
+						</Text>
+						<Text size="xs" color="muted">
+							3–25 posts
+						</Text>
+					</Stack>
+					<Stepper
+						value={maxThreadParts}
+						onChange={onMaxThreadPartsChange}
+						min={3}
+						max={25}
+						size="md"
+						disabled={readOnly}
+						aria-label="Thread length"
+					/>
 				</Stack>
 			)}
 		</Stack>

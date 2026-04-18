@@ -1,6 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
+import { CalendarClock, Send } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
+import { Topbar } from "@/components/Layout/Topbar";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
@@ -11,9 +13,14 @@ import {
 import { useUnlinkMedia } from "@/hooks/useUnlinkMedia";
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
+import { DatePicker } from "@/proto-design-system/components/composite/DatePicker";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
+import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal";
+import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import { ComposeStep } from "./ComposeStep";
 import styles from "./CreatePostWizard.module.scss";
@@ -360,81 +367,185 @@ export function WizardInner({
 			? "Update your post content and platform adaptations. Changes save automatically as you type."
 			: "View your published post and see how each platform rendered it.";
 
+	const [scheduleOpen, setScheduleOpen] = useState(false);
+	const [scheduleDate, setScheduleDate] = useState<Date | null>(() =>
+		state.scheduledAt ? new Date(state.scheduledAt) : null,
+	);
+	const [scheduleTime, setScheduleTime] = useState<string>(() => {
+		if (state.scheduledAt) {
+			const d = new Date(state.scheduledAt);
+			return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+		}
+		return "09:00";
+	});
+
+	const handleConfirmSchedule = useCallback(async () => {
+		if (!scheduleDate) {
+			wizard.setError("Please pick a date.");
+			return;
+		}
+		const [h, m] = scheduleTime.split(":").map(Number);
+		const combined = new Date(scheduleDate);
+		combined.setHours(h ?? 9, m ?? 0, 0, 0);
+		wizard.setScheduledAt(combined.toISOString());
+		setScheduleOpen(false);
+		await handleSchedule();
+	}, [scheduleDate, scheduleTime, wizard, handleSchedule]);
+
+	const busy = state.submitting || savingDraft || updatingDraft;
+	const canAct = state.generated && !readOnly;
+
+	const breadcrumbs = [
+		{ label: "Posts", href: "/posts" as const },
+		{ label: isEditMode ? "Edit" : "New" },
+	];
+
+	const topbarActions = readOnly ? undefined : (
+		<>
+			<Button
+				variant="ghost"
+				size="sm"
+				onClick={handleSaveDraft}
+				isLoading={savingDraft || updatingDraft}
+				disabled={busy}
+			>
+				Save draft
+			</Button>
+			<Button
+				variant="secondary"
+				size="sm"
+				onClick={() => setScheduleOpen(true)}
+				disabled={busy || !canAct}
+			>
+				<CalendarClock size={14} /> Schedule
+			</Button>
+			<Button
+				variant="primary"
+				size="sm"
+				onClick={handlePublish}
+				isLoading={state.submitting}
+				disabled={busy || !canAct}
+			>
+				<Send size={14} /> Publish
+			</Button>
+		</>
+	);
+
 	return (
-		<div className={styles.page}>
-			<header className={styles.header}>
-				<div className={styles.headerInner}>
-					<div>
-						<div className={styles.eyebrow}>{eyebrowLabel}</div>
-						<h1 className={styles.title}>{titleFragment}</h1>
-						<p className={styles.sub}>{subLine}</p>
+		<>
+			<Topbar breadcrumbs={breadcrumbs} actions={topbarActions} />
+			<div className={styles.page}>
+				<header className={styles.header}>
+					<div className={styles.headerInner}>
+						<div>
+							<div className={styles.eyebrow}>{eyebrowLabel}</div>
+							<h1 className={styles.title}>{titleFragment}</h1>
+							<p className={styles.sub}>{subLine}</p>
+						</div>
 					</div>
-				</div>
-			</header>
+				</header>
 
-			{state.error && <Alert variant="error">{state.error}</Alert>}
+				{state.error && <Alert variant="error">{state.error}</Alert>}
 
-			<div className={styles.twoColumn}>
-				<Stack gap="lg">
-					<ComposeStep
-						blurb={state.blurb}
-						contentType={state.contentType}
+				<div className={styles.twoColumn}>
+					<Stack gap="lg">
+						<ComposeStep
+							blurb={state.blurb}
+							contentType={state.contentType}
+							selectedPlatforms={state.selectedPlatforms}
+							platformContent={state.platformContent}
+							pendingFiles={state.pendingFiles}
+							existingMedia={state.uploadedMedia.map((m) => ({
+								id: m.id,
+								name: m.filename,
+								size: m.sizeBytes,
+								contentType: m.contentType,
+								url: m.url,
+							}))}
+							onRemoveExistingMedia={handleRemoveUploadedMedia}
+							mediaChanged={state.mediaChangedSinceGeneration}
+							generating={state.generating}
+							generated={state.generated}
+							readOnly={readOnly}
+							onBlurbChange={wizard.setBlurb}
+							maxThreadParts={state.maxThreadParts}
+							onContentTypeChange={wizard.setContentType}
+							onMaxThreadPartsChange={wizard.setMaxThreadParts}
+							onTogglePlatform={wizard.togglePlatform}
+							onFilesChange={wizard.setPendingFiles}
+							onGenerate={handleGenerate}
+						/>
+						{platformPosts && platformPosts.length > 0 && (
+							<PostPublishStatus
+								platformPosts={platformPosts}
+								onRetry={hasFailed ? handleRetry : undefined}
+								retrying={retrying}
+							/>
+						)}
+					</Stack>
+					<PreviewStep
 						selectedPlatforms={state.selectedPlatforms}
 						platformContent={state.platformContent}
-						pendingFiles={state.pendingFiles}
-						existingMedia={state.uploadedMedia.map((m) => ({
-							id: m.id,
-							name: m.filename,
-							size: m.sizeBytes,
-							contentType: m.contentType,
-							url: m.url,
-						}))}
-						onRemoveExistingMedia={handleRemoveUploadedMedia}
-						mediaChanged={state.mediaChangedSinceGeneration}
+						threadContent={state.threadContent}
+						contentType={state.contentType}
+						generationProgress={state.generationProgress}
 						generating={state.generating}
 						generated={state.generated}
-						publishMode={state.publishMode}
-						scheduledAt={state.scheduledAt}
-						submitting={state.submitting}
-						savingDraft={savingDraft || updatingDraft}
+						baseContent={sse.baseContent || initialBaseContent || ""}
+						ssePhase={sse.phase}
+						uploadedMedia={state.uploadedMedia}
 						readOnly={readOnly}
-						onBlurbChange={wizard.setBlurb}
-						maxThreadParts={state.maxThreadParts}
-						onContentTypeChange={wizard.setContentType}
-						onMaxThreadPartsChange={wizard.setMaxThreadParts}
-						onTogglePlatform={wizard.togglePlatform}
-						onFilesChange={wizard.setPendingFiles}
-						onGenerate={handleGenerate}
-						onSetPublishMode={wizard.setPublishMode}
-						onSetScheduledAt={wizard.setScheduledAt}
-						onPublish={handlePublish}
-						onSchedule={handleSchedule}
-						onSaveDraft={handleSaveDraft}
+						onUpdateContent={wizard.updatePlatformContent}
+						onUpdateThreadSegment={wizard.updateThreadSegment}
 					/>
-					{platformPosts && platformPosts.length > 0 && (
-						<PostPublishStatus
-							platformPosts={platformPosts}
-							onRetry={hasFailed ? handleRetry : undefined}
-							retrying={retrying}
-						/>
-					)}
-				</Stack>
-				<PreviewStep
-					selectedPlatforms={state.selectedPlatforms}
-					platformContent={state.platformContent}
-					threadContent={state.threadContent}
-					contentType={state.contentType}
-					generationProgress={state.generationProgress}
-					generating={state.generating}
-					generated={state.generated}
-					baseContent={sse.baseContent || initialBaseContent || ""}
-					ssePhase={sse.phase}
-					uploadedMedia={state.uploadedMedia}
-					readOnly={readOnly}
-					onUpdateContent={wizard.updatePlatformContent}
-					onUpdateThreadSegment={wizard.updateThreadSegment}
-				/>
+				</div>
 			</div>
-		</div>
+
+			<Modal
+				isOpen={scheduleOpen}
+				onClose={() => setScheduleOpen(false)}
+				title="Schedule post"
+				size="sm"
+				footer={
+					<Stack direction="row" gap="sm" justify="end">
+						<Button variant="ghost" onClick={() => setScheduleOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="primary"
+							onClick={handleConfirmSchedule}
+							isLoading={state.submitting}
+							disabled={!scheduleDate}
+						>
+							Schedule
+						</Button>
+					</Stack>
+				}
+			>
+				<Stack gap="md">
+					<Stack gap="xs">
+						<Text size="sm" weight="medium">
+							Date
+						</Text>
+						<DatePicker
+							value={scheduleDate}
+							onChange={setScheduleDate}
+							minDate={new Date()}
+							placeholder="Pick a date"
+						/>
+					</Stack>
+					<Stack gap="xs">
+						<Text size="sm" weight="medium">
+							Time
+						</Text>
+						<TextField
+							type="time"
+							value={scheduleTime}
+							onChange={(e) => setScheduleTime(e.target.value)}
+						/>
+					</Stack>
+				</Stack>
+			</Modal>
+		</>
 	);
 }
