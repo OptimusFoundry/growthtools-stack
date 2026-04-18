@@ -83,6 +83,12 @@ npm run test
 
 Do NOT proceed to Phase 5 until all four checks pass.
 
+## Phase 4.5: Browser Verification (if applicable)
+
+After all checks pass, verify the feature works in a real browser using `mcp__claude-in-chrome__*` or `mcp__plugin_playwright_*` tools. Load the tool schema first via `ToolSearch` (e.g. `select:mcp__claude-in-chrome__tabs_context_mcp`), then navigate to the affected page and confirm the golden path renders correctly.
+
+This step is optional for non-visual changes (hook logic, data transforms) but **required for any new page, route, or interactive component**.
+
 ## Phase 5: Pre-Commit
 
 Dispatch the `pre-commit` agent. It runs the full CI checklist across both backend and frontend.

@@ -51,6 +51,20 @@ Deep expertise tasks. Run one at a time.
 
 ---
 
+## Available Tools & Plugins
+
+Use these throughout — don't rely solely on Read/Grep/Bash.
+
+| Tool | When to use |
+|------|-------------|
+| **Superpowers skills** (`Skill` tool) | Check for an applicable skill before starting any task — there usually is one. Key skills: `subagent-driven-development`, `writing-plans`, `using-git-worktrees`, `finishing-a-development-branch` |
+| **LSP** (`LSP` tool) | Go and TypeScript code navigation — go-to-definition, find-references, hover types. Prefer over grep when tracing types or call chains |
+| **Browser automation** (`mcp__claude-in-chrome__*`) | Verify frontend changes in a real browser. Use after `frontend-supervisor` completes to confirm UI behaviour |
+| **Playwright MCP** (`mcp__plugin_playwright_*`) | Programmatic browser control for E2E verification |
+| **ToolSearch** | Discover available tools before doing something manually — run `ToolSearch` first if unsure what's available |
+
+---
+
 ## Parallelisation Rules
 
 1. **haiku agents are always safe to batch** — they read docs then write isolated files. Fire as many as needed in one `Agent` tool call batch.

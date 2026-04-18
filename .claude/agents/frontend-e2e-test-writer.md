@@ -2,6 +2,8 @@
 name: frontend-e2e-test-writer
 description: Writes exhaustive Playwright E2E tests covering ALL scenarios for a feature. Use PROACTIVELY when implementing new features or when user asks to add E2E tests. Covers happy paths, errors, edge cases, and user interactions.
 tools: Read, Write, Edit, Glob, Grep, Bash
+# Also use mcp__plugin_playwright_* tools (load via ToolSearch) to manually
+# explore the running app before writing tests — confirms selectors and flow
 model: sonnet
 ---
 
