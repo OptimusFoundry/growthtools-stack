@@ -38,8 +38,10 @@ type CommitState =
 function commitState(commit: GitHubCommitSummary): CommitState {
 	if (commit.post_id && commit.post_deleted) return { kind: "post_deleted" };
 	if (commit.post_id) return { kind: "post", postID: commit.post_id };
-	if (commit.blog_post_id && commit.blog_deleted) return { kind: "blog_deleted" };
-	if (commit.blog_post_id) return { kind: "blog", blogPostID: commit.blog_post_id };
+	if (commit.blog_post_id && commit.blog_deleted)
+		return { kind: "blog_deleted" };
+	if (commit.blog_post_id)
+		return { kind: "blog", blogPostID: commit.blog_post_id };
 	if (commit.skipped_reason)
 		return { kind: "skipped", reason: commit.skipped_reason };
 	if (!commit.capture_requested_at) return { kind: "waiting" };
