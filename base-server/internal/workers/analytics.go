@@ -65,7 +65,8 @@ func (w *AnalyticsWorker) handle(ctx context.Context, key, value []byte) error {
 	// Get the platform post to find the platform-specific post ID
 	pp, err := w.store.GetPlatformPostByID(ctx, event.PlatformPostID)
 	if err != nil {
-		return fmt.Errorf("failed to get platform post: %w", err)
+		w.logger.Error(ctx, "failed to get platform post for analytics", err)
+		return nil
 	}
 
 	if pp.PlatformPostID == nil || *pp.PlatformPostID == "" {
@@ -76,7 +77,8 @@ func (w *AnalyticsWorker) handle(ctx context.Context, key, value []byte) error {
 	// Get platform connection for auth
 	connections, err := w.store.ListPlatformConnectionsByAccount(ctx, event.AccountID)
 	if err != nil {
-		return fmt.Errorf("failed to list connections: %w", err)
+		w.logger.Error(ctx, "failed to list connections for analytics", err)
+		return nil
 	}
 
 	var conn store.PlatformConnection
@@ -89,14 +91,16 @@ func (w *AnalyticsWorker) handle(ctx context.Context, key, value []byte) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("no connection found for platform %s", event.Platform)
+		w.logger.Info(ctx, fmt.Sprintf("no connection found for platform %s, skipping analytics", event.Platform))
+		return nil
 	}
 
 	// Ensure tokens are fresh before fetching analytics
 	if w.tokenRefresher != nil {
 		refreshed, refreshErr := w.tokenRefresher.EnsureFreshConnection(ctx, conn)
 		if refreshErr != nil {
-			return fmt.Errorf("failed to refresh token for %s: %w", event.Platform, refreshErr)
+			w.logger.Error(ctx, fmt.Sprintf("failed to refresh token for %s, skipping analytics", event.Platform), refreshErr)
+			return nil
 		}
 		conn = refreshed
 	}
@@ -104,12 +108,14 @@ func (w *AnalyticsWorker) handle(ctx context.Context, key, value []byte) error {
 	// Get adapter and fetch engagement
 	adapter, err := w.registry.Get(event.Platform)
 	if err != nil {
-		return fmt.Errorf("adapter not found for platform %s: %w", event.Platform, err)
+		w.logger.Error(ctx, fmt.Sprintf("adapter not found for platform %s, skipping analytics", event.Platform), err)
+		return nil
 	}
 
 	engagement, err := adapter.GetEngagement(ctx, *pp.PlatformPostID, conn)
 	if err != nil {
-		return fmt.Errorf("failed to get engagement: %w", err)
+		w.logger.Error(ctx, "failed to get engagement for analytics", err)
+		return nil
 	}
 
 	// Record analytics
@@ -123,7 +129,8 @@ func (w *AnalyticsWorker) handle(ctx context.Context, key, value []byte) error {
 		Clicks:         engagement.Clicks,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to record analytics: %w", err)
+		w.logger.Error(ctx, "failed to record analytics", err)
+		return nil
 	}
 
 	w.logger.Info(ctx, fmt.Sprintf("recorded analytics for %s: impressions=%d, likes=%d", event.Platform, engagement.Impressions, engagement.Likes))

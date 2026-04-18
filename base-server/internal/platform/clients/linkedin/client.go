@@ -11,10 +11,13 @@ import (
 	"base-server/internal/infra/observability"
 )
 
+const linkedinAPIBase = "https://api.linkedin.com"
+
 // Client handles HTTP communication with the LinkedIn REST API.
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string
 }
 
 // NewClient creates a new LinkedIn API client.
@@ -23,6 +26,22 @@ func NewClient(logger *observability.Logger) *Client {
 		httpClient: &http.Client{},
 		logger:     logger,
 	}
+}
+
+// NewTestClient creates a Client that routes all requests to baseURL.
+func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+	return &Client{
+		httpClient: httpClient,
+		logger:     logger,
+		baseURL:    baseURL,
+	}
+}
+
+func (c *Client) apiBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return linkedinAPIBase
 }
 
 // CreatePost creates a post on LinkedIn.
@@ -52,7 +71,7 @@ func (c *Client) CreatePost(ctx context.Context, accessToken string, req CreateP
 		return CreatePostResponse{}, fmt.Errorf("linkedinapi: failed to marshal payload: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.linkedin.com/rest/posts", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBase()+"/rest/posts", bytes.NewReader(body))
 	if err != nil {
 		return CreatePostResponse{}, fmt.Errorf("linkedinapi: failed to create request: %w", err)
 	}
@@ -85,7 +104,7 @@ func (c *Client) InitializeImageUpload(ctx context.Context, accessToken, authorU
 		},
 	})
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.linkedin.com/rest/images?action=initializeUpload", bytes.NewReader(initPayload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBase()+"/rest/images?action=initializeUpload", bytes.NewReader(initPayload))
 	if err != nil {
 		return InitializeImageUploadResponse{}, fmt.Errorf("linkedinapi: failed to create request: %w", err)
 	}
@@ -143,7 +162,7 @@ func (c *Client) UploadImage(ctx context.Context, accessToken, uploadURL string,
 
 // GetSocialMetadata retrieves engagement metrics for a LinkedIn post.
 func (c *Client) GetSocialMetadata(ctx context.Context, accessToken, postID string) (SocialMetadata, error) {
-	endpoint := fmt.Sprintf("https://api.linkedin.com/rest/socialMetadata/%s", postID)
+	endpoint := fmt.Sprintf(c.apiBase()+"/rest/socialMetadata/%s", postID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

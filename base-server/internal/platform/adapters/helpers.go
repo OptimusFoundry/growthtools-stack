@@ -25,6 +25,11 @@ func downloadMedia(ctx context.Context, mediaURL string) ([]byte, string, error)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		io.Copy(io.Discard, resp.Body)
+		return nil, "", fmt.Errorf("media download returned status %d", resp.StatusCode)
+	}
+
 	mediaBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to read media: %w", err)

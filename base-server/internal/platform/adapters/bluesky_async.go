@@ -45,15 +45,11 @@ func (a *BlueskyAdapter) StartPublish(ctx context.Context, spec PostSpec, conn s
 	for _, mediaURL := range spec.MediaURLs {
 		mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
 		if err != nil {
-			a.logger.Error(ctx, "failed to download media for bluesky", err)
-			handle.Items = append(handle.Items, blueskyHandleItem{})
-			continue
+			return nil, false, fmt.Errorf("bluesky adapter: download media: %w", err)
 		}
 		blob, err := a.client.UploadBlob(ctx, session.AccessJwt, mediaBytes, contentType)
 		if err != nil {
-			a.logger.Error(ctx, "failed to upload blob to bluesky", err)
-			handle.Items = append(handle.Items, blueskyHandleItem{})
-			continue
+			return nil, false, fmt.Errorf("bluesky adapter: upload blob: %w", err)
 		}
 		handle.Items = append(handle.Items, blueskyHandleItem{
 			Blob:    blob,

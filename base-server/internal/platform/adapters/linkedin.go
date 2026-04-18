@@ -36,19 +36,16 @@ func (a *LinkedInAdapter) Publish(ctx context.Context, content string, mediaURLs
 	for _, mediaURL := range mediaURLs {
 		mediaBytes, _, err := downloadMedia(ctx, mediaURL)
 		if err != nil {
-			a.logger.Error(ctx, "failed to download media for linkedin", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("linkedin adapter: download media: %w", err)
 		}
 
 		initResp, err := a.client.InitializeImageUpload(ctx, conn.AccessToken, authorURN)
 		if err != nil {
-			a.logger.Error(ctx, "failed to initialize linkedin image upload", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("linkedin adapter: initialize image upload: %w", err)
 		}
 
 		if err := a.client.UploadImage(ctx, conn.AccessToken, initResp.UploadURL, mediaBytes); err != nil {
-			a.logger.Error(ctx, "failed to upload image to linkedin", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("linkedin adapter: upload image: %w", err)
 		}
 
 		mediaAssets = append(mediaAssets, map[string]any{

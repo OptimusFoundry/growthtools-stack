@@ -37,8 +37,7 @@ func (a *XAdapter) Publish(ctx context.Context, content string, mediaURLs []stri
 	for _, mediaURL := range mediaURLs {
 		mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
 		if err != nil {
-			a.logger.Error(ctx, "failed to download media for X", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("x adapter: download media: %w", err)
 		}
 
 		mediaID, err := a.client.UploadMedia(ctx, x.UploadMediaRequest{
@@ -46,8 +45,7 @@ func (a *XAdapter) Publish(ctx context.Context, content string, mediaURLs []stri
 			MediaType:  contentType,
 		}, accessToken, tokenSecret)
 		if err != nil {
-			a.logger.Error(ctx, "failed to upload media to X", err)
-			continue
+			return PlatformPostResult{}, fmt.Errorf("x adapter: upload media: %w", err)
 		}
 		mediaIDs = append(mediaIDs, mediaID)
 	}
@@ -85,18 +83,18 @@ func (a *XAdapter) PublishThread(ctx context.Context, segments []ThreadSegment, 
 		if mediaURL := mediaURLForSegment(seg, mediaURLs); mediaURL != "" {
 			mediaBytes, contentType, err := downloadMedia(ctx, mediaURL)
 			if err != nil {
-				a.logger.Error(ctx, "failed to download media for X thread segment", err)
-			} else {
-				mediaID, err := a.client.UploadMedia(ctx, x.UploadMediaRequest{
-					MediaBytes: mediaBytes,
-					MediaType:  contentType,
-				}, accessToken, tokenSecret)
-				if err != nil {
-					a.logger.Error(ctx, "failed to upload media to X for thread segment", err)
-				} else {
-					mediaIDs = append(mediaIDs, mediaID)
-				}
+				return firstResult, fmt.Errorf("x adapter: failed to download media for thread segment %d: %w", i+1, err)
 			}
+
+			mediaID, err := a.client.UploadMedia(ctx, x.UploadMediaRequest{
+				MediaBytes: mediaBytes,
+				MediaType:  contentType,
+			}, accessToken, tokenSecret)
+			if err != nil {
+				return firstResult, fmt.Errorf("x adapter: failed to upload media for thread segment %d: %w", i+1, err)
+			}
+
+			mediaIDs = append(mediaIDs, mediaID)
 		}
 
 		result, err := a.client.CreateTweet(ctx, x.CreateTweetRequest{
