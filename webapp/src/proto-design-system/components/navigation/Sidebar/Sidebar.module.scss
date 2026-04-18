@@ -11,11 +11,11 @@
   height: 100%;
   overflow-y: auto;
   transition: width var(--duration-normal) var(--ease-out);
-  width: var(--space-64);
+  width: var(--space-32);
 }
 
 .collapsed {
-  width: var(--space-16);
+  width: var(--space-10);
 
   .nav {
     align-items: center;
@@ -73,7 +73,7 @@
   position: fixed;
   top: 0;
   transform: translateX(-100%);
-  width: var(--space-64);
+  width: var(--space-32);
   z-index: var(--z-modal);
 
   @media (prefers-reduced-motion: no-preference) {
@@ -117,10 +117,10 @@
 // =============================================================================
 
 .compact {
-  width: var(--space-56);
+  width: var(--space-28);
 
   &.collapsed {
-    width: var(--space-14);
+    width: var(--space-9);
 
     .nav {
       padding: var(--space-3) var(--space-1);
