@@ -1,20 +1,14 @@
 import { useNavigate } from "@tanstack/react-router";
 import "highlight.js/styles/github.css";
-import { BookOpen, Edit, Globe, Trash2, X } from "lucide-react";
+import { BookOpen, Edit, Globe, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
-import {
-	BlogPostForm,
-	type BlogPostFormData,
-} from "@/components/blog/BlogPostForm";
-import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useGetBlogPost } from "@/hooks/useGetBlogPost";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
-import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
@@ -25,86 +19,43 @@ import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { BlogPost } from "@/types/blog";
+import { BlogWizard } from "./BlogWizard";
 import styles from "./blog-editor.module.scss";
 
 export interface BlogEditorProps {
 	editPostId?: string;
 }
 
-function toFormData(bp: BlogPost): BlogPostFormData {
-	return {
-		title: bp.title,
-		slug: bp.slug,
-		content: bp.content,
-		excerpt: bp.excerpt ?? "",
-		seoTitle: bp.seoTitle ?? "",
-		metaDescription: bp.metaDescription ?? "",
-		ogTitle: bp.ogTitle ?? "",
-		ogDescription: bp.ogDescription ?? "",
-		keywords: bp.keywords.join(", "),
-	};
-}
-
 // ── Create mode ──────────────────────────────────────────────────────────────
 
 function CreateBlogEditor() {
 	const navigate = useNavigate();
-	const { createBlogPost, loading: creating, error } = useCreateBlogPost();
-	const { publishBlog, loading: publishing } = usePublishBlog();
-
-	const handleSaveDraft = useCallback(
-		async (data: BlogPostFormData) => {
-			await createBlogPost({
-				title: data.title,
-				slug: data.slug,
-				content: data.content,
-				excerpt: data.excerpt || undefined,
-				status: "draft",
-				seo_title: data.seoTitle || undefined,
-				meta_description: data.metaDescription || undefined,
-				keywords: data.keywords ? data.keywords.split(", ") : undefined,
-				og_title: data.ogTitle || undefined,
-				og_description: data.ogDescription || undefined,
-			});
-			navigate({ to: "/blog" });
-		},
-		[createBlogPost, navigate],
-	);
-
-	const handlePublish = useCallback(
-		async (data: BlogPostFormData) => {
-			const post = await createBlogPost({
-				title: data.title,
-				slug: data.slug,
-				content: data.content,
-				excerpt: data.excerpt || undefined,
-				status: "draft",
-				seo_title: data.seoTitle || undefined,
-				meta_description: data.metaDescription || undefined,
-				keywords: data.keywords ? data.keywords.split(", ") : undefined,
-				og_title: data.ogTitle || undefined,
-				og_description: data.ogDescription || undefined,
-			});
-			await publishBlog(post.id);
-			navigate({ to: "/blog" });
-		},
-		[createBlogPost, publishBlog, navigate],
-	);
-
-	if (error) {
-		return (
-			<Alert variant="error" title="Something went wrong">
-				{error}
-			</Alert>
-		);
-	}
 
 	return (
-		<BlogPostForm
-			onSaveDraft={handleSaveDraft}
-			onPublish={handlePublish}
-			loading={creating || publishing}
-		/>
+		<motion.div
+			className={styles.editor}
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			transition={{ duration: 0.6 }}
+		>
+			<Breadcrumb
+				size="lg"
+				items={[
+					{ label: "Blog", href: "/blog", icon: <BookOpen size={18} /> },
+					{ label: "New Post" },
+				]}
+			/>
+			<Divider />
+			<Stack gap="xs">
+				<Text as="h1" size="xl" weight="semibold">
+					New Blog Post
+				</Text>
+				<Text size="sm" color="secondary">
+					Write a topic and let AI draft your blog post
+				</Text>
+			</Stack>
+			<BlogWizard onDone={() => navigate({ to: "/blog" })} />
+		</motion.div>
 	);
 }
 
@@ -120,7 +71,6 @@ function EditBlogEditor({ id }: { id: string }) {
 	} = useGetBlogPost(id);
 	const { publishBlog, loading: publishing } = usePublishBlog();
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
-	const { updateBlogPost, loading: saving } = useUpdateBlogPost();
 
 	const [isEditing, setIsEditing] = useState(false);
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -136,58 +86,11 @@ function EditBlogEditor({ id }: { id: string }) {
 		navigate({ to: "/blog" });
 	}, [id, deleteBlog, navigate]);
 
-	const handleSaveDraft = useCallback(
-		async (data: BlogPostFormData) => {
-			await updateBlogPost(id, {
-				title: data.title,
-				slug: data.slug,
-				content: data.content,
-				excerpt: data.excerpt || undefined,
-				seo_title: data.seoTitle || undefined,
-				meta_description: data.metaDescription || undefined,
-				keywords: data.keywords
-					? data.keywords
-							.split(",")
-							.map((k) => k.trim())
-							.filter(Boolean)
-					: undefined,
-				og_title: data.ogTitle || undefined,
-				og_description: data.ogDescription || undefined,
-			});
-			setIsEditing(false);
-			refetch();
-		},
-		[id, updateBlogPost, refetch],
-	);
-
-	const handleSaveAndPublish = useCallback(
-		async (data: BlogPostFormData) => {
-			await updateBlogPost(id, {
-				title: data.title,
-				slug: data.slug,
-				content: data.content,
-				excerpt: data.excerpt || undefined,
-				seo_title: data.seoTitle || undefined,
-				meta_description: data.metaDescription || undefined,
-				keywords: data.keywords
-					? data.keywords
-							.split(",")
-							.map((k) => k.trim())
-							.filter(Boolean)
-					: undefined,
-				og_title: data.ogTitle || undefined,
-				og_description: data.ogDescription || undefined,
-			});
-			await publishBlog(id);
-			navigate({ to: "/blog" });
-		},
-		[id, updateBlogPost, publishBlog, navigate],
-	);
-
 	if (fetching) return <Spinner />;
 	if (fetchError) return <Alert variant="error">{fetchError}</Alert>;
 	if (!blogPost) return <Alert variant="warning">Blog post not found.</Alert>;
 
+	// ── Edit mode ─────────────────────────────────────────────────────────────
 	if (isEditing) {
 		return (
 			<motion.div
@@ -204,35 +107,65 @@ function EditBlogEditor({ id }: { id: string }) {
 					]}
 				/>
 				<Divider />
-				<Stack gap="md">
-					<Stack direction="row" justify="between" align="center" wrap>
-						<Stack gap="xs">
-							<Text as="h1" size="2xl" weight="bold">
-								Edit blog post
-							</Text>
-							<Text size="sm" color="muted">
-								/{blogPost.slug}
-							</Text>
-						</Stack>
-						<Button
-							variant="ghost"
-							onClick={() => setIsEditing(false)}
-							aria-label="Cancel edit"
-						>
-							<X size={16} /> Cancel
-						</Button>
-					</Stack>
-					<BlogPostForm
-						initialData={toFormData(blogPost)}
-						onSaveDraft={handleSaveDraft}
-						onPublish={handleSaveAndPublish}
-						loading={saving || publishing}
-					/>
+				<Stack gap="xs">
+					<Text as="h1" size="xl" weight="semibold">
+						Edit Blog Post
+					</Text>
+					<Text size="sm" color="secondary">
+						Update your post content and details
+					</Text>
 				</Stack>
+				<BlogWizard
+					initialBlogPost={blogPost}
+					onDone={() => {
+						setIsEditing(false);
+						refetch();
+					}}
+					onCancel={() => setIsEditing(false)}
+				/>
 			</motion.div>
 		);
 	}
 
+	// ── View mode ─────────────────────────────────────────────────────────────
+	return (
+		<ViewBlogPage
+			blogPost={blogPost}
+			publishing={publishing}
+			deleting={deleting}
+			confirmDelete={confirmDelete}
+			onEdit={() => setIsEditing(true)}
+			onPublish={handlePublish}
+			onRequestDelete={() => setConfirmDelete(true)}
+			onCancelDelete={() => setConfirmDelete(false)}
+			onDelete={handleDelete}
+		/>
+	);
+}
+
+interface ViewBlogPageProps {
+	blogPost: BlogPost;
+	publishing: boolean;
+	deleting: boolean;
+	confirmDelete: boolean;
+	onEdit: () => void;
+	onPublish: () => void;
+	onRequestDelete: () => void;
+	onCancelDelete: () => void;
+	onDelete: () => void;
+}
+
+function ViewBlogPage({
+	blogPost,
+	publishing,
+	deleting,
+	confirmDelete,
+	onEdit,
+	onPublish,
+	onRequestDelete,
+	onCancelDelete,
+	onDelete,
+}: ViewBlogPageProps) {
 	return (
 		<motion.div
 			className={styles.editor}
@@ -277,13 +210,13 @@ function EditBlogEditor({ id }: { id: string }) {
 						)}
 					</Stack>
 					<Stack direction="row" gap="sm">
-						<Button variant="secondary" onClick={() => setIsEditing(true)}>
+						<Button variant="secondary" onClick={onEdit}>
 							<Edit size={16} /> Edit
 						</Button>
 						{blogPost.status !== "published" && (
 							<Button
 								variant="primary"
-								onClick={handlePublish}
+								onClick={onPublish}
 								isLoading={publishing}
 							>
 								<Globe size={16} /> Publish
@@ -291,7 +224,7 @@ function EditBlogEditor({ id }: { id: string }) {
 						)}
 						<Button
 							variant="ghost"
-							onClick={() => setConfirmDelete(true)}
+							onClick={onRequestDelete}
 							aria-label="Delete"
 						>
 							<Trash2 size={16} />
@@ -327,17 +260,17 @@ function EditBlogEditor({ id }: { id: string }) {
 
 			<Modal
 				isOpen={confirmDelete}
-				onClose={() => setConfirmDelete(false)}
+				onClose={onCancelDelete}
 				title="Delete blog post"
 				size="sm"
 				footer={
 					<Stack direction="row" gap="sm" justify="end">
-						<Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+						<Button variant="ghost" onClick={onCancelDelete}>
 							Cancel
 						</Button>
 						<Button
 							variant="destructive"
-							onClick={handleDelete}
+							onClick={onDelete}
 							isLoading={deleting}
 						>
 							Delete

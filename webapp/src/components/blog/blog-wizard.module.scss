@@ -1,0 +1,118 @@
+@use "@/proto-design-system/mixins" as *;
+
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+	width: 100%;
+}
+
+.twoColumn {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+
+	@include breakpoint(lg) {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-6);
+		align-items: start;
+	}
+}
+
+.previewPanel {
+	@include breakpoint(lg) {
+		position: sticky;
+		top: var(--space-4);
+	}
+}
+
+.sectionLabel {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-base-content-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin: 0;
+}
+
+.markdown {
+	padding-top: var(--space-4);
+	max-width: 72ch;
+	color: var(--color-base-content);
+	line-height: var(--line-height-relaxed);
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		margin-top: var(--space-6);
+		margin-bottom: var(--space-3);
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-base-content);
+	}
+
+	p {
+		margin-bottom: var(--space-4);
+	}
+
+	code {
+		background: var(--color-base-100);
+		padding: var(--space-0-5) var(--space-1);
+		border-radius: var(--radius-sm);
+		font-family: var(--font-family-mono);
+		font-size: 0.9em;
+	}
+
+	pre {
+		background: var(--color-base-100);
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		overflow-x: auto;
+
+		code {
+			background: transparent;
+			padding: 0;
+		}
+	}
+
+	ul,
+	ol {
+		margin-bottom: var(--space-4);
+		padding-left: var(--space-6);
+	}
+
+	li {
+		margin-bottom: var(--space-1);
+	}
+
+	table {
+		border-collapse: collapse;
+		margin-bottom: var(--space-4);
+
+		th,
+		td {
+			border: 1px solid var(--color-border);
+			padding: var(--space-2) var(--space-3);
+		}
+
+		th {
+			background: var(--color-base-100);
+			font-weight: var(--font-weight-semibold);
+		}
+	}
+}
+
+.emptyPreview {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-3);
+	padding: var(--space-16) var(--space-6);
+	text-align: center;
+}
+
+.emptyPreviewIcon {
+	color: var(--color-muted);
+}
