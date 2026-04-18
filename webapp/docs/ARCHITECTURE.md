@@ -202,11 +202,12 @@ src/api/
 └── types/          # API response types (snake_case, matching backend)
 ```
 
-- `fetcher<T>(url, options)` — authenticated, sends cookies
+- `fetcher<T>(url, options)` — authenticated, sends cookies (`credentials: 'include'` automatically)
 - `publicFetcher<T>(url, options)` — no auth, for public endpoints
 - Types in `api/types/` use snake_case (matching backend)
 - Transforms in `api/transforms/` convert to camelCase UI types
 - UI types in `src/types/` use camelCase
+- **Auth is cookie-based** — never manage tokens manually, auth state is server-side
 
 ---
 
@@ -287,6 +288,70 @@ return <DataDisplay data={data} />;
 | `useEffect` calls | ~2 | Extract into hooks |
 | Props count | ~8 | Consider composition |
 
+**When to extract**: 3+ related `useState` → custom hook. `useEffect` with complex logic → data-fetching hook. Handler > 5 lines → named function. Validation/transformation logic → pure function. Logic reused elsewhere → shared hook.
+
+```tsx
+// ❌ Everything inline — hard to read and test
+function UserSettingsPage() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  useEffect(() => { /* 15 lines of fetch logic */ }, []);
+  const handleSubmit = async () => { /* 30 lines */ };
+  return <div>/* 100 lines of JSX */</div>;
+}
+
+// ✅ Logic extracted — component is readable
+const validateSettings = (data: FormData): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  if (!data.name.trim()) errors.name = 'Name is required';
+  if (!isValidEmail(data.email)) errors.email = 'Invalid email';
+  return errors;
+};
+
+function useUserSettings() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setLoading(true);
+    fetcher<User>(`${import.meta.env.VITE_API_URL}/api/protected/user`)
+      .then(setUser)
+      .finally(() => setLoading(false));
+  }, []);
+  return { user, loading };
+}
+
+function useSettingsForm(user: User | null) {
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  useEffect(() => {
+    if (user) setFormData({ name: user.name, email: user.email });
+  }, [user]);
+  const handleSubmit = useCallback(async () => {
+    const validationErrors = validateSettings(formData);
+    if (Object.keys(validationErrors).length) { setErrors(validationErrors); return; }
+    await fetcher(`${import.meta.env.VITE_API_URL}/api/protected/user`, {
+      method: 'PUT', body: JSON.stringify(formData),
+    });
+  }, [formData]);
+  return { formData, setFormData, errors, handleSubmit };
+}
+
+function UserSettingsPage() {
+  const { user, loading } = useUserSettings();
+  const { formData, setFormData, errors, handleSubmit } = useSettingsForm(user);
+  if (loading) return <Spinner />;
+  return (
+    <Card>
+      <TextField label="Name" value={formData.name}
+        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+        errorMessage={errors.name} />
+      <Button onClick={handleSubmit}>Save</Button>
+    </Card>
+  );
+}
+```
+
 ---
 
 ## No Barrel Exports
@@ -304,3 +369,50 @@ import { useAuth } from '@/hooks';
 ```
 
 Exception: `src/api/index.ts` is intentional.
+
+---
+
+## Feature Gating
+
+Two `FeatureGate` variants exist in `src/components/gating/`. Choose based on whether you want to show-disabled or completely hide inaccessible features.
+
+### FeatureGate — disabled state with lock badge
+
+```tsx
+import { FeatureGate } from "@/components/gating/FeatureGate/component";
+
+// Content appears disabled with a lock badge overlay when feature is unavailable.
+// Lock badge navigates to billing on click.
+<FeatureGate feature="webhooks_zapier">
+  <WebhooksManager />
+</FeatureGate>
+```
+
+**Use when:** You want users to see what they're missing (discoverable) but can't access it yet.
+
+### FeatureGateHidden — completely hidden
+
+```tsx
+import { FeatureGateHidden } from "@/components/gating/FeatureGateHidden/component";
+
+// Simple hide — nothing shown
+<FeatureGateHidden feature="email_blasts">
+  <EmailBlastEditor />
+</FeatureGateHidden>
+
+// With fallback upgrade prompt
+<FeatureGateHidden
+  feature="webhooks_zapier"
+  fallback={<UpgradePrompt feature="webhooks_zapier" />}
+>
+  <WebhooksManager />
+</FeatureGateHidden>
+```
+
+**Use when:** The feature doesn't exist in lower tiers (not just restricted), or you want a clean UI without disabled sections.
+
+| Variant | Behavior | Use Case |
+|---------|----------|----------|
+| `FeatureGate` | Disabled with lock badge | Show restricted features with upgrade path |
+| `FeatureGateHidden` | Completely hidden | Hide tier-exclusive features |
+| `FeatureGateDisabled` (exported from both) | Disabled with hover tooltip | Form sections that require upgrade |

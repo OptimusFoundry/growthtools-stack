@@ -267,19 +267,43 @@ export const AllVariants: Story = {
 
 ## TypeScript Patterns
 
-```typescript
-import type { ComponentProps } from 'react';
+### Import Ordering
 
-// satisfies for config objects
+Always organize imports in this order:
+
+```typescript
+// 1. React
+import { useState, useEffect, useCallback } from 'react';
+
+// 2. Third-party
+import { useNavigate } from '@tanstack/react-router';
+
+// 3. API / utils
+import { fetcher } from '@/api/client';
+
+// 4. Types (import type)
+import type { User } from '@/types/user';
+
+// 5. Components
+import { Button } from '@/proto-design-system/components/primitives/Button';
+
+// 6. Styles (always last)
+import styles from './Component.module.scss';
+```
+
+### Other TypeScript Patterns
+
+```typescript
+// satisfies for config objects — validates without widening the type
 const defaultConfig = {
   variant: 'primary',
   size: 'md',
 } satisfies Partial<ComponentNameProps>;
 
-// import type for type-only imports
-import type { User } from '@/types';
+// import type for type-only imports — required in strict mode
+import type { User } from '@/types/user';
 
-// Explicit type arguments when inference is ambiguous
+// Explicit type arguments when inference changes behavior
 const items = createItems<Item>([...]);
 ```
 
