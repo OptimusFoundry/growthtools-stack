@@ -416,6 +416,85 @@ func TestPostProcessor_SchedulePost(t *testing.T) {
 	})
 }
 
+func TestPostProcessor_UpdateDraft_PreservesMediaIDs(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	postID := uuid.New()
+	mediaID1 := uuid.New()
+	mediaID2 := uuid.New()
+
+	t.Run("media_ids are written to UpdatePostParams", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		expectedMediaIDs := store.UUIDArray{mediaID1, mediaID2}
+		contentType := "text"
+		platformContent := "platform content"
+
+		mockStore.EXPECT().UpdatePost(
+			gomock.Any(),
+			accountID,
+			postID,
+			gomock.AssignableToTypeOf(store.UpdatePostParams{}),
+		).DoAndReturn(func(_ context.Context, _, _ uuid.UUID, p store.UpdatePostParams) (store.Post, error) {
+			require.Equal(t, expectedMediaIDs, p.MediaIDs)
+			require.Equal(t, "hello", *p.Content)
+			require.Equal(t, contentType, *p.ContentType)
+			return store.Post{ID: postID, AccountID: accountID, Content: "hello"}, nil
+		})
+		mockStore.EXPECT().DeletePlatformPostsByPostID(gomock.Any(), postID).Return(nil)
+		mockStore.EXPECT().CreatePlatformPost(gomock.Any(), gomock.Any()).Return(store.PlatformPost{}, nil)
+
+		proc := New(mockStore, mockPublisher, logger)
+		result, err := proc.UpdateDraft(context.Background(), UpdateDraftParams{
+			AccountID:   accountID,
+			PostID:      postID,
+			Content:     "hello",
+			ContentType: contentType,
+			MediaIDs:    expectedMediaIDs,
+			Platforms: []PlatformDraftContent{
+				{Platform: "x", Content: &platformContent},
+			},
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, postID, result.ID)
+	})
+
+	t.Run("nil media_ids are not set on UpdatePostParams (COALESCE-preserve)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		mockStore.EXPECT().UpdatePost(
+			gomock.Any(),
+			accountID,
+			postID,
+			gomock.AssignableToTypeOf(store.UpdatePostParams{}),
+		).DoAndReturn(func(_ context.Context, _, _ uuid.UUID, p store.UpdatePostParams) (store.Post, error) {
+			require.Nil(t, p.MediaIDs, "nil MediaIDs must not be set so COALESCE preserves existing value")
+			return store.Post{ID: postID, AccountID: accountID, Content: "hello"}, nil
+		})
+		mockStore.EXPECT().DeletePlatformPostsByPostID(gomock.Any(), postID).Return(nil)
+		// no platforms → no CreatePlatformPost calls
+
+		proc := New(mockStore, mockPublisher, logger)
+		_, err := proc.UpdateDraft(context.Background(), UpdateDraftParams{
+			AccountID:   accountID,
+			PostID:      postID,
+			Content:     "hello",
+			ContentType: "text",
+			MediaIDs:    nil, // explicitly nil — caller did not provide media_ids
+		})
+
+		require.NoError(t, err)
+	})
+}
+
 func TestPostProcessor_GetPostWithPlatformPosts(t *testing.T) {
 	t.Parallel()
 	logger := observability.NewLogger()

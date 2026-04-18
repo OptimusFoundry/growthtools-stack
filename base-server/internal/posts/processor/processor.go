@@ -453,6 +453,9 @@ func (p *PostProcessor) UpdateDraft(ctx context.Context, params UpdateDraftParam
 	if params.Tags != nil {
 		updateParams.Tags = store.StringArray(params.Tags)
 	}
+	if params.MediaIDs != nil {
+		updateParams.MediaIDs = params.MediaIDs
+	}
 
 	post, err := p.store.UpdatePost(ctx, params.AccountID, params.PostID, updateParams)
 	if err != nil {

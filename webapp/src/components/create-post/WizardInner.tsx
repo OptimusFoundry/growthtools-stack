@@ -104,9 +104,16 @@ export function WizardInner({
 
 		// Upload pending files + convert to base64 for AI, then start SSE generation
 		const uploadAndGenerate = async () => {
+			// IDs already persisted from initialOverrides (e.g. GitHub-capture draft).
+			// Captured before the upload loop so closure staleness is not an issue.
+			const alreadyPersistedIDs = state.uploadedMedia.map((m) => m.id);
+
 			const validFiles = state.pendingFiles
 				.filter((f) => !f.error)
 				.map((f) => f.file);
+
+			// Collect IDs from newly uploaded files (uploaded in parallel with base64).
+			const newlyUploadedIDs: string[] = [];
 
 			// S3 upload (for publishing) and base64 (for AI) run in parallel
 			const [imagePayloads] = await Promise.all([
@@ -117,6 +124,7 @@ export function WizardInner({
 							try {
 								const media = await uploadMedia(pendingFile.file);
 								wizard.addUploadedMedia(media);
+								newlyUploadedIDs.push(media.id);
 							} catch {
 								// continue with remaining files
 							}
@@ -125,12 +133,16 @@ export function WizardInner({
 				})(),
 			]);
 
+			// Combine persisted IDs with any newly-uploaded IDs.
+			const allMediaIDs = [...alreadyPersistedIDs, ...newlyUploadedIDs];
+
 			sse.generate(
 				state.blurb,
 				state.selectedPlatforms,
 				state.contentType,
 				imagePayloads.length > 0 ? imagePayloads : undefined,
 				state.contentType === "thread" ? state.maxThreadParts : undefined,
+				allMediaIDs.length > 0 ? allMediaIDs : undefined,
 			);
 		};
 
@@ -141,6 +153,7 @@ export function WizardInner({
 		state.pendingFiles,
 		state.contentType,
 		state.maxThreadParts,
+		state.uploadedMedia,
 		wizard,
 		sse,
 		uploadMedia,
