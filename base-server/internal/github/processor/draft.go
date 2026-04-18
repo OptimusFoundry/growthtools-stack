@@ -188,9 +188,14 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 
 	videoKey, imageKeys := bucketArtifacts(payload.Uploaded)
 	decision := g.assessMediaAndMode(ctx, commit.Message, videoKey, imageKeys)
-	if decision.UseVideo {
-		g.logger.Info(ctx, "media/mode decision: "+decision.Reason)
-	} else {
+	decisionCtx := observability.WithFields(ctx,
+		observability.Field{Key: "assessor_reason", Value: decision.Reason},
+		observability.Field{Key: "assessor_use_video", Value: decision.UseVideo},
+		observability.Field{Key: "assessor_image_indexes", Value: decision.ImageIndexes},
+		observability.Field{Key: "assessor_mode", Value: decision.Mode},
+	)
+	g.logger.Info(decisionCtx, "media/mode decision")
+	if !decision.UseVideo {
 		videoKey = ""
 	}
 	imageKeys = pickImagesByIndex(imageKeys, decision.ImageIndexes)

@@ -80,7 +80,8 @@ Return raw JSON only (no markdown fences, no commentary):
 Media rules (lean toward video):
 - Video drives engagement far more than screenshots. If the video exists, watch it. If it actually shows the change in action — a working UI, a transition, a demo moment — use_video MUST be true, and you should generally drop images unless a screenshot reveals something the video does not (e.g. a static final-state detail or a result screen the video cuts away from).
 - If the video is broken, stuck on a loading state, mostly blank, or fails to show the change, set use_video=false.
-- Prefer fewer images. One or two strong static shots beats a reel of near-duplicates. Skip loading spinners, mid-animation frames, redundant views.
+- Deduplicate images aggressively. Compare every pair of screenshots. If two images show the same UI state — same layout, same content, same screen — keep only the cleaner or later one. Drop the rest. Screenshots taken seconds apart on a static page are duplicates even if a few pixels differ.
+- After deduplication, prefer fewer images still. One or two strong static shots beats a reel. Skip loading spinners, mid-animation frames, and any view that doesn't add new information beyond what's already shown.
 - If neither video nor any image adds real value, use_video=false and image_indexes=[] are both valid answers. Better no media than bad media.
 
 Mode rules:
