@@ -29,6 +29,8 @@ DB_NAME=$(aws ssm get-parameter \
   --query "Parameter.Value" --output text)
 ```
 
+If any aws ssm get-parameter command returns an error, report the error message verbatim and stop — do not continue.
+
 ## Step 2: Discover the SSM tunnel target
 
 ```
@@ -45,18 +47,37 @@ If the result is `None` or empty, stop and report:
 Error: No running ECS instance found — the autoscaling group may be scaled to zero.
 ```
 
+If the aws ec2 describe-instances command returns an error (not empty — an actual CLI error), report the error message verbatim and stop.
+
 ## Step 3: Start the SSM port-forward
 
 Use local port 15432 to avoid conflicting with any local PostgreSQL.
 
 ```
-aws ssm start-session \
+timeout 10 aws ssm start-session \
   --target "$INSTANCE_ID" \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
   --parameters "host=$RDS_HOST,portNumber=5432,localPortNumber=15432" &
 SSM_PID=$!
 sleep 4
 ```
+
+If the tunnel process exits within the sleep window (check with `kill -0 $SSM_PID 2>/dev/null || echo 'tunnel exited early'`), report 'SSM tunnel failed to start' and stop.
+
+## Step 3b: Verify the tunnel is working
+
+Test connectivity before running the query:
+
+```
+timeout 2 psql \
+  --host=127.0.0.1 \
+  --port=15432 \
+  --username="$DB_USER" \
+  --dbname="$DB_NAME" \
+  --command="SELECT 1" 2>&1
+```
+
+If this fails with a connection error, report: "SSM tunnel verification failed: [error message]" then kill the tunnel (kill $SSM_PID 2>/dev/null) and stop.
 
 ## Step 4: Validate the SQL query
 
@@ -71,6 +92,8 @@ If the query has no LIMIT clause, append LIMIT 50 before running.
 
 ## Step 5: Run the query
 
+The SQL query will be provided to you in the coordinator's prompt. Extract it, validate it (Step 4), then substitute it below in place of $SQL_QUERY.
+
 ```
 PGPASSWORD="$DB_PASS" psql \
   --host=127.0.0.1 \
@@ -79,8 +102,6 @@ PGPASSWORD="$DB_PASS" psql \
   --dbname="$DB_NAME" \
   --command="$SQL_QUERY"
 ```
-
-Replace $SQL_QUERY with the actual query you were given.
 
 ## Step 6: Kill the tunnel
 
