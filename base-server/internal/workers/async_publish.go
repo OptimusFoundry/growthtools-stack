@@ -87,7 +87,10 @@ func buildPostSpec(
 		if err != nil {
 			logger.Error(ctx, "failed to load media for post spec", err)
 		} else {
-			spec.MediaURLs = mediaURLsForPublish(ctx, signer, items, logger)
+			spec.MediaURLs, err = mediaURLsForPublish(ctx, signer, items)
+			if err != nil {
+				return adapters.PostSpec{}, fmt.Errorf("build post spec: %w", err)
+			}
 		}
 	}
 	return spec, nil

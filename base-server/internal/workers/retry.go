@@ -124,7 +124,11 @@ func (w *RetryWorker) processRetries(ctx context.Context) error {
 			if err != nil {
 				w.logger.Error(ctx, "failed to resolve media URLs for retry", err)
 			} else {
-				mediaURLs = mediaURLsForPublish(ctx, w.urlSigner, mediaItems, w.logger)
+				mediaURLs, err = mediaURLsForPublish(ctx, w.urlSigner, mediaItems)
+				if err != nil {
+					w.logger.Error(ctx, "failed to presign media URLs for retry", err)
+					mediaURLs = nil
+				}
 			}
 		}
 

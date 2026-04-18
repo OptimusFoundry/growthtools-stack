@@ -88,7 +88,7 @@ func (a *ThreadsAdapter) CheckReady(ctx context.Context, raw json.RawMessage, co
 	if err := json.Unmarshal(raw, &handle); err != nil {
 		return false, nil, fmt.Errorf("threads adapter: unmarshal handle: %w", err)
 	}
-	status, err := a.client.GetContainerStatus(ctx, handle.ContainerID, conn.AccessToken)
+	status, errMsg, err := a.client.GetContainerStatus(ctx, handle.ContainerID, conn.AccessToken)
 	if err != nil {
 		return false, raw, fmt.Errorf("threads adapter: GetContainerStatus: %w", err)
 	}
@@ -96,6 +96,9 @@ func (a *ThreadsAdapter) CheckReady(ctx context.Context, raw json.RawMessage, co
 	case "FINISHED":
 		return true, raw, nil
 	case "ERROR", "EXPIRED":
+		if errMsg != "" {
+			return false, raw, fmt.Errorf("threads adapter: container %s entered terminal state %s: %s", handle.ContainerID, status, errMsg)
+		}
 		return false, raw, fmt.Errorf("threads adapter: container %s entered terminal state %s", handle.ContainerID, status)
 	default:
 		return false, raw, nil

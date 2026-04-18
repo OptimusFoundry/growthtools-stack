@@ -121,7 +121,11 @@ func (w *PublishWorker) handle(ctx context.Context, key, value []byte) error {
 		if err != nil {
 			w.logger.Error(ctx, "failed to resolve media URLs", err)
 		} else {
-			mediaURLs = mediaURLsForPublish(ctx, w.urlSigner, mediaItems, w.logger)
+			mediaURLs, err = mediaURLsForPublish(ctx, w.urlSigner, mediaItems)
+			if err != nil {
+				w.logger.Error(ctx, "failed to presign media URLs for publish", err)
+				mediaURLs = nil
+			}
 		}
 	}
 

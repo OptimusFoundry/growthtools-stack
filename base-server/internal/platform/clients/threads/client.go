@@ -66,34 +66,38 @@ func (c *Client) CreateThread(ctx context.Context, accessToken string, req Creat
 	return CreateThreadResponse{ID: result.ID}, nil
 }
 
-// GetContainerStatus reads the container's current processing status.
+// GetContainerStatus reads the container's current processing status and,
+// when Meta reports an error, its error_message.
 // Threads returns one of: IN_PROGRESS, FINISHED, ERROR, PUBLISHED, EXPIRED.
 // Videos need to reach FINISHED before they can be published; images are
 // usually finished almost immediately.
-func (c *Client) GetContainerStatus(ctx context.Context, containerID, accessToken string) (string, error) {
-	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s?fields=status&access_token=%s",
+// Returns (status, errorMessage, err). errorMessage is non-empty only when
+// status is ERROR — it carries Meta's human-readable reason for the failure.
+func (c *Client) GetContainerStatus(ctx context.Context, containerID, accessToken string) (status, errorMessage string, err error) {
+	endpoint := fmt.Sprintf("https://graph.threads.net/v1.0/%s?fields=status,error_message&access_token=%s",
 		containerID, url.QueryEscape(accessToken))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return "", fmt.Errorf("threadsapi: failed to create status request: %w", err)
+		return "", "", fmt.Errorf("threadsapi: failed to create status request: %w", err)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("threadsapi: status request failed: %w", err)
+		return "", "", fmt.Errorf("threadsapi: status request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("threadsapi: status API returned %d: %s", resp.StatusCode, string(body))
+		return "", "", fmt.Errorf("threadsapi: status API returned %d: %s", resp.StatusCode, string(body))
 	}
 	var result struct {
-		Status string `json:"status"`
+		Status       string `json:"status"`
+		ErrorMessage string `json:"error_message"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("threadsapi: failed to parse status response: %w", err)
+		return "", "", fmt.Errorf("threadsapi: failed to parse status response: %w", err)
 	}
-	return result.Status, nil
+	return result.Status, result.ErrorMessage, nil
 }
 
 // WaitForContainerReady polls GetContainerStatus until the container is
@@ -108,7 +112,7 @@ func (c *Client) WaitForContainerReady(ctx context.Context, containerID, accessT
 	// two seconds behind FINISHED without hammering the API.
 	const interval = 2 * time.Second
 	for {
-		status, err := c.GetContainerStatus(ctx, containerID, accessToken)
+		status, errMsg, err := c.GetContainerStatus(ctx, containerID, accessToken)
 		if err != nil {
 			return err
 		}
@@ -116,6 +120,9 @@ func (c *Client) WaitForContainerReady(ctx context.Context, containerID, accessT
 		case "FINISHED":
 			return nil
 		case "ERROR", "EXPIRED":
+			if errMsg != "" {
+				return fmt.Errorf("threadsapi: container %s entered terminal state %s: %s", containerID, status, errMsg)
+			}
 			return fmt.Errorf("threadsapi: container %s entered terminal state %s", containerID, status)
 		}
 		if time.Now().After(deadline) {
