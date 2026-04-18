@@ -678,3 +678,192 @@ func TestStore_GetGitHubCommitByIDForUser(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// GetGitHubCommitForBlog
+// ============================================================================
+
+func TestStore_GetGitHubCommitForBlog(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) uuid.UUID // returns commitID
+		wantErr error
+		assert  func(t *testing.T, got GitHubCommitForBlog)
+	}{
+		{
+			name: "happy path returns access_token, account_id, repo owner/name, sha, message",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-blog-" + uuid.New().String()[:16]
+				branch := "main"
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					strPtr("Author"), strPtr("a@b.com"), "blog commit message",
+					&branch, strPtr("https://github.com/example"), time.Now().UTC(), nil)
+				require.NoError(t, err)
+				return commit.ID
+			},
+			assert: func(t *testing.T, got GitHubCommitForBlog) {
+				assert.NotEqual(t, uuid.Nil, got.ID)
+				assert.NotEqual(t, uuid.Nil, got.AccountID)
+				assert.NotEmpty(t, got.RepoOwner)
+				assert.NotEmpty(t, got.RepoName)
+				assert.NotEmpty(t, got.ConnectionAccessToken)
+				assert.Equal(t, "blog commit message", got.Message)
+				assert.NotNil(t, got.Branch)
+				assert.Equal(t, "main", *got.Branch)
+				assert.Nil(t, got.BlogPostID)
+				assert.Nil(t, got.CaptureOutput)
+			},
+		},
+		{
+			name: "happy path returns capture_output and blog_post_id when set",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-blog-cap-" + uuid.New().String()[:12]
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					nil, nil, "capture msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				captureJSON := json.RawMessage(`{"uploaded":[{"key":"a.png"}]}`)
+				require.NoError(t, s.UpdateGitHubCommitCapture(ctx, commit.ID, captureJSON))
+
+				accountID := createTestAccount(t, s)
+				bp, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+					AccountID: accountID,
+					Title:     "Linked Blog",
+					Slug:      "linked-" + uuid.New().String()[:8],
+					Content:   "# linked",
+					Status:    BlogStatusDraft,
+					Keywords:  StringArray{},
+				})
+				require.NoError(t, err)
+				require.NoError(t, s.UpdateGitHubCommitBlogPostID(ctx, commit.ID, bp.ID))
+				return commit.ID
+			},
+			assert: func(t *testing.T, got GitHubCommitForBlog) {
+				assert.NotNil(t, got.CaptureOutput)
+				require.NotNil(t, got.BlogPostID)
+				assert.NotEqual(t, uuid.Nil, *got.BlogPostID)
+			},
+		},
+		{
+			name: "returns ErrNotFound when commit id does not exist",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				return uuid.New()
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			name: "returns ErrNotFound when owning connection is soft-deleted",
+			setup: func(t *testing.T) uuid.UUID {
+				t.Helper()
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				sha := "sha-blog-delconn-" + uuid.New().String()[:10]
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, sha,
+					nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				require.NoError(t, s.SoftDeleteGitHubConnection(ctx, userID))
+				_ = conn
+				return commit.ID
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			commitID := tt.setup(t)
+			got, err := s.GetGitHubCommitForBlog(ctx, commitID)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assert != nil {
+				tt.assert(t, got)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// UpdateGitHubCommitBlogPostID
+// ============================================================================
+
+func TestStore_UpdateGitHubCommitBlogPostID(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) (uuid.UUID, uuid.UUID) // commitID, blogPostID
+		wantErr error
+	}{
+		{
+			name: "happy path links commit to blog post",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				accountID := createTestAccount(t, s)
+				userID := createTestUser(t, s)
+				conn := createTestGitHubConnection(t, s, userID)
+				repo := createTestGitHubRepo(t, s, conn.ID)
+				commit, _, err := s.InsertGitHubCommit(ctx, repo.ID, "sha-b-"+uuid.New().String()[:16],
+					nil, nil, "msg", nil, nil, time.Now().UTC(), nil)
+				require.NoError(t, err)
+				bp, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+					AccountID: accountID,
+					Title:     "T",
+					Slug:      "t-" + uuid.New().String()[:8],
+					Content:   "# t",
+					Status:    BlogStatusDraft,
+					Keywords:  StringArray{},
+				})
+				require.NoError(t, err)
+				return commit.ID, bp.ID
+			},
+		},
+		{
+			name: "not found for unknown commit",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID) {
+				t.Helper()
+				return uuid.New(), uuid.New()
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			commitID, blogPostID := tt.setup(t)
+			err := s.UpdateGitHubCommitBlogPostID(ctx, commitID, blogPostID)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
