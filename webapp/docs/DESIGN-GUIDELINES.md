@@ -778,4 +778,23 @@ const triggerRef = useRef();
 
 ---
 
-*Last updated: December 2024*
+---
+
+## SCSS Linting
+
+Run: `npm run lint:scss` — validates all SCSS files against design tokens.
+
+**VS Code setup** (recommended for real-time feedback):
+1. Install the **Stylelint** VS Code extension
+2. Add to `.vscode/settings.json`:
+```json
+{
+  "stylelint.enable": true,
+  "stylelint.validate": ["css", "scss"],
+  "editor.codeActionsOnSave": { "source.fixAll.stylelint": true },
+  "css.validate": false,
+  "scss.validate": false
+}
+```
+
+Config lives in `.stylelintrc.json` with custom plugin at `scripts/stylelint-plugin-validate-tokens.js`.

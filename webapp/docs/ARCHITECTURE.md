@@ -248,6 +248,48 @@ The Layout component reads this config via PersonaProvider and renders the sideb
 
 ---
 
+## Styling Pattern
+
+- **Always** use CSS Modules: `component.module.scss`
+- **Always** use design tokens: `var(--space-4)`, `var(--color-surface)`, etc.
+- **Never** hardcode colors, spacing, or font sizes
+- **Never** use inline styles for layout
+
+```scss
+// component.module.scss
+.root {
+  padding: var(--space-6);
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+// Responsive layout with tokens
+.layout {
+  display: grid;
+  grid-template-columns: var(--space-64) 1fr;  // 256px sidebar + flexible
+  gap: var(--space-6);
+  padding: var(--space-page);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+```
+
+---
+
 ## Loading / Error / Empty State Pattern
 
 ```tsx
