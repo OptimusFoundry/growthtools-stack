@@ -26,6 +26,11 @@ export interface OAuthState {
 	authUrl: string;
 }
 
+export interface PlatformInfo {
+	description: string;
+	icon: React.ReactNode | null;
+}
+
 export const PLATFORM_DISPLAY_NAMES: Record<PlatformType, string> = {
 	x: "X (Twitter)",
 	linkedin: "LinkedIn",
@@ -68,4 +73,39 @@ export const PLATFORM_SUPPORTS_THREADS: Record<PlatformType, boolean> = {
 	threads: true,
 	tiktok: false,
 	pinterest: false,
+};
+
+export const PLATFORM_INFO: Record<PlatformType, PlatformInfo> = {
+	x: {
+		description: "Post tweets and threads to your audience",
+		icon: null,
+	},
+	bluesky: {
+		description: "Share posts on the decentralized network",
+		icon: null,
+	},
+	threads: {
+		description: "Publish content to Meta's text platform",
+		icon: null,
+	},
+	linkedin: {
+		description: "Share posts to your professional network",
+		icon: null,
+	},
+	facebook: {
+		description: "Share posts to your Facebook audience",
+		icon: null,
+	},
+	instagram: {
+		description: "Share posts to Instagram",
+		icon: null,
+	},
+	tiktok: {
+		description: "Share videos to TikTok",
+		icon: null,
+	},
+	pinterest: {
+		description: "Share pins to Pinterest",
+		icon: null,
+	},
 };
