@@ -220,38 +220,42 @@ function PostsPage() {
 									className={styles.postLink}
 								>
 									<div className={styles.postRow}>
-										<span className={styles.idx}>
-											№ {String(index + 1).padStart(2, "0")}
-										</span>
-										<div className={styles.postBody}>
-											<div className={styles.postTitleText}>
-												{truncate(post.title || post.content, 80)}
-											</div>
-											<div className={styles.postMetaText}>
-												{statusLine(post)}
+										<div className={styles.titleRow}>
+											<span className={styles.idx}>
+												№ {String(index + 1).padStart(2, "0")}
+											</span>
+											<div className={styles.postBody}>
+												<div className={styles.postTitleText}>
+													{truncate(post.title || post.content, 80)}
+												</div>
+												<div className={styles.postMetaText}>
+													{statusLine(post)}
+												</div>
 											</div>
 										</div>
-										{post.platforms.length > 0 && (
-											<span className={styles.platformChips}>
-												{post.platforms.slice(0, 3).map((p) => (
-													<span
-														key={p}
-														className={styles.platformChip}
-														title={p}
-													>
-														{getPlatformIcon(p, 14)}
-													</span>
-												))}
+										<div className={styles.metaRow}>
+											{post.platforms.length > 0 && (
+												<span className={styles.platformChips}>
+													{post.platforms.slice(0, 3).map((p) => (
+														<span
+															key={p}
+															className={styles.platformChip}
+															title={p}
+														>
+															{getPlatformIcon(p, 14)}
+														</span>
+													))}
+												</span>
+											)}
+											<span
+												className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
+											>
+												{STATUS_LABELS[post.status]}
 											</span>
-										)}
-										<span
-											className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
-										>
-											{STATUS_LABELS[post.status]}
-										</span>
-										<span className={styles.chevronBtn} aria-hidden>
-											<ChevronRight size={16} />
-										</span>
+											<span className={styles.chevronBtn} aria-hidden>
+												<ChevronRight size={16} />
+											</span>
+										</div>
 									</div>
 								</Link>
 							))}

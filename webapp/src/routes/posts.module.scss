@@ -1,6 +1,7 @@
 // =============================================================================
 // POSTS PAGE
 // =============================================================================
+@use "@/proto-design-system/mixins" as *;
 
 .page {
   display: flex;
@@ -91,18 +92,30 @@
   text-decoration: none;
 }
 
+// Mobile-first: stacked layout —
+//   row 1: idx + title (title flexes, truncates)
+//   row 2: meta line
+//   row 3: platform chips · status badge · chevron
+// Desktop (md+): the original 5-col grid.
 .postRow {
-  align-items: center;
   border-top: 1px solid var(--color-border);
   cursor: pointer;
-  display: grid;
-  gap: var(--space-5);
-  grid-template-columns: var(--space-7) 1fr auto auto auto;
-  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
   transition: background-color var(--duration-fast) var(--ease-out);
 
   &:hover {
     background-color: var(--color-base-100);
+  }
+
+  @include breakpoint(md) {
+    align-items: center;
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: var(--space-7) 1fr auto auto auto;
+    padding: var(--space-5) var(--space-6);
   }
 }
 
@@ -110,8 +123,21 @@
   border-top: 0;
 }
 
+// Mobile: idx sits inline next to title; on desktop it's its own column.
+.titleRow {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-3);
+  min-width: 0;
+
+  @include breakpoint(md) {
+    display: contents;
+  }
+}
+
 .idx {
   color: var(--color-base-content-tertiary);
+  flex-shrink: 0;
   font-family: var(--font-family-mono, var(--font-family-sans));
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wider);
@@ -119,20 +145,25 @@
 
 .postBody {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-1-5);
+  gap: var(--space-1);
   min-width: 0;
 }
 
 .postTitleText {
   color: var(--color-base-content);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-tight);
   line-height: var(--line-height-tight);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  @include breakpoint(md) {
+    font-size: var(--font-size-lg);
+  }
 }
 
 .postMetaText {
@@ -140,6 +171,21 @@
   font-family: var(--font-family-mono, var(--font-family-sans));
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Mobile-only: bottom row with chips + badge + chevron
+.metaRow {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+
+  @include breakpoint(md) {
+    display: contents;
+  }
 }
 
 .platformChips {
