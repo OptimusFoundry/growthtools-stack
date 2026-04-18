@@ -11,6 +11,7 @@ package handler
 
 import (
 	processor "base-server/internal/content/processor"
+	prompts "base-server/internal/content/prompts"
 	aiclient "base-server/internal/infra/clients/aiclient"
 	context "context"
 	reflect "reflect"
@@ -58,6 +59,38 @@ func (mr *MockContentProcessorMockRecorder) AdaptContent(ctx, accountID, content
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdaptContent", reflect.TypeOf((*MockContentProcessor)(nil).AdaptContent), ctx, accountID, content, platform)
 }
 
+// DecideMode mocks base method.
+func (m *MockContentProcessor) DecideMode(ctx context.Context, video *aiclient.ImageData, images []aiclient.ImageData, prompt string) (processor.ModeDecision, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DecideMode", ctx, video, images, prompt)
+	ret0, _ := ret[0].(processor.ModeDecision)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DecideMode indicates an expected call of DecideMode.
+func (mr *MockContentProcessorMockRecorder) DecideMode(ctx, video, images, prompt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecideMode", reflect.TypeOf((*MockContentProcessor)(nil).DecideMode), ctx, video, images, prompt)
+}
+
+// FetchAndBucketMedia mocks base method.
+func (m *MockContentProcessor) FetchAndBucketMedia(ctx context.Context, accountID uuid.UUID, mediaIDs []uuid.UUID) (*aiclient.ImageData, []aiclient.ImageData, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAndBucketMedia", ctx, accountID, mediaIDs)
+	ret0, _ := ret[0].(*aiclient.ImageData)
+	ret1, _ := ret[1].([]aiclient.ImageData)
+	ret2, _ := ret[2].(bool)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// FetchAndBucketMedia indicates an expected call of FetchAndBucketMedia.
+func (mr *MockContentProcessorMockRecorder) FetchAndBucketMedia(ctx, accountID, mediaIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAndBucketMedia", reflect.TypeOf((*MockContentProcessor)(nil).FetchAndBucketMedia), ctx, accountID, mediaIDs)
+}
+
 // GeneratePost mocks base method.
 func (m *MockContentProcessor) GeneratePost(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string) (string, error) {
 	m.ctrl.T.Helper()
@@ -86,6 +119,22 @@ func (m *MockContentProcessor) GenerateThread(ctx context.Context, content, plat
 func (mr *MockContentProcessorMockRecorder) GenerateThread(ctx, content, platform any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateThread", reflect.TypeOf((*MockContentProcessor)(nil).GenerateThread), ctx, content, platform)
+}
+
+// GenerateWithMediaPlan mocks base method.
+func (m *MockContentProcessor) GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan) (string, map[string]processor.ThreadWithMediaPlanResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateWithMediaPlan", ctx, accountID, prompt, platforms, plan)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(map[string]processor.ThreadWithMediaPlanResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GenerateWithMediaPlan indicates an expected call of GenerateWithMediaPlan.
+func (mr *MockContentProcessorMockRecorder) GenerateWithMediaPlan(ctx, accountID, prompt, platforms, plan any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWithMediaPlan", reflect.TypeOf((*MockContentProcessor)(nil).GenerateWithMediaPlan), ctx, accountID, prompt, platforms, plan)
 }
 
 // StreamGenerateAndAdapt mocks base method.

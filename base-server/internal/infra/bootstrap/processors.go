@@ -78,6 +78,12 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 
 	// Content generation
 	p.content = contentProcessor.New(s, cl.gemini, logger)
+	// Wire the media-aware regenerate path so HandleStreamGenerate can fetch
+	// persisted media from S3 when the frontend sends media_ids (edit / regenerate
+	// flow). Only available when S3 is configured.
+	if cl.s3Fetch != nil {
+		p.content.WithMediaFetcher(s, cl.s3Fetch)
+	}
 
 	// AI Chat
 	p.chat = chatProcessor.New(s, cl.gemini, logger)

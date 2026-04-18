@@ -5,6 +5,7 @@ package processor
 import (
 	"context"
 	"errors"
+	"io"
 
 	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
@@ -20,12 +21,20 @@ var (
 	ErrVoiceProfile       = errors.New("failed to get voice profile")
 	ErrStreamGenerate     = errors.New("failed to stream generate and adapt")
 	ErrSelectMediaAndMode = errors.New("failed to select media and mode")
+	ErrDecideMode         = errors.New("failed to decide post mode")
 	ErrClassifyCommit     = errors.New("failed to classify commit")
+	ErrFetchMedia         = errors.New("failed to fetch media for generation")
 )
 
 // ContentStore defines the database operations required by ContentProcessor.
 type ContentStore interface {
 	GetVoiceProfileByAccount(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error)
+}
+
+// MediaStore defines the database operations for media fetching required by
+// the media-aware generation path.
+type MediaStore interface {
+	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
 // AIClient defines the AI operations required by ContentProcessor.
@@ -57,11 +66,19 @@ type StreamCallbacks struct {
 	OnThreadDone   func(platform string, segments []ThreadSegment)
 }
 
+// S3Fetcher reads an S3 object body. Wired into ContentProcessor so the
+// media-aware streaming path can download persisted media for AI analysis.
+type S3Fetcher interface {
+	GetFile(ctx context.Context, key string) (io.ReadCloser, string, error)
+}
+
 // ContentProcessor handles AI-powered content generation.
 type ContentProcessor struct {
-	store    ContentStore
-	aiClient AIClient
-	logger   *observability.Logger
+	store      ContentStore
+	mediaStore MediaStore
+	s3Fetch    S3Fetcher
+	aiClient   AIClient
+	logger     *observability.Logger
 }
 
 // New creates a new ContentProcessor.
@@ -71,4 +88,13 @@ func New(store ContentStore, aiClient AIClient, logger *observability.Logger) Co
 		aiClient: aiClient,
 		logger:   logger,
 	}
+}
+
+// WithMediaFetcher wires an optional MediaStore + S3Fetcher for the
+// media-aware streaming path. Called from bootstrap after the S3 client is
+// available. Both dependencies are required together — supplying one without
+// the other has no effect.
+func (p *ContentProcessor) WithMediaFetcher(ms MediaStore, fetcher S3Fetcher) {
+	p.mediaStore = ms
+	p.s3Fetch = fetcher
 }

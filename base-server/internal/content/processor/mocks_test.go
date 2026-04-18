@@ -13,6 +13,7 @@ import (
 	aiclient "base-server/internal/infra/clients/aiclient"
 	store "base-server/internal/infra/store"
 	context "context"
+	io "io"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -56,6 +57,45 @@ func (m *MockContentStore) GetVoiceProfileByAccount(ctx context.Context, account
 func (mr *MockContentStoreMockRecorder) GetVoiceProfileByAccount(ctx, accountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVoiceProfileByAccount", reflect.TypeOf((*MockContentStore)(nil).GetVoiceProfileByAccount), ctx, accountID)
+}
+
+// MockMediaStore is a mock of MediaStore interface.
+type MockMediaStore struct {
+	ctrl     *gomock.Controller
+	recorder *MockMediaStoreMockRecorder
+	isgomock struct{}
+}
+
+// MockMediaStoreMockRecorder is the mock recorder for MockMediaStore.
+type MockMediaStoreMockRecorder struct {
+	mock *MockMediaStore
+}
+
+// NewMockMediaStore creates a new mock instance.
+func NewMockMediaStore(ctrl *gomock.Controller) *MockMediaStore {
+	mock := &MockMediaStore{ctrl: ctrl}
+	mock.recorder = &MockMediaStoreMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMediaStore) EXPECT() *MockMediaStoreMockRecorder {
+	return m.recorder
+}
+
+// GetMediaByIDs mocks base method.
+func (m *MockMediaStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMediaByIDs", ctx, ids)
+	ret0, _ := ret[0].([]store.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMediaByIDs indicates an expected call of GetMediaByIDs.
+func (mr *MockMediaStoreMockRecorder) GetMediaByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMediaByIDs", reflect.TypeOf((*MockMediaStore)(nil).GetMediaByIDs), ctx, ids)
 }
 
 // MockAIClient is a mock of AIClient interface.
@@ -109,4 +149,44 @@ func (m *MockAIClient) StreamMessage(ctx context.Context, systemPrompt string, m
 func (mr *MockAIClientMockRecorder) StreamMessage(ctx, systemPrompt, messages, maxTokens, onChunk any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamMessage", reflect.TypeOf((*MockAIClient)(nil).StreamMessage), ctx, systemPrompt, messages, maxTokens, onChunk)
+}
+
+// MockS3Fetcher is a mock of S3Fetcher interface.
+type MockS3Fetcher struct {
+	ctrl     *gomock.Controller
+	recorder *MockS3FetcherMockRecorder
+	isgomock struct{}
+}
+
+// MockS3FetcherMockRecorder is the mock recorder for MockS3Fetcher.
+type MockS3FetcherMockRecorder struct {
+	mock *MockS3Fetcher
+}
+
+// NewMockS3Fetcher creates a new mock instance.
+func NewMockS3Fetcher(ctrl *gomock.Controller) *MockS3Fetcher {
+	mock := &MockS3Fetcher{ctrl: ctrl}
+	mock.recorder = &MockS3FetcherMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockS3Fetcher) EXPECT() *MockS3FetcherMockRecorder {
+	return m.recorder
+}
+
+// GetFile mocks base method.
+func (m *MockS3Fetcher) GetFile(ctx context.Context, key string) (io.ReadCloser, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFile", ctx, key)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetFile indicates an expected call of GetFile.
+func (mr *MockS3FetcherMockRecorder) GetFile(ctx, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockS3Fetcher)(nil).GetFile), ctx, key)
 }
