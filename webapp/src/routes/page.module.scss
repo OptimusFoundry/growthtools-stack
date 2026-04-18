@@ -42,3 +42,68 @@
   flex-direction: column;
   gap: var(--space-6);
 }
+
+// =============================================================================
+// EDITORIAL PAGE HERO — per ui_kits/growth-tools/kit.css .page-header
+// Big serif headline with optional italic em accent, eyebrow above, sub below.
+// =============================================================================
+
+.pageHero {
+  align-items: flex-end;
+  display: flex;
+  gap: var(--space-7);
+  justify-content: space-between;
+}
+
+.pageHeroText {
+  flex: 1;
+  max-width: 62%;
+  min-width: 0;
+}
+
+.pageEyebrow {
+  align-items: center;
+  color: var(--color-base-content-tertiary);
+  display: flex;
+  font-family: var(--font-family-mono, var(--font-family-sans));
+  font-size: var(--font-size-xs);
+  gap: var(--space-3);
+  letter-spacing: var(--letter-spacing-widest);
+  margin-bottom: var(--space-5);
+  text-transform: uppercase;
+}
+
+.pageEyebrow::before {
+  background-color: var(--color-primary);
+  content: "";
+  display: inline-block;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
+  height: 1px;
+  width: var(--space-5);
+}
+
+.pageHeroTitle {
+  color: var(--color-base-content);
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tighter);
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
+  line-height: 1;
+  margin: 0;
+  text-wrap: balance;
+
+  em {
+    color: var(--color-primary);
+    font-style: italic;
+    font-weight: var(--font-weight-normal);
+  }
+}
+
+.pageHeroSub {
+  color: var(--color-base-content-secondary);
+  font-size: var(--font-size-lg);
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
+  line-height: 1.55;
+  margin: var(--space-5) 0 0;
+  max-width: 52ch;
+}

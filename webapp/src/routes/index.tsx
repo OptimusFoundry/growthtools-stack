@@ -29,24 +29,33 @@ export const Route = createFileRoute("/")({
 
 function Index() {
 	const { user } = useAuth();
-	const today = new Date().toLocaleDateString(undefined, {
+	const now = new Date();
+	const eyebrowDate = now.toLocaleDateString(undefined, {
 		weekday: "long",
 		month: "long",
 		day: "numeric",
 	});
+	const hour = now.getHours();
+	const greeting =
+		hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+	const firstName = user?.firstName || "there";
 
 	return (
 		<>
-			<Topbar
-				title={`Welcome back, ${user?.firstName || "there"}`}
-				eyebrow={today}
-			/>
+			<Topbar title="Dashboard" />
 			<Stack gap="lg" className={styles.page} animate>
-				<Stack gap="xs">
-					<Text color="muted">
-						Your AI-powered social media command center.
-					</Text>
-				</Stack>
+				<header className={styles.pageHero}>
+					<div className={styles.pageHeroText}>
+						<div className={styles.pageEyebrow}>{eyebrowDate}</div>
+						<h1 className={styles.pageHeroTitle}>
+							{greeting}, {firstName} — your <em>command center</em>.
+						</h1>
+						<p className={styles.pageHeroSub}>
+							Drafts to finish, posts to schedule, and a calendar that knows
+							what's next. Pick where you want to spend your morning.
+						</p>
+					</div>
+				</header>
 
 				<Stack gap="xs">
 					<Text as="h3" size="lg" weight="semibold">

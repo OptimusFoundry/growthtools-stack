@@ -25,6 +25,7 @@ import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { ContentType, PostStatus } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
+import pageStyles from "./page.module.scss";
 import styles from "./posts.module.scss";
 
 export const Route = createFileRoute("/posts")({
@@ -151,6 +152,22 @@ function PostsPage() {
 				}
 			/>
 			<Stack gap="lg" className={styles.page} animate>
+				<header className={pageStyles.pageHero}>
+					<div className={pageStyles.pageHeroText}>
+						<div className={pageStyles.pageEyebrow}>
+							Library · {String(postCount).padStart(2, "0")}{" "}
+							{postCount === 1 ? "entry" : "entries"}
+						</div>
+						<h1 className={pageStyles.pageHeroTitle}>
+							Everything you've <em>written</em>, in one room.
+						</h1>
+						<p className={pageStyles.pageHeroSub}>
+							Drafts, scheduled, and published — sorted the way your week
+							actually works. Click through to edit in the composer.
+						</p>
+					</div>
+				</header>
+
 				<div className={styles.stats}>
 					<div className={styles.statItem}>
 						<Text size="2xl" weight="bold">

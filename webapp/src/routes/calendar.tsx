@@ -220,7 +220,6 @@ function CalendarPage() {
 		<>
 			<Topbar
 				title="Calendar"
-				eyebrow={`${monthLabel} · ${scheduledThisMonth} scheduled`}
 				actions={
 					<>
 						<Button
@@ -250,6 +249,14 @@ function CalendarPage() {
 				}
 			/>
 			<Stack gap="lg" className={styles.page} animate>
+				<header className={styles.pageHero}>
+					<div className={styles.pageHeroText}>
+						<h1 className={styles.pageHeroTitle}>Calendar</h1>
+						<p className={styles.pageHeroSub}>
+							{monthLabel} · {scheduledThisMonth} scheduled
+						</p>
+					</div>
+				</header>
 				<Stack gap="md">
 					{selectedDate ? (
 						<>

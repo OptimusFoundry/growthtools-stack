@@ -16,6 +16,7 @@ import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { BlogStatus } from "@/types/blog";
 import styles from "./blog.module.scss";
+import pageStyles from "./page.module.scss";
 
 export const Route = createFileRoute("/blog")({
 	component: BlogPage,
@@ -124,6 +125,22 @@ function BlogPage() {
 				}
 			/>
 			<Stack gap="lg" className={styles.page} animate>
+				<header className={pageStyles.pageHero}>
+					<div className={pageStyles.pageHeroText}>
+						<div className={pageStyles.pageEyebrow}>
+							Stories · {String(postCount).padStart(2, "0")}{" "}
+							{postCount === 1 ? "piece" : "pieces"}
+						</div>
+						<h1 className={pageStyles.pageHeroTitle}>
+							Long-form, <em>thought through</em>.
+						</h1>
+						<p className={pageStyles.pageHeroSub}>
+							Drafts to refine and stories to ship. Write the slow takes here —
+							quick threads belong in Posts.
+						</p>
+					</div>
+				</header>
+
 				<div className={styles.stats}>
 					<div className={styles.statItem}>
 						<Text size="2xl" weight="bold">
