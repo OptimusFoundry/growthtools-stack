@@ -169,35 +169,6 @@ function PostsPage() {
 					</div>
 				</header>
 
-				<div className={styles.stats}>
-					<div className={styles.statItem}>
-						<Text size="2xl" weight="bold">
-							{postCount}
-						</Text>
-						<Text size="xs" color="muted">
-							Total
-						</Text>
-					</div>
-					<div className={styles.statDivider} />
-					<div className={styles.statItem}>
-						<Text size="2xl" weight="bold">
-							{publishedCount}
-						</Text>
-						<Text size="xs" color="muted">
-							Published
-						</Text>
-					</div>
-					<div className={styles.statDivider} />
-					<div className={styles.statItem}>
-						<Text size="2xl" weight="bold">
-							{draftCount}
-						</Text>
-						<Text size="xs" color="muted">
-							Drafts
-						</Text>
-					</div>
-				</div>
-
 				<FilterTabs
 					value={statusFilter}
 					onChange={setStatusFilter}
