@@ -4,11 +4,11 @@
  */
 
 import { useCallback, useEffect } from "react";
-import { useDisconnectGitHub } from "@/hooks/useDisconnectGitHub";
 import {
 	type GitHubConnection,
 	useGitHubConnection,
 } from "@/hooks/useGitHubConnection";
+import { useDisconnectGitHub } from "@/hooks/useDisconnectGitHub";
 import { useInitGitHubOAuth } from "@/hooks/useInitGitHubOAuth";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 
@@ -45,8 +45,8 @@ export function useGitHubConnectionFlow({
 	handlers: GitHubConnectionFlowHandlers;
 } {
 	const { connection, loading, refetch } = useGitHubConnection();
-	const { initOAuth } = useInitGitHubOAuth();
-	const { disconnect } = useDisconnectGitHub();
+	const { initOAuth, loading: initLoading } = useInitGitHubOAuth();
+	const { disconnect, loading: disconnectLoading } = useDisconnectGitHub();
 	const { addBanner } = useBannerCenter();
 
 	// One-shot banner after OAuth callback

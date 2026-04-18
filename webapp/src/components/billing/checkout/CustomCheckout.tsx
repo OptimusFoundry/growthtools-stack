@@ -3,7 +3,7 @@ import {
 	EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import "./checkout.scss";
+import styles from "./checkout.module.scss";
 
 // Load stripe outside of component to avoid recreating Stripe object on every render
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
@@ -14,8 +14,8 @@ interface CheckoutFormProps {
 
 const CustomCheckout = ({ clientSecret }: CheckoutFormProps) => {
 	return (
-		<div className="checkout-wrapper">
-			<div className="checkout-container">
+		<div className={styles["checkout-wrapper"]}>
+			<div className={styles["checkout-container"]}>
 				<h2>Complete Your Payment</h2>
 				<EmbeddedCheckoutProvider
 					stripe={stripePromise}

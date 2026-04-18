@@ -675,6 +675,59 @@ if (!data) {
 return <DataDisplay data={data} />;
 ```
 
+## Feature Gating Components
+
+Two `FeatureGate` variants exist in `src/components/gating/`. Choose based on whether you want to hide or disable inaccessible features.
+
+### FeatureGate (Disabled State with Lock Badge)
+Located: `src/components/gating/FeatureGate/component.tsx`
+
+Shows feature in disabled state when user lacks access. Displays an inline lock badge that navigates to billing on click.
+
+```tsx
+import { FeatureGate } from "@/components/gating/FeatureGate/component";
+
+// Content appears disabled with a lock badge overlay when feature is unavailable
+<FeatureGate feature="webhooks_zapier">
+  <WebhooksManager />
+</FeatureGate>
+```
+
+**Use when:** You want users to see what they're missing (discoverable) but can't access it yet.
+
+### FeatureGateHidden (Complete Hide)
+Located: `src/components/gating/FeatureGateHidden/component.tsx`
+
+Hides content entirely when user lacks access. Optionally shows fallback content instead.
+
+```tsx
+import { FeatureGateHidden } from "@/components/gating/FeatureGateHidden/component";
+
+// Simple hide - nothing shown
+<FeatureGateHidden feature="email_blasts">
+  <EmailBlastEditor />
+</FeatureGateHidden>
+
+// With fallback upgrade prompt
+<FeatureGateHidden 
+  feature="webhooks_zapier"
+  fallback={<UpgradePrompt feature="webhooks_zapier" />}
+>
+  <WebhooksManager />
+</FeatureGateHidden>
+```
+
+**Use when:** The feature doesn't exist in lower tiers (not just restricted) or you want a cleaner UI without disabled sections.
+
+### Also Available: FeatureGateDisabled
+Both variants export `FeatureGateDisabled` for rendering content in a disabled state with tooltip on hover.
+
+| Variant | Behavior | Use Case |
+|---------|----------|----------|
+| `FeatureGate` | Disabled with lock badge | Show restricted features with upgrade path |
+| `FeatureGateHidden` | Completely hidden | Hide tier-exclusive features |
+| `FeatureGateDisabled` | Disabled with hover tooltip | Form sections that require upgrade |
+
 ## Environment Variables
 
 ```env

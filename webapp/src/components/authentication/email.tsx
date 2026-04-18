@@ -3,7 +3,7 @@ import { useSubmitLogin } from "@/hooks/useSubmitLogin";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { Input } from "@/proto-design-system/components/forms/Input";
 import { Button } from "@/proto-design-system/components/primitives/Button";
-import "./email.scss";
+import styles from "./email.module.scss";
 
 type EmailFormErrors = {
 	email?: string;
@@ -138,8 +138,8 @@ export default function EmailSignIn() {
 	}
 
 	return (
-		<form className={"email-login-form"} onSubmit={handleLogin}>
-			<div className={"form-item"}>
+		<form className={styles["email-login-form"]} onSubmit={handleLogin}>
+			<div className={styles["form-item"]}>
 				<label htmlFor="email">Email</label>
 				<Input
 					id="email"
@@ -156,7 +156,7 @@ export default function EmailSignIn() {
 					formNoValidate={true}
 				/>
 			</div>
-			<div className={"form-item"}>
+			<div className={styles["form-item"]}>
 				<label htmlFor="password">Password</label>
 				<Input
 					id="password"
