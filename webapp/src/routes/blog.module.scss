@@ -82,7 +82,7 @@
     align-items: center;
     display: grid;
     gap: var(--space-5);
-    grid-template-columns: var(--space-7) 1fr auto auto;
+    grid-template-columns: var(--space-7) 1fr auto auto auto;
     padding: var(--space-5) var(--space-6);
   }
 }
