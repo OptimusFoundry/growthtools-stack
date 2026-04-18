@@ -10,6 +10,7 @@
 package handler
 
 import (
+	processor "base-server/internal/blog/processor"
 	store "base-server/internal/infra/store"
 	context "context"
 	reflect "reflect"
@@ -144,4 +145,18 @@ func (m *MockBlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid
 func (mr *MockBlogProcessorMockRecorder) GenerateBlogPost(ctx, accountID, instruction, keywords, mediaIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateBlogPost", reflect.TypeOf((*MockBlogProcessor)(nil).GenerateBlogPost), ctx, accountID, instruction, keywords, mediaIDs)
+}
+
+// StreamGenerateBlogPost mocks base method.
+func (m *MockBlogProcessor) StreamGenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID, cb processor.BlogStreamCallbacks) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StreamGenerateBlogPost", ctx, accountID, instruction, keywords, mediaIDs, cb)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StreamGenerateBlogPost indicates an expected call of StreamGenerateBlogPost.
+func (mr *MockBlogProcessorMockRecorder) StreamGenerateBlogPost(ctx, accountID, instruction, keywords, mediaIDs, cb any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamGenerateBlogPost", reflect.TypeOf((*MockBlogProcessor)(nil).StreamGenerateBlogPost), ctx, accountID, instruction, keywords, mediaIDs, cb)
 }

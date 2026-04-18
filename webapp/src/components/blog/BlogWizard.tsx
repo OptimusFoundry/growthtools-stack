@@ -1,12 +1,13 @@
 import { BookOpen, RefreshCw, Sparkles } from "lucide-react";
 import "highlight.js/styles/github.css";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
+import { toBlogPost } from "@/api/transforms/blog";
 import { MediaUploadSection } from "@/components/create-post/compose/MediaUploadSection";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
-import { useGenerateBlog } from "@/hooks/useGenerateBlog";
+import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useMedia } from "@/hooks/useMedia";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
@@ -29,6 +30,7 @@ import {
 	Tabs,
 } from "@/proto-design-system/components/navigation/Tabs/Tabs";
 import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { BlogPost } from "@/types/blog";
 import styles from "./blog-wizard.module.scss";
@@ -78,7 +80,15 @@ export function BlogWizard({
 	const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
 	const [error, setError] = useState<string | null>(null);
 
-	const { generateBlog, loading: generating } = useGenerateBlog();
+	const {
+		generate,
+		reset: resetSSE,
+		phase,
+		streamingContent,
+		blogPost: generatedPost,
+		loading: generating,
+		error: generateError,
+	} = useSSEBlogGenerate();
 	const { createBlogPost, loading: creating } = useCreateBlogPost();
 	const { updateBlogPost, loading: updating } = useUpdateBlogPost();
 	const { publishBlog, loading: publishing } = usePublishBlog();
@@ -86,6 +96,24 @@ export function BlogWizard({
 	const { media: allMedia } = useMedia({ limit: 100 });
 
 	const saving = creating || updating || publishing;
+
+	// Populate form fields when the SSE done payload arrives.
+	useEffect(() => {
+		if (!generatedPost) return;
+		const post = toBlogPost(generatedPost);
+		setTitle(post.title);
+		setContent(post.content);
+		setSlug(post.slug);
+		if (post.excerpt) setExcerpt(post.excerpt);
+		if (post.seoTitle) setSeoTitle(post.seoTitle);
+		if (post.metaDescription) setMetaDescription(post.metaDescription);
+		if (post.ogTitle) setOgTitle(post.ogTitle);
+		if (post.ogDescription) setOgDescription(post.ogDescription);
+	}, [generatedPost]);
+
+	// During streaming, show accumulated chunks. After done, show persisted content.
+	const previewContent = streamingContent || content;
+	const isStreaming = phase === "generating";
 
 	// Derive ExistingFile[] for the MediaUploadSection by matching
 	// existingMediaIds against the full media library.
@@ -114,28 +142,12 @@ export function BlogWizard({
 			return;
 		}
 		setError(null);
-		try {
-			const parsedKeywords = keywords
-				.split(",")
-				.map((k) => k.trim())
-				.filter(Boolean);
-			const result = await generateBlog(
-				instruction,
-				parsedKeywords,
-				existingMediaIds,
-			);
-			setTitle(result.title);
-			setContent(result.content);
-			setSlug(result.slug);
-			if (result.excerpt) setExcerpt(result.excerpt);
-			if (result.seoTitle) setSeoTitle(result.seoTitle);
-			if (result.metaDescription) setMetaDescription(result.metaDescription);
-			if (result.ogTitle) setOgTitle(result.ogTitle);
-			if (result.ogDescription) setOgDescription(result.ogDescription);
-		} catch {
-			// error surfaced via hook state
-		}
-	}, [instruction, keywords, existingMediaIds, generateBlog]);
+		const parsedKeywords = keywords
+			.split(",")
+			.map((k) => k.trim())
+			.filter(Boolean);
+		await generate(instruction, parsedKeywords, existingMediaIds);
+	}, [instruction, keywords, existingMediaIds, generate]);
 
 	const validate = useCallback((): boolean => {
 		if (!title.trim()) {
@@ -248,6 +260,9 @@ export function BlogWizard({
 		onDone,
 	]);
 
+	// Suppress unused warning — reset is available for future use (e.g. cancel button)
+	void resetSSE;
+
 	return (
 		<div className={styles.page}>
 			<Breadcrumb
@@ -270,6 +285,7 @@ export function BlogWizard({
 			</Stack>
 
 			{error && <Alert variant="error">{error}</Alert>}
+			{generateError && <Alert variant="error">{generateError}</Alert>}
 
 			<div className={styles.twoColumn}>
 				{/* ── Left: compose ──────────────────────────────────────────── */}
@@ -416,42 +432,59 @@ export function BlogWizard({
 
 				{/* ── Right: preview ──────────────────────────────────────────── */}
 				<div className={styles.previewPanel}>
-					<Tabs defaultTab="preview">
-						<TabList>
-							<Tab id="preview">Preview</Tab>
-							<Tab id="markdown">Markdown</Tab>
-						</TabList>
-						<TabPanels>
-							<TabPanel id="preview">
-								{content ? (
+					{/* Phase-aware loader: shown before first chunk arrives */}
+					{generating && !streamingContent && (
+						<Stack gap="sm" align="center" className={styles.generatingLoader}>
+							<Spinner size="lg" />
+							<Text size="sm" color="secondary" weight="medium">
+								Generating your blog post...
+							</Text>
+						</Stack>
+					)}
+
+					{/* Live streaming preview — renders as chunks arrive */}
+					{(streamingContent || content) && (
+						<Tabs defaultTab="preview">
+							<TabList>
+								<Tab id="preview">Preview</Tab>
+								<Tab id="markdown">Markdown</Tab>
+							</TabList>
+							<TabPanels>
+								<TabPanel id="preview">
 									<div className={styles.markdown}>
 										<ReactMarkdown
 											remarkPlugins={[remarkGfm]}
 											rehypePlugins={[rehypeHighlight]}
 										>
-											{content}
+											{previewContent}
 										</ReactMarkdown>
+										{isStreaming && (
+											<span className={styles.streamingCursor} />
+										)}
 									</div>
-								) : (
-									<div className={styles.emptyPreview}>
-										<BookOpen size={40} className={styles.emptyPreviewIcon} />
-										<Text size="sm" color="muted">
-											Enter a topic and click Generate to create your blog post.
-										</Text>
-									</div>
-								)}
-							</TabPanel>
-							<TabPanel id="markdown">
-								<TextArea
-									placeholder="Blog post content will appear here after generation, or type directly..."
-									rows={30}
-									value={content}
-									onChange={(e) => setContent(e.target.value)}
-									fullWidth
-								/>
-							</TabPanel>
-						</TabPanels>
-					</Tabs>
+								</TabPanel>
+								<TabPanel id="markdown">
+									<TextArea
+										placeholder="Blog post content will appear here after generation, or type directly..."
+										rows={30}
+										value={isStreaming ? streamingContent : content}
+										onChange={(e) => !isStreaming && setContent(e.target.value)}
+										fullWidth
+									/>
+								</TabPanel>
+							</TabPanels>
+						</Tabs>
+					)}
+
+					{/* Empty state: nothing generated yet and not currently generating */}
+					{!generating && !streamingContent && !content && (
+						<div className={styles.emptyPreview}>
+							<BookOpen size={40} className={styles.emptyPreviewIcon} />
+							<Text size="sm" color="muted">
+								Enter a topic and click Generate to create your blog post.
+							</Text>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

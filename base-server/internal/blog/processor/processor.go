@@ -45,10 +45,18 @@ type BlogStore interface {
 }
 
 var (
-	ErrBlogPostNotFound      = errors.New("blog post not found")
-	ErrSlugAlreadyExists     = errors.New("slug already exists")
-	ErrBlogGenerationFailed  = errors.New("blog generation failed")
+	ErrBlogPostNotFound     = errors.New("blog post not found")
+	ErrSlugAlreadyExists    = errors.New("slug already exists")
+	ErrBlogGenerationFailed = errors.New("blog generation failed")
 )
+
+// BlogStreamCallbacks holds callbacks for streaming blog generation.
+type BlogStreamCallbacks struct {
+	OnPhase func(phase string)       // phases: "generating", "done"
+	OnChunk func(chunk string)       // raw markdown delta from AI
+	OnDone  func(post store.BlogPost) // final persisted post
+	OnError func(err error)          // terminal error — no further callbacks fire
+}
 
 const (
 	generateBlogMaxTokens = 8192
@@ -337,6 +345,113 @@ func (p *BlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUI
 		return store.BlogPost{}, ErrBlogGenerationFailed
 	}
 	return post, nil
+}
+
+// StreamGenerateBlogPost streams blog post generation via AI and persists the
+// result atomically once the full response is validated. Callbacks are invoked
+// as generation progresses: OnPhase("generating") before streaming starts,
+// OnChunk for each AI token, OnPhase("done") and OnDone after DB persist.
+// OnError is called on any terminal error; no further callbacks fire after it.
+func (p *BlogProcessor) StreamGenerateBlogPost(
+	ctx context.Context,
+	accountID uuid.UUID,
+	instruction string,
+	keywords []string,
+	mediaIDs []uuid.UUID,
+	cb BlogStreamCallbacks,
+) error {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "operation", Value: "stream_generate_blog_post"},
+	)
+
+	// Phase 1: fetch images for prompt (same as GenerateBlogPost).
+	images := p.fetchImagesForPrompt(ctx, mediaIDs)
+	userMsg := buildGenerateBlogUserMessage(instruction, keywords, images)
+
+	cb.OnPhase("generating")
+
+	// Phase 2: stream the AI response, accumulating raw chunks.
+	var rawBuilder strings.Builder
+	err := p.ai.StreamMessage(ctx, generateBlogSystemPrompt, []aiclient.Message{
+		{Role: "user", Content: userMsg},
+	}, generateBlogMaxTokens, func(chunk string) {
+		rawBuilder.WriteString(chunk)
+		cb.OnChunk(chunk)
+	})
+	if err != nil {
+		p.logger.Error(ctx, "AI blog stream failed", err)
+		cb.OnError(ErrBlogGenerationFailed)
+		return ErrBlogGenerationFailed
+	}
+
+	rawOutput := strings.TrimSpace(rawBuilder.String())
+
+	// Phase 3: parse and validate JSON (identical to GenerateBlogPost).
+	var resp blogGenJSONResponse
+	if parseErr := json.Unmarshal([]byte(rawOutput), &resp); parseErr != nil {
+		p.logger.Error(ctx, "failed to parse blog generation JSON", fmt.Errorf("parse: %w, raw length=%d", parseErr, len(rawOutput)))
+		cb.OnError(ErrBlogGenerationFailed)
+		return ErrBlogGenerationFailed
+	}
+	if resp.Title == "" || resp.Content == "" {
+		p.logger.Error(ctx, "blog generation JSON missing title or content", fmt.Errorf("raw length=%d", len(rawOutput)))
+		cb.OnError(ErrBlogGenerationFailed)
+		return ErrBlogGenerationFailed
+	}
+
+	slug, err := p.blogResolveUniqueSlug(ctx, accountID, blogSlugify(resp.Title))
+	if err != nil {
+		p.logger.Error(ctx, "failed to resolve unique slug", err)
+		cb.OnError(ErrBlogGenerationFailed)
+		return ErrBlogGenerationFailed
+	}
+
+	kws := store.StringArray(resp.Keywords)
+	if kws == nil {
+		kws = store.StringArray{}
+	}
+	mids := store.UUIDArray(mediaIDs)
+	if mids == nil {
+		mids = store.UUIDArray{}
+	}
+
+	params := store.CreateBlogPostParams{
+		AccountID:         accountID,
+		Title:             resp.Title,
+		Slug:              slug,
+		Content:           resp.Content,
+		Status:            store.BlogStatusDraft,
+		Keywords:          kws,
+		MediaIDs:          mids,
+		SourceInstruction: &instruction,
+	}
+	if resp.Excerpt != "" {
+		params.Excerpt = &resp.Excerpt
+	}
+	if resp.SEOTitle != "" {
+		params.SEOTitle = &resp.SEOTitle
+	}
+	if resp.MetaDescription != "" {
+		params.MetaDescription = &resp.MetaDescription
+	}
+	if resp.OGTitle != "" {
+		params.OGTitle = &resp.OGTitle
+	}
+	if resp.OGDescription != "" {
+		params.OGDescription = &resp.OGDescription
+	}
+
+	post, err := p.store.CreateBlogPost(ctx, params)
+	if err != nil {
+		p.logger.Error(ctx, "failed to persist generated blog post", err)
+		cb.OnError(ErrBlogGenerationFailed)
+		return ErrBlogGenerationFailed
+	}
+
+	cb.OnPhase("done")
+	cb.OnDone(post)
+	return nil
 }
 
 // promptImage is an image the model should inline into the generated markdown.
