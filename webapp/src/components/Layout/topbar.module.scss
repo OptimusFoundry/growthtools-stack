@@ -53,11 +53,3 @@
   gap: var(--space-3);
 }
 
-// Editorial breadcrumb — title-sized so the path becomes the headline.
-.breadcrumb {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-tight);
-  line-height: var(--line-height-tight);
-}

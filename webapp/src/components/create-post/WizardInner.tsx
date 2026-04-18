@@ -1,5 +1,4 @@
 import { useNavigate } from "@tanstack/react-router";
-import { PenSquare } from "lucide-react";
 import { useCallback, useState } from "react";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
@@ -13,9 +12,7 @@ import { useUpdateDraft } from "@/hooks/useUpdateDraft";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import { ComposeStep } from "./ComposeStep";
@@ -339,20 +336,6 @@ export function WizardInner({
 
 	return (
 		<div className={styles.page}>
-			<Breadcrumb
-				size="lg"
-				items={[
-					{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
-					{
-						label: !isEditMode
-							? "New Post"
-							: postStatus === "draft"
-								? "Edit Post"
-								: "Post Details",
-					},
-				]}
-			/>
-			<Divider />
 			<Stack gap="xs">
 				<Text as="h1" size="xl" weight="semibold">
 					{!isEditMode

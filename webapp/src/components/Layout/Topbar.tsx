@@ -28,11 +28,7 @@ export function Topbar({
 		<header className={styles.topbar}>
 			<div className={styles.titleBlock}>
 				{hasBreadcrumbs ? (
-					<Breadcrumb
-						items={breadcrumbs}
-						size="lg"
-						className={styles.breadcrumb}
-					/>
+					<Breadcrumb items={breadcrumbs} size="md" />
 				) : (
 					<>
 						{eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
