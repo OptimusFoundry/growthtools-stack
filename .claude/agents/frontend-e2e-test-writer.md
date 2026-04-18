@@ -1,7 +1,7 @@
 ---
 name: frontend-e2e-test-writer
 description: Writes exhaustive Playwright E2E tests covering ALL scenarios for a feature. Use PROACTIVELY when implementing new features or when user asks to add E2E tests. Covers happy paths, errors, edge cases, and user interactions.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: Read, Write, Edit, Glob, Grep, Bash, LSP
 # Also use mcp__plugin_playwright_* tools (load via ToolSearch) to manually
 # explore the running app before writing tests — confirms selectors and flow
 model: sonnet
@@ -11,47 +11,13 @@ model: sonnet
 
 You write exhaustive Playwright E2E tests that cover every API call, user interaction, state, and edge case. Goal: 100% scenario coverage.
 
-## Required First Steps
+## Setup
 
-1. Read `webapp/docs/TESTING-PATTERNS.md` — E2E structure, MSW handler template, test template
-2. Read `webapp/docs/REACT19-PATTERNS.md` — React 19 testing specifics
+Your task spec from the plan is self-contained — it includes the endpoint table, user interaction table, and states list. Use these directly; do not re-discover endpoints by grepping. Read `webapp/docs/TESTING-PATTERNS.md` only if you need to verify test file structure or MSW handler syntax.
 
-## Discovery Phase — ALWAYS Do First
+## Scenario Tables (from plan)
 
-Before writing any test, analyze the feature to find every testable scenario.
-
-### Step 1: Identify All API Endpoints
-
-```bash
-grep -r "fetcher\|publicFetcher" webapp/src/features/[feature-name]/
-grep -r "fetcher\|publicFetcher" webapp/src/routes/[route-path].tsx
-```
-
-Create a table:
-
-| Endpoint | Method | Component | Purpose |
-|----------|--------|-----------|---------|
-| `/api/protected/items` | GET | ItemList | List items |
-| `/api/protected/items` | POST | CreateItem | Create item |
-| `/api/protected/items/:id` | DELETE | ItemDetail | Delete item |
-
-### Step 2: Identify All User Interactions
-
-| Element | Action | Expected result |
-|---------|--------|-----------------|
-| Create button | Click | Opens form |
-| Submit form | Click | Creates item, shows toast |
-| Delete button | Click | Confirms then deletes |
-| Empty state CTA | Click | Opens create flow |
-
-### Step 3: Map All States
-
-For each UI state, write at least one test:
-- Loading state (spinner visible)
-- Success state (data visible)
-- Empty state (EmptyState component visible)
-- Error state (error alert visible)
-- Each API error code (400, 401, 403, 404, 409, 422, 500)
+Use the endpoint table, interaction table, and states list provided in your task spec. If the plan is missing any of these, grep for `fetcher` calls in the feature files as a fallback — but flag the gap.
 
 ## E2E Directory Structure
 

@@ -1,7 +1,7 @@
 ---
 name: frontend-style-checker
 description: Validates SCSS against design tokens and design guidelines. Use PROACTIVELY when reviewing or creating styles. Enforces design token usage, prevents hardcoded values.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, LSP
 model: haiku
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: frontend-code-reviewer
 description: Reviews frontend React/TypeScript code for quality, React 19 compliance, design system adherence, and security. Use after writing frontend code or before creating a PR.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, LSP
 model: sonnet
 ---
 

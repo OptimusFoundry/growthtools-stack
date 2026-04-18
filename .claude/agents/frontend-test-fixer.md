@@ -1,7 +1,7 @@
 ---
 name: frontend-test-fixer
 description: Fixes failing frontend tests. Use PROACTIVELY when tests fail or after code changes. Diagnoses root causes, migrates deprecated React 19 patterns, fixes async issues.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: Read, Write, Edit, Glob, Grep, Bash, LSP
 model: haiku
 ---
 

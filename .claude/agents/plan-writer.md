@@ -64,9 +64,12 @@ This phase is **mandatory** — not optional. You must look up every concrete de
 ### Frontend specifics (if building frontend)
 
 - [ ] **Existing hooks** — `ls webapp/src/hooks/` to confirm which hooks exist; verify no duplicate
-- [ ] **Existing routes** — check `webapp/src/routes/` to confirm route file names and path conventions
-- [ ] **Component import paths** — for every component the plan uses, confirm the exact import path from `webapp/docs/COMPONENT-PATTERNS.md`
-- [ ] **TypeScript types** — for any API response being consumed, define the TypeScript interface now based on the backend response shape
+- [ ] **Existing routes** — `ls webapp/src/routes/` to confirm route file names and path conventions
+- [ ] **Page template shape** — read `webapp/docs/PAGE-TEMPLATES.md` and select the right template; embed the actual JSX shell skeleton in the task (not a reference to the doc)
+- [ ] **Component import paths** — for every design system component the plan uses, confirm the exact import path from `webapp/docs/COMPONENT-PATTERNS.md`; embed them in the task
+- [ ] **TypeScript types** — define the full TypeScript interface for every API response shape consumed by the frontend, based on the backend response structs already resolved above
+- [ ] **Hook return type** — define the complete hook signature including return type for every new hook
+- [ ] **E2E scenarios** — for every new page, enumerate: all API endpoints (URL + method), all user interactions, all UI states (loading, empty, each error code)
 
 ---
 
@@ -111,6 +114,10 @@ Every task must be a **self-contained spec**. An agent receiving the task must b
 - **Exact bootstrap block** — every new feature module task includes the exact wiring code to add to `bootstrap.go`
 - **Explicit dependencies** — every frontend task that calls an API states which backend task it depends on
 - **Full TypeScript types** — every frontend hook/component task includes the TypeScript interface for the data it works with
+- **Full hook signature** — every hook task includes the complete function signature with return type
+- **Embedded page shell** — every page task includes the actual JSX skeleton (not a reference to PAGE-TEMPLATES.md)
+- **Exact component import paths** — every page/component task lists each design system component with its full import path
+- **E2E scenario table** — every new page task includes an F-task for E2E tests with endpoint table, interaction table, and states list
 
 ---
 
@@ -295,7 +302,7 @@ Then pass `platformHandler` into the `NewAPI(...)` call.
 **File:** `webapp/src/hooks/usePlatformConnections.ts`
 **Depends on:** B3 (GET /api/protected/platform/connections)
 
-**TypeScript types:**
+**TypeScript interface:**
 ```ts
 export interface PlatformConnection {
   id:          string;
@@ -303,7 +310,18 @@ export interface PlatformConnection {
   connectedAt: string;
 }
 ```
-**Returns:** `{ connections: PlatformConnection[], isLoading: boolean, error: Error | null, refetch: () => void }`
+
+**Hook signature:**
+```ts
+export function usePlatformConnections(): {
+  connections: PlatformConnection[];
+  isLoading:   boolean;
+  error:        Error | null;
+  refetch:      () => void;
+}
+```
+
+**API call:** `GET /api/protected/platform/connections` → `PlatformConnection[]`
 
 ### F2: Page — Connections settings
 **Files:**
@@ -311,12 +329,55 @@ export interface PlatformConnection {
 - `webapp/src/features/platform/components/ConnectionsPage/component.module.scss`
 - `webapp/src/routes/connections.tsx`
 **Depends on:** F1, B3
-**Components to use** (exact import paths from `webapp/docs/COMPONENT-PATTERNS.md`):
-- `Stack` from `@/proto-design-system/Stack`
-- `Card` from `@/proto-design-system/Card`
-- `Button` from `@/proto-design-system/Button`
-- `Badge` from `@/proto-design-system/Badge`
-- `EmptyState` from `@/proto-design-system/EmptyState`
+
+**Page shell** (list page template — copy exactly, rename tokens):
+```tsx
+<Stack gap="lg" className={styles.page} animate>
+  <Stack gap="xs">
+    <Text as="h1" size="2xl" weight="bold">Connections</Text>
+    <Text color="muted">Manage your connected social platforms.</Text>
+  </Stack>
+
+  <Stack gap="md">
+    <Stack gap="xs">
+      <Text as="h3" size="lg" weight="semibold">Connected platforms</Text>
+      <Text color="muted" size="sm">These platforms are linked to your account.</Text>
+    </Stack>
+    {connections.length === 0
+      ? <EmptyState icon={<Plug2 size={48} />} title="No platforms connected" description="Connect a platform to start publishing." action={<Button>Connect platform</Button>} />
+      : connections.map(c => <ConnectionCard key={c.id} connection={c} onDisconnect={handleDisconnect} />)
+    }
+  </Stack>
+</Stack>
+```
+
+**Component imports** (exact paths):
+```ts
+import { Stack }      from '@/proto-design-system/Stack';
+import { Text }       from '@/proto-design-system/Text';
+import { Button }     from '@/proto-design-system/Button';
+import { EmptyState } from '@/proto-design-system/EmptyState';
+```
+
+### F3: E2E tests — Connections page
+**File:** `e2e/connections.spec.ts`
+**Depends on:** F2, B3
+
+**Endpoints to mock:**
+| URL | Method | Happy response |
+|-----|--------|----------------|
+| `/api/protected/platform/connections` | GET | `[{ id, platform, connectedAt }]` |
+| `/api/protected/platform/connect` | POST | `{ id, platform }` — 201 |
+| `/api/protected/platform/connections/:id` | DELETE | 204 |
+
+**User interactions to cover:**
+| Element | Action | Expected result |
+|---------|--------|-----------------|
+| Connect platform button | Click | Opens connect flow |
+| Disconnect button on card | Click | Removes connection, shows toast |
+| Empty state CTA | Click | Opens connect flow |
+
+**States to cover:** loading, empty (no connections), populated list, 401 redirect to login, 500 server error on list fetch, 409 conflict on connect
 ```
 
 ---
@@ -329,7 +390,9 @@ export interface PlatformConnection {
 - [ ] Every store task includes: model struct, params struct, full method signatures, SQL constants
 - [ ] Every handler/processor task includes: request/response structs, processor interface, error variables, handleError cases
 - [ ] Every new feature module task includes: exact route registration lines with group variable, exact bootstrap wiring block
-- [ ] Every frontend task includes: TypeScript interface for all data types, exact component import paths
+- [ ] Every frontend hook task includes: full TypeScript interface + complete hook signature with return type
+- [ ] Every frontend page task includes: actual JSX shell skeleton, exact component import paths, depends-on chain
+- [ ] Every new page has a paired E2E task with endpoint table, interaction table, and states list
 - [ ] Every frontend task that calls an API states which backend task it depends on
 - [ ] Nothing re-implements what TRACKER.md marks as already built
 - [ ] No task says "follow Pattern X" — the pattern is already resolved and embedded
