@@ -49,10 +49,9 @@ export function usePlatformConnectionFlow({
 	state: PlatformConnectionFlowState;
 	handlers: PlatformConnectionFlowHandlers;
 } {
-	const { connectPlatform, loading: connectLoading } = useConnectPlatform();
-	const { connectWithToken, loading: tokenLoading } = useConnectWithToken();
-	const { disconnectPlatform, loading: disconnectLoading } =
-		useDisconnectPlatform();
+	const { connectPlatform } = useConnectPlatform();
+	const { connectWithToken } = useConnectWithToken();
+	const { disconnectPlatform } = useDisconnectPlatform();
 	const { addBanner } = useBannerCenter();
 
 	const [connectingPlatform, setConnectingPlatform] =
