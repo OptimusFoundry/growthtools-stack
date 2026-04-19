@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	adminHandler "base-server/internal/admin/handler"
 	authHandler "base-server/internal/auth/handler"
 	billingHandler "base-server/internal/billing/handler"
 
@@ -21,6 +22,7 @@ import (
 
 type API struct {
 	router           *gin.RouterGroup
+	adminHandler     adminHandler.Handler
 	authHandler      authHandler.Handler
 	billingHandler   billingHandler.Handler
 	contentHandler   contentHandler.Handler
@@ -36,6 +38,7 @@ type API struct {
 
 func New(
 	router *gin.RouterGroup,
+	adminHandler adminHandler.Handler,
 	authHandler authHandler.Handler,
 	billingHandler billingHandler.Handler,
 	contentHandler contentHandler.Handler,
@@ -50,6 +53,7 @@ func New(
 ) API {
 	return API{
 		router:           router,
+		adminHandler:     adminHandler,
 		authHandler:      authHandler,
 		billingHandler:   billingHandler,
 		contentHandler:   contentHandler,
@@ -181,6 +185,12 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.POST("/github/commits/:id/retry-capture", a.githubHandler.HandleRetryCapture)
 
 	}
+
+	// Admin routes — gated by HandleAdminMiddleware (empty allowlist → 403 all)
+	adminGroup := protectedGroup.Group("/admin", a.adminHandler.HandleAdminMiddleware)
+	adminGroup.GET("/users", a.adminHandler.SearchUsers)
+	adminGroup.POST("/impersonate/:user_id", a.adminHandler.StartImpersonation)
+	adminGroup.DELETE("/impersonate", a.adminHandler.StopImpersonation)
 
 	// Public billing endpoints
 	apiGroup.GET("billing/plans", a.billingHandler.ListPrices)

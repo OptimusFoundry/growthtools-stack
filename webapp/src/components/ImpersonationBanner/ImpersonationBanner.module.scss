@@ -1,0 +1,72 @@
+/*
+ * Intentional design system deviation: this banner must look like a system
+ * warning, not editorial UI. Do not "fix" it to match editorial design tokens.
+ * The amber/red palette is the safety mechanism for admins impersonating real
+ * user accounts. See design spec 2026-04-19-admin-impersonation-design.md.
+ *
+ * stylelint-disable scale-unlimited/declaration-strict-value, color-function-alias-notation
+ */
+
+/* stylelint-disable scale-unlimited/declaration-strict-value */
+.banner {
+  align-items: center;
+  /* amber-700 — intentionally hardcoded, not an editorial design token */
+  background-color: #b45309;
+  color: #fff;
+  display: flex;
+  flex-shrink: 0;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-3);
+  justify-content: space-between;
+  letter-spacing: 0.01em;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+}
+/* stylelint-enable scale-unlimited/declaration-strict-value */
+
+.message {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.icon {
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+/* stylelint-disable scale-unlimited/declaration-strict-value, color-function-alias-notation */
+.stopButton {
+  background-color: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+  padding: var(--space-1) var(--space-3);
+  transition: background-color 150ms ease, border-color 150ms ease;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+/* stylelint-enable scale-unlimited/declaration-strict-value, color-function-alias-notation */

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -40,6 +41,7 @@ type AuthConfig struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURI  string
+	AdminEmails        []string
 }
 
 // ServicesConfig holds external service API keys and configuration
@@ -173,6 +175,15 @@ func Load() (*Config, error) {
 	}
 	if cfg.Auth.GoogleRedirectURI, err = requireEnv("GOOGLE_REDIRECT_URI"); err != nil {
 		return nil, err
+	}
+
+	// Admin emails (optional — empty list means admin feature disabled)
+	if raw := getEnvWithDefault("ADMIN_EMAILS", ""); raw != "" {
+		for _, e := range strings.Split(raw, ",") {
+			if trimmed := strings.TrimSpace(e); trimmed != "" {
+				cfg.Auth.AdminEmails = append(cfg.Auth.AdminEmails, trimmed)
+			}
+		}
 	}
 
 	// Services configuration

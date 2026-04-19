@@ -13,6 +13,7 @@ import {
 	Settings,
 } from "lucide-react";
 import React, { memo } from "react";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner/ImpersonationBanner";
 import UserName from "@/components/user/Username";
 import { usePersona } from "@/contexts/persona";
 import {
@@ -114,6 +115,8 @@ export const Layout = memo(function Layout({ children }: LayoutProps) {
 		<div className={styles.container}>
 			<AppSidebar />
 			<div className={styles.content}>
+				{/* ImpersonationBanner renders only when is_impersonated=true; no-op otherwise */}
+				<ImpersonationBanner />
 				<header className={styles.header}>
 					<SidebarMobileTrigger />
 				</header>

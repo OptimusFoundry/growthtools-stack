@@ -19,5 +19,9 @@ export function toUiUser(api: ApiUser): User {
 		externalId: api.external_id,
 		persona: api.persona,
 		tier: api.tier ? toUiTierInfo(api.tier) : undefined,
+		isImpersonated: api.is_impersonated,
+		impersonatedBy: api.impersonated_by
+			? { id: api.impersonated_by.id, name: api.impersonated_by.name }
+			: undefined,
 	};
 }

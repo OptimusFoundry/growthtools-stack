@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"os"
 
-	"base-server/internal/infra/apierrors"
 	"base-server/internal/auth/processor"
+	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/tiers"
 
@@ -15,10 +15,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// ImpersonationParser can validate an impersonate cookie and return its claims.
+// Implemented by admin/processor.AdminProcessor; kept as an interface to avoid
+// a circular import between auth/handler and admin/processor.
+// Returns (targetUserID, targetAccountID, adminUserID, error).
+type ImpersonationParser interface {
+	// ParseImpersonateToken validates the impersonate cookie JWT.
+	// Returns targetUserID, targetAccountID, adminUserID and nil on success.
+	// Returns "", "", "", non-nil error on any failure (expired, tampered, etc.).
+	ParseImpersonateToken(tokenStr string) (string, string, string, error)
+}
+
 type Handler struct {
-	authProcessor processor.AuthProcessor
-	tierService   *tiers.TierService
-	logger        *observability.Logger
+	authProcessor      processor.AuthProcessor
+	tierService        *tiers.TierService
+	logger             *observability.Logger
+	impersonationParser ImpersonationParser // nil when admin feature is disabled
 }
 
 type EmailSignupRequest struct {
@@ -37,12 +49,28 @@ func New(authProcessor processor.AuthProcessor, tierService *tiers.TierService, 
 	return Handler{authProcessor: authProcessor, tierService: tierService, logger: logger}
 }
 
-// UserInfoResponse combines user info with tier information
+// WithImpersonationParser wires an ImpersonationParser into the handler.
+// Called during bootstrap when the admin module is enabled (ADMIN_EMAILS is set).
+func (h *Handler) WithImpersonationParser(p ImpersonationParser) {
+	h.impersonationParser = p
+}
+
+// ImpersonatorSummary carries the admin's public profile when impersonating.
+type ImpersonatorSummary struct {
+	ID    string `json:"id"`
+	Email string `json:"email,omitempty"`
+	Name  string `json:"name"`
+}
+
+// UserInfoResponse combines user info with tier information.
+// IsImpersonated and ImpersonatedBy are only set during active impersonation.
 type UserInfoResponse struct {
-	FirstName  string          `json:"first_name"`
-	LastName   string          `json:"last_name"`
-	ExternalID uuid.UUID       `json:"external_id"`
-	Tier       *tiers.TierInfo `json:"tier,omitempty"`
+	FirstName      string               `json:"first_name"`
+	LastName       string               `json:"last_name"`
+	ExternalID     uuid.UUID            `json:"external_id"`
+	Tier           *tiers.TierInfo      `json:"tier,omitempty"`
+	IsImpersonated bool                 `json:"is_impersonated,omitempty"`
+	ImpersonatedBy *ImpersonatorSummary `json:"impersonated_by,omitempty"`
 }
 
 func (h *Handler) HandleEmailLogin(c *gin.Context) {
@@ -111,25 +139,57 @@ func (h *Handler) HandleJWTMiddleware(c *gin.Context) {
 	}
 
 	claims, err := h.authProcessor.ValidateJWTToken(ctx, token)
-
 	if err != nil {
 		apierrors.Unauthorized(c, "Invalid or expired token")
 		c.Abort()
 		return
 	}
-	sub, err := claims.GetSubject()
+	realUserID, err := claims.GetSubject()
 	if err != nil {
 		apierrors.Unauthorized(c, "Invalid token claims")
 		c.Abort()
 		return
 	}
-	c.Set("User-ID", sub)
-	c.Set("Account-ID", claims.AccountID)
+	realAccountID := claims.AccountID
 
-	ctx = observability.SetUserID(ctx, sub)
+	// Default: set context to the real (admin) user.
+	effectiveUserID := realUserID
+	effectiveAccountID := realAccountID
+
+	// If an impersonate cookie is present and the admin feature is wired in,
+	// attempt to apply it. On any failure we silently ignore the impersonate
+	// cookie and continue as the real user (defense-in-depth, not a 401).
+	if h.impersonationParser != nil {
+		if impToken, cookieErr := c.Cookie("impersonate"); cookieErr == nil && impToken != "" {
+			targetUID, targetAccID, adminUID, parseErr := h.impersonationParser.ParseImpersonateToken(impToken)
+			if parseErr == nil {
+				// Defense-in-depth: the admin_user_id in the cookie must match the
+				// real user who holds the `token` cookie. This guards against a cookie
+				// minted by a now-rotated admin being replayed with a different session.
+				if adminUID == realUserID {
+					effectiveUserID = targetUID
+					effectiveAccountID = targetAccID
+					ctx = observability.SetImpersonated(ctx, realUserID)
+				} else {
+					// Cookie was minted for a different admin — clear it.
+					secure := os.Getenv("GO_ENV") == "production"
+					c.SetCookie("impersonate", "", -1, "/", h.authProcessor.GetWebAppHost(), secure, true)
+				}
+			} else {
+				// Expired or malformed — don't 401, just silently clear it.
+				secure := os.Getenv("GO_ENV") == "production"
+				c.SetCookie("impersonate", "", -1, "/", h.authProcessor.GetWebAppHost(), secure, true)
+			}
+		}
+	}
+
+	c.Set("User-ID", effectiveUserID)
+	c.Set("Account-ID", effectiveAccountID)
+
+	ctx = observability.SetUserID(ctx, effectiveUserID)
 	ctx = observability.WithFields(ctx,
-		observability.Field{Key: "user_id", Value: sub},
-		observability.Field{Key: "account_id", Value: claims.AccountID},
+		observability.Field{Key: "user_id", Value: effectiveUserID},
+		observability.Field{Key: "account_id", Value: effectiveAccountID},
 		observability.Field{Key: "auth_type", Value: claims.AuthType},
 	)
 	c.Request = c.Request.WithContext(ctx)
@@ -174,6 +234,24 @@ func (h *Handler) GetUserInfo(c *gin.Context) {
 					response.Tier = &tierInfo
 				} else {
 					h.logger.Error(ctx, "failed to get tier info", tierErr)
+				}
+			}
+		}
+	}
+
+	// Populate impersonation fields when an active session is detected.
+	if observability.IsImpersonated(ctx) {
+		response.IsImpersonated = true
+		if adminID, ok := observability.ImpersonatedBy(ctx); ok {
+			adminUserID, parseErr := uuid.Parse(adminID)
+			if parseErr == nil {
+				adminUser, lookupErr := h.authProcessor.GetUserByExternalID(ctx, adminUserID)
+				if lookupErr == nil {
+					response.ImpersonatedBy = &ImpersonatorSummary{
+						ID:   adminUserID.String(),
+						Name: adminUser.FirstName + " " + adminUser.LastName,
+						// Email not in User struct; omit rather than add another DB call.
+					}
 				}
 			}
 		}

@@ -7,6 +7,11 @@
  */
 
 import {
+	adminEndpoints,
+	adminHandlers,
+	adminScenarios,
+} from "./admin.handlers";
+import {
 	analyticsEndpoints,
 	analyticsHandlers,
 	analyticsScenarios,
@@ -56,12 +61,15 @@ export const handlers = [
 	...settingsHandlers,
 	...contentHandlers,
 	...chatHandlers,
+	...adminHandlers,
 ];
 
 /**
  * Export individual handler groups for selective use
  */
 export {
+	adminEndpoints,
+	adminHandlers,
 	analyticsEndpoints,
 	analyticsHandlers,
 	authEndpoints,
@@ -89,6 +97,7 @@ export {
  *   network.use(endpoints.posts.list[401]())
  */
 export const endpoints = {
+	admin: adminEndpoints,
 	analytics: analyticsEndpoints,
 	auth: authEndpoints,
 	billing: billingEndpoints,
@@ -106,6 +115,7 @@ export const endpoints = {
  * is not enough — e.g. `scenarios.blog.empty()`, `scenarios.auth.sessionExpired()`.
  */
 export const scenarios = {
+	admin: adminScenarios,
 	analytics: analyticsScenarios,
 	auth: authScenarios,
 	billing: billingScenarios,

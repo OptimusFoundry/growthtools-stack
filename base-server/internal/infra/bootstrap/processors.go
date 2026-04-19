@@ -1,11 +1,12 @@
 package bootstrap
 
 import (
-	aiblog          "base-server/internal/ai/blog"
+	adminProcessor "base-server/internal/admin/processor"
+	aiblog "base-server/internal/ai/blog"
 	commitclassifier "base-server/internal/ai/commitclassifier"
-	mediadescriber  "base-server/internal/ai/mediadescriber"
-	mediaplanner    "base-server/internal/ai/mediaplanner"
-	socialposts     "base-server/internal/ai/socialposts"
+	mediadescriber "base-server/internal/ai/mediadescriber"
+	mediaplanner "base-server/internal/ai/mediaplanner"
+	socialposts "base-server/internal/ai/socialposts"
 
 	authProcessor "base-server/internal/auth/processor"
 	billingProcessor "base-server/internal/billing/processor"
@@ -30,20 +31,21 @@ import (
 
 // procs holds all processor and service instances constructed during initialization.
 type procs struct {
-	billing      billingProcessor.BillingProcessor
-	auth         authProcessor.AuthProcessor
-	tierService  *tiers.TierService
-	chat         chatProcessor.ChatProcessor
-	content      contentProcessor.ContentProcessor
-	platforms    platformsProcessor.PlatformProcessor
-	posts        postsProcessor.PostProcessor
-	media        mediaProcessor.MediaProcessor
-	github       githubProcessor.GitHubProcessor
-	blog         blogProcessor.BlogProcessor
-	analytics    analyticsProcessor.AnalyticsProcessor
-	settings     settingsProcessor.SettingsProcessor
-	draftGen     githubProcessor.DraftGenerator
-	blogGen      githubProcessor.BlogDraftGenerator
+	admin       adminProcessor.AdminProcessor
+	billing     billingProcessor.BillingProcessor
+	auth        authProcessor.AuthProcessor
+	tierService *tiers.TierService
+	content     contentProcessor.ContentProcessor
+	chat        chatProcessor.ChatProcessor
+	platforms   platformsProcessor.PlatformProcessor
+	posts       postsProcessor.PostProcessor
+	media       mediaProcessor.MediaProcessor
+	github      githubProcessor.GitHubProcessor
+	blog        blogProcessor.BlogProcessor
+	analytics   analyticsProcessor.AnalyticsProcessor
+	settings    settingsProcessor.SettingsProcessor
+	draftGen    githubProcessor.DraftGenerator
+	blogGen     githubProcessor.BlogDraftGenerator
 
 	// AI packages (no store, no HTTP — pure AI libraries)
 	aiDescriber  *mediadescriber.Describer
@@ -155,6 +157,12 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 
 	// Settings (voice profile)
 	p.settings = settingsProcessor.New(s, logger)
+
+	// Admin — empty allowlist means feature is disabled; all /api/admin/* → 403.
+	p.admin = adminProcessor.New(s, adminProcessor.AdminConfig{
+		JWTSecret:   cfg.Auth.JWTSecret,
+		AdminEmails: cfg.Auth.AdminEmails,
+	}, logger)
 
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.

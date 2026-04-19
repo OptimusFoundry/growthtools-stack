@@ -18,10 +18,19 @@ export type UserPersona =
 	| "content_creator"
 	| "viewer";
 
+export interface ImpersonatorSummary {
+	id: string;
+	name: string;
+}
+
 export interface User {
 	firstName: string;
 	lastName: string;
 	externalId: string;
 	persona?: UserPersona;
 	tier?: TierInfo;
+	/** True when the current session is an active impersonation of another user. */
+	isImpersonated?: boolean;
+	/** Set when isImpersonated is true. */
+	impersonatedBy?: ImpersonatorSummary;
 }
