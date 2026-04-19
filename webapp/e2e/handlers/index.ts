@@ -2,23 +2,45 @@
  * MSW Handler exports
  *
  * Default handlers provide a "happy path" Pro tier user experience.
- * Use scenario factories to override for specific test cases.
+ * Use `endpoints` for numeric-status overrides (foo[401](), foo[500]()).
+ * Use `scenarios` for semantic variants that can't be expressed as a status.
  */
 
-import { analyticsHandlers, analyticsScenarios } from "./analytics.handlers";
-import { authHandlers, authScenarios } from "./auth.handlers";
 import {
+	analyticsEndpoints,
+	analyticsHandlers,
+	analyticsScenarios,
+} from "./analytics.handlers";
+import { authEndpoints, authHandlers, authScenarios } from "./auth.handlers";
+import {
+	billingEndpoints,
 	billingHandlers,
 	billingScenarios,
 	getBillingHandlersForTier,
 } from "./billing.handlers";
-import { blogHandlers, blogScenarios } from "./blog.handlers";
-import { chatHandlers, chatScenarios } from "./chat.handlers";
-import { contentHandlers, contentScenarios } from "./content.handlers";
-import { mediaHandlers, mediaScenarios } from "./media.handlers";
-import { platformsHandlers, platformsScenarios } from "./platforms.handlers";
-import { postsHandlers, postsScenarios } from "./posts.handlers";
-import { settingsHandlers, settingsScenarios } from "./settings.handlers";
+import { blogEndpoints, blogHandlers, blogScenarios } from "./blog.handlers";
+import { chatEndpoints, chatHandlers, chatScenarios } from "./chat.handlers";
+import {
+	contentEndpoints,
+	contentHandlers,
+	contentScenarios,
+} from "./content.handlers";
+import {
+	mediaEndpoints,
+	mediaHandlers,
+	mediaScenarios,
+} from "./media.handlers";
+import {
+	platformsEndpoints,
+	platformsHandlers,
+	platformsScenarios,
+} from "./platforms.handlers";
+import {
+	postsEndpoints,
+	postsHandlers,
+	postsScenarios,
+} from "./posts.handlers";
+import { settingsEndpoints, settingsHandlers } from "./settings.handlers";
 
 /**
  * Default handlers - Pro tier user with full access
@@ -40,32 +62,59 @@ export const handlers = [
  * Export individual handler groups for selective use
  */
 export {
+	analyticsEndpoints,
 	analyticsHandlers,
+	authEndpoints,
 	authHandlers,
+	billingEndpoints,
 	billingHandlers,
+	blogEndpoints,
 	blogHandlers,
+	chatEndpoints,
 	chatHandlers,
+	contentEndpoints,
 	contentHandlers,
+	mediaEndpoints,
 	mediaHandlers,
+	platformsEndpoints,
 	platformsHandlers,
+	postsEndpoints,
 	postsHandlers,
+	settingsEndpoints,
 	settingsHandlers,
 };
 
 /**
- * Export scenarios for test overrides
+ * Aggregate of per-domain endpoint tables. Use for numeric-status overrides:
+ *   network.use(endpoints.posts.list[401]())
+ */
+export const endpoints = {
+	analytics: analyticsEndpoints,
+	auth: authEndpoints,
+	billing: billingEndpoints,
+	blog: blogEndpoints,
+	chat: chatEndpoints,
+	content: contentEndpoints,
+	media: mediaEndpoints,
+	platforms: platformsEndpoints,
+	posts: postsEndpoints,
+	settings: settingsEndpoints,
+};
+
+/**
+ * Aggregate of per-domain semantic scenario variants. Use when a status code
+ * is not enough — e.g. `scenarios.blog.empty()`, `scenarios.auth.sessionExpired()`.
  */
 export const scenarios = {
+	analytics: analyticsScenarios,
 	auth: authScenarios,
 	billing: billingScenarios,
-	chat: chatScenarios,
-	posts: postsScenarios,
-	platforms: platformsScenarios,
-	media: mediaScenarios,
 	blog: blogScenarios,
-	analytics: analyticsScenarios,
-	settings: settingsScenarios,
+	chat: chatScenarios,
 	content: contentScenarios,
+	media: mediaScenarios,
+	platforms: platformsScenarios,
+	posts: postsScenarios,
 };
 
 /**
