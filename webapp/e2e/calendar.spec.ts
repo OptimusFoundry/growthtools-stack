@@ -66,13 +66,27 @@ test.describe("Calendar", () => {
 			}
 		});
 
-		test("subtitle shows scheduled count from monthTotals", async ({
+		test("subtitle shows all non-zero status totals by default", async ({
 			page,
 		}) => {
 			await gotoCalendar(page);
-			// Fixture monthTotals.byStatus.scheduled = 2
-			// The subtitle renders "<Month Year> · 2 scheduled"
-			await expect(page.getByText("· 2 scheduled")).toBeVisible();
+			// Fixture monthTotals.byStatus: scheduled=2, published=1, draft=1
+			// The subtitle concatenates every non-zero status segment.
+			const sub = page.locator("p").filter({ hasText: /·/ });
+			await expect(sub).toContainText("2 scheduled");
+			await expect(sub).toContainText("1 published");
+			await expect(sub).toContainText("1 draft");
+		});
+
+		test("subtitle switches to platform totals when view toggled", async ({
+			page,
+		}) => {
+			await gotoCalendar(page);
+			await page.getByRole("tab", { name: /by platform/i }).click();
+			// Fixture monthTotals.byPlatform: x=2, linkedin=1 (others zero)
+			const sub = page.locator("p").filter({ hasText: /·/ });
+			await expect(sub).toContainText("2 x");
+			await expect(sub).toContainText("1 linkedin");
 		});
 
 		test("shows view-mode tabs (By status / By platform)", async ({ page }) => {
