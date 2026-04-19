@@ -180,69 +180,74 @@ const PricingCard = memo(function PricingCard({
 				</div>
 			)}
 
-			<div className={styles.cardHeader}>
-				<Text
-					as="h3"
-					size="xl"
-					weight="semibold"
-					className={plan.highlighted ? styles.textLight : ""}
-				>
-					{plan.name}
-				</Text>
+			<div className={styles.specHeader}>
+				<span className={styles.specName}>
+					{plan.name === "Pro" ? (
+						<>
+							<em>{plan.name}</em>
+						</>
+					) : (
+						plan.name
+					)}
+				</span>
+				<span className={styles.specMeta}>{priceLabel}</span>
+			</div>
+
+			<div className={styles.cardBody}>
 				<Text
 					color={plan.highlighted ? "inherit" : "secondary"}
 					className={plan.highlighted ? styles.textLightMuted : ""}
 				>
 					{plan.description}
 				</Text>
-			</div>
 
-			<div className={styles.cardPricing}>
-				<Text
-					as="span"
-					size="4xl"
-					weight="bold"
-					className={plan.highlighted ? styles.textLight : ""}
-				>
-					{priceDisplay}
-				</Text>
-				<Text
-					as="span"
-					color={plan.highlighted ? "inherit" : "secondary"}
-					className={plan.highlighted ? styles.textLightMuted : ""}
-				>
-					/{priceLabel}
-				</Text>
-			</div>
+				<div className={styles.cardPricing}>
+					<Text
+						as="span"
+						size="4xl"
+						weight="bold"
+						className={plan.highlighted ? styles.textLight : ""}
+					>
+						{priceDisplay}
+					</Text>
+					<Text
+						as="span"
+						color={plan.highlighted ? "inherit" : "secondary"}
+						className={plan.highlighted ? styles.textLightMuted : ""}
+					>
+						/{priceLabel}
+					</Text>
+				</div>
 
-			<ul className={styles.featureList}>
-				{plan.features.map((feature) => (
-					<li key={feature.text} className={styles.featureItem}>
-						{feature.included ? (
-							<Check
-								size={18}
-								className={
-									plan.highlighted ? styles.iconLight : styles.iconSuccess
+				<ul className={styles.featureList}>
+					{plan.features.map((feature) => (
+						<li key={feature.text} className={styles.featureItem}>
+							{feature.included ? (
+								<Check
+									size={18}
+									className={
+										plan.highlighted ? styles.iconLight : styles.iconSuccess
+									}
+								/>
+							) : (
+								<X size={18} className={styles.iconMuted} />
+							)}
+							<Text
+								color={
+									plan.highlighted
+										? "inherit"
+										: feature.included
+											? "default"
+											: "muted"
 								}
-							/>
-						) : (
-							<X size={18} className={styles.iconMuted} />
-						)}
-						<Text
-							color={
-								plan.highlighted
-									? "inherit"
-									: feature.included
-										? "default"
-										: "muted"
-							}
-							className={plan.highlighted ? styles.textLight : ""}
-						>
-							{feature.text}
-						</Text>
-					</li>
-				))}
-			</ul>
+								className={plan.highlighted ? styles.textLight : ""}
+							>
+								{feature.text}
+							</Text>
+						</li>
+					))}
+				</ul>
+			</div>
 
 			<div className={styles.cardFooter}>
 				<Button
@@ -413,9 +418,7 @@ function PlansPage() {
 		return priceInfo?.priceId === currentSubscription.priceId;
 	};
 
-	const topbar = (
-		<Topbar title="Plans" eyebrow="Pick the plan that fits how you ship" />
-	);
+	const topbar = <Topbar title="Plans" />;
 
 	if (loading || subscriptionLoading) {
 		return (

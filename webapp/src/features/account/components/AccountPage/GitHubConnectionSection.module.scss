@@ -1,63 +1,52 @@
-// Spec-card body layouts for the GitHub Connected / Disconnected cards.
-.availableCardBody {
-	display: flex;
+// Inline GitHub row used inside the Inbound Sources spec card.
+.row {
 	align-items: center;
+	display: flex;
 	gap: var(--space-4);
 }
 
-.availableCardIcon {
-	display: flex;
+.icon {
 	align-items: center;
-	justify-content: center;
-	width: 44px;
-	height: 44px;
-	flex-shrink: 0;
-	border-radius: var(--radius-card);
 	background: var(--color-base-200);
-	color: var(--color-base-content-secondary);
-}
-
-.connectedCardIcon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	flex-shrink: 0;
 	border-radius: var(--radius-md);
-	background: var(--color-base-200);
 	color: var(--color-base-content);
+	display: flex;
+	flex-shrink: 0;
+	height: var(--space-9);
+	justify-content: center;
+	width: var(--space-9);
 }
 
-.footerActions {
-	display: flex;
+.body {
+	flex: 1;
+	min-width: 0;
+}
+
+.nameLine {
 	align-items: center;
-	justify-content: flex-end;
+	display: flex;
+	gap: var(--space-2);
+}
+
+.statusDot {
+	background: var(--color-success);
+	border-radius: var(--radius-full);
+	display: inline-block;
+	height: var(--space-1-5);
+	width: var(--space-1-5);
 }
 
 .repoRow {
-	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	display: flex;
 	gap: var(--space-3);
+	justify-content: space-between;
 	padding: var(--space-2) 0;
 }
 
 .repoInfo {
-	min-width: 0;
 	flex: 1;
-}
-
-.commitRow {
-	padding: var(--space-2) 0;
-}
-
-.commitMessage {
 	min-width: 0;
-	flex: 1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .loading {

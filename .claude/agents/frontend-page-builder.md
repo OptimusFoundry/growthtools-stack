@@ -13,6 +13,8 @@ You compose new pages (routes, tabs, forms) using the existing design system. Yo
 
 Your task spec from the plan is self-contained — it includes the JSX shell skeleton, exact component import paths, hook name and return type, and TypeScript interfaces. Write the code; do not re-research what the plan already specifies.
 
+**Authoritative design rules** — before writing any JSX, read `docs/design-docs/00-overview.md`, `11-page-composition.md`, `12-judgment.md`, `13-recipes.md`, `14-composition.md`, `15-states.md`, `19-typography-decisions.md`, `20-spacing-decisions.md`. These govern shell, heading, eyebrow, section rhythm, empty/loading/error states, and the 60-second review.
+
 If the plan is missing something (a component prop, an existing page's structure), use LSP `goToDefinition` or `hover` to look it up. Read an existing route file in full only if you are extending it — one file maximum.
 
 ## Decision Tree

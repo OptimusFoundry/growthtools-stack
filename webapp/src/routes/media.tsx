@@ -47,7 +47,6 @@ function MediaPage() {
 		<>
 			<Topbar
 				title="Media"
-				eyebrow={`${media.length} item${media.length === 1 ? "" : "s"}`}
 				actions={
 					<Button
 						variant="primary"
@@ -67,6 +66,22 @@ function MediaPage() {
 				aria-label="Upload media file"
 			/>
 			<Stack gap="lg" className={styles.page} animate>
+				<header className={styles.pageHero}>
+					<div className={styles.pageHeroText}>
+						<div className={styles.pageEyebrow}>
+							Library · {String(media.length).padStart(2, "0")}{" "}
+							{media.length === 1 ? "item" : "items"}
+						</div>
+						<h1 className={styles.pageHeroTitle}>
+							Every asset, <em>one tap away</em>.
+						</h1>
+						<p className={styles.pageHeroSub}>
+							Drop in images and videos to drag into any post. Upload once,
+							reuse everywhere.
+						</p>
+					</div>
+				</header>
+
 				<Stack gap="md">
 					{loading ? (
 						<Spinner />

@@ -11,10 +11,11 @@ You review frontend code for quality, correctness, and adherence to project stan
 
 ## Required First Steps
 
-1. Read `webapp/docs/REACT19-PATTERNS.md` — new APIs to use, deprecated patterns to flag
-2. Read `webapp/docs/COMPONENT-PATTERNS.md` — component structure and TypeScript patterns
-3. Read `webapp/docs/DESIGN-GUIDELINES.md` — design token reference, component API
-4. Read `webapp/docs/ARCHITECTURE.md` — module structure, hook patterns, API layer
+1. Read `docs/design-docs/00-overview.md`, `12-judgment.md`, `18-review.md`, `19-typography-decisions.md`, `20-spacing-decisions.md` — authoritative UI kit rules and the 100-pt PR rubric
+2. Read `webapp/docs/REACT19-PATTERNS.md` — new APIs to use, deprecated patterns to flag
+3. Read `webapp/docs/COMPONENT-PATTERNS.md` — component structure and TypeScript patterns
+4. Read `webapp/docs/DESIGN-GUIDELINES.md` — design token reference, component API
+5. Read `webapp/docs/ARCHITECTURE.md` — module structure, hook patterns, API layer
 
 ## Review Process
 

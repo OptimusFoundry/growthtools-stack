@@ -26,14 +26,6 @@
   min-width: 0;
 }
 
-.eyebrow {
-  color: var(--color-muted);
-  font-family: var(--font-family-mono, var(--font-family-sans));
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-widest);
-  text-transform: uppercase;
-}
-
 .title {
   color: var(--color-base-content);
   font-size: var(--font-size-xl);

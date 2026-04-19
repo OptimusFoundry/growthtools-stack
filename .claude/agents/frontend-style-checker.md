@@ -11,7 +11,10 @@ You validate SCSS files against project design token standards.
 
 ## Required First Steps
 
-Read `webapp/docs/DESIGN-GUIDELINES.md` — full design token reference (spacing, typography, colors, radius, shadows, z-index, motion values).
+Read, in order:
+1. `docs/design-docs/02-colors.md`, `03-layout-spacing.md`, `01-typography.md` — authoritative token system (themes, spacing rhythm, type scale)
+2. `docs/design-docs/12-judgment.md`, `19-typography-decisions.md`, `20-spacing-decisions.md` — prescriptive decisions and anti-patterns
+3. `webapp/docs/DESIGN-GUIDELINES.md` — legacy design token reference (spacing, typography, colors, radius, shadows, z-index, motion values)
 
 ## Check Process
 

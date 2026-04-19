@@ -89,7 +89,23 @@ Backend haiku agents read from `base-server/docs/`:
 | `HANDLERS.md` | Request/response structs, handler/processor templates, routing |
 | `KAFKA.md` | Producer, consumer/worker, bootstrap integration |
 
-Frontend agents read from `webapp/docs/`:
+Frontend agents read from `docs/design-docs/` (authoritative UI kit — read first for any UI change) and `webapp/docs/`:
+
+**`docs/design-docs/` (numbered, read in order):**
+
+| Doc | Contents |
+|-----|----------|
+| `00-overview.md` | Kit philosophy, 5 non-negotiable rules, HTML skeleton, reading order |
+| `01-typography.md` → `09-data-display.md` | Primitive catalogs: type, color, layout, buttons, forms, feedback, nav, overlays, data |
+| `10-feature-kit.md`, `11-page-composition.md` | Product-specific composites; how to assemble a page |
+| `12-judgment.md` | **Prescriptive decisions: pair-spacing, color roles, one-of rules, anti-patterns, 60-sec review** |
+| `13-recipes.md`, `14-composition.md`, `15-states.md` | Cookbook, macro rhythm + archetypes, state inventory |
+| `16-accessibility.md`, `17-implementation.md` | WCAG AA baseline; CSS scoping, React patterns, theming |
+| `18-review.md` | 100-pt PR rubric — the template to paste into PR descriptions |
+| `19-typography-decisions.md` | **Font/size/color/weight decision flowchart + role table** |
+| `20-spacing-decisions.md` | **Spacing-token decision flowchart + rhythm pairs + stack ladder** |
+
+**`webapp/docs/`:**
 
 | Doc | Contents |
 |-----|----------|
