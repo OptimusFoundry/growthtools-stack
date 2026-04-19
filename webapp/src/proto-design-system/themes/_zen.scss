@@ -1,0 +1,80 @@
+// =============================================================================
+// ZEN THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Sans+JP:wght@300;400;500;700&display=swap";
+
+[data-theme="zen"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Noto Sans JP", "Inter", system-ui, sans-serif;
+  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-serif:   "Cormorant Garamond", georgia, serif;
+  --font-family-display: "Cormorant Garamond", "Fraunces", georgia, serif;
+  --color-background: oklch(96% 0.012 75deg);
+  --color-base-50: oklch(98% 0.008 75deg);
+  --color-base-100: oklch(94% 0.012 75deg);
+  --color-base-200: oklch(90% 0.015 70deg);
+  --color-base-300: oklch(84% 0.015 65deg);
+  --color-base-400: oklch(72% 0.015 60deg);
+  --color-base-500: oklch(56% 0.015 55deg);
+  --color-base-600: oklch(42% 0.015 50deg);
+  --color-base-700: oklch(32% 0.015 50deg);
+  --color-base-800: oklch(24% 0.015 50deg);
+  --color-base-900: oklch(18% 0.015 50deg);
+  --color-base-950: oklch(10% 0.010 50deg);
+  --color-base-content: oklch(18% 0.015 50deg);
+  --color-base-content-secondary: oklch(32% 0.015 50deg);
+  --color-base-content-tertiary: oklch(52% 0.012 50deg);
+  --color-muted: oklch(70% 0.010 50deg);
+  --color-surface: oklch(98% 0.008 75deg);
+  --color-surface-elevated: oklch(99% 0.005 75deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.5);
+  --color-border: oklch(88% 0.012 70deg);
+  --color-border-hover: oklch(70% 0.015 60deg);
+  --color-primary: oklch(50% 0.16 30deg);
+  --color-primary-hover: oklch(44% 0.18 30deg);
+  --color-primary-active: oklch(38% 0.18 30deg);
+  --color-primary-content: oklch(97% 0.008 75deg);
+  --color-secondary: oklch(32% 0.015 50deg);
+  --color-secondary-hover: oklch(22% 0.015 50deg);
+  --color-secondary-active: oklch(18% 0.015 50deg);
+  --color-secondary-content: oklch(97% 0.008 75deg);
+  --color-accent: oklch(62% 0.08 130deg);
+  --color-accent-hover: oklch(55% 0.10 130deg);
+  --color-accent-active: oklch(51% 0.1 130deg);
+  --color-accent-content: oklch(98% 0.008 75deg);
+  --color-accent-bg: oklch(94% 0.05 130deg);
+  --color-success: oklch(55% 0.10 140deg);
+  --color-success-hover: oklch(63% 0.1 140deg);
+  --color-success-active: oklch(47% 0.1 140deg);
+  --color-success-bg: oklch(94% 0.020 140deg);
+  --color-success-content: oklch(97% 0.008 75deg);
+  --color-warning: oklch(72% 0.12 70deg);
+  --color-warning-hover: oklch(80% 0.12 70deg);
+  --color-warning-active: oklch(64% 0.12 70deg);
+  --color-warning-bg: oklch(95% 0.025 70deg);
+  --color-warning-content: oklch(22% 0.04 60deg);
+  --color-error: oklch(50% 0.16 30deg);
+  --color-error-hover: oklch(58% 0.16 30deg);
+  --color-error-active: oklch(42% 0.16 30deg);
+  --color-error-bg: oklch(94% 0.025 30deg);
+  --color-error-content: oklch(97% 0.008 75deg);
+  --color-info: oklch(50% 0.08 220deg);
+  --color-info-hover: oklch(58% 0.08 220deg);
+  --color-info-active: oklch(42% 0.08 220deg);
+  --color-info-bg: oklch(94% 0.020 220deg);
+  --color-info-content: oklch(97% 0.008 75deg);
+  --shadow-color: oklch(50% 0.16 30deg / 0.25);
+  --shadow-color-strong: oklch(50% 0.16 30deg / 0.55);
+  --shadow-xs: 0 1px 0 0 oklch(18% 0.015 50deg / 0.03);
+  --shadow-sm: 0 1px 2px 0 oklch(18% 0.015 50deg / 0.04);
+  --shadow-md: 0 2px 6px -1px oklch(18% 0.015 50deg / 0.05), 0 1px 2px 0 oklch(18% 0.015 50deg / 0.03);
+  --shadow-lg: 0 8px 20px -4px oklch(18% 0.015 50deg / 0.06), 0 2px 4px 0 oklch(18% 0.015 50deg / 0.03);
+  --shadow-xl: 0 16px 40px -8px oklch(18% 0.015 50deg / 0.08), 0 4px 8px 0 oklch(18% 0.015 50deg / 0.04);
+  --shadow-primary: 0 4px 16px 0 oklch(50% 0.16 30deg / 0.20);
+  --shadow-accent: 0 4px 16px 0 oklch(62% 0.08 130deg / 0.20);
+  --focus-ring-color: oklch(50% 0.16 30deg / 0.25);
+  --color-header-bg: var(--color-base-100);
+}

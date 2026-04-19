@@ -1,0 +1,80 @@
+// =============================================================================
+// MOSS THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..900,0..100;1,9..144,400..900,0..100&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap";
+
+[data-theme="moss"] {
+  color-scheme: dark;
+
+  --font-family-sans:    "Lora", georgia, serif;
+  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-serif:   "Fraunces", georgia, serif;
+  --font-family-display: "Fraunces", "Playfair Display", georgia, serif;
+  --color-background: oklch(18% 0.04 150deg);
+  --color-base-50: oklch(22% 0.05 150deg);
+  --color-base-100: oklch(26% 0.06 150deg);
+  --color-base-200: oklch(32% 0.07 145deg);
+  --color-base-300: oklch(40% 0.08 140deg);
+  --color-base-400: oklch(50% 0.09 135deg);
+  --color-base-500: oklch(60% 0.09 125deg);
+  --color-base-600: oklch(70% 0.08 115deg);
+  --color-base-700: oklch(80% 0.06 100deg);
+  --color-base-800: oklch(86% 0.05 95deg);
+  --color-base-900: oklch(92% 0.04 90deg);
+  --color-base-950: oklch(97% 0.02 85deg);
+  --color-base-content: oklch(90% 0.04 90deg);
+  --color-base-content-secondary: oklch(76% 0.05 95deg);
+  --color-base-content-tertiary: oklch(58% 0.06 120deg);
+  --color-muted: oklch(44% 0.06 135deg);
+  --color-surface: oklch(22% 0.05 150deg);
+  --color-surface-elevated: oklch(28% 0.06 150deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
+  --color-border: oklch(36% 0.07 145deg);
+  --color-border-hover: oklch(72% 0.14 95deg);
+  --color-primary: oklch(62% 0.12 130deg);
+  --color-primary-hover: oklch(70% 0.14 130deg);
+  --color-primary-active: oklch(56% 0.12 130deg);
+  --color-primary-content: oklch(14% 0.03 150deg);
+  --color-secondary: oklch(44% 0.08 155deg);
+  --color-secondary-hover: oklch(52% 0.10 155deg);
+  --color-secondary-active: oklch(48% 0.1 155deg);
+  --color-secondary-content: oklch(92% 0.04 90deg);
+  --color-accent: oklch(74% 0.14 80deg);
+  --color-accent-hover: oklch(80% 0.16 80deg);
+  --color-accent-active: oklch(76% 0.16 80deg);
+  --color-accent-content: oklch(16% 0.04 80deg);
+  --color-accent-bg: oklch(24% 0.08 80deg);
+  --color-success: oklch(68% 0.14 135deg);
+  --color-success-hover: oklch(76% 0.14 135deg);
+  --color-success-active: oklch(60% 0.14 135deg);
+  --color-success-bg: oklch(26% 0.07 135deg);
+  --color-success-content: oklch(14% 0.03 150deg);
+  --color-warning: oklch(74% 0.14 80deg);
+  --color-warning-hover: oklch(82% 0.14 80deg);
+  --color-warning-active: oklch(66% 0.14 80deg);
+  --color-warning-bg: oklch(26% 0.06 80deg);
+  --color-warning-content: oklch(16% 0.04 80deg);
+  --color-error: oklch(58% 0.18 25deg);
+  --color-error-hover: oklch(66% 0.18 25deg);
+  --color-error-active: oklch(50% 0.18 25deg);
+  --color-error-bg: oklch(24% 0.07 25deg);
+  --color-error-content: oklch(96% 0.02 25deg);
+  --color-info: oklch(64% 0.10 210deg);
+  --color-info-hover: oklch(72% 0.1 210deg);
+  --color-info-active: oklch(56% 0.1 210deg);
+  --color-info-bg: oklch(26% 0.05 210deg);
+  --color-info-content: oklch(14% 0.03 210deg);
+  --shadow-color: oklch(62% 0.12 130deg / 0.25);
+  --shadow-color-strong: oklch(62% 0.12 130deg / 0.55);
+  --shadow-xs: 0 1px 3px 0 oklch(6% 0.02 150deg / 0.4);
+  --shadow-sm: 0 2px 6px -1px oklch(6% 0.02 150deg / 0.5), 0 1px 2px 0 oklch(6% 0.02 150deg / 0.3);
+  --shadow-md: 0 6px 16px -2px oklch(6% 0.02 150deg / 0.55), 0 2px 4px 0 oklch(6% 0.02 150deg / 0.3);
+  --shadow-lg: 0 14px 28px -4px oklch(6% 0.02 150deg / 0.6), 0 4px 8px 0 oklch(6% 0.02 150deg / 0.3);
+  --shadow-xl: 0 24px 48px -8px oklch(6% 0.02 150deg / 0.7), 0 8px 16px 0 oklch(6% 0.02 150deg / 0.4);
+  --shadow-primary: 0 4px 16px 0 oklch(62% 0.12 130deg / 0.35);
+  --shadow-accent: 0 4px 16px 0 oklch(74% 0.14 80deg / 0.4);
+  --focus-ring-color: oklch(62% 0.12 130deg / 0.45);
+  --color-header-bg: var(--color-base-100);
+}

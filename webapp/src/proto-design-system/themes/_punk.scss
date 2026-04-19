@@ -1,0 +1,80 @@
+// =============================================================================
+// PUNK THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap";
+
+[data-theme="punk"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Courier Prime", "Courier New", monospace;
+  --font-family-mono:    "Courier Prime", "Courier New", monospace;
+  --font-family-serif:   "Special Elite", "Courier Prime", monospace;
+  --font-family-display: "Archivo Black", "Impact", sans-serif;
+  --color-background: oklch(94% 0.005 80deg);
+  --color-base-50: oklch(97% 0.004 80deg);
+  --color-base-100: oklch(92% 0.006 80deg);
+  --color-base-200: oklch(85% 0.006 80deg);
+  --color-base-300: oklch(75% 0.005 80deg);
+  --color-base-400: oklch(60% 0.004 80deg);
+  --color-base-500: oklch(45% 0 0deg);
+  --color-base-600: oklch(32% 0 0deg);
+  --color-base-700: oklch(22% 0 0deg);
+  --color-base-800: oklch(16% 0 0deg);
+  --color-base-900: oklch(10% 0 0deg);
+  --color-base-950: oklch(4%  0 0deg);
+  --color-base-content: oklch(12% 0 0deg);
+  --color-base-content-secondary: oklch(20% 0 0deg);
+  --color-base-content-tertiary: oklch(40% 0 0deg);
+  --color-muted: oklch(60% 0 0deg);
+  --color-surface: oklch(97% 0.004 80deg);
+  --color-surface-elevated: oklch(99% 0.002 80deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.5);
+  --color-border: oklch(12% 0 0deg);
+  --color-border-hover: oklch(55% 0.24 25deg);
+  --color-primary: oklch(52% 0.26 25deg);
+  --color-primary-hover: oklch(45% 0.28 25deg);
+  --color-primary-active: oklch(40% 0.26 25deg);
+  --color-primary-content: oklch(97% 0.004 80deg);
+  --color-secondary: oklch(12% 0 0deg);
+  --color-secondary-hover: oklch(4% 0 0deg);
+  --color-secondary-active: oklch(1% 0 0deg);
+  --color-secondary-content: oklch(97% 0.004 80deg);
+  --color-accent: oklch(92% 0.22 105deg);
+  --color-accent-hover: oklch(88% 0.24 105deg);
+  --color-accent-active: oklch(84% 0.24 105deg);
+  --color-accent-content: oklch(12% 0 0deg);
+  --color-accent-bg: oklch(94% 0.05 105deg);
+  --color-success: oklch(55% 0.20 150deg);
+  --color-success-hover: oklch(63% 0.2 150deg);
+  --color-success-active: oklch(47% 0.2 150deg);
+  --color-success-bg: oklch(92% 0.06 150deg);
+  --color-success-content: oklch(97% 0.004 80deg);
+  --color-warning: oklch(92% 0.22 105deg);
+  --color-warning-hover: oklch(99% 0.22 105deg);
+  --color-warning-active: oklch(84% 0.22 105deg);
+  --color-warning-bg: oklch(95% 0.10 105deg);
+  --color-warning-content: oklch(12% 0 0deg);
+  --color-error: oklch(52% 0.26 25deg);
+  --color-error-hover: oklch(60% 0.26 25deg);
+  --color-error-active: oklch(44% 0.26 25deg);
+  --color-error-bg: oklch(92% 0.07 25deg);
+  --color-error-content: oklch(97% 0.004 80deg);
+  --color-info: oklch(12% 0 0deg);
+  --color-info-hover: oklch(20% 0 0deg);
+  --color-info-active: oklch(4% 0 0deg);
+  --color-info-bg: oklch(88% 0.005 80deg);
+  --color-info-content: oklch(97% 0.004 80deg);
+  --shadow-color: oklch(52% 0.26 25deg / 0.25);
+  --shadow-color-strong: oklch(52% 0.26 25deg / 0.55);
+  --shadow-xs: 2px 2px 0 0 oklch(12% 0 0deg);
+  --shadow-sm: 3px 3px 0 0 oklch(12% 0 0deg);
+  --shadow-md: 4px 4px 0 0 oklch(12% 0 0deg);
+  --shadow-lg: 6px 6px 0 0 oklch(12% 0 0deg);
+  --shadow-xl: 10px 10px 0 0 oklch(12% 0 0deg);
+  --shadow-primary: 4px 4px 0 0 oklch(12% 0 0deg);
+  --shadow-accent: 4px 4px 0 0 oklch(12% 0 0deg);
+  --focus-ring-color: oklch(52% 0.26 25deg / 0.6);
+  --color-header-bg: var(--color-base-100);
+}

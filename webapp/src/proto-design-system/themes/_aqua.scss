@@ -1,0 +1,74 @@
+// =============================================================================
+// AQUA THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap";
+
+[data-theme="aqua"] {
+  color-scheme: dark;
+
+  --font-family-sans:    "Inter", -apple-system, blinkmacsystemfont, "SF Pro Text", system-ui, sans-serif;
+  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-serif:   "Inter", system-ui, sans-serif;
+  --font-family-display: "Nunito", "SF Pro Rounded", "Inter", system-ui, sans-serif;
+  --color-background: oklch(26% 0.08 245deg);
+  --color-base-50: oklch(80% 0.03 220deg / 0.10);
+  --color-base-100: oklch(80% 0.03 220deg / 0.16);
+  --color-base-200: oklch(78% 0.03 220deg / 0.22);
+  --color-base-300: oklch(74% 0.04 220deg / 0.32);
+  --color-base-400: oklch(70% 0.05 220deg / 0.48);
+  --color-base-500: oklch(68% 0.08 220deg);
+  --color-base-600: oklch(76% 0.10 215deg);
+  --color-base-700: oklch(84% 0.08 215deg);
+  --color-base-800: oklch(92% 0.04 215deg);
+  --color-base-900: oklch(96% 0.015 215deg);
+  --color-base-950: oklch(99% 0.006 215deg);
+  --color-base-content: oklch(99% 0.005 220deg);
+  --color-base-content-secondary: oklch(94% 0.010 220deg);
+  --color-base-content-tertiary: oklch(84% 0.015 220deg);
+  --color-muted: oklch(72% 0.022 225deg);
+  --color-surface: oklch(70% 0.04 230deg / 0.12);
+  --color-surface-elevated: oklch(80% 0.03 220deg / 0.18);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
+  --color-border: oklch(100% 0 0 / 0.18);
+  --color-border-hover: oklch(100% 0 0 / 0.32);
+  --color-primary: oklch(72% 0.18 235deg);
+  --color-primary-hover: oklch(80% 0.20 235deg);
+  --color-primary-active: oklch(66% 0.18 235deg);
+  --color-primary-content: oklch(98% 0.008 220deg);
+  --color-secondary: oklch(80% 0.03 220deg / 0.25);
+  --color-secondary-hover: oklch(82% 0.04 220deg / 0.38);
+  --color-secondary-active: oklch(78% 0.04 220deg / 0.38);
+  --color-secondary-content: oklch(98% 0.008 220deg);
+  --color-accent: oklch(82% 0.14 200deg);
+  --color-accent-hover: oklch(88% 0.16 200deg);
+  --color-accent-active: oklch(84% 0.16 200deg);
+  --color-accent-content: oklch(18% 0.04 200deg);
+  --color-accent-bg: oklch(24% 0.08 200deg);
+  --color-success: oklch(78% 0.18 155deg);
+  --color-success-hover: oklch(86% 0.18 155deg);
+  --color-success-active: oklch(70% 0.18 155deg);
+  --color-success-bg: oklch(78% 0.18 155deg / 0.18);
+  --color-success-content: oklch(14% 0.04 155deg);
+  --color-warning: oklch(82% 0.16 80deg);
+  --color-warning-hover: oklch(90% 0.16 80deg);
+  --color-warning-active: oklch(74% 0.16 80deg);
+  --color-warning-bg: oklch(82% 0.16 80deg / 0.20);
+  --color-warning-content: oklch(16% 0.05 80deg);
+  --color-error: oklch(70% 0.22 22deg);
+  --color-error-hover: oklch(78% 0.22 22deg);
+  --color-error-active: oklch(62% 0.22 22deg);
+  --color-error-bg: oklch(70% 0.22 22deg / 0.20);
+  --color-error-content: oklch(98% 0.02 22deg);
+  --color-info: oklch(72% 0.18 235deg);
+  --color-info-hover: oklch(80% 0.18 235deg);
+  --color-info-active: oklch(64% 0.18 235deg);
+  --color-info-bg: oklch(72% 0.18 235deg / 0.20);
+  --color-info-content: oklch(14% 0.04 235deg);
+  --shadow-color: oklch(72% 0.18 235deg / 0.25);
+  --shadow-color-strong: oklch(72% 0.18 235deg / 0.55);
+  --shadow-xs: inset 0 1px 0 0 oklch(100% 0 0 / 0.25), 0 1px 2px 0 oklch(0% 0 0 / 0.2);
+  --focus-ring-color: oklch(72% 0.18 235deg / 0.55);
+  --color-header-bg: var(--color-base-100);
+}

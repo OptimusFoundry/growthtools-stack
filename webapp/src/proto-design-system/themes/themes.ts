@@ -22,7 +22,24 @@ export type ThemeName =
 	| "ocean"
 	| "glow"
 	| "fog"
-	| "porcelain";
+	| "porcelain"
+	| "aqua"
+	| "archive"
+	| "botanical"
+	| "carbon"
+	| "clinic"
+	| "concrete"
+	| "flux"
+	| "marble"
+	| "matrix"
+	| "mercury"
+	| "moss"
+	| "plasma"
+	| "punk"
+	| "radio"
+	| "riso"
+	| "vinyl"
+	| "zen";
 
 export interface Theme {
 	name: ThemeName;
@@ -43,6 +60,23 @@ export const themes: Record<ThemeName, Theme> = {
 	glow: { name: "glow", label: "Glow", colorScheme: "dark" },
 	fog: { name: "fog", label: "Fog", colorScheme: "light" },
 	porcelain: { name: "porcelain", label: "Porcelain", colorScheme: "light" },
+	aqua: { name: "aqua", label: "Aqua", colorScheme: "dark" },
+	archive: { name: "archive", label: "Archive", colorScheme: "dark" },
+	botanical: { name: "botanical", label: "Botanical", colorScheme: "light" },
+	carbon: { name: "carbon", label: "Carbon", colorScheme: "dark" },
+	clinic: { name: "clinic", label: "Clinic", colorScheme: "light" },
+	concrete: { name: "concrete", label: "Concrete", colorScheme: "light" },
+	flux: { name: "flux", label: "Flux", colorScheme: "dark" },
+	marble: { name: "marble", label: "Marble", colorScheme: "light" },
+	matrix: { name: "matrix", label: "Matrix", colorScheme: "dark" },
+	mercury: { name: "mercury", label: "Mercury", colorScheme: "dark" },
+	moss: { name: "moss", label: "Moss", colorScheme: "dark" },
+	plasma: { name: "plasma", label: "Plasma", colorScheme: "dark" },
+	punk: { name: "punk", label: "Punk", colorScheme: "light" },
+	radio: { name: "radio", label: "Radio", colorScheme: "dark" },
+	riso: { name: "riso", label: "Riso", colorScheme: "light" },
+	vinyl: { name: "vinyl", label: "Vinyl", colorScheme: "dark" },
+	zen: { name: "zen", label: "Zen", colorScheme: "light" },
 };
 
 export const themeNames = Object.keys(themes) as ThemeName[];

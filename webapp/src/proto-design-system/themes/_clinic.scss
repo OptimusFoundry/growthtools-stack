@@ -1,0 +1,80 @@
+// =============================================================================
+// CLINIC THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap";
+
+[data-theme="clinic"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-serif:   "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --font-family-display: "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --color-background: oklch(99% 0.003 220deg);
+  --color-base-50: oklch(99% 0.003 220deg);
+  --color-base-100: oklch(96% 0.005 220deg);
+  --color-base-200: oklch(92% 0.008 220deg);
+  --color-base-300: oklch(84% 0.010 220deg);
+  --color-base-400: oklch(72% 0.012 225deg);
+  --color-base-500: oklch(58% 0.014 230deg);
+  --color-base-600: oklch(44% 0.016 230deg);
+  --color-base-700: oklch(32% 0.018 230deg);
+  --color-base-800: oklch(22% 0.020 230deg);
+  --color-base-900: oklch(14% 0.018 230deg);
+  --color-base-950: oklch(8% 0.014 230deg);
+  --color-base-content: oklch(18% 0.02 230deg);
+  --color-base-content-secondary: oklch(32% 0.02 230deg);
+  --color-base-content-tertiary: oklch(52% 0.015 230deg);
+  --color-muted: oklch(68% 0.012 230deg);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-elevated: oklch(100% 0 0);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.5);
+  --color-border: oklch(88% 0.010 220deg);
+  --color-border-hover: oklch(60% 0.14 220deg);
+  --color-primary: oklch(58% 0.14 220deg);
+  --color-primary-hover: oklch(50% 0.16 220deg);
+  --color-primary-active: oklch(44% 0.17 220deg);
+  --color-primary-content: oklch(99% 0.003 220deg);
+  --color-secondary: oklch(32% 0.02 230deg);
+  --color-secondary-hover: oklch(22% 0.02 230deg);
+  --color-secondary-active: oklch(18% 0.02 230deg);
+  --color-secondary-content: oklch(99% 0.003 220deg);
+  --color-accent: oklch(56% 0.24 25deg);
+  --color-accent-hover: oklch(50% 0.26 25deg);
+  --color-accent-active: oklch(46% 0.26 25deg);
+  --color-accent-content: oklch(99% 0.003 25deg);
+  --color-accent-bg: oklch(94% 0.05 25deg);
+  --color-success: oklch(52% 0.16 155deg);
+  --color-success-hover: oklch(60% 0.16 155deg);
+  --color-success-active: oklch(44% 0.16 155deg);
+  --color-success-bg: oklch(95% 0.015 155deg);
+  --color-success-content: oklch(99% 0.003 220deg);
+  --color-warning: oklch(68% 0.18 70deg);
+  --color-warning-hover: oklch(76% 0.18 70deg);
+  --color-warning-active: oklch(60% 0.18 70deg);
+  --color-warning-bg: oklch(96% 0.025 80deg);
+  --color-warning-content: oklch(18% 0.04 70deg);
+  --color-error: oklch(56% 0.24 25deg);
+  --color-error-hover: oklch(64% 0.24 25deg);
+  --color-error-active: oklch(48% 0.24 25deg);
+  --color-error-bg: oklch(95% 0.020 25deg);
+  --color-error-content: oklch(99% 0.003 25deg);
+  --color-info: oklch(58% 0.14 220deg);
+  --color-info-hover: oklch(66% 0.14 220deg);
+  --color-info-active: oklch(50% 0.14 220deg);
+  --color-info-bg: oklch(95% 0.015 220deg);
+  --color-info-content: oklch(99% 0.003 220deg);
+  --shadow-color: oklch(58% 0.14 220deg / 0.25);
+  --shadow-color-strong: oklch(58% 0.14 220deg / 0.55);
+  --shadow-xs: 0 0 0 1px oklch(88% 0.010 220deg);
+  --shadow-sm: 0 0 0 1px oklch(88% 0.010 220deg), 0 1px 2px 0 oklch(18% 0.02 230deg / 0.04);
+  --shadow-md: 0 0 0 1px oklch(88% 0.010 220deg), 0 4px 8px -2px oklch(18% 0.02 230deg / 0.06);
+  --shadow-lg: 0 0 0 1px oklch(88% 0.010 220deg), 0 12px 20px -4px oklch(18% 0.02 230deg / 0.08);
+  --shadow-xl: 0 0 0 1px oklch(88% 0.010 220deg), 0 24px 40px -8px oklch(18% 0.02 230deg / 0.10);
+  --shadow-primary: 0 0 0 2px oklch(58% 0.14 220deg / 0.2);
+  --shadow-accent: 0 0 0 2px oklch(56% 0.24 25deg / 0.25);
+  --focus-ring-color: oklch(58% 0.14 220deg / 0.4);
+  --color-header-bg: var(--color-base-100);
+}

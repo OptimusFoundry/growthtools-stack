@@ -1,0 +1,80 @@
+// =============================================================================
+// VINYL THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;0,6..96,800;0,6..96,900;1,6..96,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
+
+[data-theme="vinyl"] {
+  color-scheme: dark;
+
+  --font-family-sans:    "Inter", system-ui, sans-serif;
+  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-serif:   "Bodoni Moda", georgia, serif;
+  --font-family-display: "Bodoni Moda", "Playfair Display", georgia, serif;
+  --color-background: oklch(8% 0.006 40deg);
+  --color-base-50: oklch(12% 0.008 40deg);
+  --color-base-100: oklch(16% 0.010 40deg);
+  --color-base-200: oklch(22% 0.012 40deg);
+  --color-base-300: oklch(30% 0.015 50deg);
+  --color-base-400: oklch(42% 0.020 60deg);
+  --color-base-500: oklch(56% 0.025 70deg);
+  --color-base-600: oklch(68% 0.030 75deg);
+  --color-base-700: oklch(80% 0.030 75deg);
+  --color-base-800: oklch(88% 0.028 75deg);
+  --color-base-900: oklch(94% 0.022 75deg);
+  --color-base-950: oklch(98% 0.012 75deg);
+  --color-base-content: oklch(96% 0.020 75deg);
+  --color-base-content-secondary: oklch(82% 0.025 75deg);
+  --color-base-content-tertiary: oklch(62% 0.025 75deg);
+  --color-muted: oklch(46% 0.020 75deg);
+  --color-surface: oklch(12% 0.008 40deg);
+  --color-surface-elevated: oklch(16% 0.010 40deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
+  --color-border: oklch(26% 0.015 50deg);
+  --color-border-hover: oklch(74% 0.14 80deg);
+  --color-primary: oklch(78% 0.15 82deg);
+  --color-primary-hover: oklch(84% 0.16 82deg);
+  --color-primary-active: oklch(72% 0.16 82deg);
+  --color-primary-content: oklch(10% 0.02 82deg);
+  --color-secondary: oklch(96% 0.020 75deg);
+  --color-secondary-hover: oklch(88% 0.025 75deg);
+  --color-secondary-active: oklch(84% 0.025 75deg);
+  --color-secondary-content: oklch(8% 0.006 40deg);
+  --color-accent: oklch(68% 0.18 72deg);
+  --color-accent-hover: oklch(74% 0.20 72deg);
+  --color-accent-active: oklch(70% 0.2 72deg);
+  --color-accent-content: oklch(10% 0.02 72deg);
+  --color-accent-bg: oklch(24% 0.08 72deg);
+  --color-success: oklch(76% 0.18 140deg);
+  --color-success-hover: oklch(84% 0.18 140deg);
+  --color-success-active: oklch(68% 0.18 140deg);
+  --color-success-bg: oklch(20% 0.05 140deg);
+  --color-success-content: oklch(10% 0.03 140deg);
+  --color-warning: oklch(78% 0.15 82deg);
+  --color-warning-hover: oklch(86% 0.15 82deg);
+  --color-warning-active: oklch(70% 0.15 82deg);
+  --color-warning-bg: oklch(22% 0.05 82deg);
+  --color-warning-content: oklch(10% 0.02 82deg);
+  --color-error: oklch(60% 0.24 20deg);
+  --color-error-hover: oklch(68% 0.24 20deg);
+  --color-error-active: oklch(52% 0.24 20deg);
+  --color-error-bg: oklch(22% 0.08 20deg);
+  --color-error-content: oklch(98% 0.02 20deg);
+  --color-info: oklch(72% 0.12 220deg);
+  --color-info-hover: oklch(80% 0.12 220deg);
+  --color-info-active: oklch(64% 0.12 220deg);
+  --color-info-bg: oklch(22% 0.05 220deg);
+  --color-info-content: oklch(10% 0.02 220deg);
+  --shadow-color: oklch(78% 0.15 82deg / 0.25);
+  --shadow-color-strong: oklch(78% 0.15 82deg / 0.55);
+  --shadow-xs: inset 0 1px 0 0 oklch(78% 0.15 82deg / 0.05), 0 1px 2px 0 oklch(0% 0 0 / 0.6);
+  --shadow-sm: inset 0 1px 0 0 oklch(78% 0.15 82deg / 0.08), 0 2px 6px 0 oklch(0% 0 0 / 0.7);
+  --shadow-md: inset 0 1px 0 0 oklch(78% 0.15 82deg / 0.10), 0 8px 20px -4px oklch(0% 0 0 / 0.8);
+  --shadow-lg: inset 0 1px 0 0 oklch(78% 0.15 82deg / 0.12), 0 20px 40px -8px oklch(0% 0 0 / 0.85);
+  --shadow-xl: inset 0 1px 0 0 oklch(78% 0.15 82deg / 0.14), 0 32px 60px -12px oklch(0% 0 0 / 0.9);
+  --shadow-primary: 0 4px 20px 0 oklch(78% 0.15 82deg / 0.4);
+  --shadow-accent: 0 4px 20px 0 oklch(68% 0.18 72deg / 0.45);
+  --focus-ring-color: oklch(78% 0.15 82deg / 0.45);
+  --color-header-bg: var(--color-base-100);
+}

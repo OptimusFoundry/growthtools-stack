@@ -1,0 +1,80 @@
+// =============================================================================
+// MATRIX THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap";
+
+[data-theme="matrix"] {
+  color-scheme: dark;
+
+  --font-family-sans:    "IBM Plex Mono", "Courier Prime", monospace;
+  --font-family-mono:    "IBM Plex Mono", "SF Mono", monospace;
+  --font-family-serif:   "Courier Prime", "IBM Plex Mono", monospace;
+  --font-family-display: "VT323", "IBM Plex Mono", monospace;
+  --color-background: oklch(6% 0.02 150deg);
+  --color-base-50: oklch(10% 0.03 150deg);
+  --color-base-100: oklch(14% 0.04 150deg);
+  --color-base-200: oklch(20% 0.06 150deg);
+  --color-base-300: oklch(28% 0.10 150deg);
+  --color-base-400: oklch(40% 0.14 150deg);
+  --color-base-500: oklch(54% 0.18 150deg);
+  --color-base-600: oklch(66% 0.22 150deg);
+  --color-base-700: oklch(78% 0.24 150deg);
+  --color-base-800: oklch(86% 0.24 150deg);
+  --color-base-900: oklch(92% 0.22 150deg);
+  --color-base-950: oklch(98% 0.15 150deg);
+  --color-base-content: oklch(90% 0.24 150deg);
+  --color-base-content-secondary: oklch(76% 0.22 150deg);
+  --color-base-content-tertiary: oklch(58% 0.18 150deg);
+  --color-muted: oklch(42% 0.14 150deg);
+  --color-surface: oklch(10% 0.03 150deg);
+  --color-surface-elevated: oklch(14% 0.04 150deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
+  --color-border: oklch(40% 0.14 150deg);
+  --color-border-hover: oklch(78% 0.24 150deg);
+  --color-primary: oklch(82% 0.26 145deg);
+  --color-primary-hover: oklch(90% 0.26 145deg);
+  --color-primary-active: oklch(74% 0.24 145deg);
+  --color-primary-content: oklch(6% 0.02 150deg);
+  --color-secondary: oklch(58% 0.18 150deg);
+  --color-secondary-hover: oklch(68% 0.20 150deg);
+  --color-secondary-active: oklch(64% 0.2 150deg);
+  --color-secondary-content: oklch(6% 0.02 150deg);
+  --color-accent: oklch(76% 0.18 195deg);
+  --color-accent-hover: oklch(84% 0.20 195deg);
+  --color-accent-active: oklch(80% 0.2 195deg);
+  --color-accent-content: oklch(6% 0.02 195deg);
+  --color-accent-bg: oklch(24% 0.08 195deg);
+  --color-success: oklch(82% 0.26 145deg);
+  --color-success-hover: oklch(90% 0.26 145deg);
+  --color-success-active: oklch(74% 0.26 145deg);
+  --color-success-bg: oklch(16% 0.06 145deg);
+  --color-success-content: oklch(6% 0.02 150deg);
+  --color-warning: oklch(88% 0.22 95deg);
+  --color-warning-hover: oklch(96% 0.22 95deg);
+  --color-warning-active: oklch(80% 0.22 95deg);
+  --color-warning-bg: oklch(20% 0.08 95deg);
+  --color-warning-content: oklch(10% 0.04 95deg);
+  --color-error: oklch(68% 0.28 20deg);
+  --color-error-hover: oklch(76% 0.28 20deg);
+  --color-error-active: oklch(60% 0.28 20deg);
+  --color-error-bg: oklch(20% 0.10 20deg);
+  --color-error-content: oklch(98% 0.02 20deg);
+  --color-info: oklch(76% 0.18 195deg);
+  --color-info-hover: oklch(84% 0.18 195deg);
+  --color-info-active: oklch(68% 0.18 195deg);
+  --color-info-bg: oklch(18% 0.07 195deg);
+  --color-info-content: oklch(8% 0.03 195deg);
+  --shadow-color: oklch(82% 0.26 145deg / 0.25);
+  --shadow-color-strong: oklch(82% 0.26 145deg / 0.55);
+  --shadow-xs: 0 0 4px 0 oklch(82% 0.26 145deg / 0.3);
+  --shadow-sm: 0 0 8px 0 oklch(82% 0.26 145deg / 0.35);
+  --shadow-md: 0 0 16px 0 oklch(82% 0.26 145deg / 0.4), 0 2px 4px 0 oklch(0% 0 0 / 0.6);
+  --shadow-lg: 0 0 24px 0 oklch(82% 0.26 145deg / 0.5), 0 4px 12px 0 oklch(0% 0 0 / 0.7);
+  --shadow-xl: 0 0 40px 0 oklch(82% 0.26 145deg / 0.6), 0 8px 24px 0 oklch(0% 0 0 / 0.8);
+  --shadow-primary: 0 0 24px 0 oklch(82% 0.26 145deg / 0.7);
+  --shadow-accent: 0 0 24px 0 oklch(76% 0.18 195deg / 0.7);
+  --focus-ring-color: oklch(82% 0.26 145deg / 0.55);
+  --color-header-bg: var(--color-base-100);
+}

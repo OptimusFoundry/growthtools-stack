@@ -1,0 +1,80 @@
+// =============================================================================
+// RISO THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap";
+
+[data-theme="riso"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Work Sans", system-ui, sans-serif;
+  --font-family-mono:    "Space Mono", "SF Mono", monospace;
+  --font-family-serif:   "Fraunces", georgia, serif;
+  --font-family-display: "Space Mono", "Work Sans", monospace;
+  --color-background: oklch(95% 0.020 85deg);
+  --color-base-50: oklch(97% 0.015 85deg);
+  --color-base-100: oklch(93% 0.025 85deg);
+  --color-base-200: oklch(88% 0.035 80deg);
+  --color-base-300: oklch(80% 0.045 75deg);
+  --color-base-400: oklch(68% 0.080 340deg);
+  --color-base-500: oklch(58% 0.15 340deg);
+  --color-base-600: oklch(48% 0.18 340deg);
+  --color-base-700: oklch(38% 0.18 280deg);
+  --color-base-800: oklch(32% 0.18 275deg);
+  --color-base-900: oklch(26% 0.18 270deg);
+  --color-base-950: oklch(18% 0.15 265deg);
+  --color-base-content: oklch(28% 0.18 265deg);
+  --color-base-content-secondary: oklch(38% 0.15 265deg);
+  --color-base-content-tertiary: oklch(55% 0.10 265deg);
+  --color-muted: oklch(72% 0.06 265deg);
+  --color-surface: oklch(97% 0.015 85deg);
+  --color-surface-elevated: oklch(98% 0.012 85deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.5);
+  --color-border: oklch(58% 0.15 340deg);
+  --color-border-hover: oklch(28% 0.18 265deg);
+  --color-primary: oklch(65% 0.25 350deg);
+  --color-primary-hover: oklch(58% 0.28 350deg);
+  --color-primary-active: oklch(52% 0.28 350deg);
+  --color-primary-content: oklch(97% 0.015 85deg);
+  --color-secondary: oklch(35% 0.20 265deg);
+  --color-secondary-hover: oklch(28% 0.22 265deg);
+  --color-secondary-active: oklch(24% 0.22 265deg);
+  --color-secondary-content: oklch(97% 0.015 85deg);
+  --color-accent: oklch(82% 0.18 90deg);
+  --color-accent-hover: oklch(76% 0.20 90deg);
+  --color-accent-active: oklch(72% 0.2 90deg);
+  --color-accent-content: oklch(25% 0.12 85deg);
+  --color-accent-bg: oklch(94% 0.05 90deg);
+  --color-success: oklch(65% 0.20 155deg);
+  --color-success-hover: oklch(73% 0.2 155deg);
+  --color-success-active: oklch(57% 0.2 155deg);
+  --color-success-bg: oklch(93% 0.05 155deg);
+  --color-success-content: oklch(97% 0.015 85deg);
+  --color-warning: oklch(82% 0.18 90deg);
+  --color-warning-hover: oklch(90% 0.18 90deg);
+  --color-warning-active: oklch(74% 0.18 90deg);
+  --color-warning-bg: oklch(95% 0.05 90deg);
+  --color-warning-content: oklch(25% 0.12 85deg);
+  --color-error: oklch(60% 0.26 15deg);
+  --color-error-hover: oklch(68% 0.26 15deg);
+  --color-error-active: oklch(52% 0.26 15deg);
+  --color-error-bg: oklch(93% 0.06 15deg);
+  --color-error-content: oklch(97% 0.015 85deg);
+  --color-info: oklch(48% 0.20 250deg);
+  --color-info-hover: oklch(56% 0.2 250deg);
+  --color-info-active: oklch(40% 0.2 250deg);
+  --color-info-bg: oklch(93% 0.05 250deg);
+  --color-info-content: oklch(97% 0.015 85deg);
+  --shadow-color: oklch(65% 0.25 350deg / 0.25);
+  --shadow-color-strong: oklch(65% 0.25 350deg / 0.55);
+  --shadow-xs: 2px 2px 0 0 oklch(65% 0.25 350deg / 0.35);
+  --shadow-sm: 3px 3px 0 0 oklch(65% 0.25 350deg / 0.5);
+  --shadow-md: 4px 4px 0 0 oklch(28% 0.18 265deg / 0.6), 6px 6px 0 0 oklch(65% 0.25 350deg / 0.35);
+  --shadow-lg: 6px 6px 0 0 oklch(28% 0.18 265deg / 0.7), 10px 10px 0 0 oklch(65% 0.25 350deg / 0.4);
+  --shadow-xl: 8px 8px 0 0 oklch(28% 0.18 265deg / 0.8), 14px 14px 0 0 oklch(65% 0.25 350deg / 0.45);
+  --shadow-primary: 3px 3px 0 0 oklch(28% 0.18 265deg);
+  --shadow-accent: 3px 3px 0 0 oklch(28% 0.18 265deg);
+  --focus-ring-color: oklch(65% 0.25 350deg / 0.5);
+  --color-header-bg: var(--color-base-100);
+}

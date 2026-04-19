@@ -1,0 +1,80 @@
+// =============================================================================
+// BOTANICAL THEME
+// =============================================================================
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+
+@import "https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap";
+
+[data-theme="botanical"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Lora", georgia, serif;
+  --font-family-mono:    "DM Mono", "SF Mono", monospace;
+  --font-family-serif:   "Lora", georgia, serif;
+  --font-family-display: "DM Serif Display", "Fraunces", georgia, serif;
+  --color-background: oklch(93% 0.028 85deg);
+  --color-base-50: oklch(96% 0.020 85deg);
+  --color-base-100: oklch(91% 0.030 85deg);
+  --color-base-200: oklch(86% 0.035 90deg);
+  --color-base-300: oklch(78% 0.040 95deg);
+  --color-base-400: oklch(62% 0.060 130deg);
+  --color-base-500: oklch(48% 0.080 140deg);
+  --color-base-600: oklch(38% 0.080 145deg);
+  --color-base-700: oklch(30% 0.070 145deg);
+  --color-base-800: oklch(24% 0.060 145deg);
+  --color-base-900: oklch(18% 0.050 145deg);
+  --color-base-950: oklch(12% 0.040 145deg);
+  --color-base-content: oklch(22% 0.05 145deg);
+  --color-base-content-secondary: oklch(32% 0.05 145deg);
+  --color-base-content-tertiary: oklch(48% 0.04 140deg);
+  --color-muted: oklch(62% 0.03 135deg);
+  --color-surface: oklch(96% 0.020 85deg);
+  --color-surface-elevated: oklch(98% 0.015 85deg);
+  --color-surface-overlay: oklch(0% 0 0deg / 0.5);
+  --color-border: oklch(84% 0.030 90deg);
+  --color-border-hover: oklch(48% 0.080 140deg);
+  --color-primary: oklch(42% 0.10 145deg);
+  --color-primary-hover: oklch(36% 0.12 145deg);
+  --color-primary-active: oklch(30% 0.12 145deg);
+  --color-primary-content: oklch(96% 0.020 85deg);
+  --color-secondary: oklch(55% 0.08 60deg);
+  --color-secondary-hover: oklch(48% 0.10 60deg);
+  --color-secondary-active: oklch(44% 0.1 60deg);
+  --color-secondary-content: oklch(96% 0.020 85deg);
+  --color-accent: oklch(62% 0.12 15deg);
+  --color-accent-hover: oklch(55% 0.14 15deg);
+  --color-accent-active: oklch(51% 0.14 15deg);
+  --color-accent-content: oklch(96% 0.020 85deg);
+  --color-accent-bg: oklch(94% 0.05 15deg);
+  --color-success: oklch(55% 0.14 145deg);
+  --color-success-hover: oklch(63% 0.14 145deg);
+  --color-success-active: oklch(47% 0.14 145deg);
+  --color-success-bg: oklch(90% 0.035 145deg);
+  --color-success-content: oklch(96% 0.020 85deg);
+  --color-warning: oklch(70% 0.15 65deg);
+  --color-warning-hover: oklch(78% 0.15 65deg);
+  --color-warning-active: oklch(62% 0.15 65deg);
+  --color-warning-bg: oklch(93% 0.040 65deg);
+  --color-warning-content: oklch(24% 0.06 65deg);
+  --color-error: oklch(50% 0.18 25deg);
+  --color-error-hover: oklch(58% 0.18 25deg);
+  --color-error-active: oklch(42% 0.18 25deg);
+  --color-error-bg: oklch(91% 0.035 25deg);
+  --color-error-content: oklch(96% 0.020 85deg);
+  --color-info: oklch(48% 0.10 220deg);
+  --color-info-hover: oklch(56% 0.1 220deg);
+  --color-info-active: oklch(40% 0.1 220deg);
+  --color-info-bg: oklch(91% 0.030 220deg);
+  --color-info-content: oklch(96% 0.020 85deg);
+  --shadow-color: oklch(42% 0.1 145deg / 0.25);
+  --shadow-color-strong: oklch(42% 0.1 145deg / 0.55);
+  --shadow-xs: 0 1px 2px 0 oklch(22% 0.05 145deg / 0.05);
+  --shadow-sm: 0 2px 6px -1px oklch(22% 0.05 145deg / 0.07), 0 1px 2px 0 oklch(22% 0.05 145deg / 0.04);
+  --shadow-md: 0 8px 18px -4px oklch(22% 0.05 145deg / 0.09), 0 2px 5px -2px oklch(22% 0.05 145deg / 0.05);
+  --shadow-lg: 0 20px 36px -8px oklch(22% 0.05 145deg / 0.12), 0 4px 10px -4px oklch(22% 0.05 145deg / 0.06);
+  --shadow-xl: 0 32px 56px -12px oklch(22% 0.05 145deg / 0.16), 0 8px 18px -8px oklch(22% 0.05 145deg / 0.07);
+  --shadow-primary: 0 8px 24px 0 oklch(42% 0.10 145deg / 0.28);
+  --shadow-accent: 0 8px 24px 0 oklch(62% 0.12 15deg / 0.30);
+  --focus-ring-color: oklch(42% 0.10 145deg / 0.3);
+  --color-header-bg: var(--color-base-100);
+}
