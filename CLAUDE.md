@@ -26,7 +26,7 @@ growth-tools/
 
 - **Superpowers skills** — invoke with the `Skill` tool. Check available skills before starting any task; there is likely a skill that applies. Key skills: `superpowers:writing-plans`, `superpowers:using-git-worktrees`, `superpowers:finishing-a-development-branch`.
 - **Backend subagent coordination** — for Go backend work, use `backend-subagent-development` instead of `superpowers:subagent-driven-development`. It dispatches backend-* agents in parallel batches by phase (code agents first, then test agents), which is safe because agents write to isolated files.
-- **Language Server (LSP)** — use the `LSP` tool for precise Go and TypeScript navigation: go-to-definition, find-references, type information. Prefer this over grep when exploring types or tracing call chains.
+- **Language Server (LSP)** — use the `LSP` tool for precise Go and TypeScript navigation: go-to-definition, find-references, type information. Prefer this over grep when exploring types or tracing call chains. **LSP is a deferred tool** — load it once per session with `ToolSearch(query: "select:LSP", max_results: 1)` before first use. Pass the same instruction to any subagent you dispatch that will navigate code.
 - **Browser automation** — `mcp__claude-in-chrome__*` tools available for testing frontend features in a real browser. Use for verifying UI changes end-to-end.
 - **Playwright MCP** — `mcp__plugin_playwright_*` tools for browser automation and E2E verification.
 
