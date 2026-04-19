@@ -184,9 +184,12 @@ func TestBlogAPI_GetBlog(t *testing.T) {
 			},
 			wantStatus: http.StatusOK,
 			wantBody: func(t *testing.T, body []byte) {
-				var got store.BlogPost
+				var got struct {
+					Post  store.BlogPost `json:"post"`
+					Media []store.Media  `json:"media"`
+				}
 				require.NoError(t, json.Unmarshal(body, &got))
-				assert.Equal(t, "blog body", got.Content)
+				assert.Equal(t, "blog body", got.Post.Content)
 			},
 		},
 		{
