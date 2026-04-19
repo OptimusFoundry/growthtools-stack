@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v83/webhook"
+	"github.com/stripe/stripe-go/v85/webhook"
 )
 
 func (h *Handler) HandleGetPaymentMethod(c *gin.Context) {
@@ -43,7 +43,7 @@ func (h *Handler) HandleWebhook(c *gin.Context) {
 		apierrors.BadRequest(c, "INVALID_INPUT", "missing Stripe-Signature header")
 		return
 	}
-	event, err := webhook.ConstructEvent(payload, signatureHeader, h.processor.WebhookSecret)
+	event, err := webhook.ConstructEventWithOptions(payload, signatureHeader, h.processor.WebhookSecret, webhook.ConstructEventOptions{IgnoreAPIVersionMismatch: true})
 	if err != nil {
 		apierrors.BadRequest(c, "INVALID_INPUT", "invalid webhook signature")
 		return

@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v83"
-	"github.com/stripe/stripe-go/v83/product"
+	"github.com/stripe/stripe-go/v85"
+	"github.com/stripe/stripe-go/v85/product"
 )
 
 type Price struct {

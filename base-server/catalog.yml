@@ -1,0 +1,133 @@
+# Growth Tools catalog — products, prices, features, plan mappings.
+#
+# Source of truth for:
+#   - Stripe products + prices (matched by metadata.catalog_key / lookup_key)
+#   - DB tables: products, prices, features, limits, plan_feature_limits
+#
+# Apply with: make catalog-apply  (dev)  |  make catalog-apply-prod  (prod)
+#
+# Rules of the road:
+#   - Additive only. To "remove" a feature from a plan, set enabled: false or limit: 0.
+#   - Stripe prices are immutable: to change an amount, add a new price key and
+#     stop referencing the old one. The old Stripe price stays archivable but present.
+#   - price.key is the Stripe lookup_key AND the prices.description column in DB.
+
+products:
+  - key: gt_free
+    name: "Growth Tools Free"
+    description: "Free tier — get started with Growth Tools"
+    prices:
+      - key: free
+        unit_amount: 0
+        currency: usd
+        interval: month
+
+  - key: gt_pro
+    name: "Growth Tools Pro"
+    description: "Pro tier — advanced features for solo founders"
+    prices:
+      - key: gt_pro_monthly
+        unit_amount: 1900
+        currency: usd
+        interval: month
+      - key: gt_pro_annual
+        unit_amount: 19000
+        currency: usd
+        interval: year
+
+  - key: gt_team
+    name: "Growth Tools Team"
+    description: "Team tier — full features with team collaboration"
+    prices:
+      - key: gt_team_monthly
+        unit_amount: 4900
+        currency: usd
+        interval: month
+      - key: gt_team_annual
+        unit_amount: 49000
+        currency: usd
+        interval: year
+
+features:
+  - name: platform_connections
+    description: "Connect social media platform accounts"
+  - name: ai_content_generation
+    description: "Generate posts and content with Claude AI"
+  - name: scheduling
+    description: "Schedule posts for future publishing"
+  - name: analytics
+    description: "View engagement metrics and performance data"
+  - name: blog
+    description: "Create and publish SEO-optimized blog posts"
+  - name: media_library
+    description: "Upload and manage images and videos"
+  - name: github_integration
+    description: "Auto-generate posts from GitHub activity"
+  - name: remove_branding
+    description: "Remove Growth Tools branding"
+  - name: posts_per_month
+    description: "Number of posts per month"
+  - name: platforms
+    description: "Number of connected platforms"
+  - name: media_storage_mb
+    description: "Media storage in megabytes"
+  - name: team_members
+    description: "Number of team members"
+
+# Per-price feature map.
+#
+# - boolean features: { enabled: true|false }
+# - quantitative features: { enabled: true, limit: <int> }
+#   * A row with enabled:true + no limit means "unlimited".
+#   * A row with limit:0 is the soft-off switch.
+plans:
+  - price: free
+    features:
+      platform_connections:  { enabled: true }
+      ai_content_generation: { enabled: false }
+      scheduling:            { enabled: false }
+      analytics:             { enabled: false }
+      blog:                  { enabled: false }
+      media_library:         { enabled: true }
+      github_integration:    { enabled: false }
+      remove_branding:       { enabled: false }
+      posts_per_month:       { enabled: true, limit: 10 }
+      platforms:             { enabled: true, limit: 2 }
+      media_storage_mb:      { enabled: true, limit: 100 }
+      team_members:          { enabled: true, limit: 1 }
+
+  - price: gt_pro_monthly
+    features: &gt_pro_features
+      platform_connections:  { enabled: true }
+      ai_content_generation: { enabled: true }
+      scheduling:            { enabled: true }
+      analytics:             { enabled: true }
+      blog:                  { enabled: true }
+      media_library:         { enabled: true }
+      github_integration:    { enabled: true }
+      remove_branding:       { enabled: false }
+      posts_per_month:       { enabled: true, limit: 100 }
+      platforms:             { enabled: true, limit: 5 }
+      media_storage_mb:      { enabled: true, limit: 1000 }
+      team_members:          { enabled: true, limit: 1 }
+
+  - price: gt_pro_annual
+    features: *gt_pro_features
+
+  - price: gt_team_monthly
+    features: &gt_team_features
+      platform_connections:  { enabled: true }
+      ai_content_generation: { enabled: true }
+      scheduling:            { enabled: true }
+      analytics:             { enabled: true }
+      blog:                  { enabled: true }
+      media_library:         { enabled: true }
+      github_integration:    { enabled: true }
+      remove_branding:       { enabled: true }
+      posts_per_month:       { enabled: true }                  # unlimited
+      platforms:             { enabled: true }                  # unlimited
+      media_storage_mb:      { enabled: true, limit: 10000 }
+      team_members:          { enabled: true, limit: 5 }
+
+  - price: gt_team_annual
+    features: *gt_team_features

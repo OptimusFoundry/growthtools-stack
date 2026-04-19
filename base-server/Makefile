@@ -1,5 +1,7 @@
 .PHONY: dev-up dev-down dev-test-unit dev-test-store dev-test-integration \
-       docker-up docker-down docker-test-integration docker-test-all help
+       docker-up docker-down docker-test-integration docker-test-all help \
+       catalog-dry-run catalog-apply catalog-apply-prod \
+       stripe-listen stripe-products stripe-prices dev-run
 
 # =============================================================================
 # LOCAL DEVELOPMENT (uses local DB — may pollute your database)
@@ -72,6 +74,41 @@ docker-test-all:
 	@$(MAKE) docker-down
 
 # =============================================================================
+# STRIPE CATALOG
+# =============================================================================
+
+# Preview catalog-sync plan without writing to Stripe or DB (reads env.local).
+catalog-dry-run:
+	go run ./cmd/catalog-sync --env=test --dry-run
+
+# Apply catalog.yml to TEST-mode Stripe + local DB.
+catalog-apply:
+	go run ./cmd/catalog-sync --env=test
+
+# Apply catalog.yml to LIVE Stripe + prod DB. Requires CONFIRM=prod.
+# Caller is responsible for exporting prod DB_* and STRIPE_SECRET_KEY.
+catalog-apply-prod:
+	CONFIRM=prod go run ./cmd/catalog-sync --env=prod
+
+# Start base-server + Stripe webhook forwarder together via hivemind (Procfile).
+# Install once: brew install hivemind
+# Ctrl+C stops both.
+dev-run:
+	hivemind
+
+# Forward Stripe test-mode webhooks standalone (when running the server separately).
+# Requires `stripe` CLI logged in (stripe login).
+stripe-listen:
+	stripe listen --forward-to localhost:8080/api/billing/webhook
+
+# Read-only inspection of the live Stripe catalog (test mode).
+stripe-products:
+	stripe products list --limit 100
+
+stripe-prices:
+	stripe prices list --limit 100
+
+# =============================================================================
 # HELP
 # =============================================================================
 
@@ -84,6 +121,16 @@ help:
 	@echo "  make dev-test-unit        - Run unit tests locally (no DB needed)"
 	@echo "  make dev-test-store       - Run store tests locally (requires dev-up)"
 	@echo "  make dev-test-integration - Run integration tests locally (in-process server)"
+	@echo ""
+	@echo "  make dev-run              - Start base-server + Stripe listener together (hivemind)"
+	@echo ""
+	@echo "STRIPE CATALOG (declarative product/price/feature sync):"
+	@echo "  make catalog-dry-run      - Preview catalog.yml changes (no writes)"
+	@echo "  make catalog-apply        - Apply catalog.yml to test-mode Stripe + local DB"
+	@echo "  make catalog-apply-prod   - Apply catalog.yml to LIVE Stripe + prod DB (CONFIRM=prod)"
+	@echo "  make stripe-listen        - Forward Stripe test webhooks to localhost:8080"
+	@echo "  make stripe-products      - List products in Stripe (test mode)"
+	@echo "  make stripe-prices        - List prices in Stripe (test mode)"
 	@echo ""
 	@echo "ISOLATED DOCKER TESTING (DB + Kafka only; server runs in-process):"
 	@echo "  make docker-up            - Start isolated Docker test environment"

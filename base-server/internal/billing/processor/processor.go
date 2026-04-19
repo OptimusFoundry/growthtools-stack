@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v83"
-	"github.com/stripe/stripe-go/v83/customer"
+	"github.com/stripe/stripe-go/v85"
+	"github.com/stripe/stripe-go/v85/customer"
 )
 
 // BillingProcessorInterface defines the contract for billing operations

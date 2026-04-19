@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stripe/stripe-go/v83"
-	"github.com/stripe/stripe-go/v83/subscription"
-	"github.com/stripe/stripe-go/v83/tax/transaction"
+	"github.com/stripe/stripe-go/v85"
+	"github.com/stripe/stripe-go/v85/subscription"
+	"github.com/stripe/stripe-go/v85/tax/transaction"
 )
 
 // Invoke this method in your webhook handler when `payment_intent.succeeded` webhook is received

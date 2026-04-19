@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v85"
 	"go.uber.org/mock/gomock"
 )
 

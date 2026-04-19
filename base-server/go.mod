@@ -14,15 +14,17 @@ require (
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.9
 	github.com/resend/resend-go/v3 v3.5.0
 	github.com/segmentio/kafka-go v0.4.50
 	github.com/stretchr/testify v1.11.1
-	github.com/stripe/stripe-go/v83 v83.2.1
+	github.com/stripe/stripe-go/v85 v85.0.1
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.50.0
 	golang.org/x/sync v0.20.0
 	google.golang.org/genai v1.54.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -96,5 +98,4 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
