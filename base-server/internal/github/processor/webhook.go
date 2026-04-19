@@ -311,6 +311,48 @@ func appURLFromReadme(readme string) string {
 	return ""
 }
 
+// frontendPathPrefixes lists the monorepo paths whose changes can surface
+// in the web UI. Anything outside these prefixes is considered non-UI
+// (backend, worker, infra, docs, CI) and skipped by the frontend gate.
+// Keep in sync with the actual monorepo layout.
+var frontendPathPrefixes = []string{"webapp/"}
+
+// diffTouchesFrontend returns true when at least one file path referenced
+// by the unified diff sits under a frontend prefix. Parses the canonical
+// `diff --git a/<path> b/<path>` headers. An empty or unparseable diff is
+// treated as "unknown" — we return true to let the LLM classifier make
+// the call rather than silently dropping commits we can't inspect.
+func diffTouchesFrontend(diff string) bool {
+	if strings.TrimSpace(diff) == "" {
+		return true
+	}
+	seenHeader := false
+	for _, line := range strings.Split(diff, "\n") {
+		if !strings.HasPrefix(line, "diff --git ") {
+			continue
+		}
+		seenHeader = true
+		parts := strings.Fields(line)
+		if len(parts) < 4 {
+			continue
+		}
+		a := strings.TrimPrefix(parts[2], "a/")
+		b := strings.TrimPrefix(parts[3], "b/")
+		for _, prefix := range frontendPathPrefixes {
+			if strings.HasPrefix(a, prefix) || strings.HasPrefix(b, prefix) {
+				return true
+			}
+		}
+	}
+	// If we couldn't find any `diff --git` header at all, treat as unknown
+	// and let the classifier decide — the diff fetch may have been truncated
+	// at an unlucky boundary or used a non-standard format.
+	if !seenHeader {
+		return true
+	}
+	return false
+}
+
 // enqueueCaptureRequests publishes one github.capture.requests message per
 // newly-inserted commit. The app URL (when derivable) comes from the repo
 // README, and the unified diff comes from GitHub's API — both are fetched
@@ -342,6 +384,21 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 		}
 		if len(diff) > maxDiffChars {
 			diff = diff[:maxDiffChars] + "\n… [truncated]"
+		}
+
+		// Frontend gate: capture is a web-UI demo tool, so commits that
+		// don't touch the webapp/ tree have nothing visible to record.
+		// This catches backend-only, capture-worker, docs, and infra
+		// commits deterministically before we pay the LLM classifier —
+		// 99% of skips land here and never reach Gemini. The retry path
+		// overrides this: the user explicitly asked for a capture.
+		if !skipClassifier && !diffTouchesFrontend(diff) {
+			const reason = "no frontend changes (capture focuses on webapp/)"
+			p.logger.Info(ctx, fmt.Sprintf("skipping commit %s: %s", commit.SHA, reason))
+			if markErr := p.store.MarkGitHubCommitSkipped(ctx, commit.ID, reason); markErr != nil {
+				p.logger.Error(ctx, fmt.Sprintf("failed to persist skip reason for %s", commit.SHA), markErr)
+			}
+			continue
 		}
 
 		// AI-driven filter: drop commits that aren't worth the capture +

@@ -1039,11 +1039,11 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
 					Return("# My App\n\nSee it live at https://myapp.example.com for details.", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "abc123").
-					Return("diff --git a/foo.go b/foo.go\n+added line", nil)
+					Return("diff --git a/webapp/src/App.tsx b/webapp/src/App.tsx\n+added line", nil)
 				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
 					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
 						req := payload.(CaptureRequest)
-						if req.Diff != "diff --git a/foo.go b/foo.go\n+added line" {
+						if req.Diff != "diff --git a/webapp/src/App.tsx b/webapp/src/App.tsx\n+added line" {
 							t.Errorf("unexpected Diff: %q", req.Diff)
 						}
 						if req.AppURL != "https://myapp.example.com" {
@@ -1063,6 +1063,37 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 						}
 						return nil
 					})
+			},
+		},
+		{
+			// Backend-only diff: the frontend gate kicks in before the LLM
+			// classifier and before any Publish call. We expect exactly one
+			// MarkGitHubCommitSkipped with a reason mentioning webapp.
+			name: "backend-only diff – skipped by frontend gate, classifier never called",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("be0001", "chore: tweak backend logger")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("# App\nhttps://app.example.com", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "be0001").
+					Return("diff --git a/base-server/main.go b/base-server/main.go\n+foo", nil)
+				s.EXPECT().
+					MarkGitHubCommitSkipped(gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ uuid.UUID, reason string) error {
+						if !strings.Contains(reason, "frontend") {
+							t.Errorf("expected skip reason to mention frontend, got %q", reason)
+						}
+						return nil
+					})
+				// No Publish expectation → gomock fails if it's called.
+			},
+			classifierMocks: func(cl *MockCommitClassifier, _ *MockGitHubStore) {
+				// Classifier should NOT be called — frontend gate short-circuits.
+				// No EXPECT() here; any call would fail the test.
+				_ = cl
 			},
 		},
 		{
@@ -1276,6 +1307,82 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			proc.enqueueCaptureRequests(context.Background(), repo, commits, false)
 			// enqueueCaptureRequests returns nothing; correctness is verified
 			// entirely through mock expectations and DoAndReturn assertions.
+		})
+	}
+}
+
+func TestDiffTouchesFrontend(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		diff string
+		want bool
+	}{
+		{
+			name: "webapp tsx file – frontend",
+			diff: "diff --git a/webapp/src/App.tsx b/webapp/src/App.tsx\n+foo",
+			want: true,
+		},
+		{
+			name: "webapp scss file – frontend",
+			diff: "diff --git a/webapp/src/styles/_theme.scss b/webapp/src/styles/_theme.scss\n",
+			want: true,
+		},
+		{
+			name: "backend only – not frontend",
+			diff: "diff --git a/base-server/main.go b/base-server/main.go\n+foo",
+			want: false,
+		},
+		{
+			name: "capture-worker only – not frontend",
+			diff: "diff --git a/capture-worker/kafka.ts b/capture-worker/kafka.ts\n+log",
+			want: false,
+		},
+		{
+			name: "docs only – not frontend",
+			diff: "diff --git a/docs/PRD.md b/docs/PRD.md\n-old\n+new",
+			want: false,
+		},
+		{
+			name: "ci only – not frontend",
+			diff: "diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml\n",
+			want: false,
+		},
+		{
+			name: "mixed backend + webapp – frontend wins",
+			diff: "diff --git a/base-server/handler.go b/base-server/handler.go\n+x\ndiff --git a/webapp/src/api.ts b/webapp/src/api.ts\n+y",
+			want: true,
+		},
+		{
+			name: "file rename into webapp – frontend",
+			diff: "diff --git a/shared/foo.ts b/webapp/src/foo.ts\nsimilarity index 95%",
+			want: true,
+		},
+		{
+			name: "empty diff – unknown, defer to classifier",
+			diff: "",
+			want: true,
+		},
+		{
+			name: "whitespace-only diff – unknown, defer to classifier",
+			diff: "   \n\n",
+			want: true,
+		},
+		{
+			name: "no diff --git header at all – unknown, defer to classifier",
+			diff: "some freeform commit summary without unified diff",
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := diffTouchesFrontend(tt.diff)
+			if got != tt.want {
+				t.Errorf("diffTouchesFrontend(%q) = %v, want %v", tt.diff, got, tt.want)
+			}
 		})
 	}
 }
