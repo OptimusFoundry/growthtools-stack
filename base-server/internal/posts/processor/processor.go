@@ -561,6 +561,29 @@ func (p *PostProcessor) RetryFailedPlatformPosts(ctx context.Context, accountID,
 		return ErrFailedRetryPost
 	}
 
+	// Publish event so the publish worker picks the reset rows up immediately.
+	// Without this, the post sits in 'publishing' until RetryWorker.recoverStuckPublishing
+	// times it out after ~5 min, which both delays the retry and allows the original
+	// in-flight Kafka event (if any) to redeliver and double-publish.
+	platformPosts, err := p.store.GetPlatformPostsByPostID(ctx, postID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to load platform posts for retry event", err)
+		return ErrFailedRetryPost
+	}
+	platforms := make([]string, 0, len(platformPosts))
+	for _, pp := range platformPosts {
+		platforms = append(platforms, pp.Platform)
+	}
+	event := map[string]interface{}{
+		"post_id":    postID.String(),
+		"account_id": accountID.String(),
+		"platforms":  platforms,
+	}
+	if err := p.publisher.Publish(ctx, "post.publish", postID.String(), event); err != nil {
+		p.logger.Error(ctx, "failed to publish post.publish event for retry", err)
+		// Don't fail the request — RetryWorker fallback will eventually pick it up.
+	}
+
 	return nil
 }
 

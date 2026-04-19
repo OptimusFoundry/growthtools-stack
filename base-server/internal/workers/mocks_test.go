@@ -20,10 +20,18 @@ type mockPublishStore struct {
 	updatePostStatus                 func(ctx context.Context, accountID, id uuid.UUID, status string, publishedAt *time.Time) error
 	updatePlatformPostStatus         func(ctx context.Context, id uuid.UUID, status string, platformPostID *string, publishedAt any, errMessage *string, attemptCount *int, nextRetryAt *time.Time, lastAttemptAt *time.Time) error
 	getMediaByIDs                    func(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	claimPlatformPostForPublishing   func(ctx context.Context, id uuid.UUID) (bool, error)
 
 	// Track calls for assertions
 	updatePlatformPostStatusCalls []updatePlatformPostStatusCall
 	updatePostStatusCalls         []updatePostStatusCall
+}
+
+func (m *mockPublishStore) ClaimPlatformPostForPublishing(ctx context.Context, id uuid.UUID) (bool, error) {
+	if m.claimPlatformPostForPublishing != nil {
+		return m.claimPlatformPostForPublishing(ctx, id)
+	}
+	return true, nil
 }
 
 type updatePlatformPostStatusCall struct {

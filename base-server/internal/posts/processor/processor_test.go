@@ -652,7 +652,11 @@ func TestPostProcessor_RetryFailedPlatformPosts(t *testing.T) {
 		)
 		mockStore.EXPECT().ResetPlatformPostsForRetry(gomock.Any(), postID).Return(nil)
 		mockStore.EXPECT().UpdatePostStatus(gomock.Any(), accountID, postID, store.PostStatusPublishing, (*time.Time)(nil)).Return(nil)
+		mockStore.EXPECT().GetPlatformPostsByPostID(gomock.Any(), postID).Return(
+			[]store.PlatformPost{{Platform: "x"}, {Platform: "linkedin"}}, nil,
+		)
 		mockPublisher := NewMockEventPublisher(ctrl)
+		mockPublisher.EXPECT().Publish(gomock.Any(), "post.publish", postID.String(), gomock.Any()).Return(nil)
 		proc := New(mockStore, mockPublisher, logger)
 
 		err := proc.RetryFailedPlatformPosts(context.Background(), accountID, postID)

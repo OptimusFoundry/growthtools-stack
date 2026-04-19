@@ -128,6 +128,35 @@ func (s *Store) UpdatePlatformPostStatus(ctx context.Context, id uuid.UUID, stat
 	return nil
 }
 
+// sqlClaimPlatformPostForPublishing atomically transitions a row from
+// pending/failed → publishing. The conditional WHERE means only one
+// concurrent caller can win the row; redelivered Kafka messages and
+// concurrent worker instances see rows_affected=0 and skip.
+const sqlClaimPlatformPostForPublishing = `
+UPDATE platform_posts
+SET status = 'publishing',
+    last_attempt_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+  AND status IN ('pending', 'failed')
+`
+
+// ClaimPlatformPostForPublishing returns true if this caller successfully
+// claimed the row (status flipped to publishing). False means another
+// caller already claimed it, the row is already published, or the id
+// does not exist.
+func (s *Store) ClaimPlatformPostForPublishing(ctx context.Context, id uuid.UUID) (bool, error) {
+	res, err := s.db.ExecContext(ctx, sqlClaimPlatformPostForPublishing, id)
+	if err != nil {
+		return false, fmt.Errorf("failed to claim platform post for publishing: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	return rows == 1, nil
+}
+
 const sqlUpdatePlatformPostEngagement = `
 UPDATE platform_posts
 SET engagement = $2, updated_at = CURRENT_TIMESTAMP
@@ -320,7 +349,7 @@ func (s *Store) ListPlatformPostsAwaitingMedia(ctx context.Context, limit int) (
 // ResetPlatformPostsForRetry resets permanently failed platform_posts so they can be retried
 const sqlResetPlatformPostsForRetry = `
 UPDATE platform_posts
-SET status = 'failed',
+SET status = 'pending',
     attempt_count = 0,
     next_retry_at = CURRENT_TIMESTAMP,
     error_message = NULL,
