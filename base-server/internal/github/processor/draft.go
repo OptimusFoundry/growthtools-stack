@@ -26,7 +26,7 @@ const (
 	// fallbackThreadParts is the part count used only when the media/mode
 	// assessor call fails AND we're falling back to thread mode. Happy-path
 	// generation uses the AI-chosen count.
-	fallbackThreadParts = 5
+	fallbackThreadParts = 3
 	draftPostSource     = "github_event"
 	mediaSource         = "github_capture"
 )

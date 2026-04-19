@@ -332,7 +332,7 @@ func (h *Handler) handleStreamGenerateWithMedia(
 	modeDecision, err := h.processor.DecideMode(ctx, video, images, req.Prompt)
 	if err != nil {
 		h.logger.Error(ctx, "mode decision failed; defaulting to thread mode", err)
-		modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: 5, Reason: "mode decision unavailable"}
+		modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "mode decision unavailable"}
 	}
 
 	// Build a MediaPlan that reflects the full user selection.

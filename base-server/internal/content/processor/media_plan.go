@@ -71,23 +71,23 @@ You will receive:
 Return raw JSON only (no markdown fences, no commentary):
 {
   "use_video": true|false,
-  "image_indexes": [1, 3],
+  "image_indexes": [2],
   "mode": "single"|"thread",
   "thread_parts": 0,
   "reason": "one short sentence"
 }
 
-Media rules (lean toward video):
-- Video drives engagement far more than screenshots. If the video exists, watch it. If it actually shows the change in action — a working UI, a transition, a demo moment — use_video MUST be true, and you should generally drop images unless a screenshot reveals something the video does not (e.g. a static final-state detail or a result screen the video cuts away from).
+Media rules (at most one video + at most one image):
+- The final post carries at most one video and at most one image. image_indexes MUST contain either zero or exactly one index.
+- Video drives engagement far more than screenshots. If the video exists, watch it. If it actually shows the change in action — a working UI, a transition, a demo moment — use_video MUST be true.
 - If the video is broken, stuck on a loading state, mostly blank, or fails to show the change, set use_video=false.
-- Deduplicate images aggressively. Compare every pair of screenshots. If two images show the same UI state — same layout, same content, same screen — keep only the cleaner or later one. Drop the rest. Screenshots taken seconds apart on a static page are duplicates even if a few pixels differ.
-- After deduplication, prefer fewer images still. One or two strong static shots beats a reel. Skip loading spinners, mid-animation frames, and any view that doesn't add new information beyond what's already shown.
+- For the image: pick the single screenshot that most clearly shows the change described in the commit message — ideally the final/result state of the feature. If the video already demonstrates the change end-to-end and no screenshot adds new information, image_indexes=[] is fine. Never pick a loading spinner, mid-animation frame, or a screen unrelated to the change.
 - If neither video nor any image adds real value, use_video=false and image_indexes=[] are both valid answers. Better no media than bad media.
 
 Mode rules:
 - "single" when the change is small, the media is one strong video or one strong screenshot, or the commit message does not carry enough substance for multiple beats.
 - "thread" when there is enough to say across multiple posts AND there is enough media (or enough narrative) to pace it. Threads with one media item and thin copy feel padded — prefer single in that case.
-- When mode="thread", thread_parts is an integer 2–7. Do not exceed 7. When mode="single", thread_parts MUST be 0.
+- When mode="thread", thread_parts is an integer 2–3. Do not exceed 3. When mode="single", thread_parts MUST be 0.
 
 General:
 - image_indexes are 1-based into the order provided. Ascending, no duplicates.
@@ -141,7 +141,7 @@ General:
 		decision.Mode = "single"
 		decision.ThreadParts = 0
 	} else {
-		decision.ThreadParts = max(2, min(7, parsed.ThreadParts))
+		decision.ThreadParts = max(2, min(3, parsed.ThreadParts))
 	}
 
 	seen := make(map[int]struct{}, len(parsed.ImageIndexes))
@@ -160,6 +160,9 @@ General:
 		for j := i; j > 0 && cleaned[j-1] > cleaned[j]; j-- {
 			cleaned[j-1], cleaned[j] = cleaned[j], cleaned[j-1]
 		}
+	}
+	if len(cleaned) > 1 {
+		cleaned = cleaned[:1]
 	}
 	decision.ImageIndexes = cleaned
 
@@ -338,7 +341,7 @@ func imageDescriptionsForPrompts(descriptions []ImageDescription) []prompts.Imag
 // user's selection and only needs the layout decision.
 type ModeDecision struct {
 	Mode        string // "single" or "thread"
-	ThreadParts int    // 2–7 when Mode="thread", 0 otherwise
+	ThreadParts int    // 2–3 when Mode="thread", 0 otherwise
 	Reason      string
 }
 
@@ -380,7 +383,7 @@ Return raw JSON only (no markdown fences, no commentary):
 Mode rules:
 - "single" when the change is small, the media is one strong video or one strong screenshot, or the prompt does not carry enough substance for multiple beats.
 - "thread" when there is enough substance + enough media (or enough narrative) to pace it across multiple posts. Threads with thin copy feel padded — prefer single in that case.
-- When mode="thread", thread_parts is an integer 2–7. Do not exceed 7. When mode="single", thread_parts MUST be 0.`
+- When mode="thread", thread_parts is an integer 2–3. Do not exceed 3. When mode="single", thread_parts MUST be 0.`
 
 	parts := make([]string, 0, 2+len(images))
 	parts = append(parts, fmt.Sprintf("Post prompt:\n%s", strings.TrimSpace(prompt)))
@@ -427,7 +430,7 @@ Mode rules:
 		decision.Mode = "single"
 		decision.ThreadParts = 0
 	} else {
-		decision.ThreadParts = max(2, min(7, parsed.ThreadParts))
+		decision.ThreadParts = max(2, min(3, parsed.ThreadParts))
 	}
 	return decision, nil
 }
