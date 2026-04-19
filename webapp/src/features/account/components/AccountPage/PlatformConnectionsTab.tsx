@@ -22,8 +22,11 @@ import { Container } from "@/proto-design-system/components/layout/Container";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
+import { Badge } from "@/proto-design-system/components/primitives/Badge";
+import type { BadgeVariant } from "@/proto-design-system/components/primitives/Badge/Badge.types";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Tag } from "@/proto-design-system/components/primitives/Tag";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import {
 	PLATFORM_DISPLAY_NAMES,
@@ -70,12 +73,20 @@ const PLATFORM_INFO: Record<
 	},
 };
 
-const STATUS_DOT_CLASS: Record<PlatformConnection["status"], string> = {
-	active: styles.statusDotActive,
-	expired: styles.statusDotWarning,
-	revoked: styles.statusDotMuted,
-	error: styles.statusDotError,
+const STATUS_BADGE: Record<
+	PlatformConnection["status"],
+	{ variant: BadgeVariant; label: string }
+> = {
+	active: { variant: "success", label: "Active" },
+	expired: { variant: "warning", label: "Expired" },
+	revoked: { variant: "secondary", label: "Revoked" },
+	error: { variant: "error", label: "Error" },
 };
+
+const NEEDS_RECONNECT = new Set<PlatformConnection["status"]>([
+	"expired",
+	"error",
+]);
 
 function formatDate(dateStr: string): string {
 	return new Date(dateStr).toLocaleDateString("en-US", {
@@ -113,18 +124,22 @@ const PlatformRow = memo(function PlatformRow({
 		? `@${connection.platformUserId} · Connected ${formatDate(connection.connectedAt)}`
 		: info?.description;
 
+	const badge = connection ? STATUS_BADGE[connection.status] : null;
+	const needsReconnect = connection
+		? NEEDS_RECONNECT.has(connection.status)
+		: false;
+	const scopes = connection?.scopes ?? [];
+
 	return (
 		<div className={styles.platformRow}>
 			<div className={styles.platformIcon}>{info?.icon}</div>
 			<div className={styles.platformBody}>
 				<div className={styles.platformNameLine}>
 					<Text weight="semibold">{name}</Text>
-					{connection && (
-						<span
-							className={`${styles.statusDot} ${STATUS_DOT_CLASS[connection.status]}`}
-							title={connection.status}
-							aria-label={connection.status}
-						/>
+					{badge && (
+						<Badge variant={badge.variant} size="sm" rounded>
+							{badge.label}
+						</Badge>
 					)}
 				</div>
 				{meta && (
@@ -132,17 +147,38 @@ const PlatformRow = memo(function PlatformRow({
 						{meta}
 					</Text>
 				)}
+				{scopes.length > 0 && (
+					<div className={styles.scopeChips}>
+						{scopes.map((scope) => (
+							<Tag key={scope} size="sm">
+								{scope}
+							</Tag>
+						))}
+					</div>
+				)}
 			</div>
 			<div className={styles.platformAction}>
 				{connection ? (
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => onDisconnect(connection.id)}
-						disabled={disconnecting}
-					>
-						{disconnecting ? "Disconnecting…" : "Disconnect"}
-					</Button>
+					<Stack direction="row" gap="sm">
+						{needsReconnect && (
+							<Button
+								variant="primary"
+								size="sm"
+								onClick={() => onConnect(platform)}
+								disabled={connecting}
+							>
+								{connecting ? "Reconnecting…" : "Reconnect"}
+							</Button>
+						)}
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => onDisconnect(connection.id)}
+							disabled={disconnecting}
+						>
+							{disconnecting ? "Disconnecting…" : "Disconnect"}
+						</Button>
+					</Stack>
 				) : (
 					<Button
 						variant="secondary"

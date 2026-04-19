@@ -46,27 +46,11 @@
 	gap: var(--space-2);
 }
 
-.statusDot {
-	border-radius: var(--radius-full);
-	display: inline-block;
-	height: var(--space-1-5);
-	width: var(--space-1-5);
-}
-
-.statusDotActive {
-	background: var(--color-success);
-}
-
-.statusDotWarning {
-	background: var(--color-warning);
-}
-
-.statusDotError {
-	background: var(--color-error);
-}
-
-.statusDotMuted {
-	background: var(--color-base-content-tertiary);
+.scopeChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1-5);
+	margin-top: var(--space-2);
 }
 
 .platformAction {
