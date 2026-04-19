@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 
 	"base-server/internal/content/processor"
@@ -328,11 +329,30 @@ func (h *Handler) handleStreamGenerateWithMedia(
 		return
 	}
 
-	// Ask the AI to decide single vs thread. Fail-open to thread mode.
-	modeDecision, err := h.processor.DecideMode(ctx, video, images, req.Prompt)
-	if err != nil {
-		h.logger.Error(ctx, "mode decision failed; defaulting to thread mode", err)
-		modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "mode decision unavailable"}
+	// Resolve mode. If the caller explicitly picked single ("text") or thread,
+	// honor it — this path is invoked from the wizard/regenerate UI where the
+	// user has already made that choice. Only fall back to DecideMode when the
+	// caller left it unspecified.
+	var modeDecision processor.ModeDecision
+	switch strings.ToLower(strings.TrimSpace(req.ContentType)) {
+	case "thread":
+		parts := req.MaxThreadParts
+		if parts < 2 {
+			parts = 3
+		}
+		if parts > 3 {
+			parts = 3
+		}
+		modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: parts, Reason: "user selected thread"}
+	case "text", "single":
+		modeDecision = processor.ModeDecision{Mode: "single", ThreadParts: 0, Reason: "user selected single"}
+	default:
+		var err error
+		modeDecision, err = h.processor.DecideMode(ctx, video, images, req.Prompt)
+		if err != nil {
+			h.logger.Error(ctx, "mode decision failed; defaulting to thread mode", err)
+			modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "mode decision unavailable"}
+		}
 	}
 
 	// Build a MediaPlan that reflects the full user selection.
