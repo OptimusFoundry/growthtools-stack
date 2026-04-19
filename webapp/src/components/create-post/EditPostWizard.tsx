@@ -29,6 +29,9 @@ export function EditPostWizard({ editPostId }: EditPostWizardProps) {
 		platformPosts,
 		media,
 	);
+	if (post.scheduledAt) {
+		overrides.scheduledAt = post.scheduledAt;
+	}
 
 	const hasBeenPublished =
 		post.status === "publishing" ||

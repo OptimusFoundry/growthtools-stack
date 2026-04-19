@@ -71,6 +71,11 @@
 	max-width: 56ch;
 }
 
+.subEmphasis {
+	color: var(--color-base-content);
+	font-weight: var(--font-weight-semibold);
+}
+
 // Two-column layout
 .twoColumn {
 	display: flex;

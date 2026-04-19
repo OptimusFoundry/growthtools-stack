@@ -30,6 +30,27 @@ import type { WizardState } from "./useCreatePostWizard";
 import { useCreatePostWizard } from "./useCreatePostWizard";
 import { useWizardSSESync } from "./useWizardSSESync";
 
+function startOfToday(): Date {
+	const d = new Date();
+	d.setHours(0, 0, 0, 0);
+	return d;
+}
+
+function isSameLocalDay(a: Date, b: Date): boolean {
+	return (
+		a.getFullYear() === b.getFullYear() &&
+		a.getMonth() === b.getMonth() &&
+		a.getDate() === b.getDate()
+	);
+}
+
+function timeMinForDate(date: Date | null): string | undefined {
+	if (!date) return undefined;
+	const now = new Date();
+	if (!isSameLocalDay(date, now)) return undefined;
+	return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
 // ---------------------------------------------------------------------------
 // useScheduleDrawer
 // Manages the schedule drawer's open state, date, time, and confirm logic.
@@ -73,6 +94,14 @@ function useScheduleDrawer(
 		const [h, m] = scheduleTime.split(":").map(Number);
 		const combined = new Date(scheduleDate);
 		combined.setHours(h ?? 9, m ?? 0, 0, 0);
+		if (combined.getTime() <= Date.now()) {
+			addBanner({
+				type: "error",
+				title: "Pick a time in the future",
+				dismissible: true,
+			});
+			return;
+		}
 		const iso = combined.toISOString();
 		setScheduledAt(iso);
 		setScheduleOpen(false);
@@ -444,13 +473,35 @@ export function WizardInner({
 		</>
 	);
 
-	const subLine = !isEditMode
-		? "Write the idea once — AI adapts it for each platform and keeps the voice consistent."
-		: postStatus === "draft"
-			? "Update your post content and platform adaptations. Changes save automatically as you type."
-			: postStatus === "scheduled"
-				? "Review the post and platform adaptations before it goes live at the scheduled time."
-				: "View your published post and see how each platform rendered it.";
+	const isScheduled = postStatus === "scheduled";
+	const formattedScheduledAt =
+		isScheduled && state.scheduledAt
+			? new Date(state.scheduledAt).toLocaleString(undefined, {
+					weekday: "long",
+					month: "long",
+					day: "numeric",
+					hour: "numeric",
+					minute: "2-digit",
+				})
+			: null;
+
+	const subLine: ReactNode = !isEditMode ? (
+		"Write the idea once — AI adapts it for each platform and keeps the voice consistent."
+	) : postStatus === "draft" ? (
+		"Update your post content and platform adaptations. Changes save automatically as you type."
+	) : isScheduled ? (
+		formattedScheduledAt ? (
+			<>
+				Going live on{" "}
+				<strong className={styles.subEmphasis}>{formattedScheduledAt}</strong>.
+				Review or reschedule before it ships.
+			</>
+		) : (
+			"Review the post and platform adaptations before it goes live at the scheduled time."
+		)
+	) : (
+		"View your published post and see how each platform rendered it."
+	);
 
 	const busy = state.submitting || savingDraft || updatingDraft;
 	const canAct = state.generated && !readOnly;
@@ -513,7 +564,7 @@ export function WizardInner({
 				onClick={() => scheduleDrawer.setScheduleOpen(true)}
 				disabled={busy || !canAct}
 			>
-				<CalendarClock size={14} /> Schedule
+				<CalendarClock size={14} /> {isScheduled ? "Reschedule" : "Schedule"}
 			</Button>
 			<Button
 				variant="primary"
@@ -601,7 +652,7 @@ export function WizardInner({
 			<Drawer
 				isOpen={scheduleDrawer.scheduleOpen}
 				onClose={() => scheduleDrawer.setScheduleOpen(false)}
-				title="Schedule post"
+				title={isScheduled ? "Reschedule post" : "Schedule post"}
 				description={scheduleDrawer.scheduledLabel}
 				size="md"
 				footer={
@@ -618,7 +669,7 @@ export function WizardInner({
 							isLoading={state.submitting}
 							disabled={!scheduleDrawer.scheduleDate}
 						>
-							Schedule
+							{isScheduled ? "Reschedule" : "Schedule"}
 						</Button>
 					</Stack>
 				}
@@ -627,7 +678,7 @@ export function WizardInner({
 					<DatePicker
 						value={scheduleDrawer.scheduleDate}
 						onChange={scheduleDrawer.setScheduleDate}
-						minDate={new Date()}
+						minDate={startOfToday()}
 						inline
 					/>
 					<Stack gap="xs">
@@ -636,6 +687,7 @@ export function WizardInner({
 							type="time"
 							value={scheduleDrawer.scheduleTime}
 							onChange={(e) => scheduleDrawer.setScheduleTime(e.target.value)}
+							min={timeMinForDate(scheduleDrawer.scheduleDate)}
 						/>
 					</Stack>
 				</Stack>
