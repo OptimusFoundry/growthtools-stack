@@ -40,14 +40,6 @@ func (c *Client) apiBase() string {
 	return "https://api.x.com"
 }
 
-// uploadBase returns the base URL for media upload calls. Falls back to production.
-func (c *Client) uploadBase() string {
-	if c.baseURL != "" {
-		return c.baseURL
-	}
-	return "https://upload.twitter.com"
-}
-
 // CreateTweet posts a tweet via the X v2 API.
 func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, accessToken, tokenSecret string) (CreateTweetResponse, error) {
 	payload := map[string]any{

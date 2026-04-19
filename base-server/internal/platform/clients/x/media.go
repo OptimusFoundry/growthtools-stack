@@ -3,14 +3,12 @@ package x
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -118,111 +116,139 @@ func (c *Client) UploadMediaAsync(ctx context.Context, req UploadMediaRequest, a
 	return parseUploadResponse(respBody)
 }
 
-// uploadVideoChunked uploads a video using the X v1.1 INIT→APPEND→FINALIZE
-// chunked flow. The v2 API has no media upload endpoint — all media uploads
-// (including video) must use upload.twitter.com/1.1/media/upload.json.
-// tokenSecret is unused: video always authenticates with Bearer, not OAuth 1.0a.
+// uploadVideoChunked uploads a video using the X v2 structured chunked flow:
+//   - POST /2/media/upload/initialize (JSON)
+//   - POST /2/media/upload/{id}/append (multipart chunk)
+//   - POST /2/media/upload/{id}/finalize
+//
+// The legacy v1.1 endpoint (upload.twitter.com/1.1/media/upload.json) and
+// the command-style v2 path (POST /2/media/upload with command=INIT) both
+// return 404 for OAuth 2.0 callers on the Pay Per Use tier.
 func (c *Client) uploadVideoChunked(ctx context.Context, videoBytes []byte, mediaType, accessToken string) (UploadMediaResult, error) {
 	if len(videoBytes) == 0 {
 		return UploadMediaResult{}, fmt.Errorf("xapi: video upload requires non-empty bytes")
 	}
 
-	endpoint := c.uploadBase() + "/1.1/media/upload.json"
 	const chunkSize = 5 * 1024 * 1024
 
-	// INIT
-	initBody, err := c.chunkedCommandRaw(ctx, endpoint, accessToken, []field{
-		{"command", "INIT"},
-		{"media_type", mediaType},
-		{"total_bytes", strconv.Itoa(len(videoBytes))},
-		{"media_category", "tweet_video"},
-	}, nil)
+	// INIT — POST /2/media/upload/initialize with JSON body.
+	mediaID, err := c.initVideoUpload(ctx, mediaType, len(videoBytes), accessToken)
 	if err != nil {
 		return UploadMediaResult{}, fmt.Errorf("xapi: video INIT failed: %w", err)
 	}
-	initResult, err := parseUploadResponse(initBody)
-	if err != nil {
-		return UploadMediaResult{}, fmt.Errorf("xapi: video INIT parse failed: %w", err)
-	}
-	if initResult.MediaID == "" {
-		return UploadMediaResult{}, fmt.Errorf("xapi: video INIT returned empty media_id")
-	}
-	mediaID := initResult.MediaID
 
-	// APPEND — mediaID returned by X is discarded; 204 No Content has no body
+	// APPEND — POST /2/media/upload/{id}/append for each chunk.
 	for i, seg := 0, 0; i < len(videoBytes); i, seg = i+chunkSize, seg+1 {
 		end := min(i+chunkSize, len(videoBytes))
-		if _, err := c.chunkedCommandRaw(ctx, endpoint, accessToken, []field{
-			{"command", "APPEND"},
-			{"media_id", mediaID},
-			{"segment_index", strconv.Itoa(seg)},
-		}, videoBytes[i:end]); err != nil {
+		if err := c.appendVideoChunk(ctx, mediaID, seg, videoBytes[i:end], accessToken); err != nil {
 			return UploadMediaResult{}, fmt.Errorf("xapi: video APPEND segment %d failed: %w", seg, err)
 		}
 	}
 
-	// FINALIZE — returns processing_info for async polling
-	finalBody, err := c.chunkedCommandRaw(ctx, endpoint, accessToken, []field{
-		{"command", "FINALIZE"},
-		{"media_id", mediaID},
-	}, nil)
-	if err != nil {
-		return UploadMediaResult{}, fmt.Errorf("xapi: video FINALIZE failed: %w", err)
-	}
-	return parseUploadResponse(finalBody)
+	// FINALIZE — POST /2/media/upload/{id}/finalize; response carries processing_info.
+	return c.finalizeVideoUpload(ctx, mediaID, accessToken)
 }
 
-// field is an ordered key-value pair for multipart form fields.
-// Using a slice instead of map guarantees deterministic field ordering.
-type field struct{ key, value string }
+// initVideoUpload starts a chunked upload session and returns the media id.
+func (c *Client) initVideoUpload(ctx context.Context, mediaType string, totalBytes int, accessToken string) (string, error) {
+	payload := map[string]any{
+		"media_type":     mediaType,
+		"total_bytes":    totalBytes,
+		"media_category": "tweet_video",
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal init payload: %w", err)
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBase()+"/2/media/upload/initialize", bytes.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("build init request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
 
-// chunkedCommandRaw posts a multipart/form-data command and returns the raw
-// response body. chunk is written as the "media" field when non-nil.
-func (c *Client) chunkedCommandRaw(ctx context.Context, endpoint, accessToken string, fields []field, chunk []byte) ([]byte, error) {
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("status %d: %s", resp.StatusCode, string(respBody))
+	}
+	result, err := parseUploadResponse(respBody)
+	if err != nil {
+		return "", fmt.Errorf("parse response: %w", err)
+	}
+	if result.MediaID == "" {
+		return "", fmt.Errorf("empty media_id")
+	}
+	return result.MediaID, nil
+}
+
+// appendVideoChunk uploads a single chunk as multipart form-data.
+func (c *Client) appendVideoChunk(ctx context.Context, mediaID string, segmentIndex int, chunk []byte, accessToken string) error {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
-	for _, f := range fields {
-		if err := w.WriteField(f.key, f.value); err != nil {
-			return nil, fmt.Errorf("xapi: write field %s: %w", f.key, err)
-		}
+	if err := w.WriteField("segment_index", strconv.Itoa(segmentIndex)); err != nil {
+		return fmt.Errorf("write segment_index: %w", err)
 	}
-	if chunk != nil {
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition", `form-data; name="media"; filename="chunk"`)
-		h.Set("Content-Type", "application/octet-stream")
-		part, err := w.CreatePart(h)
-		if err != nil {
-			return nil, fmt.Errorf("xapi: create chunk part: %w", err)
-		}
-		if _, err := part.Write(chunk); err != nil {
-			return nil, fmt.Errorf("xapi: write chunk: %w", err)
-		}
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", `form-data; name="media"; filename="chunk"`)
+	h.Set("Content-Type", "application/octet-stream")
+	part, err := w.CreatePart(h)
+	if err != nil {
+		return fmt.Errorf("create chunk part: %w", err)
+	}
+	if _, err := part.Write(chunk); err != nil {
+		return fmt.Errorf("write chunk: %w", err)
 	}
 	if err := w.Close(); err != nil {
-		return nil, fmt.Errorf("xapi: close multipart writer: %w", err)
+		return fmt.Errorf("close multipart writer: %w", err)
 	}
 
+	endpoint := fmt.Sprintf("%s/2/media/upload/%s/append", c.apiBase(), mediaID)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &buf)
 	if err != nil {
-		return nil, fmt.Errorf("xapi: build request: %w", err)
+		return fmt.Errorf("build request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", w.FormDataContentType())
 	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("xapi: request failed: %w", err)
+		return fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("xapi: command failed with %d: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("status %d: %s", resp.StatusCode, string(body))
 	}
-	return body, nil
+	return nil
 }
 
-// parseUploadResponse decodes a v2 (or v1.1 fallback) media upload response.
+// finalizeVideoUpload closes the chunked upload and returns processing state.
+func (c *Client) finalizeVideoUpload(ctx context.Context, mediaID, accessToken string) (UploadMediaResult, error) {
+	endpoint := fmt.Sprintf("%s/2/media/upload/%s/finalize", c.apiBase(), mediaID)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
+	if err != nil {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video FINALIZE build request: %w", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video FINALIZE request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return UploadMediaResult{}, fmt.Errorf("xapi: video FINALIZE status %d: %s", resp.StatusCode, string(body))
+	}
+	return parseUploadResponse(body)
+}
+
+// parseUploadResponse decodes a v2 media upload response.
 func parseUploadResponse(respBody []byte) (UploadMediaResult, error) {
 	if len(respBody) == 0 {
 		return UploadMediaResult{}, nil
@@ -338,96 +364,3 @@ func (c *Client) GetMediaStatus(ctx context.Context, mediaID, accessToken string
 	return pi, nil
 }
 
-// uploadMediaLegacy is the old v1.1 chunked flow, kept for reference.
-func (c *Client) uploadMediaLegacy(ctx context.Context, req UploadMediaRequest, accessToken, tokenSecret string) (string, error) {
-	totalBytes := len(req.MediaBytes)
-	mediaType := req.MediaType
-	if mediaType == "" {
-		mediaType = "image/jpeg"
-	}
-
-	uploadURL := c.uploadBase() + "/1.1/media/upload.json"
-
-	initParams := url.Values{}
-	initParams.Set("command", "INIT")
-	initParams.Set("total_bytes", strconv.Itoa(totalBytes))
-	initParams.Set("media_type", mediaType)
-
-	initReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, strings.NewReader(initParams.Encode()))
-	if err != nil {
-		return "", fmt.Errorf("xapi: failed to create INIT request: %w", err)
-	}
-	initReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	initReq.Header.Set("Authorization", c.authHeader(http.MethodPost, uploadURL, initParams, accessToken, tokenSecret))
-
-	initResp, err := c.httpClient.Do(initReq)
-	if err != nil {
-		return "", fmt.Errorf("xapi: INIT request failed: %w", err)
-	}
-	defer initResp.Body.Close()
-	initBody, _ := io.ReadAll(initResp.Body)
-
-	if initResp.StatusCode != http.StatusAccepted && initResp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("xapi: INIT failed with %d: %s", initResp.StatusCode, string(initBody))
-	}
-
-	var initResult struct {
-		MediaIDString string `json:"media_id_string"`
-	}
-	if err := json.Unmarshal(initBody, &initResult); err != nil {
-		return "", fmt.Errorf("xapi: failed to parse INIT response: %w", err)
-	}
-
-	const chunkSize = 5 * 1024 * 1024
-	for i := 0; i < totalBytes; i += chunkSize {
-		end := min(i+chunkSize, totalBytes)
-		chunk := req.MediaBytes[i:end]
-		segmentIndex := i / chunkSize
-
-		appendParams := url.Values{}
-		appendParams.Set("command", "APPEND")
-		appendParams.Set("media_id", initResult.MediaIDString)
-		appendParams.Set("segment_index", strconv.Itoa(segmentIndex))
-		appendParams.Set("media_data", base64.StdEncoding.EncodeToString(chunk))
-
-		appendReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, strings.NewReader(appendParams.Encode()))
-		if err != nil {
-			return "", fmt.Errorf("xapi: failed to create APPEND request: %w", err)
-		}
-		appendReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		appendReq.Header.Set("Authorization", c.authHeader(http.MethodPost, uploadURL, appendParams, accessToken, tokenSecret))
-
-		appendResp, err := c.httpClient.Do(appendReq)
-		if err != nil {
-			return "", fmt.Errorf("xapi: APPEND request failed: %w", err)
-		}
-		appendResp.Body.Close()
-		if appendResp.StatusCode != http.StatusNoContent && appendResp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("xapi: APPEND failed with %d", appendResp.StatusCode)
-		}
-	}
-
-	finalizeParams := url.Values{}
-	finalizeParams.Set("command", "FINALIZE")
-	finalizeParams.Set("media_id", initResult.MediaIDString)
-
-	finalizeReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, strings.NewReader(finalizeParams.Encode()))
-	if err != nil {
-		return "", fmt.Errorf("xapi: failed to create FINALIZE request: %w", err)
-	}
-	finalizeReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	finalizeReq.Header.Set("Authorization", c.authHeader(http.MethodPost, uploadURL, finalizeParams, accessToken, tokenSecret))
-
-	finalizeResp, err := c.httpClient.Do(finalizeReq)
-	if err != nil {
-		return "", fmt.Errorf("xapi: FINALIZE request failed: %w", err)
-	}
-	defer finalizeResp.Body.Close()
-
-	if finalizeResp.StatusCode != http.StatusCreated && finalizeResp.StatusCode != http.StatusOK {
-		finalizeBody, _ := io.ReadAll(finalizeResp.Body)
-		return "", fmt.Errorf("xapi: FINALIZE failed with %d: %s", finalizeResp.StatusCode, string(finalizeBody))
-	}
-
-	return initResult.MediaIDString, nil
-}
