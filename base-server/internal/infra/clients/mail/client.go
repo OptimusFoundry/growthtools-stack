@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/resendlabs/resend-go"
+	"github.com/resend/resend-go/v3"
 )
 
 type ResendClient struct {

@@ -38,15 +38,15 @@ export const handlers = [
  * Export individual handler groups for selective use
  */
 export {
+	analyticsHandlers,
 	authHandlers,
 	billingHandlers,
-	postsHandlers,
-	platformsHandlers,
-	mediaHandlers,
 	blogHandlers,
-	analyticsHandlers,
-	settingsHandlers,
 	contentHandlers,
+	mediaHandlers,
+	platformsHandlers,
+	postsHandlers,
+	settingsHandlers,
 };
 
 /**

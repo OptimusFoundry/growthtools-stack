@@ -4,7 +4,7 @@ import (
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
-	"github.com/stripe/stripe-go/v79"
+	"github.com/stripe/stripe-go/v83"
 )
 
 type ProductService struct {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v79/webhook"
+	"github.com/stripe/stripe-go/v83/webhook"
 )
 
 func (h *Handler) HandleGetPaymentMethod(c *gin.Context) {

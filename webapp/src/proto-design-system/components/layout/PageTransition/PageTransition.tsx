@@ -65,7 +65,7 @@ export function PageTransition({
 
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration, ease: [0, 0, 0.2, 1] };
+		: { duration, ease: [0, 0, 0.2, 1] as const };
 
 	return (
 		<AnimatePresence mode="wait">

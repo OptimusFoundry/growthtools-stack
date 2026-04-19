@@ -136,7 +136,7 @@ export function Drawer({
 										animate: { y: 0, x: 0 },
 										exit: { y: "100%", x: 0 },
 									}))}
-						transition={{ duration: 0.24, ease: [0.2, 0, 0, 1] }}
+						transition={{ duration: 0.24, ease: [0.2, 0, 0, 1] as const }}
 					>
 						{(title || showCloseButton) && (
 							<header className={styles.header}>

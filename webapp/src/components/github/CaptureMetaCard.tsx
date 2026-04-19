@@ -1,4 +1,4 @@
-import { ExternalLink, Github } from "lucide-react";
+import { ExternalLink, GitBranch as Github } from "lucide-react";
 import { memo } from "react";
 import type { GitHubCommit } from "@/hooks/useGitHubCommits";
 import { Stack } from "@/proto-design-system/components/layout/Stack";

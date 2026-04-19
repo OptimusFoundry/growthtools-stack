@@ -3,7 +3,7 @@
  * Renders GitHub connection state inline (no card chrome — wrapped by caller).
  */
 
-import { Github } from "lucide-react";
+import { GitBranch as Github } from "lucide-react";
 import { memo } from "react";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";

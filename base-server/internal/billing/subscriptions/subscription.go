@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v79"
+	"github.com/stripe/stripe-go/v83"
 )
 
 type Subscription struct {
@@ -47,9 +47,9 @@ func (p *SubscriptionService) CreateSubscription(ctx context.Context, subscripti
 		PriceID:         price.ID,
 		StripeID:        subscriptionCreated.ID,
 		Status:          string(subscriptionCreated.Status),
-		StartDate:       time.Unix(subscriptionCreated.CurrentPeriodStart, 0),
-		EndDate:         time.Unix(subscriptionCreated.CurrentPeriodEnd, 0),
-		NextBillingDate: time.Unix(subscriptionCreated.CurrentPeriodEnd, 0),
+		StartDate:       time.Unix(subscriptionCreated.Items.Data[0].CurrentPeriodStart, 0),
+		EndDate:         time.Unix(subscriptionCreated.Items.Data[0].CurrentPeriodEnd, 0),
+		NextBillingDate: time.Unix(subscriptionCreated.Items.Data[0].CurrentPeriodEnd, 0),
 	}
 	err = p.store.CreateSubscription(ctx, params)
 	if err != nil {
@@ -65,9 +65,9 @@ func (p *SubscriptionService) UpdateSubscription(ctx context.Context, subscripti
 
 	params := store.UpdateSubscriptionParams{
 		Status:  string(subscriptionUpdated.Status),
-		EndDate: time.Unix(subscriptionUpdated.CurrentPeriodEnd, 0),
+		EndDate: time.Unix(subscriptionUpdated.Items.Data[0].CurrentPeriodEnd, 0),
 		// This we should only update when invoice is paid
-		NextBillingDate: time.Unix(subscriptionUpdated.CurrentPeriodEnd, 0),
+		NextBillingDate: time.Unix(subscriptionUpdated.Items.Data[0].CurrentPeriodEnd, 0),
 		StripeID:        subscriptionUpdated.ID,
 		StripePriceID:   subscriptionUpdated.Items.Data[0].Price.ID,
 	}

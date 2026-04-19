@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stripe/stripe-go/v79"
-	"github.com/stripe/stripe-go/v79/subscription"
-	"github.com/stripe/stripe-go/v79/tax/transaction"
+	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/subscription"
+	"github.com/stripe/stripe-go/v83/tax/transaction"
 )
 
 // Invoke this method in your webhook handler when `payment_intent.succeeded` webhook is received
@@ -106,11 +106,11 @@ func (p *BillingProcessor) SubscriptionCreated(ctx context.Context, subscription
 func (p *BillingProcessor) InvoicePaymentFailed(ctx context.Context, invoice stripe.Invoice) error {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "invoice_id", Value: invoice.ID},
-		observability.Field{Key: "subscription_id", Value: invoice.Subscription.ID})
+		observability.Field{Key: "subscription_id", Value: invoice.Parent.SubscriptionDetails.Subscription.ID})
 	//1. Get the user by the customer ID
 	//2. Get the user's email
 	//3. Send an email to the user
-	err := p.CancelSubscriptionBySubscriptionExternalID(ctx, invoice.Subscription.ID)
+	err := p.CancelSubscriptionBySubscriptionExternalID(ctx, invoice.Parent.SubscriptionDetails.Subscription.ID)
 	if err != nil {
 		p.logger.Error(ctx, "failed to cancel subscription", err)
 		return fmt.Errorf("failed to cancel subscription: %w", err)
@@ -123,17 +123,17 @@ func (p *BillingProcessor) InvoicePaymentFailed(ctx context.Context, invoice str
 func (p *BillingProcessor) InvoicePaymentPaid(ctx context.Context, invoice stripe.Invoice) error {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "invoice_id", Value: invoice.ID},
-		observability.Field{Key: "subscription_id", Value: invoice.Subscription.ID})
+		observability.Field{Key: "subscription_id", Value: invoice.Parent.SubscriptionDetails.Subscription.ID})
 	// 1. Get the user by the customer ID
 	// 2. Get the user's email
 	// 3. Send an email to the user
 	// 4. Update next billing date on subscription row
-	//err := p.subscriptionService.UpdateSubscription(ctx, invoice.Subscription.ID)
+	//err := p.subscriptionService.UpdateSubscription(ctx, invoice.Parent.SubscriptionDetails.Subscription.ID)
 	//if err != nil {
 	//	p.logger.Error(ctx, "failed to cancel subscription", err)
 	//	return
 	//}
-	sub, err := subscription.Get(invoice.Subscription.ID, nil)
+	sub, err := subscription.Get(invoice.Parent.SubscriptionDetails.Subscription.ID, nil)
 	if err != nil {
 		p.logger.Error(ctx, "failed to get subscription", err)
 		return fmt.Errorf("failed to get subscription: %w", err)
@@ -147,7 +147,7 @@ func (p *BillingProcessor) InvoicePaymentPaid(ctx context.Context, invoice strip
 //	// 1. Get the user by the customer ID
 //	// 2. Get the user's email
 //	// 3. Send an email to the user
-//	err := p.subscriptionService.UpdateSubscription(ctx, invoice.Subscription.ID)
+//	err := p.subscriptionService.UpdateSubscription(ctx, invoice.Parent.SubscriptionDetails.Subscription.ID)
 //	if err != nil {
 //		p.logger.Error(ctx, "failed to cancel subscription", err)
 //		return

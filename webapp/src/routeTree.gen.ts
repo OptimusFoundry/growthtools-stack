@@ -165,7 +165,7 @@ export interface FileRoutesByFullPath {
   '/oauth/signedin': typeof OauthSignedinRoute
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
-  '/billing': typeof BillingIndexRoute
+  '/billing/': typeof BillingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -240,7 +240,7 @@ export interface FileRouteTypes {
     | '/oauth/signedin'
     | '/posts/$id'
     | '/posts/new'
-    | '/billing'
+    | '/billing/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -398,7 +398,7 @@ declare module '@tanstack/react-router' {
     '/billing/': {
       id: '/billing/'
       path: '/billing'
-      fullPath: '/billing'
+      fullPath: '/billing/'
       preLoaderRoute: typeof BillingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }

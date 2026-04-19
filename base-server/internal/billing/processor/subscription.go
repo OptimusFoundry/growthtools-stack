@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v79"
-	"github.com/stripe/stripe-go/v79/checkout/session"
-	"github.com/stripe/stripe-go/v79/subscription"
+	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/checkout/session"
+	"github.com/stripe/stripe-go/v83/subscription"
 )
 
 var (
