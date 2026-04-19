@@ -74,7 +74,7 @@ func (s *pinterestAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func newPinterestAdapterWithAPI(srv *httptest.Server) *PinterestAdapter {
 	logger := observability.NewLogger()
-	client := pinterest.NewTestClient(srv.URL, srv.Client(), logger)
+	client := pinterest.NewClient(srv.URL, srv.Client(), logger)
 	return NewPinterestAdapter(client, logger)
 }
 

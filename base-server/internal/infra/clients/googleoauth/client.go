@@ -9,8 +9,6 @@ import (
 	"net/http"
 )
 
-const googleOauthTokenURL = "https://oauth2.googleapis.com/token"
-
 type GoogleOauthTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	IdToken     string `json:"id_token"`
@@ -27,23 +25,26 @@ type Client struct {
 	clientID     string
 	clientSecret string
 	redirectURL  string
+	tokenURL     string
+	userinfoURL  string
 	logger       *observability.Logger
 	httpClient   *http.Client
 }
 
-func NewClient(clientID, clientSecret, redirectURL string, logger *observability.Logger) *Client {
-	httpClient := &http.Client{}
+func NewClient(clientID, clientSecret, redirectURL string, tokenURL, userinfoURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
 		clientID:     clientID,
 		clientSecret: clientSecret,
 		redirectURL:  redirectURL,
+		tokenURL:     tokenURL,
+		userinfoURL:  userinfoURL,
 		logger:       logger,
 		httpClient:   httpClient,
 	}
 }
 
 func (c *Client) GetAccessToken(ctx context.Context, code string) (GoogleOauthTokenResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", googleOauthTokenURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", c.tokenURL, nil)
 	if err != nil {
 		c.logger.InfoWithError(ctx, "failed to create request", err)
 		return GoogleOauthTokenResponse{}, fmt.Errorf("failed to create request: %w", err)
@@ -98,7 +99,7 @@ func (c *Client) GetAccessToken(ctx context.Context, code string) (GoogleOauthTo
 }
 
 func (c *Client) GetUserInfo(ctx context.Context, token string) (UserInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/oauth2/v3/userinfo", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", c.userinfoURL, nil)
 	if err != nil {
 		c.logger.InfoWithError(ctx, "failed to create request", err)
 		return UserInfo{}, fmt.Errorf("failed to create request: %w", err)

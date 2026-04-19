@@ -13,8 +13,6 @@ import (
 	"base-server/internal/infra/observability"
 )
 
-const threadsAPIBase = "https://graph.threads.net"
-
 // Client handles HTTP communication with the Threads API.
 type Client struct {
 	httpClient *http.Client
@@ -23,15 +21,7 @@ type Client struct {
 }
 
 // NewClient creates a new Threads API client.
-func NewClient(logger *observability.Logger) *Client {
-	return &Client{
-		httpClient: &http.Client{},
-		logger:     logger,
-	}
-}
-
-// NewTestClient creates a Client that routes all requests to baseURL.
-func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
 		httpClient: httpClient,
 		logger:     logger,
@@ -43,7 +33,7 @@ func (c *Client) apiBase() string {
 	if c.baseURL != "" {
 		return c.baseURL
 	}
-	return threadsAPIBase
+	return "https://graph.threads.net"
 }
 
 // CreateThread creates a thread container (step 1 of the 2-step flow).

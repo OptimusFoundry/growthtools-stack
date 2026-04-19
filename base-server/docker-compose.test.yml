@@ -9,6 +9,8 @@ services:
       POSTGRES_USER: base_user
       POSTGRES_PASSWORD: base_password
       PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
     volumes:
       - test_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -42,7 +44,7 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -51,6 +53,8 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       CLUSTER_ID: 'TestCluster12345678901'
+    ports:
+      - "9092:9092"
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
       interval: 3s
@@ -58,65 +62,5 @@ services:
       retries: 10
       start_period: 5s
 
-  server:
-    container_name: base-server-test-server
-    image: base-server-test-server:ci
-    build:
-      context: .
-      dockerfile: Dockerfile
-      cache_from:
-        - base-server-test-server:ci
-    depends_on:
-      db:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-      kafka:
-        condition: service_healthy
-    env_file:
-      - env.test
-    environment:
-      # Override database and kafka to use Docker service names
-      DB_HOST: db
-      KAFKA_BROKERS: kafka:9092
-      GO_ENV: test
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 2s
-      timeout: 3s
-      retries: 15
-      start_period: 3s
-
-  runner:
-    container_name: base-server-test-runner
-    hostname: test-runner
-    image: base-server-test-runner:ci
-    build:
-      context: .
-      dockerfile: Dockerfile.test
-      cache_from:
-        - base-server-test-runner:ci
-    # No depends_on - services should already be up via docker-up
-    environment:
-      TEST_DB_HOST: db
-      TEST_DB_PORT: 5432
-      TEST_DB_USER: base_user
-      TEST_DB_PASS: base_password
-      TEST_DB_NAME: base_db
-      TEST_API_HOST: server
-      TEST_API_PORT: 8080
-      KAFKA_BROKERS: kafka:9092
-      # Must match env.test so newJWT signs tokens the server will accept
-      JWT_SECRET: test-jwt-secret-for-testing-only
-      # For mock webhook server - use container hostname so server can reach it
-      TEST_WEBHOOK_HOST: test-runner
-    volumes:
-      - ./:/app
-      - test_go_mod_cache:/go/pkg/mod
-      - test_go_build_cache:/root/.cache/go-build
-    working_dir: /app
-
 volumes:
   test_postgres_data:
-  test_go_mod_cache:
-  test_go_build_cache:

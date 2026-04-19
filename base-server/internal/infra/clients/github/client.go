@@ -13,10 +13,6 @@ import (
 	"base-server/internal/infra/observability"
 )
 
-const (
-	githubAPIBase      = "https://api.github.com"
-	githubOAuthTokenURL = "https://github.com/login/oauth/access_token"
-)
 
 // OAuthTokenResponse is returned by GitHub's token endpoint
 type OAuthTokenResponse struct {
@@ -55,19 +51,23 @@ type Webhook struct {
 
 // Client wraps GitHub REST API calls using plain net/http
 type Client struct {
-	clientID     string
-	clientSecret string
-	logger       *observability.Logger
-	httpClient   *http.Client
+	clientID      string
+	clientSecret  string
+	apiBase       string
+	oauthTokenURL string
+	logger        *observability.Logger
+	httpClient    *http.Client
 }
 
 // NewClient creates a new GitHub API client
-func NewClient(clientID, clientSecret string, logger *observability.Logger) *Client {
+func NewClient(clientID, clientSecret, apiBase, oauthTokenURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
-		clientID:     clientID,
-		clientSecret: clientSecret,
-		logger:       logger,
-		httpClient:   &http.Client{},
+		clientID:      clientID,
+		clientSecret:  clientSecret,
+		apiBase:       apiBase,
+		oauthTokenURL: oauthTokenURL,
+		logger:        logger,
+		httpClient:    httpClient,
 	}
 }
 
@@ -78,7 +78,7 @@ func (c *Client) ExchangeOAuthCode(ctx context.Context, code string) (OAuthToken
 	params.Set("client_secret", c.clientSecret)
 	params.Set("code", code)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, githubOAuthTokenURL, strings.NewReader(params.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.oauthTokenURL, strings.NewReader(params.Encode()))
 	if err != nil {
 		return OAuthTokenResponse{}, fmt.Errorf("failed to create token request: %w", err)
 	}
@@ -109,7 +109,7 @@ func (c *Client) ExchangeOAuthCode(ctx context.Context, code string) (OAuthToken
 
 // GetAuthenticatedUser fetches the authenticated GitHub user via GET /user
 func (c *Client) GetAuthenticatedUser(ctx context.Context, token string) (GitHubUser, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, githubAPIBase+"/user", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.apiBase+"/user", nil)
 	if err != nil {
 		return GitHubUser{}, fmt.Errorf("failed to create user request: %w", err)
 	}
@@ -141,7 +141,7 @@ func (c *Client) GetAuthenticatedUser(ctx context.Context, token string) (GitHub
 
 // ListUserRepos lists the authenticated user's repos (paginated, 100 per page)
 func (c *Client) ListUserRepos(ctx context.Context, token string, page int) ([]GitHubRepo, error) {
-	reqURL := fmt.Sprintf("%s/user/repos?sort=updated&per_page=100&page=%d", githubAPIBase, page)
+	reqURL := fmt.Sprintf("%s/user/repos?sort=updated&per_page=100&page=%d", c.apiBase, page)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repos request: %w", err)
@@ -192,7 +192,7 @@ func (c *Client) CreateWebhook(ctx context.Context, token, owner, name, webhookU
 		return 0, fmt.Errorf("failed to marshal webhook payload: %w", err)
 	}
 
-	reqURL := fmt.Sprintf("%s/repos/%s/%s/hooks", githubAPIBase, owner, name)
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/hooks", c.apiBase, owner, name)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, strings.NewReader(string(body)))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create webhook request: %w", err)
@@ -230,7 +230,7 @@ func (c *Client) CreateWebhook(ctx context.Context, token, owner, name, webhookU
 // Returns "" (not error) when the commit is too large for GitHub to render a
 // diff, so callers can fall through with just the commit message.
 func (c *Client) GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error) {
-	reqURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s", githubAPIBase, owner, name, sha)
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s", c.apiBase, owner, name, sha)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create commit diff request: %w", err)
@@ -264,7 +264,7 @@ func (c *Client) GetCommitDiff(ctx context.Context, token, owner, name, sha stri
 // common format. Returns empty string (not error) if the repo has no README
 // so callers can fall through to defaults.
 func (c *Client) GetRepoReadme(ctx context.Context, token, owner, name string) (string, error) {
-	reqURL := fmt.Sprintf("%s/repos/%s/%s/readme", githubAPIBase, owner, name)
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/readme", c.apiBase, owner, name)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create readme request: %w", err)
@@ -296,7 +296,7 @@ func (c *Client) GetRepoReadme(ctx context.Context, token, owner, name string) (
 
 // DeleteWebhook deletes the specified webhook from the given repo
 func (c *Client) DeleteWebhook(ctx context.Context, token, owner, name string, hookID int64) error {
-	reqURL := fmt.Sprintf("%s/repos/%s/%s/hooks/%s", githubAPIBase, owner, name, strconv.FormatInt(hookID, 10))
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/hooks/%s", c.apiBase, owner, name, strconv.FormatInt(hookID, 10))
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, reqURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create delete webhook request: %w", err)

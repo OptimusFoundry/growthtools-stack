@@ -13,16 +13,17 @@ var ErrEmptyEnvironmentVariable = errors.New("empty environment variable")
 
 // Config holds all application configuration
 type Config struct {
-	Database      DatabaseConfig
-	Auth          AuthConfig
-	Services      ServicesConfig
-	Server        ServerConfig
-	Gemini        GeminiConfig
-	S3            S3Config
-	Storage       StorageConfig
-	GitHub        GitHubConfig
-	Kafka     KafkaConfig
-	Platforms PlatformsConfig
+	Database     DatabaseConfig
+	Auth         AuthConfig
+	Services     ServicesConfig
+	Server       ServerConfig
+	Gemini       GeminiConfig
+	S3           S3Config
+	Storage      StorageConfig
+	GitHub       GitHubConfig
+	Kafka        KafkaConfig
+	Platforms    PlatformsConfig
+	ExternalURLs ExternalURLsConfig
 }
 
 // DatabaseConfig holds database connection settings
@@ -103,6 +104,29 @@ type PlatformsConfig struct {
 	TikTokClientSecret string
 	PinterestAppID     string
 	PinterestAppSecret string
+}
+
+// ExternalURLsConfig holds optional overrides for upstream API base URLs.
+// Used by integration tests to point clients at httptest.Server instances.
+// All fields default to the canonical production URL when empty.
+type ExternalURLsConfig struct {
+	// Google OAuth
+	GoogleOAuthTokenURL string // default: https://oauth2.googleapis.com/token
+	GoogleUserInfoURL   string // default: https://www.googleapis.com/oauth2/v3/userinfo
+
+	// GitHub
+	GitHubAPIBase       string // default: https://api.github.com
+	GitHubOAuthTokenURL string // default: https://github.com/login/oauth/access_token
+
+	// Platform API clients
+	XAPIBase           string // default: https://api.x.com
+	LinkedInAPIBase    string // default: https://api.linkedin.com
+	BlueskyPDSHost     string // default: https://bsky.social
+	FacebookGraphBase  string // default: https://graph.facebook.com
+	InstagramGraphBase string // default: https://graph.facebook.com  (same host as FB)
+	ThreadsAPIBase     string // default: https://graph.threads.net
+	TikTokAPIBase      string // default: https://open.tiktokapis.com
+	PinterestAPIBase   string // default: https://api.pinterest.com
 }
 
 // Load reads and validates all required environment variables
@@ -210,6 +234,20 @@ func Load() (*Config, error) {
 	cfg.Platforms.TikTokClientSecret = getEnvWithDefault("TIKTOK_CLIENT_SECRET", "")
 	cfg.Platforms.PinterestAppID = getEnvWithDefault("PINTEREST_APP_ID", "")
 	cfg.Platforms.PinterestAppSecret = getEnvWithDefault("PINTEREST_APP_SECRET", "")
+
+	// External URL overrides (for integration tests; empty = production)
+	cfg.ExternalURLs.GoogleOAuthTokenURL = getEnvWithDefault("GOOGLE_OAUTH_TOKEN_URL", "https://oauth2.googleapis.com/token")
+	cfg.ExternalURLs.GoogleUserInfoURL = getEnvWithDefault("GOOGLE_USERINFO_URL", "https://www.googleapis.com/oauth2/v3/userinfo")
+	cfg.ExternalURLs.GitHubAPIBase = getEnvWithDefault("GITHUB_API_BASE", "https://api.github.com")
+	cfg.ExternalURLs.GitHubOAuthTokenURL = getEnvWithDefault("GITHUB_OAUTH_TOKEN_URL", "https://github.com/login/oauth/access_token")
+	cfg.ExternalURLs.XAPIBase = getEnvWithDefault("X_API_BASE", "https://api.x.com")
+	cfg.ExternalURLs.LinkedInAPIBase = getEnvWithDefault("LINKEDIN_API_BASE", "https://api.linkedin.com")
+	cfg.ExternalURLs.BlueskyPDSHost = getEnvWithDefault("BLUESKY_PDS_HOST", "https://bsky.social")
+	cfg.ExternalURLs.FacebookGraphBase = getEnvWithDefault("FACEBOOK_GRAPH_BASE", "https://graph.facebook.com")
+	cfg.ExternalURLs.InstagramGraphBase = getEnvWithDefault("INSTAGRAM_GRAPH_BASE", "https://graph.facebook.com")
+	cfg.ExternalURLs.ThreadsAPIBase = getEnvWithDefault("THREADS_API_BASE", "https://graph.threads.net")
+	cfg.ExternalURLs.TikTokAPIBase = getEnvWithDefault("TIKTOK_API_BASE", "https://open.tiktokapis.com")
+	cfg.ExternalURLs.PinterestAPIBase = getEnvWithDefault("PINTEREST_API_BASE", "https://api.pinterest.com")
 
 	return cfg, nil
 }

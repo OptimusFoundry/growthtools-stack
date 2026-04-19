@@ -46,7 +46,7 @@ func TestPlatformProcessor_InitiateOAuth(t *testing.T) {
 	t.Run("happy path returns auth URL", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		url, err := proc.InitiateOAuth(context.Background(), accountID, "x")
 
@@ -59,7 +59,7 @@ func TestPlatformProcessor_InitiateOAuth(t *testing.T) {
 	t.Run("unsupported platform", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		_, err := proc.InitiateOAuth(context.Background(), accountID, "unknown")
 
@@ -99,7 +99,7 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 		xCfg.TokenURL = tokenServer.URL
 		configs["x"] = xCfg
 
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		// Pre-seed the PKCE verifier
 		proc.pkceVerifiers[accountID.String()] = "test-verifier"
 
@@ -113,7 +113,7 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 	t.Run("unsupported platform", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		_, err := proc.HandleOAuthCallback(context.Background(), accountID, "unknown", "code")
 
@@ -144,7 +144,7 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 		xCfg.TokenURL = tokenServer.URL
 		configs["x"] = xCfg
 
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		// Pre-seed the PKCE verifier
 		proc.pkceVerifiers[accountID.String()] = "test-verifier"
 
@@ -168,7 +168,7 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 				return store.PlatformConnection{ID: connID, Platform: "bluesky", PlatformUserID: params.PlatformUserID}, nil
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		conn, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "app-password")
 
@@ -187,7 +187,7 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 				return store.PlatformConnection{ID: existingID, Platform: "bluesky", PlatformUserID: params.PlatformUserID, AccessToken: params.AccessToken}, nil
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		conn, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "new-app-password")
 
@@ -203,7 +203,7 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 				return store.PlatformConnection{}, errors.New("db error")
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		_, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "app-password")
 
@@ -225,7 +225,7 @@ func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 				return nil
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		err := proc.DisconnectPlatform(context.Background(), accountID, connID)
 
@@ -239,7 +239,7 @@ func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 				return store.ErrNotFound
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		err := proc.DisconnectPlatform(context.Background(), accountID, connID)
 
@@ -254,7 +254,7 @@ func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 				return errors.New("db error")
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		err := proc.DisconnectPlatform(context.Background(), accountID, connID)
 
@@ -278,7 +278,7 @@ func TestPlatformProcessor_ListConnections(t *testing.T) {
 				}, nil
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		result, err := proc.ListConnections(context.Background(), accountID)
 
@@ -293,7 +293,7 @@ func TestPlatformProcessor_ListConnections(t *testing.T) {
 				return nil, errors.New("db error")
 			},
 		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		_, err := proc.ListConnections(context.Background(), accountID)
 
@@ -338,7 +338,7 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		conn := store.PlatformConnection{
 			ID:           connID,
 			AccountID:    accountID,
@@ -381,7 +381,7 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		conn := store.PlatformConnection{
 			ID:           connID,
 			AccountID:    accountID,
@@ -402,7 +402,7 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 		t.Parallel()
 
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		conn := store.PlatformConnection{
 			ID:        connID,
 			AccountID: accountID,
@@ -419,7 +419,7 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 		t.Parallel()
 
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		conn := store.PlatformConnection{
 			ID:        connID,
 			AccountID: accountID,
@@ -462,7 +462,7 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 		conn := store.PlatformConnection{
 			ID:           connID,
 			AccountID:    accountID,
@@ -489,7 +489,7 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 		t.Parallel()
 
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		futureExpiry := time.Now().Add(2 * time.Hour)
 		conn := store.PlatformConnection{
@@ -531,7 +531,7 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 				TokenURL:     tokenServer.URL,
 			},
 		}
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		refreshToken := "old-refresh"
 		nearExpiry := time.Now().Add(2 * time.Minute) // within 5-min window
@@ -554,7 +554,7 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 		t.Parallel()
 
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		conn := store.PlatformConnection{
 			ID:        connID,
@@ -572,7 +572,7 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 		t.Parallel()
 
 		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		nearExpiry := time.Now().Add(1 * time.Minute)
 		conn := store.PlatformConnection{
@@ -638,7 +638,7 @@ func TestPlatformProcessor_HealthCheckWithRefresh(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		result, err := proc.ListConnections(context.Background(), accountID)
 
@@ -668,7 +668,7 @@ func TestPlatformProcessor_HealthCheckWithRefresh(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
+		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
 
 		result, err := proc.ListConnections(context.Background(), accountID)
 

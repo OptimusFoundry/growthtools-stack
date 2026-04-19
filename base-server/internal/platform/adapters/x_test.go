@@ -78,7 +78,7 @@ func downloadOnlyServer(t *testing.T, status int, body []byte, ct string) *httpt
 // newXAdapterWithAPI creates an XAdapter backed by a test API server using NewTestClient.
 func newXAdapterWithAPI(srv *httptest.Server) *XAdapter {
 	logger := observability.NewLogger()
-	client := x.NewTestClient(srv.URL, srv.Client(), logger)
+	client := x.NewClient("", "", srv.URL, srv.Client(), logger)
 	return NewXAdapter(client, logger)
 }
 

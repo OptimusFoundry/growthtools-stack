@@ -22,6 +22,9 @@ func Middleware(l *Logger) gin.HandlerFunc {
 		// Add request ID to response headers
 		c.Writer.Header().Set("X-Request-ID", requestID)
 
+		// Store request-ID in context so TracingTransport can propagate it outbound.
+		ctx = SetRequestID(ctx, requestID)
+
 		ctx = WithFields(ctx,
 			Field{"request_id", requestID},
 			Field{"path", c.Request.URL.Path},

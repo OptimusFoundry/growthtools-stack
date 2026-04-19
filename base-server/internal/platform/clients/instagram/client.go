@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"base-server/internal/infra/observability"
 )
@@ -15,26 +16,42 @@ import (
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string
 }
 
 // NewClient creates a new Instagram API client.
-func NewClient(logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		logger:     logger,
+		baseURL:    baseURL,
 	}
+}
+
+// graphBase returns the Graph API base URL.
+func (c *Client) graphBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return "https://graph.facebook.com"
 }
 
 // CreateMediaContainer creates a media container for Instagram publishing (step 1).
 func (c *Client) CreateMediaContainer(ctx context.Context, igAccountID, accessToken, imageURL, caption string) (CreateMediaContainerResponse, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s/media", igAccountID)
+	endpoint := fmt.Sprintf("%s/v21.0/%s/media", c.graphBase(), igAccountID)
 
 	params := url.Values{}
 	params.Set("image_url", imageURL)
 	params.Set("caption", caption)
 	params.Set("access_token", accessToken)
 
-	resp, err := http.PostForm(endpoint, params)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(params.Encode()))
+	if err != nil {
+		return CreateMediaContainerResponse{}, fmt.Errorf("instagramapi: failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return CreateMediaContainerResponse{}, fmt.Errorf("instagramapi: container request failed: %w", err)
 	}
@@ -57,13 +74,19 @@ func (c *Client) CreateMediaContainer(ctx context.Context, igAccountID, accessTo
 
 // PublishMedia publishes a previously created media container (step 2).
 func (c *Client) PublishMedia(ctx context.Context, igAccountID, accessToken, containerID string) (PublishMediaResponse, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s/media_publish", igAccountID)
+	endpoint := fmt.Sprintf("%s/v21.0/%s/media_publish", c.graphBase(), igAccountID)
 
 	params := url.Values{}
 	params.Set("creation_id", containerID)
 	params.Set("access_token", accessToken)
 
-	resp, err := http.PostForm(endpoint, params)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(params.Encode()))
+	if err != nil {
+		return PublishMediaResponse{}, fmt.Errorf("instagramapi: failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return PublishMediaResponse{}, fmt.Errorf("instagramapi: publish request failed: %w", err)
 	}
@@ -86,8 +109,8 @@ func (c *Client) PublishMedia(ctx context.Context, igAccountID, accessToken, con
 
 // GetMediaInsights retrieves engagement metrics for an Instagram post.
 func (c *Client) GetMediaInsights(ctx context.Context, postID, accessToken string) (MediaInsights, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s?fields=like_count,comments_count,impressions,reach&access_token=%s",
-		postID, accessToken)
+	endpoint := fmt.Sprintf("%s/v21.0/%s?fields=like_count,comments_count,impressions,reach&access_token=%s",
+		c.graphBase(), postID, accessToken)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -123,7 +146,7 @@ func (c *Client) GetMediaInsights(ctx context.Context, postID, accessToken strin
 
 // GetPermalink retrieves the permalink for an Instagram media item.
 func (c *Client) GetPermalink(ctx context.Context, mediaID, accessToken string) (string, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s?fields=permalink&access_token=%s", mediaID, accessToken)
+	endpoint := fmt.Sprintf("%s/v21.0/%s?fields=permalink&access_token=%s", c.graphBase(), mediaID, accessToken)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("instagramapi: failed to create request: %w", err)

@@ -91,7 +91,7 @@ func (s *asyncXAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func newXAdapterWithAsyncAPI(srv *httptest.Server) *XAdapter {
 	logger := observability.NewLogger()
-	client := x.NewTestClient(srv.URL, srv.Client(), logger)
+	client := x.NewClient("", "", srv.URL, srv.Client(), logger)
 	return NewXAdapter(client, logger)
 }
 

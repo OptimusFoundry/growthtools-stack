@@ -3,6 +3,7 @@ package processor
 import (
 	"context"
 	"errors"
+	"net/http"
 	"sync"
 	"time"
 
@@ -77,6 +78,7 @@ type PlatformProcessor struct {
 	oauthConfigs   PlatformOAuthConfigs
 	staticTokens   StaticTokens
 	logger         *observability.Logger
+	httpClient     *http.Client // shared tracing client for outbound HTTP calls
 	xClient        XClient
 	threadsClient  ThreadsClient
 	blueskyClient  BlueskyClient
@@ -87,11 +89,12 @@ type PlatformProcessor struct {
 }
 
 // New creates a new PlatformProcessor.
-func New(store PlatformStore, oauthConfigs PlatformOAuthConfigs, staticTokens StaticTokens, logger *observability.Logger, xClient XClient, threadsClient ThreadsClient, blueskyClient BlueskyClient) PlatformProcessor {
+func New(store PlatformStore, oauthConfigs PlatformOAuthConfigs, staticTokens StaticTokens, httpClient *http.Client, logger *observability.Logger, xClient XClient, threadsClient ThreadsClient, blueskyClient BlueskyClient) PlatformProcessor {
 	return PlatformProcessor{
 		store:         store,
 		oauthConfigs:  oauthConfigs,
 		staticTokens:  staticTokens,
+		httpClient:    httpClient,
 		logger:        logger,
 		xClient:       xClient,
 		threadsClient: threadsClient,

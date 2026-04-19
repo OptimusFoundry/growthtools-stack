@@ -8,7 +8,7 @@ go test ./...                # All unit tests
 make dev-up                  # Start Docker services (DB, Kafka)
 make dev-test-unit           # Unit tests (mocked, no deps)
 make dev-test-store          # Store tests (needs dev-up)
-make dev-test-integration    # Integration tests (needs dev-up + go run main.go)
+make dev-test-integration    # Integration tests (needs dev-up; server is in-process)
 make docker-test-all         # Full isolated run (matches CI)
 go run main.go               # Run server locally
 ```
