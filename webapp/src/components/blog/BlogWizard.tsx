@@ -10,7 +10,6 @@ import { MediaUploadSection } from "@/components/create-post/compose/MediaUpload
 import { Topbar } from "@/components/Layout/Topbar";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
-import { useMedia } from "@/hooks/useMedia";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
@@ -36,10 +35,12 @@ import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { BlogPost } from "@/types/blog";
+import type { MediaItem } from "@/types/media";
 import styles from "./blog-wizard.module.scss";
 
 export interface BlogWizardProps {
 	initialBlogPost?: BlogPost;
+	initialMedia?: MediaItem[];
 	onDone: () => void;
 	onCancel?: () => void;
 }
@@ -52,7 +53,11 @@ const slugify = (text: string): string =>
 		.replace(/\s+/g, "-")
 		.replace(/-+/g, "-");
 
-export function BlogWizard({ initialBlogPost, onDone }: BlogWizardProps) {
+export function BlogWizard({
+	initialBlogPost,
+	initialMedia,
+	onDone,
+}: BlogWizardProps) {
 	const isEditMode = Boolean(initialBlogPost);
 	const postStatus = initialBlogPost?.status;
 
@@ -74,8 +79,8 @@ export function BlogWizard({ initialBlogPost, onDone }: BlogWizardProps) {
 	const [ogDescription, setOgDescription] = useState(
 		initialBlogPost?.ogDescription ?? "",
 	);
-	const [existingMediaIds, setExistingMediaIds] = useState<string[]>(
-		initialBlogPost?.mediaIds ?? [],
+	const [existingMedia, setExistingMedia] = useState<MediaItem[]>(
+		initialMedia ?? [],
 	);
 	const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
 	const [error, setError] = useState<string | null>(null);
@@ -95,12 +100,14 @@ export function BlogWizard({ initialBlogPost, onDone }: BlogWizardProps) {
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const { addBanner } = useBannerCenter();
-	const { media: allMedia } = useMedia({ limit: 100 });
 
 	const saving = creating || updating || publishing;
 	const busy = saving || generating;
 
-	// Populate form fields when the SSE done payload arrives.
+	// Populate form fields when the SSE done payload arrives. The done event
+	// carries the persisted post (with media_ids only). Media metadata is not
+	// round-tripped — the user attached media before clicking Generate, so we
+	// already have the full MediaItem[] in `existingMedia` state locally.
 	useEffect(() => {
 		if (!generatedPost) return;
 		const post = toBlogPost(generatedPost);
@@ -119,20 +126,21 @@ export function BlogWizard({ initialBlogPost, onDone }: BlogWizardProps) {
 	const isStreaming = phase === "generating";
 	const hasPreview = Boolean(streamingContent || content);
 
-	// Derive ExistingFile[] for the MediaUploadSection by matching
-	// existingMediaIds against the full media library.
-	const existingMedia = useMemo<ExistingFile[]>(() => {
-		return existingMediaIds
-			.map((id) => allMedia.find((m) => m.id === id))
-			.filter((m): m is NonNullable<typeof m> => m !== undefined)
-			.map((m) => ({
+	const existingMediaFiles = useMemo<ExistingFile[]>(
+		() =>
+			existingMedia.map((m) => ({
 				id: m.id,
 				name: m.filename,
 				size: m.sizeBytes,
 				contentType: m.contentType,
 				url: m.url ?? undefined,
-			}));
-	}, [existingMediaIds, allMedia]);
+			})),
+		[existingMedia],
+	);
+	const existingMediaIds = useMemo(
+		() => existingMedia.map((m) => m.id),
+		[existingMedia],
+	);
 
 	const handleTitleBlur = useCallback(() => {
 		if (title && !slug) {
@@ -393,32 +401,34 @@ export function BlogWizard({ initialBlogPost, onDone }: BlogWizardProps) {
 								onChange={(e) => setKeywords(e.target.value)}
 								helperText="Used to guide AI generation"
 							/>
-							<Button
-								variant={content ? "secondary" : "primary"}
-								onClick={handleRegenerate}
-								isLoading={generating}
-								disabled={busy}
-							>
-								{content ? (
-									<>
-										<RefreshCw size={16} /> Regenerate
-									</>
-								) : (
-									<>
-										<Sparkles size={16} /> Generate
-									</>
-								)}
-							</Button>
+							<Stack direction="row" gap="sm" justify="end">
+								<Button
+									variant={content ? "secondary" : "primary"}
+									onClick={handleRegenerate}
+									isLoading={generating}
+									disabled={busy}
+								>
+									{content ? (
+										<>
+											<RefreshCw size={16} /> Regenerate
+										</>
+									) : (
+										<>
+											<Sparkles size={16} /> Generate
+										</>
+									)}
+								</Button>
+							</Stack>
 						</Stack>
 
 						<Divider />
 
 						<MediaUploadSection
 							pendingFiles={pendingFiles}
-							existingMedia={existingMedia}
+							existingMedia={existingMediaFiles}
 							onFilesChange={setPendingFiles}
 							onRemoveExisting={(id) =>
-								setExistingMediaIds((prev) => prev.filter((mid) => mid !== id))
+								setExistingMedia((prev) => prev.filter((m) => m.id !== id))
 							}
 						/>
 

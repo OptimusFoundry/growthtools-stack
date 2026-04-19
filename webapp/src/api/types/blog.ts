@@ -5,6 +5,12 @@
  */
 
 import type { BlogStatus } from "@/types/blog";
+import type { ApiMediaItem } from "./media";
+
+export interface ApiBlogPostWithMedia {
+	post: ApiBlogPost;
+	media: ApiMediaItem[] | null;
+}
 
 export interface ApiBlogPost {
 	id: string;

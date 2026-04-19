@@ -19,7 +19,12 @@ function CreateBlogEditor() {
 
 function EditBlogEditor({ id }: { id: string }) {
 	const navigate = useNavigate();
-	const { blogPost, loading: fetching, error: fetchError } = useGetBlogPost(id);
+	const {
+		blogPost,
+		media,
+		loading: fetching,
+		error: fetchError,
+	} = useGetBlogPost(id);
 
 	if (fetching) return <Spinner />;
 	if (fetchError) return <Alert variant="error">{fetchError}</Alert>;
@@ -28,6 +33,7 @@ function EditBlogEditor({ id }: { id: string }) {
 	return (
 		<BlogWizard
 			initialBlogPost={blogPost}
+			initialMedia={media}
 			onDone={() => navigate({ to: "/blog" })}
 			onCancel={() => navigate({ to: "/blog" })}
 		/>

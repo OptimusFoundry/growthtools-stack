@@ -88,10 +88,10 @@ func (mr *MockBlogProcessorMockRecorder) GenerateBlogPost(ctx, accountID, instru
 }
 
 // GetBlogPost mocks base method.
-func (m *MockBlogProcessor) GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error) {
+func (m *MockBlogProcessor) GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPostWithMedia, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlogPost", ctx, accountID, postID)
-	ret0, _ := ret[0].(store.BlogPost)
+	ret0, _ := ret[0].(processor.BlogPostWithMedia)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -52,10 +52,18 @@ var (
 
 // BlogStreamCallbacks holds callbacks for streaming blog generation.
 type BlogStreamCallbacks struct {
-	OnPhase func(phase string)       // phases: "generating", "done"
-	OnChunk func(chunk string)       // raw markdown delta from AI
-	OnDone  func(post store.BlogPost) // final persisted post
-	OnError func(err error)          // terminal error — no further callbacks fire
+	OnPhase func(phase string)        // phases: "generating", "done"
+	OnChunk func(chunk string)        // raw markdown delta from AI
+	OnDone  func(post store.BlogPost) // final persisted post (media_ids only — frontend already has media metadata locally)
+	OnError func(err error)           // terminal error — no further callbacks fire
+}
+
+// BlogPostWithMedia bundles a blog post with its attached media, hydrated
+// (and presigned) on the server so the editor doesn't need a second roundtrip
+// to render thumbnails. Mirrors PostWithPlatformPosts in posts/processor.
+type BlogPostWithMedia struct {
+	Post  store.BlogPost `json:"post"`
+	Media []store.Media  `json:"media"`
 }
 
 const (
@@ -167,7 +175,7 @@ func (p *BlogProcessor) CreateBlogPost(ctx context.Context, params store.CreateB
 	return created, nil
 }
 
-func (p *BlogProcessor) GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error) {
+func (p *BlogProcessor) GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (BlogPostWithMedia, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: accountID.String()},
 		observability.Field{Key: "post_id", Value: postID.String()},
@@ -178,11 +186,48 @@ func (p *BlogProcessor) GetBlogPost(ctx context.Context, accountID, postID uuid.
 	if err != nil {
 		p.logger.Error(ctx, "failed to get blog post", err)
 		if errors.Is(err, store.ErrNotFound) {
-			return store.BlogPost{}, ErrBlogPostNotFound
+			return BlogPostWithMedia{}, ErrBlogPostNotFound
 		}
-		return store.BlogPost{}, err
+		return BlogPostWithMedia{}, err
 	}
-	return post, nil
+
+	media := p.hydrateBlogMedia(ctx, post.MediaIDs)
+	return BlogPostWithMedia{Post: post, Media: media}, nil
+}
+
+// hydrateBlogMedia loads media rows for the given IDs and presigns any `s3://`
+// URLs so the editor can render thumbnails directly. Errors are logged and the
+// media slice is returned empty rather than failing the request — missing
+// thumbnails are a degraded UX, not a fatal one.
+func (p *BlogProcessor) hydrateBlogMedia(ctx context.Context, ids store.UUIDArray) []store.Media {
+	out := make([]store.Media, 0)
+	if len(ids) == 0 {
+		return out
+	}
+	fetched, err := p.store.GetMediaByIDs(ctx, []uuid.UUID(ids))
+	if err != nil {
+		p.logger.Error(ctx, "failed to load media for blog post", err)
+		return out
+	}
+	for i := range fetched {
+		p.presignBlogMedia(ctx, &fetched[i])
+	}
+	return fetched
+}
+
+// presignBlogMedia rewrites an `s3://` media URL to a presigned HTTPS URL in
+// place. Non-`s3://` URLs are left alone. Errors are logged and the URL is
+// left unchanged — same policy as posts/processor.presignMediaURL.
+func (p *BlogProcessor) presignBlogMedia(ctx context.Context, m *store.Media) {
+	if p.urlSigner == nil || m == nil || !strings.HasPrefix(m.S3URL, "s3://") {
+		return
+	}
+	signed, err := p.urlSigner.PresignGetURL(ctx, m.S3Key, blogMediaPresignTTL)
+	if err != nil {
+		p.logger.Error(ctx, "failed to presign media url for blog response", err)
+		return
+	}
+	m.S3URL = signed
 }
 
 func (p *BlogProcessor) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error) {

@@ -121,7 +121,8 @@ func TestBlogProcessor_GetBlogPost(t *testing.T) {
 		result, err := proc.GetBlogPost(context.Background(), accountID, postID)
 
 		require.NoError(t, err)
-		assert.Equal(t, "My Post", result.Title)
+		assert.Equal(t, "My Post", result.Post.Title)
+		assert.Empty(t, result.Media)
 	})
 
 	t.Run("not found", func(t *testing.T) {

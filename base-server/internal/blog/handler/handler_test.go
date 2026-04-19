@@ -139,7 +139,7 @@ func TestHandler_HandleGetBlog(t *testing.T) {
 			name: "200 happy path",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().GetBlogPost(gomock.Any(), accountID, postID).
-					Return(store.BlogPost{ID: postID}, nil)
+					Return(processor.BlogPostWithMedia{Post: store.BlogPost{ID: postID}}, nil)
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusOK,
@@ -154,7 +154,7 @@ func TestHandler_HandleGetBlog(t *testing.T) {
 			name: "404 not found",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().GetBlogPost(gomock.Any(), accountID, postID).
-					Return(store.BlogPost{}, processor.ErrBlogPostNotFound)
+					Return(processor.BlogPostWithMedia{}, processor.ErrBlogPostNotFound)
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusNotFound,
@@ -163,7 +163,7 @@ func TestHandler_HandleGetBlog(t *testing.T) {
 			name: "500 on unexpected error",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().GetBlogPost(gomock.Any(), accountID, postID).
-					Return(store.BlogPost{}, errors.New("boom"))
+					Return(processor.BlogPostWithMedia{}, errors.New("boom"))
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusInternalServerError,
