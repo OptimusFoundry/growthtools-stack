@@ -23,7 +23,7 @@ const ffmpegPath: string = ffmpegInstaller.path;
  * Default playback speed for finalized demo recordings. Overridable via
  * the CAPTURE_VIDEO_SPEED env var (parsed as a float). 1.0 = real time.
  */
-export const DEFAULT_VIDEO_SPEED = 1.5;
+export const DEFAULT_VIDEO_SPEED = 1.0;
 
 export function resolveVideoSpeed(fallback: number = DEFAULT_VIDEO_SPEED): number {
 	const raw = process.env.CAPTURE_VIDEO_SPEED;
