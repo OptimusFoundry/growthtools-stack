@@ -196,6 +196,39 @@ func GetDeviceType(c *gin.Context) string {
 	return "unknown"
 }
 
+// requestIDCtxKey and userIDCtxKey are unexported so callers must use the typed
+// helpers below, preventing key collisions from other packages.
+type requestIDCtxKey struct{}
+type userIDCtxKey struct{}
+
+// SetRequestID stores a request-ID in ctx, returning the new context.
+// Called by observability.Middleware after generating or reading X-Request-ID.
+func SetRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDCtxKey{}, id)
+}
+
+// GetRequestID returns the request-ID stored by SetRequestID, or "" if absent.
+func GetRequestID(ctx context.Context) string {
+	if id, ok := ctx.Value(requestIDCtxKey{}).(string); ok {
+		return id
+	}
+	return ""
+}
+
+// SetUserID stores an authenticated user-ID (UUID string) in ctx, returning the new context.
+// Called by auth.HandleJWTMiddleware after validating the JWT.
+func SetUserID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, userIDCtxKey{}, id)
+}
+
+// GetUserID returns the user-ID stored by SetUserID, or "" if absent (unauthenticated).
+func GetUserID(ctx context.Context) string {
+	if id, ok := ctx.Value(userIDCtxKey{}).(string); ok {
+		return id
+	}
+	return ""
+}
+
 // GetDeviceOS determines the device OS from User-Agent parsing.
 // Returns "android", "ios", or "other".
 func GetDeviceOS(c *gin.Context) string {

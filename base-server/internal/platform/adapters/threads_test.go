@@ -95,7 +95,7 @@ func (s *threadsAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func newThreadsAdapterWithAPI(srv *httptest.Server) *ThreadsAdapter {
 	logger := observability.NewLogger()
-	client := threads.NewTestClient(srv.URL, srv.Client(), logger)
+	client := threads.NewClient(srv.URL, srv.Client(), logger)
 	return NewThreadsAdapter(client, logger)
 }
 

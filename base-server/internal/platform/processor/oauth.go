@@ -123,7 +123,7 @@ func (p *PlatformProcessor) exchangeOAuth2Token(ctx context.Context, platform, c
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", "", "", nil, fmt.Errorf("token request failed: %w", err)
 	}
@@ -218,7 +218,7 @@ func (p *PlatformProcessor) exchangeXOAuth2Token(ctx context.Context, accountID 
 	// X OAuth 2.0 uses Basic auth with client_id:client_secret
 	req.SetBasicAuth(cfg.ClientID, cfg.ClientSecret)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", "", "", nil, fmt.Errorf("X token request failed: %w", err)
 	}

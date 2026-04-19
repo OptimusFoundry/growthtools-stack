@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"base-server/internal/infra/observability"
 )
@@ -15,25 +16,41 @@ import (
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string
 }
 
 // NewClient creates a new Facebook API client.
-func NewClient(logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		logger:     logger,
+		baseURL:    baseURL,
 	}
+}
+
+// graphBase returns the Graph API base URL.
+func (c *Client) graphBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return "https://graph.facebook.com"
 }
 
 // PostToFeed creates a text post on a Facebook Page feed.
 func (c *Client) PostToFeed(ctx context.Context, pageID, accessToken, message string) (PostResponse, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s/feed", pageID)
+	endpoint := fmt.Sprintf("%s/v21.0/%s/feed", c.graphBase(), pageID)
 
 	params := url.Values{}
 	params.Set("message", message)
 	params.Set("access_token", accessToken)
 
-	resp, err := http.PostForm(endpoint, params)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(params.Encode()))
+	if err != nil {
+		return PostResponse{}, fmt.Errorf("facebookapi: failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return PostResponse{}, fmt.Errorf("facebookapi: request failed: %w", err)
 	}
@@ -56,14 +73,20 @@ func (c *Client) PostToFeed(ctx context.Context, pageID, accessToken, message st
 
 // PostPhoto creates a photo post on a Facebook Page.
 func (c *Client) PostPhoto(ctx context.Context, pageID, accessToken, message, imageURL string) (PostResponse, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s/photos", pageID)
+	endpoint := fmt.Sprintf("%s/v21.0/%s/photos", c.graphBase(), pageID)
 
 	params := url.Values{}
 	params.Set("message", message)
 	params.Set("url", imageURL)
 	params.Set("access_token", accessToken)
 
-	resp, err := http.PostForm(endpoint, params)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(params.Encode()))
+	if err != nil {
+		return PostResponse{}, fmt.Errorf("facebookapi: failed to create photo request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return PostResponse{}, fmt.Errorf("facebookapi: photo request failed: %w", err)
 	}
@@ -87,8 +110,8 @@ func (c *Client) PostPhoto(ctx context.Context, pageID, accessToken, message, im
 
 // GetPostInsights retrieves engagement metrics for a Facebook post.
 func (c *Client) GetPostInsights(ctx context.Context, postID, accessToken string) (PostInsights, error) {
-	endpoint := fmt.Sprintf("https://graph.facebook.com/v21.0/%s?fields=insights.metric(post_impressions_unique),likes.summary(true),comments.summary(true),shares&access_token=%s",
-		postID, accessToken)
+	endpoint := fmt.Sprintf("%s/v21.0/%s?fields=insights.metric(post_impressions_unique),likes.summary(true),comments.summary(true),shares&access_token=%s",
+		c.graphBase(), postID, accessToken)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

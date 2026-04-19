@@ -67,7 +67,7 @@ func (s *blueskyAsyncAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 func newBlueskyAdapterWithAsyncAPI(srv *httptest.Server) *BlueskyAdapter {
 	logger := observability.NewLogger()
-	client := bluesky.NewTestClient(srv.URL, srv.Client(), logger)
+	client := bluesky.NewClient(srv.URL, srv.Client(), logger)
 	return NewBlueskyAdapter(client, logger)
 }
 

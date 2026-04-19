@@ -19,16 +19,7 @@ type Client struct {
 }
 
 // NewClient creates a new Pinterest API client.
-func NewClient(logger *observability.Logger) *Client {
-	return &Client{
-		httpClient: &http.Client{},
-		logger:     logger,
-	}
-}
-
-// NewTestClient creates a Client that routes all requests to baseURL.
-// Use with httptest.Server in tests.
-func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
 		httpClient: httpClient,
 		logger:     logger,

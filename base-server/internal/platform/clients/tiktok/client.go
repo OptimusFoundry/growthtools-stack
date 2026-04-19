@@ -15,14 +15,24 @@ import (
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
+	baseURL    string
 }
 
 // NewClient creates a new TikTok API client.
-func NewClient(logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		logger:     logger,
+		baseURL:    baseURL,
 	}
+}
+
+// apiBase returns the TikTok API base URL.
+func (c *Client) apiBase() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return "https://open.tiktokapis.com"
 }
 
 // InitVideoUpload initializes a video upload via the TikTok inbox upload flow.
@@ -49,7 +59,7 @@ func (c *Client) InitVideoUpload(ctx context.Context, accessToken, title string)
 		return InitVideoUploadResponse{}, fmt.Errorf("tiktokapi: failed to marshal payload: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBase()+"/v2/post/publish/inbox/video/init/", bytes.NewReader(body))
 	if err != nil {
 		return InitVideoUploadResponse{}, fmt.Errorf("tiktokapi: failed to create request: %w", err)
 	}

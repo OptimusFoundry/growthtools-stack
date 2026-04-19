@@ -22,19 +22,10 @@ type Client struct {
 }
 
 // NewClient creates a new X API client with app-level credentials.
-func NewClient(apiKey, apiSecret string, logger *observability.Logger) *Client {
+func NewClient(apiKey, apiSecret, baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
 		apiKey:     apiKey,
 		apiSecret:  apiSecret,
-		httpClient: &http.Client{},
-		logger:     logger,
-	}
-}
-
-// NewTestClient creates a Client that routes all requests to baseURL
-// using the provided http.Client. Use with httptest.Server in tests.
-func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
-	return &Client{
 		httpClient: httpClient,
 		logger:     logger,
 		baseURL:    baseURL,

@@ -11,25 +11,15 @@ import (
 	"base-server/internal/infra/observability"
 )
 
-const pdsHost = "https://bsky.social"
-
 // Client handles HTTP communication with the Bluesky AT Protocol API.
 type Client struct {
 	httpClient *http.Client
 	logger     *observability.Logger
-	baseURL    string // empty = use pdsHost
+	baseURL    string // empty = use production PDS host
 }
 
 // NewClient creates a new Bluesky API client.
-func NewClient(logger *observability.Logger) *Client {
-	return &Client{
-		httpClient: &http.Client{},
-		logger:     logger,
-	}
-}
-
-// NewTestClient creates a Client that routes all requests to baseURL.
-func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
 		httpClient: httpClient,
 		logger:     logger,
@@ -42,7 +32,7 @@ func (c *Client) host() string {
 	if c.baseURL != "" {
 		return c.baseURL
 	}
-	return pdsHost
+	return "https://bsky.social"
 }
 
 // CreateSession authenticates with Bluesky and returns an access JWT and DID.

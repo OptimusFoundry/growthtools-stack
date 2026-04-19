@@ -11,8 +11,6 @@ import (
 	"base-server/internal/infra/observability"
 )
 
-const linkedinAPIBase = "https://api.linkedin.com"
-
 // Client handles HTTP communication with the LinkedIn REST API.
 type Client struct {
 	httpClient *http.Client
@@ -21,15 +19,7 @@ type Client struct {
 }
 
 // NewClient creates a new LinkedIn API client.
-func NewClient(logger *observability.Logger) *Client {
-	return &Client{
-		httpClient: &http.Client{},
-		logger:     logger,
-	}
-}
-
-// NewTestClient creates a Client that routes all requests to baseURL.
-func NewTestClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
+func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
 		httpClient: httpClient,
 		logger:     logger,
@@ -41,7 +31,7 @@ func (c *Client) apiBase() string {
 	if c.baseURL != "" {
 		return c.baseURL
 	}
-	return linkedinAPIBase
+	return "https://api.linkedin.com"
 }
 
 // CreatePost creates a post on LinkedIn.

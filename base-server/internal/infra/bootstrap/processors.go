@@ -6,6 +6,7 @@ import (
 	"base-server/internal/billing/products"
 	"base-server/internal/billing/subscriptions"
 	"base-server/internal/infra/config"
+	"base-server/internal/infra/httpclient"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 	"base-server/internal/infra/tiers"
@@ -90,7 +91,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	p.chat = chatProcessor.New(s, cl.gemini, logger)
 
 	// Platform connections
-	p.platforms = platformsProcessor.New(s, cl.oauthConfigs, cl.staticTokens, logger, cl.xClient, cl.threads, cl.bluesky)
+	p.platforms = platformsProcessor.New(s, cl.oauthConfigs, cl.staticTokens, httpclient.NewTracingClient(), logger, cl.xClient, cl.threads, cl.bluesky)
 
 	// Posts
 	// Capture-sourced media rows carry `s3://bucket/key` URLs; the posts

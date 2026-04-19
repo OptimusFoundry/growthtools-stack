@@ -126,6 +126,7 @@ func (h *Handler) HandleJWTMiddleware(c *gin.Context) {
 	c.Set("User-ID", sub)
 	c.Set("Account-ID", claims.AccountID)
 
+	ctx = observability.SetUserID(ctx, sub)
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "user_id", Value: sub},
 		observability.Field{Key: "account_id", Value: claims.AccountID},

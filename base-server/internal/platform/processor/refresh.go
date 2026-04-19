@@ -30,7 +30,7 @@ func (p *PlatformProcessor) refreshOAuth2Token(ctx context.Context, conn store.P
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("refresh request failed: %w", err)
 	}
@@ -80,7 +80,7 @@ func (p *PlatformProcessor) refreshXToken(ctx context.Context, conn store.Platfo
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth(cfg.ClientID, cfg.ClientSecret)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("X refresh request failed: %w", err)
 	}
@@ -126,7 +126,7 @@ func (p *PlatformProcessor) refreshThreadsToken(ctx context.Context, conn store.
 		return "", nil, fmt.Errorf("failed to create Threads refresh request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", nil, fmt.Errorf("Threads refresh request failed: %w", err)
 	}

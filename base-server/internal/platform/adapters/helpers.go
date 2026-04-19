@@ -12,6 +12,10 @@ func nowUTC() string {
 	return time.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00")
 }
 
+// mediaHTTPClient is the HTTP client used by downloadMedia. Overridable in tests
+// if needed; defaults to http.DefaultTransport with no custom transport.
+var mediaHTTPClient = &http.Client{}
+
 // downloadMedia fetches media bytes from a URL (typically S3) and returns the bytes and content type.
 func downloadMedia(ctx context.Context, mediaURL string) ([]byte, string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, mediaURL, nil)
@@ -19,7 +23,7 @@ func downloadMedia(ctx context.Context, mediaURL string) ([]byte, string, error)
 		return nil, "", fmt.Errorf("failed to create media download request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := mediaHTTPClient.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to download media: %w", err)
 	}

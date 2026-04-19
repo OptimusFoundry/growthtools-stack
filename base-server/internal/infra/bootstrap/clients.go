@@ -16,6 +16,7 @@ import (
 	"base-server/internal/infra/clients/mail"
 	"base-server/internal/infra/clients/s3"
 	"base-server/internal/infra/email"
+	"base-server/internal/infra/httpclient"
 
 	"base-server/internal/platform/adapters"
 	"base-server/internal/platform/clients/bluesky"
@@ -60,11 +61,17 @@ type clients struct {
 func buildClients(ctx context.Context, cfg *config.Config, logger *observability.Logger) (*clients, error) {
 	c := &clients{}
 
+	// Shared tracing HTTP client — propagates X-Request-ID + X-User-ID outbound.
+	tracingClient := httpclient.NewTracingClient()
+
 	// Google OAuth
 	c.googleOAuth = googleoauth.NewClient(
 		cfg.Auth.GoogleClientID,
 		cfg.Auth.GoogleClientSecret,
 		cfg.Auth.GoogleRedirectURI,
+		cfg.ExternalURLs.GoogleOAuthTokenURL,
+		cfg.ExternalURLs.GoogleUserInfoURL,
+		tracingClient,
 		logger,
 	)
 
@@ -110,17 +117,24 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 	c.kafka = kafka.NewProducer(cfg.Kafka.Brokers, logger)
 
 	// GitHub client
-	c.ghClient = githubclient.NewClient(cfg.GitHub.OAuthClientID, cfg.GitHub.OAuthClientSecret, logger)
+	c.ghClient = githubclient.NewClient(
+		cfg.GitHub.OAuthClientID,
+		cfg.GitHub.OAuthClientSecret,
+		cfg.ExternalURLs.GitHubAPIBase,
+		cfg.ExternalURLs.GitHubOAuthTokenURL,
+		httpclient.NewTracingClient(),
+		logger,
+	)
 
 	// Platform API clients
-	c.xClient = x.NewClient(cfg.Platforms.XAPIKey, cfg.Platforms.XAPISecret, logger)
-	c.bluesky = bluesky.NewClient(logger)
-	c.linkedin = linkedin.NewClient(logger)
-	c.facebook = facebook.NewClient(logger)
-	c.instagram = instagram.NewClient(logger)
-	c.threads = threads.NewClient(logger)
-	c.tiktok = tiktok.NewClient(logger)
-	c.pinterest = pinterest.NewClient(logger)
+	c.xClient = x.NewClient(cfg.Platforms.XAPIKey, cfg.Platforms.XAPISecret, cfg.ExternalURLs.XAPIBase, httpclient.NewTracingClient(), logger)
+	c.bluesky = bluesky.NewClient(cfg.ExternalURLs.BlueskyPDSHost, httpclient.NewTracingClient(), logger)
+	c.linkedin = linkedin.NewClient(cfg.ExternalURLs.LinkedInAPIBase, httpclient.NewTracingClient(), logger)
+	c.facebook = facebook.NewClient(cfg.ExternalURLs.FacebookGraphBase, httpclient.NewTracingClient(), logger)
+	c.instagram = instagram.NewClient(cfg.ExternalURLs.InstagramGraphBase, httpclient.NewTracingClient(), logger)
+	c.threads = threads.NewClient(cfg.ExternalURLs.ThreadsAPIBase, httpclient.NewTracingClient(), logger)
+	c.tiktok = tiktok.NewClient(cfg.ExternalURLs.TikTokAPIBase, httpclient.NewTracingClient(), logger)
+	c.pinterest = pinterest.NewClient(cfg.ExternalURLs.PinterestAPIBase, httpclient.NewTracingClient(), logger)
 
 	// Platform adapters (stateless singletons)
 	xAdapter := adapters.NewXAdapter(c.xClient, logger)
@@ -156,7 +170,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/x",
 			Scopes:       []string{"tweet.read", "tweet.write", "users.read", "media.write", "offline.access"},
 			AuthURL:      "https://x.com/i/oauth2/authorize",
-			TokenURL:     "https://api.x.com/2/oauth2/token",
+			TokenURL:     cfg.ExternalURLs.XAPIBase + "/2/oauth2/token",
 		},
 		"linkedin": {
 			ClientID:     cfg.Platforms.LinkedInClientID,
@@ -164,7 +178,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/linkedin",
 			Scopes:       []string{"openid", "profile", "w_member_social"},
 			AuthURL:      "https://www.linkedin.com/oauth/v2/authorization",
-			TokenURL:     "https://www.linkedin.com/oauth/v2/accessToken",
+			TokenURL:     cfg.ExternalURLs.LinkedInAPIBase + "/oauth/v2/accessToken",
 		},
 		"facebook": {
 			ClientID:     cfg.Platforms.MetaAppID,
@@ -188,7 +202,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/threads",
 			Scopes:       []string{"threads_basic", "threads_content_publish", "threads_manage_insights"},
 			AuthURL:      "https://threads.net/oauth/authorize",
-			TokenURL:     "https://graph.threads.net/oauth/access_token",
+			TokenURL:     cfg.ExternalURLs.ThreadsAPIBase + "/oauth/access_token",
 		},
 		"tiktok": {
 			ClientID:     cfg.Platforms.TikTokClientKey,

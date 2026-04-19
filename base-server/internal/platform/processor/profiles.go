@@ -18,7 +18,7 @@ func (p *PlatformProcessor) fetchXProfile(ctx context.Context, accessToken strin
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -69,7 +69,7 @@ func (p *PlatformProcessor) fetchLinkedInProfile(ctx context.Context, accessToke
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -92,7 +92,7 @@ func (p *PlatformProcessor) fetchFacebookProfile(ctx context.Context, accessToke
 		return "", "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -116,7 +116,7 @@ func (p *PlatformProcessor) fetchInstagramProfile(ctx context.Context, accessTok
 		return "", "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -149,7 +149,7 @@ func (p *PlatformProcessor) fetchThreadsProfile(ctx context.Context, accessToken
 		return "", "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -180,7 +180,7 @@ func (p *PlatformProcessor) fetchTikTokProfile(ctx context.Context, accessToken,
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -208,7 +208,7 @@ func (p *PlatformProcessor) fetchPinterestProfile(ctx context.Context, accessTok
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}

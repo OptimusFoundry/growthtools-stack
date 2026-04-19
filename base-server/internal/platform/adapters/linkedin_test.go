@@ -81,7 +81,7 @@ func (s *linkedinAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func newLinkedInAdapterWithAPI(srv *httptest.Server) *LinkedInAdapter {
 	logger := observability.NewLogger()
-	client := linkedin.NewTestClient(srv.URL, srv.Client(), logger)
+	client := linkedin.NewClient(srv.URL, srv.Client(), logger)
 	return NewLinkedInAdapter(client, logger)
 }
 
