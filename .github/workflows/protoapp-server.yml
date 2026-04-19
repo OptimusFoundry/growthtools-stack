@@ -22,17 +22,18 @@ env:
   DEPLOY_ROLE: arn:aws:iam::339713122183:role/github-actions-admin-aws
 
 jobs:
-  # Two test jobs run in parallel on separate runners:
-  #  - test-race: pure Go, race detector + unit tests, no docker needed.
-  #  - test-and-push: spins up the docker stack once, runs store + integration
-  #    tests against the same DB/server, and — on success — pushes the
-  #    already-built test-server image to ECR. This replaces a separate
-  #    docker-build-and-push job that used to rebuild the same image from
-  #    scratch (2+ minutes), relying on buildx cache-sharing that still paid
-  #    the checkout/buildx-setup/ECR-push tax on a second runner.
-  # deploy-ecs gates on both.
+  # Pipeline shape:
+  #   unit-race ─┐
+  #              ├──> build-push ──> deploy-ecs
+  #   integ-tests ┘
+  #
+  # unit-race + integ-tests run in parallel (independent, no shared state).
+  # build-push only runs when both are green, so ECR/buildx minutes aren't
+  # spent on red commits. Each job owns one concern and one GHA cache scope —
+  # compose base-images cache (postgres/kafka/flyway) is separate from the
+  # server buildx cache.
 
-  test-race:
+  unit-race:
     name: Unit + Race (go test -race -short)
     runs-on: ubuntu-latest
     defaults:
@@ -53,43 +54,14 @@ jobs:
       - name: Unit tests + race detector
         run: go test -race -short ./...
 
-  test-and-push:
-    name: Store + Integration + Push Image
+  integ-tests:
+    name: Store + Integration (in-process server)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: base-server
     steps:
       - uses: actions/checkout@v5
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ env.DEPLOY_ROLE }}
-          role-session-name: GitHubActions
-      - name: Load manifest and upsert ECR repository
-        working-directory: .
-        run: |
-          aws ssm get-parameter --name "/${PRODUCT_SLUG}/manifest" --query Parameter.Value --output text > /tmp/manifest.json
-          ECR_REPOSITORY=$(jq -r .aws.ecrRepository /tmp/manifest.json)
-          echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> "$GITHUB_ENV"
-          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 \
-            || aws ecr create-repository --repository-name "$ECR_REPOSITORY"
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Pre-pull the compose base images (postgres/kafka/flyway) in the
-      # background while buildx builds the local images. The pulls land in
-      # the shared Docker daemon before `compose up` runs, knocking ~15s
-      # off bring-up that would otherwise sit waiting on docker.io.
-      - name: Pre-pull compose base images (background)
-        run: |
-          nohup docker compose -f docker-compose.test.yml pull --quiet db kafka flyway \
-            > /tmp/compose-pull.log 2>&1 &
-          echo $! > /tmp/compose-pull.pid
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -98,44 +70,36 @@ jobs:
           cache: true
           cache-dependency-path: base-server/go.sum
 
-      # Build the test-server image. It's no longer used as a test container
-      # (tests run in-process on the runner after PR #30's retirement of the
-      # Docker server), but it IS the image we push to ECR after tests pass.
-      # `mode=max` exports the full builder stage so the next run starts warm.
-      - name: Build test-server image
-        run: |
-          docker buildx build \
-            --file Dockerfile \
-            --tag base-server-test-server:ci \
-            --load \
-            --cache-from type=gha,scope=test-server \
-            --cache-to type=gha,mode=max,scope=test-server \
-            .
+      # Cache the compose base images (postgres / kafka / flyway) as a tarball.
+      # Key is the hash of docker-compose.test.yml — invalidates only when a
+      # pinned tag changes. On cache hit `docker load` restores in ~2s vs a
+      # ~15s cold pull from docker.io.
+      - name: Restore compose base images
+        id: compose-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/compose-images.tar
+          key: compose-base-images-${{ hashFiles('base-server/docker-compose.test.yml') }}
 
-      # Wait for the background compose pull started earlier so `up --wait`
-      # does not have to fetch anything from docker.io. `wait` only works on
-      # children of the current shell; the pre-pull ran in an earlier step,
-      # so we poll with `kill -0` instead.
-      - name: Wait for compose pre-pull
+      - name: Pull + save compose base images (cache miss)
+        if: steps.compose-cache.outputs.cache-hit != 'true'
         run: |
-          PID=$(cat /tmp/compose-pull.pid)
-          while kill -0 "$PID" 2>/dev/null; do
-            sleep 1
-          done
-          echo "::group::compose pull log"
-          cat /tmp/compose-pull.log
-          echo "::endgroup::"
+          docker compose -f docker-compose.test.yml pull --quiet db kafka flyway
+          IMAGES=$(docker compose -f docker-compose.test.yml config --images | sort -u)
+          echo "Saving: $IMAGES"
+          docker save $IMAGES -o /tmp/compose-images.tar
 
-      # Bring up db + kafka, then run flyway to apply migrations. PR #30
-      # retired the test-server container — there's no `server` service to
-      # wait on. Tests run in-process on the runner after this.
+      - name: Load compose base images (cache hit)
+        if: steps.compose-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/compose-images.tar
+
+      # Bring up db + kafka, then run flyway to apply migrations. Server runs
+      # in-process inside the Go test binary — no server container here.
       - name: Bring up test infrastructure
         run: |
           docker compose -f docker-compose.test.yml up -d --wait db kafka
           docker compose -f docker-compose.test.yml up flyway
 
-      # Store tests hit the real DB; integration tests spin up an in-process
-      # httptest.Server. Both run natively on the runner with Go.
       - name: Store tests
         run: go test -race ./internal/infra/store/...
 
@@ -146,24 +110,59 @@ jobs:
         if: failure()
         run: docker compose -f docker-compose.test.yml logs --tail=200 || true
 
-      # Tests passed. Push the test-server image we already built+loaded above
-      # straight to ECR under two tags. No rebuild, no buildx round-trip, no
-      # second runner.
-      - name: Tag and push image to ECR
+  build-push:
+    name: Build + Push image to ECR
+    runs-on: ubuntu-latest
+    needs: [unit-race, integ-tests]
+    defaults:
+      run:
+        working-directory: base-server
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.DEPLOY_ROLE }}
+          role-session-name: GitHubActions
+
+      - name: Load manifest and upsert ECR repository
+        working-directory: .
+        run: |
+          aws ssm get-parameter --name "/${PRODUCT_SLUG}/manifest" --query Parameter.Value --output text > /tmp/manifest.json
+          ECR_REPOSITORY=$(jq -r .aws.ecrRepository /tmp/manifest.json)
+          echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> "$GITHUB_ENV"
+          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 \
+            || aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Single buildx invocation: build, tag, and push in one pass with GHA
+      # layer cache. `mode=max` exports the full builder stage so the next run
+      # starts warm even on Dockerfile tweaks.
+      - name: Build and push image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          SHA_TAG="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
-          LATEST_TAG="$REGISTRY/$ECR_REPOSITORY:latest"
-          docker tag base-server-test-server:ci "$SHA_TAG"
-          docker tag base-server-test-server:ci "$LATEST_TAG"
-          docker push "$SHA_TAG"
-          docker push "$LATEST_TAG"
+          docker buildx build \
+            --file Dockerfile \
+            --tag "$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}" \
+            --tag "$REGISTRY/$ECR_REPOSITORY:latest" \
+            --cache-from type=gha,scope=server \
+            --cache-to type=gha,mode=max,scope=server \
+            --push \
+            .
 
   deploy-ecs:
     name: Deploy to protoapp
     runs-on: ubuntu-latest
-    needs: [test-race, test-and-push]
+    needs: [build-push]
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
