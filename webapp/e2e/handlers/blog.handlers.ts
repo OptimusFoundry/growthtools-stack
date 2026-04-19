@@ -1,64 +1,108 @@
 /**
  * Blog API handlers
+ *
+ * Canonical surface: `blogEndpoints` — one `setupEndpoint(...)` per route.
+ * `blogHandlers` is the default 2xx happy-path array, built from the `[200]()`
+ * factory of each endpoint. `blogScenarios` only retains semantic variants
+ * that can't be expressed as a numeric status (empty list, filtered list).
  */
 import { HttpResponse, http } from "msw";
+import { setupEndpoint } from "../helpers/endpoint";
 import { blogPosts } from "../mocks/data";
 
-/**
- * Default handlers - returns blog posts
- */
-export const blogHandlers = [
-	// List blog posts
-	http.get("*/api/protected/blog", ({ request }) => {
-		const url = new URL(request.url);
-		const status = url.searchParams.get("status");
+const now = new Date().toISOString();
 
-		let filtered = [...blogPosts];
-		if (status) {
-			filtered = filtered.filter((p) => p.status === status);
-		}
+const createdBlog = {
+	id: "blog_new",
+	account_id: "acc_123",
+	title: "",
+	slug: "",
+	content: "",
+	excerpt: "",
+	status: "draft",
+	keywords: [],
+	created_at: now,
+	updated_at: now,
+};
 
-		return HttpResponse.json(filtered);
-	}),
+const updatedBlog = blogPosts[0];
 
-	// Create blog post
-	http.post("*/api/protected/blog", async ({ request }) => {
-		const body = (await request.json()) as Record<string, unknown>;
-		const now = new Date().toISOString();
-		return HttpResponse.json(
-			{
-				id: "blog_new",
-				account_id: "acc_123",
-				title: body.title ?? "",
-				slug: body.slug ?? "",
-				content: body.content ?? "",
-				excerpt: body.excerpt ?? "",
-				status: body.status ?? "draft",
-				keywords: body.keywords ?? [],
-				created_at: now,
-				updated_at: now,
+const publishedBlog = {
+	...blogPosts[0],
+	status: "published",
+	published_at: now,
+};
+
+const generatedBlog = {
+	id: "blog_generated",
+	account_id: "acc_123",
+	title: "AI-Generated Post",
+	slug: "ai-generated-post",
+	content: "Generated content.",
+	status: "draft",
+	keywords: [],
+	created_at: now,
+	updated_at: now,
+};
+
+export const blogEndpoints = {
+	list: setupEndpoint("GET", "*/api/protected/blog", blogPosts),
+	create: setupEndpoint("POST", "*/api/protected/blog", createdBlog, {
+		overrides: {
+			409: {
+				error: "A blog post with this slug already exists",
+				code: "CONFLICT",
 			},
-			{ status: 201 },
-		);
+		},
 	}),
-];
+	update: setupEndpoint("PUT", "*/api/protected/blog/:id", updatedBlog, {
+		overrides: {
+			404: { error: "Blog post not found", code: "NOT_FOUND" },
+		},
+	}),
+	delete: setupEndpoint(
+		"DELETE",
+		"*/api/protected/blog/:id",
+		{ message: "Blog post deleted successfully" },
+		{
+			successStatus: 200,
+			overrides: {
+				404: { error: "Blog post not found", code: "NOT_FOUND" },
+			},
+		},
+	),
+	publish: setupEndpoint(
+		"POST",
+		"*/api/protected/blog/:id/publish",
+		publishedBlog,
+		{
+			successStatus: 200,
+			overrides: {
+				404: { error: "Blog post not found", code: "NOT_FOUND" },
+			},
+		},
+	),
+	generate: setupEndpoint(
+		"POST",
+		"*/api/protected/blog/generate",
+		generatedBlog,
+		{
+			overrides: {
+				500: { error: "Blog generation failed", code: "INTERNAL_ERROR" },
+			},
+		},
+	),
+};
 
-/**
- * Scenario factories for test overrides
- */
+export const blogHandlers = Object.values(blogEndpoints).map((e) => e[200]());
+
 export const blogScenarios = {
-	/** Empty blog */
-	empty: () =>
-		http.get("*/api/protected/blog", () => {
-			return HttpResponse.json([]);
-		}),
+	/** 200: empty list */
+	empty: () => http.get("*/api/protected/blog", () => HttpResponse.json([])),
 
-	/** Server error */
-	serverError: () =>
-		http.get("*/api/protected/blog", () => {
-			return HttpResponse.json(
-				{ error: "Internal server error" },
-				{ status: 500 },
-			);
-		}),
+	/** 200: filtered to only published posts */
+	publishedOnly: () =>
+		http.get("*/api/protected/blog", () =>
+			HttpResponse.json(blogPosts.filter((p) => p.status === "published")),
+		),
 };

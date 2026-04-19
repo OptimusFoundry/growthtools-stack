@@ -2,22 +2,16 @@
  * Content Generation & AI Chat API handlers
  */
 import { HttpResponse, http } from "msw";
+import { setupEndpoint } from "../helpers/endpoint";
 
-/**
- * Default handlers - content generation and AI chat
- */
-export const contentHandlers = [
-	// Generate content
-	http.post("*/api/protected/content/generate", () => {
-		return HttpResponse.json({
-			content:
-				"Here are 5 tips for building a strong developer community on social media:\n\n1. Share your real experiences, not just polished wins.\n2. Engage with replies and build genuine conversations.\n3. Post consistently, even when the engagement is low.\n4. Use visuals to break up technical content.\n5. Collaborate with other developers in your niche.",
-			contentType: "text",
-			suggestedTags: ["community", "developers", "tips"],
-		});
-	}),
+const generatedContent = {
+	content:
+		"Here are 5 tips for building a strong developer community on social media:\n\n1. Share your real experiences, not just polished wins.\n2. Engage with replies and build genuine conversations.\n3. Post consistently, even when the engagement is low.\n4. Use visuals to break up technical content.\n5. Collaborate with other developers in your niche.",
+	contentType: "text",
+	suggestedTags: ["community", "developers", "tips"],
+};
 
-	// AI Chat (SSE stream mock)
+const streamingChatHandler = () =>
 	http.post("*/api/protected/chat", () => {
 		const encoder = new TextEncoder();
 		const stream = new ReadableStream({
@@ -43,25 +37,25 @@ export const contentHandlers = [
 				Connection: "keep-alive",
 			},
 		});
-	}),
-];
+	});
 
-/**
- * Scenario factories for test overrides
- */
-export const contentScenarios = {
-	/** Generation error */
-	generationError: () =>
-		http.post("*/api/protected/content/generate", () => {
-			return HttpResponse.json(
-				{ error: "Content generation failed" },
-				{ status: 500 },
-			);
-		}),
-
-	/** Chat error */
-	chatError: () =>
-		http.post("*/api/protected/chat", () => {
-			return HttpResponse.json({ error: "Chat unavailable" }, { status: 503 });
-		}),
+export const contentEndpoints = {
+	generate: setupEndpoint(
+		"POST",
+		"*/api/protected/content/generate",
+		generatedContent,
+		{ successStatus: 200 },
+	),
+	// `chat` uses a streaming response — we keep the streaming happy-path as a
+	// custom handler, but expose the numeric error statuses via setupEndpoint.
+	chat: setupEndpoint("POST", "*/api/protected/chat", { ok: true }),
 };
+
+// Streaming happy-path overrides the generic JSON success for chat.
+contentEndpoints.chat[200] = streamingChatHandler;
+
+export const contentHandlers = Object.values(contentEndpoints).map((e) =>
+	e[200](),
+);
+
+export const contentScenarios = {};

@@ -2,33 +2,19 @@
  * Platforms API handlers
  */
 import { HttpResponse, http } from "msw";
+import { setupEndpoint } from "../helpers/endpoint";
 import { platformConnections } from "../mocks/data";
 
-/**
- * Default handlers - returns connected platforms
- */
-export const platformsHandlers = [
-	http.get("*/api/protected/platforms", () => {
-		return HttpResponse.json(platformConnections);
-	}),
-];
+export const platformsEndpoints = {
+	list: setupEndpoint("GET", "*/api/protected/platforms", platformConnections),
+};
 
-/**
- * Scenario factories for test overrides
- */
+export const platformsHandlers = Object.values(platformsEndpoints).map((e) =>
+	e[200](),
+);
+
 export const platformsScenarios = {
-	/** No connected platforms */
+	/** 200 with empty connections list */
 	empty: () =>
-		http.get("*/api/protected/platforms", () => {
-			return HttpResponse.json([]);
-		}),
-
-	/** Server error */
-	serverError: () =>
-		http.get("*/api/protected/platforms", () => {
-			return HttpResponse.json(
-				{ error: "Internal server error" },
-				{ status: 500 },
-			);
-		}),
+		http.get("*/api/protected/platforms", () => HttpResponse.json([])),
 };

@@ -2,55 +2,46 @@
  * Analytics API handlers
  */
 import { HttpResponse, http } from "msw";
+import { setupEndpoint } from "../helpers/endpoint";
 import {
 	analyticsOverview,
 	analyticsTimeseries,
 	platformBreakdown,
 } from "../mocks/data";
 
-/**
- * Default handlers - returns analytics data
- */
-export const analyticsHandlers = [
-	// Overview
-	http.get("*/api/protected/analytics/overview", () => {
-		return HttpResponse.json(analyticsOverview);
-	}),
+export const analyticsEndpoints = {
+	overview: setupEndpoint(
+		"GET",
+		"*/api/protected/analytics/overview",
+		analyticsOverview,
+	),
+	timeseries: setupEndpoint(
+		"GET",
+		"*/api/protected/analytics/timeseries",
+		analyticsTimeseries,
+	),
+	platforms: setupEndpoint(
+		"GET",
+		"*/api/protected/analytics/platforms",
+		platformBreakdown,
+	),
+};
 
-	// Time series
-	http.get("*/api/protected/analytics/timeseries", () => {
-		return HttpResponse.json(analyticsTimeseries);
-	}),
+export const analyticsHandlers = Object.values(analyticsEndpoints).map((e) =>
+	e[200](),
+);
 
-	// Platform breakdown
-	http.get("*/api/protected/analytics/platforms", () => {
-		return HttpResponse.json(platformBreakdown);
-	}),
-];
-
-/**
- * Scenario factories for test overrides
- */
 export const analyticsScenarios = {
-	/** No analytics data */
+	/** No analytics data — every endpoint returns an empty/null body. */
 	empty: () => [
-		http.get("*/api/protected/analytics/overview", () => {
-			return HttpResponse.json(null);
-		}),
-		http.get("*/api/protected/analytics/timeseries", () => {
-			return HttpResponse.json([]);
-		}),
-		http.get("*/api/protected/analytics/platforms", () => {
-			return HttpResponse.json([]);
-		}),
+		http.get("*/api/protected/analytics/overview", () =>
+			HttpResponse.json(null),
+		),
+		http.get("*/api/protected/analytics/timeseries", () =>
+			HttpResponse.json([]),
+		),
+		http.get("*/api/protected/analytics/platforms", () =>
+			HttpResponse.json([]),
+		),
 	],
-
-	/** Server error on overview */
-	serverError: () =>
-		http.get("*/api/protected/analytics/overview", () => {
-			return HttpResponse.json(
-				{ error: "Internal server error" },
-				{ status: 500 },
-			);
-		}),
 };

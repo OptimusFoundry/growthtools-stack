@@ -2,64 +2,40 @@
  * Media API handlers
  */
 import { HttpResponse, http } from "msw";
+import { setupEndpoint } from "../helpers/endpoint";
 import { mediaItems } from "../mocks/data";
 
-/**
- * Default handlers - returns media library
- */
-export const mediaHandlers = [
-	// List media
-	http.get("*/api/protected/media", () => {
-		return HttpResponse.json(mediaItems);
-	}),
+const now = new Date().toISOString();
 
-	// Upload media
-	http.post("*/api/protected/media", () => {
-		const now = new Date().toISOString();
-		return HttpResponse.json(
-			{
-				id: "media_new",
-				account_id: "acc_123",
-				filename: "uploaded-file.png",
-				content_type: "image/png",
-				s3_url: "https://cdn.example.com/media/uploaded-file.png",
-				size_bytes: 102400,
-				width: 800,
-				height: 600,
-				source: "upload",
-				created_at: now,
-				updated_at: now,
-			},
-			{ status: 201 },
-		);
-	}),
+const uploadedMedia = {
+	id: "media_new",
+	account_id: "acc_123",
+	filename: "uploaded-file.png",
+	content_type: "image/png",
+	s3_url: "https://cdn.example.com/media/uploaded-file.png",
+	size_bytes: 102400,
+	width: 800,
+	height: 600,
+	source: "upload",
+	created_at: now,
+	updated_at: now,
+};
 
-	// Delete media
-	http.delete("*/api/protected/media/:id", ({ params }) => {
-		const item = mediaItems.find((m) => m.id === params.id);
-		if (!item) {
-			return HttpResponse.json({ error: "Media not found" }, { status: 404 });
-		}
-		return HttpResponse.json({ message: "Media deleted" });
-	}),
-];
+export const mediaEndpoints = {
+	list: setupEndpoint("GET", "*/api/protected/media", mediaItems),
+	upload: setupEndpoint("POST", "*/api/protected/media", uploadedMedia),
+	delete: setupEndpoint(
+		"DELETE",
+		"*/api/protected/media/:id",
+		{ message: "Media deleted successfully" },
+		{ successStatus: 200 },
+	),
+};
 
-/**
- * Scenario factories for test overrides
- */
+export const mediaHandlers = Object.values(mediaEndpoints).map((e) => e[200]());
+
 export const mediaScenarios = {
-	/** Empty media library */
-	empty: () =>
-		http.get("*/api/protected/media", () => {
-			return HttpResponse.json([]);
-		}),
-
-	/** Server error */
-	serverError: () =>
-		http.get("*/api/protected/media", () => {
-			return HttpResponse.json(
-				{ error: "Internal server error" },
-				{ status: 500 },
-			);
-		}),
+	/** 200 with empty media library */
+	listEmpty: () =>
+		http.get("*/api/protected/media", () => HttpResponse.json([])),
 };

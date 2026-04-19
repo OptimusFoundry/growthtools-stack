@@ -1,61 +1,65 @@
 /**
  * Auth/User API handlers
+ *
+ * Endpoints covered:
+ *   POST /api/auth/test/login   — hidden test-login page
+ *   GET  /api/protected/user    — current user / session hydration
  */
 import { HttpResponse, http } from "msw";
 import type { ApiTierName } from "../../src/api/types/tier";
+import { setupEndpoint } from "../helpers/endpoint";
 import { users } from "../mocks/data";
 
-/**
- * Creates user handler for a specific tier
- */
 export const createUserHandler = (tier: ApiTierName) =>
-	http.get("*/api/protected/user", () => {
-		return HttpResponse.json(users[tier]);
-	});
+	http.get("*/api/protected/user", () => HttpResponse.json(users[tier]));
 
-// Intercepts the hidden test-login endpoint. MSW sits at the network layer, so
-// no real cookie is set — the companion /api/protected/user handler is what
-// makes the app appear authenticated afterwards.
-export const testLoginHandler = http.post("*/api/auth/test/login", () => {
-	return new HttpResponse(null, { status: 204 });
-});
+// ── Endpoint table ─────────────────────────────────────────────────────────
 
-/**
- * Default handlers - Pro tier user
- */
+export const authEndpoints = {
+	user: setupEndpoint("GET", "*/api/protected/user", users.pro),
+	testLogin: setupEndpoint("POST", "*/api/auth/test/login", null, {
+		successStatus: 204,
+		overrides: {
+			401: { error: "Invalid email or password", code: "UNAUTHORIZED" },
+		},
+	}),
+};
+
+export const testLoginHandler = authEndpoints.testLogin[200]();
+
 export const authHandlers = [createUserHandler("pro"), testLoginHandler];
 
-/**
- * Handler factories for different user states
- */
+// ── Semantic scenario variants (consumed by auth.spec.ts) ─────────────────
+
 export const authScenarios = {
 	/** Free tier user */
 	freeTier: () => createUserHandler("free"),
-
 	/** Pro tier user */
 	proTier: () => createUserHandler("pro"),
-
 	/** Team tier user */
 	teamTier: () => createUserHandler("team"),
 
-	/** Unauthenticated - returns 401 */
+	/** Unauthenticated — generic 401 on /user */
 	unauthenticated: () =>
-		http.get("*/api/protected/user", () => {
-			return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
-		}),
+		http.get("*/api/protected/user", () =>
+			HttpResponse.json({ error: "Unauthorized" }, { status: 401 }),
+		),
 
-	/** Session expired */
+	/** Session expired — 401 with a specific message the UI checks for */
 	sessionExpired: () =>
-		http.get("*/api/protected/user", () => {
-			return HttpResponse.json({ error: "Session expired" }, { status: 401 });
-		}),
+		http.get("*/api/protected/user", () =>
+			HttpResponse.json({ error: "Session expired" }, { status: 401 }),
+		),
 
-	/** Test-login rejected (e.g. bad password) */
+	/**
+	 * Test-login rejected (bad password) — 401 with specific message. Kept as
+	 * a semantic variant because auth.spec.ts asserts the exact error copy.
+	 */
 	testLoginFailed: () =>
-		http.post("*/api/auth/test/login", () => {
-			return HttpResponse.json(
+		http.post("*/api/auth/test/login", () =>
+			HttpResponse.json(
 				{ error: "Invalid email or password" },
 				{ status: 401 },
-			);
-		}),
+			),
+		),
 };
