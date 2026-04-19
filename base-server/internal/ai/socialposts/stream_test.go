@@ -251,13 +251,15 @@ func TestGenerateStreamContextCancel(t *testing.T) {
 
 	mockAI := NewMockAIClient(ctrl)
 
-	// Stream is interrupted by context cancellation
+	// Stream is interrupted by context cancellation. MaxTimes rather than
+	// Times because the goroutine may observe ctx.Done() before the mock is
+	// called — the test only cares that an ErrorEvent surfaces.
 	mockAI.EXPECT().
 		StreamMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, sys string, msgs interface{}, maxTokens int, onChunk func(string)) error {
 			return ctx.Err()
 		}).
-		Times(1)
+		MaxTimes(1)
 
 	gen := New(mockAI, logger)
 
