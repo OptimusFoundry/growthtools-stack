@@ -205,7 +205,7 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 				platformResults[result.PlatformName] = "(thread)"
 				threadResults[result.PlatformName] = result.Segments
 				resultsMu.Unlock()
-				payload, _ := json.Marshal(map[string]any{"platform": result.PlatformName, "segments": result.Segments})
+				payload, _ := json.Marshal(map[string]any{"platform": result.PlatformName, "segments": segmentsToJSON(result.Segments)})
 				writeSSE("platform_done", string(payload))
 				writeSSE("thread_done", string(payload))
 			default:
@@ -218,8 +218,27 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 		}
 	}
 
-	donePayload, _ := json.Marshal(map[string]any{"platforms": platformResults, "threads": threadResults})
+	threadsOut := make(map[string]any, len(threadResults))
+	for platform, segs := range threadResults {
+		threadsOut[platform] = segmentsToJSON(segs)
+	}
+	donePayload, _ := json.Marshal(map[string]any{"platforms": platformResults, "threads": threadsOut})
 	writeSSE("done", string(donePayload))
+}
+
+// segmentsToJSON normalizes socialposts.Segment values into the snake_case
+// shape the webapp expects: {content, image_index?}.
+func segmentsToJSON(segs []socialposts.Segment) []map[string]any {
+	out := make([]map[string]any, 0, len(segs))
+	for _, s := range segs {
+		switch v := s.(type) {
+		case socialposts.TextSegment:
+			out = append(out, map[string]any{"content": v.Content})
+		case socialposts.MediaSegment:
+			out = append(out, map[string]any{"content": v.Content, "image_index": v.ImageIndex})
+		}
+	}
+	return out
 }
 
 
