@@ -24,7 +24,7 @@ import (
 func buildHandlers(cfg *config.Config, logger *observability.Logger, deps *Dependencies, p *procs, s *store.Store, cl *clients) {
 	deps.BillingHandler = billingHandler.New(p.billing, logger)
 	deps.AuthHandler = authHandler.New(p.auth, p.tierService, logger)
-	deps.ContentHandler = contentHandler.New(p.aiDescriber, p.aiPosts, s, cl.s3Fetch, logger)
+	deps.ContentHandler = contentHandler.New(&p.content, logger)
 	deps.ChatHandler = chatHandler.New(&p.chat, logger)
 	deps.PlatformsHandler = platformsHandler.New(&p.platforms, logger, cfg.Services.WebAppURI)
 	deps.PostsHandler = postsHandler.New(&p.posts, logger)

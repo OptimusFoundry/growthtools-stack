@@ -29,142 +29,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestContentAPI_GeneratePost tests POST /api/protected/content/generate.
-// Covers validation and auth paths only; 200/503 (Gemini) are unit-test-only.
-func TestContentAPI_GeneratePost(t *testing.T) {
-	t.Parallel()
-	c := testClient(t)
-
-	tests := []struct {
-		name       string
-		setup      func(t *testing.T) string // returns token
-		body       any
-		wantStatus int
-	}{
-		{
-			name: "400 when prompt is missing",
-			setup: func(t *testing.T) string {
-				return seedUserWithAccount(t, c.Store).Token
-			},
-			body:       map[string]any{"platforms": []any{"x"}},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "401 when no token",
-			setup: func(t *testing.T) string {
-				return ""
-			},
-			body:       map[string]any{"prompt": "test prompt"},
-			wantStatus: http.StatusUnauthorized,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			token := tt.setup(t)
-			resp, _ := c.Request(t, http.MethodPost, "/api/protected/content/generate", tt.body, token)
-			assert.Equal(t, tt.wantStatus, resp.StatusCode)
-		})
-	}
-}
-
-// TestContentAPI_AdaptContent tests POST /api/protected/content/adapt.
-// Covers validation and auth paths only; 200/503 (Gemini) are unit-test-only.
-func TestContentAPI_AdaptContent(t *testing.T) {
-	t.Parallel()
-	c := testClient(t)
-
-	tests := []struct {
-		name       string
-		setup      func(t *testing.T) string
-		body       any
-		wantStatus int
-	}{
-		{
-			name: "400 when content is missing",
-			setup: func(t *testing.T) string {
-				return seedUserWithAccount(t, c.Store).Token
-			},
-			body:       map[string]any{"platform": "x"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "400 when platform is missing",
-			setup: func(t *testing.T) string {
-				return seedUserWithAccount(t, c.Store).Token
-			},
-			body:       map[string]any{"content": "some content"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "401 when no token",
-			setup: func(t *testing.T) string {
-				return ""
-			},
-			body:       map[string]any{"content": "some content", "platform": "x"},
-			wantStatus: http.StatusUnauthorized,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			token := tt.setup(t)
-			resp, _ := c.Request(t, http.MethodPost, "/api/protected/content/adapt", tt.body, token)
-			assert.Equal(t, tt.wantStatus, resp.StatusCode)
-		})
-	}
-}
-
-// TestContentAPI_GenerateThread tests POST /api/protected/content/thread.
-// Covers validation and auth paths only; 200/503 (Gemini) are unit-test-only.
-func TestContentAPI_GenerateThread(t *testing.T) {
-	t.Parallel()
-	c := testClient(t)
-
-	tests := []struct {
-		name       string
-		setup      func(t *testing.T) string
-		body       any
-		wantStatus int
-	}{
-		{
-			name: "400 when content is missing",
-			setup: func(t *testing.T) string {
-				return seedUserWithAccount(t, c.Store).Token
-			},
-			body:       map[string]any{"platform": "x"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "400 when platform is missing",
-			setup: func(t *testing.T) string {
-				return seedUserWithAccount(t, c.Store).Token
-			},
-			body:       map[string]any{"content": "some content"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "401 when no token",
-			setup: func(t *testing.T) string {
-				return ""
-			},
-			body:       map[string]any{"content": "some content", "platform": "x"},
-			wantStatus: http.StatusUnauthorized,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			token := tt.setup(t)
-			resp, _ := c.Request(t, http.MethodPost, "/api/protected/content/thread", tt.body, token)
-			assert.Equal(t, tt.wantStatus, resp.StatusCode)
-		})
-	}
-}
-
 // TestContentAPI_StreamGenerate tests POST /api/protected/content/generate/stream.
 //
 // SSE headers are set AFTER validation. Validation errors return JSON 400/401.
@@ -208,13 +72,32 @@ func TestContentAPI_StreamGenerate(t *testing.T) {
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
+			// Handler validates content_type ∈ {single, thread, text} and
+			// returns 400 when missing (no AI fallback). Include one to reach
+			// the Gemini call that the test is actually exercising.
 			name: "200 with SSE error event when Gemini fails (test API key)",
 			setup: func(t *testing.T) string {
 				return seedUserWithAccount(t, c.Store).Token
 			},
-			body:       map[string]any{"prompt": "test prompt", "platforms": []any{"x"}},
+			body:       map[string]any{"prompt": "test prompt", "platforms": []any{"x"}, "content_type": "text"},
 			wantStatus: http.StatusOK,
 			checkSSE:   true,
+		},
+		{
+			name: "400 when content_type is missing",
+			setup: func(t *testing.T) string {
+				return seedUserWithAccount(t, c.Store).Token
+			},
+			body:       map[string]any{"prompt": "test prompt", "platforms": []any{"x"}},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "400 when content_type is invalid",
+			setup: func(t *testing.T) string {
+				return seedUserWithAccount(t, c.Store).Token
+			},
+			body:       map[string]any{"prompt": "test prompt", "platforms": []any{"x"}, "content_type": "bogus"},
+			wantStatus: http.StatusBadRequest,
 		},
 	}
 

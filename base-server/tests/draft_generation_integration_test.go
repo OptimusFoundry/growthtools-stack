@@ -53,9 +53,9 @@ func TestDraftGeneration_PathA(t *testing.T) {
 
 				// Add an active X platform connection for the account so drafts will be generated for it.
 				_, err := c.Store.GetDB().ExecContext(ctx,
-					`INSERT INTO platform_connections (id, account_id, platform, status, access_token, token_expires_at)
-					 VALUES ($1, $2, $3, $4, $5, $6)`,
-					uuid.New(), user.AccountID, "x", "active", "fake-x-token", time.Now().Add(24*time.Hour))
+					`INSERT INTO platform_connections (id, account_id, platform, platform_user_id, status, access_token, token_expires_at)
+					 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+					uuid.New(), user.AccountID, "x", "test-user-"+uuid.New().String()[:8], "active", "fake-x-token", time.Now().Add(24*time.Hour))
 				require.NoError(t, err)
 
 				// Seed a repo and commit with capture_output containing 1 video + 1 image

@@ -11,6 +11,7 @@ import (
 	billingProcessor "base-server/internal/billing/processor"
 	"base-server/internal/billing/products"
 	"base-server/internal/billing/subscriptions"
+	contentProcessor "base-server/internal/content/processor"
 	"base-server/internal/infra/config"
 	"base-server/internal/infra/httpclient"
 	"base-server/internal/infra/observability"
@@ -33,6 +34,7 @@ type procs struct {
 	auth         authProcessor.AuthProcessor
 	tierService  *tiers.TierService
 	chat         chatProcessor.ChatProcessor
+	content      contentProcessor.ContentProcessor
 	platforms    platformsProcessor.PlatformProcessor
 	posts        postsProcessor.PostProcessor
 	media        mediaProcessor.MediaProcessor
@@ -98,6 +100,9 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 
 	// AI Chat
 	p.chat = chatProcessor.New(s, cl.gemini, logger)
+
+	// Content generation
+	p.content = contentProcessor.New(s, cl.s3Fetch, p.aiDescriber, p.aiPosts, logger)
 
 	// Platform connections
 	p.platforms = platformsProcessor.New(s, cl.oauthConfigs, cl.staticTokens, httpclient.NewTracingClient(), logger, cl.xClient, cl.threads, cl.bluesky)
