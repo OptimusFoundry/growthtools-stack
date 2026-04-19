@@ -68,6 +68,8 @@ export interface PostFilters {
 	status?: PostStatus;
 	contentType?: ContentType;
 	source?: PostSource;
+	from?: string; // YYYY-MM-DD — inclusive lower bound
+	to?: string; // YYYY-MM-DD — inclusive upper bound (handler treats as end-of-day)
 	limit?: number;
 	offset?: number;
 }

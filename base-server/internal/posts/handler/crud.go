@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
@@ -112,10 +113,31 @@ func (h *Handler) HandleListPosts(c *gin.Context) {
 		}
 	}
 
+	var from, to *time.Time
+	if fromStr := c.Query("from"); fromStr != "" {
+		t, err := time.Parse("2006-01-02", fromStr)
+		if err != nil {
+			apierrors.BadRequest(c, "INVALID_INPUT", "from must be a date in YYYY-MM-DD format")
+			return
+		}
+		from = &t
+	}
+	if toStr := c.Query("to"); toStr != "" {
+		t, err := time.Parse("2006-01-02", toStr)
+		if err != nil {
+			apierrors.BadRequest(c, "INVALID_INPUT", "to must be a date in YYYY-MM-DD format")
+			return
+		}
+		endOfDay := t.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		to = &endOfDay
+	}
+
 	listParams := store.ListPostsParams{
 		AccountID: accountID,
 		Limit:     limit,
 		Offset:    offset,
+		From:      from,
+		To:        to,
 	}
 	if status != "" {
 		listParams.Status = &status

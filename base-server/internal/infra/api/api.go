@@ -117,6 +117,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.POST("/posts/draft", a.postsHandler.HandleSaveDraft)
 		protectedGroup.POST("/posts", a.postsHandler.HandleCreatePost)
 		protectedGroup.GET("/posts", a.postsHandler.HandleListPosts)
+		protectedGroup.GET("/posts/calendar", a.postsHandler.HandleGetCalendarMonth) // must be before /:id
 		protectedGroup.GET("/posts/:id", a.postsHandler.HandleGetPost)
 		protectedGroup.PUT("/posts/:id", a.postsHandler.HandleUpdatePost)
 		protectedGroup.DELETE("/posts/:id", a.postsHandler.HandleDeletePost)

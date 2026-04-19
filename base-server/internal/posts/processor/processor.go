@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -38,6 +39,8 @@ type PostStore interface {
 	DeletePlatformPostsByPostID(ctx context.Context, postID uuid.UUID) error
 	ResetPlatformPostsForRetry(ctx context.Context, postID uuid.UUID) error
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	GetCalendarStatusCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarStatusRow, error)
+	GetCalendarPlatformCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarPlatformRow, error)
 }
 
 // EventPublisher publishes events to a message broker
@@ -46,14 +49,15 @@ type EventPublisher interface {
 }
 
 var (
-	ErrPostNotFound       = errors.New("post not found")
-	ErrFailedCreatePost   = errors.New("failed to create post")
-	ErrFailedUpdatePost   = errors.New("failed to update post")
-	ErrFailedDeletePost   = errors.New("failed to delete post")
-	ErrMediaNotAttached   = errors.New("media is not attached to post")
-	ErrFailedUnlinkMedia  = errors.New("failed to unlink media from post")
-	ErrFailedSaveDraft    = errors.New("failed to save draft")
-	ErrFailedRetryPost    = errors.New("failed to retry post")
+	ErrPostNotFound            = errors.New("post not found")
+	ErrFailedCreatePost        = errors.New("failed to create post")
+	ErrFailedUpdatePost        = errors.New("failed to update post")
+	ErrFailedDeletePost        = errors.New("failed to delete post")
+	ErrMediaNotAttached        = errors.New("media is not attached to post")
+	ErrFailedUnlinkMedia       = errors.New("failed to unlink media from post")
+	ErrFailedSaveDraft         = errors.New("failed to save draft")
+	ErrFailedRetryPost         = errors.New("failed to retry post")
+	ErrInvalidCalendarParams   = errors.New("invalid calendar year or month")
 )
 
 type PostProcessor struct {
@@ -98,6 +102,48 @@ type PostWithPlatformPosts struct {
 	Post          store.Post           `json:"post"`
 	PlatformPosts []store.PlatformPost `json:"platform_posts"`
 	Media         []store.Media        `json:"media"`
+}
+
+// StatusBreakdown holds a count per post status. All six keys are always
+// present even when zero, so the frontend can render consistently.
+type StatusBreakdown struct {
+	Draft              int `json:"draft"`
+	Scheduled          int `json:"scheduled"`
+	Publishing         int `json:"publishing"`
+	Published          int `json:"published"`
+	Failed             int `json:"failed"`
+	PartiallyPublished int `json:"partially_published"`
+}
+
+// PlatformBreakdown holds a count per platform. All 8 canonical platform
+// keys are always present even when zero.
+type PlatformBreakdown struct {
+	X         int `json:"x"`
+	LinkedIn  int `json:"linkedin"`
+	BlueSky   int `json:"bluesky"`
+	Facebook  int `json:"facebook"`
+	Instagram int `json:"instagram"`
+	Threads   int `json:"threads"`
+	TikTok    int `json:"tiktok"`
+	Pinterest int `json:"pinterest"`
+}
+
+// CalendarDay is one entry in the CalendarMonth.Days slice. Only days that
+// have at least one post are included; the frontend fills empty-day gaps.
+type CalendarDay struct {
+	Date       string            `json:"date"`        // "YYYY-MM-DD"
+	ByStatus   StatusBreakdown   `json:"by_status"`
+	ByPlatform PlatformBreakdown `json:"by_platform"`
+}
+
+// CalendarMonth is the response shape for GetCalendarMonth.
+type CalendarMonth struct {
+	Month       string        `json:"month"` // "YYYY-MM"
+	Days        []CalendarDay `json:"days"`
+	MonthTotals struct {
+		ByStatus   StatusBreakdown   `json:"by_status"`
+		ByPlatform PlatformBreakdown `json:"by_platform"`
+	} `json:"month_totals"`
 }
 
 func (p *PostProcessor) CreatePost(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
@@ -520,4 +566,140 @@ func (p *PostProcessor) RetryFailedPlatformPosts(ctx context.Context, accountID,
 
 func strPtr(s string) *string {
 	return &s
+}
+
+// GetCalendarMonth aggregates posts for a single calendar month into per-day
+// status and platform breakdowns plus month totals. It issues two queries
+// (status counts, platform counts) and merges them in Go so the DB only
+// groups the needed month, not the entire posts table.
+//
+// Validation: year must be 2000-2100, month must be 1-12.
+func (p *PostProcessor) GetCalendarMonth(ctx context.Context, accountID uuid.UUID, year, month int) (CalendarMonth, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "year", Value: year},
+		observability.Field{Key: "month", Value: month},
+		observability.Field{Key: "operation", Value: "get_calendar_month"},
+	)
+
+	if year < 2000 || year > 2100 || month < 1 || month > 12 {
+		return CalendarMonth{}, ErrInvalidCalendarParams
+	}
+
+	storeParams := store.CalendarParams{
+		AccountID: accountID,
+		Year:      year,
+		Month:     month,
+	}
+
+	statusRows, err := p.store.GetCalendarStatusCounts(ctx, storeParams)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get calendar status counts", err)
+		return CalendarMonth{}, ErrInvalidCalendarParams
+	}
+
+	platformRows, err := p.store.GetCalendarPlatformCounts(ctx, storeParams)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get calendar platform counts", err)
+		return CalendarMonth{}, ErrInvalidCalendarParams
+	}
+
+	// Index platform rows by day for O(1) lookup during merge.
+	platformByDay := make(map[string][]store.CalendarPlatformRow, len(platformRows))
+	for _, row := range platformRows {
+		platformByDay[row.Day] = append(platformByDay[row.Day], row)
+	}
+
+	// Collect all days that appear in either result set.
+	daySet := make(map[string]struct{}, len(statusRows))
+	for _, row := range statusRows {
+		daySet[row.Day] = struct{}{}
+	}
+	for _, row := range platformRows {
+		daySet[row.Day] = struct{}{}
+	}
+
+	// Build a lookup for status rows.
+	statusByDay := make(map[string]store.CalendarStatusRow, len(statusRows))
+	for _, row := range statusRows {
+		statusByDay[row.Day] = row
+	}
+
+	days := make([]CalendarDay, 0, len(daySet))
+	var totStatus StatusBreakdown
+	var totPlatform PlatformBreakdown
+
+	// Sort days so the response is deterministic.
+	sortedDays := make([]string, 0, len(daySet))
+	for day := range daySet {
+		sortedDays = append(sortedDays, day)
+	}
+	// Simple insertion sort — days are YYYY-MM-DD so lexicographic == chronological.
+	for i := 1; i < len(sortedDays); i++ {
+		for j := i; j > 0 && sortedDays[j] < sortedDays[j-1]; j-- {
+			sortedDays[j], sortedDays[j-1] = sortedDays[j-1], sortedDays[j]
+		}
+	}
+
+	for _, day := range sortedDays {
+		var bySt StatusBreakdown
+		if sr, ok := statusByDay[day]; ok {
+			bySt = StatusBreakdown{
+				Draft:              sr.StatusDraft,
+				Scheduled:          sr.StatusScheduled,
+				Publishing:         sr.StatusPublishing,
+				Published:          sr.StatusPublished,
+				Failed:             sr.StatusFailed,
+				PartiallyPublished: sr.StatusPartial,
+			}
+		}
+		totStatus.Draft += bySt.Draft
+		totStatus.Scheduled += bySt.Scheduled
+		totStatus.Publishing += bySt.Publishing
+		totStatus.Published += bySt.Published
+		totStatus.Failed += bySt.Failed
+		totStatus.PartiallyPublished += bySt.PartiallyPublished
+
+		var byPl PlatformBreakdown
+		for _, pr := range platformByDay[day] {
+			addPlatformCount(&byPl, pr.Platform, pr.Count)
+			addPlatformCount(&totPlatform, pr.Platform, pr.Count)
+		}
+
+		days = append(days, CalendarDay{
+			Date:       day,
+			ByStatus:   bySt,
+			ByPlatform: byPl,
+		})
+	}
+
+	result := CalendarMonth{
+		Month: fmt.Sprintf("%04d-%02d", year, month),
+		Days:  days,
+	}
+	result.MonthTotals.ByStatus = totStatus
+	result.MonthTotals.ByPlatform = totPlatform
+	return result, nil
+}
+
+// addPlatformCount increments the correct field of a PlatformBreakdown.
+func addPlatformCount(pb *PlatformBreakdown, platform string, n int) {
+	switch platform {
+	case store.PlatformX:
+		pb.X += n
+	case store.PlatformLinkedIn:
+		pb.LinkedIn += n
+	case store.PlatformBlueSky:
+		pb.BlueSky += n
+	case store.PlatformFacebook:
+		pb.Facebook += n
+	case store.PlatformInstagram:
+		pb.Instagram += n
+	case store.PlatformThreads:
+		pb.Threads += n
+	case store.PlatformTikTok:
+		pb.TikTok += n
+	case store.PlatformPinterest:
+		pb.Pinterest += n
+	}
 }

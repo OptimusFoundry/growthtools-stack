@@ -24,6 +24,8 @@ export const useGetPosts = (filters?: PostFilters) => {
 					params.set("limit", String(filters.limit));
 				if (filters?.offset !== undefined)
 					params.set("offset", String(filters.offset));
+				if (filters?.from) params.set("from", filters.from);
+				if (filters?.to) params.set("to", filters.to);
 
 				const query = params.toString();
 				const url = `${import.meta.env.VITE_API_URL}/api/protected/posts${query ? `?${query}` : ""}`;
@@ -43,7 +45,14 @@ export const useGetPosts = (filters?: PostFilters) => {
 				setLoading(false);
 			}
 		},
-		[filters?.status, filters?.contentType, filters?.limit, filters?.offset],
+		[
+			filters?.status,
+			filters?.contentType,
+			filters?.limit,
+			filters?.offset,
+			filters?.from,
+			filters?.to,
+		],
 	);
 
 	const refetch = useCallback(() => {

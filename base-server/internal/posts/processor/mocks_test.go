@@ -140,6 +140,36 @@ func (mr *MockPostStoreMockRecorder) DeletePost(ctx, accountID, postID any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostStore)(nil).DeletePost), ctx, accountID, postID)
 }
 
+// GetCalendarPlatformCounts mocks base method.
+func (m *MockPostStore) GetCalendarPlatformCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarPlatformRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCalendarPlatformCounts", ctx, params)
+	ret0, _ := ret[0].([]store.CalendarPlatformRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCalendarPlatformCounts indicates an expected call of GetCalendarPlatformCounts.
+func (mr *MockPostStoreMockRecorder) GetCalendarPlatformCounts(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCalendarPlatformCounts", reflect.TypeOf((*MockPostStore)(nil).GetCalendarPlatformCounts), ctx, params)
+}
+
+// GetCalendarStatusCounts mocks base method.
+func (m *MockPostStore) GetCalendarStatusCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarStatusRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCalendarStatusCounts", ctx, params)
+	ret0, _ := ret[0].([]store.CalendarStatusRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCalendarStatusCounts indicates an expected call of GetCalendarStatusCounts.
+func (mr *MockPostStoreMockRecorder) GetCalendarStatusCounts(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCalendarStatusCounts", reflect.TypeOf((*MockPostStore)(nil).GetCalendarStatusCounts), ctx, params)
+}
+
 // GetMediaByIDs mocks base method.
 func (m *MockPostStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {
 	m.ctrl.T.Helper()

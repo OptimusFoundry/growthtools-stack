@@ -73,6 +73,21 @@ func (mr *MockPostProcessorMockRecorder) DeletePost(ctx, accountID, postID any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostProcessor)(nil).DeletePost), ctx, accountID, postID)
 }
 
+// GetCalendarMonth mocks base method.
+func (m *MockPostProcessor) GetCalendarMonth(ctx context.Context, accountID uuid.UUID, year, month int) (processor.CalendarMonth, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCalendarMonth", ctx, accountID, year, month)
+	ret0, _ := ret[0].(processor.CalendarMonth)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCalendarMonth indicates an expected call of GetCalendarMonth.
+func (mr *MockPostProcessorMockRecorder) GetCalendarMonth(ctx, accountID, year, month any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCalendarMonth", reflect.TypeOf((*MockPostProcessor)(nil).GetCalendarMonth), ctx, accountID, year, month)
+}
+
 // GetPost mocks base method.
 func (m *MockPostProcessor) GetPost(ctx context.Context, accountID, postID uuid.UUID) (store.Post, error) {
 	m.ctrl.T.Helper()

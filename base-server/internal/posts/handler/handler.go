@@ -30,6 +30,7 @@ type PostProcessor interface {
 	GetPostWithPlatformPosts(ctx context.Context, accountID, postID uuid.UUID) (processor.PostWithPlatformPosts, error)
 	UpdateDraft(ctx context.Context, params processor.UpdateDraftParams) (store.Post, error)
 	RetryFailedPlatformPosts(ctx context.Context, accountID, postID uuid.UUID) error
+	GetCalendarMonth(ctx context.Context, accountID uuid.UUID, year, month int) (processor.CalendarMonth, error)
 }
 
 type Handler struct {
@@ -62,6 +63,8 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 		apierrors.InternalError(c, err)
 	case errors.Is(err, processor.ErrFailedRetryPost):
 		apierrors.InternalError(c, err)
+	case errors.Is(err, processor.ErrInvalidCalendarParams):
+		apierrors.BadRequest(c, "INVALID_INPUT", "year must be 2000-2100 and month must be 1-12")
 	default:
 		apierrors.InternalError(c, err)
 	}
