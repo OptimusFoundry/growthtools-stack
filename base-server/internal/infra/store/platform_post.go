@@ -24,16 +24,16 @@ type PlatformPost struct {
 	// upload (container_id, media_id + processing state, blob ref,
 	// jobId, etc.). Shape is adapter-owned — the pipeline workers pass
 	// it through without cracking it open. Nil for text-only rows.
-	MediaHandle    *json.RawMessage `db:"media_handle" json:"media_handle,omitempty"`
-	PublishedAt    *time.Time       `db:"published_at" json:"published_at,omitempty"`
-	ErrorMessage   *string          `db:"error_message" json:"error_message,omitempty"`
-	Engagement     JSONB            `db:"engagement" json:"engagement"`
-	AttemptCount   int              `db:"attempt_count" json:"attempt_count"`
-	MaxAttempts    int              `db:"max_attempts" json:"max_attempts"`
-	NextRetryAt    *time.Time       `db:"next_retry_at" json:"next_retry_at,omitempty"`
-	LastAttemptAt  *time.Time       `db:"last_attempt_at" json:"last_attempt_at,omitempty"`
-	CreatedAt      time.Time        `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time        `db:"updated_at" json:"updated_at"`
+	MediaHandle   *json.RawMessage `db:"media_handle" json:"media_handle,omitempty"`
+	PublishedAt   *time.Time       `db:"published_at" json:"published_at,omitempty"`
+	ErrorMessage  *string          `db:"error_message" json:"error_message,omitempty"`
+	Engagement    JSONB            `db:"engagement" json:"engagement"`
+	AttemptCount  int              `db:"attempt_count" json:"attempt_count"`
+	MaxAttempts   int              `db:"max_attempts" json:"max_attempts"`
+	NextRetryAt   *time.Time       `db:"next_retry_at" json:"next_retry_at,omitempty"`
+	LastAttemptAt *time.Time       `db:"last_attempt_at" json:"last_attempt_at,omitempty"`
+	CreatedAt     time.Time        `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time        `db:"updated_at" json:"updated_at"`
 }
 
 // RetryablePlatformPost extends PlatformPost with the parent post's account_id
@@ -367,4 +367,32 @@ func (s *Store) ResetPlatformPostsForRetry(ctx context.Context, postID uuid.UUID
 		return fmt.Errorf("failed to reset platform posts for retry: %w", err)
 	}
 	return nil
+}
+
+// GetPublishedPlatformPostsForAnalytics finds published platform posts on X, Threads,
+// and BlueSky that were published after cutoff, suitable for analytics collection.
+const sqlGetPublishedPlatformPostsForAnalytics = `
+SELECT pp.id, pp.post_id, pp.platform, pp.platform_post_id, pp.status, pp.content, pp.thread_segments, pp.media_handle,
+       pp.published_at, pp.error_message, pp.engagement, pp.attempt_count, pp.max_attempts,
+       pp.next_retry_at, pp.last_attempt_at, pp.created_at, pp.updated_at,
+       p.account_id
+FROM platform_posts pp
+JOIN posts p ON p.id = pp.post_id
+WHERE pp.status = 'published'
+  AND pp.platform_post_id IS NOT NULL
+  AND pp.platform_post_id <> ''
+  AND pp.published_at > $1
+  AND pp.platform IN ('x', 'threads', 'bluesky')
+  AND p.deleted_at IS NULL
+ORDER BY pp.published_at DESC
+LIMIT 500
+`
+
+func (s *Store) GetPublishedPlatformPostsForAnalytics(ctx context.Context, cutoff time.Time) ([]RetryablePlatformPost, error) {
+	posts := make([]RetryablePlatformPost, 0)
+	err := s.db.SelectContext(ctx, &posts, sqlGetPublishedPlatformPostsForAnalytics, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get published platform posts for analytics: %w", err)
+	}
+	return posts, nil
 }

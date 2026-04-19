@@ -22,6 +22,7 @@ func buildWorkers(cfg *config.Config, logger *observability.Logger, deps *Depend
 	finalizerWorker := workers.NewFinalizerWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, s, cl.adapterRegistry, &p.platforms, logger)
 
 	analyticsWorker := workers.NewAnalyticsWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, s, cl.adapterRegistry, &p.platforms, logger)
+	analyticsProducerWorker := workers.NewAnalyticsProducerWorker(s, cl.kafka, logger)
 	schedulerWorker := workers.NewSchedulerWorker(s, cl.kafka, logger)
 	githubWorker := workers.NewGitHubWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, logger)
 	captureResultWorker := workers.NewCaptureResultWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, s, cl.kafka, logger)
@@ -49,6 +50,7 @@ func buildWorkers(cfg *config.Config, logger *observability.Logger, deps *Depend
 	deps.WorkerManager.Register(readyReconciler)
 	deps.WorkerManager.Register(finalizerWorker)
 	deps.WorkerManager.Register(analyticsWorker)
+	deps.WorkerManager.Register(analyticsProducerWorker)
 	deps.WorkerManager.Register(schedulerWorker)
 	deps.WorkerManager.Register(githubWorker)
 	deps.WorkerManager.Register(captureResultWorker)
@@ -56,4 +58,3 @@ func buildWorkers(cfg *config.Config, logger *observability.Logger, deps *Depend
 	deps.WorkerManager.Register(draftGeneratorWorker)
 	deps.WorkerManager.Register(blogGeneratorWorker)
 }
-

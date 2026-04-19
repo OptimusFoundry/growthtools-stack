@@ -23,3 +23,16 @@ type CreateRecordResponse struct {
 	URI string
 	CID string
 }
+
+// FeedPostView is a minimal view of a single post as returned by app.bsky.feed.getPosts.
+type FeedPostView struct {
+	URI         string `json:"uri"`
+	LikeCount   int    `json:"likeCount"`
+	RepostCount int    `json:"repostCount"`
+	ReplyCount  int    `json:"replyCount"`
+}
+
+// GetPostsResponse is the response shape for app.bsky.feed.getPosts.
+type GetPostsResponse struct {
+	Posts []FeedPostView `json:"posts"`
+}

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"base-server/internal/platform/clients/bluesky"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/bluesky"
 )
 
 const blueskyCharacterLimit = 300
@@ -211,9 +211,26 @@ func (a *BlueskyAdapter) ValidateContent(content string) error {
 	return nil
 }
 
-// GetEngagement returns zero engagement — Bluesky's API has limited analytics access.
+// GetEngagement fetches engagement metrics for a Bluesky post via the public AppView.
+// postID is the AT URI stored in platform_posts.platform_post_id.
+// conn is not used for auth (the endpoint is public) but is accepted to satisfy the interface.
 func (a *BlueskyAdapter) GetEngagement(ctx context.Context, postID string, conn store.PlatformConnection) (Engagement, error) {
-	return Engagement{}, nil
+	result, err := a.client.GetPosts(ctx, []string{postID})
+	if err != nil {
+		return Engagement{}, fmt.Errorf("bluesky adapter: GetEngagement: %w", err)
+	}
+
+	if len(result.Posts) == 0 {
+		a.logger.Info(ctx, fmt.Sprintf("bluesky adapter: no post found for uri %s", postID))
+		return Engagement{}, nil
+	}
+
+	post := result.Posts[0]
+	return Engagement{
+		Likes:    post.LikeCount,
+		Shares:   post.RepostCount,
+		Comments: post.ReplyCount,
+	}, nil
 }
 
 // atURIToWebURL converts an AT URI to a Bluesky web URL.
