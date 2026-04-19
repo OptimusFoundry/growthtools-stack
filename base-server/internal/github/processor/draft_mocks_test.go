@@ -131,9 +131,9 @@ func (m *MockContentGenerator) EXPECT() *MockContentGeneratorMockRecorder {
 }
 
 // GenerateWithMediaPlan mocks base method.
-func (m *MockContentGenerator) GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan) (string, map[string]processor.ThreadWithMediaPlanResult, error) {
+func (m *MockContentGenerator) GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan, images []aiclient.ImageData) (string, map[string]processor.ThreadWithMediaPlanResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateWithMediaPlan", ctx, accountID, prompt, platforms, plan)
+	ret := m.ctrl.Call(m, "GenerateWithMediaPlan", ctx, accountID, prompt, platforms, plan, images)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(map[string]processor.ThreadWithMediaPlanResult)
 	ret2, _ := ret[2].(error)
@@ -141,9 +141,9 @@ func (m *MockContentGenerator) GenerateWithMediaPlan(ctx context.Context, accoun
 }
 
 // GenerateWithMediaPlan indicates an expected call of GenerateWithMediaPlan.
-func (mr *MockContentGeneratorMockRecorder) GenerateWithMediaPlan(ctx, accountID, prompt, platforms, plan any) *gomock.Call {
+func (mr *MockContentGeneratorMockRecorder) GenerateWithMediaPlan(ctx, accountID, prompt, platforms, plan, images any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWithMediaPlan", reflect.TypeOf((*MockContentGenerator)(nil).GenerateWithMediaPlan), ctx, accountID, prompt, platforms, plan)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWithMediaPlan", reflect.TypeOf((*MockContentGenerator)(nil).GenerateWithMediaPlan), ctx, accountID, prompt, platforms, plan, images)
 }
 
 // SelectMediaAndMode mocks base method.

@@ -37,7 +37,7 @@ type ContentProcessor interface {
 	// Media-aware regenerate path (trust-user-selection).
 	FetchAndBucketMedia(ctx context.Context, accountID uuid.UUID, mediaIDs []uuid.UUID) (video *aiclient.ImageData, images []aiclient.ImageData, videoPresent bool, err error)
 	DecideMode(ctx context.Context, video *aiclient.ImageData, images []aiclient.ImageData, prompt string) (processor.ModeDecision, error)
-	GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan) (string, map[string]processor.ThreadWithMediaPlanResult, error)
+	GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan, images []aiclient.ImageData) (string, map[string]processor.ThreadWithMediaPlanResult, error)
 }
 
 // Handler handles HTTP requests for content generation.
@@ -361,7 +361,7 @@ func (h *Handler) handleStreamGenerateWithMedia(
 	plan.Mode = modeDecision.Mode
 	plan.ThreadParts = modeDecision.ThreadParts
 
-	baseContent, perPlatform, err := h.processor.GenerateWithMediaPlan(ctx, accountID, req.Prompt, req.Platforms, plan)
+	baseContent, perPlatform, err := h.processor.GenerateWithMediaPlan(ctx, accountID, req.Prompt, req.Platforms, plan, images)
 	if err != nil {
 		h.logger.Error(ctx, "media-aware content generation failed", err)
 		writeSSE("error", "failed to generate content")
@@ -383,9 +383,8 @@ func (h *Handler) handleStreamGenerateWithMedia(
 		writeSSE("platform_done", mustMarshal(map[string]string{"platform": platform, "content": result.Content}))
 
 		if modeDecision.Mode == "thread" && len(result.Segments) > 0 {
-			segs := assignMediaIndexesToSegments(result.Segments, plan)
-			threadResults[platform] = segs
-			writeSSE("thread_done", mustMarshal(map[string]any{"platform": platform, "segments": segs}))
+			threadResults[platform] = result.Segments
+			writeSSE("thread_done", mustMarshal(map[string]any{"platform": platform, "segments": result.Segments}))
 		}
 	}
 
@@ -407,32 +406,6 @@ func buildMediaPlanFromBucketed(hasVideo bool, imageCount int) *prompts.MediaPla
 		next++
 	}
 	return plan
-}
-
-// assignMediaIndexesToSegments assigns 1-based media indexes to thread
-// segments in order: segment 0 gets the first media item, etc.
-func assignMediaIndexesToSegments(segs []processor.ThreadSegment, plan *prompts.MediaPlan) []processor.ThreadSegment {
-	out := make([]processor.ThreadSegment, len(segs))
-	// Build the ordered 1-based index list from the plan.
-	mediaOrder := make([]int, 0, 1+len(plan.ImageIndexes))
-	if plan.VideoIndex > 0 {
-		mediaOrder = append(mediaOrder, 1)
-	}
-	for i := range plan.ImageIndexes {
-		pos := i
-		if plan.VideoIndex > 0 {
-			pos = i + 1
-		}
-		mediaOrder = append(mediaOrder, pos+1)
-	}
-	for i, seg := range segs {
-		out[i] = seg
-		if i < len(mediaOrder) {
-			idx := mediaOrder[i]
-			out[i].ImageIndex = &idx
-		}
-	}
-	return out
 }
 
 // mustMarshal marshals v to JSON, returning an empty object string on error.

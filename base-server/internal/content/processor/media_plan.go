@@ -173,7 +173,7 @@ General:
 // GenerateWithMediaPlan runs.
 type ThreadWithMediaPlanResult struct {
 	Content  string          // full thread text joined with newlines
-	Segments []ThreadSegment // one entry per thread part; ImageIndex left nil (caller assigns)
+	Segments []ThreadSegment // one entry per thread part; ImageIndex set by AI via [IMAGE:N] markers, nil when the AI emitted no marker
 }
 
 // GenerateWithMediaPlan is the non-streaming entry point used by background
@@ -191,6 +191,7 @@ func (p *ContentProcessor) GenerateWithMediaPlan(
 	prompt string,
 	platforms []string,
 	plan *prompts.MediaPlan,
+	images []aiclient.ImageData,
 ) (string, map[string]ThreadWithMediaPlanResult, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: accountID.String()},
@@ -202,6 +203,12 @@ func (p *ContentProcessor) GenerateWithMediaPlan(
 	if plan != nil && plan.Mode != "" {
 		mode = plan.Mode
 	}
+
+	var imageDescs []ImageDescription
+	if len(images) > 0 {
+		imageDescs = p.DescribeImages(ctx, images)
+	}
+	promptImageDescs := imageDescriptionsForPrompts(imageDescs)
 
 	baseSystem := prompts.SystemGenerate(platforms, voice)
 	baseContent, err := p.aiClient.CreateMessage(ctx, baseSystem, []aiclient.Message{
@@ -228,9 +235,9 @@ func (p *ContentProcessor) GenerateWithMediaPlan(
 				if plan != nil {
 					parts = plan.ThreadParts
 				}
-				sysPrompt = prompts.SystemThreadWithMediaPlan(platform, parts, plan)
+				sysPrompt = prompts.SystemThreadWithMediaPlan(platform, parts, plan, promptImageDescs)
 			} else {
-				sysPrompt = prompts.SystemSingleWithMediaPlan(platform, voice, plan)
+				sysPrompt = prompts.SystemSingleWithMediaPlan(platform, voice, plan, promptImageDescs)
 			}
 
 			raw, err := p.aiClient.CreateMessage(gCtx, sysPrompt, []aiclient.Message{
@@ -246,13 +253,11 @@ func (p *ContentProcessor) GenerateWithMediaPlan(
 				if charLimit == 0 {
 					charLimit = platformCfg.CharLimit
 				}
-				parts := parseThreadSegments(raw)
-				segments := make([]ThreadSegment, 0, len(parts))
-				joined := make([]string, 0, len(parts))
-				for _, s := range parts {
-					trimmed := truncateToCharLimit(s, charLimit)
-					segments = append(segments, ThreadSegment{Content: trimmed})
-					joined = append(joined, trimmed)
+				segments := parseThreadSegmentsWithImages(raw)
+				joined := make([]string, 0, len(segments))
+				for i, seg := range segments {
+					segments[i].Content = truncateToCharLimit(seg.Content, charLimit)
+					joined = append(joined, segments[i].Content)
 				}
 				mu.Lock()
 				results[platform] = ThreadWithMediaPlanResult{

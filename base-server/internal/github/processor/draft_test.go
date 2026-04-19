@@ -117,8 +117,8 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: image1MediaID}, nil)
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: image2MediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Eq([]string{"x", "bluesky", "threads"}), gomock.Any()).
-					DoAndReturn(func(_ context.Context, _ uuid.UUID, _ string, platforms []string, _ any) (string, map[string]contentProc.ThreadWithMediaPlanResult, error) {
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Eq([]string{"x", "bluesky", "threads"}), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ uuid.UUID, _ string, platforms []string, _ any, _ any) (string, map[string]contentProc.ThreadWithMediaPlanResult, error) {
 						results := make(map[string]contentProc.ThreadWithMediaPlanResult, len(platforms))
 						for _, pl := range platforms {
 							results[pl] = contentProc.ThreadWithMediaPlanResult{
@@ -224,7 +224,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "video/mp4", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("", nil, errors.New("claude is down"))
 			},
 			wantErr: ErrDraftGenerationFailed,
@@ -240,7 +240,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -312,7 +312,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 					return p.S3Key == "captures/abc/step-3.png"
 				})).Return(store.Media{ID: img3ID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {
 							Content: "one\ntwo\nthree",
@@ -366,7 +366,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(1), "", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).Times(3)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -388,7 +388,7 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				s.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return([]store.PlatformConnection{
 					{Platform: "x", Status: "active"},
 				}, nil)
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "one\ntwo", Segments: []contentProc.ThreadSegment{{Content: "one"}, {Content: "two"}}},
 					}, nil)
@@ -484,7 +484,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				expectMediaAssessedKeepAll(f, c, "captures/abc/demo.mp4", "captures/abc/step-1.png", "captures/abc/step-2.jpg")
 				h.EXPECT().HeadObject(gomock.Any(), gomock.Any()).Return(int64(100), "video/mp4", nil).AnyTimes()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil).AnyTimes()
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -545,7 +545,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 				img2MediaID := uuid.New()
 				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: img2MediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -591,7 +591,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 					return p.ContentType == "image/png" && p.SizeBytes == 0
 				})).Return(store.Media{ID: mediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
@@ -624,7 +624,7 @@ func TestDraftGenerator_GenerateDraftFromCommit_GapFill(t *testing.T) {
 					return p.ContentType == "image/png" && p.SizeBytes == 0
 				})).Return(store.Media{ID: mediaID}, nil)
 
-				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				c.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]contentProc.ThreadWithMediaPlanResult{
 						"x": {Content: "s", Segments: []contentProc.ThreadSegment{{Content: "s"}}},
 					}, nil)
