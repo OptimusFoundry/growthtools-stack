@@ -118,7 +118,7 @@ func (p *Planner) SelectAndDecide(ctx context.Context, req SelectRequest) (Selec
 		ThreadParts int    `json:"thread_parts"`
 		Reason      string `json:"reason"`
 	}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &parsed); err != nil {
+	if err := json.Unmarshal([]byte(stripCodeFence(raw)), &parsed); err != nil {
 		p.logger.Error(ctx, "failed to parse media/mode selection response", err)
 		return SelectDecision{}, ErrSelectAndDecide
 	}
@@ -190,4 +190,20 @@ func buildUserMessage(req SelectRequest) string {
 		}
 	}
 	return sb.String()
+}
+
+// stripCodeFence removes surrounding ```json ... ``` or ``` ... ``` markdown
+// fences that some models wrap around JSON responses despite instructions to
+// return raw JSON only. If no fence is present, the input is returned trimmed.
+func stripCodeFence(raw string) string {
+	s := strings.TrimSpace(raw)
+	if !strings.HasPrefix(s, "```") {
+		return s
+	}
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```")
+	if idx := strings.LastIndex(s, "```"); idx != -1 {
+		s = s[:idx]
+	}
+	return strings.TrimSpace(s)
 }

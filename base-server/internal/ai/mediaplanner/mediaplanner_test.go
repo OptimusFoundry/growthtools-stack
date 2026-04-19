@@ -106,6 +106,49 @@ func TestPlanner_SelectAndDecide_InvalidIndexesDropped(t *testing.T) {
 	}
 }
 
+func TestPlanner_SelectAndDecide_StripsMarkdownCodeFence(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		resp string
+	}{
+		{
+			name: "json-tagged fence",
+			resp: "```json\n{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"ok\"}\n```",
+		},
+		{
+			name: "bare fence",
+			resp: "```\n{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"ok\"}\n```",
+		},
+		{
+			name: "fence with surrounding whitespace",
+			resp: "  \n```json\n{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"ok\"}\n```  \n",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mock := mediaplanner.NewMockAIClient(ctrl)
+			mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(tc.resp, nil)
+
+			p := mediaplanner.New(mock, newLogger())
+			req := mediaplanner.SelectRequest{
+				CommitMessage: "x",
+				Descriptions:  []mediadescriber.Description{{Index: 1, Usable: true}},
+			}
+			d, err := p.SelectAndDecide(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if d.Mode != "single" || len(d.KeepIndexes) != 1 || d.KeepIndexes[0] != 1 {
+				t.Fatalf("unexpected decision: %+v", d)
+			}
+		})
+	}
+}
+
 func TestPlanner_SelectAndDecide_AIError(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
