@@ -9,6 +9,7 @@ import (
 	"base-server/internal/infra/store"
 
 	// Auth & billing
+	adminHandler "base-server/internal/admin/handler"
 	authHandler "base-server/internal/auth/handler"
 	billingHandler "base-server/internal/billing/handler"
 
@@ -36,6 +37,7 @@ type Dependencies struct {
 	WorkerManager *workers.Manager
 
 	// Handlers
+	AdminHandler     adminHandler.Handler
 	AuthHandler      authHandler.Handler
 	BillingHandler   billingHandler.Handler
 	ContentHandler   contentHandler.Handler

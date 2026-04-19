@@ -200,6 +200,8 @@ func GetDeviceType(c *gin.Context) string {
 // helpers below, preventing key collisions from other packages.
 type requestIDCtxKey struct{}
 type userIDCtxKey struct{}
+type isImpersonatedCtxKey struct{}
+type impersonatedByCtxKey struct{}
 
 // SetRequestID stores a request-ID in ctx, returning the new context.
 // Called by observability.Middleware after generating or reading X-Request-ID.
@@ -227,6 +229,28 @@ func GetUserID(ctx context.Context) string {
 		return id
 	}
 	return ""
+}
+
+// SetImpersonated marks the context as an impersonated session and records
+// the real admin user ID (UUID string) performing the impersonation.
+func SetImpersonated(ctx context.Context, adminUserID string) context.Context {
+	ctx = context.WithValue(ctx, isImpersonatedCtxKey{}, true)
+	ctx = context.WithValue(ctx, impersonatedByCtxKey{}, adminUserID)
+	return ctx
+}
+
+// IsImpersonated returns true when the request is running under an active
+// impersonation session (i.e. the impersonate cookie was valid).
+func IsImpersonated(ctx context.Context) bool {
+	v, _ := ctx.Value(isImpersonatedCtxKey{}).(bool)
+	return v
+}
+
+// ImpersonatedBy returns the real admin user ID and true when the request is
+// running under an active impersonation session. Returns "", false otherwise.
+func ImpersonatedBy(ctx context.Context) (string, bool) {
+	id, ok := ctx.Value(impersonatedByCtxKey{}).(string)
+	return id, ok && id != ""
 }
 
 // GetDeviceOS determines the device OS from User-Agent parsing.

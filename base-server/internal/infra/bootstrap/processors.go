@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	adminProcessor "base-server/internal/admin/processor"
 	authProcessor "base-server/internal/auth/processor"
 	billingProcessor "base-server/internal/billing/processor"
 	"base-server/internal/billing/products"
@@ -24,6 +25,7 @@ import (
 
 // procs holds all processor and service instances constructed during initialization.
 type procs struct {
+	admin       adminProcessor.AdminProcessor
 	billing     billingProcessor.BillingProcessor
 	auth        authProcessor.AuthProcessor
 	tierService *tiers.TierService
@@ -141,6 +143,12 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 
 	// Settings (voice profile)
 	p.settings = settingsProcessor.New(s, logger)
+
+	// Admin — empty allowlist means feature is disabled; all /api/admin/* → 403.
+	p.admin = adminProcessor.New(s, adminProcessor.AdminConfig{
+		JWTSecret:   cfg.Auth.JWTSecret,
+		AdminEmails: cfg.Auth.AdminEmails,
+	}, logger)
 
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.

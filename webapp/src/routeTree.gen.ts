@@ -18,6 +18,7 @@ import { Route as GithubRouteImport } from './routes/github'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BillingIndexRouteImport } from './routes/billing/index'
@@ -75,6 +76,11 @@ const BlogRoute = BlogRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -146,6 +152,7 @@ const BillingPayRoute = BillingPayRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
+    | '/admin'
     | '/analytics'
     | '/blog'
     | '/calendar'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/admin'
     | '/analytics'
     | '/blog'
     | '/calendar'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
+    | '/admin'
     | '/analytics'
     | '/blog'
     | '/calendar'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
+  AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
   BlogRoute: typeof BlogRoute
   CalendarRoute: typeof CalendarRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -478,6 +498,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
+  AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
   BlogRoute: BlogRoute,
   CalendarRoute: CalendarRoute,

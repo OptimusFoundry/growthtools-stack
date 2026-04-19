@@ -61,6 +61,7 @@ func (s *Server) Setup() {
 	rootRouter := s.router.Group("/")
 	api := apisetup.New(
 		rootRouter,
+		s.deps.AdminHandler,
 		s.deps.AuthHandler,
 		s.deps.BillingHandler,
 		s.deps.ContentHandler,

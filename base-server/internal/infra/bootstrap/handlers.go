@@ -4,6 +4,7 @@ import (
 	"base-server/internal/infra/config"
 	"base-server/internal/infra/observability"
 
+	adminHandler "base-server/internal/admin/handler"
 	authHandler "base-server/internal/auth/handler"
 	billingHandler "base-server/internal/billing/handler"
 
@@ -32,4 +33,13 @@ func buildHandlers(cfg *config.Config, logger *observability.Logger, deps *Depen
 	deps.BlogHandler = blogHandler.New(&p.blog, logger)
 	deps.AnalyticsHandler = analyticsHandler.New(&p.analytics, logger)
 	deps.SettingsHandler = settingsHandler.New(&p.settings, logger)
+
+	// Admin module — only fully wired when ADMIN_EMAILS is set.
+	// The handler exists regardless; middleware will 403 everyone when the
+	// processor has an empty allowlist (no admins configured).
+	deps.AdminHandler = adminHandler.New(&p.admin, cfg.Services.WebAppURI, logger)
+
+	// Wire impersonation parser into auth handler so JWT middleware can
+	// apply the impersonate cookie on every protected request.
+	deps.AuthHandler.WithImpersonationParser(&p.admin)
 }
