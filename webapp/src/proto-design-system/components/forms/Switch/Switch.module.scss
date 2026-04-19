@@ -47,7 +47,7 @@
     background-color: var(--color-primary);
 
     .thumb {
-      transform: translateX(100%);
+      transform: translateX(var(--switch-travel, 100%));
     }
   }
 }
@@ -79,6 +79,8 @@
 // =============================================================================
 
 .size-sm {
+  --switch-travel: calc(var(--space-6) - var(--space-3) - var(--space-1));
+
   height: var(--space-4);
   width: var(--space-6);
 
@@ -89,6 +91,8 @@
 }
 
 .size-md {
+  --switch-travel: calc(var(--space-8) - var(--space-4) - var(--space-1));
+
   height: var(--space-5);
   width: var(--space-8);
 
@@ -99,6 +103,8 @@
 }
 
 .size-lg {
+  --switch-travel: calc(var(--space-9) - var(--space-5) - var(--space-1));
+
   height: var(--space-6);
   width: var(--space-9);
 
