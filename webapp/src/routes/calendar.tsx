@@ -250,29 +250,17 @@ function CalendarPage() {
 				title="Calendar"
 				actions={
 					<>
-						<Button
-							variant="ghost"
+						<Tabs
+							variant="pill"
 							size="sm"
-							onClick={() => navigateMonth(-1)}
-							aria-label="Previous month, topbar nav"
+							activeTab={viewMode}
+							onTabChange={(id) => setViewMode(id as CalendarViewMode)}
 						>
-							<ChevronLeft size={16} />
-						</Button>
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => setCurrentDate(new Date())}
-						>
-							Today
-						</Button>
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => navigateMonth(1)}
-							aria-label="Next month, topbar nav"
-						>
-							<ChevronRight size={16} />
-						</Button>
+							<TabList aria-label="Calendar view mode">
+								<Tab id="status">By status</Tab>
+								<Tab id="platform">By platform</Tab>
+							</TabList>
+						</Tabs>
 					</>
 				}
 			/>
@@ -378,33 +366,26 @@ function CalendarPage() {
 									<Button
 										variant="ghost"
 										onClick={() => navigateMonth(-1)}
-										aria-label="Previous month, calendar nav"
+										aria-label="Prev month, calendar nav"
+										isIconOnly={true}
+										leftIcon={<ChevronLeft size={18} />}
+									/>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => setCurrentDate(new Date())}
 									>
-										<ChevronLeft size={18} />
+										Today
 									</Button>
-									<Text weight="semibold">
-										{MONTHS[month]} {year}
-									</Text>
+
 									<Button
 										variant="ghost"
 										onClick={() => navigateMonth(1)}
 										aria-label="Next month, calendar nav"
-									>
-										<ChevronRight size={18} />
-									</Button>
+										isIconOnly={true}
+										leftIcon={<ChevronRight size={18} />}
+									/>
 								</Stack>
-
-								<Tabs
-									variant="pill"
-									size="sm"
-									activeTab={viewMode}
-									onTabChange={(id) => setViewMode(id as CalendarViewMode)}
-								>
-									<TabList aria-label="Calendar view mode">
-										<Tab id="status">By status</Tab>
-										<Tab id="platform">By platform</Tab>
-									</TabList>
-								</Tabs>
 							</Stack>
 
 							{calendarLoading ? (
