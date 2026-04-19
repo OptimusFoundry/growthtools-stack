@@ -482,7 +482,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 	}
 
 	// If following a plan, we know the step count up front — cap tightly.
-	const effectiveMaxSteps = maxSteps ?? (activePlan ? activePlan.steps.length + 5 : 30);
+	const effectiveMaxSteps = maxSteps ?? 100;
 
 	const browser = await chromium.launch();
 

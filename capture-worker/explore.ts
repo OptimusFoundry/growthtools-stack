@@ -443,8 +443,8 @@ export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 		summary,
 		diff,
 		captureDir,
-		maxExploreSteps = 40,
-		wallClockMs = 4 * 60_000,
+		maxExploreSteps = 100,
+		wallClockMs = 8 * 60_000,
 		model = "gemini-2.5-flash",
 	} = input;
 
@@ -499,23 +499,34 @@ export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 			"- The browser is ALREADY SIGNED IN. Do NOT visit /test-login or fill credentials.",
 			"- You may navigate anywhere in the app freely — nothing you do is recorded.",
 			"",
-			"YOUR JOB:",
-			"1. Read the commit diff to identify which user-visible feature changed.",
-			"2. Use navigate, click, scroll, list_elements, and screenshot to find the exact",
-			"   page and workflow that best showcases what the commit changed.",
-			"3. Try multiple paths if needed — exploration is free. Undo wrong turns with navigate.",
-			"4. Once you understand the ideal demo flow, call `done` with:",
+			"YOUR JOB — think like a product-savvy QA engineer:",
+			"1. Read the commit diff carefully. What user-visible behavior changed? Which",
+			"   route, form, button, list, or state transition would a user see differently",
+			"   after this ships? Backend-only diffs still surface somewhere in the UI —",
+			"   reason about which screen consumes the changed endpoint or field.",
+			"2. Form a HYPOTHESIS about where the affected view lives before navigating.",
+			"   Use the app's own nav: survey the sidebar, top bar, tabs, and links on the",
+			"   current page with list_elements + screenshot. Pick the most likely entry",
+			"   point and drill in — don't guess URLs blindly.",
+			"3. Verify on screen. Did you actually land on the surface that would show this",
+			"   change? If not, back out (navigate) and try the next most likely path. Be",
+			"   systematic — tabs, nested routes, modals, empty states all count.",
+			"4. Once the right surface is in front of you, design the shortest sequence that",
+			"   makes the change obvious on camera. Call `done` with:",
 			"   - goal: one sentence describing the shipped feature",
 			"   - startUrl: the absolute URL where the Record agent should land first",
 			"   - steps: an ordered list of { label, tool, args } interactions that produce",
-			"     a clean, intentional demo. Keep it to 5-10 steps.",
+			"     a clean, intentional demo within 100 meaningful steps. Use as many steps",
+			"     as the feature genuinely needs — don't pad, don't cut corners. A plan",
+			"     with fewer than 3 real interactions will be rejected; if you can't find",
+			"     at least 3 meaningful steps, you haven't explored enough.",
 			"   - narration: 1-3 sentences for the end-of-video voiceover.",
 			"",
 			"LOCATOR PRIORITY: prefer testid (grep diff for data-testid). Fall back to",
 			"role+name, then visible text. Be specific — avoid selectors that match",
 			"multiple elements.",
 			"",
-			`HARD LIMITS: at most ${maxExploreSteps} tool calls. Aim to call done by step 30.`,
+			`HARD LIMITS: at most ${maxExploreSteps} tool calls. Aim to call done well before the limit — do not exhaust your budget before planning.`,
 		].join("\n");
 
 		const userPrompt = [
@@ -655,11 +666,23 @@ export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 		exploreStepCount: stepIndex.value,
 	};
 
-	// 9. Write plan.json
+	// 9. Write plan.json (write first so we can debug rejected plans)
 	const planPath = path.join(exploreDir, "plan.json");
 	await fs.writeFile(planPath, `${JSON.stringify(plan, null, 2)}\n`);
 
 	console.log(`[explore] plan written to ${planPath} (${steps.length} steps)`);
+
+	// 10. Reject thin plans — fewer than 3 interactions means explore didn't
+	// actually find the affected surface. Fail loud rather than let record
+	// burn through budget on a dud.
+	const MIN_PLAN_STEPS = 3;
+	if (steps.length < MIN_PLAN_STEPS) {
+		throw new Error(
+			`[explore] plan has only ${steps.length} valid step(s) (min ${MIN_PLAN_STEPS}); ` +
+				`see ${planPath} for what the model returned. ` +
+				"Explore likely did not locate the UI surface affected by the commit.",
+		);
+	}
 
 	return {
 		plan,
