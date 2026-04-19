@@ -30,6 +30,7 @@ npm run storybook    # Storybook (port 6006)
 - **No `any`** — use `unknown` with type guards
 - **React 19 patterns** — `ref` as prop, `useActionState`, `<Context>` directly (no `.Provider`)
 - **Feature gating** — use `FeatureGate` / `FeatureGateHidden` from `src/components/gating/`
+- **Every UI change ships a Playwright spec** — any change to `src/routes/**`, pages, forms, or a new API call MUST come with a Playwright spec in `webapp/e2e/` that table-drives across every status code the endpoints can return. Use the `network` fixture from `e2e/fixtures/test.ts` and add MSW handlers + scenario factories to `e2e/handlers/<domain>.handlers.ts`. Invoke the `playwright-coverage-check` skill when making or reviewing webapp changes — it defines the exact pattern. Never `page.route` for API mocking; never `expect(body).toBeTruthy()` as an error-path assertion.
 
 ## Environment
 

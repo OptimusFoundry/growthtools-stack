@@ -194,6 +194,52 @@ test.describe('Items feature', () => {
 });
 ```
 
+### Status-code coverage — table-driven (REQUIRED)
+
+Every API call a page/component makes must be covered with a table-driven test iterating over every status code the endpoint can return. The source of truth is the backend handler's `handleError` mapping plus success codes. Invoke the `playwright-coverage-check` skill for the full rule set.
+
+```typescript
+// e2e/items.spec.ts
+import { HttpResponse, http } from 'msw';
+import { test, expect } from './fixtures/test';
+
+const listStatusCases = [
+  { status: 200, body: [], expect: /no items found/i, label: 'empty list' },
+  { status: 401, body: { error: 'unauthorized' }, expect: /sign in/i, label: 'unauthorized' },
+  { status: 403, body: { error: 'forbidden' }, expect: /not allowed/i, label: 'forbidden' },
+  { status: 429, body: { error: 'rate limited' }, expect: /too many requests/i, label: 'rate limited' },
+  { status: 500, body: { error: 'server' }, expect: /something went wrong/i, label: 'server error' },
+] as const;
+
+for (const tc of listStatusCases) {
+  test(`GET /items handles ${tc.status} — ${tc.label}`, async ({ network, page }) => {
+    network.use(
+      http.get('*/api/protected/items', () =>
+        HttpResponse.json(tc.body, { status: tc.status }),
+      ),
+    );
+    await page.goto('/items');
+    await page.waitForLoadState('networkidle');
+    expect(await page.textContent('body')).toMatch(tc.expect);
+  });
+}
+
+test('GET /items transport failure', async ({ network, page }) => {
+  network.use(http.get('*/api/protected/items', () => HttpResponse.error()));
+  await page.goto('/items');
+  await page.waitForLoadState('networkidle');
+  expect(await page.textContent('body')).toMatch(/offline|unavailable|try again/i);
+});
+```
+
+Rules (strict):
+
+- One row per status code the backend handler can return — confirm against the Go `handleError` mapping.
+- Every row asserts specific user-visible output. **Never** `expect(body).toBeTruthy()` — replace any such assertion when you touch the spec.
+- Include a separate transport-failure test using `HttpResponse.error()` (no status code).
+- For mutations, trigger the click/submit inside each case before asserting.
+- Handlers in `e2e/handlers/<domain>.handlers.ts` must expose a `<domain>Scenarios` factory object with one named factory per non-2xx code (`unauthorized`, `forbidden`, `notFound`, `conflict`, `rateLimited`, `serverError`, `networkError`) plus meaningful 2xx variants (`empty`, `paginated`).
+
 ---
 
 ## React 19 Testing Specifics
