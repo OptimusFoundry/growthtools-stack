@@ -56,6 +56,8 @@ function CommitDetailsPage() {
 	const firstLine = commit.message.split("\n")[0] ?? commit.sha.slice(0, 7);
 	const output = commit.capture_output;
 	const hasAnyMedia = (output?.uploaded ?? []).length > 0;
+	const isSkipped = Boolean(commit.skipped_reason);
+	const isWaiting = !isSkipped && !commit.capture_requested_at;
 
 	return (
 		<>
@@ -63,7 +65,20 @@ function CommitDetailsPage() {
 			<Stack gap="lg" className={styles.page} animate>
 				<CaptureMetaCard commit={commit} />
 
-				{output?.error && (
+				{isSkipped && (
+					<Alert variant="warning" title="Capture skipped">
+						{commit.skipped_reason}
+					</Alert>
+				)}
+
+				{isWaiting && (
+					<Alert variant="info" title="Waiting for capture">
+						This commit hasn't been queued for capture yet. It'll pick up on the
+						next pipeline run.
+					</Alert>
+				)}
+
+				{!isSkipped && output?.error && (
 					<Alert variant="error" title="Capture failed">
 						<Stack gap="sm">
 							<span>{output.error}</span>
@@ -124,7 +139,7 @@ function CommitDetailsPage() {
 					</Alert>
 				)}
 
-				{!hasAnyMedia && !output?.error && (
+				{!hasAnyMedia && !output?.error && !isSkipped && !isWaiting && (
 					<EmptyState
 						icon={<ImageIcon size={48} />}
 						title="No artifacts yet"
