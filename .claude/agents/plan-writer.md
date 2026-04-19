@@ -43,8 +43,9 @@ Read the docs relevant to what you're building. These tell you current structure
 | New DB tables or columns | `base-server/docs/STORE.md` |
 | New API endpoints | `base-server/docs/HANDLERS.md`, `base-server/docs/ERROR-HANDLING.md` |
 | New feature module (handler+processor+store) | `base-server/docs/ARCHITECTURE.md` |
-| New pages or routes | `webapp/docs/PATTERNS.md`, `webapp/docs/PAGE-TEMPLATES.md` |
-| New components | `webapp/docs/COMPONENT-PATTERNS.md`, `webapp/docs/DESIGN-GUIDELINES.md` |
+| New pages or routes | `docs/design-docs/00-overview.md`, `11-page-composition.md`, `12-judgment.md`, `14-composition.md`, `15-states.md`, `19-typography-decisions.md`, `20-spacing-decisions.md`; `webapp/docs/PATTERNS.md`, `webapp/docs/PAGE-TEMPLATES.md` |
+| New components | `docs/design-docs/` numbered file(s) matching the category (buttons/badges `04`, forms `05`, feedback `06`, nav `07`, overlays `08`, data `09`, feature-kit `10`) + `12-judgment.md`, `15-states.md`, `16-accessibility.md`; `webapp/docs/COMPONENT-PATTERNS.md`, `webapp/docs/DESIGN-GUIDELINES.md` |
+| Any styling / SCSS | `docs/design-docs/02-colors.md`, `03-layout-spacing.md`, `01-typography.md`, `19-typography-decisions.md`, `20-spacing-decisions.md` |
 | New data-fetching hooks | `webapp/docs/ARCHITECTURE.md` |
 
 ---
