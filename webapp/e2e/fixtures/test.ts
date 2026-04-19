@@ -15,7 +15,7 @@
  *   });
  */
 
-import { createNetworkFixture, type NetworkFixture } from "@msw/playwright";
+import { defineNetworkFixture, type NetworkFixture } from "@msw/playwright";
 import { test as base } from "@playwright/test";
 import { handlers } from "../handlers";
 
@@ -24,9 +24,18 @@ interface Fixtures {
 }
 
 export const test = base.extend<Fixtures>({
-	network: createNetworkFixture({
-		initialHandlers: handlers,
-	}),
+	network: [
+		async ({ context }, use) => {
+			const network = defineNetworkFixture({
+				context,
+				handlers,
+			});
+			await network.enable();
+			await use(network);
+			await network.disable();
+		},
+		{ auto: true },
+	],
 });
 
 export { expect } from "@playwright/test";

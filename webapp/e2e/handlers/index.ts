@@ -13,6 +13,7 @@ import {
 	getBillingHandlersForTier,
 } from "./billing.handlers";
 import { blogHandlers, blogScenarios } from "./blog.handlers";
+import { chatHandlers, chatScenarios } from "./chat.handlers";
 import { contentHandlers, contentScenarios } from "./content.handlers";
 import { mediaHandlers, mediaScenarios } from "./media.handlers";
 import { platformsHandlers, platformsScenarios } from "./platforms.handlers";
@@ -32,6 +33,7 @@ export const handlers = [
 	...analyticsHandlers,
 	...settingsHandlers,
 	...contentHandlers,
+	...chatHandlers,
 ];
 
 /**
@@ -42,6 +44,7 @@ export {
 	authHandlers,
 	billingHandlers,
 	blogHandlers,
+	chatHandlers,
 	contentHandlers,
 	mediaHandlers,
 	platformsHandlers,
@@ -55,6 +58,7 @@ export {
 export const scenarios = {
 	auth: authScenarios,
 	billing: billingScenarios,
+	chat: chatScenarios,
 	posts: postsScenarios,
 	platforms: platformsScenarios,
 	media: mediaScenarios,
