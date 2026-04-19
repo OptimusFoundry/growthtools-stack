@@ -5,16 +5,13 @@ import { useState } from "react";
 import { fetcher } from "@/api/client";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useDeletePost } from "@/hooks/useDeletePost";
+import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
-import {
-	filesToBase64,
-	useSSEContentGenerate,
-} from "@/hooks/useSSEContentGenerate";
+import { useSSEContentGenerate } from "@/hooks/useSSEContentGenerate";
 import { useUnlinkMedia } from "@/hooks/useUnlinkMedia";
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
-import { useUploadMedia } from "@/hooks/useUploadMedia";
 import { DatePicker } from "@/proto-design-system/components/composite/DatePicker";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
@@ -113,7 +110,6 @@ interface UseWizardActionsParams {
 	updatingDraft: boolean;
 	publishPost: ReturnType<typeof usePublishPost>["publishPost"];
 	schedulePost: ReturnType<typeof useSchedulePost>["schedulePost"];
-	uploadMedia: ReturnType<typeof useUploadMedia>["uploadMedia"];
 	unlinkMedia: ReturnType<typeof useUnlinkMedia>["unlinkMedia"];
 	addBanner: ReturnType<typeof useBannerCenter>["addBanner"];
 	navigate: ReturnType<typeof useNavigate>;
@@ -130,7 +126,6 @@ function useWizardActions({
 	updateDraft,
 	publishPost,
 	schedulePost,
-	uploadMedia,
 	unlinkMedia,
 	addBanner,
 	navigate,
@@ -169,51 +164,15 @@ function useWizardActions({
 
 		wizard.startGeneration();
 
-		// Upload pending files + convert to base64 for AI, then start SSE generation
-		const uploadAndGenerate = async () => {
-			// IDs already persisted from initialOverrides (e.g. GitHub-capture draft).
-			// Captured before the upload loop so closure staleness is not an issue.
-			const alreadyPersistedIDs = state.uploadedMedia.map((m) => m.id);
-
-			const validFiles = state.pendingFiles
-				.filter((f) => !f.error)
-				.map((f) => f.file);
-
-			// Collect IDs from newly uploaded files (uploaded in parallel with base64).
-			const newlyUploadedIDs: string[] = [];
-
-			// S3 upload (for publishing) and base64 (for AI) run in parallel
-			const [imagePayloads] = await Promise.all([
-				validFiles.length > 0 ? filesToBase64(validFiles) : Promise.resolve([]),
-				(async () => {
-					for (const pendingFile of state.pendingFiles) {
-						if (!pendingFile.error) {
-							try {
-								const media = await uploadMedia(pendingFile.file);
-								wizard.addUploadedMedia(media);
-								newlyUploadedIDs.push(media.id);
-							} catch {
-								// continue with remaining files
-							}
-						}
-					}
-				})(),
-			]);
-
-			// Combine persisted IDs with any newly-uploaded IDs.
-			const allMediaIDs = [...alreadyPersistedIDs, ...newlyUploadedIDs];
-
-			sse.generate(
-				state.blurb,
-				state.selectedPlatforms,
-				state.contentType,
-				imagePayloads.length > 0 ? imagePayloads : undefined,
-				state.contentType === "thread" ? state.maxThreadParts : undefined,
-				allMediaIDs.length > 0 ? allMediaIDs : undefined,
-			);
-		};
-
-		uploadAndGenerate();
+		const mediaIDs = state.uploadedMedia.map((m) => m.id);
+		sse.generate(
+			state.blurb,
+			state.selectedPlatforms,
+			state.contentType,
+			undefined,
+			state.contentType === "thread" ? state.maxThreadParts : undefined,
+			mediaIDs.length > 0 ? mediaIDs : undefined,
+		);
 	};
 
 	// Persist the wizard's current state as a draft and return the post id
@@ -413,9 +372,12 @@ export function WizardInner({
 	const { saveDraft, loading: savingDraft } = useSaveDraft();
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
-	const { uploadMedia } = useUploadMedia();
 	const { unlinkMedia } = useUnlinkMedia();
 	const { addBanner } = useBannerCenter();
+
+	const managedMedia = useManagedMediaUpload({
+		onUploaded: wizard.addUploadedMedia,
+	});
 
 	// Sync SSE content into wizard state — pass individual stable references
 	// so each useEffect dependency tracks a specific function, not the object.
@@ -443,7 +405,6 @@ export function WizardInner({
 		updatingDraft,
 		publishPost,
 		schedulePost,
-		uploadMedia,
 		unlinkMedia,
 		addBanner,
 		navigate,
@@ -589,7 +550,8 @@ export function WizardInner({
 							contentType={state.contentType}
 							selectedPlatforms={state.selectedPlatforms}
 							platformContent={state.platformContent}
-							pendingFiles={state.pendingFiles}
+							pendingFiles={managedMedia.uploadingFiles}
+							uploading={managedMedia.isUploading}
 							existingMedia={state.uploadedMedia.map((m) => ({
 								id: m.id,
 								name: m.filename,
@@ -607,7 +569,7 @@ export function WizardInner({
 							onContentTypeChange={wizard.setContentType}
 							onMaxThreadPartsChange={wizard.setMaxThreadParts}
 							onTogglePlatform={wizard.togglePlatform}
-							onFilesChange={wizard.setPendingFiles}
+							onFilesChange={managedMedia.onFilesChange}
 							onGenerate={actions.handleGenerate}
 						/>
 						{platformPosts && platformPosts.length > 0 && (
