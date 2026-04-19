@@ -8,12 +8,24 @@ import {
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
+import { useGetCalendarMonth } from "@/hooks/useGetCalendarMonth";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import {
+	Tab,
+	TabList,
+	Tabs,
+} from "@/proto-design-system/components/navigation/Tabs/Tabs";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
+import {
+	ALL_PLATFORMS,
+	type CalendarDay,
+	type CalendarViewMode,
+	type PlatformKey,
+} from "@/types/calendar";
 import type { Post, PostStatus } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
 import calendarStyles from "./calendar.module.scss";
@@ -66,10 +78,6 @@ function getFirstDayOfMonth(year: number, month: number): number {
 	return new Date(year, month, 1).getDay();
 }
 
-function getPostDate(post: Post): string | undefined {
-	return post.scheduledAt ?? post.publishedAt ?? post.createdAt;
-}
-
 function timeAgo(iso: string): string {
 	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
 	if (seconds < 60) return "just now";
@@ -116,8 +124,6 @@ function formatDisplayDate(dateStr: string): string {
 	});
 }
 
-type StatusCounts = Partial<Record<PostStatus, number>>;
-
 const STATUS_STRIPE_ORDER: PostStatus[] = [
 	"published",
 	"partially_published",
@@ -145,21 +151,39 @@ const STATUS_STRIPE_CLASS: Record<PostStatus, string> = {
 	draft: "stripeDraft",
 };
 
-function computeStatusCounts(dayPosts: Post[]): StatusCounts {
-	const counts: StatusCounts = {};
-	for (const post of dayPosts) {
-		counts[post.status] = (counts[post.status] ?? 0) + 1;
-	}
-	return counts;
-}
+// Maps PostStatus keys to the camelCase field name in StatusBreakdown.
+const STATUS_TO_BREAKDOWN_KEY: Record<
+	PostStatus,
+	keyof CalendarDay["byStatus"]
+> = {
+	draft: "draft",
+	scheduled: "scheduled",
+	publishing: "publishing",
+	published: "published",
+	failed: "failed",
+	partially_published: "partiallyPublished",
+};
 
 function CalendarPage() {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
+	const [viewMode, setViewMode] = useState<CalendarViewMode>("status");
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();
 
-	const { posts, loading } = useGetPosts();
+	// Month grid data from the server-side aggregate endpoint.
+	// month+1 because JS Date months are 0-based but the API expects 1-based.
+	const { data: calendarData, loading: calendarLoading } = useGetCalendarMonth(
+		year,
+		month + 1,
+	);
+
+	// Selected-day detail: only fetches when a day is selected.
+	const { posts: selectedPosts, loading: postsLoading } = useGetPosts(
+		selectedDate
+			? { from: selectedDate, to: selectedDate, limit: 100 }
+			: undefined,
+	);
 
 	const navigateMonth = useCallback((delta: number) => {
 		setCurrentDate(
@@ -171,18 +195,15 @@ function CalendarPage() {
 	const daysInMonth = getDaysInMonth(year, month);
 	const firstDay = getFirstDayOfMonth(year, month);
 
-	const postsByDate = useMemo(() => {
-		const map = new Map<string, Post[]>();
-		for (const post of posts) {
-			const dateStr = getPostDate(post);
-			if (!dateStr) continue;
-			const day = new Date(dateStr).toISOString().slice(0, 10);
-			const existing = map.get(day) ?? [];
-			existing.push(post);
-			map.set(day, existing);
+	// Build a lookup map from the server response for O(1) cell rendering.
+	const dayDataMap = useMemo(() => {
+		const map = new Map<string, CalendarDay>();
+		if (!calendarData) return map;
+		for (const day of calendarData.days) {
+			map.set(day.date, day);
 		}
 		return map;
-	}, [posts]);
+	}, [calendarData]);
 
 	const calendarCells = useMemo(() => {
 		const cells: Array<{ day: number | null; dateKey: string }> = [];
@@ -198,14 +219,8 @@ function CalendarPage() {
 
 	const today = new Date().toISOString().slice(0, 10);
 
-	const selectedPosts = selectedDate
-		? (postsByDate.get(selectedDate) ?? [])
-		: [];
-
 	const monthLabel = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-	const scheduledThisMonth = posts.filter(
-		(p) => p.status === "scheduled",
-	).length;
+	const scheduledThisMonth = calendarData?.monthTotals.byStatus.scheduled ?? 0;
 
 	return (
 		<>
@@ -264,7 +279,7 @@ function CalendarPage() {
 								</Text>
 							</Stack>
 
-							{loading ? (
+							{postsLoading ? (
 								<Spinner />
 							) : selectedPosts.length === 0 ? (
 								<EmptyState
@@ -351,7 +366,21 @@ function CalendarPage() {
 								</Button>
 							</Stack>
 
-							{loading ? (
+							<Stack direction="row" justify="end">
+								<Tabs
+									variant="pill"
+									size="sm"
+									activeTab={viewMode}
+									onTabChange={(id) => setViewMode(id as CalendarViewMode)}
+								>
+									<TabList aria-label="Calendar view mode">
+										<Tab id="status">By status</Tab>
+										<Tab id="platform">By platform</Tab>
+									</TabList>
+								</Tabs>
+							</Stack>
+
+							{calendarLoading ? (
 								<Spinner />
 							) : (
 								<div className={calendarStyles.calendarGrid}>
@@ -361,12 +390,9 @@ function CalendarPage() {
 										</div>
 									))}
 									{calendarCells.map(({ day, dateKey }) => {
-										const dayPosts = day
-											? (postsByDate.get(dateKey) ?? [])
-											: [];
+										const dayData = day ? dayDataMap.get(dateKey) : undefined;
 										const isToday = dateKey === today;
-										const counts = day ? computeStatusCounts(dayPosts) : {};
-										const hasPosts = dayPosts.length > 0;
+										const hasPosts = !!dayData;
 
 										return (
 											<div
@@ -383,20 +409,43 @@ function CalendarPage() {
 															<span className={calendarStyles.dayNumber}>
 																{day}
 															</span>
-															<div className={calendarStyles.statusStripes}>
-																{STATUS_STRIPE_ORDER.map((status) => {
-																	const count = counts[status];
-																	if (!count) return null;
-																	return (
-																		<span
-																			key={status}
-																			className={`${calendarStyles.stripe} ${calendarStyles[STATUS_STRIPE_CLASS[status]]}`}
-																		>
-																			{count} {STATUS_LABELS[status]}
-																		</span>
-																	);
-																})}
-															</div>
+															{viewMode === "status" ? (
+																<div className={calendarStyles.statusStripes}>
+																	{STATUS_STRIPE_ORDER.map((status) => {
+																		const count =
+																			dayData.byStatus[
+																				STATUS_TO_BREAKDOWN_KEY[status]
+																			];
+																		if (!count) return null;
+																		return (
+																			<span
+																				key={status}
+																				className={`${calendarStyles.stripe} ${calendarStyles[STATUS_STRIPE_CLASS[status]]}`}
+																			>
+																				{count} {STATUS_LABELS[status]}
+																			</span>
+																		);
+																	})}
+																</div>
+															) : (
+																<div className={calendarStyles.statusStripes}>
+																	{(
+																		ALL_PLATFORMS as readonly PlatformKey[]
+																	).map((platform) => {
+																		const count =
+																			dayData.byPlatform[platform] ?? 0;
+																		if (!count) return null;
+																		return (
+																			<span
+																				key={platform}
+																				className={calendarStyles.stripe}
+																			>
+																				{getPlatformIcon(platform, 10)} {count}
+																			</span>
+																		);
+																	})}
+																</div>
+															)}
 														</button>
 													) : (
 														<span className={calendarStyles.dayNumber}>

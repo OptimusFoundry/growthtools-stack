@@ -42,7 +42,51 @@ const publishedPost = {
 	published_at: now,
 };
 
+const emptyBreakdown = {
+	by_status: {
+		draft: 0,
+		scheduled: 0,
+		publishing: 0,
+		published: 0,
+		failed: 0,
+		partially_published: 0,
+	},
+	by_platform: {
+		x: 0,
+		linkedin: 0,
+		bluesky: 0,
+		facebook: 0,
+		instagram: 0,
+		threads: 0,
+		tiktok: 0,
+		pinterest: 0,
+	},
+} as const;
+
+// Canonical fixture month used for static setupEndpoint body.
+const fixtureCalendarMonth = {
+	month: "2026-04",
+	days: [
+		{
+			date: "2026-04-05",
+			by_status: { ...emptyBreakdown.by_status, scheduled: 2, published: 1, draft: 1 },
+			by_platform: { ...emptyBreakdown.by_platform, x: 2, linkedin: 1 },
+		},
+	],
+	month_totals: {
+		by_status: { ...emptyBreakdown.by_status, scheduled: 2, published: 1, draft: 1 },
+		by_platform: { ...emptyBreakdown.by_platform, x: 2, linkedin: 1 },
+	},
+};
+
 export const postsEndpoints = {
+	// Calendar month aggregate — must come before `list` in route registration
+	// order so `/posts/calendar` doesn't match the `/posts` list handler.
+	calendarMonth: setupEndpoint(
+		"GET",
+		"*/api/protected/posts/calendar",
+		fixtureCalendarMonth,
+	),
 	list: setupEndpoint("GET", "*/api/protected/posts", posts),
 	create: setupEndpoint("POST", "*/api/protected/posts", createdPost),
 	get: setupEndpoint("GET", "*/api/protected/posts/:id", posts[0]),
@@ -75,6 +119,40 @@ postsEndpoints.delete[200] = () =>
 	http.delete("*/api/protected/posts/:id", () =>
 		HttpResponse.json({ message: "Post deleted" }),
 	);
+
+// Override calendar-month 200 to echo the requested year/month so the UI
+// renders the header for the month the user navigated to, not a fixed fixture.
+postsEndpoints.calendarMonth[200] = () =>
+	http.get("*/api/protected/posts/calendar", ({ request }) => {
+		const url = new URL(request.url);
+		const year = url.searchParams.get("year") ?? "2026";
+		const month = url.searchParams.get("month") ?? "4";
+		const mm = String(Number(month)).padStart(2, "0");
+		return HttpResponse.json({
+			month: `${year}-${mm}`,
+			days: [
+				{
+					date: `${year}-${mm}-05`,
+					by_status: {
+						...emptyBreakdown.by_status,
+						scheduled: 2,
+						published: 1,
+						draft: 1,
+					},
+					by_platform: { ...emptyBreakdown.by_platform, x: 2, linkedin: 1 },
+				},
+			],
+			month_totals: {
+				by_status: {
+					...emptyBreakdown.by_status,
+					scheduled: 2,
+					published: 1,
+					draft: 1,
+				},
+				by_platform: { ...emptyBreakdown.by_platform, x: 2, linkedin: 1 },
+			},
+		});
+	});
 
 // ── Default (happy-path) handler array ─────────────────────────────────────
 
