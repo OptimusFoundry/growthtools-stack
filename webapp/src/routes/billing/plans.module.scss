@@ -79,8 +79,8 @@
 	flex-direction: column;
 	background: var(--color-surface);
 	border: 1px solid var(--color-border);
-	border-radius: var(--radius-xl);
-	padding: var(--space-5);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
 	transition: box-shadow var(--duration-fast) var(--ease-out);
 
 	&:hover {
@@ -103,20 +103,71 @@
 	top: calc(var(--space-4) * -1);
 	left: 50%;
 	transform: translateX(-50%);
+	z-index: 1;
 }
 
-.cardHeader {
+// Editorial spec header — mirrors Card variant="spec"
+.specHeader {
+	align-items: baseline;
+	border-bottom: 1px solid var(--color-border);
 	display: flex;
+	gap: var(--space-6);
+	justify-content: space-between;
+	padding: var(--space-4) var(--space-6);
+
+	.cardHighlighted & {
+		border-bottom-color: rgb(255, 255, 255, 0.2);
+	}
+}
+
+.specName {
+	color: var(--color-base-content);
+	font-family: var(--font-family-display, var(--font-family-serif));
+	font-size: var(--font-size-xl);
+	font-weight: var(--font-weight-medium);
+	letter-spacing: var(--letter-spacing-tight);
+	line-height: var(--line-height-tight);
+
+	em {
+		color: var(--color-primary);
+		font-style: italic;
+		font-weight: var(--font-weight-normal);
+	}
+
+	.cardHighlighted & {
+		color: var(--color-white);
+
+		em {
+			color: var(--color-white);
+		}
+	}
+}
+
+.specMeta {
+	color: var(--color-base-content-tertiary);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xxs);
+	letter-spacing: var(--letter-spacing-widest);
+	text-transform: uppercase;
+	white-space: nowrap;
+
+	.cardHighlighted & {
+		color: rgb(255, 255, 255, 0.8);
+	}
+}
+
+.cardBody {
+	display: flex;
+	flex: 1;
 	flex-direction: column;
-	gap: var(--space-1);
-	margin-bottom: var(--space-4);
+	gap: var(--space-4);
+	padding: var(--space-5) var(--space-6);
 }
 
 .cardPricing {
 	display: flex;
 	align-items: baseline;
 	gap: var(--space-1);
-	margin-bottom: var(--space-5);
 }
 
 // ============================================================================
@@ -131,7 +182,6 @@
 	margin: 0;
 	padding: 0;
 	flex: 1;
-	margin-bottom: var(--space-5);
 }
 
 .featureItem {
@@ -145,10 +195,16 @@
 // ============================================================================
 
 .cardFooter {
+	border-top: 1px solid var(--color-border);
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-2);
 	margin-top: auto;
+	padding: var(--space-4) var(--space-6);
+
+	.cardHighlighted & {
+		border-top-color: rgb(255, 255, 255, 0.2);
+	}
 }
 
 .ctaButton {

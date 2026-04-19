@@ -58,10 +58,7 @@ export const AccountPage = memo(function AccountPage() {
 
 	return (
 		<>
-			<Topbar
-				title="Settings"
-				eyebrow="Manage your account settings and billing"
-			/>
+			<Topbar title="Settings" />
 			<Stack gap="lg" className={styles.page} animate>
 				<Tabs
 					activeTab={activeTab}

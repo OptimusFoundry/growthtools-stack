@@ -1,16 +1,16 @@
 /**
  * GitHubConnectionSection Component
- * Orchestrates GitHub connection, repository selection, and commit tracking
+ * Renders GitHub connection state inline (no card chrome — wrapped by caller).
  */
 
+import { Github } from "lucide-react";
 import { memo } from "react";
+import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import { GitHubCommitsList } from "./GitHubCommitsList";
-import { GitHubConnectedCard } from "./GitHubConnectedCard";
 import styles from "./GitHubConnectionSection.module.scss";
-import { GitHubDisconnectedCard } from "./GitHubDisconnectedCard";
 import { GitHubRepoSelector } from "./GitHubRepoSelector";
 import { useGitHubConnectionFlow } from "./useGitHubConnectionFlow";
 
@@ -36,53 +36,62 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 
 	if (state.loading && !state.connection) {
 		return (
-			<Stack gap="sm">
-				<Text color="muted" size="sm">
-					Connect your GitHub account to auto-generate posts from commits.
-				</Text>
-				<Stack align="center" justify="center" className={styles.loading}>
-					<Spinner size="md" />
-				</Stack>
+			<Stack align="center" justify="center" className={styles.loading}>
+				<Spinner size="md" />
 			</Stack>
+		);
+	}
+
+	if (!state.connection) {
+		return (
+			<div className={styles.row}>
+				<div className={styles.icon}>
+					<Github size={20} />
+				</div>
+				<Stack gap="xs" className={styles.body}>
+					<Text weight="semibold">GitHub</Text>
+					<Text size="sm" color="secondary">
+						Auto-generate posts from repository activity
+					</Text>
+				</Stack>
+				<Button variant="secondary" size="sm" onClick={handlers.handleConnect}>
+					Connect
+				</Button>
+			</div>
 		);
 	}
 
 	return (
 		<Stack gap="md">
-			<Text color="muted" size="sm">
-				Connect your GitHub account to auto-generate posts from commits.
-			</Text>
-
-			{state.connection ? (
-				<Stack gap="md">
-					<GitHubConnectedCard
-						connection={state.connection}
-						onDisconnect={handlers.handleDisconnect}
-					/>
-
-					<Stack gap="xs">
-						<Text size="sm" weight="semibold">
-							Repositories
-						</Text>
-						<Text size="xs" color="muted">
-							Toggle which repositories to watch for new commits.
-						</Text>
-					</Stack>
-					<GitHubRepoSelector connectionId={state.connection.id} />
-
-					<Stack gap="xs">
-						<Text size="sm" weight="semibold">
-							Recent commits
-						</Text>
-						<Text size="xs" color="muted">
-							Latest pushes across connected repositories.
-						</Text>
-					</Stack>
-					<GitHubCommitsList connectionId={state.connection.id} />
+			<div className={styles.row}>
+				<div className={styles.icon}>
+					<Github size={20} />
+				</div>
+				<Stack gap="xs" className={styles.body}>
+					<div className={styles.nameLine}>
+						<Text weight="semibold">GitHub</Text>
+						<span className={styles.statusDot} aria-label="connected" />
+					</div>
+					<Text size="sm" color="secondary">
+						@{state.connection.github_username}
+					</Text>
 				</Stack>
-			) : (
-				<GitHubDisconnectedCard onConnect={handlers.handleConnect} />
-			)}
+				<Button variant="ghost" size="sm" onClick={handlers.handleDisconnect}>
+					Disconnect
+				</Button>
+			</div>
+
+			<Divider />
+
+			<Stack gap="xs">
+				<Text size="sm" weight="semibold">
+					Repositories
+				</Text>
+				<Text size="xs" color="muted">
+					Toggle which repositories to watch for new commits.
+				</Text>
+			</Stack>
+			<GitHubRepoSelector connectionId={state.connection.id} />
 		</Stack>
 	);
 });

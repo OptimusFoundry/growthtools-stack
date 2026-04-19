@@ -13,6 +13,7 @@ import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
+import pageStyles from "@/routes/page.module.scss";
 import type { PlatformType } from "@/types/platform";
 import { PLATFORM_DISPLAY_NAMES } from "@/types/platform";
 import styles from "./component.module.scss";
@@ -30,12 +31,7 @@ function getPlatformLabel(platform: string): string {
 export const AnalyticsPage = memo(function AnalyticsPage() {
 	const { overview, platformBreakdown, loading } = useAnalytics();
 
-	const topbar = (
-		<Topbar
-			title="Analytics"
-			eyebrow="Track your social media performance across platforms"
-		/>
-	);
+	const topbar = <Topbar title="Analytics" />;
 
 	if (loading) {
 		return (
@@ -67,6 +63,22 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 		<>
 			{topbar}
 			<Stack gap="lg" className={styles.page} animate>
+				<header className={pageStyles.pageHero}>
+					<div className={pageStyles.pageHeroText}>
+						<div className={pageStyles.pageEyebrow}>
+							Performance · {platformBreakdown.length}{" "}
+							{platformBreakdown.length === 1 ? "platform" : "platforms"}
+						</div>
+						<h1 className={pageStyles.pageHeroTitle}>
+							The numbers, <em>without the noise</em>.
+						</h1>
+						<p className={pageStyles.pageHeroSub}>
+							Impressions, engagement, and reach across every connected platform
+							— at a glance.
+						</p>
+					</div>
+				</header>
+
 				<div className={styles.statsGrid}>
 					<StatCard
 						label="Impressions"

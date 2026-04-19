@@ -10,18 +10,11 @@ interface TopbarProps {
 	 *  current crumb becomes the visual title. */
 	title?: string;
 	breadcrumbs?: BreadcrumbItem[];
-	eyebrow?: ReactNode;
 	actions?: ReactNode;
 	children?: ReactNode;
 }
 
-export function Topbar({
-	title,
-	breadcrumbs,
-	eyebrow,
-	actions,
-	children,
-}: TopbarProps) {
+export function Topbar({ title, breadcrumbs, actions, children }: TopbarProps) {
 	const hasBreadcrumbs = !!breadcrumbs && breadcrumbs.length > 0;
 
 	return (
@@ -30,10 +23,7 @@ export function Topbar({
 				{hasBreadcrumbs ? (
 					<Breadcrumb items={breadcrumbs} size="md" />
 				) : (
-					<>
-						{eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
-						{title && <h1 className={styles.title}>{title}</h1>}
-					</>
+					title && <h1 className={styles.title}>{title}</h1>
 				)}
 			</div>
 			{children}
