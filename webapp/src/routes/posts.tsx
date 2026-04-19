@@ -7,6 +7,7 @@ import { useDeletePost } from "@/hooks/useDeletePost";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
@@ -102,17 +103,28 @@ function PostsPage() {
 	const { posts, loading, refetch } = useGetPosts(filters);
 	const { deletePost, loading: deleting } = useDeletePost();
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+	const { addBanner } = useBannerCenter();
 
 	const handleDeleteConfirm = useCallback(async () => {
 		if (!deleteTargetId) return;
 		try {
 			await deletePost(deleteTargetId);
 			setDeleteTargetId(null);
+			addBanner({
+				type: "success",
+				title: "Post deleted",
+				dismissible: true,
+			});
 			refetch();
 		} catch {
-			// error is surfaced via hook state
+			addBanner({
+				type: "error",
+				title: "Couldn't delete post",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		}
-	}, [deleteTargetId, deletePost, refetch]);
+	}, [deleteTargetId, deletePost, refetch, addBanner]);
 
 	const hasActiveFilter = statusFilter !== "";
 	const postCount = allPosts.length;

@@ -7,6 +7,7 @@ import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
@@ -78,17 +79,28 @@ function BlogPage() {
 	const { blogPosts, loading, refetch } = useBlogPosts(filters);
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+	const { addBanner } = useBannerCenter();
 
 	const handleDeleteConfirm = useCallback(async () => {
 		if (!deleteTargetId) return;
 		try {
 			await deleteBlog(deleteTargetId);
 			setDeleteTargetId(null);
+			addBanner({
+				type: "success",
+				title: "Blog post deleted",
+				dismissible: true,
+			});
 			refetch();
 		} catch {
-			// error surfaced via hook state
+			addBanner({
+				type: "error",
+				title: "Couldn't delete blog post",
+				description: "Please try again.",
+				dismissible: true,
+			});
 		}
-	}, [deleteTargetId, deleteBlog, refetch]);
+	}, [deleteTargetId, deleteBlog, refetch, addBanner]);
 
 	const hasActiveFilter = statusFilter !== "";
 	const postCount = allPosts.length;
