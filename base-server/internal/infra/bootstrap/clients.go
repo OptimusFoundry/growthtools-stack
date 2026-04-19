@@ -186,7 +186,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/facebook",
 			Scopes:       []string{"pages_manage_posts", "pages_read_engagement", "pages_show_list"},
 			AuthURL:      "https://www.facebook.com/v21.0/dialog/oauth",
-			TokenURL:     "https://graph.facebook.com/v21.0/oauth/access_token",
+			TokenURL:     cfg.ExternalURLs.FacebookOAuthTokenURL,
 		},
 		"instagram": {
 			ClientID:     cfg.Platforms.MetaAppID,
@@ -194,7 +194,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/instagram",
 			Scopes:       []string{"instagram_basic", "instagram_content_publish", "pages_show_list"},
 			AuthURL:      "https://www.facebook.com/v21.0/dialog/oauth",
-			TokenURL:     "https://graph.facebook.com/v21.0/oauth/access_token",
+			TokenURL:     cfg.ExternalURLs.InstagramOAuthTokenURL,
 		},
 		"threads": {
 			ClientID:     cfg.Platforms.ThreadsAppID,
@@ -210,7 +210,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/tiktok",
 			Scopes:       []string{"user.info.basic", "video.publish"},
 			AuthURL:      "https://www.tiktok.com/v2/auth/authorize/",
-			TokenURL:     "https://open.tiktokapis.com/v2/oauth/token/",
+			TokenURL:     cfg.ExternalURLs.TikTokOAuthTokenURL,
 		},
 		"pinterest": {
 			ClientID:     cfg.Platforms.PinterestAppID,
@@ -218,7 +218,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 			RedirectURL:  redirectBase + "/pinterest",
 			Scopes:       []string{"boards:read", "pins:read", "pins:write", "user_accounts:read"},
 			AuthURL:      "https://www.pinterest.com/oauth/",
-			TokenURL:     "https://api.pinterest.com/v5/oauth/token",
+			TokenURL:     cfg.ExternalURLs.PinterestOAuthTokenURL,
 		},
 	}
 

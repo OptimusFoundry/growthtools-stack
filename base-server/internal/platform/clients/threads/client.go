@@ -262,6 +262,37 @@ func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) erro
 	return nil
 }
 
+// GetProfile retrieves the user's Threads profile (id and username).
+func (c *Client) GetProfile(ctx context.Context, accessToken string) (userID, username string, err error) {
+	endpoint := c.apiBase() + "/v1.0/me?fields=id,username&access_token=" + accessToken
+
+	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if reqErr != nil {
+		return "", "", fmt.Errorf("threadsapi: failed to create request: %w", reqErr)
+	}
+
+	resp, doErr := c.httpClient.Do(req)
+	if doErr != nil {
+		return "", "", fmt.Errorf("threadsapi: request failed: %w", doErr)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("threadsapi: get profile returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		ID       string `json:"id"`
+		Username string `json:"username"`
+	}
+	if jsonErr := json.Unmarshal(body, &result); jsonErr != nil {
+		return "", "", fmt.Errorf("threadsapi: failed to parse profile response: %w", jsonErr)
+	}
+
+	return result.ID, result.Username, nil
+}
+
 // GetPermalink retrieves the permalink for a Threads post.
 func (c *Client) GetPermalink(ctx context.Context, threadID, accessToken string) (string, error) {
 	endpoint := fmt.Sprintf(c.apiBase()+"/v1.0/%s?fields=permalink&access_token=%s", threadID, accessToken)

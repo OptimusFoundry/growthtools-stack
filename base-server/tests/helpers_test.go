@@ -289,6 +289,50 @@ func seedPlatformConnection(t *testing.T, s *store.Store, accountID uuid.UUID, p
 	return conn
 }
 
+// seedGoogleOAuthUser inserts a user + Google OAuth auth row for integration tests.
+// Returns the email and the Google external_id (sub) so callers can build mock responses.
+func seedGoogleOAuthUser(t *testing.T, s *store.Store) (email string, googleSub string) {
+	t.Helper()
+	ctx := context.Background()
+
+	userID := uuid.New()
+	_, err := s.GetDB().ExecContext(ctx,
+		`INSERT INTO users (id, first_name, last_name) VALUES ($1, $2, $3)`,
+		userID, "Google", "OAuthUser-"+userID.String()[:8])
+	require.NoError(t, err)
+
+	authID := uuid.New()
+	_, err = s.GetDB().ExecContext(ctx,
+		`INSERT INTO user_auth (id, user_id, auth_type) VALUES ($1, $2, $3)`,
+		authID, userID, "oauth")
+	require.NoError(t, err)
+
+	googleSub = "google-sub-" + userID.String()[:8]
+	email = "google-" + userID.String()[:8] + "@test.example.com"
+	_, err = s.GetDB().ExecContext(ctx,
+		`INSERT INTO oauth_auth (auth_id, external_id, email, full_name, auth_provider) VALUES ($1, $2, $3, $4, $5)`,
+		authID, googleSub, email, "Google OAuthUser-"+userID.String()[:8], "google")
+	require.NoError(t, err)
+
+	// Create an account for the user (required by GetUserByAuthID JOIN on accounts).
+	accountSlug := "google-" + userID.String()[:8]
+	var accountID uuid.UUID
+	err = s.GetDB().GetContext(ctx, &accountID,
+		`INSERT INTO accounts (name, slug, owner_user_id, plan, settings) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		"Google User "+userID.String()[:8], accountSlug, userID, "free", `{}`)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		bg := context.Background()
+		_, _ = s.GetDB().ExecContext(bg, `DELETE FROM accounts WHERE id = $1`, accountID)
+		_, _ = s.GetDB().ExecContext(bg, `DELETE FROM oauth_auth WHERE auth_id = $1`, authID)
+		_, _ = s.GetDB().ExecContext(bg, `DELETE FROM user_auth WHERE id = $1`, authID)
+		_, _ = s.GetDB().ExecContext(bg, `DELETE FROM users WHERE id = $1`, userID)
+	})
+
+	return email, googleSub
+}
+
 // envOrDefault returns the environment variable value or the default if unset.
 func envOrDefault(key, defaultVal string) string {
 	if v := os.Getenv(key); v != "" {

@@ -127,6 +127,12 @@ type ExternalURLsConfig struct {
 	ThreadsAPIBase     string // default: https://graph.threads.net
 	TikTokAPIBase      string // default: https://open.tiktokapis.com
 	PinterestAPIBase   string // default: https://api.pinterest.com
+
+	// OAuth token exchange URLs (overridable for integration tests)
+	FacebookOAuthTokenURL  string // default: https://graph.facebook.com/v21.0/oauth/access_token
+	InstagramOAuthTokenURL string // default: https://graph.facebook.com/v21.0/oauth/access_token
+	TikTokOAuthTokenURL    string // default: https://open.tiktokapis.com/v2/oauth/token/
+	PinterestOAuthTokenURL string // default: https://api.pinterest.com/v5/oauth/token
 }
 
 // Load reads and validates all required environment variables
@@ -248,6 +254,10 @@ func Load() (*Config, error) {
 	cfg.ExternalURLs.ThreadsAPIBase = getEnvWithDefault("THREADS_API_BASE", "https://graph.threads.net")
 	cfg.ExternalURLs.TikTokAPIBase = getEnvWithDefault("TIKTOK_API_BASE", "https://open.tiktokapis.com")
 	cfg.ExternalURLs.PinterestAPIBase = getEnvWithDefault("PINTEREST_API_BASE", "https://api.pinterest.com")
+	cfg.ExternalURLs.FacebookOAuthTokenURL = getEnvWithDefault("FACEBOOK_OAUTH_TOKEN_URL", "https://graph.facebook.com/v21.0/oauth/access_token")
+	cfg.ExternalURLs.InstagramOAuthTokenURL = getEnvWithDefault("INSTAGRAM_OAUTH_TOKEN_URL", "https://graph.facebook.com/v21.0/oauth/access_token")
+	cfg.ExternalURLs.TikTokOAuthTokenURL = getEnvWithDefault("TIKTOK_OAUTH_TOKEN_URL", "https://open.tiktokapis.com/v2/oauth/token/")
+	cfg.ExternalURLs.PinterestOAuthTokenURL = getEnvWithDefault("PINTEREST_OAUTH_TOKEN_URL", "https://api.pinterest.com/v5/oauth/token")
 
 	return cfg, nil
 }

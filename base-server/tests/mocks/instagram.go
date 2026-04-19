@@ -32,3 +32,9 @@ func (m *InstagramMock) ExpectGetPermalink(t *testing.T, mediaID string) *Expect
 	t.Helper()
 	return m.Expect(t, http.MethodGet, fmt.Sprintf("/v21.0/%s", mediaID))
 }
+
+// ExpectOAuthToken expects POST /v21.0/oauth/access_token.
+func (m *InstagramMock) ExpectOAuthToken(t *testing.T) *Expectation {
+	t.Helper()
+	return m.Expect(t, http.MethodPost, "/v21.0/oauth/access_token")
+}

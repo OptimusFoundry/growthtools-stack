@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func testOAuthConfigs() PlatformOAuthConfigs {
@@ -38,15 +39,28 @@ func testOAuthConfigs() PlatformOAuthConfigs {
 	}
 }
 
+func newTestProcessor(t *testing.T, ctrl *gomock.Controller, configs PlatformOAuthConfigs) (*MockPlatformStore, *PlatformProcessor) {
+	t.Helper()
+	logger := observability.NewLogger()
+	mockStore := NewMockPlatformStore(ctrl)
+	mockX := NewMockXClient(ctrl)
+	mockX.EXPECT().VerifyCredentials(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	mockThreads := NewMockThreadsClient(ctrl)
+	mockThreads.EXPECT().VerifyCredentials(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	mockBluesky := NewMockBlueskyClient(ctrl)
+	mockBluesky.EXPECT().VerifyCredentials(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, mockX, mockThreads, mockBluesky)
+	return mockStore, &proc
+}
+
 func TestPlatformProcessor_InitiateOAuth(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 
 	t.Run("happy path returns auth URL", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 
 		url, err := proc.InitiateOAuth(context.Background(), accountID, "x")
 
@@ -58,8 +72,8 @@ func TestPlatformProcessor_InitiateOAuth(t *testing.T) {
 
 	t.Run("unsupported platform", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 
 		_, err := proc.InitiateOAuth(context.Background(), accountID, "unknown")
 
@@ -70,14 +84,12 @@ func TestPlatformProcessor_InitiateOAuth(t *testing.T) {
 
 func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 
 	t.Run("happy path creates connection", func(t *testing.T) {
 		t.Parallel()
 		connID := uuid.New()
 
-		// Mock X token endpoint
 		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{
@@ -87,20 +99,18 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 		}))
 		defer tokenServer.Close()
 
-		// Mock X profile endpoint — not called via config, uses hardcoded URL,
-		// so profile fetch will fail gracefully and use fallback "unknown"
-		mockStore := &MockPlatformStore{
-			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
-				return store.PlatformConnection{ID: connID, AccountID: params.AccountID, Platform: params.Platform}, nil
-			},
-		}
 		configs := testOAuthConfigs()
 		xCfg := configs["x"]
 		xCfg.TokenURL = tokenServer.URL
 		configs["x"] = xCfg
 
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
-		// Pre-seed the PKCE verifier
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		mockStore.EXPECT().
+			CreatePlatformConnection(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
+				return store.PlatformConnection{ID: connID, AccountID: params.AccountID, Platform: params.Platform}, nil
+			})
 		proc.pkceVerifiers[accountID.String()] = "test-verifier"
 
 		conn, err := proc.HandleOAuthCallback(context.Background(), accountID, "x", "auth-code")
@@ -112,8 +122,8 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 
 	t.Run("unsupported platform", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 
 		_, err := proc.HandleOAuthCallback(context.Background(), accountID, "unknown", "code")
 
@@ -124,7 +134,6 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 	t.Run("store error returns ErrHandleOAuthCallback", func(t *testing.T) {
 		t.Parallel()
 
-		// Mock X token endpoint
 		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{
@@ -134,18 +143,16 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 		}))
 		defer tokenServer.Close()
 
-		mockStore := &MockPlatformStore{
-			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
-				return store.PlatformConnection{}, errors.New("db error")
-			},
-		}
 		configs := testOAuthConfigs()
 		xCfg := configs["x"]
 		xCfg.TokenURL = tokenServer.URL
 		configs["x"] = xCfg
 
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
-		// Pre-seed the PKCE verifier
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		mockStore.EXPECT().
+			CreatePlatformConnection(gomock.Any(), gomock.Any()).
+			Return(store.PlatformConnection{}, errors.New("db error"))
 		proc.pkceVerifiers[accountID.String()] = "test-verifier"
 
 		_, err := proc.HandleOAuthCallback(context.Background(), accountID, "x", "code")
@@ -157,18 +164,18 @@ func TestPlatformProcessor_HandleOAuthCallback(t *testing.T) {
 
 func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 
 	t.Run("happy path (new connection)", func(t *testing.T) {
 		t.Parallel()
 		connID := uuid.New()
-		mockStore := &MockPlatformStore{
-			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().
+			CreatePlatformConnection(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
 				return store.PlatformConnection{ID: connID, Platform: "bluesky", PlatformUserID: params.PlatformUserID}, nil
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+			})
 
 		conn, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "app-password")
 
@@ -181,13 +188,14 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 		t.Parallel()
 		existingID := uuid.New()
 		var capturedToken string
-		mockStore := &MockPlatformStore{
-			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().
+			CreatePlatformConnection(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
 				capturedToken = params.AccessToken
 				return store.PlatformConnection{ID: existingID, Platform: "bluesky", PlatformUserID: params.PlatformUserID, AccessToken: params.AccessToken}, nil
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+			})
 
 		conn, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "new-app-password")
 
@@ -198,12 +206,11 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 
 	t.Run("create connection error", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{
-			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
-				return store.PlatformConnection{}, errors.New("db error")
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().
+			CreatePlatformConnection(gomock.Any(), gomock.Any()).
+			Return(store.PlatformConnection{}, errors.New("db error"))
 
 		_, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "app-password")
 
@@ -214,18 +221,14 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 
 func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 	connID := uuid.New()
 
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{
-			DeletePlatformConnectionFn: func(ctx context.Context, aID, id uuid.UUID) error {
-				return nil
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().DeletePlatformConnection(gomock.Any(), accountID, connID).Return(nil)
 
 		err := proc.DisconnectPlatform(context.Background(), accountID, connID)
 
@@ -234,12 +237,9 @@ func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 
 	t.Run("not found returns ErrConnectionNotFound", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{
-			DeletePlatformConnectionFn: func(ctx context.Context, aID, id uuid.UUID) error {
-				return store.ErrNotFound
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().DeletePlatformConnection(gomock.Any(), accountID, connID).Return(store.ErrNotFound)
 
 		err := proc.DisconnectPlatform(context.Background(), accountID, connID)
 
@@ -249,12 +249,9 @@ func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 
 	t.Run("other error returns ErrDisconnectPlatform", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{
-			DeletePlatformConnectionFn: func(ctx context.Context, aID, id uuid.UUID) error {
-				return errors.New("db error")
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().DeletePlatformConnection(gomock.Any(), accountID, connID).Return(errors.New("db error"))
 
 		err := proc.DisconnectPlatform(context.Background(), accountID, connID)
 
@@ -265,20 +262,18 @@ func TestPlatformProcessor_DisconnectPlatform(t *testing.T) {
 
 func TestPlatformProcessor_ListConnections(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{
-			ListPlatformConnectionsByAccountFn: func(ctx context.Context, aID uuid.UUID) ([]store.PlatformConnection, error) {
-				return []store.PlatformConnection{
-					{ID: uuid.New(), Platform: "x"},
-					{ID: uuid.New(), Platform: "linkedin"},
-				}, nil
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return(
+			[]store.PlatformConnection{
+				{ID: uuid.New(), Platform: "x"},
+				{ID: uuid.New(), Platform: "linkedin"},
+			}, nil,
+		)
 
 		result, err := proc.ListConnections(context.Background(), accountID)
 
@@ -288,12 +283,9 @@ func TestPlatformProcessor_ListConnections(t *testing.T) {
 
 	t.Run("store error returns ErrListConnections", func(t *testing.T) {
 		t.Parallel()
-		mockStore := &MockPlatformStore{
-			ListPlatformConnectionsByAccountFn: func(ctx context.Context, aID uuid.UUID) ([]store.PlatformConnection, error) {
-				return nil, errors.New("db error")
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return(nil, errors.New("db error"))
 
 		_, err := proc.ListConnections(context.Background(), accountID)
 
@@ -304,7 +296,6 @@ func TestPlatformProcessor_ListConnections(t *testing.T) {
 
 func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 	connID := uuid.New()
 	refreshToken := "test-refresh-token"
@@ -322,14 +313,6 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 		}))
 		defer tokenServer.Close()
 
-		var storedAccessToken string
-		mockStore := &MockPlatformStore{
-			UpdatePlatformConnectionTokensFn: func(ctx context.Context, aID, id uuid.UUID, accessToken string, rt *string, expiresAt *time.Time) error {
-				storedAccessToken = accessToken
-				return nil
-			},
-		}
-
 		configs := PlatformOAuthConfigs{
 			"linkedin": {
 				ClientID:     "client-id",
@@ -338,7 +321,16 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		var storedAccessToken string
+		mockStore.EXPECT().
+			UpdatePlatformConnectionTokens(gomock.Any(), accountID, connID, gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, _, _ uuid.UUID, accessToken string, _ *string, _ *time.Time) error {
+				storedAccessToken = accessToken
+				return nil
+			})
+
 		conn := store.PlatformConnection{
 			ID:           connID,
 			AccountID:    accountID,
@@ -365,14 +357,6 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 		}))
 		defer tokenServer.Close()
 
-		var updatedStatus string
-		mockStore := &MockPlatformStore{
-			UpdatePlatformConnectionStatusFn: func(ctx context.Context, aID, id uuid.UUID, status string) error {
-				updatedStatus = status
-				return nil
-			},
-		}
-
 		configs := PlatformOAuthConfigs{
 			"linkedin": {
 				ClientID:     "client-id",
@@ -381,7 +365,16 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		var updatedStatus string
+		mockStore.EXPECT().
+			UpdatePlatformConnectionStatus(gomock.Any(), accountID, connID, gomock.Any()).
+			DoAndReturn(func(_ context.Context, _, _ uuid.UUID, status string) error {
+				updatedStatus = status
+				return nil
+			})
+
 		conn := store.PlatformConnection{
 			ID:           connID,
 			AccountID:    accountID,
@@ -400,9 +393,8 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 
 	t.Run("no refresh token", func(t *testing.T) {
 		t.Parallel()
-
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 		conn := store.PlatformConnection{
 			ID:        connID,
 			AccountID: accountID,
@@ -417,9 +409,8 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 
 	t.Run("bluesky - skipped, returned unchanged", func(t *testing.T) {
 		t.Parallel()
-
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 		conn := store.PlatformConnection{
 			ID:        connID,
 			AccountID: accountID,
@@ -448,12 +439,6 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 		}))
 		defer tokenServer.Close()
 
-		mockStore := &MockPlatformStore{
-			UpdatePlatformConnectionTokensFn: func(ctx context.Context, aID, id uuid.UUID, accessToken string, rt *string, expiresAt *time.Time) error {
-				return nil
-			},
-		}
-
 		configs := PlatformOAuthConfigs{
 			"x": {
 				ClientID:     "x-client-id",
@@ -462,7 +447,12 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		mockStore.EXPECT().
+			UpdatePlatformConnectionTokens(gomock.Any(), accountID, connID, gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil)
+
 		conn := store.PlatformConnection{
 			ID:           connID,
 			AccountID:    accountID,
@@ -481,15 +471,13 @@ func TestPlatformProcessor_RefreshConnection(t *testing.T) {
 
 func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 	connID := uuid.New()
 
 	t.Run("fresh token - no refresh", func(t *testing.T) {
 		t.Parallel()
-
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 
 		futureExpiry := time.Now().Add(2 * time.Hour)
 		conn := store.PlatformConnection{
@@ -518,12 +506,6 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 		}))
 		defer tokenServer.Close()
 
-		mockStore := &MockPlatformStore{
-			UpdatePlatformConnectionTokensFn: func(ctx context.Context, aID, id uuid.UUID, accessToken string, rt *string, expiresAt *time.Time) error {
-				return nil
-			},
-		}
-
 		configs := PlatformOAuthConfigs{
 			"linkedin": {
 				ClientID:     "client-id",
@@ -531,10 +513,15 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 				TokenURL:     tokenServer.URL,
 			},
 		}
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		mockStore.EXPECT().
+			UpdatePlatformConnectionTokens(gomock.Any(), accountID, connID, gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil)
 
 		refreshToken := "old-refresh"
-		nearExpiry := time.Now().Add(2 * time.Minute) // within 5-min window
+		nearExpiry := time.Now().Add(2 * time.Minute)
 		conn := store.PlatformConnection{
 			ID:             connID,
 			AccountID:      accountID,
@@ -552,9 +539,8 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 
 	t.Run("no expiry set - no refresh", func(t *testing.T) {
 		t.Parallel()
-
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 
 		conn := store.PlatformConnection{
 			ID:        connID,
@@ -570,9 +556,8 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 
 	t.Run("bluesky - always fresh", func(t *testing.T) {
 		t.Parallel()
-
-		mockStore := &MockPlatformStore{}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		_, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
 
 		nearExpiry := time.Now().Add(1 * time.Minute)
 		conn := store.PlatformConnection{
@@ -591,7 +576,6 @@ func TestPlatformProcessor_EnsureFreshConnection(t *testing.T) {
 
 func TestPlatformProcessor_HealthCheckWithRefresh(t *testing.T) {
 	t.Parallel()
-	logger := observability.NewLogger()
 	accountID := uuid.New()
 	connID := uuid.New()
 
@@ -611,25 +595,6 @@ func TestPlatformProcessor_HealthCheckWithRefresh(t *testing.T) {
 		refreshToken := "test-refresh"
 		nearExpiry := time.Now().Add(2 * time.Minute)
 
-		mockStore := &MockPlatformStore{
-			ListPlatformConnectionsByAccountFn: func(ctx context.Context, aID uuid.UUID) ([]store.PlatformConnection, error) {
-				return []store.PlatformConnection{
-					{
-						ID:             connID,
-						AccountID:      accountID,
-						Platform:       "x",
-						AccessToken:    "old-token",
-						RefreshToken:   &refreshToken,
-						TokenExpiresAt: &nearExpiry,
-						Status:         "active",
-					},
-				}, nil
-			},
-			UpdatePlatformConnectionTokensFn: func(ctx context.Context, aID, id uuid.UUID, accessToken string, rt *string, expiresAt *time.Time) error {
-				return nil
-			},
-		}
-
 		configs := PlatformOAuthConfigs{
 			"x": {
 				ClientID:     "x-client-id",
@@ -638,7 +603,24 @@ func TestPlatformProcessor_HealthCheckWithRefresh(t *testing.T) {
 			},
 		}
 
-		proc := New(mockStore, configs, StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, configs)
+		mockStore.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return(
+			[]store.PlatformConnection{
+				{
+					ID:             connID,
+					AccountID:      accountID,
+					Platform:       "x",
+					AccessToken:    "old-token",
+					RefreshToken:   &refreshToken,
+					TokenExpiresAt: &nearExpiry,
+					Status:         "active",
+				},
+			}, nil,
+		)
+		mockStore.EXPECT().
+			UpdatePlatformConnectionTokens(gomock.Any(), accountID, connID, gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil).AnyTimes()
 
 		result, err := proc.ListConnections(context.Background(), accountID)
 
@@ -653,22 +635,20 @@ func TestPlatformProcessor_HealthCheckWithRefresh(t *testing.T) {
 
 		futureExpiry := time.Now().Add(2 * time.Hour)
 
-		mockStore := &MockPlatformStore{
-			ListPlatformConnectionsByAccountFn: func(ctx context.Context, aID uuid.UUID) ([]store.PlatformConnection, error) {
-				return []store.PlatformConnection{
-					{
-						ID:             connID,
-						AccountID:      accountID,
-						Platform:       "x",
-						AccessToken:    "valid-token",
-						TokenExpiresAt: &futureExpiry,
-						Status:         "active",
-					},
-				}, nil
-			},
-		}
-
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, &http.Client{}, logger, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		mockStore, proc := newTestProcessor(t, ctrl, testOAuthConfigs())
+		mockStore.EXPECT().ListPlatformConnectionsByAccount(gomock.Any(), accountID).Return(
+			[]store.PlatformConnection{
+				{
+					ID:             connID,
+					AccountID:      accountID,
+					Platform:       "x",
+					AccessToken:    "valid-token",
+					TokenExpiresAt: &futureExpiry,
+					Status:         "active",
+				},
+			}, nil,
+		)
 
 		result, err := proc.ListConnections(context.Background(), accountID)
 
