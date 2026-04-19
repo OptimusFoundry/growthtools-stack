@@ -12,12 +12,16 @@ import { useDisconnectPlatform } from "@/hooks/useDisconnectPlatform";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
+import {
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
+} from "@/proto-design-system/components/layout/Card";
 import { Container } from "@/proto-design-system/components/layout/Container";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Tag } from "@/proto-design-system/components/primitives/Tag";
@@ -67,16 +71,6 @@ const PLATFORM_INFO: Record<
 	},
 };
 
-const STATUS_BADGE_VARIANT: Record<
-	PlatformConnection["status"],
-	"success" | "warning" | "error" | "secondary"
-> = {
-	active: "success",
-	expired: "warning",
-	revoked: "secondary",
-	error: "error",
-};
-
 function formatDate(dateStr: string): string {
 	return new Date(dateStr).toLocaleDateString("en-US", {
 		month: "short",
@@ -104,30 +98,23 @@ const ConnectedCard = memo(function ConnectedCard({
 	onDisconnect,
 	disconnecting,
 }: ConnectedCardProps) {
+	const platformName =
+		PLATFORM_DISPLAY_NAMES[connection.platform as PlatformType];
 	return (
-		<Card variant="outlined">
+		<Card variant="spec" className={styles.specCard}>
+			<CardHeader name={platformName} meta={connection.status.toUpperCase()} />
 			<CardBody>
-				<div className={styles.connectedCard}>
-					<div className={styles.connectedCardHeader}>
-						<Stack direction="row" gap="sm" align="center">
-							<div className={styles.connectedCardIcon}>
-								{PLATFORM_INFO[connection.platform]?.icon}
-							</div>
-							<Stack gap="xs">
-								<Text size="lg" weight="semibold">
-									{PLATFORM_DISPLAY_NAMES[connection.platform as PlatformType]}
-								</Text>
-								{connection.displayName && (
-									<Text size="sm" color="secondary">
-										{connection.displayName}
-									</Text>
-								)}
-							</Stack>
-						</Stack>
-						<Badge variant={STATUS_BADGE_VARIANT[connection.status]} size="sm">
-							{connection.status}
-						</Badge>
-					</div>
+				<div className={styles.connectedCardBody}>
+					<Stack direction="row" gap="sm" align="center">
+						<div className={styles.connectedCardIcon}>
+							{PLATFORM_INFO[connection.platform]?.icon}
+						</div>
+						{connection.displayName && (
+							<Text size="sm" color="secondary">
+								{connection.displayName}
+							</Text>
+						)}
+					</Stack>
 
 					<div className={styles.connectedCardMeta}>
 						<div className={styles.metaItem}>
@@ -161,19 +148,18 @@ const ConnectedCard = memo(function ConnectedCard({
 							</div>
 						)}
 					</div>
-
-					<div className={styles.connectedCardFooter}>
-						<Button
-							variant="destructive"
-							size="sm"
-							onClick={() => onDisconnect(connection.id)}
-							disabled={disconnecting}
-						>
-							{disconnecting ? "Disconnecting..." : "Disconnect"}
-						</Button>
-					</div>
 				</div>
 			</CardBody>
+			<CardFooter className={styles.footerActions}>
+				<Button
+					variant="destructive"
+					size="sm"
+					onClick={() => onDisconnect(connection.id)}
+					disabled={disconnecting}
+				>
+					{disconnecting ? "Disconnecting..." : "Disconnect"}
+				</Button>
+			</CardFooter>
 		</Card>
 	);
 });
@@ -198,28 +184,28 @@ const AvailableCard = memo(function AvailableCard({
 	const info = PLATFORM_INFO[platform];
 
 	return (
-		<Card variant="outlined">
+		<Card variant="spec" className={styles.specCard}>
+			<CardHeader name={PLATFORM_DISPLAY_NAMES[platform]} meta="AVAILABLE" />
 			<CardBody>
-				<div className={styles.availableCard}>
+				<div className={styles.availableCardBody}>
 					<div className={styles.availableCardIcon}>{info?.icon}</div>
-					<Stack gap="xs" className={styles.availableCardContent}>
-						<Text weight="medium">{PLATFORM_DISPLAY_NAMES[platform]}</Text>
-						{info?.description && (
-							<Text size="xs" color="secondary">
-								{info.description}
-							</Text>
-						)}
-					</Stack>
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={() => onConnect(platform)}
-						disabled={connecting}
-					>
-						{connecting ? "Connecting..." : "Connect"}
-					</Button>
+					{info?.description && (
+						<Text size="sm" color="secondary">
+							{info.description}
+						</Text>
+					)}
 				</div>
 			</CardBody>
+			<CardFooter className={styles.footerActions}>
+				<Button
+					variant="secondary"
+					size="sm"
+					onClick={() => onConnect(platform)}
+					disabled={connecting}
+				>
+					{connecting ? "Connecting..." : "Connect"}
+				</Button>
+			</CardFooter>
 		</Card>
 	);
 });
@@ -447,15 +433,10 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 			<Stack gap="xl">
 				{/* Connected Platforms */}
 				{connectedPlatforms.length > 0 && (
-					<Stack gap="md">
-						<Stack gap="xs">
-							<Text as="h2" size="xl" weight="semibold">
-								Connected Platforms
-							</Text>
-							<Text size="md" color="secondary">
-								Manage your active platform connections
-							</Text>
-						</Stack>
+					<Stack gap="sm">
+						<Text size="sm" color="secondary">
+							Manage your active platform connections.
+						</Text>
 						<div className={styles.connectedGrid}>
 							{connectedPlatforms.map((platform) => {
 								const conn = connectionMap.get(platform)!;
@@ -476,15 +457,10 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 
 				{/* Available Platforms */}
 				{availablePlatforms.length > 0 && (
-					<Stack gap="md">
-						<Stack gap="xs">
-							<Text as="h2" size="xl" weight="semibold">
-								Add a Platform
-							</Text>
-							<Text size="md" color="secondary">
-								Connect more accounts to expand your reach
-							</Text>
-						</Stack>
+					<Stack gap="sm">
+						<Text size="sm" color="secondary">
+							Connect more accounts to expand your reach.
+						</Text>
 						<div className={styles.availableGrid}>
 							{availablePlatforms.map((platform) => (
 								<AvailableCard

@@ -6,9 +6,13 @@
 import { Github } from "lucide-react";
 import { memo } from "react";
 import type { GitHubConnection } from "@/hooks/useGitHubConnection";
-import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
+import {
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
+} from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import styles from "./GitHubConnectionSection.module.scss";
@@ -27,32 +31,30 @@ export const GitHubConnectedCard = memo(function GitHubConnectedCard({
 	onDisconnect,
 }: GitHubConnectedCardProps) {
 	return (
-		<Card variant="outlined">
+		<Card variant="spec">
+			<CardHeader
+				name={
+					<>
+						Git<em>Hub</em>
+					</>
+				}
+				meta="CONNECTED"
+			/>
 			<CardBody>
-				<div className={styles.connectedCard}>
-					<Stack direction="row" gap="sm" align="center">
-						<div className={styles.connectedCardIcon}>
-							<Github size={24} />
-						</div>
-						<Stack gap="xs">
-							<Text size="lg" weight="semibold">
-								GitHub
-							</Text>
-							<Text size="sm" color="secondary">
-								@{connection.github_username}
-							</Text>
-						</Stack>
-					</Stack>
-					<Badge variant="success" size="sm">
-						connected
-					</Badge>
-					<div className={styles.connectedCardFooter}>
-						<Button variant="destructive" size="sm" onClick={onDisconnect}>
-							Disconnect
-						</Button>
+				<Stack direction="row" gap="sm" align="center">
+					<div className={styles.connectedCardIcon}>
+						<Github size={24} />
 					</div>
-				</div>
+					<Text size="sm" color="secondary">
+						@{connection.github_username}
+					</Text>
+				</Stack>
 			</CardBody>
+			<CardFooter className={styles.footerActions}>
+				<Button variant="destructive" size="sm" onClick={onDisconnect}>
+					Disconnect
+				</Button>
+			</CardFooter>
 		</Card>
 	);
 });

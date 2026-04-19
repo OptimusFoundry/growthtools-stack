@@ -36,15 +36,10 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 
 	if (state.loading && !state.connection) {
 		return (
-			<Stack gap="md">
-				<Stack gap="xs">
-					<Text as="h3" size="lg" weight="semibold">
-						GitHub
-					</Text>
-					<Text color="muted" size="sm">
-						Connect your GitHub account to auto-generate posts from commits.
-					</Text>
-				</Stack>
+			<Stack gap="sm">
+				<Text color="muted" size="sm">
+					Connect your GitHub account to auto-generate posts from commits.
+				</Text>
 				<Stack align="center" justify="center" className={styles.loading}>
 					<Spinner size="md" />
 				</Stack>
@@ -54,14 +49,9 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 
 	return (
 		<Stack gap="md">
-			<Stack gap="xs">
-				<Text as="h3" size="lg" weight="semibold">
-					GitHub
-				</Text>
-				<Text color="muted" size="sm">
-					Connect your GitHub account to auto-generate posts from commits.
-				</Text>
-			</Stack>
+			<Text color="muted" size="sm">
+				Connect your GitHub account to auto-generate posts from commits.
+			</Text>
 
 			{state.connection ? (
 				<Stack gap="md">
