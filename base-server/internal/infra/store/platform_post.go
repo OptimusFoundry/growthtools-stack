@@ -203,6 +203,7 @@ WHERE pp.status = 'failed'
   AND pp.attempt_count < pp.max_attempts
   AND pp.next_retry_at IS NOT NULL
   AND pp.next_retry_at <= $1
+  AND p.deleted_at IS NULL
 ORDER BY pp.next_retry_at ASC
 LIMIT $2
 `
@@ -226,6 +227,7 @@ FROM platform_posts pp
 JOIN posts p ON p.id = pp.post_id
 WHERE pp.status = 'publishing'
   AND pp.updated_at < $1
+  AND p.deleted_at IS NULL
 ORDER BY pp.updated_at ASC
 LIMIT $2
 `
