@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, GitCommit, Github } from "lucide-react";
+import { ChevronRight, GitCommit, GitBranch as Github } from "lucide-react";
 import { motion } from "motion/react";
 import { Topbar } from "@/components/Layout/Topbar";
 import {

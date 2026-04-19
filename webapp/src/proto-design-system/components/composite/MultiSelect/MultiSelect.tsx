@@ -99,7 +99,7 @@ export function MultiSelect({
 
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration: 0.15, ease: [0, 0, 0.2, 1] };
+		: { duration: 0.15, ease: [0, 0, 0.2, 1] as const };
 
 	// Handle click outside
 	useEffect(() => {

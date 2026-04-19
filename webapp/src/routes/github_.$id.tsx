@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { GitCommit, Github, Image as ImageIcon } from "lucide-react";
+import {
+	GitCommit,
+	GitBranch as Github,
+	Image as ImageIcon,
+} from "lucide-react";
 import { ArtifactGrid } from "@/components/github/ArtifactGrid";
 import { CaptureMetaCard } from "@/components/github/CaptureMetaCard";
 import { Topbar } from "@/components/Layout/Topbar";

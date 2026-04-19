@@ -82,7 +82,7 @@ export function Banner({
 	const transition =
 		prefersReducedMotion || !animate
 			? { duration: 0 }
-			: { duration: 0.2, ease: [0, 0, 0.2, 1] };
+			: { duration: 0.2, ease: [0, 0, 0.2, 1] as const };
 
 	const iconElement = icon || typeIcons[type];
 
