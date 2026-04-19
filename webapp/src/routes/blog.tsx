@@ -233,7 +233,7 @@ function BlogPage() {
 														e.stopPropagation();
 														setDeleteTargetId(post.id);
 													}}
-													aria-label="Delete"
+													aria-label={`Delete blog post "${post.title || "untitled"}"`}
 												>
 													<Trash2 size={16} />
 												</button>

@@ -31,6 +31,7 @@ npm run storybook    # Storybook (port 6006)
 - **React 19 patterns** — `ref` as prop, `useActionState`, `<Context>` directly (no `.Provider`)
 - **Feature gating** — use `FeatureGate` / `FeatureGateHidden` from `src/components/gating/`
 - **Every UI change ships a Playwright spec** — any change to `src/routes/**`, pages, forms, or a new API call MUST come with a Playwright spec in `webapp/e2e/` that table-drives across every status code the endpoints can return. Use the `network` fixture from `e2e/fixtures/test.ts` and add MSW handlers + scenario factories to `e2e/handlers/<domain>.handlers.ts`. Invoke the `playwright-coverage-check` skill when making or reviewing webapp changes — it defines the exact pattern. Never `page.route` for API mocking; never `expect(body).toBeTruthy()` as an error-path assertion.
+- **Accessible names must be unique within their visible context** — every focusable control needs a non-ambiguous accessible name. When two controls would otherwise share a name (rows in a list, duplicated nav across regions, icon-only buttons), the `aria-label` MUST disambiguate them. Ambiguous names break screen readers AND Playwright strict-mode locators. See [docs/A11Y-PATTERNS.md](docs/A11Y-PATTERNS.md).
 
 ## Environment
 
@@ -48,3 +49,4 @@ VITE_API_URL=http://localhost:3000
 - [Page composition](docs/PATTERNS.md) — shell, heading, section, empty state rhythm
 - [Page templates](docs/PAGE-TEMPLATES.md) — copy-paste scaffolds for 4 page shapes
 - [Testing patterns](docs/TESTING-PATTERNS.md) — Vitest, RTL, Playwright, MSW
+- [Accessibility patterns](docs/A11Y-PATTERNS.md) — aria-label uniqueness, instance discriminators, region landmarks

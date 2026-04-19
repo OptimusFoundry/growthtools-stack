@@ -254,7 +254,7 @@ function CalendarPage() {
 							variant="ghost"
 							size="sm"
 							onClick={() => navigateMonth(-1)}
-							aria-label="Previous month"
+							aria-label="Previous month, topbar nav"
 						>
 							<ChevronLeft size={16} />
 						</Button>
@@ -269,7 +269,7 @@ function CalendarPage() {
 							variant="ghost"
 							size="sm"
 							onClick={() => navigateMonth(1)}
-							aria-label="Next month"
+							aria-label="Next month, topbar nav"
 						>
 							<ChevronRight size={16} />
 						</Button>
@@ -371,7 +371,7 @@ function CalendarPage() {
 									<Button
 										variant="ghost"
 										onClick={() => navigateMonth(-1)}
-										aria-label="Previous month"
+										aria-label="Previous month, calendar nav"
 									>
 										<ChevronLeft size={18} />
 									</Button>
@@ -381,7 +381,7 @@ function CalendarPage() {
 									<Button
 										variant="ghost"
 										onClick={() => navigateMonth(1)}
-										aria-label="Next month"
+										aria-label="Next month, calendar nav"
 									>
 										<ChevronRight size={18} />
 									</Button>
@@ -425,6 +425,7 @@ function CalendarPage() {
 															type="button"
 															className={calendarStyles.dayCellButton}
 															onClick={() => setSelectedDate(dateKey)}
+															aria-label={`View posts for ${MONTHS[month]} ${day}, ${year}`}
 														>
 															<span className={calendarStyles.dayNumber}>
 																{day}
