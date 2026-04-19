@@ -10,143 +10,184 @@
 package handler
 
 import (
-	processor "base-server/internal/content/processor"
-	prompts "base-server/internal/content/prompts"
-	aiclient "base-server/internal/infra/clients/aiclient"
+	mediadescriber "base-server/internal/ai/mediadescriber"
+	socialposts "base-server/internal/ai/socialposts"
+	store "base-server/internal/infra/store"
 	context "context"
+	io "io"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockContentProcessor is a mock of ContentProcessor interface.
-type MockContentProcessor struct {
+// MockDescriber is a mock of Describer interface.
+type MockDescriber struct {
 	ctrl     *gomock.Controller
-	recorder *MockContentProcessorMockRecorder
+	recorder *MockDescriberMockRecorder
 	isgomock struct{}
 }
 
-// MockContentProcessorMockRecorder is the mock recorder for MockContentProcessor.
-type MockContentProcessorMockRecorder struct {
-	mock *MockContentProcessor
+// MockDescriberMockRecorder is the mock recorder for MockDescriber.
+type MockDescriberMockRecorder struct {
+	mock *MockDescriber
 }
 
-// NewMockContentProcessor creates a new mock instance.
-func NewMockContentProcessor(ctrl *gomock.Controller) *MockContentProcessor {
-	mock := &MockContentProcessor{ctrl: ctrl}
-	mock.recorder = &MockContentProcessorMockRecorder{mock}
+// NewMockDescriber creates a new mock instance.
+func NewMockDescriber(ctrl *gomock.Controller) *MockDescriber {
+	mock := &MockDescriber{ctrl: ctrl}
+	mock.recorder = &MockDescriberMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockContentProcessor) EXPECT() *MockContentProcessorMockRecorder {
+func (m *MockDescriber) EXPECT() *MockDescriberMockRecorder {
 	return m.recorder
 }
 
-// AdaptContent mocks base method.
-func (m *MockContentProcessor) AdaptContent(ctx context.Context, accountID uuid.UUID, content, platform string) (string, error) {
+// DescribeBatch mocks base method.
+func (m *MockDescriber) DescribeBatch(ctx context.Context, items []mediadescriber.Media) []mediadescriber.Description {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdaptContent", ctx, accountID, content, platform)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "DescribeBatch", ctx, items)
+	ret0, _ := ret[0].([]mediadescriber.Description)
+	return ret0
+}
+
+// DescribeBatch indicates an expected call of DescribeBatch.
+func (mr *MockDescriberMockRecorder) DescribeBatch(ctx, items any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeBatch", reflect.TypeOf((*MockDescriber)(nil).DescribeBatch), ctx, items)
+}
+
+// MockGenerator is a mock of Generator interface.
+type MockGenerator struct {
+	ctrl     *gomock.Controller
+	recorder *MockGeneratorMockRecorder
+	isgomock struct{}
+}
+
+// MockGeneratorMockRecorder is the mock recorder for MockGenerator.
+type MockGeneratorMockRecorder struct {
+	mock *MockGenerator
+}
+
+// NewMockGenerator creates a new mock instance.
+func NewMockGenerator(ctrl *gomock.Controller) *MockGenerator {
+	mock := &MockGenerator{ctrl: ctrl}
+	mock.recorder = &MockGeneratorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGenerator) EXPECT() *MockGeneratorMockRecorder {
+	return m.recorder
+}
+
+// GenerateStream mocks base method.
+func (m *MockGenerator) GenerateStream(ctx context.Context, req socialposts.Request) (<-chan socialposts.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateStream", ctx, req)
+	ret0, _ := ret[0].(<-chan socialposts.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AdaptContent indicates an expected call of AdaptContent.
-func (mr *MockContentProcessorMockRecorder) AdaptContent(ctx, accountID, content, platform any) *gomock.Call {
+// GenerateStream indicates an expected call of GenerateStream.
+func (mr *MockGeneratorMockRecorder) GenerateStream(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdaptContent", reflect.TypeOf((*MockContentProcessor)(nil).AdaptContent), ctx, accountID, content, platform)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateStream", reflect.TypeOf((*MockGenerator)(nil).GenerateStream), ctx, req)
 }
 
-// DecideMode mocks base method.
-func (m *MockContentProcessor) DecideMode(ctx context.Context, video *aiclient.ImageData, images []aiclient.ImageData, prompt string) (processor.ModeDecision, error) {
+// MockS3Fetcher is a mock of S3Fetcher interface.
+type MockS3Fetcher struct {
+	ctrl     *gomock.Controller
+	recorder *MockS3FetcherMockRecorder
+	isgomock struct{}
+}
+
+// MockS3FetcherMockRecorder is the mock recorder for MockS3Fetcher.
+type MockS3FetcherMockRecorder struct {
+	mock *MockS3Fetcher
+}
+
+// NewMockS3Fetcher creates a new mock instance.
+func NewMockS3Fetcher(ctrl *gomock.Controller) *MockS3Fetcher {
+	mock := &MockS3Fetcher{ctrl: ctrl}
+	mock.recorder = &MockS3FetcherMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockS3Fetcher) EXPECT() *MockS3FetcherMockRecorder {
+	return m.recorder
+}
+
+// GetFile mocks base method.
+func (m *MockS3Fetcher) GetFile(ctx context.Context, key string) (io.ReadCloser, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DecideMode", ctx, video, images, prompt)
-	ret0, _ := ret[0].(processor.ModeDecision)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DecideMode indicates an expected call of DecideMode.
-func (mr *MockContentProcessorMockRecorder) DecideMode(ctx, video, images, prompt any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecideMode", reflect.TypeOf((*MockContentProcessor)(nil).DecideMode), ctx, video, images, prompt)
-}
-
-// FetchAndBucketMedia mocks base method.
-func (m *MockContentProcessor) FetchAndBucketMedia(ctx context.Context, accountID uuid.UUID, mediaIDs []uuid.UUID) (*aiclient.ImageData, []aiclient.ImageData, bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAndBucketMedia", ctx, accountID, mediaIDs)
-	ret0, _ := ret[0].(*aiclient.ImageData)
-	ret1, _ := ret[1].([]aiclient.ImageData)
-	ret2, _ := ret[2].(bool)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
-}
-
-// FetchAndBucketMedia indicates an expected call of FetchAndBucketMedia.
-func (mr *MockContentProcessorMockRecorder) FetchAndBucketMedia(ctx, accountID, mediaIDs any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAndBucketMedia", reflect.TypeOf((*MockContentProcessor)(nil).FetchAndBucketMedia), ctx, accountID, mediaIDs)
-}
-
-// GeneratePost mocks base method.
-func (m *MockContentProcessor) GeneratePost(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GeneratePost", ctx, accountID, prompt, platforms)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GeneratePost indicates an expected call of GeneratePost.
-func (mr *MockContentProcessorMockRecorder) GeneratePost(ctx, accountID, prompt, platforms any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GeneratePost", reflect.TypeOf((*MockContentProcessor)(nil).GeneratePost), ctx, accountID, prompt, platforms)
-}
-
-// GenerateThread mocks base method.
-func (m *MockContentProcessor) GenerateThread(ctx context.Context, content, platform string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateThread", ctx, content, platform)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GenerateThread indicates an expected call of GenerateThread.
-func (mr *MockContentProcessorMockRecorder) GenerateThread(ctx, content, platform any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateThread", reflect.TypeOf((*MockContentProcessor)(nil).GenerateThread), ctx, content, platform)
-}
-
-// GenerateWithMediaPlan mocks base method.
-func (m *MockContentProcessor) GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan, images []aiclient.ImageData) (string, map[string]processor.ThreadWithMediaPlanResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateWithMediaPlan", ctx, accountID, prompt, platforms, plan, images)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(map[string]processor.ThreadWithMediaPlanResult)
+	ret := m.ctrl.Call(m, "GetFile", ctx, key)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// GenerateWithMediaPlan indicates an expected call of GenerateWithMediaPlan.
-func (mr *MockContentProcessorMockRecorder) GenerateWithMediaPlan(ctx, accountID, prompt, platforms, plan, images any) *gomock.Call {
+// GetFile indicates an expected call of GetFile.
+func (mr *MockS3FetcherMockRecorder) GetFile(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWithMediaPlan", reflect.TypeOf((*MockContentProcessor)(nil).GenerateWithMediaPlan), ctx, accountID, prompt, platforms, plan, images)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockS3Fetcher)(nil).GetFile), ctx, key)
 }
 
-// StreamGenerateAndAdapt mocks base method.
-func (m *MockContentProcessor) StreamGenerateAndAdapt(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, contentType string, images []aiclient.ImageData, maxThreadParts int, cb processor.StreamCallbacks) error {
+// MockHandlerStore is a mock of HandlerStore interface.
+type MockHandlerStore struct {
+	ctrl     *gomock.Controller
+	recorder *MockHandlerStoreMockRecorder
+	isgomock struct{}
+}
+
+// MockHandlerStoreMockRecorder is the mock recorder for MockHandlerStore.
+type MockHandlerStoreMockRecorder struct {
+	mock *MockHandlerStore
+}
+
+// NewMockHandlerStore creates a new mock instance.
+func NewMockHandlerStore(ctrl *gomock.Controller) *MockHandlerStore {
+	mock := &MockHandlerStore{ctrl: ctrl}
+	mock.recorder = &MockHandlerStoreMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockHandlerStore) EXPECT() *MockHandlerStoreMockRecorder {
+	return m.recorder
+}
+
+// GetMediaByIDs mocks base method.
+func (m *MockHandlerStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StreamGenerateAndAdapt", ctx, accountID, prompt, platforms, contentType, images, maxThreadParts, cb)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetMediaByIDs", ctx, ids)
+	ret0, _ := ret[0].([]store.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// StreamGenerateAndAdapt indicates an expected call of StreamGenerateAndAdapt.
-func (mr *MockContentProcessorMockRecorder) StreamGenerateAndAdapt(ctx, accountID, prompt, platforms, contentType, images, maxThreadParts, cb any) *gomock.Call {
+// GetMediaByIDs indicates an expected call of GetMediaByIDs.
+func (mr *MockHandlerStoreMockRecorder) GetMediaByIDs(ctx, ids any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamGenerateAndAdapt", reflect.TypeOf((*MockContentProcessor)(nil).StreamGenerateAndAdapt), ctx, accountID, prompt, platforms, contentType, images, maxThreadParts, cb)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMediaByIDs", reflect.TypeOf((*MockHandlerStore)(nil).GetMediaByIDs), ctx, ids)
+}
+
+// GetVoiceProfileByAccount mocks base method.
+func (m *MockHandlerStore) GetVoiceProfileByAccount(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVoiceProfileByAccount", ctx, accountID)
+	ret0, _ := ret[0].(store.VoiceProfile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVoiceProfileByAccount indicates an expected call of GetVoiceProfileByAccount.
+func (mr *MockHandlerStoreMockRecorder) GetVoiceProfileByAccount(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVoiceProfileByAccount", reflect.TypeOf((*MockHandlerStore)(nil).GetVoiceProfileByAccount), ctx, accountID)
 }

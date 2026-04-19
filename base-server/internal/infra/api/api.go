@@ -129,10 +129,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.POST("/posts/:id/schedule", a.postsHandler.HandleSchedulePost)
 
 		// Content generation
-		protectedGroup.POST("/content/generate", a.contentHandler.HandleGeneratePost)
 		protectedGroup.POST("/content/generate/stream", a.contentHandler.HandleStreamGenerate)
-		protectedGroup.POST("/content/adapt", a.contentHandler.HandleAdaptContent)
-		protectedGroup.POST("/content/thread", a.contentHandler.HandleGenerateThread)
 
 		// AI Chat
 		protectedGroup.POST("/ai/conversation", a.chatHandler.HandleChat)

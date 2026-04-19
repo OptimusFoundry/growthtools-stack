@@ -29,7 +29,7 @@ func TestBlogProcessor_CreateBlogPost(t *testing.T) {
 				return store.BlogPost{ID: postID, AccountID: params.AccountID, Title: params.Title, Slug: params.Slug}, nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		result, err := proc.CreateBlogPost(context.Background(), store.CreateBlogPostParams{
 			AccountID: accountID,
@@ -51,7 +51,7 @@ func TestBlogProcessor_CreateBlogPost(t *testing.T) {
 				return store.BlogPost{ID: uuid.New(), Slug: slug}, nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.CreateBlogPost(context.Background(), store.CreateBlogPostParams{
 			AccountID: accountID,
@@ -72,7 +72,7 @@ func TestBlogProcessor_CreateBlogPost(t *testing.T) {
 				return store.BlogPost{}, errors.New("db error")
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.CreateBlogPost(context.Background(), store.CreateBlogPostParams{
 			AccountID: accountID,
@@ -92,7 +92,7 @@ func TestBlogProcessor_CreateBlogPost(t *testing.T) {
 				return store.BlogPost{}, errors.New("db error")
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.CreateBlogPost(context.Background(), store.CreateBlogPostParams{
 			AccountID: accountID,
@@ -116,7 +116,7 @@ func TestBlogProcessor_GetBlogPost(t *testing.T) {
 				return store.BlogPost{ID: pID, Title: "My Post"}, nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		result, err := proc.GetBlogPost(context.Background(), accountID, postID)
 
@@ -132,7 +132,7 @@ func TestBlogProcessor_GetBlogPost(t *testing.T) {
 				return store.BlogPost{}, store.ErrNotFound
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.GetBlogPost(context.Background(), accountID, postID)
 
@@ -148,7 +148,7 @@ func TestBlogProcessor_GetBlogPost(t *testing.T) {
 				return store.BlogPost{}, dbErr
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.GetBlogPost(context.Background(), accountID, postID)
 
@@ -169,7 +169,7 @@ func TestBlogProcessor_ListBlogPosts(t *testing.T) {
 				return []store.BlogPost{{ID: uuid.New(), Title: "Post 1"}, {ID: uuid.New(), Title: "Post 2"}}, nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		result, err := proc.ListBlogPosts(context.Background(), accountID, nil, 10, 0)
 
@@ -185,7 +185,7 @@ func TestBlogProcessor_ListBlogPosts(t *testing.T) {
 				return nil, dbErr
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.ListBlogPosts(context.Background(), accountID, nil, 10, 0)
 
@@ -208,7 +208,7 @@ func TestBlogProcessor_UpdateBlogPost(t *testing.T) {
 				return store.BlogPost{ID: pID, Title: newTitle}, nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		result, err := proc.UpdateBlogPost(context.Background(), accountID, postID, store.UpdateBlogPostParams{Title: &newTitle})
 
@@ -223,7 +223,7 @@ func TestBlogProcessor_UpdateBlogPost(t *testing.T) {
 				return store.BlogPost{}, store.ErrNotFound
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.UpdateBlogPost(context.Background(), accountID, postID, store.UpdateBlogPostParams{})
 
@@ -239,7 +239,7 @@ func TestBlogProcessor_UpdateBlogPost(t *testing.T) {
 				return store.BlogPost{}, dbErr
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.UpdateBlogPost(context.Background(), accountID, postID, store.UpdateBlogPostParams{})
 
@@ -261,7 +261,7 @@ func TestBlogProcessor_DeleteBlogPost(t *testing.T) {
 				return nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		err := proc.DeleteBlogPost(context.Background(), accountID, postID)
 
@@ -275,7 +275,7 @@ func TestBlogProcessor_DeleteBlogPost(t *testing.T) {
 				return store.ErrNotFound
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		err := proc.DeleteBlogPost(context.Background(), accountID, postID)
 
@@ -291,7 +291,7 @@ func TestBlogProcessor_DeleteBlogPost(t *testing.T) {
 				return dbErr
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		err := proc.DeleteBlogPost(context.Background(), accountID, postID)
 
@@ -316,7 +316,7 @@ func TestBlogProcessor_PublishBlogPost(t *testing.T) {
 				return store.BlogPost{ID: pID, Status: "published"}, nil
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		result, err := proc.PublishBlogPost(context.Background(), accountID, postID)
 
@@ -331,7 +331,7 @@ func TestBlogProcessor_PublishBlogPost(t *testing.T) {
 				return store.BlogPost{}, store.ErrNotFound
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.PublishBlogPost(context.Background(), accountID, postID)
 
@@ -349,7 +349,7 @@ func TestBlogProcessor_PublishBlogPost(t *testing.T) {
 				return store.BlogPost{}, store.ErrNotFound
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.PublishBlogPost(context.Background(), accountID, postID)
 
@@ -368,7 +368,7 @@ func TestBlogProcessor_PublishBlogPost(t *testing.T) {
 				return store.BlogPost{}, dbErr
 			},
 		}
-		proc := New(mockStore, &MockAIClient{}, logger)
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
 		_, err := proc.PublishBlogPost(context.Background(), accountID, postID)
 

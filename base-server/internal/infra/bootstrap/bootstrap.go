@@ -78,7 +78,7 @@ func Initialize(ctx context.Context, cfg *config.Config, logger *observability.L
 	}
 
 	// Wire processors into handlers and populate deps handler fields.
-	buildHandlers(cfg, logger, deps, p)
+	buildHandlers(cfg, logger, deps, p, &deps.Store, cl)
 
 	// Construct workers.Manager and register all background workers.
 	buildWorkers(cfg, logger, deps, &deps.Store, cl, p)

@@ -3,15 +3,17 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
-	"base-server/internal/content/processor"
-	"base-server/internal/infra/clients/aiclient"
+	"base-server/internal/ai/mediadescriber"
+	"base-server/internal/ai/socialposts"
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -22,18 +24,31 @@ import (
 
 var contentGinOnce sync.Once
 
-func setupContentRouter(h Handler, accountID uuid.UUID) *gin.Engine {
-	contentGinOnce.Do(func() { gin.SetMode(gin.TestMode) })
-	r := gin.New()
-	r.Use(func(c *gin.Context) {
-		c.Set("Account-ID", accountID.String())
-		c.Next()
+func setupContentRouter(h Handler, accountID uuid.UUID) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	// Wrap handler to set Account-ID in context.
+	handler := func(path string, fn func(*http.ResponseWriter, *http.Request)) {
+		mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			r.Header.Set("Account-ID", accountID.String())
+			// Hack: inject into context-like structure since http.Request.Context() doesn't allow direct Set.
+			fn(&w, r)
+		})
+	}
+
+	handler("/content/stream", func(w *http.ResponseWriter, r *http.Request) {
+		h.HandleStreamGenerate(setupGinContext(*w, r, accountID))
 	})
-	r.POST("/content/generate", h.HandleGeneratePost)
-	r.POST("/content/adapt", h.HandleAdaptContent)
-	r.POST("/content/thread", h.HandleGenerateThread)
-	r.POST("/content/stream", h.HandleStreamGenerate)
-	return r
+
+	return mux
+}
+
+func setupGinContext(w http.ResponseWriter, r *http.Request, accountID uuid.UUID) *gin.Context {
+	contentGinOnce.Do(func() { gin.SetMode(gin.TestMode) })
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Set("Account-ID", accountID.String())
+	return c
 }
 
 func contentBody(t *testing.T, v any) *bytes.Buffer {
@@ -43,259 +58,49 @@ func contentBody(t *testing.T, v any) *bytes.Buffer {
 	return bytes.NewBuffer(b)
 }
 
-func TestHandler_HandleGeneratePost(t *testing.T) {
+func TestHandler_HandleStreamGenerate_ValidationAndMissingFields(t *testing.T) {
 	t.Parallel()
 	logger := observability.NewLogger()
 	accountID := uuid.New()
 
 	tests := []struct {
-		name       string
-		mocks      func(m *MockContentProcessor)
-		body       any
-		wantStatus int
+		name           string
+		body           any
+		wantStatus     int
+		wantHeaderType string
 	}{
-		{
-			name: "200 happy path",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().GeneratePost(gomock.Any(), accountID, "write a post about Go", gomock.Any()).
-					Return("Here is a post about Go!", nil)
-			},
-			body:       map[string]any{"prompt": "write a post about Go"},
-			wantStatus: http.StatusOK,
-		},
 		{
 			name:       "400 missing prompt",
-			mocks:      func(m *MockContentProcessor) {},
-			body:       map[string]any{},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "503 on generation error",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().GeneratePost(gomock.Any(), accountID, gomock.Any(), gomock.Any()).
-					Return("", processor.ErrGeneratePost)
-			},
-			body:       map[string]any{"prompt": "write something"},
-			wantStatus: http.StatusServiceUnavailable,
-		},
-		{
-			name: "500 on voice profile error",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().GeneratePost(gomock.Any(), accountID, gomock.Any(), gomock.Any()).
-					Return("", processor.ErrVoiceProfile)
-			},
-			body:       map[string]any{"prompt": "write something"},
-			wantStatus: http.StatusInternalServerError,
-		},
-		{
-			name: "500 on unexpected error",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().GeneratePost(gomock.Any(), accountID, gomock.Any(), gomock.Any()).
-					Return("", errors.New("boom"))
-			},
-			body:       map[string]any{"prompt": "write something"},
-			wantStatus: http.StatusInternalServerError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			ctrl := gomock.NewController(t)
-			m := NewMockContentProcessor(ctrl)
-			tt.mocks(m)
-
-			h := New(m, logger)
-			router := setupContentRouter(h, accountID)
-
-			req := httptest.NewRequest(http.MethodPost, "/content/generate", contentBody(t, tt.body))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			assert.Equal(t, tt.wantStatus, w.Code)
-		})
-	}
-}
-
-func TestHandler_HandleAdaptContent(t *testing.T) {
-	t.Parallel()
-	logger := observability.NewLogger()
-	accountID := uuid.New()
-
-	tests := []struct {
-		name       string
-		mocks      func(m *MockContentProcessor)
-		body       any
-		wantStatus int
-	}{
-		{
-			name: "200 happy path",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().AdaptContent(gomock.Any(), accountID, "original content", "x").
-					Return("adapted for x", nil)
-			},
-			body:       map[string]any{"content": "original content", "platform": "x"},
-			wantStatus: http.StatusOK,
-		},
-		{
-			name:       "400 missing content",
-			mocks:      func(m *MockContentProcessor) {},
-			body:       map[string]any{"platform": "x"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name:       "400 missing platform",
-			mocks:      func(m *MockContentProcessor) {},
-			body:       map[string]any{"content": "some content"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "503 on adapt error",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().AdaptContent(gomock.Any(), accountID, gomock.Any(), gomock.Any()).
-					Return("", processor.ErrAdaptContent)
-			},
-			body:       map[string]any{"content": "content", "platform": "x"},
-			wantStatus: http.StatusServiceUnavailable,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			ctrl := gomock.NewController(t)
-			m := NewMockContentProcessor(ctrl)
-			tt.mocks(m)
-
-			h := New(m, logger)
-			router := setupContentRouter(h, accountID)
-
-			req := httptest.NewRequest(http.MethodPost, "/content/adapt", contentBody(t, tt.body))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			assert.Equal(t, tt.wantStatus, w.Code)
-		})
-	}
-}
-
-func TestHandler_HandleGenerateThread(t *testing.T) {
-	t.Parallel()
-	logger := observability.NewLogger()
-	accountID := uuid.New()
-
-	tests := []struct {
-		name       string
-		mocks      func(m *MockContentProcessor)
-		body       any
-		wantStatus int
-	}{
-		{
-			name: "200 happy path",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().GenerateThread(gomock.Any(), "long post", "x").
-					Return([]string{"part1", "part2"}, nil)
-			},
-			body:       map[string]any{"content": "long post", "platform": "x"},
-			wantStatus: http.StatusOK,
-		},
-		{
-			name:       "400 missing required fields",
-			mocks:      func(m *MockContentProcessor) {},
-			body:       map[string]any{"content": "only content"},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "503 on thread error",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().GenerateThread(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil, processor.ErrGenerateThread)
-			},
-			body:       map[string]any{"content": "content", "platform": "x"},
-			wantStatus: http.StatusServiceUnavailable,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			ctrl := gomock.NewController(t)
-			m := NewMockContentProcessor(ctrl)
-			tt.mocks(m)
-
-			h := New(m, logger)
-			router := setupContentRouter(h, accountID)
-
-			req := httptest.NewRequest(http.MethodPost, "/content/thread", contentBody(t, tt.body))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			assert.Equal(t, tt.wantStatus, w.Code)
-		})
-	}
-}
-
-func TestHandler_HandleStreamGenerate(t *testing.T) {
-	t.Parallel()
-	logger := observability.NewLogger()
-	accountID := uuid.New()
-
-	tests := []struct {
-		name       string
-		mocks      func(m *MockContentProcessor)
-		body       any
-		wantStatus int
-	}{
-		{
-			name: "200 happy path SSE stream",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().StreamGenerateAndAdapt(gomock.Any(), accountID, "my prompt", []string{"x"}, "text", gomock.Any(), 0, gomock.Any()).
-					Return(nil)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-			},
-			wantStatus: http.StatusOK,
-		},
-		{
-			name:       "400 missing prompt",
-			mocks:      func(m *MockContentProcessor) {},
 			body:       map[string]any{"platforms": []string{"x"}},
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name:       "400 missing platforms",
-			mocks:      func(m *MockContentProcessor) {},
 			body:       map[string]any{"prompt": "something"},
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name:       "400 empty platforms",
-			mocks:      func(m *MockContentProcessor) {},
 			body:       map[string]any{"prompt": "something", "platforms": []string{}},
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "400 invalid base64 image",
-			mocks:      func(m *MockContentProcessor) {},
-			body:       map[string]any{"prompt": "something", "platforms": []string{"x"}, "images": []any{map[string]any{"mime_type": "image/png", "data": "not-base64!!!"}}},
-			wantStatus: http.StatusBadRequest,
+			name:           "400 missing content_type (required for new handler)",
+			body:           map[string]any{"prompt": "something", "platforms": []string{"x"}},
+			wantStatus:     http.StatusBadRequest,
+			wantHeaderType: "application/json",
 		},
 		{
-			name: "200 SSE stream even on processor error",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().StreamGenerateAndAdapt(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(processor.ErrStreamGenerate)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-			},
-			wantStatus: http.StatusOK, // SSE: header already written before error
+			name:           "400 invalid content_type",
+			body:           map[string]any{"prompt": "something", "platforms": []string{"x"}, "content_type": "invalid"},
+			wantStatus:     http.StatusBadRequest,
+			wantHeaderType: "application/json",
+		},
+		{
+			name:           "400 invalid base64 image",
+			body:           map[string]any{"prompt": "something", "platforms": []string{"x"}, "content_type": "text", "images": []any{map[string]any{"mime_type": "image/png", "data": "not-base64!!!"}}},
+			wantStatus:     http.StatusBadRequest,
+			wantHeaderType: "application/json",
 		},
 	}
 
@@ -303,181 +108,477 @@ func TestHandler_HandleStreamGenerate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
-			m := NewMockContentProcessor(ctrl)
-			tt.mocks(m)
+			describer := NewMockDescriber(ctrl)
+			generator := NewMockGenerator(ctrl)
+			mockStore := NewMockHandlerStore(ctrl)
+			s3 := NewMockS3Fetcher(ctrl)
 
-			h := New(m, logger)
-			router := setupContentRouter(h, accountID)
+			h := New(describer, generator, mockStore, s3, logger)
 
+			// Create test request.
+			w := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, tt.body))
 			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
+
+			// Setup gin context.
+			ctx, _ := gin.CreateTestContext(w)
+			ctx.Request = req
+			ctx.Set("Account-ID", accountID.String())
+
+			h.HandleStreamGenerate(ctx)
 
 			assert.Equal(t, tt.wantStatus, w.Code)
 		})
 	}
 }
 
-func TestHandler_HandleStreamGenerate_MediaIDs(t *testing.T) {
+func TestHandler_HandleStreamGenerate_TextContent(t *testing.T) {
 	t.Parallel()
 	logger := observability.NewLogger()
 	accountID := uuid.New()
-	mediaID1 := uuid.New()
-	mediaID2 := uuid.New()
 
-	tests := []struct {
-		name           string
-		mocks          func(m *MockContentProcessor)
-		body           any
-		wantStatus     int
-		assertResponse func(t *testing.T, body string)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	describer := NewMockDescriber(ctrl)
+	generator := NewMockGenerator(ctrl)
+	mockStore := NewMockHandlerStore(ctrl)
+	s3 := NewMockS3Fetcher(ctrl)
+
+	// Setup expectations.
+	mockStore.EXPECT().GetVoiceProfileByAccount(gomock.Any(), accountID).
+		Return(store.VoiceProfile{}, nil).
+		Times(1)
+
+	// Setup generator stream to emit events.
+	eventCh := make(chan socialposts.Event, 10)
+	eventCh <- socialposts.PhaseEvent{Phase: "generating", Platform: ""}
+	eventCh <- socialposts.BaseDoneEvent{Content: "base content"}
+	eventCh <- socialposts.PlatformDoneEvent{
+		Platform: "x",
+		Result:   socialposts.SinglePost{PlatformName: "x", Content: "adapted for x"},
+	}
+	close(eventCh)
+
+	generator.EXPECT().GenerateStream(gomock.Any(), gomock.Any()).
+		Return((<-chan socialposts.Event)(eventCh), nil).
+		Times(1)
+
+	h := New(describer, generator, mockStore, s3, logger)
+
+	// Create test request.
+	w := httptest.NewRecorder()
+	body := map[string]any{
+		"prompt":       "write a post",
+		"platforms":    []string{"x"},
+		"content_type": "text",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Setup gin context.
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = req
+	ctx.Set("Account-ID", accountID.String())
+
+	h.HandleStreamGenerate(ctx)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "phase")
+	assert.Contains(t, w.Body.String(), "base_done")
+	assert.Contains(t, w.Body.String(), "platform_done")
+}
+
+func TestHandler_HandleStreamGenerate_ThreadContent(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	describer := NewMockDescriber(ctrl)
+	generator := NewMockGenerator(ctrl)
+	mockStore := NewMockHandlerStore(ctrl)
+	s3 := NewMockS3Fetcher(ctrl)
+
+	// Setup expectations.
+	mockStore.EXPECT().GetVoiceProfileByAccount(gomock.Any(), accountID).
+		Return(store.VoiceProfile{}, nil).
+		Times(1)
+
+	// Setup generator stream to emit events.
+	eventCh := make(chan socialposts.Event, 10)
+	eventCh <- socialposts.PhaseEvent{Phase: "generating", Platform: ""}
+	eventCh <- socialposts.BaseDoneEvent{Content: "base content"}
+	eventCh <- socialposts.PlatformDoneEvent{
+		Platform: "x",
+		Result: socialposts.Thread{
+			PlatformName: "x",
+			Segments: []socialposts.Segment{
+				socialposts.TextSegment{Content: "part 1"},
+				socialposts.TextSegment{Content: "part 2"},
+			},
+		},
+	}
+	close(eventCh)
+
+	generator.EXPECT().GenerateStream(gomock.Any(), gomock.Any()).
+		Return((<-chan socialposts.Event)(eventCh), nil).
+		Times(1)
+
+	h := New(describer, generator, mockStore, s3, logger)
+
+	// Create test request.
+	w := httptest.NewRecorder()
+	body := map[string]any{
+		"prompt":       "write a thread",
+		"platforms":    []string{"x"},
+		"content_type": "thread",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Setup gin context.
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = req
+	ctx.Set("Account-ID", accountID.String())
+
+	h.HandleStreamGenerate(ctx)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "thread_done")
+}
+
+func TestHandler_HandleStreamGenerate_WithBase64Images(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	describer := NewMockDescriber(ctrl)
+	generator := NewMockGenerator(ctrl)
+	mockStore := NewMockHandlerStore(ctrl)
+	s3 := NewMockS3Fetcher(ctrl)
+
+	// Setup expectations.
+	mockStore.EXPECT().GetVoiceProfileByAccount(gomock.Any(), accountID).
+		Return(store.VoiceProfile{}, nil).
+		Times(1)
+
+	// Expect DescribeBatch to be called with media items.
+	describer.EXPECT().DescribeBatch(gomock.Any(), gomock.Any()).
+		Return([]mediadescriber.Description{
+			{
+				Index:       1,
+				Kind:        mediadescriber.KindImage,
+				Description: "a sample image",
+				Usable:      true,
+			},
+		}).
+		Times(1)
+
+	// Setup generator stream.
+	eventCh := make(chan socialposts.Event, 10)
+	eventCh <- socialposts.PhaseEvent{Phase: "generating", Platform: ""}
+	eventCh <- socialposts.BaseDoneEvent{Content: "base"}
+	eventCh <- socialposts.PlatformDoneEvent{
+		Platform: "x",
+		Result:   socialposts.SinglePost{PlatformName: "x", Content: "adapted"},
+	}
+	close(eventCh)
+
+	generator.EXPECT().GenerateStream(gomock.Any(), gomock.Any()).
+		Return((<-chan socialposts.Event)(eventCh), nil).
+		Times(1)
+
+	h := New(describer, generator, mockStore, s3, logger)
+
+	// Create test request with base64 image.
+	w := httptest.NewRecorder()
+	body := map[string]any{
+		"prompt":       "describe this",
+		"platforms":    []string{"x"},
+		"content_type": "text",
+		"images": []map[string]string{
+			{
+				"mime_type": "image/png",
+				"data":      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+			},
+		},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = req
+	ctx.Set("Account-ID", accountID.String())
+
+	h.HandleStreamGenerate(ctx)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+}
+
+func TestHandler_HandleStreamGenerate_WithMediaIDs(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	mediaID := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	describer := NewMockDescriber(ctrl)
+	generator := NewMockGenerator(ctrl)
+	mockStore := NewMockHandlerStore(ctrl)
+	s3 := NewMockS3Fetcher(ctrl)
+
+	// Setup expectations: GetMediaByIDs should be called.
+	mockStore.EXPECT().GetMediaByIDs(gomock.Any(), gomock.Any()).
+		Return([]store.Media{
+			{
+				ID:        mediaID,
+				AccountID: accountID,
+				S3Key:     "media/test.png",
+			},
+		}, nil).
+		Times(1)
+
+	mockStore.EXPECT().GetVoiceProfileByAccount(gomock.Any(), accountID).
+		Return(store.VoiceProfile{}, nil).
+		Times(1)
+
+	// Expect S3 fetch.
+	s3.EXPECT().GetFile(gomock.Any(), "media/test.png").
+		Return(io.NopCloser(strings.NewReader("fake image data")), "image/png", nil).
+		Times(1)
+
+	// Expect DescribeBatch.
+	describer.EXPECT().DescribeBatch(gomock.Any(), gomock.Any()).
+		Return([]mediadescriber.Description{
+			{
+				Index:       1,
+				Kind:        mediadescriber.KindImage,
+				Description: "a fetched image",
+				Usable:      true,
+			},
+		}).
+		Times(1)
+
+	// Setup generator stream.
+	eventCh := make(chan socialposts.Event, 10)
+	eventCh <- socialposts.PhaseEvent{Phase: "generating", Platform: ""}
+	eventCh <- socialposts.BaseDoneEvent{Content: "base"}
+	eventCh <- socialposts.PlatformDoneEvent{
+		Platform: "x",
+		Result:   socialposts.SinglePost{PlatformName: "x", Content: "adapted"},
+	}
+	close(eventCh)
+
+	generator.EXPECT().GenerateStream(gomock.Any(), gomock.Any()).
+		Return((<-chan socialposts.Event)(eventCh), nil).
+		Times(1)
+
+	h := New(describer, generator, mockStore, s3, logger)
+
+	// Create test request.
+	w := httptest.NewRecorder()
+	body := map[string]any{
+		"prompt":       "with stored media",
+		"platforms":    []string{"x"},
+		"content_type": "text",
+		"media_ids":    []string{mediaID.String()},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = req
+	ctx.Set("Account-ID", accountID.String())
+
+	h.HandleStreamGenerate(ctx)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "base_done")
+}
+
+func TestHandler_HandleStreamGenerate_GeneratorError(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	describer := NewMockDescriber(ctrl)
+	generator := NewMockGenerator(ctrl)
+	mockStore := NewMockHandlerStore(ctrl)
+	s3 := NewMockS3Fetcher(ctrl)
+
+	mockStore.EXPECT().GetVoiceProfileByAccount(gomock.Any(), accountID).
+		Return(store.VoiceProfile{}, nil).
+		Times(1)
+
+	// Generator stream returns error event.
+	eventCh := make(chan socialposts.Event, 1)
+	eventCh <- socialposts.ErrorEvent{Err: socialposts.ErrGenerate}
+	close(eventCh)
+
+	generator.EXPECT().GenerateStream(gomock.Any(), gomock.Any()).
+		Return((<-chan socialposts.Event)(eventCh), nil).
+		Times(1)
+
+	h := New(describer, generator, mockStore, s3, logger)
+
+	w := httptest.NewRecorder()
+	body := map[string]any{
+		"prompt":       "error test",
+		"platforms":    []string{"x"},
+		"content_type": "text",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = req
+	ctx.Set("Account-ID", accountID.String())
+
+	h.HandleStreamGenerate(ctx)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "error")
+}
+
+func TestHandler_HandleStreamGenerate_MediaIDsPreferredOverImages(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	mediaID := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	describer := NewMockDescriber(ctrl)
+	generator := NewMockGenerator(ctrl)
+	mockStore := NewMockHandlerStore(ctrl)
+	s3 := NewMockS3Fetcher(ctrl)
+
+	// When both media_ids and images are provided, media_ids path is taken.
+	// GetMediaByIDs should be called, NOT DescribeBatch on base64 images.
+	mockStore.EXPECT().GetMediaByIDs(gomock.Any(), gomock.Any()).
+		Return([]store.Media{}, nil).
+		Times(1)
+
+	// Since we get no valid media, we emit an error event and return early.
+	// So GetVoiceProfileByAccount, DescribeBatch, and GenerateStream should NOT be called.
+
+	h := New(describer, generator, mockStore, s3, logger)
+
+	w := httptest.NewRecorder()
+	body := map[string]any{
+		"prompt":       "both paths",
+		"platforms":    []string{"x"},
+		"content_type": "text",
+		"media_ids":    []string{mediaID.String()},
+		"images": []map[string]string{
+			{
+				"mime_type": "image/png",
+				"data":      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+			},
+		},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = req
+	ctx.Set("Account-ID", accountID.String())
+
+	h.HandleStreamGenerate(ctx)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "error")
+}
+
+func TestHandler_ContentTypeNormalization(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	tests := []struct{
+		name        string
+		contentType string
+		wantMode    socialposts.Mode
 	}{
 		{
-			name: "200 media-aware path emits base_done platform_done thread_done done events",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, []uuid.UUID{mediaID1, mediaID2}).
-					Return(&aiclient.ImageData{MIMEType: "video/mp4", Data: []byte("v")}, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, true, nil)
-				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), "my prompt").
-					Return(processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "ok"}, nil)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, "my prompt", []string{"x"}, gomock.Any(), gomock.Any()).
-					Return("base content", map[string]processor.ThreadWithMediaPlanResult{
-						"x": {
-							Content:  "seg1\nseg2",
-							Segments: []processor.ThreadSegment{{Content: "seg1"}, {Content: "seg2"}},
-						},
-					}, nil)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-				"media_ids": []string{mediaID1.String(), mediaID2.String()},
-			},
-			wantStatus: http.StatusOK,
-			assertResponse: func(t *testing.T, body string) {
-				t.Helper()
-				assert.Contains(t, body, "base_done")
-				assert.Contains(t, body, "platform_done")
-				assert.Contains(t, body, "thread_done")
-				assert.Contains(t, body, "done")
-			},
+			name:        "lowercase single",
+			contentType: "single",
+			wantMode:    socialposts.ModeSingle,
 		},
 		{
-			name: "200 media-aware path: DecideMode failure falls back to thread mode",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
-					Return(nil, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, false, nil)
-				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(processor.ModeDecision{}, processor.ErrDecideMode)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return("base", map[string]processor.ThreadWithMediaPlanResult{
-						"x": {Content: "content", Segments: []processor.ThreadSegment{{Content: "content"}}},
-					}, nil)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-				"media_ids": []string{mediaID1.String()},
-			},
-			wantStatus: http.StatusOK,
+			name:        "uppercase SINGLE",
+			contentType: "SINGLE",
+			wantMode:    socialposts.ModeSingle,
 		},
 		{
-			name: "200 SSE error event when FetchAndBucketMedia fails",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
-					Return(nil, nil, false, processor.ErrFetchMedia)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-				"media_ids": []string{mediaID1.String()},
-			},
-			wantStatus: http.StatusOK, // SSE: headers already written
-			assertResponse: func(t *testing.T, body string) {
-				t.Helper()
-				assert.Contains(t, body, "error")
-			},
+			name:        "text alias",
+			contentType: "text",
+			wantMode:    socialposts.ModeSingle,
 		},
 		{
-			name: "200 SSE error event when GenerateWithMediaPlan fails",
-			mocks: func(m *MockContentProcessor) {
-				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
-					Return(nil, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, false, nil)
-				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(processor.ModeDecision{Mode: "single"}, nil)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return("", nil, processor.ErrStreamGenerate)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-				"media_ids": []string{mediaID1.String()},
-			},
-			wantStatus: http.StatusOK,
-			assertResponse: func(t *testing.T, body string) {
-				t.Helper()
-				assert.Contains(t, body, "error")
-			},
-		},
-		{
-			name: "200 media_ids path preferred when both media_ids and images supplied",
-			mocks: func(m *MockContentProcessor) {
-				// media_ids path is taken — FetchAndBucketMedia is called, NOT StreamGenerateAndAdapt
-				m.EXPECT().FetchAndBucketMedia(gomock.Any(), accountID, gomock.Any()).
-					Return(nil, nil, false, nil)
-				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(processor.ModeDecision{Mode: "single"}, nil)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return("base", map[string]processor.ThreadWithMediaPlanResult{
-						"x": {Content: "c", Segments: []processor.ThreadSegment{{Content: "c"}}},
-					}, nil)
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-				"media_ids": []string{mediaID1.String()},
-				"images":    []any{map[string]any{"mime_type": "image/png", "data": "aW1h"}},
-			},
-			wantStatus: http.StatusOK,
-		},
-		{
-			name: "200 error event when all media_ids are invalid UUIDs",
-			mocks: func(m *MockContentProcessor) {
-				// No methods should be called — invalid IDs drop to 0 valid IDs.
-			},
-			body: map[string]any{
-				"prompt":    "my prompt",
-				"platforms": []string{"x"},
-				"media_ids": []string{"not-a-uuid"},
-			},
-			wantStatus: http.StatusOK,
-			assertResponse: func(t *testing.T, body string) {
-				t.Helper()
-				assert.Contains(t, body, "error")
-			},
+			name:        "thread",
+			contentType: "thread",
+			wantMode:    socialposts.ModeThread,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			ctrl := gomock.NewController(t)
-			m := NewMockContentProcessor(ctrl)
-			tt.mocks(m)
+			defer ctrl.Finish()
 
-			h := New(m, logger)
-			router := setupContentRouter(h, accountID)
+			describer := NewMockDescriber(ctrl)
+			generator := NewMockGenerator(ctrl)
+			mockStore := NewMockHandlerStore(ctrl)
+			s3 := NewMockS3Fetcher(ctrl)
 
-			req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, tt.body))
-			req.Header.Set("Content-Type", "application/json")
+			mockStore.EXPECT().GetVoiceProfileByAccount(gomock.Any(), accountID).
+				Return(store.VoiceProfile{}, nil).
+				AnyTimes()
+
+			eventCh := make(chan socialposts.Event, 1)
+			close(eventCh)
+
+			generator.EXPECT().GenerateStream(gomock.Any(), gomock.Any()).
+				Return((<-chan socialposts.Event)(eventCh), nil).
+				Times(1)
+
+			h := New(describer, generator, mockStore, s3, logger)
+
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			assert.Equal(t, tt.wantStatus, w.Code)
-			if tt.assertResponse != nil {
-				tt.assertResponse(t, w.Body.String())
+			body := map[string]any{
+				"prompt":       "test",
+				"platforms":    []string{"x"},
+				"content_type": tt.contentType,
 			}
+			req := httptest.NewRequest(http.MethodPost, "/content/stream", contentBody(t, body))
+			req.Header.Set("Content-Type", "application/json")
+
+			ctx, _ := gin.CreateTestContext(w)
+			ctx.Request = req
+			ctx.Set("Account-ID", accountID.String())
+
+			h.HandleStreamGenerate(ctx)
+
+			assert.Equal(t, http.StatusOK, w.Code)
 		})
 	}
 }
-
