@@ -167,6 +167,70 @@ function resolveLocator(page: Page, spec: LocatorSpec) {
 // Explore-pass tool set
 // ---------------------------------------------------------------------------
 
+// Single source of truth for tool names accepted by the Record agent.
+// Used both in the `done` schema (as an enum the model must satisfy) and in
+// post-hoc validation. Keeping these in sync is critical: if the model emits
+// a step whose tool isn't here, the Record agent can't execute it.
+const VALID_RECORD_TOOLS_LIST = [
+	"navigate",
+	"click",
+	"fill",
+	"press",
+	"scroll",
+	"wait",
+	"screenshot",
+] as const;
+const VALID_RECORD_TOOLS = new Set<string>(VALID_RECORD_TOOLS_LIST);
+
+// Minimum interactions required for a plan to be considered useful. Fewer
+// than this means the explore agent didn't actually find the affected
+// surface and the Record agent would burn budget on a dud.
+const MIN_PLAN_STEPS = 3;
+
+// Validate the raw `steps` array the model passes to done(). Returns the
+// successfully-parsed steps and a human-readable list of problems with the
+// rejected entries. Used both:
+//   1. inside executeExploreTool's `done` case — to send feedback to the
+//      model so it can retry instead of producing a 0-step plan, and
+//   2. after the explore loop exits — as a final defensive check before
+//      writing plan.json.
+function validatePlanSteps(rawSteps: unknown): {
+	valid: DemoStep[];
+	problems: string[];
+} {
+	const valid: DemoStep[] = [];
+	const problems: string[] = [];
+	if (!Array.isArray(rawSteps)) {
+		return { valid, problems: ["steps is not an array"] };
+	}
+	rawSteps.forEach((entry, idx) => {
+		if (entry == null || typeof entry !== "object" || Array.isArray(entry)) {
+			problems.push(`steps[${idx}]: not an object`);
+			return;
+		}
+		const step = entry as Record<string, unknown>;
+		const label = typeof step.label === "string" ? step.label.trim() : "";
+		const tool = typeof step.tool === "string" ? step.tool.trim() : "";
+		const args =
+			step.args != null &&
+			typeof step.args === "object" &&
+			!Array.isArray(step.args)
+				? (step.args as Record<string, unknown>)
+				: null;
+		if (!label) problems.push(`steps[${idx}]: missing/empty label`);
+		if (!tool) problems.push(`steps[${idx}]: missing/empty tool`);
+		else if (!VALID_RECORD_TOOLS.has(tool))
+			problems.push(
+				`steps[${idx}]: tool="${tool}" is not one of ${VALID_RECORD_TOOLS_LIST.join(", ")}`,
+			);
+		if (!args) problems.push(`steps[${idx}]: missing/invalid args object`);
+		if (label && tool && VALID_RECORD_TOOLS.has(tool) && args) {
+			valid.push({ label, tool: tool as DemoStep["tool"], args });
+		}
+	});
+	return { valid, problems };
+}
+
 const exploreTools: FunctionDeclaration[] = [
 	{
 		name: "navigate",
@@ -266,11 +330,31 @@ const exploreTools: FunctionDeclaration[] = [
 				steps: {
 					type: Type.ARRAY,
 					description:
-						"Ordered list of interactions the Record agent should execute. " +
-						"Each step: { label: string, tool: string, args: object }. " +
-						"tool must be one of: navigate, click, fill, press, scroll, wait, screenshot. " +
-						"args must match that tool's parameter schema.",
-					items: { type: Type.OBJECT },
+						`Ordered list of at least ${MIN_PLAN_STEPS} interactions the Record agent should execute. ` +
+						"Each step MUST include all three fields — label, tool, args — populated. " +
+						"Empty objects {} are NOT acceptable; they will be rejected. " +
+						"args must match the named tool's parameter schema (same as the explore tools).",
+					items: {
+						type: Type.OBJECT,
+						properties: {
+							label: {
+								type: Type.STRING,
+								description:
+									"Short human-readable description of what this step accomplishes (non-empty).",
+							},
+							tool: {
+								type: Type.STRING,
+								enum: [...VALID_RECORD_TOOLS_LIST],
+								description: "The Record-agent tool to invoke for this step.",
+							},
+							args: {
+								type: Type.OBJECT,
+								description:
+									"Arguments matching the tool's parameter schema (e.g. {url} for navigate, {by, value, name?} for click).",
+							},
+						},
+						required: ["label", "tool", "args"],
+					},
 				},
 				narration: {
 					type: Type.STRING,
@@ -391,10 +475,34 @@ async function executeExploreTool(
 			const json = await executeListElements(page);
 			return { message: json };
 		}
-		case "done":
+		case "done": {
+			// Validate the plan BEFORE accepting done. If steps is malformed
+			// (e.g. the model sent `[{}]` or fewer than MIN_PLAN_STEPS valid
+			// entries), refuse and respond with an error message so the
+			// model gets feedback and can retry within the existing budget.
+			// Without this, a bad done() silently produces a 0-step plan and
+			// the whole capture fails after the browser closes.
+			const { valid, problems } = validatePlanSteps(args.steps);
+			if (valid.length < MIN_PLAN_STEPS) {
+				const detail = problems.length
+					? problems.slice(0, 8).join("; ")
+					: `only ${valid.length} valid step(s)`;
+				console.warn(
+					`[explore] done() rejected: ${valid.length}/${MIN_PLAN_STEPS} valid steps. ${detail}`,
+				);
+				return {
+					message:
+						`done() rejected: need at least ${MIN_PLAN_STEPS} fully-populated steps but got ${valid.length} valid. ` +
+						`Problems: ${detail}. ` +
+						"Each step object MUST have non-empty label (string), tool (one of " +
+						`${VALID_RECORD_TOOLS_LIST.join("/")}), and args (object matching that tool's schema). ` +
+						"Continue exploring or call done() again with properly-populated steps.",
+				};
+			}
 			ctx.done.value = true;
 			ctx.done.args = args;
 			return { message: "done" };
+		}
 		default:
 			return { message: `unknown tool: ${call.name}` };
 	}
@@ -423,16 +531,6 @@ export interface ExploreResult {
 	exploreDir: string; // directory where explore screenshots live
 	stepCount: number;
 }
-
-const VALID_RECORD_TOOLS = new Set([
-	"navigate",
-	"click",
-	"fill",
-	"press",
-	"scroll",
-	"wait",
-	"screenshot",
-]);
 
 export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 	const {
@@ -633,27 +731,14 @@ export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 	const goal = String(doneArgs.goal ?? "");
 	const startUrl = String(doneArgs.startUrl ?? "");
 	const narration = String(doneArgs.narration ?? "");
-	const rawSteps = Array.isArray(doneArgs.steps) ? doneArgs.steps : [];
 
-	// Validate each step — skip entries with invalid tool field.
-	const steps: DemoStep[] = [];
-	for (const raw of rawSteps) {
-		const step = raw as Record<string, unknown>;
-		const label = String(step.label ?? "");
-		const tool = String(step.tool ?? "");
-		const args = (step.args != null && typeof step.args === "object" && !Array.isArray(step.args))
-			? (step.args as Record<string, unknown>)
-			: {};
-
-		if (!VALID_RECORD_TOOLS.has(tool)) {
-			console.warn(`[explore] skipping step with invalid tool="${tool}" label="${label}"`);
-			continue;
-		}
-		steps.push({
-			label,
-			tool: tool as DemoStep["tool"],
-			args,
-		});
+	// Defensive: the `done` case in executeExploreTool already validates that
+	// at least MIN_PLAN_STEPS steps are valid before flipping doneState. This
+	// re-runs the same validator so any future code path that sets doneState
+	// directly still gets caught here.
+	const { valid: steps, problems } = validatePlanSteps(doneArgs.steps);
+	for (const problem of problems) {
+		console.warn(`[explore] ${problem}`);
 	}
 
 	const plan: ExplorationPlan = {
@@ -673,10 +758,9 @@ export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 
 	console.log(`[explore] plan written to ${planPath} (${steps.length} steps)`);
 
-	// 10. Reject thin plans — fewer than 3 interactions means explore didn't
-	// actually find the affected surface. Fail loud rather than let record
-	// burn through budget on a dud.
-	const MIN_PLAN_STEPS = 3;
+	// 10. Reject thin plans — defence in depth. The `done` tool already
+	// rejects malformed step arrays inside the explore loop; this is the
+	// final guard before handing off to the Record agent.
 	if (steps.length < MIN_PLAN_STEPS) {
 		throw new Error(
 			`[explore] plan has only ${steps.length} valid step(s) (min ${MIN_PLAN_STEPS}); ` +

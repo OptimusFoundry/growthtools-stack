@@ -276,7 +276,14 @@ function CalendarPage() {
 					</>
 				}
 			/>
-			<Stack gap="lg" className={styles.page} animate>
+			{/*
+			  No outer Stack `animate` on this route: the calendar grid is
+			  data-heavy (re-layouts when month posts arrive) and the
+			  staggered y:12→0 transform causes Playwright actionability
+			  races where day-cell button clicks time out. Page hero still
+			  feels fine without the extra polish.
+			*/}
+			<Stack gap="lg" className={styles.page}>
 				<header className={styles.pageHero}>
 					<div className={styles.pageHeroText}>
 						<h1 className={styles.pageHeroTitle}>Calendar</h1>
@@ -469,7 +476,10 @@ function CalendarPage() {
 															)}
 														</button>
 													) : (
-														<span className={calendarStyles.dayNumber}>
+														<span
+															className={calendarStyles.dayNumber}
+															aria-label={`${MONTHS[month]} ${day}, ${year} — no posts`}
+														>
 															{day}
 														</span>
 													))}

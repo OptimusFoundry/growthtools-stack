@@ -330,8 +330,14 @@ export function Sidebar({
 		closeMobile,
 	};
 
-	// Render sidebar content
-	const sidebarContent = <nav className={styles.nav}>{children}</nav>;
+	// Render sidebar content. The nav is given an explicit landmark name so
+	// it can be scoped by SR users and by Playwright's by-role queries —
+	// prevents collisions with same-named links elsewhere on the page.
+	const sidebarContent = (
+		<nav className={styles.nav} aria-label="Primary">
+			{children}
+		</nav>
+	);
 
 	// When using provider, just render the sidebar (provider handles backdrop)
 	if (hasProvider) {
