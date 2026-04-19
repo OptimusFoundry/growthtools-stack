@@ -320,7 +320,7 @@ func (s *Store) ListPlatformPostsAwaitingMedia(ctx context.Context, limit int) (
 // ResetPlatformPostsForRetry resets permanently failed platform_posts so they can be retried
 const sqlResetPlatformPostsForRetry = `
 UPDATE platform_posts
-SET status = 'failed',
+SET status = 'pending',
     attempt_count = 0,
     next_retry_at = CURRENT_TIMESTAMP,
     error_message = NULL,
