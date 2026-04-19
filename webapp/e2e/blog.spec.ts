@@ -13,6 +13,7 @@
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
+import { setupEndpoint } from "./helpers/endpoint";
 import { blogPosts } from "./mocks/data";
 
 test.describe("Blog", () => {
@@ -110,47 +111,24 @@ test.describe("Blog", () => {
 	// =========================================================================
 
 	test.describe("Status Code Coverage — GET /api/protected/blog", () => {
-		const listCases = [
-			{
-				status: 401,
-				body: { error: "unauthorized" },
-				expect: /sign in|log in|unauthorized/i,
-				label: "unauthorized",
-			},
-			{
-				status: 500,
-				body: { error: "Internal server error" },
-				expect: /error|something went wrong|failed|unavailable/i,
-				label: "server error",
-			},
-		] as const;
+		const listEndpoint = setupEndpoint(
+			"GET",
+			"*/api/protected/blog",
+			blogPosts,
+		);
 
-		for (const tc of listCases) {
-			test(`GET /blog handles ${tc.status} — ${tc.label}`, async ({
-				network,
-				page,
-			}) => {
-				network.use(
-					http.get("*/api/protected/blog", () =>
-						HttpResponse.json(tc.body, { status: tc.status }),
-					),
-				);
+		// Page falls back to empty/safe state on any failure — assertion is the same.
+		const statuses: Array<keyof typeof listEndpoint> = [401, 500, "transport"];
+
+		for (const status of statuses) {
+			test(`GET /blog handles ${status}`, async ({ network, page }) => {
+				network.use(listEndpoint[status]());
 				await page.goto("/blog");
 				await page.waitForLoadState("networkidle");
 				const body = await page.textContent("body");
-				// Error state shows error message or empty state
-				expect(body).toMatch(/error|failed|unavailable|blog/i);
+				expect(body).toMatch(/blog|no blog posts|create your first/i);
 			});
 		}
-
-		test("GET /blog handles transport failure", async ({ network, page }) => {
-			network.use(http.get("*/api/protected/blog", () => HttpResponse.error()));
-			await page.goto("/blog");
-			await page.waitForLoadState("networkidle");
-			const body = await page.textContent("body");
-			// Network error on blog fetch results in empty state, not an error message
-			expect(body).toMatch(/blog|no blog posts|create your first/i);
-		});
 	});
 
 	// =========================================================================
