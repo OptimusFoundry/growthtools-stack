@@ -16,7 +16,8 @@ growth-tools/
 
 - **Go backend conventions:** [base-server/CLAUDE.md](base-server/CLAUDE.md)
 - **React frontend conventions:** [webapp/CLAUDE.md](webapp/CLAUDE.md)
-- **Design system & component patterns:** [webapp/docs/DESIGN-GUIDELINES.md](webapp/docs/DESIGN-GUIDELINES.md)
+- **UI kit design language (authoritative for any frontend change):** [docs/design-docs/](docs/design-docs/) — editorial serif-forward design system (Fraunces + Geist). Read `00-overview.md` first, then the numbered docs in order. `12-judgment.md`, `19-typography-decisions.md`, and `20-spacing-decisions.md` are the prescriptive decision guides.
+- **Component reference & design tokens:** [webapp/docs/DESIGN-GUIDELINES.md](webapp/docs/DESIGN-GUIDELINES.md)
 - **Commit message convention:** [COMMITS.md](COMMITS.md) — Conventional Commits, enforced by the `.githooks/commit-msg` hook. Run `./.githooks/install.sh` once per clone to activate.
 
 ## Plugins & Skills
