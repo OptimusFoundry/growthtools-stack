@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	contentProc "base-server/internal/content/processor"
+	"base-server/internal/ai/commitclassifier"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -71,7 +71,7 @@ type GitHubStore interface {
 // capture + draft pipeline on. Returning an error is treated as fail-open
 // by callers — the commit proceeds rather than being silently dropped.
 type CommitClassifier interface {
-	ClassifyCommit(ctx context.Context, message, diff string) (contentProc.CommitVerdict, error)
+	Classify(ctx context.Context, message, diff string) (commitclassifier.Verdict, error)
 }
 
 // GitHubClient defines the GitHub API calls required by GitHubProcessor

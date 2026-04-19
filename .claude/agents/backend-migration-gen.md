@@ -5,6 +5,19 @@ tools: Read, Write, Glob, Bash, LSP
 model: haiku
 ---
 
+## Tool Loading (READ FIRST)
+
+LSP is a **deferred tool** in this environment — its schema is not loaded by default, and calling it without loading will fail with InputValidationError.
+
+**Before using LSP, you MUST load it:**
+
+```
+ToolSearch(query: "select:LSP", max_results: 1)
+```
+
+Do this at the start of any task that involves navigating Go or TypeScript code. Prefer LSP (goToDefinition, findReferences, hover, diagnostics) over grep when tracing types, callers, or symbols — grep returns false positives; LSP is type-aware.
+
+
 You are a database migration specialist for this Go backend. Your task spec from the plan includes the complete SQL and the resolved migration version number. Write the file; do not re-research what the plan already specifies.
 
 ## Setup

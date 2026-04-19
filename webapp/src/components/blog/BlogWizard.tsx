@@ -10,13 +10,11 @@ import { MediaUploadSection } from "@/components/create-post/compose/MediaUpload
 import { Topbar } from "@/components/Layout/Topbar";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
+import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
-import type {
-	ExistingFile,
-	UploadedFile,
-} from "@/proto-design-system/components/composite/FileUpload";
+import type { ExistingFile } from "@/proto-design-system/components/composite/FileUpload";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea";
@@ -82,7 +80,9 @@ export function BlogWizard({
 	const [existingMedia, setExistingMedia] = useState<MediaItem[]>(
 		initialMedia ?? [],
 	);
-	const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
+	const managedMedia = useManagedMediaUpload({
+		onUploaded: (media) => setExistingMedia((prev) => [...prev, media]),
+	});
 	const [error, setError] = useState<string | null>(null);
 
 	const {
@@ -102,7 +102,7 @@ export function BlogWizard({
 	const { addBanner } = useBannerCenter();
 
 	const saving = creating || updating || publishing;
-	const busy = saving || generating;
+	const busy = saving || generating || managedMedia.isUploading;
 
 	// Populate form fields when the SSE done payload arrives. The done event
 	// carries the persisted post (with media_ids only). Media metadata is not
@@ -424,9 +424,9 @@ export function BlogWizard({
 						<Divider />
 
 						<MediaUploadSection
-							pendingFiles={pendingFiles}
+							pendingFiles={managedMedia.uploadingFiles}
 							existingMedia={existingMediaFiles}
-							onFilesChange={setPendingFiles}
+							onFilesChange={managedMedia.onFilesChange}
 							onRemoveExisting={(id) =>
 								setExistingMedia((prev) => prev.filter((m) => m.id !== id))
 							}

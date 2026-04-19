@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"base-server/internal/infra/observability"
@@ -32,7 +33,8 @@ type asyncXAPIServer struct {
 
 func (s *asyncXAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
-	case (r.URL.Path == "/2/media/upload" || r.URL.Path == "/1.1/media/upload.json") && r.Method == http.MethodPost:
+	case r.URL.Path == "/2/media/upload" && r.Method == http.MethodPost:
+		// Single-shot image upload.
 		if s.uploadErr {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, `{"detail":"upload failed"}`)
@@ -44,12 +46,39 @@ func (s *asyncXAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"data":{"id":%q,"media_key":"3_x"}}`, mediaID)
+
+	case r.URL.Path == "/2/media/upload/initialize" && r.Method == http.MethodPost:
+		// Chunked video INIT.
+		if s.uploadErr {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, `{"detail":"upload failed"}`)
+			return
+		}
+		mediaID := s.uploadMediaID
+		if mediaID == "" {
+			mediaID = "media-async-001"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"data":{"id":%q,"media_key":"3_x"}}`, mediaID)
+
+	case strings.HasPrefix(r.URL.Path, "/2/media/upload/") && strings.HasSuffix(r.URL.Path, "/append") && r.Method == http.MethodPost:
+		// Chunked video APPEND.
+		w.WriteHeader(http.StatusOK)
+
+	case strings.HasPrefix(r.URL.Path, "/2/media/upload/") && strings.HasSuffix(r.URL.Path, "/finalize") && r.Method == http.MethodPost:
+		// Chunked video FINALIZE — returns processing_info for async path.
+		mediaID := s.uploadMediaID
+		if mediaID == "" {
+			mediaID = "media-async-001"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		if s.processingInfo != nil {
 			piJSON, _ := json.Marshal(s.processingInfo)
-			// v1.1 response shape (used by chunked video FINALIZE)
-			fmt.Fprintf(w, `{"media_id_string":%q,"processing_info":%s}`, mediaID, string(piJSON))
+			fmt.Fprintf(w, `{"data":{"id":%q,"media_key":"3_x","processing_info":%s}}`, mediaID, string(piJSON))
 		} else {
-			// v2 response shape (image)
 			fmt.Fprintf(w, `{"data":{"id":%q,"media_key":"3_x"}}`, mediaID)
 		}
 

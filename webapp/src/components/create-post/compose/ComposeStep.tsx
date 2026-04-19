@@ -25,6 +25,8 @@ export interface ComposeStepProps {
 	/** True when the attached media set changed after the last successful
 	 * generation. Drives the "regenerate before publishing" banner. */
 	mediaChanged?: boolean;
+	/** True while any pending file is still uploading. Disables Generate. */
+	uploading?: boolean;
 	maxThreadParts: number;
 	generating: boolean;
 	generated: boolean;
@@ -51,6 +53,7 @@ export function ComposeStep({
 	existingMedia,
 	onRemoveExistingMedia,
 	mediaChanged = false,
+	uploading = false,
 	generating,
 	generated,
 	readOnly = false,
@@ -117,7 +120,7 @@ export function ComposeStep({
 						<Button
 							variant="primary"
 							onClick={onGenerate}
-							disabled={!canGenerate || generating}
+							disabled={!canGenerate || generating || uploading}
 							isLoading={generating}
 						>
 							{generated ? "Regenerate" : "Generate Content"}

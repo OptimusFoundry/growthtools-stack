@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"base-server/internal/infra/config"
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	adminHandler "base-server/internal/admin/handler"
 	authHandler "base-server/internal/auth/handler"
@@ -21,7 +22,7 @@ import (
 
 // buildHandlers wires processors into handler structs and populates the
 // handler fields on deps.
-func buildHandlers(cfg *config.Config, logger *observability.Logger, deps *Dependencies, p *procs) {
+func buildHandlers(cfg *config.Config, logger *observability.Logger, deps *Dependencies, p *procs, s *store.Store, cl *clients) {
 	deps.BillingHandler = billingHandler.New(p.billing, logger)
 	deps.AuthHandler = authHandler.New(p.auth, p.tierService, logger)
 	deps.ContentHandler = contentHandler.New(&p.content, logger)

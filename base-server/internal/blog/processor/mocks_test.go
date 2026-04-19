@@ -3,53 +3,44 @@ package processor
 import (
 	"context"
 
-	"base-server/internal/infra/clients/aiclient"
+	aiblog "base-server/internal/ai/blog"
 	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 )
 
-// MockAIClient is a manual mock for aiclient.Client
-type MockAIClient struct {
-	CreateMessageFn     func(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
-	CreateJSONMessageFn func(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
+// MockBlogGenerator is a manual mock for aiblog.Generator
+type MockBlogGenerator struct {
+	GenerateFn       func(ctx context.Context, req aiblog.Request) (aiblog.Result, error)
+	GenerateStreamFn func(ctx context.Context, req aiblog.Request) (<-chan aiblog.BlogEvent, error)
 }
 
-func (m *MockAIClient) CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
-	if m.CreateMessageFn != nil {
-		return m.CreateMessageFn(ctx, systemPrompt, messages, maxTokens)
+func (m *MockBlogGenerator) Generate(ctx context.Context, req aiblog.Request) (aiblog.Result, error) {
+	if m.GenerateFn != nil {
+		return m.GenerateFn(ctx, req)
 	}
-	return "", nil
+	return aiblog.Result{}, nil
 }
 
-func (m *MockAIClient) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
-	if m.CreateJSONMessageFn != nil {
-		return m.CreateJSONMessageFn(ctx, systemPrompt, messages, maxTokens)
+func (m *MockBlogGenerator) GenerateStream(ctx context.Context, req aiblog.Request) (<-chan aiblog.BlogEvent, error) {
+	if m.GenerateStreamFn != nil {
+		return m.GenerateStreamFn(ctx, req)
 	}
-	if m.CreateMessageFn != nil {
-		return m.CreateMessageFn(ctx, systemPrompt, messages, maxTokens)
-	}
-	return "", nil
-}
-
-func (m *MockAIClient) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
-	return nil
-}
-
-func (m *MockAIClient) StreamJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
-	return nil
+	ch := make(chan aiblog.BlogEvent)
+	close(ch)
+	return ch, nil
 }
 
 // MockBlogStore is a manual mock for BlogStore
 type MockBlogStore struct {
-	CreateBlogPostFn  func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
-	GetBlogPostByIDFn func(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
+	CreateBlogPostFn    func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
+	GetBlogPostByIDFn   func(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
 	GetBlogPostBySlugFn func(ctx context.Context, accountID uuid.UUID, slug string) (store.BlogPost, error)
-	ListBlogPostsFn   func(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error)
-	UpdateBlogPostFn  func(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
-	DeleteBlogPostFn  func(ctx context.Context, accountID, postID uuid.UUID) error
-	PublishBlogPostFn func(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
-	GetMediaByIDsFn   func(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	ListBlogPostsFn     func(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error)
+	UpdateBlogPostFn    func(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
+	DeleteBlogPostFn    func(ctx context.Context, accountID, postID uuid.UUID) error
+	PublishBlogPostFn   func(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
+	GetMediaByIDsFn     func(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
 func (m *MockBlogStore) CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error) {

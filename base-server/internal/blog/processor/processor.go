@@ -5,14 +5,14 @@ package processor
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
-	"base-server/internal/infra/clients/aiclient"
+	aiblog "base-server/internal/ai/blog"
+	"base-server/internal/ai/mediadescriber"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
@@ -23,6 +23,12 @@ import (
 // as media/processor.URLSigner — declared locally to avoid an import cycle.
 type URLSigner interface {
 	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
+}
+
+// BlogGenerator is the interface for the AI blog generator.
+type BlogGenerator interface {
+	Generate(ctx context.Context, req aiblog.Request) (aiblog.Result, error)
+	GenerateStream(ctx context.Context, req aiblog.Request) (<-chan aiblog.BlogEvent, error)
 }
 
 // blogMediaPresignTTL is intentionally long because the URL gets baked into
@@ -66,36 +72,6 @@ type BlogPostWithMedia struct {
 	Media []store.Media  `json:"media"`
 }
 
-const (
-	generateBlogMaxTokens = 8192
-	generateBlogSystemPrompt = `You are a technical blog author. Write engaging, first-person blog posts on the given topic. Cover the subject thoroughly with clear explanations, examples, and insights.
-
-If the user provides attached images, embed EVERY image inline in the "content" markdown using the exact syntax ` + "`![alt](url)`" + ` on its own line, placed at a natural spot in the narrative where it reinforces the surrounding prose. Write descriptive alt text. Do not skip images and do not invent URLs — use only the URLs the user provided.
-
-Respond with a single JSON object and nothing else. The object must have these fields:
-- "title": string — blog post title
-- "content": string — full blog post in Markdown, starting with a # heading, using H2 sections
-- "excerpt": string — one-sentence summary (max 200 chars)
-- "seo_title": string — SEO-optimised title (max 60 chars)
-- "meta_description": string — meta description (max 160 chars)
-- "keywords": array of strings — 3–8 relevant keywords
-- "og_title": string — Open Graph title (max 60 chars)
-- "og_description": string — Open Graph description (max 200 chars)
-
-No markdown fences, no preamble — raw JSON only.`
-)
-
-// blogGenJSONResponse is the expected JSON structure returned by the AI.
-type blogGenJSONResponse struct {
-	Title           string   `json:"title"`
-	Content         string   `json:"content"`
-	Excerpt         string   `json:"excerpt"`
-	SEOTitle        string   `json:"seo_title"`
-	MetaDescription string   `json:"meta_description"`
-	Keywords        []string `json:"keywords"`
-	OGTitle         string   `json:"og_title"`
-	OGDescription   string   `json:"og_description"`
-}
 
 // blogSlugPattern strips everything that is not a-z0-9.
 var blogSlugPattern = regexp.MustCompile(`[^a-z0-9]+`)
@@ -130,16 +106,16 @@ func (p *BlogProcessor) blogResolveUniqueSlug(ctx context.Context, accountID uui
 
 type BlogProcessor struct {
 	store     BlogStore
-	ai        aiclient.Client
+	blogGen   BlogGenerator
 	urlSigner URLSigner
 	logger    *observability.Logger
 }
 
-func New(store BlogStore, ai aiclient.Client, logger *observability.Logger) BlogProcessor {
+func New(store BlogStore, blogGen BlogGenerator, logger *observability.Logger) BlogProcessor {
 	return BlogProcessor{
-		store:  store,
-		ai:     ai,
-		logger: logger,
+		store:   store,
+		blogGen: blogGen,
+		logger:  logger,
 	}
 }
 
@@ -316,40 +292,22 @@ func (p *BlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUI
 		observability.Field{Key: "operation", Value: "generate_blog_post"},
 	)
 
-	// Fetch media referenced by the request and keep only images — videos
-	// can't be embedded in markdown and would waste prompt tokens. We pass
-	// the surviving URLs to the model and instruct it to inline them, which
-	// means the persisted content already has `![](url)` tags and the
-	// ReactMarkdown preview renders them on first load.
-	images := p.fetchImagesForPrompt(ctx, mediaIDs)
+	mediaItems := p.buildMediaItems(ctx, mediaIDs)
+	req := aiblog.Request{Prompt: instruction, Keywords: keywords, Media: mediaItems}
 
-	userMsg := buildGenerateBlogUserMessage(instruction, keywords, images)
-	rawOutput, err := p.ai.CreateMessage(ctx, generateBlogSystemPrompt, []aiclient.Message{
-		{Role: "user", Content: userMsg},
-	}, generateBlogMaxTokens)
+	result, err := p.blogGen.Generate(ctx, req)
 	if err != nil {
-		p.logger.Error(ctx, "AI blog generation failed", err)
+		p.logger.Error(ctx, "blog AI generation failed", err)
 		return store.BlogPost{}, ErrBlogGenerationFailed
 	}
 
-	var resp blogGenJSONResponse
-	if parseErr := json.Unmarshal([]byte(strings.TrimSpace(rawOutput)), &resp); parseErr != nil {
-		p.logger.Error(ctx, "failed to parse blog generation JSON", fmt.Errorf("parse: %w, raw length=%d", parseErr, len(rawOutput)))
-		return store.BlogPost{}, ErrBlogGenerationFailed
-	}
-
-	if resp.Title == "" || resp.Content == "" {
-		p.logger.Error(ctx, "blog generation JSON missing title or content", fmt.Errorf("raw length=%d", len(rawOutput)))
-		return store.BlogPost{}, ErrBlogGenerationFailed
-	}
-
-	slug, err := p.blogResolveUniqueSlug(ctx, accountID, blogSlugify(resp.Title))
+	slug, err := p.blogResolveUniqueSlug(ctx, accountID, blogSlugify(result.Title))
 	if err != nil {
 		p.logger.Error(ctx, "failed to resolve unique slug", err)
 		return store.BlogPost{}, ErrBlogGenerationFailed
 	}
 
-	kws := store.StringArray(resp.Keywords)
+	kws := store.StringArray(result.Keywords)
 	if kws == nil {
 		kws = store.StringArray{}
 	}
@@ -360,28 +318,28 @@ func (p *BlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUI
 
 	params := store.CreateBlogPostParams{
 		AccountID:         accountID,
-		Title:             resp.Title,
+		Title:             result.Title,
 		Slug:              slug,
-		Content:           resp.Content,
+		Content:           result.Content,
 		Status:            store.BlogStatusDraft,
 		Keywords:          kws,
 		MediaIDs:          mids,
 		SourceInstruction: &instruction,
 	}
-	if resp.Excerpt != "" {
-		params.Excerpt = &resp.Excerpt
+	if result.Excerpt != "" {
+		params.Excerpt = &result.Excerpt
 	}
-	if resp.SEOTitle != "" {
-		params.SEOTitle = &resp.SEOTitle
+	if result.SEOTitle != "" {
+		params.SEOTitle = &result.SEOTitle
 	}
-	if resp.MetaDescription != "" {
-		params.MetaDescription = &resp.MetaDescription
+	if result.MetaDescription != "" {
+		params.MetaDescription = &result.MetaDescription
 	}
-	if resp.OGTitle != "" {
-		params.OGTitle = &resp.OGTitle
+	if result.OGTitle != "" {
+		params.OGTitle = &result.OGTitle
 	}
-	if resp.OGDescription != "" {
-		params.OGDescription = &resp.OGDescription
+	if result.OGDescription != "" {
+		params.OGDescription = &result.OGDescription
 	}
 
 	post, err := p.store.CreateBlogPost(ctx, params)
@@ -410,123 +368,88 @@ func (p *BlogProcessor) StreamGenerateBlogPost(
 		observability.Field{Key: "operation", Value: "stream_generate_blog_post"},
 	)
 
-	// Phase 1: fetch images for prompt (same as GenerateBlogPost).
-	images := p.fetchImagesForPrompt(ctx, mediaIDs)
-	userMsg := buildGenerateBlogUserMessage(instruction, keywords, images)
-
+	mediaItems := p.buildMediaItems(ctx, mediaIDs)
 	cb.OnPhase("generating")
 
-	// Phase 2: stream the AI response, accumulating raw chunks.
-	var rawBuilder strings.Builder
-	err := p.ai.StreamJSONMessage(ctx, generateBlogSystemPrompt, []aiclient.Message{
-		{Role: "user", Content: userMsg},
-	}, generateBlogMaxTokens, func(chunk string) {
-		rawBuilder.WriteString(chunk)
-		cb.OnChunk(chunk)
-	})
-	if err != nil {
-		p.logger.Error(ctx, "AI blog stream failed", err)
-		cb.OnError(ErrBlogGenerationFailed)
-		return ErrBlogGenerationFailed
-	}
+	ch, _ := p.blogGen.GenerateStream(ctx, aiblog.Request{Prompt: instruction, Keywords: keywords, Media: mediaItems})
+	for evt := range ch {
+		switch e := evt.(type) {
+		case aiblog.BlogChunkEvent:
+			cb.OnChunk(e.Chunk)
+		case aiblog.BlogDoneEvent:
+			slug, err := p.blogResolveUniqueSlug(ctx, accountID, blogSlugify(e.Result.Title))
+			if err != nil {
+				p.logger.Error(ctx, "failed to resolve unique slug", err)
+				cb.OnError(ErrBlogGenerationFailed)
+				return ErrBlogGenerationFailed
+			}
 
-	rawOutput := strings.TrimSpace(rawBuilder.String())
+			kws := store.StringArray(e.Result.Keywords)
+			if kws == nil {
+				kws = store.StringArray{}
+			}
+			mids := store.UUIDArray(mediaIDs)
+			if mids == nil {
+				mids = store.UUIDArray{}
+			}
 
-	// Phase 3: parse and validate JSON (identical to GenerateBlogPost).
-	var resp blogGenJSONResponse
-	if parseErr := json.Unmarshal([]byte(rawOutput), &resp); parseErr != nil {
-		p.logger.Error(ctx, "failed to parse blog generation JSON", fmt.Errorf("parse: %w, raw length=%d", parseErr, len(rawOutput)))
-		cb.OnError(ErrBlogGenerationFailed)
-		return ErrBlogGenerationFailed
-	}
-	if resp.Title == "" || resp.Content == "" {
-		p.logger.Error(ctx, "blog generation JSON missing title or content", fmt.Errorf("raw length=%d", len(rawOutput)))
-		cb.OnError(ErrBlogGenerationFailed)
-		return ErrBlogGenerationFailed
-	}
+			params := store.CreateBlogPostParams{
+				AccountID:         accountID,
+				Title:             e.Result.Title,
+				Slug:              slug,
+				Content:           e.Result.Content,
+				Status:            store.BlogStatusDraft,
+				Keywords:          kws,
+				MediaIDs:          mids,
+				SourceInstruction: &instruction,
+			}
+			if e.Result.Excerpt != "" {
+				params.Excerpt = &e.Result.Excerpt
+			}
+			if e.Result.SEOTitle != "" {
+				params.SEOTitle = &e.Result.SEOTitle
+			}
+			if e.Result.MetaDescription != "" {
+				params.MetaDescription = &e.Result.MetaDescription
+			}
+			if e.Result.OGTitle != "" {
+				params.OGTitle = &e.Result.OGTitle
+			}
+			if e.Result.OGDescription != "" {
+				params.OGDescription = &e.Result.OGDescription
+			}
 
-	slug, err := p.blogResolveUniqueSlug(ctx, accountID, blogSlugify(resp.Title))
-	if err != nil {
-		p.logger.Error(ctx, "failed to resolve unique slug", err)
-		cb.OnError(ErrBlogGenerationFailed)
-		return ErrBlogGenerationFailed
-	}
+			post, err := p.store.CreateBlogPost(ctx, params)
+			if err != nil {
+				p.logger.Error(ctx, "failed to persist generated blog post", err)
+				cb.OnError(ErrBlogGenerationFailed)
+				return ErrBlogGenerationFailed
+			}
 
-	kws := store.StringArray(resp.Keywords)
-	if kws == nil {
-		kws = store.StringArray{}
+			cb.OnPhase("done")
+			cb.OnDone(post)
+		case aiblog.BlogErrorEvent:
+			cb.OnError(e.Err)
+			return e.Err
+		}
 	}
-	mids := store.UUIDArray(mediaIDs)
-	if mids == nil {
-		mids = store.UUIDArray{}
-	}
-
-	params := store.CreateBlogPostParams{
-		AccountID:         accountID,
-		Title:             resp.Title,
-		Slug:              slug,
-		Content:           resp.Content,
-		Status:            store.BlogStatusDraft,
-		Keywords:          kws,
-		MediaIDs:          mids,
-		SourceInstruction: &instruction,
-	}
-	if resp.Excerpt != "" {
-		params.Excerpt = &resp.Excerpt
-	}
-	if resp.SEOTitle != "" {
-		params.SEOTitle = &resp.SEOTitle
-	}
-	if resp.MetaDescription != "" {
-		params.MetaDescription = &resp.MetaDescription
-	}
-	if resp.OGTitle != "" {
-		params.OGTitle = &resp.OGTitle
-	}
-	if resp.OGDescription != "" {
-		params.OGDescription = &resp.OGDescription
-	}
-
-	post, err := p.store.CreateBlogPost(ctx, params)
-	if err != nil {
-		p.logger.Error(ctx, "failed to persist generated blog post", err)
-		cb.OnError(ErrBlogGenerationFailed)
-		return ErrBlogGenerationFailed
-	}
-
-	cb.OnPhase("done")
-	cb.OnDone(post)
 	return nil
 }
 
-// promptImage is an image the model should inline into the generated markdown.
-type promptImage struct {
-	URL      string
-	Filename string
-	AltText  string
-}
-
-// fetchImagesForPrompt loads the referenced media and returns only images.
-// Videos are skipped (markdown can't embed them). `s3://` URLs are presigned
-// via urlSigner so the AI can reference a browser-resolvable URL. Note: the
-// presigned URL is baked into the stored markdown and will expire — see
-// blogMediaPresignTTL for the TTL rationale. Any error is logged and the
-// offending entry is dropped — blog generation should not fail because media
-// lookup or signing failed for one file.
-func (p *BlogProcessor) fetchImagesForPrompt(ctx context.Context, mediaIDs []uuid.UUID) []promptImage {
+// buildMediaItems converts store media rows into aiblog.MediaItem, presigning
+// URLs and populating descriptions from alt text. Images and videos that can't
+// be presigned are skipped.
+func (p *BlogProcessor) buildMediaItems(ctx context.Context, mediaIDs []uuid.UUID) []aiblog.MediaItem {
 	if len(mediaIDs) == 0 {
 		return nil
 	}
 	media, err := p.store.GetMediaByIDs(ctx, mediaIDs)
 	if err != nil {
-		p.logger.Error(ctx, "failed to load media for blog prompt", err)
+		p.logger.Error(ctx, "failed to load media for blog generation", err)
 		return nil
 	}
-	out := make([]promptImage, 0, len(media))
+	out := make([]aiblog.MediaItem, 0, len(media))
 	for _, m := range media {
-		if !strings.HasPrefix(m.ContentType, "image/") {
-			continue
-		}
 		url := m.S3URL
 		if strings.HasPrefix(url, "s3://") {
 			if p.urlSigner == nil {
@@ -534,38 +457,25 @@ func (p *BlogProcessor) fetchImagesForPrompt(ctx context.Context, mediaIDs []uui
 			}
 			signed, err := p.urlSigner.PresignGetURL(ctx, m.S3Key, blogMediaPresignTTL)
 			if err != nil {
-				p.logger.Error(ctx, "failed to presign media url for blog prompt", err)
+				p.logger.Error(ctx, "failed to presign media url for blog generation", err)
 				continue
 			}
 			url = signed
 		}
-		alt := ""
-		if m.AltText != nil {
-			alt = *m.AltText
+
+		// Build description from alt text if available.
+		desc := mediadescriber.Description{Usable: false}
+		if m.AltText != nil && *m.AltText != "" {
+			desc = mediadescriber.Description{
+				Description: *m.AltText,
+				Usable:      true,
+			}
 		}
-		out = append(out, promptImage{URL: url, Filename: m.Filename, AltText: alt})
+
+		out = append(out, aiblog.MediaItem{
+			Description: desc,
+			URL:         url,
+		})
 	}
 	return out
-}
-
-// buildGenerateBlogUserMessage formats the user instruction + keywords + images for the AI.
-func buildGenerateBlogUserMessage(instruction string, keywords []string, images []promptImage) string {
-	var b strings.Builder
-	b.WriteString("Topic / Instructions:\n")
-	b.WriteString(instruction)
-	if len(keywords) > 0 {
-		b.WriteString("\n\nKeywords: ")
-		b.WriteString(strings.Join(keywords, ", "))
-	}
-	if len(images) > 0 {
-		b.WriteString("\n\nAttached images (embed EVERY one inline in the content markdown using `![alt](url)`):\n")
-		for i, img := range images {
-			fmt.Fprintf(&b, "%d. url=%s filename=%s", i+1, img.URL, img.Filename)
-			if img.AltText != "" {
-				fmt.Fprintf(&b, " alt=%q", img.AltText)
-			}
-			b.WriteString("\n")
-		}
-	}
-	return b.String()
 }

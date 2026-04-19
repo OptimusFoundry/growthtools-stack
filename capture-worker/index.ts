@@ -138,7 +138,7 @@ export async function capture(input: CaptureInput): Promise<CaptureResult> {
 			// Final clip is MP4 (H.264, CRF 20) — sharper than Playwright's
 			// VP8 default and plays on every social platform without
 			// transcoding. finalizeRecording also drops idle frames and
-			// applies the configured playback speed (default 2×).
+			// applies the configured playback speed (default 1×).
 			videoPath = path.join(captureDir, "recording.mp4");
 			await finalizeRecording(rawPath, videoPath, resolveVideoSpeed());
 		}
