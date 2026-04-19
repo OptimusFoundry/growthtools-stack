@@ -34,6 +34,7 @@ type PublishStore interface {
 	ListPlatformConnectionsByAccount(ctx context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error)
 	UpdatePostStatus(ctx context.Context, accountID, id uuid.UUID, status string, publishedAt *time.Time) error
 	UpdatePlatformPostStatus(ctx context.Context, id uuid.UUID, status string, platformPostID *string, publishedAt any, errMessage *string, attemptCount *int, nextRetryAt *time.Time, lastAttemptAt *time.Time) error
+	ClaimPlatformPostForPublishing(ctx context.Context, id uuid.UUID) (bool, error)
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
@@ -132,8 +133,25 @@ func (w *PublishWorker) handle(ctx context.Context, key, value []byte) error {
 	// Dispatch to each platform independently
 	results := make(map[uuid.UUID]platformResult)
 	for _, pp := range platformPosts {
-		// Skip already published platform posts
-		if pp.Status == store.PlatformPostStatusPublished {
+		// Skip rows that are already finalized or in-flight on another worker.
+		// 'publishing' covers the redelivery race where a previous handler
+		// claimed the row, called the platform API, and is mid-flight.
+		if pp.Status == store.PlatformPostStatusPublished || pp.Status == store.PlatformPostStatusPublishing {
+			results[pp.ID] = resultPublished
+			continue
+		}
+
+		// Atomic claim: only one caller wins the pending/failed → publishing
+		// transition. Loser sees claimed=false and skips, which prevents
+		// double-publishing on Kafka redelivery after a broker restart.
+		claimed, err := w.store.ClaimPlatformPostForPublishing(ctx, pp.ID)
+		if err != nil {
+			w.logger.Error(ctx, fmt.Sprintf("failed to claim platform post %s", pp.ID), err)
+			results[pp.ID] = resultRetryable
+			continue
+		}
+		if !claimed {
+			w.logger.Info(ctx, fmt.Sprintf("platform post %s already claimed, skipping", pp.ID))
 			results[pp.ID] = resultPublished
 			continue
 		}
