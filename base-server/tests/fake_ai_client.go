@@ -53,35 +53,28 @@ func (f *fakeAIClient) StreamJSONMessage(ctx context.Context, sys string, msgs [
 func newFakeAIClient() *fakeAIClient {
 	return &fakeAIClient{
 		CreateMessageFn: func(ctx context.Context, sys string, msgs []aiclient.Message, max int) (string, error) {
-			// Dispatch by inspecting the system prompt to determine which AI component is calling.
+			// Dispatch by inspecting the system prompt. Order matters — check the
+			// most-specific marker first. The planner prompt contains the word
+			// "descriptions" which naively matches "describe" too, so the planner
+			// branch has to win before any describer check.
 
-			// commitclassifier: system prompt contains "release-notes editor"
+			// commitclassifier
 			if strings.Contains(sys, "release-notes editor") {
 				return `{"worthwhile": true, "reason": "demo feature"}`, nil
 			}
 
-			// mediadescriber: system prompt contains "Describe this" (for image or video)
-			if strings.Contains(sys, "Describe this") || strings.Contains(sys, "describe") {
-				// Return a reasonable description
-				return "A clean demo of the feature in action showing the UI.", nil
-			}
-
-			// mediaplanner: system prompt contains "editorial director"
+			// mediaplanner — before describer (see note above)
 			if strings.Contains(sys, "editorial director") {
 				return `{"keep_indexes": [1, 2], "mode": "thread", "thread_parts": 2, "reason": "demo"}`, nil
 			}
 
-			// socialposts generator: system prompt contains platform-specific content
-			// (this is a fallback for any X/LinkedIn/etc post generation)
-			if strings.Contains(sys, "X (formerly Twitter)") ||
-				strings.Contains(sys, "LinkedIn") ||
-				strings.Contains(sys, "social") ||
-				strings.Contains(sys, "Post") {
-				return `Generated post content for the feature.`, nil
+			// mediadescriber — describer prompts start with "Describe this"
+			if strings.Contains(sys, "Describe this") {
+				return "A clean demo of the feature in action showing the UI.", nil
 			}
 
-			// Default fallback
-			return `{}`, nil
+			// socialposts generator — any remaining call is post generation
+			return `Generated post content for the feature.`, nil
 		},
 		CreateJSONMessageFn: func(ctx context.Context, sys string, msgs []aiclient.Message, max int) (string, error) {
 			// Same dispatch logic as CreateMessageFn, but for JSON-specific methods.
