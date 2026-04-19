@@ -57,6 +57,7 @@ type ContentGenerator interface {
 		prompt string,
 		platforms []string,
 		plan *prompts.MediaPlan,
+		images []aiclient.ImageData,
 	) (string, map[string]contentProc.ThreadWithMediaPlanResult, error)
 
 	// SelectMediaAndMode evaluates a candidate video + candidate images and
@@ -209,7 +210,7 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 
 	prompt := buildDraftPrompt(commit)
 	baseContent, perPlatform, err := g.content.GenerateWithMediaPlan(
-		ctx, commit.AccountID, prompt, targets, mediaPlan,
+		ctx, commit.AccountID, prompt, targets, mediaPlan, nil,
 	)
 	if err != nil {
 		g.logger.Error(ctx, "failed to generate draft content", err)

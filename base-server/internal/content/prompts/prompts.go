@@ -91,8 +91,8 @@ func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []Ima
 // AI what media is attached to the one post. Unlike thread mode, there is no
 // per-segment layout to describe — the copy just needs to reference the
 // media naturally and not duplicate what the visuals already show.
-func SystemSingleWithMediaPlan(platformID string, voice *VoiceContext, plan *MediaPlan) string {
-	base := SystemAdapt(platformID, voice, nil)
+func SystemSingleWithMediaPlan(platformID string, voice *VoiceContext, plan *MediaPlan, imageDescriptions []ImageDescription) string {
+	base := SystemAdapt(platformID, voice, imageDescriptions)
 	if plan == nil || (plan.VideoIndex == 0 && len(plan.ImageIndexes) == 0) {
 		return base
 	}
@@ -114,32 +114,36 @@ func SystemSingleWithMediaPlan(platformID string, voice *VoiceContext, plan *Med
 	return sb.String()
 }
 
-// SystemThreadWithMediaPlan builds a thread prompt that is aware of
-// pre-assigned media attachments (e.g. a video on segment 1, screenshots on
-// subsequent segments). Unlike the imageDescriptions variant, the AI does
-// NOT emit [IMAGE:N] markers — the caller assigns indexes deterministically
-// after receiving the segments.
-func SystemThreadWithMediaPlan(platformID string, maxThreadParts int, plan *MediaPlan) string {
+// SystemThreadWithMediaPlan builds a thread prompt that is aware of attached
+// media. The video (if any) is pinned to segment 1 by prose instruction — the
+// AI is told not to emit a marker for it. Still images are assigned by the AI
+// via [IMAGE:N] markers based on topical fit with each segment's copy. Images
+// that don't fit any segment are dropped.
+func SystemThreadWithMediaPlan(platformID string, maxThreadParts int, plan *MediaPlan, imageDescriptions []ImageDescription) string {
 	base := SystemThread(platformID, maxThreadParts, nil)
-	if plan == nil || (plan.VideoIndex == 0 && len(plan.ImageIndexes) == 0) {
+	if plan == nil || (plan.VideoIndex == 0 && len(imageDescriptions) == 0) {
 		return base
 	}
 
 	var sb strings.Builder
 	sb.WriteString(base)
-	sb.WriteString("\n## Media Plan (pre-assigned, do NOT emit [IMAGE:N] markers)\n")
-	sb.WriteString("Media is attached to segments in a fixed order by the caller. Write copy aware of this layout:\n")
-	segment := 1
+	sb.WriteString("\n## Media Placement\n")
 	if plan.VideoIndex > 0 {
-		fmt.Fprintf(&sb, "- Segment %d: a short video clip demonstrating the change. Open with a hook that references what the viewer is about to see.\n", segment)
-		segment++
+		sb.WriteString("Segment 1 has a short video clip demonstrating the change. Open segment 1 with a hook that references what the viewer is about to see. Do NOT emit an [IMAGE:N] marker for the video — it is pinned to segment 1 by the caller.\n")
 	}
-	for _, idx := range plan.ImageIndexes {
-		_ = idx
-		fmt.Fprintf(&sb, "- Segment %d: a screenshot. Point at what's visible — don't describe it literally, call out what matters.\n", segment)
-		segment++
+	if len(imageDescriptions) > 0 {
+		if plan.VideoIndex > 0 {
+			fmt.Fprintf(&sb, "You have %d still image(s) to assign across the remaining thread segments (not segment 1 — the video lives there).\n", len(imageDescriptions))
+		} else {
+			fmt.Fprintf(&sb, "You have %d still image(s) to assign across the thread segments.\n", len(imageDescriptions))
+		}
+		sb.WriteString("To assign an image, add `[IMAGE:N]` on its own line at the end of the thread part, where N is the image number from the list below.\n")
+		sb.WriteString("Each image may be assigned to at most one segment. Do NOT assign an image to a segment whose copy is not topically related to it. If an image does not fit any segment, omit it — do not force it.\n")
+		sb.WriteString("Available images:\n")
+		for _, d := range imageDescriptions {
+			fmt.Fprintf(&sb, "- Image %d: %s\n", d.Index, d.Description)
+		}
 	}
-	sb.WriteString("- Remaining segments (if any) have no attached media. Carry the thread forward with context, details, or a closing takeaway.\n")
 	return sb.String()
 }
 

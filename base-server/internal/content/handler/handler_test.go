@@ -340,7 +340,7 @@ func TestHandler_HandleStreamGenerate_MediaIDs(t *testing.T) {
 					Return(&aiclient.ImageData{MIMEType: "video/mp4", Data: []byte("v")}, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, true, nil)
 				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), "my prompt").
 					Return(processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "ok"}, nil)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, "my prompt", []string{"x"}, gomock.Any()).
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, "my prompt", []string{"x"}, gomock.Any(), gomock.Any()).
 					Return("base content", map[string]processor.ThreadWithMediaPlanResult{
 						"x": {
 							Content:  "seg1\nseg2",
@@ -369,7 +369,7 @@ func TestHandler_HandleStreamGenerate_MediaIDs(t *testing.T) {
 					Return(nil, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, false, nil)
 				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(processor.ModeDecision{}, processor.ErrDecideMode)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]processor.ThreadWithMediaPlanResult{
 						"x": {Content: "content", Segments: []processor.ThreadSegment{{Content: "content"}}},
 					}, nil)
@@ -405,7 +405,7 @@ func TestHandler_HandleStreamGenerate_MediaIDs(t *testing.T) {
 					Return(nil, []aiclient.ImageData{{MIMEType: "image/png", Data: []byte("i")}}, false, nil)
 				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(processor.ModeDecision{Mode: "single"}, nil)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("", nil, processor.ErrStreamGenerate)
 			},
 			body: map[string]any{
@@ -427,7 +427,7 @@ func TestHandler_HandleStreamGenerate_MediaIDs(t *testing.T) {
 					Return(nil, nil, false, nil)
 				m.EXPECT().DecideMode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(processor.ModeDecision{Mode: "single"}, nil)
-				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				m.EXPECT().GenerateWithMediaPlan(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("base", map[string]processor.ThreadWithMediaPlanResult{
 						"x": {Content: "c", Segments: []processor.ThreadSegment{{Content: "c"}}},
 					}, nil)

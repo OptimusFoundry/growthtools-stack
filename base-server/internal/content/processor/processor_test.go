@@ -249,6 +249,7 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 		name          string
 		platforms     []string
 		plan          *prompts.MediaPlan
+		images        []aiclient.ImageData
 		mocks         func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient)
 		wantErr       error
 		assertResults func(t *testing.T, base string, results map[string]ThreadWithMediaPlanResult)
@@ -275,7 +276,7 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 				require.True(t, ok)
 				require.Len(t, r.Segments, 3)
 				assert.Equal(t, "seg1", r.Segments[0].Content)
-				assert.Nil(t, r.Segments[0].ImageIndex, "caller assigns image index")
+				assert.Nil(t, r.Segments[0].ImageIndex, "no images provided — ImageIndex is nil")
 				assert.Equal(t, "seg2", r.Segments[1].Content)
 				assert.Equal(t, "seg3", r.Segments[2].Content)
 				assert.Equal(t, "seg1\nseg2\nseg3", r.Content)
@@ -402,6 +403,121 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 				assert.Len(t, r.Segments, 2)
 			},
 		},
+		{
+			name:      "thread with images — AI assigns markers, segments carry ImageIndex",
+			platforms: []string{"x"},
+			plan:      &prompts.MediaPlan{Mode: "thread", ThreadParts: 3, ImageIndexes: []int{1, 2}},
+			images: []aiclient.ImageData{
+				{MIMEType: "image/png", Data: []byte("img1")},
+				{MIMEType: "image/png", Data: []byte("img2")},
+			},
+			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
+				ms := noVoiceStore(ctrl)
+				ai := NewMockAIClient(ctrl)
+				// Describe step: two parallel calls (one per image).
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("A chart showing retention metrics", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("A modal dialog for onboarding", nil)
+				// Base content call.
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base content", nil)
+				// Platform thread call — AI emits markers.
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("hook copy\n[IMAGE:1]---THREAD_BREAK---detail copy\n[IMAGE:2]---THREAD_BREAK---cta copy", nil)
+				return ms, ai
+			},
+			assertResults: func(t *testing.T, base string, results map[string]ThreadWithMediaPlanResult) {
+				t.Helper()
+				r := results["x"]
+				require.Len(t, r.Segments, 3)
+				require.NotNil(t, r.Segments[0].ImageIndex)
+				assert.Equal(t, 1, *r.Segments[0].ImageIndex)
+				require.NotNil(t, r.Segments[1].ImageIndex)
+				assert.Equal(t, 2, *r.Segments[1].ImageIndex)
+				assert.Nil(t, r.Segments[2].ImageIndex)
+			},
+		},
+		{
+			name:      "thread with images — AI omits marker for image 2, image 2 is dropped",
+			platforms: []string{"x"},
+			plan:      &prompts.MediaPlan{Mode: "thread", ThreadParts: 3, ImageIndexes: []int{1, 2}},
+			images: []aiclient.ImageData{
+				{MIMEType: "image/png", Data: []byte("img1")},
+				{MIMEType: "image/png", Data: []byte("img2")},
+			},
+			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
+				ms := noVoiceStore(ctrl)
+				ai := NewMockAIClient(ctrl)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("desc 1", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("desc 2", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base content", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("hook copy\n[IMAGE:1]---THREAD_BREAK---detail copy---THREAD_BREAK---cta copy", nil)
+				return ms, ai
+			},
+			assertResults: func(t *testing.T, base string, results map[string]ThreadWithMediaPlanResult) {
+				t.Helper()
+				r := results["x"]
+				require.Len(t, r.Segments, 3)
+				require.NotNil(t, r.Segments[0].ImageIndex)
+				assert.Equal(t, 1, *r.Segments[0].ImageIndex)
+				assert.Nil(t, r.Segments[1].ImageIndex, "image 2 dropped — no fallback to positional")
+				assert.Nil(t, r.Segments[2].ImageIndex)
+			},
+		},
+		{
+			name:      "single mode with images — descriptions passed, no markers",
+			platforms: []string{"linkedin"},
+			plan:      &prompts.MediaPlan{Mode: "single", ImageIndexes: []int{1}},
+			images: []aiclient.ImageData{
+				{MIMEType: "image/png", Data: []byte("img1")},
+			},
+			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
+				ms := noVoiceStore(ctrl)
+				ai := NewMockAIClient(ctrl)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("A dashboard showing daily active users", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("great post about the dashboard", nil)
+				return ms, ai
+			},
+			assertResults: func(t *testing.T, base string, results map[string]ThreadWithMediaPlanResult) {
+				t.Helper()
+				r := results["linkedin"]
+				require.Len(t, r.Segments, 1)
+				assert.Equal(t, "great post about the dashboard", r.Segments[0].Content)
+				assert.Nil(t, r.Segments[0].ImageIndex, "single mode never parses markers")
+			},
+		},
+		{
+			name:      "no images — describe step skipped, video-only plan",
+			platforms: []string{"x"},
+			plan:      &prompts.MediaPlan{Mode: "thread", ThreadParts: 2, VideoIndex: 1},
+			images:    nil,
+			mocks: func(ctrl *gomock.Controller) (*MockContentStore, *MockAIClient) {
+				ms := noVoiceStore(ctrl)
+				ai := NewMockAIClient(ctrl)
+				// Only 2 AI calls — no describe step.
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("base", nil)
+				ai.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("hook---THREAD_BREAK---close", nil)
+				return ms, ai
+			},
+			assertResults: func(t *testing.T, base string, results map[string]ThreadWithMediaPlanResult) {
+				t.Helper()
+				r := results["x"]
+				require.Len(t, r.Segments, 2)
+				assert.Nil(t, r.Segments[0].ImageIndex)
+				assert.Nil(t, r.Segments[1].ImageIndex)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -413,7 +529,7 @@ func TestContentProcessor_GenerateWithMediaPlan(t *testing.T) {
 
 			base, results, err := proc.GenerateWithMediaPlan(
 				context.Background(), accountID, "test prompt",
-				tt.platforms, tt.plan,
+				tt.platforms, tt.plan, tt.images,
 			)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
