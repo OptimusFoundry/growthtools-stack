@@ -43,3 +43,9 @@
 .quickActionButton {
 	flex-shrink: 0;
 }
+
+.footerActions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}

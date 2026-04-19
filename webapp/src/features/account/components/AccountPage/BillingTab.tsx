@@ -19,12 +19,16 @@ import { useCreateCustomerPortal } from "@/hooks/useCreateCustomerPortal";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
+import {
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
+} from "@/proto-design-system/components/layout/Card";
 import { Container } from "@/proto-design-system/components/layout/Container";
 import { Divider } from "@/proto-design-system/components/layout/Divider";
 import { Grid } from "@/proto-design-system/components/layout/Grid";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -99,77 +103,67 @@ const SubscriptionSummary = memo(function SubscriptionSummary({
 	planDetails,
 	onChangePlan,
 }: SubscriptionSummaryProps) {
-	const statusVariant =
-		subscription.status === "active"
-			? "success"
-			: subscription.status === "canceled"
-				? "warning"
-				: "secondary";
-
 	return (
-		<Card variant="outlined">
+		<Card variant="spec">
+			<CardHeader
+				name={
+					<>
+						Current <em>Plan</em>
+					</>
+				}
+				meta={subscription.status.toUpperCase()}
+			/>
 			<CardBody>
-				<Stack gap="md" align="start">
-					<Stack direction="row" gap="sm" align="center" justify="between">
-						<Text as="h2" size="xl" weight="semibold">
-							Current Plan
+				<Stack gap="sm">
+					<Stack direction="row" gap="sm" align="center">
+						<Sparkles size={20} className={styles.planIcon} />
+						<Text size="xl" weight="semibold">
+							{planDetails?.name || "Loading..."}
 						</Text>
-						<Badge variant={statusVariant} size="sm">
-							{subscription.status}
-						</Badge>
 					</Stack>
 
-					<Stack gap="sm">
-						<Stack direction="row" gap="sm" align="center">
-							<Sparkles size={20} className={styles.planIcon} />
-							<Text size="xl" weight="semibold">
-								{planDetails?.name || "Loading..."}
-							</Text>
-						</Stack>
-
-						<Stack direction="row" gap="xs" align="baseline">
-							<Text size="2xl" weight="bold">
-								{planDetails?.price || "--"}
-							</Text>
-							{planDetails?.interval && (
-								<Text size="sm" color="secondary">
-									/{planDetails.interval}
-								</Text>
-							)}
-						</Stack>
-
-						{subscription.status === "active" &&
-							subscription.nextBillingDate && (
-								<Stack direction="row" gap="xs" align="center">
-									<Calendar size={14} className={styles.secondaryIcon} />
-									<Text size="sm" color="secondary">
-										Renews{" "}
-										{new Date(subscription.nextBillingDate).toLocaleDateString(
-											"en-US",
-											{
-												month: "short",
-												day: "numeric",
-												year: "numeric",
-											},
-										)}
-									</Text>
-								</Stack>
-							)}
-
-						{subscription.status === "canceled" && (
-							<Text size="sm" color="warning">
-								Your subscription will remain active until the end of the
-								current billing period.
+					<Stack direction="row" gap="xs" align="baseline">
+						<Text size="2xl" weight="bold">
+							{planDetails?.price || "--"}
+						</Text>
+						{planDetails?.interval && (
+							<Text size="sm" color="secondary">
+								/{planDetails.interval}
 							</Text>
 						)}
 					</Stack>
 
-					<Button variant="secondary" onClick={onChangePlan}>
-						{subscription.status === "canceled" ? "Resubscribe" : "Change Plan"}
-						<ArrowUpRight size={16} />
-					</Button>
+					{subscription.status === "active" && subscription.nextBillingDate && (
+						<Stack direction="row" gap="xs" align="center">
+							<Calendar size={14} className={styles.secondaryIcon} />
+							<Text size="sm" color="secondary">
+								Renews{" "}
+								{new Date(subscription.nextBillingDate).toLocaleDateString(
+									"en-US",
+									{
+										month: "short",
+										day: "numeric",
+										year: "numeric",
+									},
+								)}
+							</Text>
+						</Stack>
+					)}
+
+					{subscription.status === "canceled" && (
+						<Text size="sm" color="warning">
+							Your subscription will remain active until the end of the current
+							billing period.
+						</Text>
+					)}
 				</Stack>
 			</CardBody>
+			<CardFooter className={styles.footerActions}>
+				<Button variant="secondary" onClick={onChangePlan}>
+					{subscription.status === "canceled" ? "Resubscribe" : "Change Plan"}
+					<ArrowUpRight size={16} />
+				</Button>
+			</CardFooter>
 		</Card>
 	);
 });
@@ -217,50 +211,52 @@ const BillingActionsCard = memo(function BillingActionsCard({
 	onManageBilling,
 }: BillingActionsCardProps) {
 	return (
-		<Card variant="outlined">
+		<Card variant="spec">
+			<CardHeader
+				name={
+					<>
+						Billing & <em>Invoices</em>
+					</>
+				}
+				meta="ACCOUNT"
+			/>
 			<CardBody>
-				<Stack gap="md">
-					<Text as="h2" size="xl" weight="semibold">
-						Billing & Invoices
-					</Text>
+				<Stack gap="sm">
+					<QuickAction
+						icon={<Receipt size={20} />}
+						title="View Invoices"
+						description="Download past invoices and receipts"
+						action={
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={onManageBilling}
+								disabled={portalLoading || !portalUrl}
+								rightIcon={<ExternalLink size={14} />}
+							>
+								View
+							</Button>
+						}
+					/>
 
-					<Stack gap="sm">
-						<QuickAction
-							icon={<Receipt size={20} />}
-							title="View Invoices"
-							description="Download past invoices and receipts"
-							action={
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={onManageBilling}
-									disabled={portalLoading || !portalUrl}
-									rightIcon={<ExternalLink size={14} />}
-								>
-									View
-								</Button>
-							}
-						/>
+					<Divider />
 
-						<Divider />
-
-						<QuickAction
-							icon={<CreditCard size={20} />}
-							title="Payment Method"
-							description="Update your card or payment details"
-							action={
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={onManageBilling}
-									disabled={portalLoading || !portalUrl}
-									rightIcon={<ExternalLink size={14} />}
-								>
-									Manage
-								</Button>
-							}
-						/>
-					</Stack>
+					<QuickAction
+						icon={<CreditCard size={20} />}
+						title="Payment Method"
+						description="Update your card or payment details"
+						action={
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={onManageBilling}
+								disabled={portalLoading || !portalUrl}
+								rightIcon={<ExternalLink size={14} />}
+							>
+								Manage
+							</Button>
+						}
+					/>
 				</Stack>
 			</CardBody>
 		</Card>
