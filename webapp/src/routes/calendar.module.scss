@@ -1,10 +1,9 @@
 .calendarGrid {
 	display: grid;
 	grid-template-columns: repeat(7, 1fr);
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-	gap: 1px;
+	gap: var(--border-width-sm);
 	background: var(--color-border);
-	border: 1px solid var(--color-border);
+	border: var(--border-width-sm) solid var(--color-border);
 	border-radius: var(--radius-card);
 	overflow: hidden;
 }

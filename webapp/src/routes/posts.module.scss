@@ -58,8 +58,7 @@
 .statDivider {
   background: var(--color-border);
   height: var(--space-6);
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-  width: 1px;
+  width: var(--border-width-sm);
 }
 
 // ─── Content ─────────────────────────────────────────────────────────────────
