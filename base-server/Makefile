@@ -1,21 +1,9 @@
 .PHONY: dev-up dev-down dev-test-unit dev-test-store dev-test-integration \
-       docker-up docker-down docker-test-unit docker-test-store docker-test-integration docker-test-db docker-test-all \
-       docker-logs docker-clean help
+       docker-up docker-down docker-test-integration docker-test-all help
 
 # =============================================================================
-# LOCAL DEVELOPMENT (uses local DB - may pollute your database)
+# LOCAL DEVELOPMENT (uses local DB — may pollute your database)
 # =============================================================================
-
-# Local test database configuration
-export TEST_DB_HOST ?= localhost
-export TEST_DB_PORT ?= 5432
-export TEST_DB_USER ?= base_user
-export TEST_DB_PASS ?= base_password
-export TEST_DB_NAME ?= base_db
-
-# Local API test configuration
-export TEST_API_HOST ?= localhost
-export TEST_API_PORT ?= 8080
 
 # Start local services (database, kafka, migrations). Compose lives at repo
 # root since it also defines capture-worker.
@@ -31,7 +19,7 @@ dev-down:
 	docker compose -f ../docker-compose.yml down -v
 	@echo "Local services stopped!"
 
-# Run unit tests locally (mocked - no DB needed)
+# Run unit tests locally (mocked — no DB needed)
 dev-test-unit:
 	@echo "Running unit tests locally..."
 	go test -short ./internal/.../processor/... ./internal/.../service/...
@@ -41,89 +29,47 @@ dev-test-store:
 	@echo "Running store tests locally..."
 	go test -race ./internal/infra/store/...
 
-# Run integration tests locally (requires running server)
+# Run integration tests locally (requires dev-up; server is in-process)
 dev-test-integration:
-	@echo "Running integration tests locally..."
+	@echo "Running integration tests locally (in-process server)..."
 	go test -v -race -tags=integration ./tests/...
 
 # =============================================================================
-# ISOLATED DOCKER TESTING (uses separate test DB - won't pollute local)
+# ISOLATED DOCKER TESTING (uses separate test DB — won't pollute local)
 # =============================================================================
 
-# Start isolated Docker test environment (all services including server)
+# Start isolated Docker test environment (DB + Kafka + migrations only; no server)
 docker-up:
-	@echo "Starting isolated Docker test environment..."
+	@echo "Starting test infrastructure (DB, Kafka, migrations)..."
 	docker compose -f docker-compose.test.yml up -d --wait db kafka
 	docker compose -f docker-compose.test.yml up flyway
-	docker compose -f docker-compose.test.yml up -d --wait server
-	@echo "Docker test environment ready!"
+	@echo "Test infrastructure ready!"
 
 # Stop isolated Docker test environment
 docker-down:
-	@echo "Stopping Docker test environment..."
+	@echo "Stopping test infrastructure..."
 	docker compose -f docker-compose.test.yml down -v
-	@echo "Docker test environment stopped!"
+	@echo "Done."
 
-# Run unit tests in Docker (no DB needed)
-docker-test-unit:
-	@echo "Running unit tests in Docker..."
-	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
-		go test -short ./internal/.../processor/... ./internal/.../service/...
-
-# Run store tests in Docker (isolated DB)
-docker-test-store:
-	@echo "Running store tests in Docker..."
-	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
-		go test -race ./internal/infra/store/...
-
-# Run integration tests in Docker (with test server)
+# Run integration tests against the in-process server (requires docker-up first)
 docker-test-integration:
-	@echo "Running integration tests in Docker..."
-	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
-		go test -v -race -tags=integration ./tests/...
+	@echo "Running integration tests (in-process server)..."
+	go test -v -race -tags=integration ./tests/...
 
-# CI: run store + integration tests in a single runner container.
-# One `go test` invocation; Go parallelizes the two packages. Saves the
-# container-startup overhead of a second `docker compose run` and lets Go
-# share the compiled std-lib / deps across both test binaries. The
-# `-tags=integration` flag is a no-op for the store package (no tagged files
-# there), so one call covers both.
-docker-test-db:
-	@echo "Running store + integration tests in Docker (single container)..."
-	docker compose -f docker-compose.test.yml run --rm --no-deps runner \
-		go test -race -tags=integration ./internal/infra/store/... ./tests/...
-
-# Run all tests in isolated Docker environment
+# Run all tests (unit + store + integration) after docker-up
 docker-test-all:
-	@echo "=========================================="
-	@echo "Running all tests in Docker environment"
-	@echo "=========================================="
 	@$(MAKE) docker-up
 	@echo ""
 	@echo ">>> Running unit tests..."
-	@$(MAKE) docker-test-unit
+	@$(MAKE) dev-test-unit
 	@echo ""
 	@echo ">>> Running store tests..."
-	@$(MAKE) docker-test-store
+	@$(MAKE) dev-test-store
 	@echo ""
 	@echo ">>> Running integration tests..."
 	@$(MAKE) docker-test-integration
 	@echo ""
-	@echo ">>> Cleaning up..."
 	@$(MAKE) docker-down
-	@echo "=========================================="
-	@echo "All tests completed!"
-	@echo "=========================================="
-
-# View Docker test server logs (for debugging)
-docker-logs:
-	docker compose -f docker-compose.test.yml logs server
-
-# Clean up all Docker test resources (volumes, images, containers)
-docker-clean:
-	@echo "Cleaning up Docker test resources..."
-	docker compose -f docker-compose.test.yml down -v --rmi local --remove-orphans
-	@echo "Cleanup complete!"
 
 # =============================================================================
 # HELP
@@ -137,14 +83,10 @@ help:
 	@echo "  make dev-down             - Stop local services"
 	@echo "  make dev-test-unit        - Run unit tests locally (no DB needed)"
 	@echo "  make dev-test-store       - Run store tests locally (requires dev-up)"
-	@echo "  make dev-test-integration - Run integration tests locally"
+	@echo "  make dev-test-integration - Run integration tests locally (in-process server)"
 	@echo ""
-	@echo "ISOLATED DOCKER TESTING (fully containerized, no exposed ports):"
+	@echo "ISOLATED DOCKER TESTING (DB + Kafka only; server runs in-process):"
 	@echo "  make docker-up            - Start isolated Docker test environment"
 	@echo "  make docker-down          - Stop Docker test environment"
-	@echo "  make docker-test-unit     - Run unit tests in Docker"
-	@echo "  make docker-test-store    - Run store tests in Docker"
-	@echo "  make docker-test-integration - Run integration tests in Docker"
-	@echo "  make docker-test-all      - Run ALL tests in Docker (recommended)"
-	@echo "  make docker-logs          - View test server logs (for debugging)"
-	@echo "  make docker-clean         - Clean up all Docker test resources"
+	@echo "  make docker-test-integration - Run integration tests (in-process server)"
+	@echo "  make docker-test-all      - Run ALL tests in Docker environment"
