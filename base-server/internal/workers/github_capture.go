@@ -117,7 +117,17 @@ func (w *CaptureResultWorker) handle(ctx context.Context, key, value []byte) err
 		if errMsg == "" {
 			errMsg = "capture-worker reported failure without detail"
 		}
-		payload = map[string]any{"error": errMsg}
+		// Include any salvaged artifacts (plan.json, partial transcripts,
+		// explore screenshots) so the commit detail page can link to them
+		// for debugging even when the run failed.
+		failurePayload := map[string]any{"error": errMsg}
+		if len(msg.Uploaded) > 0 {
+			failurePayload["uploaded"] = msg.Uploaded
+		}
+		if msg.CaptureDir != "" {
+			failurePayload["captureDir"] = msg.CaptureDir
+		}
+		payload = failurePayload
 	}
 
 	raw, err := json.Marshal(payload)

@@ -14,7 +14,7 @@
 //                                       payload omits them
 
 import { Admin, Consumer, Kafka, Producer } from "kafkajs";
-import { runCapture } from "./capture.ts";
+import { runCapture, uploadCommitArtifacts } from "./capture.ts";
 
 const TOPIC_REQUESTS = "github.capture.requests";
 const TOPIC_RESULTS = "github.capture.results";
@@ -121,7 +121,10 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 			}
 
 			const commitLog = `${request.owner}/${request.repo}@${request.sha.slice(0, 7)}`;
-			console.log(`[kafka] capture start ${commitLog}`);
+			const diffSize = request.diff?.length ?? 0;
+			console.log(
+				`[kafka] capture start ${commitLog} commit_id=${request.commit_id} diff_chars=${diffSize} two_pass=${request.two_pass === true} app_url=${request.app_url ?? "(default)"}`,
+			);
 
 			// Keep the consumer-group session alive while the long-running
 			// capture executes. kafkajs does NOT heartbeat in the
@@ -167,6 +170,24 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 			} catch (err) {
 				result.error = err instanceof Error ? err.message : String(err);
 				console.error(`[kafka] capture failed ${commitLog}:`, result.error);
+				// Best-effort upload of whatever the agent wrote before the
+				// throw — plan.json, partial transcripts, explore screenshots.
+				// Without this, failed runs leave no artifacts behind because
+				// the success path (runCapture) never reaches its upload step.
+				try {
+					const salvaged = await uploadCommitArtifacts(request.sha);
+					if (salvaged.length > 0) {
+						result.uploaded = salvaged;
+						console.log(
+							`[kafka] salvaged ${salvaged.length} artifact(s) from failed run ${commitLog}`,
+						);
+					}
+				} catch (uploadErr) {
+					console.error(
+						`[kafka] failed to salvage artifacts for ${commitLog}:`,
+						uploadErr,
+					);
+				}
 			} finally {
 				clearInterval(heartbeatTimer);
 			}

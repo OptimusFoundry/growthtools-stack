@@ -3,11 +3,19 @@
 // does the Playwright work; this file just orchestrates the call and uploads
 // what it produces.
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectsCommand,
+	ListObjectsV2Command,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { runDemo } from "./agent.ts";
 import type { ExplorationPlan } from "./types.ts";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export interface CaptureInput {
 	commit: string;
@@ -66,27 +74,109 @@ function guessContentType(file: string): string {
 	return "application/octet-stream";
 }
 
-async function uploadDir(localDir: string, keyPrefix: string): Promise<string[]> {
+// uploadTree walks a local directory recursively and uploads every file under
+// keyPrefix, preserving the relative path. Returns the list of uploaded S3
+// keys. Unlike the old uploadDir (flat, single-level), this keeps subdirs
+// like explore/ and demo/ structured so the commit's full working directory
+// round-trips to S3.
+async function uploadTree(localRoot: string, keyPrefix: string): Promise<string[]> {
 	if (!s3 || !s3Bucket) return [];
-	const entries = await fs.readdir(localDir);
+	const client = s3;
+	const bucket = s3Bucket;
 	const uploaded: string[] = [];
-	for (const entry of entries) {
-		const full = path.join(localDir, entry);
-		const stat = await fs.stat(full);
-		if (!stat.isFile()) continue;
-		const key = `${keyPrefix}/${entry}`;
-		const body = await fs.readFile(full);
-		await s3.send(
-			new PutObjectCommand({
+
+	async function walk(dir: string) {
+		const entries = await fs.readdir(dir, { withFileTypes: true });
+		for (const entry of entries) {
+			const full = path.join(dir, entry.name);
+			if (entry.isDirectory()) {
+				await walk(full);
+				continue;
+			}
+			if (!entry.isFile()) continue;
+			const rel = path.relative(localRoot, full);
+			const key = `${keyPrefix}/${rel.split(path.sep).join("/")}`;
+			const body = await fs.readFile(full);
+			await client.send(
+				new PutObjectCommand({
+					Bucket: bucket,
+					Key: key,
+					Body: body,
+					ContentType: guessContentType(entry.name),
+				}),
+			);
+			uploaded.push(key);
+		}
+	}
+
+	await walk(localRoot);
+	return uploaded;
+}
+
+// clearPrefix deletes every object under keyPrefix. Used on retry so the new
+// run's artifacts fully replace the prior run's — prevents stale plan.json
+// from a failed explore lingering next to a successful demo.
+async function clearPrefix(keyPrefix: string): Promise<number> {
+	if (!s3 || !s3Bucket) return 0;
+	let deleted = 0;
+	let continuationToken: string | undefined;
+	do {
+		const listed = await s3.send(
+			new ListObjectsV2Command({
 				Bucket: s3Bucket,
-				Key: key,
-				Body: body,
-				ContentType: guessContentType(entry),
+				Prefix: `${keyPrefix}/`,
+				ContinuationToken: continuationToken,
 			}),
 		);
-		uploaded.push(key);
+		const objects = (listed.Contents ?? [])
+			.map((o) => o.Key)
+			.filter((k): k is string => Boolean(k));
+		if (objects.length > 0) {
+			await s3.send(
+				new DeleteObjectsCommand({
+					Bucket: s3Bucket,
+					Delete: { Objects: objects.map((Key) => ({ Key })), Quiet: true },
+				}),
+			);
+			deleted += objects.length;
+		}
+		continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+	} while (continuationToken);
+	return deleted;
+}
+
+// commitArtifactsDir returns the on-disk root where the agent writes every
+// artifact for a commit run — demo/, explore/, any future siblings. Must
+// mirror the outDir + commit slice layout in agent.ts.
+export function commitArtifactsDir(commit: string): string {
+	return path.join(__dirname, "captures", commit.slice(0, 12));
+}
+
+export function commitS3Prefix(commit: string): string {
+	return `captures/${commit.slice(0, 12)}`;
+}
+
+// uploadCommitArtifacts wipes the commit's S3 prefix and re-uploads everything
+// currently on disk under commitArtifactsDir. Called from both the success
+// and failure paths so failed runs leave plan.json, transcripts, and explore
+// screenshots behind for debugging. Safe to call even when nothing is on
+// disk (returns []).
+export async function uploadCommitArtifacts(commit: string): Promise<CaptureUpload[]> {
+	if (!s3 || !s3Bucket) return [];
+	const dir = commitArtifactsDir(commit);
+	try {
+		await fs.access(dir);
+	} catch {
+		console.log(`[capture] no artifacts on disk for ${commit.slice(0, 12)}; skipping upload`);
+		return [];
 	}
-	return uploaded;
+	const prefix = commitS3Prefix(commit);
+	const wiped = await clearPrefix(prefix);
+	const keys = await uploadTree(dir, prefix);
+	console.log(
+		`[capture] s3 sync ${commit.slice(0, 12)}: wiped ${wiped} prior objects, uploaded ${keys.length}`,
+	);
+	return keys.map((key) => ({ key, url: `s3://${s3Bucket}/${key}` }));
 }
 
 /**
@@ -109,13 +199,10 @@ export async function runCapture(input: CaptureInput): Promise<CaptureOutput> {
 		exploreWallClockMs: input.exploreWallClockMs,
 	});
 
-	const keyPrefix = `captures/${input.commit.slice(0, 12)}/demo`;
-	const keys = await uploadDir(result.captureDir, keyPrefix);
-
-	const uploaded: CaptureUpload[] = keys.map((key) => ({
-		key,
-		url: s3Bucket ? `s3://${s3Bucket}/${key}` : undefined,
-	}));
+	// Upload the whole commit tree (demo/, explore/, anything else the agent
+	// writes under captures/<sha12>/). Wipes the prefix first so retries
+	// cleanly replace prior runs instead of layering stale artifacts.
+	const uploaded = await uploadCommitArtifacts(input.commit);
 
 	return {
 		commit: input.commit,
