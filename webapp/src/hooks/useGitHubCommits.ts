@@ -37,6 +37,8 @@ export interface GitHubCommit {
 	capture_output?: GitHubCaptureOutput;
 	capture_requested_at?: string;
 	processed_at?: string;
+	/** Set when the commit classifier chose not to capture the commit. */
+	skipped_reason?: string;
 	repo_owner?: string;
 	repo_name?: string;
 }

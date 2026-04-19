@@ -19,6 +19,8 @@ export const CaptureMetaCard = memo(function CaptureMetaCard({
 		commit.repo_owner && commit.repo_name
 			? `${commit.repo_owner}/${commit.repo_name}`
 			: "";
+	const isSkipped = Boolean(commit.skipped_reason);
+	const isWaiting = !isSkipped && !commit.capture_requested_at;
 
 	return (
 		<Stack gap="sm">
@@ -26,6 +28,16 @@ export const CaptureMetaCard = memo(function CaptureMetaCard({
 				<Text as="h1" size="2xl" weight="bold">
 					{firstLine}
 				</Text>
+				{isSkipped && (
+					<Badge variant="warning" size="sm">
+						Skipped
+					</Badge>
+				)}
+				{isWaiting && (
+					<Badge variant="secondary" size="sm">
+						Waiting
+					</Badge>
+				)}
 				{commit.post_id && !commit.post_deleted && (
 					<Badge variant="primary" size="sm">
 						Post created
