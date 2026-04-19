@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v79"
+	"github.com/stripe/stripe-go/v83"
 	"go.uber.org/mock/gomock"
 )
 
@@ -575,11 +575,11 @@ func TestSubscriptionCreated(t *testing.T) {
 						Price: &stripe.Price{
 							ID: "price_test123",
 						},
+						CurrentPeriodStart: time.Now().Unix(),
+						CurrentPeriodEnd:   time.Now().Add(30 * 24 * time.Hour).Unix(),
 					},
 				},
 			},
-			CurrentPeriodStart: time.Now().Unix(),
-			CurrentPeriodEnd:   time.Now().Add(30 * 24 * time.Hour).Unix(),
 		}
 
 		mockSubscriptionService.EXPECT().
@@ -645,10 +645,10 @@ func TestSubscriptionUpdated(t *testing.T) {
 						Price: &stripe.Price{
 							ID: "price_test123",
 						},
+						CurrentPeriodEnd: time.Now().Add(30 * 24 * time.Hour).Unix(),
 					},
 				},
 			},
-			CurrentPeriodEnd: time.Now().Add(30 * 24 * time.Hour).Unix(),
 		}
 
 		mockSubscriptionService.EXPECT().

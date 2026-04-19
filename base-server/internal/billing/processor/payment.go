@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v79"
-	"github.com/stripe/stripe-go/v79/billingportal/session"
-	"github.com/stripe/stripe-go/v79/setupintent"
+	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/billingportal/session"
+	"github.com/stripe/stripe-go/v83/setupintent"
 )
 
 var (
