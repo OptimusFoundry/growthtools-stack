@@ -66,23 +66,27 @@
 .statusStripes {
 	display: flex;
 	flex-direction: column;
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-	gap: 2px;
+	gap: var(--space-0-5);
 	padding: 0 var(--space-0-5);
 }
 
 .stripe {
 	display: block;
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-	padding: 2px var(--space-1);
+	padding: var(--space-0-5) var(--space-1);
 	border-radius: var(--radius-xs);
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-	font-size: 10px;
+	font-size: var(--font-size-xxs);
 	font-weight: var(--font-weight-medium);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	border-left: 3px solid transparent;
+	border-left: var(--border-width-lg) solid transparent;
+}
+
+.stripePlatform {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	color: var(--color-text-secondary);
 }
 
 .stripePublished {

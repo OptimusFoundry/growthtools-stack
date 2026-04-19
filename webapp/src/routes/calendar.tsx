@@ -220,7 +220,29 @@ function CalendarPage() {
 	const today = new Date().toISOString().slice(0, 10);
 
 	const monthLabel = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-	const scheduledThisMonth = calendarData?.monthTotals.byStatus.scheduled ?? 0;
+
+	// Build the subtitle segments for the selected view mode, dropping zeros
+	// so the header doesn't read "0 draft · 0 scheduled · 0 …" on empty months.
+	const subtitleSegments: string[] = [];
+	if (calendarData) {
+		if (viewMode === "status") {
+			for (const status of STATUS_STRIPE_ORDER) {
+				const count =
+					calendarData.monthTotals.byStatus[STATUS_TO_BREAKDOWN_KEY[status]];
+				if (count > 0) {
+					subtitleSegments.push(`${count} ${STATUS_LABELS[status]}`);
+				}
+			}
+		} else {
+			for (const platform of ALL_PLATFORMS as readonly PlatformKey[]) {
+				const count = calendarData.monthTotals.byPlatform[platform] ?? 0;
+				if (count > 0) subtitleSegments.push(`${count} ${platform}`);
+			}
+		}
+	}
+	// Fallback when the month has no posts so the header still reads sensibly.
+	if (subtitleSegments.length === 0) subtitleSegments.push("0 scheduled");
+	const subtitle = `${monthLabel} · ${subtitleSegments.join(" · ")}`;
 
 	return (
 		<>
@@ -258,9 +280,7 @@ function CalendarPage() {
 				<header className={styles.pageHero}>
 					<div className={styles.pageHeroText}>
 						<h1 className={styles.pageHeroTitle}>Calendar</h1>
-						<p className={styles.pageHeroSub}>
-							{monthLabel} · {scheduledThisMonth} scheduled
-						</p>
+						<p className={styles.pageHeroSub}>{subtitle}</p>
 					</div>
 				</header>
 				<Stack gap="md">
@@ -347,26 +367,26 @@ function CalendarPage() {
 					) : (
 						<>
 							<Stack direction="row" justify="between" align="center">
-								<Button
-									variant="ghost"
-									onClick={() => navigateMonth(-1)}
-									aria-label="Previous month"
-								>
-									<ChevronLeft size={18} />
-								</Button>
-								<Text weight="semibold">
-									{MONTHS[month]} {year}
-								</Text>
-								<Button
-									variant="ghost"
-									onClick={() => navigateMonth(1)}
-									aria-label="Next month"
-								>
-									<ChevronRight size={18} />
-								</Button>
-							</Stack>
+								<Stack direction="row" align="center" gap="sm">
+									<Button
+										variant="ghost"
+										onClick={() => navigateMonth(-1)}
+										aria-label="Previous month"
+									>
+										<ChevronLeft size={18} />
+									</Button>
+									<Text weight="semibold">
+										{MONTHS[month]} {year}
+									</Text>
+									<Button
+										variant="ghost"
+										onClick={() => navigateMonth(1)}
+										aria-label="Next month"
+									>
+										<ChevronRight size={18} />
+									</Button>
+								</Stack>
 
-							<Stack direction="row" justify="end">
 								<Tabs
 									variant="pill"
 									size="sm"
@@ -438,7 +458,7 @@ function CalendarPage() {
 																		return (
 																			<span
 																				key={platform}
-																				className={calendarStyles.stripe}
+																				className={`${calendarStyles.stripe} ${calendarStyles.stripePlatform}`}
 																			>
 																				{getPlatformIcon(platform, 10)} {count}
 																			</span>
