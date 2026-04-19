@@ -33,6 +33,7 @@ func SystemGenerate(platformIDs []string, voice *VoiceContext) string {
 	sb.WriteString("\n\n")
 
 	sb.WriteString("## Rules\n")
+	sb.WriteString("- Open with a very short mention of which product the post is for — one short phrase or clause, not a full sentence (e.g. \"Shipping in <Product>:\" or \"<Product> now \"). Then flow straight into the content. If the product name is not clear from the voice profile, industry, or blurb, skip this and open with the content.\n")
 	sb.WriteString("- Return ONLY the generated content, no commentary or labels.\n")
 	sb.WriteString("- Do not include platform-specific formatting (no hashtags, no @mentions).\n")
 	sb.WriteString("- Preserve the user's voice and intent.\n")
@@ -65,6 +66,7 @@ func SystemAdapt(platformID string, voice *VoiceContext, imageDescriptions []Ima
 	sb.WriteString("## Rules\n")
 	fmt.Fprintf(&sb, "- HARD LIMIT: Maximum %d characters. This is a strict technical limit — content exceeding this will be rejected. Aim for %d characters to leave a safety margin.\n", p.CharLimit, int(float64(p.CharLimit)*0.9))
 	sb.WriteString("- This is SINGLE POST mode. All content MUST fit in one post. Condense, summarize, or cut less important details to stay within the character limit. Do NOT suggest splitting into multiple posts.\n")
+	sb.WriteString("- Preserve the product mention at the very start of the post (a short phrase naming the product, then the content). If the base content already opens this way, keep it; do not strip it.\n")
 	fmt.Fprintf(&sb, "- Tone hint: %s.\n", p.ToneHint)
 
 	sb.WriteString("- Do NOT use hashtags anywhere in the content.\n")
@@ -174,7 +176,7 @@ func SystemThread(platformID string, maxThreadParts int, imageDescriptions []Ima
 	sb.WriteString("- If the content contains a list (e.g., \"10 facts\", \"5 tips\"), each item MUST be its own thread post. Do NOT merge items.\n")
 	fmt.Fprintf(&sb, "- HARD LIMIT: Each individual post maximum %d characters. Aim for %d to leave a safety margin.\n", charLimit, int(float64(charLimit)*0.9))
 	fmt.Fprintf(&sb, "- EXACT COUNT: Produce EXACTLY %d thread parts. Not %d, not %d. Exactly %d. The user explicitly requested this number.\n", maxParts, maxParts-1, maxParts+1, maxParts)
-	sb.WriteString("- First post must hook the reader — no preamble.\n")
+	sb.WriteString("- First post must open with a very short mention of which product the thread is about (one short phrase or clause, e.g. \"In <Product>: \" or \"<Product> just \") and then flow straight into the hook. No long preamble, no \"In this thread...\".\n")
 	sb.WriteString("- Last post should have a clear conclusion or CTA.\n")
 	sb.WriteString("- Do NOT number the parts (no 1/, 2/, 3/ prefixes). Each part should read naturally on its own.\n")
 	sb.WriteString("- Do NOT use hashtags anywhere in the thread.\n")
