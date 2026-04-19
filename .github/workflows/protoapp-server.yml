@@ -24,9 +24,13 @@ env:
 jobs:
   # Two test jobs run in parallel on separate runners:
   #  - test-race: pure Go, race detector + unit tests, no docker needed.
-  #  - test-db: spins up the docker stack once and runs store + integration
-  #    tests against the same DB/server, avoiding a redundant bring-up.
-  # ECR prep / docker build / deploy gate on both.
+  #  - test-and-push: spins up the docker stack once, runs store + integration
+  #    tests against the same DB/server, and — on success — pushes the
+  #    already-built test-server image to ECR. This replaces a separate
+  #    docker-build-and-push job that used to rebuild the same image from
+  #    scratch (2+ minutes), relying on buildx cache-sharing that still paid
+  #    the checkout/buildx-setup/ECR-push tax on a second runner.
+  # deploy-ecs gates on both.
 
   test-race:
     name: Unit + Race (go test -race -short)
@@ -49,14 +53,31 @@ jobs:
       - name: Unit tests + race detector
         run: go test -race -short ./...
 
-  test-db:
-    name: Store + Integration (shared Docker stack)
+  test-and-push:
+    name: Store + Integration + Push Image
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: base-server
     steps:
       - uses: actions/checkout@v5
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.DEPLOY_ROLE }}
+          role-session-name: GitHubActions
+      - name: Load manifest and upsert ECR repository
+        working-directory: .
+        run: |
+          aws ssm get-parameter --name "/${PRODUCT_SLUG}/manifest" --query Parameter.Value --output text > /tmp/manifest.json
+          ECR_REPOSITORY=$(jq -r .aws.ecrRepository /tmp/manifest.json)
+          echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> "$GITHUB_ENV"
+          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 \
+            || aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -77,11 +98,12 @@ jobs:
       #
       # The Dockerfiles use BuildKit cache mounts (/go/pkg/mod,
       # /root/.cache/go-build) so partial dep bumps only rebuild the delta.
-      # test-server uses `mode=max` because docker-build-and-push reads the
-      # same scope and needs the builder-stage layers (where `go build`
-      # runs) — `mode=min` would only export the final alpine+binary stage.
-      # test-runner uses `mode=min`: nothing downstream reuses its cache,
-      # so exporting every intermediate layer is wasted bandwidth.
+      # test-server uses `mode=max` so the *next* workflow run pulls full
+      # builder-stage layers from GHA cache. test-runner uses `mode=min`:
+      # nothing downstream reuses its cache, so exporting every intermediate
+      # layer is wasted bandwidth.
+      # The test-server image we build here is also what we push to ECR
+      # after tests pass — no separate build job needed.
       - name: Build test images (parallel)
         run: |
           set -o pipefail
@@ -148,70 +170,24 @@ jobs:
         if: failure()
         run: make docker-logs || true
 
-  prepare-ecr:
-    name: Prepare ECR Repository
-    runs-on: ubuntu-latest
-    needs: [test-race, test-db]
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ env.DEPLOY_ROLE }}
-          role-session-name: GitHubActions
-      - name: Load manifest
+      # Tests passed. Push the test-server image we already built+loaded above
+      # straight to ECR under two tags. No rebuild, no buildx round-trip, no
+      # second runner.
+      - name: Tag and push image to ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          aws ssm get-parameter --name "/${PRODUCT_SLUG}/manifest" --query Parameter.Value --output text > /tmp/manifest.json
-          echo "ECR_REPOSITORY=$(jq -r .aws.ecrRepository /tmp/manifest.json)" >> "$GITHUB_ENV"
-      - name: Upsert ECR repository
-        run: aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" || aws ecr create-repository --repository-name "$ECR_REPOSITORY"
-
-  docker-build-and-push:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    needs: prepare-ecr
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ env.DEPLOY_ROLE }}
-          role-session-name: GitHubActions
-
-      - name: Load manifest
-        run: |
-          aws ssm get-parameter --name "/${PRODUCT_SLUG}/manifest" --query Parameter.Value --output text > /tmp/manifest.json
-          echo "ECR_REPOSITORY=$(jq -r .aws.ecrRepository /tmp/manifest.json)" >> "$GITHUB_ENV"
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: base-server
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-          # Share layer cache with the test-server build in test-db. Both use
-          # the same Dockerfile, so the production push reuses everything the
-          # test build already warmed up.
-          cache-from: |
-            type=gha,scope=test-server
-            type=gha,scope=prod-server
-          cache-to: type=gha,mode=max,scope=prod-server
+          SHA_TAG="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+          LATEST_TAG="$REGISTRY/$ECR_REPOSITORY:latest"
+          docker tag base-server-test-server:ci "$SHA_TAG"
+          docker tag base-server-test-server:ci "$LATEST_TAG"
+          docker push "$SHA_TAG"
+          docker push "$LATEST_TAG"
 
   deploy-ecs:
     name: Deploy to protoapp
     runs-on: ubuntu-latest
-    needs: docker-build-and-push
+    needs: [test-race, test-and-push]
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
