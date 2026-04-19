@@ -10,11 +10,8 @@
 package processor
 
 import (
-	processor "base-server/internal/content/processor"
-	prompts "base-server/internal/content/prompts"
-	aiclient "base-server/internal/infra/clients/aiclient"
 	store "base-server/internal/infra/store"
-	processor0 "base-server/internal/posts/processor"
+	processor "base-server/internal/posts/processor"
 	context "context"
 	io "io"
 	reflect "reflect"
@@ -106,61 +103,6 @@ func (mr *MockDraftStoreMockRecorder) UpdateGitHubCommitPostID(ctx, commitID, po
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitHubCommitPostID", reflect.TypeOf((*MockDraftStore)(nil).UpdateGitHubCommitPostID), ctx, commitID, postID)
 }
 
-// MockContentGenerator is a mock of ContentGenerator interface.
-type MockContentGenerator struct {
-	ctrl     *gomock.Controller
-	recorder *MockContentGeneratorMockRecorder
-	isgomock struct{}
-}
-
-// MockContentGeneratorMockRecorder is the mock recorder for MockContentGenerator.
-type MockContentGeneratorMockRecorder struct {
-	mock *MockContentGenerator
-}
-
-// NewMockContentGenerator creates a new mock instance.
-func NewMockContentGenerator(ctrl *gomock.Controller) *MockContentGenerator {
-	mock := &MockContentGenerator{ctrl: ctrl}
-	mock.recorder = &MockContentGeneratorMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockContentGenerator) EXPECT() *MockContentGeneratorMockRecorder {
-	return m.recorder
-}
-
-// GenerateWithMediaPlan mocks base method.
-func (m *MockContentGenerator) GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan, images []aiclient.ImageData) (string, map[string]processor.ThreadWithMediaPlanResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateWithMediaPlan", ctx, accountID, prompt, platforms, plan, images)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(map[string]processor.ThreadWithMediaPlanResult)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GenerateWithMediaPlan indicates an expected call of GenerateWithMediaPlan.
-func (mr *MockContentGeneratorMockRecorder) GenerateWithMediaPlan(ctx, accountID, prompt, platforms, plan, images any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWithMediaPlan", reflect.TypeOf((*MockContentGenerator)(nil).GenerateWithMediaPlan), ctx, accountID, prompt, platforms, plan, images)
-}
-
-// SelectMediaAndMode mocks base method.
-func (m *MockContentGenerator) SelectMediaAndMode(ctx context.Context, video *aiclient.ImageData, images []aiclient.ImageData, commitMessage string) (processor.MediaAndModeDecision, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectMediaAndMode", ctx, video, images, commitMessage)
-	ret0, _ := ret[0].(processor.MediaAndModeDecision)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SelectMediaAndMode indicates an expected call of SelectMediaAndMode.
-func (mr *MockContentGeneratorMockRecorder) SelectMediaAndMode(ctx, video, images, commitMessage any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectMediaAndMode", reflect.TypeOf((*MockContentGenerator)(nil).SelectMediaAndMode), ctx, video, images, commitMessage)
-}
-
 // MockPostsDrafter is a mock of PostsDrafter interface.
 type MockPostsDrafter struct {
 	ctrl     *gomock.Controller
@@ -186,7 +128,7 @@ func (m *MockPostsDrafter) EXPECT() *MockPostsDrafterMockRecorder {
 }
 
 // SaveDraft mocks base method.
-func (m *MockPostsDrafter) SaveDraft(ctx context.Context, params processor0.SaveDraftParams) (store.Post, error) {
+func (m *MockPostsDrafter) SaveDraft(ctx context.Context, params processor.SaveDraftParams) (store.Post, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveDraft", ctx, params)
 	ret0, _ := ret[0].(store.Post)

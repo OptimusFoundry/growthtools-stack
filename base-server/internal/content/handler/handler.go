@@ -6,17 +6,18 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
 
-	"base-server/internal/content/processor"
-	"base-server/internal/content/prompts"
+	"base-server/internal/ai/mediadescriber"
+	"base-server/internal/ai/socialposts"
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,48 +29,51 @@ const (
 	maxTotalPayload = 45 * 1024 * 1024 // 45MB total
 )
 
-// ContentProcessor defines the content generation operations required by the handler.
-type ContentProcessor interface {
-	GeneratePost(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string) (string, error)
-	AdaptContent(ctx context.Context, accountID uuid.UUID, content string, platform string) (string, error)
-	GenerateThread(ctx context.Context, content string, platform string) ([]string, error)
-	StreamGenerateAndAdapt(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, contentType string, images []aiclient.ImageData, maxThreadParts int, cb processor.StreamCallbacks) error
-	// Media-aware regenerate path (trust-user-selection).
-	FetchAndBucketMedia(ctx context.Context, accountID uuid.UUID, mediaIDs []uuid.UUID) (video *aiclient.ImageData, images []aiclient.ImageData, videoPresent bool, err error)
-	DecideMode(ctx context.Context, video *aiclient.ImageData, images []aiclient.ImageData, prompt string) (processor.ModeDecision, error)
-	GenerateWithMediaPlan(ctx context.Context, accountID uuid.UUID, prompt string, platforms []string, plan *prompts.MediaPlan, images []aiclient.ImageData) (string, map[string]processor.ThreadWithMediaPlanResult, error)
+// Describer defines the media description operations required by the handler.
+type Describer interface {
+	DescribeBatch(ctx context.Context, items []mediadescriber.Media) []mediadescriber.Description
+}
+
+// Generator defines the social post generation operations required by the handler.
+type Generator interface {
+	GenerateStream(ctx context.Context, req socialposts.Request) (<-chan socialposts.Event, error)
+}
+
+// S3Fetcher defines the S3 operations required by the handler for media-aware generation.
+type S3Fetcher interface {
+	GetFile(ctx context.Context, key string) (io.ReadCloser, string, error)
+}
+
+// HandlerStore defines the database operations required by the handler.
+type HandlerStore interface {
+	GetVoiceProfileByAccount(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error)
+	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
 // Handler handles HTTP requests for content generation.
 type Handler struct {
-	processor ContentProcessor
+	describer Describer
+	generator Generator
+	store     HandlerStore
+	s3Fetch   S3Fetcher
 	logger    *observability.Logger
 }
 
 // New creates a new content Handler.
-func New(proc ContentProcessor, logger *observability.Logger) Handler {
+func New(
+	describer Describer,
+	generator Generator,
+	store HandlerStore,
+	s3Fetch S3Fetcher,
+	logger *observability.Logger,
+) Handler {
 	return Handler{
-		processor: proc,
+		describer: describer,
+		generator: generator,
+		store:     store,
+		s3Fetch:   s3Fetch,
 		logger:    logger,
 	}
-}
-
-// GeneratePostRequest is the request body for post generation.
-type GeneratePostRequest struct {
-	Prompt    string   `json:"prompt" binding:"required"`
-	Platforms []string `json:"platforms"`
-}
-
-// AdaptContentRequest is the request body for content adaptation.
-type AdaptContentRequest struct {
-	Content  string `json:"content" binding:"required"`
-	Platform string `json:"platform" binding:"required"`
-}
-
-// GenerateThreadRequest is the request body for thread generation.
-type GenerateThreadRequest struct {
-	Content  string `json:"content" binding:"required"`
-	Platform string `json:"platform" binding:"required"`
 }
 
 // ImageInput represents a base64-encoded image in the request body.
@@ -79,13 +83,6 @@ type ImageInput struct {
 }
 
 // StreamGenerateRequest is the request body for streaming content generation.
-//
-// When MediaIDs is non-empty the handler uses the media-aware regenerate path:
-// it fetches the persisted media rows, downloads their S3 bytes, decides
-// single-vs-thread, and calls GenerateWithMediaPlan.  When only Images is
-// non-empty it falls through to the original StreamGenerateAndAdapt path.
-// Callers must NOT send both; if both arrive MediaIDs is preferred and a
-// warning is logged.
 type StreamGenerateRequest struct {
 	Prompt         string       `json:"prompt" binding:"required"`
 	Platforms      []string     `json:"platforms" binding:"required,min=1"`
@@ -95,95 +92,17 @@ type StreamGenerateRequest struct {
 	MaxThreadParts int          `json:"max_thread_parts,omitempty"`
 }
 
-// HandleGeneratePost generates a social media post from a prompt.
-func (h *Handler) HandleGeneratePost(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	accountID, ok := h.getAccountID(c)
-	if !ok {
-		return
-	}
-
-	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
-
-	var req GeneratePostRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		apierrors.ValidationError(c, err)
-		return
-	}
-
-	content, err := h.processor.GeneratePost(ctx, accountID, req.Prompt, req.Platforms)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"content": content})
-}
-
-// HandleAdaptContent adapts existing content for a specific platform.
-func (h *Handler) HandleAdaptContent(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	accountID, ok := h.getAccountID(c)
-	if !ok {
-		return
-	}
-
-	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
-
-	var req AdaptContentRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		apierrors.ValidationError(c, err)
-		return
-	}
-
-	adapted, err := h.processor.AdaptContent(ctx, accountID, req.Content, req.Platform)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"content": adapted})
-}
-
-// HandleGenerateThread generates a thread of posts from content.
-func (h *Handler) HandleGenerateThread(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	accountID, ok := h.getAccountID(c)
-	if !ok {
-		return
-	}
-
-	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
-
-	var req GenerateThreadRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		apierrors.ValidationError(c, err)
-		return
-	}
-
-	thread, err := h.processor.GenerateThread(ctx, req.Content, req.Platform)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"thread": thread})
-}
-
 // HandleStreamGenerate streams content generation and per-platform adaptation via SSE.
-// Base content is streamed first, then parallel per-platform adaptations stream concurrently.
+// It supports both base64-encoded images and media IDs that reference stored media in S3.
 //
 // Path selection:
-//   - MediaIDs non-empty → media-aware regenerate path (trust user's selection,
-//     fetch from S3, decide mode, call GenerateWithMediaPlan). This is
-//     non-streaming internally (GenerateWithMediaPlan is synchronous); events are
-//     emitted in batch at the end. Acceptable for v1 regenerate UX.
-//   - Images non-empty (and MediaIDs empty) → original StreamGenerateAndAdapt path.
-//   - Both empty → text-only StreamGenerateAndAdapt path.
-//   - Both supplied → prefer MediaIDs, log warning, ignore Images.
+//   - MediaIDs non-empty → fetch from S3, describe media, call socialposts.GenerateStream
+//   - Images non-empty (and MediaIDs empty) → decode base64, describe media, call socialposts.GenerateStream
+//   - Both empty → text-only socialposts.GenerateStream
+//   - Both supplied → prefer MediaIDs, log warning, ignore Images
+//
+// content_type must be one of: "single", "text", or "thread" (case-insensitive).
+// Returns 400 if content_type is missing or invalid.
 func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -200,6 +119,26 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 		return
 	}
 
+	// Validate content_type.
+	contentTypeNorm := strings.ToLower(strings.TrimSpace(req.ContentType))
+	switch contentTypeNorm {
+	case "single", "text", "thread":
+		// valid
+	default:
+		apierrors.BadRequest(c, "INVALID_CONTENT_TYPE", "content_type must be one of: single, thread, text")
+		return
+	}
+
+	// Resolve mode for socialposts.Request.
+	var mode socialposts.Mode
+	switch contentTypeNorm {
+	case "thread":
+		mode = socialposts.ModeThread
+	default:
+		// both "single" and "text" map to ModeSingle
+		mode = socialposts.ModeSingle
+	}
+
 	// Guard: both paths supplied — prefer MediaIDs.
 	if len(req.MediaIDs) > 0 && len(req.Images) > 0 {
 		h.logger.Warn(ctx, "stream generate received both media_ids and images; preferring media_ids")
@@ -213,7 +152,7 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 
 	flusher, canFlush := c.Writer.(http.Flusher)
 
-	// Mutex protects concurrent SSE writes from parallel platform goroutines.
+	// Mutex protects concurrent SSE writes.
 	var mu sync.Mutex
 	writeSSE := func(event string, data string) {
 		mu.Lock()
@@ -227,81 +166,120 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 		}
 	}
 
+	// Fetch media and descriptions.
+	descriptions := make([]mediadescriber.Description, 0)
 	if len(req.MediaIDs) > 0 {
-		h.handleStreamGenerateWithMedia(ctx, c, accountID, req, writeSSE)
+		h.handleStreamGenerateWithMediaIDs(ctx, c, accountID, req, mode, writeSSE)
 		return
 	}
 
-	// --- Original path: base64 images or text-only ---
-
-	// Decode base64 images.
+	// Decode base64 images or use empty list.
 	images, err := decodeImages(req.Images)
 	if err != nil {
 		apierrors.BadRequest(c, "INVALID_IMAGES", err.Error())
 		return
 	}
 
-	contentType := req.ContentType
-	if contentType == "" {
-		contentType = "text"
+	// Describe images if any.
+	if len(images) > 0 {
+		writeSSE("phase", mustMarshal(map[string]string{"phase": "describing", "platform": ""}))
+		mediaItems := make([]mediadescriber.Media, len(images))
+		for i, img := range images {
+			mediaItems[i] = mediadescriber.Media{
+				Index:    i + 1,
+				Kind:     mediadescriber.KindImage,
+				MIMEType: img.MIMEType,
+				Data:     img.Data,
+			}
+		}
+		descriptions = h.describer.DescribeBatch(ctx, mediaItems)
+	}
+
+	// Get voice profile.
+	voiceCtx, err := h.getVoiceContext(ctx, accountID)
+	if err != nil {
+		h.logger.Error(ctx, "failed to fetch voice profile", err)
+		// Continue without voice profile; it's optional.
+	}
+
+	// Build socialposts.Request.
+	genReq := socialposts.Request{
+		Prompt:      req.Prompt,
+		Platforms:   req.Platforms,
+		Mode:        mode,
+		Media:       descriptions,
+		Voice:       voiceCtx,
+	}
+
+	if mode == socialposts.ModeThread {
+		genReq.ThreadParts = req.MaxThreadParts
+		if genReq.ThreadParts < 2 {
+			genReq.ThreadParts = 3
+		}
+		if genReq.ThreadParts > 3 {
+			genReq.ThreadParts = 3
+		}
+	}
+
+	// Stream generation.
+	ch, err := h.generator.GenerateStream(ctx, genReq)
+	if err != nil {
+		h.logger.Error(ctx, "failed to start stream generation", err)
+		writeSSE("error", "failed to start content generation")
+		return
 	}
 
 	platformResults := make(map[string]string)
-	threadResults := make(map[string][]processor.ThreadSegment)
+	threadResults := make(map[string][]socialposts.Segment)
 	var resultsMu sync.Mutex
 
-	callbacks := processor.StreamCallbacks{
-		OnPhase: func(phase string, platform string) {
-			payload, _ := json.Marshal(map[string]string{"phase": phase, "platform": platform})
+	for evt := range ch {
+		switch e := evt.(type) {
+		case socialposts.PhaseEvent:
+			payload, _ := json.Marshal(map[string]string{"phase": e.Phase, "platform": e.Platform})
 			writeSSE("phase", string(payload))
-		},
-		OnChunk: func(platform string, chunk string) {
-			payload, _ := json.Marshal(map[string]string{"platform": platform, "text": chunk})
+		case socialposts.ChunkEvent:
+			payload, _ := json.Marshal(map[string]string{"platform": e.Platform, "text": e.Chunk})
 			writeSSE("chunk", string(payload))
-		},
-		OnBaseDone: func(content string) {
-			payload, _ := json.Marshal(map[string]string{"content": content})
+		case socialposts.BaseDoneEvent:
+			payload, _ := json.Marshal(map[string]string{"content": e.Content})
 			writeSSE("base_done", string(payload))
-		},
-		OnPlatformDone: func(platform string, content string) {
+		case socialposts.PlatformDoneEvent:
 			resultsMu.Lock()
-			platformResults[platform] = content
-			resultsMu.Unlock()
-			payload, _ := json.Marshal(map[string]string{"platform": platform, "content": content})
-			writeSSE("platform_done", string(payload))
-		},
-		OnThreadDone: func(platform string, segments []processor.ThreadSegment) {
-			resultsMu.Lock()
-			threadResults[platform] = segments
-			resultsMu.Unlock()
-			payload, _ := json.Marshal(map[string]any{"platform": platform, "segments": segments})
-			writeSSE("thread_done", string(payload))
-		},
-	}
-
-	if err := h.processor.StreamGenerateAndAdapt(ctx, accountID, req.Prompt, req.Platforms, contentType, images, req.MaxThreadParts, callbacks); err != nil {
-		h.logger.Error(ctx, "streaming content generation failed", err)
-		writeSSE("error", "failed to generate content")
-		return
+			switch result := e.Result.(type) {
+			case socialposts.SinglePost:
+				platformResults[result.PlatformName] = result.Content
+				resultsMu.Unlock()
+				payload, _ := json.Marshal(map[string]string{"platform": result.PlatformName, "content": result.Content})
+				writeSSE("platform_done", string(payload))
+			case socialposts.Thread:
+				platformResults[result.PlatformName] = "(thread)"
+				threadResults[result.PlatformName] = result.Segments
+				resultsMu.Unlock()
+				payload, _ := json.Marshal(map[string]any{"platform": result.PlatformName, "segments": result.Segments})
+				writeSSE("platform_done", string(payload))
+				writeSSE("thread_done", string(payload))
+			default:
+				resultsMu.Unlock()
+			}
+		case socialposts.ErrorEvent:
+			h.logger.Error(ctx, "stream generation error event", e.Err)
+			writeSSE("error", "failed to generate content")
+			return
+		}
 	}
 
 	donePayload, _ := json.Marshal(map[string]any{"platforms": platformResults, "threads": threadResults})
 	writeSSE("done", string(donePayload))
 }
 
-// handleStreamGenerateWithMedia is the media-aware regenerate path.
-// It trusts the user's media selection: fetch from S3, decide mode via AI,
-// then call GenerateWithMediaPlan.
-//
-// NOTE: GenerateWithMediaPlan is synchronous, so all events are emitted in
-// batch at the end (no true streaming for the base content phase). This is an
-// accepted v1 regression relative to the SSE path — the trade-off is
-// simplicity and correctness.
-func (h *Handler) handleStreamGenerateWithMedia(
+// handleStreamGenerateWithMediaIDs handles the media-ID path: fetch from S3, describe, generate.
+func (h *Handler) handleStreamGenerateWithMediaIDs(
 	ctx context.Context,
 	c *gin.Context,
 	accountID uuid.UUID,
 	req StreamGenerateRequest,
+	mode socialposts.Mode,
 	writeSSE func(event, data string),
 ) {
 	// Parse media IDs.
@@ -319,72 +297,149 @@ func (h *Handler) handleStreamGenerateWithMedia(
 		return
 	}
 
-	writeSSE("phase", mustMarshal(map[string]string{"phase": "generating", "platform": ""}))
-
-	// Fetch and bucket media by MIME type.
-	video, images, _, err := h.processor.FetchAndBucketMedia(ctx, accountID, mediaIDs)
+	// Fetch media rows from database.
+	rows, err := h.store.GetMediaByIDs(ctx, mediaIDs)
 	if err != nil {
-		h.logger.Error(ctx, "failed to fetch media for regenerate", err)
+		h.logger.Error(ctx, "failed to load media rows", err)
 		writeSSE("error", "failed to fetch media for generation")
 		return
 	}
 
-	// Resolve mode. If the caller explicitly picked single ("text") or thread,
-	// honor it — this path is invoked from the wizard/regenerate UI where the
-	// user has already made that choice. Only fall back to DecideMode when the
-	// caller left it unspecified.
-	var modeDecision processor.ModeDecision
-	switch strings.ToLower(strings.TrimSpace(req.ContentType)) {
-	case "thread":
-		parts := req.MaxThreadParts
-		if parts < 2 {
-			parts = 3
-		}
-		if parts > 3 {
-			parts = 3
-		}
-		modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: parts, Reason: "user selected thread"}
-	case "text", "single":
-		modeDecision = processor.ModeDecision{Mode: "single", ThreadParts: 0, Reason: "user selected single"}
-	default:
-		var err error
-		modeDecision, err = h.processor.DecideMode(ctx, video, images, req.Prompt)
-		if err != nil {
-			h.logger.Error(ctx, "mode decision failed; defaulting to thread mode", err)
-			modeDecision = processor.ModeDecision{Mode: "thread", ThreadParts: 3, Reason: "mode decision unavailable"}
-		}
+	// Build a map for quick lookup.
+	rowByID := make(map[uuid.UUID]store.Media, len(rows))
+	for _, r := range rows {
+		rowByID[r.ID] = r
 	}
 
-	// Build a MediaPlan that reflects the full user selection.
-	// VideoIndex = 1 if video present, ImageIndexes = [2..N] or [1..N].
-	plan := buildMediaPlanFromBucketed(video != nil, len(images))
-	plan.Mode = modeDecision.Mode
-	plan.ThreadParts = modeDecision.ThreadParts
+	// Fetch S3 bytes for each media item.
+	writeSSE("phase", mustMarshal(map[string]string{"phase": "describing", "platform": ""}))
 
-	baseContent, perPlatform, err := h.processor.GenerateWithMediaPlan(ctx, accountID, req.Prompt, req.Platforms, plan, images)
-	if err != nil {
-		h.logger.Error(ctx, "media-aware content generation failed", err)
-		writeSSE("error", "failed to generate content")
+	mediaItems := make([]mediadescriber.Media, 0, len(mediaIDs))
+	imageDataList := make([]aiclient.ImageData, 0)
+
+	for i, id := range mediaIDs {
+		row, ok := rowByID[id]
+		if !ok || row.AccountID != accountID {
+			continue
+		}
+		if row.S3Key == "" {
+			continue
+		}
+
+		// Fetch from S3.
+		body, mimeType, fetchErr := h.s3Fetch.GetFile(ctx, row.S3Key)
+		if fetchErr != nil {
+			h.logger.Error(ctx, "failed to fetch media from S3", fetchErr)
+			continue
+		}
+		defer body.Close()
+
+		// Read bytes.
+		data, readErr := io.ReadAll(body)
+		if readErr != nil {
+			h.logger.Error(ctx, "failed to read media bytes from S3", readErr)
+			continue
+		}
+
+		// Determine kind from MIME type.
+		var kind mediadescriber.Kind
+		if strings.HasPrefix(mimeType, "video/") {
+			kind = mediadescriber.KindVideo
+		} else {
+			kind = mediadescriber.KindImage
+		}
+
+		mediaItems = append(mediaItems, mediadescriber.Media{
+			Index:    i + 1,
+			Kind:     kind,
+			MIMEType: mimeType,
+			Data:     data,
+		})
+		imageDataList = append(imageDataList, aiclient.ImageData{
+			MIMEType: mimeType,
+			Data:     data,
+		})
+	}
+
+	if len(mediaItems) == 0 {
+		writeSSE("error", "no valid media found")
 		return
 	}
 
-	// Emit events (batch — no true SSE streaming for base content in this path).
-	writeSSE("base_done", mustMarshal(map[string]string{"content": baseContent}))
+	// Describe media.
+	descriptions := h.describer.DescribeBatch(ctx, mediaItems)
 
-	platformResults := make(map[string]string, len(perPlatform))
-	threadResults := make(map[string][]processor.ThreadSegment)
+	// Get voice profile.
+	voiceCtx, err := h.getVoiceContext(ctx, accountID)
+	if err != nil {
+		h.logger.Error(ctx, "failed to fetch voice profile", err)
+		// Continue without voice profile; it's optional.
+	}
 
-	for _, platform := range req.Platforms {
-		result, ok := perPlatform[platform]
-		if !ok {
-			continue
+	// Build socialposts.Request.
+	genReq := socialposts.Request{
+		Prompt:    req.Prompt,
+		Platforms: req.Platforms,
+		Mode:      mode,
+		Media:     descriptions,
+		Voice:     voiceCtx,
+	}
+
+	if mode == socialposts.ModeThread {
+		genReq.ThreadParts = req.MaxThreadParts
+		if genReq.ThreadParts < 2 {
+			genReq.ThreadParts = 3
 		}
-		platformResults[platform] = result.Content
-		writeSSE("platform_done", mustMarshal(map[string]string{"platform": platform, "content": result.Content}))
+		if genReq.ThreadParts > 3 {
+			genReq.ThreadParts = 3
+		}
+	}
 
-		if modeDecision.Mode == "thread" && len(result.Segments) > 0 {
-			threadResults[platform] = result.Segments
-			writeSSE("thread_done", mustMarshal(map[string]any{"platform": platform, "segments": result.Segments}))
+	// Stream generation.
+	ch, err := h.generator.GenerateStream(ctx, genReq)
+	if err != nil {
+		h.logger.Error(ctx, "failed to start stream generation", err)
+		writeSSE("error", "failed to start content generation")
+		return
+	}
+
+	platformResults := make(map[string]string)
+	threadResults := make(map[string][]socialposts.Segment)
+	var resultsMu sync.Mutex
+
+	for evt := range ch {
+		switch e := evt.(type) {
+		case socialposts.PhaseEvent:
+			payload, _ := json.Marshal(map[string]string{"phase": e.Phase, "platform": e.Platform})
+			writeSSE("phase", string(payload))
+		case socialposts.ChunkEvent:
+			payload, _ := json.Marshal(map[string]string{"platform": e.Platform, "text": e.Chunk})
+			writeSSE("chunk", string(payload))
+		case socialposts.BaseDoneEvent:
+			payload, _ := json.Marshal(map[string]string{"content": e.Content})
+			writeSSE("base_done", string(payload))
+		case socialposts.PlatformDoneEvent:
+			resultsMu.Lock()
+			switch result := e.Result.(type) {
+			case socialposts.SinglePost:
+				platformResults[result.PlatformName] = result.Content
+				resultsMu.Unlock()
+				payload, _ := json.Marshal(map[string]string{"platform": result.PlatformName, "content": result.Content})
+				writeSSE("platform_done", string(payload))
+			case socialposts.Thread:
+				platformResults[result.PlatformName] = "(thread)"
+				threadResults[result.PlatformName] = result.Segments
+				resultsMu.Unlock()
+				payload, _ := json.Marshal(map[string]any{"platform": result.PlatformName, "segments": result.Segments})
+				writeSSE("platform_done", string(payload))
+				writeSSE("thread_done", string(payload))
+			default:
+				resultsMu.Unlock()
+			}
+		case socialposts.ErrorEvent:
+			h.logger.Error(ctx, "stream generation error event", e.Err)
+			writeSSE("error", "failed to generate content")
+			return
 		}
 	}
 
@@ -392,20 +447,28 @@ func (h *Handler) handleStreamGenerateWithMedia(
 	writeSSE("done", string(donePayload))
 }
 
-// buildMediaPlanFromBucketed builds a MediaPlan reflecting a user's full
-// selection (video + N images). Callers set Mode and ThreadParts separately.
-func buildMediaPlanFromBucketed(hasVideo bool, imageCount int) *prompts.MediaPlan {
-	plan := &prompts.MediaPlan{}
-	next := 1
-	if hasVideo {
-		plan.VideoIndex = next
-		next++
+// getVoiceContext fetches the voice profile for an account and converts it to socialposts.VoiceContext.
+func (h *Handler) getVoiceContext(ctx context.Context, accountID uuid.UUID) (*socialposts.VoiceContext, error) {
+	vp, err := h.store.GetVoiceProfileByAccount(ctx, accountID)
+	if err != nil {
+		return nil, err
 	}
-	for i := 0; i < imageCount; i++ {
-		plan.ImageIndexes = append(plan.ImageIndexes, next)
-		next++
+
+	vc := &socialposts.VoiceContext{
+		Tone:         vp.Tone,
+		Style:        vp.Style,
+		ExamplePosts: vp.ExamplePosts,
 	}
-	return plan
+	if vp.Industry != nil {
+		vc.Industry = *vp.Industry
+	}
+	if vp.TargetAudience != nil {
+		vc.TargetAudience = *vp.TargetAudience
+	}
+	if vp.CustomInstructions != nil {
+		vc.CustomInstructions = *vp.CustomInstructions
+	}
+	return vc, nil
 }
 
 // mustMarshal marshals v to JSON, returning an empty object string on error.
@@ -416,7 +479,6 @@ func mustMarshal(v any) string {
 	}
 	return string(b)
 }
-
 
 // decodeImages validates and decodes base64 image inputs.
 func decodeImages(inputs []ImageInput) ([]aiclient.ImageData, error) {
@@ -442,22 +504,6 @@ func decodeImages(inputs []ImageInput) ([]aiclient.ImageData, error) {
 		})
 	}
 	return images, nil
-}
-
-// handleError maps processor errors to appropriate API responses.
-func (h *Handler) handleError(c *gin.Context, err error) {
-	switch {
-	case errors.Is(err, processor.ErrGeneratePost):
-		apierrors.ServiceUnavailable(c, "GENERATION_FAILED", "Failed to generate post content", err)
-	case errors.Is(err, processor.ErrAdaptContent):
-		apierrors.ServiceUnavailable(c, "ADAPT_FAILED", "Failed to adapt content", err)
-	case errors.Is(err, processor.ErrGenerateThread):
-		apierrors.ServiceUnavailable(c, "THREAD_FAILED", "Failed to generate thread", err)
-	case errors.Is(err, processor.ErrVoiceProfile):
-		apierrors.InternalError(c, err)
-	default:
-		apierrors.InternalError(c, err)
-	}
 }
 
 // getAccountID extracts and validates the account ID from the gin context.

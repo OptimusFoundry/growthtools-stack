@@ -408,7 +408,7 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 		// already explicitly asked for this commit to be captured, so the
 		// classifier's earlier "not worthwhile" verdict (if any) is moot.
 		if p.classifier != nil && !skipClassifier {
-			verdict, classifyErr := p.classifier.ClassifyCommit(ctx, commit.Message, diff)
+			verdict, classifyErr := p.classifier.Classify(ctx, commit.Message, diff)
 			if classifyErr != nil {
 				p.logger.Error(ctx, fmt.Sprintf("commit classifier failed for %s; proceeding with capture", commit.SHA), classifyErr)
 			} else if !verdict.Worthwhile {

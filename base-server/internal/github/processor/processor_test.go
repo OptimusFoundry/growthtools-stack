@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	contentProc "base-server/internal/content/processor"
+	"base-server/internal/ai/commitclassifier"
 	githubclient "base-server/internal/infra/clients/github"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -1204,8 +1204,8 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			},
 			classifierMocks: func(cl *MockCommitClassifier, s *MockGitHubStore) {
 				cl.EXPECT().
-					ClassifyCommit(gomock.Any(), "chore: bump lockfile", "lockfile diff").
-					Return(contentProc.CommitVerdict{Worthwhile: false, Reason: "lockfile-only change"}, nil)
+					Classify(gomock.Any(), "chore: bump lockfile", "lockfile diff").
+					Return(commitclassifier.Verdict{Worthwhile: false, Reason: "lockfile-only change"}, nil)
 				s.EXPECT().
 					MarkGitHubCommitSkipped(gomock.Any(), gomock.Any(), "lockfile-only change").
 					Return(nil)
@@ -1227,8 +1227,8 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 					Return(nil)
 			},
 			classifierMocks: func(cl *MockCommitClassifier, s *MockGitHubStore) {
-				cl.EXPECT().ClassifyCommit(gomock.Any(), "feat: add thing", "real diff").
-					Return(contentProc.CommitVerdict{}, errors.New("anthropic timeout"))
+				cl.EXPECT().Classify(gomock.Any(), "feat: add thing", "real diff").
+					Return(commitclassifier.Verdict{}, errors.New("anthropic timeout"))
 				// No MarkGitHubCommitSkipped — classifier failing must not
 				// mark the commit as skipped.
 			},
@@ -1250,8 +1250,8 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 					Return(nil)
 			},
 			classifierMocks: func(cl *MockCommitClassifier, s *MockGitHubStore) {
-				cl.EXPECT().ClassifyCommit(gomock.Any(), "feat: new pricing page", "pricing diff").
-					Return(contentProc.CommitVerdict{Worthwhile: true, Reason: "adds new /pricing page"}, nil)
+				cl.EXPECT().Classify(gomock.Any(), "feat: new pricing page", "pricing diff").
+					Return(commitclassifier.Verdict{Worthwhile: true, Reason: "adds new /pricing page"}, nil)
 				// No MarkGitHubCommitSkipped — worthwhile commits don't get
 				// flagged in the DB.
 			},

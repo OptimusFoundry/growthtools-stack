@@ -1,6 +1,12 @@
 package bootstrap
 
 import (
+	aiblog          "base-server/internal/ai/blog"
+	commitclassifier "base-server/internal/ai/commitclassifier"
+	mediadescriber  "base-server/internal/ai/mediadescriber"
+	mediaplanner    "base-server/internal/ai/mediaplanner"
+	socialposts     "base-server/internal/ai/socialposts"
+
 	authProcessor "base-server/internal/auth/processor"
 	billingProcessor "base-server/internal/billing/processor"
 	"base-server/internal/billing/products"
@@ -14,7 +20,6 @@ import (
 	analyticsProcessor "base-server/internal/analytics/processor"
 	blogProcessor "base-server/internal/blog/processor"
 	chatProcessor "base-server/internal/chat/processor"
-	contentProcessor "base-server/internal/content/processor"
 	githubProcessor "base-server/internal/github/processor"
 	mediaProcessor "base-server/internal/media/processor"
 	platformsProcessor "base-server/internal/platform/processor"
@@ -24,20 +29,26 @@ import (
 
 // procs holds all processor and service instances constructed during initialization.
 type procs struct {
-	billing     billingProcessor.BillingProcessor
-	auth        authProcessor.AuthProcessor
-	tierService *tiers.TierService
-	content     contentProcessor.ContentProcessor
-	chat        chatProcessor.ChatProcessor
-	platforms   platformsProcessor.PlatformProcessor
-	posts       postsProcessor.PostProcessor
-	media       mediaProcessor.MediaProcessor
-	github      githubProcessor.GitHubProcessor
-	blog        blogProcessor.BlogProcessor
-	analytics   analyticsProcessor.AnalyticsProcessor
-	settings    settingsProcessor.SettingsProcessor
-	draftGen    githubProcessor.DraftGenerator
-	blogGen     githubProcessor.BlogDraftGenerator
+	billing      billingProcessor.BillingProcessor
+	auth         authProcessor.AuthProcessor
+	tierService  *tiers.TierService
+	chat         chatProcessor.ChatProcessor
+	platforms    platformsProcessor.PlatformProcessor
+	posts        postsProcessor.PostProcessor
+	media        mediaProcessor.MediaProcessor
+	github       githubProcessor.GitHubProcessor
+	blog         blogProcessor.BlogProcessor
+	analytics    analyticsProcessor.AnalyticsProcessor
+	settings     settingsProcessor.SettingsProcessor
+	draftGen     githubProcessor.DraftGenerator
+	blogGen      githubProcessor.BlogDraftGenerator
+
+	// AI packages (no store, no HTTP — pure AI libraries)
+	aiDescriber  *mediadescriber.Describer
+	aiClassifier *commitclassifier.Classifier
+	aiPlanner    *mediaplanner.Planner
+	aiPosts      *socialposts.Generator
+	aiBlog       *aiblog.Generator
 }
 
 // buildProcessors constructs all processor and service instances.
@@ -78,14 +89,12 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	}
 	p.auth = authProcessor.New(s, authConfig, cl.googleOAuth, &p.billing, cl.emailService, logger)
 
-	// Content generation
-	p.content = contentProcessor.New(s, cl.gemini, logger)
-	// Wire the media-aware regenerate path so HandleStreamGenerate can fetch
-	// persisted media from S3 when the frontend sends media_ids (edit / regenerate
-	// flow). Only available when S3 is configured.
-	if cl.s3Fetch != nil {
-		p.content.WithMediaFetcher(s, cl.s3Fetch)
-	}
+	// AI packages — constructed once, injected by value into feature processors.
+	p.aiDescriber = mediadescriber.New(cl.gemini, logger)
+	p.aiClassifier = commitclassifier.New(cl.gemini, logger)
+	p.aiPlanner = mediaplanner.New(cl.gemini, logger)
+	p.aiPosts = socialposts.New(cl.gemini, logger)
+	p.aiBlog = aiblog.New(cl.gemini, logger)
 
 	// AI Chat
 	p.chat = chatProcessor.New(s, cl.gemini, logger)
@@ -126,14 +135,14 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 		logger,
 	)
 	p.github.SetURLSigner(cl.urlSigner)
-	// AI-filter pushed commits: only commits the content processor flags as
+	// AI-filter pushed commits: only commits the classifier flags as
 	// worthwhile (user-visible change) survive into the capture pipeline.
 	// Fail-open inside the processor means a classifier outage doesn't drop
 	// user features on the floor.
-	p.github.SetCommitClassifier(&p.content)
+	p.github.SetCommitClassifier(p.aiClassifier)
 
 	// Blog
-	p.blog = blogProcessor.New(s, cl.gemini, logger)
+	p.blog = blogProcessor.New(s, p.aiBlog, logger)
 	p.blog.SetURLSigner(cl.urlSigner)
 
 	// Analytics
@@ -144,7 +153,18 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 
 	// Draft generator: consumes github.draft.generate, builds an AI draft
 	// from the commit + capture artifacts, persists it through SaveDraft.
-	p.draftGen = githubProcessor.NewDraftGenerator(s, &p.content, &p.posts, cl.s3Head, cl.s3Fetch, cfg.S3.Bucket, logger)
+	p.draftGen = githubProcessor.NewDraftGenerator(
+		s,
+		p.aiClassifier,
+		p.aiDescriber,
+		p.aiPlanner,
+		p.aiPosts,
+		&p.posts,
+		cl.s3Head,
+		cl.s3Fetch,
+		cfg.S3.Bucket,
+		logger,
+	)
 
 	// Blog draft generator: consumes github.blog.generate, fetches the full
 	// commit diff from GitHub + capture screenshots from S3, calls Gemini,

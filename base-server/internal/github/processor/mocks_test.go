@@ -10,7 +10,7 @@
 package processor
 
 import (
-	processor "base-server/internal/content/processor"
+	commitclassifier "base-server/internal/ai/commitclassifier"
 	github "base-server/internal/infra/clients/github"
 	store "base-server/internal/infra/store"
 	context "context"
@@ -453,19 +453,19 @@ func (m *MockCommitClassifier) EXPECT() *MockCommitClassifierMockRecorder {
 	return m.recorder
 }
 
-// ClassifyCommit mocks base method.
-func (m *MockCommitClassifier) ClassifyCommit(ctx context.Context, message, diff string) (processor.CommitVerdict, error) {
+// Classify mocks base method.
+func (m *MockCommitClassifier) Classify(ctx context.Context, message, diff string) (commitclassifier.Verdict, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClassifyCommit", ctx, message, diff)
-	ret0, _ := ret[0].(processor.CommitVerdict)
+	ret := m.ctrl.Call(m, "Classify", ctx, message, diff)
+	ret0, _ := ret[0].(commitclassifier.Verdict)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ClassifyCommit indicates an expected call of ClassifyCommit.
-func (mr *MockCommitClassifierMockRecorder) ClassifyCommit(ctx, message, diff any) *gomock.Call {
+// Classify indicates an expected call of Classify.
+func (mr *MockCommitClassifierMockRecorder) Classify(ctx, message, diff any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClassifyCommit", reflect.TypeOf((*MockCommitClassifier)(nil).ClassifyCommit), ctx, message, diff)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Classify", reflect.TypeOf((*MockCommitClassifier)(nil).Classify), ctx, message, diff)
 }
 
 // MockGitHubClient is a mock of GitHubClient interface.
