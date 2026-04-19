@@ -55,6 +55,8 @@ type ListPostsParams struct {
 	Status      *string
 	ContentType *string
 	Source      *string
+	From        *time.Time // inclusive lower bound on COALESCE(published_at, scheduled_at, created_at)
+	To          *time.Time // inclusive upper bound (end of day)
 	Limit       int
 	Offset      int
 }
@@ -106,8 +108,10 @@ WHERE p.account_id = $1 AND p.deleted_at IS NULL
 AND ($2::text IS NULL OR p.status = $2::post_status)
 AND ($3::text IS NULL OR p.content_type = $3::content_type)
 AND ($4::text IS NULL OR p.source = $4::post_source)
+AND ($5::timestamptz IS NULL OR COALESCE(p.published_at, p.scheduled_at, p.created_at) >= $5)
+AND ($6::timestamptz IS NULL OR COALESCE(p.published_at, p.scheduled_at, p.created_at) <= $6)
 ORDER BY p.created_at DESC
-LIMIT $5 OFFSET $6
+LIMIT $7 OFFSET $8
 `
 
 func (s *Store) ListPosts(ctx context.Context, params ListPostsParams) ([]Post, error) {
@@ -117,7 +121,8 @@ func (s *Store) ListPosts(ctx context.Context, params ListPostsParams) ([]Post, 
 	}
 	posts := make([]Post, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlListPosts,
-		params.AccountID, params.Status, params.ContentType, params.Source, limit, params.Offset)
+		params.AccountID, params.Status, params.ContentType, params.Source,
+		params.From, params.To, limit, params.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list posts: %w", err)
 	}
