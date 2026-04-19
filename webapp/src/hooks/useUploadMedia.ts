@@ -8,38 +8,44 @@ export const useUploadMedia = () => {
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const uploadMedia = useCallback(async (file: File): Promise<MediaItem> => {
-		setLoading(true);
-		setError(null);
+	const uploadMedia = useCallback(
+		async (file: File, signal?: AbortSignal): Promise<MediaItem> => {
+			setLoading(true);
+			setError(null);
 
-		try {
-			const formData = new FormData();
-			formData.append("file", file);
+			try {
+				const formData = new FormData();
+				formData.append("file", file);
 
-			const response = await fetch(
-				`${import.meta.env.VITE_API_URL}/api/protected/media`,
-				{
-					method: "POST",
-					credentials: "include",
-					body: formData,
-				},
-			);
+				const response = await fetch(
+					`${import.meta.env.VITE_API_URL}/api/protected/media`,
+					{
+						method: "POST",
+						credentials: "include",
+						body: formData,
+						signal,
+					},
+				);
 
-			if (!response.ok) {
-				const text = await response.text();
-				throw new Error(text || `Upload failed with status ${response.status}`);
+				if (!response.ok) {
+					const text = await response.text();
+					throw new Error(
+						text || `Upload failed with status ${response.status}`,
+					);
+				}
+
+				const data: ApiMediaItem = await response.json();
+				return toMediaItem(data);
+			} catch (err: unknown) {
+				const message = getErrorMessage(err);
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
 			}
-
-			const data: ApiMediaItem = await response.json();
-			return toMediaItem(data);
-		} catch (err: unknown) {
-			const message = getErrorMessage(err);
-			setError(message);
-			throw err;
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+		},
+		[],
+	);
 
 	return { uploadMedia, loading, error };
 };

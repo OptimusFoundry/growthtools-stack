@@ -1,6 +1,5 @@
 import { useReducer } from "react";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
-import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 
@@ -11,7 +10,6 @@ export interface WizardState {
 	blurb: string;
 	contentType: WizardContentType;
 	selectedPlatforms: PlatformType[];
-	pendingFiles: UploadedFile[];
 	uploadedMedia: MediaItem[];
 	generating: boolean;
 	generated: boolean;
@@ -33,7 +31,6 @@ type WizardAction =
 	| { type: "SET_CONTENT_TYPE"; contentType: WizardContentType }
 	| { type: "SET_MAX_THREAD_PARTS"; value: number }
 	| { type: "TOGGLE_PLATFORM"; platform: PlatformType }
-	| { type: "SET_PENDING_FILES"; files: UploadedFile[] }
 	| { type: "ADD_UPLOADED_MEDIA"; media: MediaItem }
 	| { type: "REMOVE_UPLOADED_MEDIA"; id: string }
 	| { type: "START_GENERATION" }
@@ -64,7 +61,6 @@ const initialState: WizardState = {
 	blurb: "",
 	contentType: "text",
 	selectedPlatforms: [],
-	pendingFiles: [],
 	uploadedMedia: [],
 	generating: false,
 	generated: false,
@@ -95,8 +91,6 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 					: [...state.selectedPlatforms, action.platform],
 			};
 		}
-		case "SET_PENDING_FILES":
-			return { ...state, pendingFiles: action.files };
 		case "ADD_UPLOADED_MEDIA":
 			return {
 				...state,
@@ -196,8 +190,6 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		dispatch({ type: "SET_MAX_THREAD_PARTS", value });
 	const togglePlatform = (platform: PlatformType) =>
 		dispatch({ type: "TOGGLE_PLATFORM", platform });
-	const setPendingFiles = (files: UploadedFile[]) =>
-		dispatch({ type: "SET_PENDING_FILES", files });
 	const addUploadedMedia = (media: MediaItem) =>
 		dispatch({ type: "ADD_UPLOADED_MEDIA", media });
 	const removeUploadedMedia = (id: string) =>
@@ -234,7 +226,6 @@ export function useCreatePostWizard(initialOverrides?: Partial<WizardState>) {
 		setContentType,
 		setMaxThreadParts,
 		togglePlatform,
-		setPendingFiles,
 		addUploadedMedia,
 		removeUploadedMedia,
 		startGeneration,
