@@ -77,8 +77,7 @@
   background-color: var(--color-primary);
   content: "";
   display: inline-block;
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-  height: 1px;
+  height: var(--border-width-sm);
   width: var(--space-5);
 }
 
@@ -87,8 +86,7 @@
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-tighter);
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-  line-height: 1;
+  line-height: var(--line-height-none);
   margin: 0;
   text-wrap: balance;
 
@@ -102,8 +100,7 @@
 .pageHeroSub {
   color: var(--color-base-content-secondary);
   font-size: var(--font-size-lg);
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-  line-height: 1.55;
+  line-height: var(--line-height-normal);
   margin: var(--space-5) 0 0;
   max-width: 52ch;
 }

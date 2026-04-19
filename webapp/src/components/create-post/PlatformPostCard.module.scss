@@ -72,7 +72,6 @@
 	font-size: var(--font-size-base);
 	line-height: var(--line-height-relaxed);
 	color: var(--color-base-content);
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 	min-height: 60px;
 	outline: none;
 	white-space: pre-wrap;
@@ -103,9 +102,7 @@
 }
 
 .avatar {
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 	width: 40px;
-	/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
 	height: 40px;
 	border-radius: var(--radius-full);
 	background: var(--color-base-200);

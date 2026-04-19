@@ -76,8 +76,7 @@
 		left: 3px;
 		top: 0;
 		bottom: 0;
-		/* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
-		width: 2px;
+		width: var(--border-width-md);
 		background: var(--platform-accent, var(--color-border));
 		border-radius: var(--radius-full);
 	}
