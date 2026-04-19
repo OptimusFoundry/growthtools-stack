@@ -55,7 +55,12 @@ function Index() {
 					</Text>
 					<div className={cardStyles.cardGrid}>
 						{quickLinks.map((link) => (
-							<Link key={link.href} to={link.href} className={cardStyles.card}>
+							<Link
+								key={link.href}
+								to={link.href}
+								className={cardStyles.card}
+								aria-label={`Open ${link.label}, quick access`}
+							>
 								{link.icon}
 								<span className={cardStyles.cardLabel}>{link.label}</span>
 							</Link>
