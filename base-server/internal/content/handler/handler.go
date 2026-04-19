@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -24,17 +25,20 @@ const (
 	maxTotalPayload = 45 * 1024 * 1024 // 45MB total
 )
 
+// ContentProcessor defines the processor surface the handler depends on.
+// Matches the interface-based DI pattern used by every other feature handler.
+type ContentProcessor interface {
+	StreamGenerate(ctx context.Context, params contentProcessor.StreamGenerateParams) (<-chan socialposts.Event, error)
+}
+
 // Handler handles HTTP requests for content generation.
 type Handler struct {
-	processor *contentProcessor.ContentProcessor
+	processor ContentProcessor
 	logger    *observability.Logger
 }
 
 // New creates a new content Handler.
-func New(
-	processor *contentProcessor.ContentProcessor,
-	logger *observability.Logger,
-) Handler {
+func New(processor ContentProcessor, logger *observability.Logger) Handler {
 	return Handler{
 		processor: processor,
 		logger:    logger,
@@ -139,7 +143,7 @@ func (h *Handler) HandleStreamGenerate(c *gin.Context) {
 	}
 
 	// Call processor to start the pipeline.
-	ch, err := (*h.processor).StreamGenerate(ctx, procParams)
+	ch, err := h.processor.StreamGenerate(ctx, procParams)
 	if err != nil {
 		h.logger.Error(ctx, "failed to start stream generation", err)
 		apierrors.BadRequest(c, "GENERATION_FAILED", "failed to start content generation")
