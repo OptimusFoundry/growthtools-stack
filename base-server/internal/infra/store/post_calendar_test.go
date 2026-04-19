@@ -5,21 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// createTestPostWithDate creates a post for the given account and sets its
-// scheduled_at (or published_at) to the provided time. Returns the post ID.
-func createTestPostWithScheduledAt(t *testing.T, s *Store, accountID interface{ String() string }, status string, scheduledAt time.Time) {
+func createTestPostWithScheduledAt(t *testing.T, s *Store, accountID uuid.UUID, status string, scheduledAt time.Time) {
 	t.Helper()
 	ctx := context.Background()
 
-	accID, ok := accountID.(interface{ String() string })
-	_ = accID
-	_ = ok
-
-	// Use raw SQL to be able to set scheduled_at precisely.
 	_, err := s.db.ExecContext(ctx,
 		`INSERT INTO posts (account_id, content, content_type, status, scheduled_at, source, media_ids, tags)
 		 VALUES ($1, $2, 'text', $3, $4, 'manual', '{}', '{}')`,
@@ -28,7 +22,7 @@ func createTestPostWithScheduledAt(t *testing.T, s *Store, accountID interface{ 
 	require.NoError(t, err)
 }
 
-func createTestPostWithPublishedAt(t *testing.T, s *Store, accountID interface{ String() string }, status string, publishedAt time.Time) {
+func createTestPostWithPublishedAt(t *testing.T, s *Store, accountID uuid.UUID, status string, publishedAt time.Time) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -139,8 +133,7 @@ func TestGetCalendarPlatformCounts_Happy(t *testing.T) {
 
 	day := time.Date(2026, 4, 5, 10, 0, 0, 0, time.UTC)
 
-	// Create post with scheduled_at.
-	var postID interface{ String() string }
+	var postID uuid.UUID
 	err := s.db.QueryRowContext(ctx,
 		`INSERT INTO posts (account_id, content, content_type, status, scheduled_at, source, media_ids, tags)
 		 VALUES ($1, 'platform test', 'text', 'scheduled', $2, 'manual', '{}', '{}')
@@ -149,19 +142,10 @@ func TestGetCalendarPlatformCounts_Happy(t *testing.T) {
 	).Scan(&postID)
 	require.NoError(t, err)
 
-	// Get the actual postID as uuid.UUID by re-querying.
-	var rawPostID string
-	err = s.db.QueryRowContext(ctx,
-		`SELECT id::text FROM posts WHERE account_id = $1 ORDER BY created_at DESC LIMIT 1`,
-		accountID,
-	).Scan(&rawPostID)
-	require.NoError(t, err)
-
-	// Insert 3 platform_posts for different platforms.
 	for _, platform := range []string{PlatformX, PlatformLinkedIn, PlatformBlueSky} {
 		_, err = s.db.ExecContext(ctx,
-			`INSERT INTO platform_posts (post_id, platform, status, content) VALUES ($1::uuid, $2, 'pending', 'content')`,
-			rawPostID, platform,
+			`INSERT INTO platform_posts (post_id, platform, status, content) VALUES ($1, $2, 'pending', 'content')`,
+			postID, platform,
 		)
 		require.NoError(t, err)
 	}

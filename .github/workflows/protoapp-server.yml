@@ -91,53 +91,26 @@ jobs:
             > /tmp/compose-pull.log 2>&1 &
           echo $! > /tmp/compose-pull.pid
 
-      # Build test-server and test-runner in parallel. They hit disjoint
-      # GHA cache scopes and, within the runner, one is CPU-bound (go build)
-      # while the other is I/O-bound (apk + go mod download), so CPU
-      # contention is small.
-      #
-      # The Dockerfiles use BuildKit cache mounts (/go/pkg/mod,
-      # /root/.cache/go-build) so partial dep bumps only rebuild the delta.
-      # test-server uses `mode=max` so the *next* workflow run pulls full
-      # builder-stage layers from GHA cache. test-runner uses `mode=min`:
-      # nothing downstream reuses its cache, so exporting every intermediate
-      # layer is wasted bandwidth.
-      # The test-server image we build here is also what we push to ECR
-      # after tests pass — no separate build job needed.
-      - name: Build test images (parallel)
-        run: |
-          set -o pipefail
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+          cache-dependency-path: base-server/go.sum
 
+      # Build the test-server image. It's no longer used as a test container
+      # (tests run in-process on the runner after PR #30's retirement of the
+      # Docker server), but it IS the image we push to ECR after tests pass.
+      # `mode=max` exports the full builder stage so the next run starts warm.
+      - name: Build test-server image
+        run: |
           docker buildx build \
             --file Dockerfile \
             --tag base-server-test-server:ci \
             --load \
             --cache-from type=gha,scope=test-server \
             --cache-to type=gha,mode=max,scope=test-server \
-            . > /tmp/build-server.log 2>&1 &
-          SERVER_PID=$!
-
-          docker buildx build \
-            --file Dockerfile.test \
-            --tag base-server-test-runner:ci \
-            --load \
-            --cache-from type=gha,scope=test-runner \
-            --cache-to type=gha,mode=min,scope=test-runner \
-            . > /tmp/build-runner.log 2>&1 &
-          RUNNER_PID=$!
-
-          SERVER_RC=0; wait "$SERVER_PID" || SERVER_RC=$?
-          RUNNER_RC=0; wait "$RUNNER_PID" || RUNNER_RC=$?
-
-          echo "::group::test-server build log"
-          cat /tmp/build-server.log
-          echo "::endgroup::"
-          echo "::group::test-runner build log"
-          cat /tmp/build-runner.log
-          echo "::endgroup::"
-
-          [ "$SERVER_RC" -eq 0 ] || { echo "test-server build failed ($SERVER_RC)"; exit "$SERVER_RC"; }
-          [ "$RUNNER_RC" -eq 0 ] || { echo "test-runner build failed ($RUNNER_RC)"; exit "$RUNNER_RC"; }
+            .
 
       # Wait for the background compose pull started earlier so `up --wait`
       # does not have to fetch anything from docker.io. `wait` only works on
@@ -153,22 +126,25 @@ jobs:
           cat /tmp/compose-pull.log
           echo "::endgroup::"
 
-      # One-shot stack bring-up. `--wait server` lets compose handle the
-      # dependency graph (db+kafka start in parallel → flyway runs on healthy
-      # db → server waits for flyway completion + kafka health), replacing
-      # three sequential `docker compose up` calls.
-      - name: Bring up full stack
-        run: docker compose -f docker-compose.test.yml up -d --wait server
+      # Bring up db + kafka, then run flyway to apply migrations. PR #30
+      # retired the test-server container — there's no `server` service to
+      # wait on. Tests run in-process on the runner after this.
+      - name: Bring up test infrastructure
+        run: |
+          docker compose -f docker-compose.test.yml up -d --wait db kafka
+          docker compose -f docker-compose.test.yml up flyway
 
-      # Store + integration tests run in a single runner container. Go's
-      # package-level parallelism handles both test suites; `-tags=integration`
-      # is a no-op for store packages, so one `go test` invocation covers both.
-      - name: Store + Integration tests
-        run: make docker-test-db
+      # Store tests hit the real DB; integration tests spin up an in-process
+      # httptest.Server. Both run natively on the runner with Go.
+      - name: Store tests
+        run: go test -race ./internal/infra/store/...
 
-      - name: Dump Docker logs on failure
+      - name: Integration tests
+        run: go test -v -race -tags=integration ./tests/...
+
+      - name: Dump compose logs on failure
         if: failure()
-        run: make docker-logs || true
+        run: docker compose -f docker-compose.test.yml logs --tail=200 || true
 
       # Tests passed. Push the test-server image we already built+loaded above
       # straight to ECR under two tags. No rebuild, no buildx round-trip, no
