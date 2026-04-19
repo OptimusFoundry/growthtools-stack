@@ -31,6 +31,7 @@ type GitHubProcessor interface {
 	DisconnectRepo(ctx context.Context, userID uuid.UUID, owner, name string) error
 	ListRecentCommits(ctx context.Context, userID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, int, error)
 	GetCommit(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error)
+	RetryCapture(ctx context.Context, userID, commitID uuid.UUID) error
 }
 
 type Handler struct {
@@ -383,4 +384,33 @@ func (h *Handler) HandleGetCommit(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, commit)
+}
+
+// HandleRetryCapture re-runs the capture pipeline for a single commit.
+// POST /api/protected/github/commits/:id/retry-capture
+func (h *Handler) HandleRetryCapture(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+
+	commitID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", "Invalid commit id")
+		return
+	}
+
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "user_id", Value: userID.String()},
+		observability.Field{Key: "commit_id", Value: commitID.String()},
+	)
+
+	if err := h.processor.RetryCapture(ctx, userID, commitID); err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"status": "queued"})
 }

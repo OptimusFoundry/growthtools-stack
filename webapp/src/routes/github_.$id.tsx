@@ -3,6 +3,7 @@ import {
 	GitCommit,
 	GitBranch as Github,
 	Image as ImageIcon,
+	RefreshCw,
 } from "lucide-react";
 import { ArtifactGrid } from "@/components/github/ArtifactGrid";
 import { CaptureMetaCard } from "@/components/github/CaptureMetaCard";
@@ -21,7 +22,8 @@ export const Route = createFileRoute("/github_/$id")({
 
 function CommitDetailsPage() {
 	const { id } = Route.useParams();
-	const { commit, loading } = useGitHubCommit(id);
+	const { commit, loading, retryCapture, retrying, retryError } =
+		useGitHubCommit(id);
 
 	if (loading && !commit) {
 		return (
@@ -63,9 +65,32 @@ function CommitDetailsPage() {
 
 				{output?.error && (
 					<Alert variant="error" title="Capture failed">
-						{output.error}
+						<Stack gap="sm">
+							<span>{output.error}</span>
+							{retryError && <span>Retry failed: {retryError}</span>}
+							<Stack direction="row" gap="sm">
+								<Button
+									variant="primary"
+									size="sm"
+									onClick={retryCapture}
+									disabled={retrying}
+									leftIcon={<RefreshCw size={14} />}
+								>
+									{retrying ? "Retrying…" : "Retry capture"}
+								</Button>
+							</Stack>
+						</Stack>
 					</Alert>
 				)}
+
+				{!output?.error &&
+					commit.capture_requested_at &&
+					!commit.processed_at && (
+						<Alert variant="info" title="Capture in progress">
+							The capture worker is processing this commit. Refresh in a moment
+							to see results.
+						</Alert>
+					)}
 
 				{((commit.post_id && !commit.post_deleted) ||
 					(commit.blog_post_id && !commit.blog_deleted)) && (

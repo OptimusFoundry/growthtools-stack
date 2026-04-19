@@ -50,6 +50,7 @@ type GitHubStore interface {
 	GetGitHubRepoByConnectionAndName(ctx context.Context, connectionID uuid.UUID, owner, name string) (store.GitHubRepo, error)
 	GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64) (store.GitHubRepo, error)
 	GetGitHubRepoByOwnerName(ctx context.Context, owner, name string) (store.GitHubRepo, error)
+	GetGitHubRepoByID(ctx context.Context, repoID uuid.UUID) (store.GitHubRepo, error)
 	UpdateGitHubRepoID(ctx context.Context, repoID uuid.UUID, githubRepoID int64) error
 	SoftDeleteGitHubRepo(ctx context.Context, repoID uuid.UUID) error
 
@@ -57,6 +58,7 @@ type GitHubStore interface {
 	InsertGitHubCommit(ctx context.Context, repoID uuid.UUID, sha string, authorName, authorEmail *string, message string, branch, commitURL *string, pushedAt time.Time, payload *json.RawMessage) (store.GitHubCommit, bool, error)
 	GetGitHubCommitByRepoSHA(ctx context.Context, repoID uuid.UUID, sha string) (store.GitHubCommit, error)
 	MarkGitHubCommitCaptureRequested(ctx context.Context, commitID uuid.UUID) (bool, error)
+	ResetGitHubCommitCapture(ctx context.Context, commitID uuid.UUID) error
 	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
 	ListGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]store.GitHubCommitSummary, error)

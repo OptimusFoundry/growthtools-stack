@@ -284,7 +284,7 @@ func (p *GitHubProcessor) handleWorkflowRun(ctx context.Context, repo store.GitH
 	if p.publisher == nil {
 		return nil
 	}
-	p.enqueueCaptureRequests(context.WithoutCancel(ctx), repo, []store.GitHubCommit{commit})
+	p.enqueueCaptureRequests(context.WithoutCancel(ctx), repo, []store.GitHubCommit{commit}, false)
 	return nil
 }
 
@@ -316,7 +316,7 @@ func appURLFromReadme(readme string) string {
 // README, and the unified diff comes from GitHub's API — both are fetched
 // server-side using the user's stored OAuth token so the capture-worker
 // never needs any credentials or a local git checkout of its own.
-func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store.GitHubRepo, commits []store.GitHubCommit) {
+func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store.GitHubRepo, commits []store.GitHubCommit, skipClassifier bool) {
 	// Borrow the user's token. connection_id on the repo points at the
 	// github_connections PK, not the user id — GetGitHubConnectionByID is
 	// the right lookup.
@@ -347,7 +347,10 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 		// AI-driven filter: drop commits that aren't worth the capture +
 		// post cost. Nil classifier or classifier errors fall through —
 		// we'd rather capture noise than silently swallow a user feature.
-		if p.classifier != nil {
+		// skipClassifier is set by the manual retry path: the user has
+		// already explicitly asked for this commit to be captured, so the
+		// classifier's earlier "not worthwhile" verdict (if any) is moot.
+		if p.classifier != nil && !skipClassifier {
 			verdict, classifyErr := p.classifier.ClassifyCommit(ctx, commit.Message, diff)
 			if classifyErr != nil {
 				p.logger.Error(ctx, fmt.Sprintf("commit classifier failed for %s; proceeding with capture", commit.SHA), classifyErr)

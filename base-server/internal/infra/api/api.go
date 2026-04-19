@@ -180,6 +180,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.DELETE("/github/repos/:owner/:name", a.githubHandler.HandleDisconnectRepo)
 		protectedGroup.GET("/github/commits", a.githubHandler.HandleListCommits)
 		protectedGroup.GET("/github/commits/:id", a.githubHandler.HandleGetCommit)
+		protectedGroup.POST("/github/commits/:id/retry-capture", a.githubHandler.HandleRetryCapture)
 
 	}
 

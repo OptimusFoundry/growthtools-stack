@@ -1273,7 +1273,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				tt.classifierMocks(mockClassifier, mockStore)
 				proc.SetCommitClassifier(mockClassifier)
 			}
-			proc.enqueueCaptureRequests(context.Background(), repo, commits)
+			proc.enqueueCaptureRequests(context.Background(), repo, commits, false)
 			// enqueueCaptureRequests returns nothing; correctness is verified
 			// entirely through mock expectations and DoAndReturn assertions.
 		})

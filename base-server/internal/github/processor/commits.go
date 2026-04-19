@@ -39,6 +39,61 @@ func (p *GitHubProcessor) GetCommit(ctx context.Context, userID, commitID uuid.U
 	return commit, nil
 }
 
+// RetryCapture resets a commit's capture state and re-enqueues it on the
+// github.capture.requests topic. Scoped to the requesting user so one user
+// can't retry another user's commit. The classifier is bypassed — the user
+// explicitly asked for this commit to be captured, overriding any prior
+// "not worthwhile" verdict.
+func (p *GitHubProcessor) RetryCapture(ctx context.Context, userID, commitID uuid.UUID) error {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "user_id", Value: userID.String()},
+		observability.Field{Key: "commit_id", Value: commitID.String()},
+		observability.Field{Key: "operation", Value: "retry_capture"},
+	)
+
+	commit, err := p.store.GetGitHubCommitByIDForUser(ctx, userID, commitID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return ErrCommitNotFound
+		}
+		p.logger.Error(ctx, "failed to get github commit for retry", err)
+		return ErrFailedGetCommit
+	}
+
+	repo, err := p.store.GetGitHubRepoByID(ctx, commit.RepoID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return ErrRepoNotFound
+		}
+		p.logger.Error(ctx, "failed to get github repo for retry", err)
+		return ErrFailedGetCommit
+	}
+
+	if err := p.store.ResetGitHubCommitCapture(ctx, commit.ID); err != nil {
+		p.logger.Error(ctx, "failed to reset capture state for retry", err)
+		return ErrFailedGetCommit
+	}
+
+	claimed, err := p.store.MarkGitHubCommitCaptureRequested(ctx, commit.ID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to mark commit capture_requested_at for retry", err)
+		return ErrFailedGetCommit
+	}
+	if !claimed {
+		// Race with another retry (or the webhook path). The other caller
+		// will publish; we're done.
+		p.logger.Warn(ctx, "retry lost race claiming capture_requested_at; another path will publish")
+		return nil
+	}
+
+	if p.publisher == nil {
+		p.logger.Warn(ctx, "publisher is nil; retry cannot enqueue capture request")
+		return nil
+	}
+	p.enqueueCaptureRequests(context.WithoutCancel(ctx), repo, []store.GitHubCommit{commit}, true)
+	return nil
+}
+
 // ListRecentCommits returns a page of commits across all repos for a user's
 // connection along with the total row count so the UI can render full page
 // navigation.

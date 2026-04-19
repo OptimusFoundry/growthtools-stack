@@ -151,6 +151,31 @@ func (s *Store) GetGitHubRepoByOwnerName(ctx context.Context, owner, name string
 	return repo, nil
 }
 
+// GetGitHubRepoByID looks up a repo by its internal uuid. Used by manual
+// retry flows where the caller has a commit and needs the owning repo to
+// re-enqueue a capture request.
+const sqlGetGitHubRepoByID = `
+SELECT r.id, r.connection_id, a.id AS account_id, r.github_repo_id, r.owner, r.name,
+       r.default_branch, r.webhook_id, r.webhook_secret, r.enabled,
+       r.created_at, r.updated_at, r.deleted_at
+FROM github_repos r
+JOIN github_connections c ON c.id = r.connection_id AND c.deleted_at IS NULL
+JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
+WHERE r.id = $1 AND r.deleted_at IS NULL
+`
+
+func (s *Store) GetGitHubRepoByID(ctx context.Context, repoID uuid.UUID) (GitHubRepo, error) {
+	var repo GitHubRepo
+	err := s.db.GetContext(ctx, &repo, sqlGetGitHubRepoByID, repoID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubRepo{}, ErrNotFound
+		}
+		return GitHubRepo{}, fmt.Errorf("failed to get github repo by id: %w", err)
+	}
+	return repo, nil
+}
+
 // UpdateGitHubRepoID backfills the github.com numeric id on a repo row.
 // Called the first time a webhook delivers payload.repository.id for a repo
 // that was stored with github_repo_id=0 (we skip the API call on connect).

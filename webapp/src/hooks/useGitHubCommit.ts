@@ -12,6 +12,8 @@ export const useGitHubCommit = (id: string | undefined) => {
 	const [commit, setCommit] = useState<GitHubCommit | null>(null);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+	const [retrying, setRetrying] = useState<boolean>(false);
+	const [retryError, setRetryError] = useState<string | null>(null);
 
 	const fetchCommit = useCallback(
 		async (signal: AbortSignal) => {
@@ -40,11 +42,48 @@ export const useGitHubCommit = (id: string | undefined) => {
 		return () => controller.abort();
 	}, [fetchCommit]);
 
+	// retryCapture kicks off a new run of the capture pipeline for this commit
+	// and optimistically clears the prior error/artifacts on success so the UI
+	// flips to the "in progress" state without a full page reload.
+	const retryCapture = useCallback(async () => {
+		if (!id) return;
+		setRetrying(true);
+		setRetryError(null);
+		try {
+			await fetcher<{ status: string }>(
+				`${import.meta.env.VITE_API_URL}/api/protected/github/commits/${id}/retry-capture`,
+				{ method: "POST" },
+			);
+			setCommit((prev) =>
+				prev
+					? {
+							...prev,
+							capture_output: undefined,
+							processed_at: undefined,
+							capture_requested_at: new Date().toISOString(),
+						}
+					: prev,
+			);
+		} catch (err: unknown) {
+			setRetryError(getErrorMessage(err));
+		} finally {
+			setRetrying(false);
+		}
+	}, [id]);
+
 	useEffect(() => {
 		const controller = new AbortController();
 		fetchCommit(controller.signal);
 		return () => controller.abort();
 	}, [fetchCommit]);
 
-	return { commit, loading, error, refetch };
+	return {
+		commit,
+		loading,
+		error,
+		refetch,
+		retryCapture,
+		retrying,
+		retryError,
+	};
 };

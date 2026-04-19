@@ -208,6 +208,33 @@ func (s *Store) MarkGitHubCommitCaptureRequested(ctx context.Context, commitID u
 	return rows > 0, nil
 }
 
+const sqlResetGitHubCommitCapture = `
+UPDATE github_commits
+SET capture_output = NULL,
+    capture_requested_at = NULL,
+    processed_at = NULL,
+    skipped_reason = NULL
+WHERE id = $1
+`
+
+// ResetGitHubCommitCapture clears the capture state for a commit so the
+// pipeline can be re-run. Invoked by the manual retry flow when a previous
+// run failed or was skipped.
+func (s *Store) ResetGitHubCommitCapture(ctx context.Context, commitID uuid.UUID) error {
+	res, err := s.db.ExecContext(ctx, sqlResetGitHubCommitCapture, commitID)
+	if err != nil {
+		return fmt.Errorf("failed to reset github commit capture: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 const sqlMarkGitHubCommitSkipped = `
 UPDATE github_commits
 SET skipped_reason = $2, processed_at = NOW()
