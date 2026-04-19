@@ -16,6 +16,22 @@ You are an architect. Your plan must be so specific that every agent receiving a
 
 ---
 
+## Code Exploration: LSP First
+
+When resolving code specifics (Phase 3) — types, signatures, call sites, where something is wired — **use LSP before Read**. Reading whole files to look up one symbol wastes context and slows the plan.
+
+| You need | Use |
+|----------|-----|
+| Type or struct definition | `LSP goToDefinition` on the symbol |
+| Method signature on a type | `LSP hover` or `goToDefinition` |
+| Where a function is called from | `LSP findReferences` |
+| Enumerate methods on a type | `LSP documentSymbol` on the file |
+| Whole-file read (prompts, migrations, small configs) | `Read` is fine |
+
+Only fall back to `Read` when LSP returns nothing (rare for Go), when you genuinely need the surrounding prose (comments, prompt text), or when the file is short enough (<100 lines) that Read is cheaper than two LSP round-trips. When you do Read, read the specific line range you need (`offset` + `limit`) instead of the whole file.
+
+---
+
 ## Phase 1: Understand What to Build
 
 Read these first:
