@@ -4,8 +4,12 @@ package tests
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
+	"time"
+
+	"base-server/tests/testenv"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -159,6 +163,105 @@ func TestAuthAPI_Logout(t *testing.T) {
 	t.Parallel()
 	// There is no explicit logout endpoint in the routes. The test-login endpoint
 	// sets a cookie; users clear the cookie on the client side. Skipping.
+}
+
+// TestAuthAPI_GoogleOAuthCallback tests GET /api/auth/google/callback.
+// The handler calls the Google OAuth mock for token exchange and userinfo.
+// New-user paths (which call Stripe) are out of scope; we test the returning-user
+// path and error paths only.
+func TestAuthAPI_GoogleOAuthCallback(t *testing.T) {
+	t.Parallel()
+	env := testenv.GlobalEnv
+	c := testClient(t)
+
+	// noRedirectClient captures the 302 redirect without following it.
+	noRedirectClient := &http.Client{
+		Timeout: 15 * time.Second,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	tests := []struct {
+		name       string
+		queryCode  string
+		setup      func(t *testing.T)
+		wantStatus int
+	}{
+		{
+			name:       "400 when code is missing",
+			queryCode:  "",
+			setup:      func(t *testing.T) {},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:      "500 when Google token exchange fails",
+			queryCode: "valid-code",
+			setup: func(t *testing.T) {
+				env.GoogleOAuth.ExpectTokenExchange(t).
+					ReturnStatus(http.StatusInternalServerError).
+					Times(1, t)
+			},
+			wantStatus: http.StatusInternalServerError,
+		},
+		{
+			name:      "500 when Google userinfo fails",
+			queryCode: "valid-code",
+			setup: func(t *testing.T) {
+				env.GoogleOAuth.ExpectTokenExchange(t).
+					ReturnJSON(http.StatusOK, map[string]any{
+						"access_token": "goog-token",
+						"token_type":   "Bearer",
+					}).Times(1, t)
+				env.GoogleOAuth.ExpectGetUserInfo(t).
+					ReturnStatus(http.StatusInternalServerError).
+					Times(1, t)
+			},
+			wantStatus: http.StatusInternalServerError,
+		},
+		{
+			name:      "302 redirects for existing Google OAuth user",
+			queryCode: "valid-code",
+			setup: func(t *testing.T) {
+				email, sub := seedGoogleOAuthUser(t, c.Store)
+				env.GoogleOAuth.ExpectTokenExchange(t).
+					ReturnJSON(http.StatusOK, map[string]any{
+						"access_token": "goog-access-token",
+						"token_type":   "Bearer",
+					}).Times(1, t)
+				env.GoogleOAuth.ExpectGetUserInfo(t).
+					ReturnJSON(http.StatusOK, map[string]any{
+						"sub":         sub,
+						"email":       email,
+						"given_name":  "Google",
+						"family_name": "User",
+					}).Times(1, t)
+			},
+			wantStatus: http.StatusFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tt.setup(t)
+
+			url := env.BaseURL + "/api/auth/google/callback"
+			if tt.queryCode != "" {
+				url += "?code=" + tt.queryCode
+			}
+
+			req, err := http.NewRequest(http.MethodGet, url, nil)
+			require.NoError(t, err)
+
+			resp, err := noRedirectClient.Do(req)
+			require.NoError(t, err)
+			_, _ = io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+		})
+	}
 }
 
 func TestAuthAPI_GetUserInfo(t *testing.T) {

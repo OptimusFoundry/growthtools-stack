@@ -4,6 +4,7 @@
 package testenv
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -100,6 +102,11 @@ func Start(_ *testing.M) *Env {
 	os.Setenv("THREADS_API_BASE", threadsMock.Server.URL)
 	os.Setenv("TIKTOK_API_BASE", tiktokMock.Server.URL)
 	os.Setenv("PINTEREST_API_BASE", pinterestMock.Server.URL)
+	// OAuth token exchange URL overrides for FB/IG/TikTok/Pinterest
+	os.Setenv("FACEBOOK_OAUTH_TOKEN_URL", facebookMock.Server.URL+"/v21.0/oauth/access_token")
+	os.Setenv("INSTAGRAM_OAUTH_TOKEN_URL", instagramMock.Server.URL+"/v21.0/oauth/access_token")
+	os.Setenv("TIKTOK_OAUTH_TOKEN_URL", tiktokMock.Server.URL+"/v2/oauth/token/")
+	os.Setenv("PINTEREST_OAUTH_TOKEN_URL", pinterestMock.Server.URL+"/v5/oauth/token")
 
 	// Load env.test for DB credentials, JWT_SECRET, etc.
 	// We load manually so that mock URL env vars (already set above) are not
@@ -367,4 +374,47 @@ func (c *AuthedClient) Delete(path string) (*http.Response, string, error) {
 		return nil, "", fmt.Errorf("AuthedClient.Delete: %w", err)
 	}
 	return c.Do(req)
+}
+
+// SSEEvent represents a single server-sent event.
+type SSEEvent struct {
+	Event string // value of the "event:" line; empty if no event line
+	Data  string // value of the "data:" line(s) concatenated with "\n"
+}
+
+// ReadSSE reads all SSE events from resp.Body until EOF.
+// The caller is responsible for closing resp.Body.
+// Call this only for responses with Content-Type: text/event-stream.
+func ReadSSE(t *testing.T, resp *http.Response) []SSEEvent {
+	t.Helper()
+	var events []SSEEvent
+	scanner := bufio.NewScanner(resp.Body)
+
+	var cur SSEEvent
+	var dataLines []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			// Empty line = end of event block.
+			if len(dataLines) > 0 || cur.Event != "" {
+				cur.Data = strings.Join(dataLines, "\n")
+				events = append(events, cur)
+				cur = SSEEvent{}
+				dataLines = nil
+			}
+			continue
+		}
+		if strings.HasPrefix(line, "event:") {
+			cur.Event = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
+		} else if strings.HasPrefix(line, "data:") {
+			dataLines = append(dataLines, strings.TrimSpace(strings.TrimPrefix(line, "data:")))
+		}
+	}
+	// Flush any trailing partial event (no final blank line).
+	if len(dataLines) > 0 || cur.Event != "" {
+		cur.Data = strings.Join(dataLines, "\n")
+		events = append(events, cur)
+	}
+	return events
 }

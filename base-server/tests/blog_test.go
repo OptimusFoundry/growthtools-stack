@@ -3,12 +3,16 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"base-server/internal/infra/store"
+	"base-server/tests/testenv"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -481,6 +485,140 @@ func TestBlogAPI_PublishBlog(t *testing.T) {
 				require.NoError(t, json.Unmarshal(body, &published))
 				tt.afterAssert(t, published.AccountID, published.ID)
 			}
+		})
+	}
+}
+
+// TestBlogAPI_GenerateBlog tests POST /api/protected/blog/generate.
+//
+// IMPORTANT: The Gemini success path (201) and Gemini-error path (500) are NOT
+// testable at integration level because the Gemini SDK does not support base-URL
+// overrides. These paths are covered by unit tests with gomock.
+// This test covers validation and auth only.
+func TestBlogAPI_GenerateBlog(t *testing.T) {
+	t.Parallel()
+	c := testClient(t)
+
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) string // returns token
+		body       any
+		wantStatus int
+	}{
+		{
+			name: "400 when instruction is missing",
+			setup: func(t *testing.T) string {
+				return seedUserWithAccount(t, c.Store).Token
+			},
+			body:       map[string]any{"keywords": []any{"go", "testing"}},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) string {
+				return ""
+			},
+			body:       map[string]any{"instruction": "write a blog post"},
+			wantStatus: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token := tt.setup(t)
+			resp, _ := c.Request(t, http.MethodPost, "/api/protected/blog/generate", tt.body, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+		})
+	}
+}
+
+// TestBlogAPI_StreamGenerateBlog tests POST /api/protected/blog/generate/stream.
+//
+// SSE headers are set AFTER validation. Validation errors return JSON 400/401.
+// When validation passes and the request reaches the Gemini call, Gemini fails
+// immediately with the test API key — the handler emits an SSE "error" event and
+// closes the stream with HTTP 200.
+func TestBlogAPI_StreamGenerateBlog(t *testing.T) {
+	t.Parallel()
+	c := testClient(t)
+	env := testenv.GlobalEnv
+
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) string
+		body       any
+		wantStatus int
+		checkSSE   bool
+	}{
+		{
+			name: "400 when instruction is missing",
+			setup: func(t *testing.T) string {
+				return seedUserWithAccount(t, c.Store).Token
+			},
+			body:       map[string]any{},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) string {
+				return ""
+			},
+			body:       map[string]any{"instruction": "write a blog post"},
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "200 with SSE error event when Gemini fails (test API key)",
+			setup: func(t *testing.T) string {
+				return seedUserWithAccount(t, c.Store).Token
+			},
+			body:       map[string]any{"instruction": "write a blog post about Go testing"},
+			wantStatus: http.StatusOK,
+			checkSSE:   true,
+		},
+	}
+
+	sseClient := &http.Client{Timeout: 30 * time.Second}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token := tt.setup(t)
+
+			if !tt.checkSSE {
+				resp, _ := c.Request(t, http.MethodPost, "/api/protected/blog/generate/stream", tt.body, token)
+				assert.Equal(t, tt.wantStatus, resp.StatusCode)
+				return
+			}
+
+			bodyBytes, err := json.Marshal(tt.body)
+			require.NoError(t, err)
+
+			req, err := http.NewRequest(http.MethodPost,
+				env.BaseURL+"/api/protected/blog/generate/stream",
+				bytes.NewReader(bodyBytes))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			if token != "" {
+				req.AddCookie(&http.Cookie{Name: "token", Value: token})
+			}
+
+			resp, err := sseClient.Do(req)
+			require.NoError(t, err)
+			defer func() { _, _ = io.Copy(io.Discard, resp.Body); resp.Body.Close() }()
+
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			assert.Contains(t, resp.Header.Get("Content-Type"), "text/event-stream")
+
+			events := testenv.ReadSSE(t, resp)
+			hasErrorOrDone := false
+			for _, ev := range events {
+				if ev.Event == "error" || ev.Event == "done" {
+					hasErrorOrDone = true
+					break
+				}
+			}
+			assert.True(t, hasErrorOrDone, "expected SSE error or done event; got events: %+v", events)
 		})
 	}
 }

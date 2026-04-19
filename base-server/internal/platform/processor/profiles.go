@@ -144,26 +144,10 @@ func (p *PlatformProcessor) fetchInstagramProfile(ctx context.Context, accessTok
 }
 
 func (p *PlatformProcessor) fetchThreadsProfile(ctx context.Context, accessToken string) (string, string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://graph.threads.net/v1.0/me?fields=id,username&access_token="+accessToken, nil)
-	if err != nil {
-		return "", "", err
+	if p.threadsClient == nil {
+		return "unknown", "", nil
 	}
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		return "", "", err
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-
-	var result struct {
-		ID       string `json:"id"`
-		Username string `json:"username"`
-	}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", "", err
-	}
-	return result.ID, result.Username, nil
+	return p.threadsClient.GetProfile(ctx, accessToken)
 }
 
 func (p *PlatformProcessor) fetchTikTokProfile(ctx context.Context, accessToken, openID string) (string, string, error) {

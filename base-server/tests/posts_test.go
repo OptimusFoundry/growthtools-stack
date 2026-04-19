@@ -689,14 +689,181 @@ func TestPostsAPI_UpdateDraft(t *testing.T) {
 	}
 }
 
-// TestPostsAPI_PublishPost and TestPostsAPI_RetryPost are OUT OF SCOPE:
-// both call social platform adapters (third parties). They are covered at the
-// processor unit-test level with gomock.
+// TestPostsAPI_PublishPost tests POST /api/protected/posts/:id/publish.
+// No synchronous upstream call — publishes to Kafka (best-effort).
+func TestPostsAPI_PublishPost(t *testing.T) {
+	t.Parallel()
+	c := testClient(t)
 
-func TestPostsAPI_SchedulePost_DBAssertion(t *testing.T) {
-	// This is covered by TestPostsAPI_SchedulePost "200 schedules the post" case above.
-	// Added here as documentation: scheduled_at and status="scheduled" are verified
-	// directly via c.Store.GetPostByID after the HTTP call.
-	t.Skip("covered in TestPostsAPI_SchedulePost")
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (token, postID string)
+		body        any
+		wantStatus  int
+		afterAssert func(t *testing.T, accountID, postID uuid.UUID)
+	}{
+		{
+			name: "200 queues post for publishing",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				p := seedPost(t, c.Store, u.AccountID, seedPostOpts{})
+				return u.Token, p.ID.String()
+			},
+			body:       map[string]any{"platforms": []any{"x"}},
+			wantStatus: http.StatusOK,
+			afterAssert: func(t *testing.T, accountID, postID uuid.UUID) {
+				got, err := c.Store.GetPostByID(context.Background(), accountID, postID)
+				require.NoError(t, err)
+				assert.Equal(t, "publishing", got.Status)
+			},
+		},
+		{
+			name: "400 when platforms field is missing",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				p := seedPost(t, c.Store, u.AccountID, seedPostOpts{})
+				return u.Token, p.ID.String()
+			},
+			body:       map[string]any{},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "400 when post ID is not a UUID",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				return u.Token, "not-a-uuid"
+			},
+			body:       map[string]any{"platforms": []any{"x"}},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string) {
+				return "", uuid.New().String()
+			},
+			body:       map[string]any{"platforms": []any{"x"}},
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "404 when post does not exist",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				return u.Token, uuid.New().String()
+			},
+			body:       map[string]any{"platforms": []any{"x"}},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "404 when post belongs to another account",
+			setup: func(t *testing.T) (string, string) {
+				owner := seedUserWithAccount(t, c.Store)
+				p := seedPost(t, c.Store, owner.AccountID, seedPostOpts{})
+				stranger := seedUserWithAccount(t, c.Store)
+				return stranger.Token, p.ID.String()
+			},
+			body:       map[string]any{"platforms": []any{"x"}},
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, postIDStr := tt.setup(t)
+			resp, body := c.Request(t, http.MethodPost, "/api/protected/posts/"+postIDStr+"/publish", tt.body, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			if tt.afterAssert != nil && resp.StatusCode == http.StatusOK {
+				var got map[string]any
+				_ = json.Unmarshal(body, &got)
+				// DB assertion uses the seeded post ID directly.
+				postID, err := uuid.Parse(postIDStr)
+				require.NoError(t, err)
+				// We need the accountID from the seeded post.
+				dbPost, err := c.Store.GetDB().QueryContext(context.Background(),
+					`SELECT account_id FROM posts WHERE id = $1`, postID)
+				require.NoError(t, err)
+				defer dbPost.Close()
+				if dbPost.Next() {
+					var accountID uuid.UUID
+					require.NoError(t, dbPost.Scan(&accountID))
+					tt.afterAssert(t, accountID, postID)
+				}
+			}
+		})
+	}
+}
+
+// TestPostsAPI_RetryPost tests POST /api/protected/posts/:id/retry.
+// No synchronous upstream call.
+func TestPostsAPI_RetryPost(t *testing.T) {
+	t.Parallel()
+	c := testClient(t)
+
+	tests := []struct {
+		name       string
+		setup      func(t *testing.T) (token, postID string)
+		wantStatus int
+	}{
+		{
+			name: "200 resets platform posts for retry",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				p := seedPost(t, c.Store, u.AccountID, seedPostOpts{Status: "failed"})
+				// Insert a platform_posts row with failed status.
+				_, err := c.Store.GetDB().ExecContext(context.Background(),
+					`INSERT INTO platform_posts (post_id, platform, status) VALUES ($1, $2, $3)`,
+					p.ID, "x", "failed")
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					_, _ = c.Store.GetDB().ExecContext(context.Background(),
+						`DELETE FROM platform_posts WHERE post_id = $1`, p.ID)
+				})
+				return u.Token, p.ID.String()
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "400 when post ID is not a UUID",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				return u.Token, "not-a-uuid"
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "401 when no token",
+			setup: func(t *testing.T) (string, string) {
+				return "", uuid.New().String()
+			},
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "404 when post does not exist",
+			setup: func(t *testing.T) (string, string) {
+				u := seedUserWithAccount(t, c.Store)
+				return u.Token, uuid.New().String()
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "404 when post belongs to another account",
+			setup: func(t *testing.T) (string, string) {
+				owner := seedUserWithAccount(t, c.Store)
+				p := seedPost(t, c.Store, owner.AccountID, seedPostOpts{Status: "failed"})
+				stranger := seedUserWithAccount(t, c.Store)
+				return stranger.Token, p.ID.String()
+			},
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			token, postIDStr := tt.setup(t)
+			resp, _ := c.Request(t, http.MethodPost, "/api/protected/posts/"+postIDStr+"/retry", nil, token)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+		})
+	}
 }
 

@@ -69,6 +69,7 @@ func (m *MockXClient) VerifyCredentials(ctx context.Context, accessToken string)
 // MockThreadsClient is a manual mock for ThreadsClient
 type MockThreadsClient struct {
 	VerifyCredentialsFn func(ctx context.Context, accessToken string) error
+	GetProfileFn        func(ctx context.Context, accessToken string) (string, string, error)
 }
 
 func (m *MockThreadsClient) VerifyCredentials(ctx context.Context, accessToken string) error {
@@ -76,6 +77,13 @@ func (m *MockThreadsClient) VerifyCredentials(ctx context.Context, accessToken s
 		return m.VerifyCredentialsFn(ctx, accessToken)
 	}
 	return nil
+}
+
+func (m *MockThreadsClient) GetProfile(ctx context.Context, accessToken string) (string, string, error) {
+	if m.GetProfileFn != nil {
+		return m.GetProfileFn(ctx, accessToken)
+	}
+	return "mock-threads-user-id", "mockthreadsuser", nil
 }
 
 // MockBlueskyClient is a manual mock for BlueskyClient

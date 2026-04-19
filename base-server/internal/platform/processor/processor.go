@@ -46,9 +46,10 @@ type XClient interface {
 	VerifyCredentials(ctx context.Context, accessToken string) error
 }
 
-// ThreadsClient defines the Threads API operations needed for health checks.
+// ThreadsClient defines the Threads API operations needed for health checks and profile fetches.
 type ThreadsClient interface {
 	VerifyCredentials(ctx context.Context, accessToken string) error
+	GetProfile(ctx context.Context, accessToken string) (userID, username string, err error)
 }
 
 // BlueskyClient defines the Bluesky API operations needed for health checks.
