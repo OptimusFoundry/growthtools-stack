@@ -274,7 +274,7 @@ function PostsPage() {
 														e.stopPropagation();
 														setDeleteTargetId(post.id);
 													}}
-													aria-label="Delete"
+													aria-label={`Delete post "${truncate(post.title || post.content, 40)}"`}
 												>
 													<Trash2 size={16} />
 												</button>
