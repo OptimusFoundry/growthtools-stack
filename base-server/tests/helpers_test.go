@@ -10,12 +10,11 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
-	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/tests/testenv"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -31,53 +30,12 @@ type Client struct {
 	Store   *store.Store
 }
 
-var healthCheckOnce sync.Once
-
 func testClient(t *testing.T) *Client {
 	t.Helper()
-
-	host := envOrDefault("TEST_API_HOST", "localhost")
-	port := envOrDefault("TEST_API_PORT", "8080")
-	baseURL := fmt.Sprintf("http://%s:%s", host, port)
-
-	// Probe /health once per test binary so we fail fast with a clear message
-	// if the server is not running.
-	healthCheckOnce.Do(func() {
-		deadline := time.Now().Add(5 * time.Second)
-		for time.Now().Before(deadline) {
-			resp, err := http.Get(baseURL + "/health") //nolint:noctx
-			if err == nil {
-				_ = resp.Body.Close()
-				if resp.StatusCode == http.StatusOK {
-					return
-				}
-			}
-			time.Sleep(250 * time.Millisecond)
-		}
-		panic(fmt.Sprintf(
-			"integration tests require the API server to be running at %s — run `make dev-up` then `go run main.go`",
-			baseURL,
-		))
-	})
-
-	// Direct store handle for seeding — same DB the running server uses.
-	dbHost := envOrDefault("TEST_DB_HOST", "localhost")
-	dbPort := envOrDefault("TEST_DB_PORT", "5432")
-	dbUser := envOrDefault("TEST_DB_USER", "base_user")
-	dbPass := envOrDefault("TEST_DB_PASS", "base_password")
-	dbName := envOrDefault("TEST_DB_NAME", "base_db")
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		dbUser, dbPass, dbHost, dbPort, dbName)
-
-	logger := observability.NewLogger()
-	s, err := store.New(connStr, logger)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = s.GetDB().Close() })
-
 	return &Client{
-		baseURL: baseURL,
+		baseURL: testenv.GlobalEnv.BaseURL,
 		http:    &http.Client{Timeout: 15 * time.Second},
-		Store:   &s,
+		Store:   testenv.GlobalEnv.DB,
 	}
 }
 
