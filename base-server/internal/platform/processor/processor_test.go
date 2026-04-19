@@ -160,13 +160,10 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 	logger := observability.NewLogger()
 	accountID := uuid.New()
 
-	t.Run("happy path", func(t *testing.T) {
+	t.Run("happy path (new connection)", func(t *testing.T) {
 		t.Parallel()
 		connID := uuid.New()
 		mockStore := &MockPlatformStore{
-			GetPlatformConnectionByAccountAndPlatformFn: func(ctx context.Context, aID uuid.UUID, platform, platformUserID string) (store.PlatformConnection, error) {
-				return store.PlatformConnection{}, store.ErrNotFound
-			},
 			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
 				return store.PlatformConnection{ID: connID, Platform: "bluesky", PlatformUserID: params.PlatformUserID}, nil
 			},
@@ -180,42 +177,28 @@ func TestPlatformProcessor_ConnectBluesky(t *testing.T) {
 		assert.Equal(t, "bluesky", conn.Platform)
 	})
 
-	t.Run("already connected", func(t *testing.T) {
+	t.Run("reconnect upserts existing row", func(t *testing.T) {
 		t.Parallel()
+		existingID := uuid.New()
+		var capturedToken string
 		mockStore := &MockPlatformStore{
-			GetPlatformConnectionByAccountAndPlatformFn: func(ctx context.Context, aID uuid.UUID, platform, platformUserID string) (store.PlatformConnection, error) {
-				return store.PlatformConnection{ID: uuid.New()}, nil
+			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
+				capturedToken = params.AccessToken
+				return store.PlatformConnection{ID: existingID, Platform: "bluesky", PlatformUserID: params.PlatformUserID, AccessToken: params.AccessToken}, nil
 			},
 		}
 		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
 
-		_, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "app-password")
+		conn, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "new-app-password")
 
-		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrAlreadyConnected)
-	})
-
-	t.Run("check existing connection error", func(t *testing.T) {
-		t.Parallel()
-		mockStore := &MockPlatformStore{
-			GetPlatformConnectionByAccountAndPlatformFn: func(ctx context.Context, aID uuid.UUID, platform, platformUserID string) (store.PlatformConnection, error) {
-				return store.PlatformConnection{}, errors.New("db error")
-			},
-		}
-		proc := New(mockStore, testOAuthConfigs(), StaticTokens{}, logger, nil, nil, nil)
-
-		_, err := proc.ConnectBluesky(context.Background(), accountID, "user.bsky.social", "app-password")
-
-		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrConnectBluesky)
+		require.NoError(t, err)
+		assert.Equal(t, existingID, conn.ID)
+		assert.Equal(t, "new-app-password", capturedToken)
 	})
 
 	t.Run("create connection error", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockPlatformStore{
-			GetPlatformConnectionByAccountAndPlatformFn: func(ctx context.Context, aID uuid.UUID, platform, platformUserID string) (store.PlatformConnection, error) {
-				return store.PlatformConnection{}, store.ErrNotFound
-			},
 			CreatePlatformConnectionFn: func(ctx context.Context, params store.CreatePlatformConnectionParams) (store.PlatformConnection, error) {
 				return store.PlatformConnection{}, errors.New("db error")
 			},

@@ -20,16 +20,11 @@ func (p *PlatformProcessor) ConnectBluesky(ctx context.Context, accountID uuid.U
 		observability.Field{Key: "operation", Value: "connect_bluesky"},
 	)
 
-	// Check for existing connection with the same handle.
-	_, err := p.store.GetPlatformConnectionByAccountAndPlatform(ctx, accountID, "bluesky", handle)
-	if err == nil {
-		return store.PlatformConnection{}, ErrAlreadyConnected
-	}
-	if !errors.Is(err, store.ErrNotFound) {
-		p.logger.Error(ctx, "failed to check existing bluesky connection", err)
-		return store.PlatformConnection{}, ErrConnectBluesky
-	}
-
+	// Upsert: if a row for (account, bluesky, handle) already exists, the
+	// store's ON CONFLICT clause rotates the access_token, resets status to
+	// 'active', and clears deleted_at. This is the reconnect path — the app
+	// password may have been rotated on Bluesky's side, so treating an
+	// existing row as a conflict is wrong; we want to replace the creds.
 	params := store.CreatePlatformConnectionParams{
 		AccountID:      accountID,
 		Platform:       "bluesky",
@@ -68,16 +63,9 @@ func (p *PlatformProcessor) ConnectWithToken(ctx context.Context, accountID uuid
 		return store.PlatformConnection{}, fmt.Errorf("%w: %v", ErrConnectThreads, err)
 	}
 
-	// Check for existing connection
-	_, err = p.store.GetPlatformConnectionByAccountAndPlatform(ctx, accountID, platform, platformUserID)
-	if err == nil {
-		return store.PlatformConnection{}, ErrAlreadyConnected
-	}
-	if !errors.Is(err, store.ErrNotFound) {
-		p.logger.Error(ctx, "failed to check existing connection", err)
-		return store.PlatformConnection{}, ErrConnectThreads
-	}
-
+	// Upsert on reconnect: same rationale as ConnectBluesky — the store's
+	// ON CONFLICT handles token rotation + status reset, so an existing row
+	// for this platform user should be refreshed rather than rejected.
 	var displayNamePtr *string
 	if displayName != "" {
 		displayNamePtr = &displayName
