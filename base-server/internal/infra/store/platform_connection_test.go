@@ -193,6 +193,78 @@ func TestUpdatePlatformConnectionStatus(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
+func TestCreatePlatformConnection_UpsertOnReconnect(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	platformUserID := "bs-upsert-" + uuid.New().String()[:8]
+	oldDisplay := "old-handle"
+	oldRefresh := "old-refresh"
+	oldExpiry := time.Now().UTC().Add(1 * time.Hour)
+
+	first, err := s.CreatePlatformConnection(ctx, CreatePlatformConnectionParams{
+		AccountID:      accountID,
+		Platform:       PlatformBlueSky,
+		PlatformUserID: platformUserID,
+		DisplayName:    &oldDisplay,
+		AccessToken:    "old-app-password",
+		RefreshToken:   &oldRefresh,
+		TokenExpiresAt: &oldExpiry,
+		Scopes:         StringArray{"read"},
+	})
+	require.NoError(t, err)
+
+	// Simulate the row drifting to expired + soft-deleted — the two states a
+	// reconnect needs to recover from.
+	err = s.UpdatePlatformConnectionStatus(ctx, accountID, first.ID, PlatformConnectionStatusExpired)
+	require.NoError(t, err)
+	err = s.DeletePlatformConnection(ctx, accountID, first.ID)
+	require.NoError(t, err)
+
+	// Re-connect with a fresh app password. The ON CONFLICT clause must
+	// rotate the token, flip status back to active, and clear deleted_at —
+	// without minting a new row.
+	newDisplay := "new-handle"
+	newRefresh := "new-refresh"
+	newExpiry := time.Now().UTC().Add(48 * time.Hour)
+
+	second, err := s.CreatePlatformConnection(ctx, CreatePlatformConnectionParams{
+		AccountID:      accountID,
+		Platform:       PlatformBlueSky,
+		PlatformUserID: platformUserID,
+		DisplayName:    &newDisplay,
+		AccessToken:    "new-app-password",
+		RefreshToken:   &newRefresh,
+		TokenExpiresAt: &newExpiry,
+		Scopes:         StringArray{"read", "write"},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, first.ID, second.ID, "upsert must reuse the existing row id")
+	assert.Equal(t, "new-app-password", second.AccessToken)
+	require.NotNil(t, second.RefreshToken)
+	assert.Equal(t, "new-refresh", *second.RefreshToken)
+	require.NotNil(t, second.DisplayName)
+	assert.Equal(t, "new-handle", *second.DisplayName)
+	assert.Equal(t, PlatformConnectionStatusActive, second.Status)
+	assert.Nil(t, second.DeletedAt)
+	assert.ElementsMatch(t, StringArray{"read", "write"}, second.Scopes)
+
+	// Round-trip via the Get path — same id, same refreshed fields, and the
+	// deleted_at IS NULL filter now finds it again.
+	got, err := s.GetPlatformConnectionByAccountAndPlatform(ctx, accountID, PlatformBlueSky, platformUserID)
+	require.NoError(t, err)
+	assert.Equal(t, first.ID, got.ID)
+	assert.Equal(t, "new-app-password", got.AccessToken)
+	assert.Equal(t, PlatformConnectionStatusActive, got.Status)
+}
+
 func TestDeletePlatformConnection(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {
