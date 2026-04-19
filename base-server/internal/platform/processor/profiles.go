@@ -144,9 +144,6 @@ func (p *PlatformProcessor) fetchInstagramProfile(ctx context.Context, accessTok
 }
 
 func (p *PlatformProcessor) fetchThreadsProfile(ctx context.Context, accessToken string) (string, string, error) {
-	if p.threadsClient == nil {
-		return "unknown", "", nil
-	}
 	return p.threadsClient.GetProfile(ctx, accessToken)
 }
 

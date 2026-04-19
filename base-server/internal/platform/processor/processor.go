@@ -1,3 +1,5 @@
+//go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor
+
 package processor
 
 import (
