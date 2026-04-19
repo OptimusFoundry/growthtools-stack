@@ -69,12 +69,22 @@ const fixtureCalendarMonth = {
 	days: [
 		{
 			date: "2026-04-05",
-			by_status: { ...emptyBreakdown.by_status, scheduled: 2, published: 1, draft: 1 },
+			by_status: {
+				...emptyBreakdown.by_status,
+				scheduled: 2,
+				published: 1,
+				draft: 1,
+			},
 			by_platform: { ...emptyBreakdown.by_platform, x: 2, linkedin: 1 },
 		},
 	],
 	month_totals: {
-		by_status: { ...emptyBreakdown.by_status, scheduled: 2, published: 1, draft: 1 },
+		by_status: {
+			...emptyBreakdown.by_status,
+			scheduled: 2,
+			published: 1,
+			draft: 1,
+		},
 		by_platform: { ...emptyBreakdown.by_platform, x: 2, linkedin: 1 },
 	},
 };
