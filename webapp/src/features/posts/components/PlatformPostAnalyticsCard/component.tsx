@@ -111,7 +111,7 @@ export function PlatformPostAnalyticsCard({
 						<KpiCell label="Comments" value={pp.latest?.comments ?? 0} />
 						<KpiCell label="Shares" value={pp.latest?.shares ?? 0} />
 					</div>
-					{sparkData.length > 0 && (
+					{sparkData.length >= 2 && (
 						<Sparkline
 							data={sparkData}
 							stroke="var(--color-primary)"
