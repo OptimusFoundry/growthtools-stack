@@ -146,6 +146,10 @@ func (s *stubAIClient) CreateMessage(ctx context.Context, systemPrompt string, m
 	return "", errors.New("not implemented in stub")
 }
 
+func (s *stubAIClient) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	return "", errors.New("not implemented in stub")
+}
+
 func (s *stubAIClient) StreamMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int, onChunk func(string)) error {
 	return errors.New("not implemented in stub")
 }

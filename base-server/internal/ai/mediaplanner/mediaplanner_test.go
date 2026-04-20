@@ -18,7 +18,7 @@ func TestPlanner_SelectAndDecide_SingleWithMedia(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := mediaplanner.NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(`{"keep_indexes":[1],"mode":"single","thread_parts":0,"reason":"video shows the change"}`, nil)
 
 	p := mediaplanner.New(mock, newLogger())
@@ -45,7 +45,7 @@ func TestPlanner_SelectAndDecide_ThreadWithTwoParts(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := mediaplanner.NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(`{"keep_indexes":[1,2],"mode":"thread","thread_parts":2,"reason":"enough for two parts"}`, nil)
 
 	p := mediaplanner.New(mock, newLogger())
@@ -72,7 +72,7 @@ func TestPlanner_SelectAndDecide_ThreadPartsClampedTo3(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := mediaplanner.NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(`{"keep_indexes":[],"mode":"thread","thread_parts":10,"reason":"too many"}`, nil)
 
 	p := mediaplanner.New(mock, newLogger())
@@ -89,7 +89,7 @@ func TestPlanner_SelectAndDecide_InvalidIndexesDropped(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := mediaplanner.NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(`{"keep_indexes":[0,5,999],"mode":"single","thread_parts":0,"reason":"x"}`, nil)
 
 	p := mediaplanner.New(mock, newLogger())
@@ -130,7 +130,7 @@ func TestPlanner_SelectAndDecide_StripsMarkdownCodeFence(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			mock := mediaplanner.NewMockAIClient(ctrl)
-			mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(tc.resp, nil)
 
 			p := mediaplanner.New(mock, newLogger())
@@ -177,7 +177,7 @@ func TestPlanner_SelectAndDecide_ExtractsJSONFromNoisyResponse(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			mock := mediaplanner.NewMockAIClient(ctrl)
-			mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(tc.resp, nil)
 
 			p := mediaplanner.New(mock, newLogger())
@@ -200,7 +200,7 @@ func TestPlanner_SelectAndDecide_AIError(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := mediaplanner.NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", errors.New("timeout"))
 
 	p := mediaplanner.New(mock, newLogger())

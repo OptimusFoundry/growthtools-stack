@@ -41,6 +41,21 @@ func (m *MockAIClient) EXPECT() *MockAIClientMockRecorder {
 	return m.recorder
 }
 
+// CreateJSONMessage mocks base method.
+func (m *MockAIClient) CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateJSONMessage", ctx, systemPrompt, messages, maxTokens)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateJSONMessage indicates an expected call of CreateJSONMessage.
+func (mr *MockAIClientMockRecorder) CreateJSONMessage(ctx, systemPrompt, messages, maxTokens any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateJSONMessage", reflect.TypeOf((*MockAIClient)(nil).CreateJSONMessage), ctx, systemPrompt, messages, maxTokens)
+}
+
 // CreateMessage mocks base method.
 func (m *MockAIClient) CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error) {
 	m.ctrl.T.Helper()
