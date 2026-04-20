@@ -21,6 +21,15 @@ export interface BlogPost {
 	updatedAt: string;
 }
 
+export interface BlogPostListItem {
+	id: string;
+	title: string;
+	status: BlogStatus;
+	publishedAt?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface SEOMetadata {
 	seoTitle?: string;
 	metaDescription?: string;

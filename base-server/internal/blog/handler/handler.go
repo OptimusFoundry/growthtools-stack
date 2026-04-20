@@ -25,7 +25,7 @@ import (
 type BlogProcessor interface {
 	CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
 	GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPostWithMedia, error)
-	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error)
+	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
 	UpdateBlogPost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)

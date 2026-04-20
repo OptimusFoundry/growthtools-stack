@@ -165,8 +165,8 @@ func TestBlogProcessor_ListBlogPosts(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockBlogStore{
-			ListBlogPostsFn: func(ctx context.Context, aID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error) {
-				return []store.BlogPost{{ID: uuid.New(), Title: "Post 1"}, {ID: uuid.New(), Title: "Post 2"}}, nil
+			ListBlogPostsFn: func(ctx context.Context, aID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error) {
+				return []store.BlogPostListItem{{ID: uuid.New(), Title: "Post 1"}, {ID: uuid.New(), Title: "Post 2"}}, nil
 			},
 		}
 		proc := New(mockStore, &MockBlogGenerator{}, logger)
@@ -181,7 +181,7 @@ func TestBlogProcessor_ListBlogPosts(t *testing.T) {
 		t.Parallel()
 		dbErr := errors.New("db error")
 		mockStore := &MockBlogStore{
-			ListBlogPostsFn: func(ctx context.Context, aID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error) {
+			ListBlogPostsFn: func(ctx context.Context, aID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error) {
 				return nil, dbErr
 			},
 		}

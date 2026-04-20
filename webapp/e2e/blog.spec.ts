@@ -4,7 +4,7 @@
  * Tests for the blog management page.
  *
  * Endpoints exercised:
- *   GET    /api/protected/blog            → 200 (list), 401, 500
+ *   GET    /api/protected/blogs           → 200 (list), 401, 500
  *   POST   /api/protected/blog            → 201 (create), 400, 409, 500
  *   PUT    /api/protected/blog/:id        → 200 (update), 400, 404, 500
  *   DELETE /api/protected/blog/:id        → 200 (delete), 404, 500
@@ -49,14 +49,6 @@ test.describe("Blog", () => {
 			});
 			expect(await newPostBtn.isVisible()).toBe(true);
 		});
-
-		test("shows keyword badges", async ({ page }) => {
-			await page.goto("/blog");
-			await page.waitForLoadState("networkidle");
-
-			const content = await page.textContent("body");
-			expect(content).toMatch(/growth tools/i);
-		});
 	});
 
 	// =========================================================================
@@ -66,7 +58,7 @@ test.describe("Blog", () => {
 	test.describe("Filtering", () => {
 		test("filter by status shows matching posts", async ({ network, page }) => {
 			network.use(
-				http.get("*/api/protected/blog", ({ request }) => {
+				http.get("*/api/protected/blogs", ({ request }) => {
 					const url = new URL(request.url);
 					const status = url.searchParams.get("status");
 					if (status === "published") {
@@ -93,7 +85,7 @@ test.describe("Blog", () => {
 	test.describe("Empty State", () => {
 		test("shows empty state when no blog posts", async ({ network, page }) => {
 			network.use(
-				http.get("*/api/protected/blog", () => {
+				http.get("*/api/protected/blogs", () => {
 					return HttpResponse.json([]);
 				}),
 			);
@@ -110,10 +102,10 @@ test.describe("Blog", () => {
 	// Status Code Coverage — GET /api/protected/blog
 	// =========================================================================
 
-	test.describe("Status Code Coverage — GET /api/protected/blog", () => {
+	test.describe("Status Code Coverage — GET /api/protected/blogs", () => {
 		const listEndpoint = setupEndpoint(
 			"GET",
-			"*/api/protected/blog",
+			"*/api/protected/blogs",
 			blogPosts,
 		);
 

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
-import { toBlogPosts } from "@/api/transforms/blog";
-import type { ApiBlogPost } from "@/api/types/blog";
-import type { BlogPost, BlogStatus } from "@/types/blog";
+import { toBlogPostListItems } from "@/api/transforms/blog";
+import type { ApiBlogPostListItem } from "@/api/types/blog";
+import type { BlogPostListItem, BlogStatus } from "@/types/blog";
 import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 interface BlogFilters {
@@ -12,7 +12,7 @@ interface BlogFilters {
 }
 
 export const useBlogPosts = (filters?: BlogFilters) => {
-	const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+	const [blogPosts, setBlogPosts] = useState<BlogPostListItem[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -30,13 +30,13 @@ export const useBlogPosts = (filters?: BlogFilters) => {
 					params.set("offset", String(filters.offset));
 
 				const query = params.toString();
-				const url = `${import.meta.env.VITE_API_URL}/api/protected/blog${query ? `?${query}` : ""}`;
+				const url = `${import.meta.env.VITE_API_URL}/api/protected/blogs${query ? `?${query}` : ""}`;
 
-				const response = await fetcher<ApiBlogPost[]>(url, {
+				const response = await fetcher<ApiBlogPostListItem[]>(url, {
 					method: "GET",
 					signal,
 				});
-				setBlogPosts(toBlogPosts(response));
+				setBlogPosts(toBlogPostListItems(response));
 			} catch (err: unknown) {
 				if (isAbortError(err)) {
 					console.debug("Request was aborted.");

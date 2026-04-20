@@ -103,10 +103,10 @@ func (mr *MockBlogProcessorMockRecorder) GetBlogPost(ctx, accountID, postID any)
 }
 
 // ListBlogPosts mocks base method.
-func (m *MockBlogProcessor) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error) {
+func (m *MockBlogProcessor) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListBlogPosts", ctx, accountID, status, limit, offset)
-	ret0, _ := ret[0].([]store.BlogPost)
+	ret0, _ := ret[0].([]store.BlogPostListItem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

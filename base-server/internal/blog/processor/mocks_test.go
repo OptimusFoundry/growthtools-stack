@@ -36,7 +36,7 @@ type MockBlogStore struct {
 	CreateBlogPostFn    func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
 	GetBlogPostByIDFn   func(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
 	GetBlogPostBySlugFn func(ctx context.Context, accountID uuid.UUID, slug string) (store.BlogPost, error)
-	ListBlogPostsFn     func(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error)
+	ListBlogPostsFn     func(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
 	UpdateBlogPostFn    func(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPostFn    func(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPostFn   func(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
@@ -55,7 +55,7 @@ func (m *MockBlogStore) GetBlogPostBySlug(ctx context.Context, accountID uuid.UU
 	return m.GetBlogPostBySlugFn(ctx, accountID, slug)
 }
 
-func (m *MockBlogStore) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error) {
+func (m *MockBlogStore) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error) {
 	return m.ListBlogPostsFn(ctx, accountID, status, limit, offset)
 }
 

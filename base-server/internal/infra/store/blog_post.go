@@ -33,6 +33,18 @@ type BlogPost struct {
 	DeletedAt         *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
 }
 
+// BlogPostListItem is the slim projection returned by list queries.
+// It omits content, SEO fields, media references, and other heavy columns
+// that are unnecessary when rendering a list view.
+type BlogPostListItem struct {
+	ID          uuid.UUID  `db:"id"           json:"id"`
+	Title       string     `db:"title"        json:"title"`
+	Status      string     `db:"status"       json:"status"`
+	PublishedAt *time.Time `db:"published_at" json:"published_at,omitempty"`
+	CreatedAt   time.Time  `db:"created_at"   json:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"   json:"updated_at"`
+}
+
 // CreateBlogPostParams represents parameters for creating a blog post
 type CreateBlogPostParams struct {
 	AccountID         uuid.UUID
@@ -111,7 +123,7 @@ func (s *Store) GetBlogPostBySlug(ctx context.Context, accountID uuid.UUID, slug
 }
 
 const sqlListBlogPosts = `
-SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
+SELECT id, title, status, published_at, created_at, updated_at
 FROM blog_posts
 WHERE account_id = $1 AND deleted_at IS NULL
 AND ($2::text IS NULL OR status = $2::blog_status)
@@ -119,11 +131,11 @@ ORDER BY created_at DESC
 LIMIT $3 OFFSET $4
 `
 
-func (s *Store) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]BlogPost, error) {
+func (s *Store) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]BlogPostListItem, error) {
 	if limit <= 0 {
 		limit = 20
 	}
-	posts := make([]BlogPost, 0)
+	posts := make([]BlogPostListItem, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlListBlogPosts, accountID, status, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list blog posts: %w", err)
