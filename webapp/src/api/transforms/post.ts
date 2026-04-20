@@ -4,8 +4,8 @@
  * Transform between API (snake_case) and UI (camelCase) post types
  */
 
-import type { PlatformPost, Post } from "@/types/post";
-import type { ApiPlatformPost, ApiPost } from "../types/post";
+import type { PlatformPost, Post, PostListItem } from "@/types/post";
+import type { ApiPlatformPost, ApiPost, ApiPostListItem } from "../types/post";
 
 export function toPost(api: ApiPost): Post {
 	return {
@@ -31,6 +31,30 @@ export function toPost(api: ApiPost): Post {
 
 export function toPosts(apiPosts: ApiPost[]): Post[] {
 	return apiPosts.map(toPost);
+}
+
+export function toPostListItem(api: ApiPostListItem): PostListItem {
+	return {
+		id: api.id,
+		accountId: api.account_id,
+		title: api.title,
+		contentType: api.content_type,
+		status: api.status,
+		scheduledAt: api.scheduled_at,
+		publishedAt: api.published_at,
+		mediaIds: api.media_ids ?? [],
+		tags: api.tags ?? [],
+		aiGenerated: api.ai_generated,
+		source: api.source,
+		githubEventId: api.github_event_id,
+		platforms: api.platforms ?? [],
+		createdAt: api.created_at,
+		updatedAt: api.updated_at,
+	};
+}
+
+export function toPostListItems(apiPosts: ApiPostListItem[]): PostListItem[] {
+	return apiPosts.map(toPostListItem);
 }
 
 export function toPlatformPost(api: ApiPlatformPost): PlatformPost {

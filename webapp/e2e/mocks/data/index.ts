@@ -16,7 +16,7 @@ import type { ApiPrice, ApiSubscription } from "../../../src/api/types/billing";
 import type { ApiBlogPost } from "../../../src/api/types/blog";
 import type { ApiMediaItem } from "../../../src/api/types/media";
 import type { ApiPlatformConnection } from "../../../src/api/types/platform";
-import type { ApiPost } from "../../../src/api/types/post";
+import type { ApiPost, ApiPostListItem } from "../../../src/api/types/post";
 import type { ApiTierInfo, ApiTierName } from "../../../src/api/types/tier";
 import type { ApiUser } from "../../../src/api/types/user";
 import type { ApiVoiceProfile } from "../../../src/api/types/voiceProfile";
@@ -214,6 +214,39 @@ export const posts: ApiPost[] = [
 
 export const getPostById = (id: string): ApiPost | undefined =>
 	posts.find((p) => p.id === id);
+
+/**
+ * Slim list items — mirrors the GET /api/protected/posts response shape.
+ * Does NOT include `content` or `base_content`.
+ * post_4 intentionally has no title to test the "Untitled post" fallback.
+ */
+function toListItem({
+	content: _content,
+	base_content: _baseContent,
+	...rest
+}: ApiPost): ApiPostListItem {
+	return rest;
+}
+
+export const postListItems: ApiPostListItem[] = [
+	toListItem(posts[0]),
+	toListItem(posts[1]),
+	toListItem(posts[2]),
+	// Untitled post — simulates a pre-migration post with no title
+	{
+		id: "post_4",
+		account_id: "acc_123",
+		content_type: "text",
+		status: "draft",
+		media_ids: [],
+		tags: [],
+		ai_generated: false,
+		source: "manual",
+		platforms: [],
+		created_at: now,
+		updated_at: now,
+	},
+];
 
 // ============================================================================
 // Platform Connection Data

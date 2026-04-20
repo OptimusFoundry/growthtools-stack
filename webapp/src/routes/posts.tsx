@@ -245,7 +245,7 @@ function PostsPage() {
 											</span>
 											<div className={styles.postBody}>
 												<div className={styles.postTitleText}>
-													{truncate(post.title || post.content, 80)}
+													{truncate(post.title ?? "Untitled post", 80)}
 												</div>
 												<div className={styles.postMetaText}>
 													{statusLine(post)}
@@ -281,7 +281,7 @@ function PostsPage() {
 														e.stopPropagation();
 														setDeleteTargetId(post.id);
 													}}
-													aria-label={`Delete post "${truncate(post.title || post.content, 40)}"`}
+													aria-label={`Delete post "${truncate(post.title ?? "Untitled post", 40)}"`}
 												>
 													<Trash2 size={16} />
 												</button>
@@ -292,7 +292,7 @@ function PostsPage() {
 													params={{ id: post.id }}
 													onClick={(e) => e.stopPropagation()}
 													className={styles.analyticsBtn}
-													aria-label={`View analytics for "${truncate(post.title || post.content, 40)}"`}
+													aria-label={`View analytics for "${truncate(post.title ?? "Untitled post", 40)}"`}
 												>
 													<BarChart2 size={16} />
 												</Link>
