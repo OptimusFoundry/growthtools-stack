@@ -13,17 +13,6 @@
   overflow: hidden;
 }
 
-.header {
-  align-items: center;
-  display: flex;
-  flex-shrink: 0;
-  padding: var(--space-2) var(--space-4);
-
-  &:empty {
-    display: none;
-  }
-}
-
 .main {
   background-color: var(--color-background);
   flex: 1;

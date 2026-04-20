@@ -1,8 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarClock, Send, Trash2 } from "lucide-react";
+import { CalendarClock, MoreHorizontal, Send, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { fetcher } from "@/api/client";
+import { MobileActionBar } from "@/components/Layout/MobileActionBar";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
@@ -18,6 +19,10 @@ import { useBannerCenter } from "@/proto-design-system/components/feedback/Banne
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
+import {
+	Dropdown,
+	type DropdownItem,
+} from "@/proto-design-system/components/overlays/Dropdown/Dropdown";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -536,8 +541,50 @@ export function WizardInner({
 		{ label: isEditMode ? "Edit" : "New" },
 	];
 
+	const overflowItems: DropdownItem[] = readOnly
+		? []
+		: [
+				...(canDelete
+					? [
+							{
+								id: "delete",
+								label: "Delete",
+								icon: <Trash2 size={14} />,
+								disabled: busy || deleting,
+								danger: true,
+							} satisfies DropdownItem,
+						]
+					: []),
+				{
+					id: "save-draft",
+					label: "Save draft",
+					disabled: busy || savingDraft || updatingDraft,
+				} satisfies DropdownItem,
+			];
+
+	const overflowTrigger =
+		overflowItems.length > 0 ? (
+			<Dropdown
+				items={overflowItems}
+				placement="top"
+				align="start"
+				variant="ghost"
+				size="sm"
+				iconOnly
+				trigger={<MoreHorizontal size={16} aria-hidden="true" />}
+				triggerAriaLabel="More post actions"
+				onChange={(id) => {
+					if (id === "delete") {
+						setDeleteOpen(true);
+					} else if (id === "save-draft") {
+						actions.handleSaveDraft();
+					}
+				}}
+			/>
+		) : undefined;
+
 	const topbarActions = readOnly ? undefined : (
-		<>
+		<Stack direction="row" gap="sm" align="center">
 			{canDelete && (
 				<Button
 					variant="ghost"
@@ -575,20 +622,53 @@ export function WizardInner({
 			>
 				<Send size={14} /> Publish
 			</Button>
-		</>
+		</Stack>
 	);
 
 	return (
 		<>
-			<Topbar breadcrumbs={breadcrumbs} actions={topbarActions} />
+			<Topbar
+				breadcrumbs={breadcrumbs}
+				actions={topbarActions}
+				hideActionsOnMobile={!readOnly}
+			/>
+			{!readOnly && (
+				<MobileActionBar
+					primary={
+						<Button
+							variant="primary"
+							size="sm"
+							onClick={actions.handlePublish}
+							isLoading={state.submitting}
+							disabled={busy || !canAct}
+							aria-label="Publish post"
+						>
+							<Send size={14} /> Publish
+						</Button>
+					}
+					secondary={
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={() => scheduleDrawer.setScheduleOpen(true)}
+							disabled={busy || !canAct}
+							aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
+						>
+							<CalendarClock size={14} />{" "}
+							{isScheduled ? "Reschedule" : "Schedule"}
+						</Button>
+					}
+					overflow={overflowTrigger}
+				/>
+			)}
 			<div className={styles.page}>
 				<header className={styles.header}>
 					<div className={styles.headerInner}>
-						<div>
+						<Stack direction="column" gap="0">
 							<div className={styles.eyebrow}>{eyebrowLabel}</div>
 							<h1 className={styles.title}>{titleFragment}</h1>
 							<p className={styles.sub}>{subLine}</p>
-						</div>
+						</Stack>
 					</div>
 				</header>
 

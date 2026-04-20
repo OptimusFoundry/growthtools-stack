@@ -22,7 +22,6 @@ import {
 	SidebarHeader,
 	SidebarItem,
 	SidebarLogo,
-	SidebarMobileTrigger,
 	SidebarSection,
 	SidebarToggle,
 } from "@/proto-design-system/components/navigation/Sidebar";
@@ -117,9 +116,6 @@ export const Layout = memo(function Layout({ children }: LayoutProps) {
 			<div className={styles.content}>
 				{/* ImpersonationBanner renders only when is_impersonated=true; no-op otherwise */}
 				<ImpersonationBanner />
-				<header className={styles.header}>
-					<SidebarMobileTrigger />
-				</header>
 				<main className={styles.main}>{children}</main>
 			</div>
 		</div>

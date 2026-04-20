@@ -197,6 +197,18 @@
   z-index: var(--z-dropdown);
 }
 
+.placement-top .menu {
+  bottom: calc(100% + var(--space-1));
+  top: auto;
+  transform-origin: bottom center;
+}
+
+// Icon-only trigger — remove min-width so the button stays square
+.iconOnly .trigger {
+  min-width: unset;
+  width: auto;
+}
+
 .align-start {
   left: 0;
 }

@@ -122,6 +122,11 @@ export const postsEndpoints = {
 		{ message: "Media unlinked from post" },
 		{ successStatus: 200 },
 	),
+	details: setupEndpoint("GET", "*/api/protected/posts/:id/details", {
+		post: posts[0],
+		platform_posts: [],
+		media: null,
+	}),
 };
 
 // Override delete to return 200+body (matches legacy behavior: returns JSON message)
