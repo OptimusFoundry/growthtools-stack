@@ -103,6 +103,21 @@ func (mr *MockPostProcessorMockRecorder) GetPost(ctx, accountID, postID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPost", reflect.TypeOf((*MockPostProcessor)(nil).GetPost), ctx, accountID, postID)
 }
 
+// GetPostAnalytics mocks base method.
+func (m *MockPostProcessor) GetPostAnalytics(ctx context.Context, accountID, postID uuid.UUID) (processor.GetPostAnalyticsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPostAnalytics", ctx, accountID, postID)
+	ret0, _ := ret[0].(processor.GetPostAnalyticsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPostAnalytics indicates an expected call of GetPostAnalytics.
+func (mr *MockPostProcessorMockRecorder) GetPostAnalytics(ctx, accountID, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostAnalytics", reflect.TypeOf((*MockPostProcessor)(nil).GetPostAnalytics), ctx, accountID, postID)
+}
+
 // GetPostWithPlatformPosts mocks base method.
 func (m *MockPostProcessor) GetPostWithPlatformPosts(ctx context.Context, accountID, postID uuid.UUID) (processor.PostWithPlatformPosts, error) {
 	m.ctrl.T.Helper()
