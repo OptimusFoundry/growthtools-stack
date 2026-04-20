@@ -72,7 +72,6 @@ type BlogPostWithMedia struct {
 	Media []store.Media  `json:"media"`
 }
 
-
 // blogSlugPattern strips everything that is not a-z0-9.
 var blogSlugPattern = regexp.MustCompile(`[^a-z0-9]+`)
 

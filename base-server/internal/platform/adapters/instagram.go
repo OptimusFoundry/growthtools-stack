@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"base-server/internal/platform/clients/instagram"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/instagram"
 )
 
 const instagramCharacterLimit = 2200

@@ -72,9 +72,9 @@ func (w *PublishWorker) SetURLSigner(signer URLSigner) {
 type platformResult int
 
 const (
-	resultPublished    platformResult = iota
-	resultRetryable                   // failed but will retry
-	resultPermanentFail               // failed, no more retries
+	resultPublished     platformResult = iota
+	resultRetryable                    // failed but will retry
+	resultPermanentFail                // failed, no more retries
 )
 
 func (w *PublishWorker) handle(ctx context.Context, key, value []byte) error {

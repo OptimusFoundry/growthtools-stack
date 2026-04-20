@@ -438,7 +438,7 @@ func TestXAdapter_Finalize(t *testing.T) {
 
 		handle := buildHandle([]xMediaItem{
 			{MediaID: "m1", State: "succeeded"},
-			{MediaID: "", State: ""},   // empty — should be skipped
+			{MediaID: "", State: ""}, // empty — should be skipped
 		})
 		adapter := newXAdapterWithAsyncAPI(srv)
 		result, err := adapter.Finalize(context.Background(), PostSpec{Content: "one media"}, handle, conn)

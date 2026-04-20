@@ -33,9 +33,9 @@ type xMediaHandle struct {
 }
 
 type xMediaItem struct {
-	MediaID string              `json:"media_id"`
-	State   string              `json:"state"` // "succeeded" for images; "pending"/"in_progress"/"succeeded"/"failed" for video
-	Info    *x.ProcessingInfo   `json:"info,omitempty"`
+	MediaID string            `json:"media_id"`
+	State   string            `json:"state"` // "succeeded" for images; "pending"/"in_progress"/"succeeded"/"failed" for video
+	Info    *x.ProcessingInfo `json:"info,omitempty"`
 }
 
 // StartPublish implements AsyncPlatformAdapter.

@@ -30,17 +30,17 @@ type PlatformProcessor interface {
 
 // Handler handles HTTP requests for platform connections.
 type Handler struct {
-	processor  PlatformProcessor
-	logger     *observability.Logger
-	webAppURI  string
+	processor PlatformProcessor
+	logger    *observability.Logger
+	webAppURI string
 }
 
 // New creates a new platforms Handler.
 func New(proc PlatformProcessor, logger *observability.Logger, webAppURI string) Handler {
 	return Handler{
-		processor:  proc,
-		logger:     logger,
-		webAppURI:  webAppURI,
+		processor: proc,
+		logger:    logger,
+		webAppURI: webAppURI,
 	}
 }
 

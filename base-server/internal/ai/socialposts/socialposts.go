@@ -78,7 +78,7 @@ type MediaSegment struct {
 	ImageIndex int
 }
 
-func (TextSegment)  isSegment() {}
+func (TextSegment) isSegment()  {}
 func (MediaSegment) isSegment() {}
 
 // PlatformResult is the per-platform generation sum type.
@@ -101,8 +101,8 @@ type Thread struct {
 
 func (s SinglePost) Platform() string { return s.PlatformName }
 func (s SinglePost) ModeKind() Mode   { return ModeSingle }
-func (t Thread)     Platform() string { return t.PlatformName }
-func (t Thread)     ModeKind() Mode   { return ModeThread }
+func (t Thread) Platform() string     { return t.PlatformName }
+func (t Thread) ModeKind() Mode       { return ModeThread }
 
 // Result is the non-streaming output of Generate.
 type Result struct {

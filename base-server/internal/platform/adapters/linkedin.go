@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"base-server/internal/platform/clients/linkedin"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/linkedin"
 )
 
 const linkedinCharacterLimit = 3000

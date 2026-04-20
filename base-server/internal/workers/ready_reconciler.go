@@ -21,13 +21,13 @@ import (
 // platform column so we don't need per-platform workers. Scale-out
 // later by sharding on `platform` if one becomes hot.
 type ReadyReconciler struct {
-	store     AsyncPublishStore
-	publisher EventPublisher
-	registry  *adapters.AdapterRegistry
+	store          AsyncPublishStore
+	publisher      EventPublisher
+	registry       *adapters.AdapterRegistry
 	tokenRefresher TokenRefresher
-	logger    *observability.Logger
-	interval  time.Duration
-	batchSize int
+	logger         *observability.Logger
+	interval       time.Duration
+	batchSize      int
 	// stuckAfter is the overall deadline for a single row to reach
 	// media_ready. Past this, the row is marked failed — stops a
 	// stuck transcode from wedging the pipeline.

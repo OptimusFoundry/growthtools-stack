@@ -31,10 +31,10 @@ func TestDispatchWorker_Handle(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		setup      func() (*mockAsyncStore, *mockEventPublisher, []byte)
-		assertFn   func(t *testing.T, s *mockAsyncStore, pub *mockEventPublisher, err error)
-		wantErr    bool
+		name        string
+		setup       func() (*mockAsyncStore, *mockEventPublisher, []byte)
+		assertFn    func(t *testing.T, s *mockAsyncStore, pub *mockEventPublisher, err error)
+		wantErr     bool
 		errContains string
 	}{
 		{
@@ -202,7 +202,7 @@ func TestDispatchWorker_Handle(t *testing.T) {
 			},
 		},
 		{
-			name:        "invalid event JSON returns error",
+			name: "invalid event JSON returns error",
 			setup: func() (*mockAsyncStore, *mockEventPublisher, []byte) {
 				return &mockAsyncStore{}, &mockEventPublisher{}, []byte("not json")
 			},

@@ -9,8 +9,9 @@
 // false or set limit to 0 in the YAML and re-run.
 //
 // Usage:
-//   catalog-sync [--file catalog.yml] [--env test|prod] [--dry-run]
-//                [--stripe-only] [--db-only]
+//
+//	catalog-sync [--file catalog.yml] [--env test|prod] [--dry-run]
+//	             [--stripe-only] [--db-only]
 //
 // Prod guard: ENV=prod requires CONFIRM=prod.
 package main
@@ -77,11 +78,11 @@ type stripeIDs struct {
 
 func main() {
 	var (
-		file        = flag.String("file", "catalog.yml", "path to catalog YAML")
-		env         = flag.String("env", "test", "test | prod")
-		dryRun      = flag.Bool("dry-run", false, "print planned changes; make no writes")
-		stripeOnly  = flag.Bool("stripe-only", false, "only sync Stripe, skip DB phase")
-		dbOnly      = flag.Bool("db-only", false, "only sync DB, skip Stripe phase")
+		file       = flag.String("file", "catalog.yml", "path to catalog YAML")
+		env        = flag.String("env", "test", "test | prod")
+		dryRun     = flag.Bool("dry-run", false, "print planned changes; make no writes")
+		stripeOnly = flag.Bool("stripe-only", false, "only sync Stripe, skip DB phase")
+		dbOnly     = flag.Bool("db-only", false, "only sync DB, skip Stripe phase")
 	)
 	flag.Parse()
 

@@ -125,10 +125,10 @@ func TestStore_GetAccountByID(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
-		setup     func(t *testing.T) uuid.UUID
-		wantErr   error
-		assertFn  func(t *testing.T, got Account)
+		name     string
+		setup    func(t *testing.T) uuid.UUID
+		wantErr  error
+		assertFn func(t *testing.T, got Account)
 	}{
 		{
 			name: "found",
@@ -240,10 +240,10 @@ func TestStore_GetAccountsByOwnerUserID(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name     string
-		setup    func(t *testing.T) uuid.UUID // returns userID
-		wantMin  int
-		wantMax  int
+		name    string
+		setup   func(t *testing.T) uuid.UUID // returns userID
+		wantMin int
+		wantMax int
 	}{
 		{
 			name: "returns accounts for owner",
@@ -609,9 +609,9 @@ func TestStore_GetTeamMemberByAccountAndUserID(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
-		setup     func(t *testing.T) (uuid.UUID, uuid.UUID)
-		wantErr   error
+		name    string
+		setup   func(t *testing.T) (uuid.UUID, uuid.UUID)
+		wantErr error
 	}{
 		{
 			name: "found",

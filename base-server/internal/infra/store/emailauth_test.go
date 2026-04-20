@@ -23,9 +23,9 @@ func TestStore_CheckIfEmailExists(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name   string
-		setup  func(t *testing.T) string // returns email to check
-		want   bool
+		name  string
+		setup func(t *testing.T) string // returns email to check
+		want  bool
 	}{
 		{
 			name: "returns false for unknown email",

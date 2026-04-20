@@ -58,10 +58,10 @@ func TestDraftGeneratorWorker_Handle(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "invalid JSON returns an error",
-			value:   []byte("not json at all"),
+			name:      "invalid JSON returns an error",
+			value:     []byte("not json at all"),
 			generator: &mockDraftGenerator{},
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
 			name:  "ErrDraftGuardTripped is swallowed — returns nil",

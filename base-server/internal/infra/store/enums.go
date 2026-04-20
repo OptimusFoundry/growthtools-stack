@@ -74,8 +74,10 @@ const (
 // Platform Post Status
 //
 // Lifecycle:
-//   pending → queued → awaiting_media → media_ready → publishing → published
-//                                                              ↘ failed
+//
+//	pending → queued → awaiting_media → media_ready → publishing → published
+//	                                                           ↘ failed
+//
 // Text-only posts and images on platforms with no async processing
 // (Bluesky images) skip straight from queued to media_ready on upload.
 // 'pending' is the pre-dispatch state set when the row is first

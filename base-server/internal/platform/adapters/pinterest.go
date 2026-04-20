@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"base-server/internal/platform/clients/pinterest"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/pinterest"
 )
 
 const pinterestCharacterLimit = 500

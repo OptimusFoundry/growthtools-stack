@@ -18,12 +18,12 @@ import (
 
 // pinterestAPIServer handles Pinterest API endpoints for adapter tests.
 type pinterestAPIServer struct {
-	t              *testing.T
-	listBoardsErr  bool
-	emptyBoards    bool // return empty items list to trigger ErrNoBoardsFound
-	createPinErr   bool
-	boardID        string
-	pinID          string
+	t               *testing.T
+	listBoardsErr   bool
+	emptyBoards     bool // return empty items list to trigger ErrNoBoardsFound
+	createPinErr    bool
+	boardID         string
+	pinID           string
 	listBoardsCalls int
 	createPinCalls  int
 	lastCreateBody  string

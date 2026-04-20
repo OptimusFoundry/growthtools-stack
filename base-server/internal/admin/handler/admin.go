@@ -215,4 +215,3 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 		apierrors.InternalError(c, err)
 	}
 }
-

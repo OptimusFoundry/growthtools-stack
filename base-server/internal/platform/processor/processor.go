@@ -87,7 +87,7 @@ type PlatformProcessor struct {
 	blueskyClient  BlueskyClient
 	pkceVerifiers  map[string]string // accountID -> code_verifier for PKCE flows
 	pkceVerifierMu sync.Mutex
-	refreshMu      sync.Mutex                // guards concurrent token refreshes
+	refreshMu      sync.Mutex                  // guards concurrent token refreshes
 	refreshing     map[uuid.UUID]chan struct{} // tracks in-flight refresh per connection ID
 }
 

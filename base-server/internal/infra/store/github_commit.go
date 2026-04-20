@@ -13,21 +13,21 @@ import (
 
 // GitHubCommit represents a persisted GitHub commit
 type GitHubCommit struct {
-	ID                 uuid.UUID        `db:"id" json:"id"`
-	RepoID             uuid.UUID        `db:"repo_id" json:"repo_id"`
-	SHA                string           `db:"sha" json:"sha"`
-	AuthorName         *string          `db:"author_name" json:"author_name,omitempty"`
-	AuthorEmail        *string          `db:"author_email" json:"author_email,omitempty"`
-	Message            string           `db:"message" json:"message"`
-	Branch             *string          `db:"branch" json:"branch,omitempty"`
-	CommitURL          *string          `db:"commit_url" json:"commit_url,omitempty"`
-	PushedAt           time.Time        `db:"pushed_at" json:"pushed_at"`
-	Payload            *json.RawMessage `db:"payload" json:"payload,omitempty"`
-	PostID             *uuid.UUID       `db:"post_id" json:"post_id,omitempty"`
+	ID          uuid.UUID        `db:"id" json:"id"`
+	RepoID      uuid.UUID        `db:"repo_id" json:"repo_id"`
+	SHA         string           `db:"sha" json:"sha"`
+	AuthorName  *string          `db:"author_name" json:"author_name,omitempty"`
+	AuthorEmail *string          `db:"author_email" json:"author_email,omitempty"`
+	Message     string           `db:"message" json:"message"`
+	Branch      *string          `db:"branch" json:"branch,omitempty"`
+	CommitURL   *string          `db:"commit_url" json:"commit_url,omitempty"`
+	PushedAt    time.Time        `db:"pushed_at" json:"pushed_at"`
+	Payload     *json.RawMessage `db:"payload" json:"payload,omitempty"`
+	PostID      *uuid.UUID       `db:"post_id" json:"post_id,omitempty"`
 	// PostDeleted is true when PostID references a soft-deleted post.
 	// See GitHubCommitSummary.PostDeleted for the why.
-	PostDeleted        bool             `db:"post_deleted" json:"post_deleted"`
-	BlogPostID         *uuid.UUID       `db:"blog_post_id" json:"blog_post_id,omitempty"`
+	PostDeleted bool       `db:"post_deleted" json:"post_deleted"`
+	BlogPostID  *uuid.UUID `db:"blog_post_id" json:"blog_post_id,omitempty"`
 	// BlogDeleted mirrors PostDeleted: true only when BlogPostID is set AND the
 	// referenced blog_posts row has been soft-deleted.
 	BlogDeleted        bool             `db:"blog_deleted" json:"blog_deleted"`
@@ -47,22 +47,22 @@ type GitHubCommit struct {
 // two fields the UI needs to render a status badge — a capture artifact count
 // and the capture error string if the worker failed.
 type GitHubCommitSummary struct {
-	ID                   uuid.UUID  `db:"id" json:"id"`
-	RepoID               uuid.UUID  `db:"repo_id" json:"repo_id"`
-	SHA                  string     `db:"sha" json:"sha"`
-	AuthorName           *string    `db:"author_name" json:"author_name,omitempty"`
-	AuthorEmail          *string    `db:"author_email" json:"author_email,omitempty"`
-	Message              string     `db:"message" json:"message"`
-	Branch               *string    `db:"branch" json:"branch,omitempty"`
-	CommitURL            *string    `db:"commit_url" json:"commit_url,omitempty"`
-	PushedAt             time.Time  `db:"pushed_at" json:"pushed_at"`
-	PostID               *uuid.UUID `db:"post_id" json:"post_id,omitempty"`
+	ID          uuid.UUID  `db:"id" json:"id"`
+	RepoID      uuid.UUID  `db:"repo_id" json:"repo_id"`
+	SHA         string     `db:"sha" json:"sha"`
+	AuthorName  *string    `db:"author_name" json:"author_name,omitempty"`
+	AuthorEmail *string    `db:"author_email" json:"author_email,omitempty"`
+	Message     string     `db:"message" json:"message"`
+	Branch      *string    `db:"branch" json:"branch,omitempty"`
+	CommitURL   *string    `db:"commit_url" json:"commit_url,omitempty"`
+	PushedAt    time.Time  `db:"pushed_at" json:"pushed_at"`
+	PostID      *uuid.UUID `db:"post_id" json:"post_id,omitempty"`
 	// PostDeleted is true only when PostID is set AND the referenced post
 	// row has been soft-deleted. Lets the UI distinguish a deleted draft
 	// (show a "Post deleted" badge) from a commit that simply hasn't been
 	// drafted yet (PostID still null).
-	PostDeleted          bool       `db:"post_deleted" json:"post_deleted"`
-	BlogPostID           *uuid.UUID `db:"blog_post_id" json:"blog_post_id,omitempty"`
+	PostDeleted bool       `db:"post_deleted" json:"post_deleted"`
+	BlogPostID  *uuid.UUID `db:"blog_post_id" json:"blog_post_id,omitempty"`
 	// BlogDeleted mirrors PostDeleted: true only when BlogPostID is set AND the
 	// referenced blog_posts row has been soft-deleted.
 	BlogDeleted          bool       `db:"blog_deleted" json:"blog_deleted"`

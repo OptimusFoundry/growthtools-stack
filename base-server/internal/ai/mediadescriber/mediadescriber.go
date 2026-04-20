@@ -42,9 +42,9 @@ type Media struct {
 // It is the shared currency of the ai/* packages — all downstream callers
 // consume []Description rather than raw bytes.
 type Description struct {
-	Index       int
-	Kind        Kind
-	MIMEType    string
+	Index    int
+	Kind     Kind
+	MIMEType string
 	// Description is 1–2 sentences describing the media.
 	Description string
 	// Usable is false when the media is broken, blank, or a stuck loading

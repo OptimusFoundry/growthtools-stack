@@ -49,7 +49,6 @@ type DraftStore interface {
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
 }
 
-
 // PostsDrafter lets us persist a draft without depending on the whole posts
 // processor.
 type PostsDrafter interface {

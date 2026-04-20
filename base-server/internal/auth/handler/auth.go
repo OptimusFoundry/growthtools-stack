@@ -27,9 +27,9 @@ type ImpersonationParser interface {
 }
 
 type Handler struct {
-	authProcessor      processor.AuthProcessor
-	tierService        *tiers.TierService
-	logger             *observability.Logger
+	authProcessor       processor.AuthProcessor
+	tierService         *tiers.TierService
+	logger              *observability.Logger
 	impersonationParser ImpersonationParser // nil when admin feature is disabled
 }
 

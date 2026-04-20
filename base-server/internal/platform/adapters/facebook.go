@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"base-server/internal/platform/clients/facebook"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/facebook"
 )
 
 const facebookCharacterLimit = 63206

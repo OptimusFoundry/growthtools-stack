@@ -20,7 +20,6 @@ var (
 	}
 )
 
-
 // contentTypeFor maps known extensions to a sensible MIME type. Used when
 // HeadObject fails or returns an empty content-type.
 func contentTypeFor(key string) string {

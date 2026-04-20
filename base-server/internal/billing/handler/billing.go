@@ -3,8 +3,8 @@ package handler
 import (
 	"errors"
 
-	"base-server/internal/infra/apierrors"
 	"base-server/internal/billing/processor"
+	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 
 	"github.com/gin-gonic/gin"

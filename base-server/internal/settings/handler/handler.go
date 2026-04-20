@@ -9,8 +9,8 @@ import (
 
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
-	"base-server/internal/settings/processor"
 	"base-server/internal/infra/store"
+	"base-server/internal/settings/processor"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

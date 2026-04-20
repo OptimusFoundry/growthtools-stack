@@ -13,7 +13,6 @@ import (
 	"base-server/internal/infra/observability"
 )
 
-
 // OAuthTokenResponse is returned by GitHub's token endpoint
 type OAuthTokenResponse struct {
 	AccessToken string `json:"access_token"`

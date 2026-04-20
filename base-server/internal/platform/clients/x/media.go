@@ -363,4 +363,3 @@ func (c *Client) GetMediaStatus(ctx context.Context, mediaID, accessToken string
 	}
 	return pi, nil
 }
-

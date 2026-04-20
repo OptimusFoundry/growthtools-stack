@@ -23,8 +23,8 @@ type PlatformDoneEvent struct {
 // ErrorEvent is the terminal error event. After this event the channel is closed.
 type ErrorEvent struct{ Err error }
 
-func (PhaseEvent)        isEvent() {}
-func (ChunkEvent)        isEvent() {}
-func (BaseDoneEvent)     isEvent() {}
+func (PhaseEvent) isEvent()        {}
+func (ChunkEvent) isEvent()        {}
+func (BaseDoneEvent) isEvent()     {}
 func (PlatformDoneEvent) isEvent() {}
-func (ErrorEvent)        isEvent() {}
+func (ErrorEvent) isEvent()        {}

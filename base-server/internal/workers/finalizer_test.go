@@ -53,13 +53,13 @@ func TestFinalizerWorker_Handle(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		pp          store.PlatformPost
-		adapter     adapters.PlatformAdapter
-		refresher   TokenRefresher
-		storeFn     func() *mockAsyncStore
-		assertFn    func(t *testing.T, s *mockAsyncStore, err error)
-		payload     []byte
+		name      string
+		pp        store.PlatformPost
+		adapter   adapters.PlatformAdapter
+		refresher TokenRefresher
+		storeFn   func() *mockAsyncStore
+		assertFn  func(t *testing.T, s *mockAsyncStore, err error)
+		payload   []byte
 	}{
 		{
 			name: "happy path: Finalize succeeds, platform post marked published",
@@ -106,9 +106,9 @@ func TestFinalizerWorker_Handle(t *testing.T) {
 		{
 			name: "platform post not in media_ready state is skipped",
 			pp: store.PlatformPost{
-				ID:      ppID,
-				PostID:  postID,
-				Status:  store.PlatformPostStatusPublished,
+				ID:       ppID,
+				PostID:   postID,
+				Status:   store.PlatformPostStatusPublished,
 				Platform: "x",
 			},
 			adapter: &mockAsyncAdapter{},

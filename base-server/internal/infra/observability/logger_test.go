@@ -10,10 +10,10 @@ import (
 
 func TestGetDeviceType(t *testing.T) {
 	tests := []struct {
-		name           string
-		userAgent      string
+		name             string
+		userAgent        string
 		cloudFrontMobile string
-		want           string
+		want             string
 	}{
 		{
 			name:             "CloudFront mobile header takes precedence",
@@ -163,10 +163,10 @@ func TestGetDeviceOS(t *testing.T) {
 
 func TestGetRealClientIP(t *testing.T) {
 	tests := []struct {
-		name               string
-		cloudFrontAddress  string
-		fallbackIP         string
-		want               string
+		name              string
+		cloudFrontAddress string
+		fallbackIP        string
+		want              string
 	}{
 		{
 			name:              "CloudFront header with port",

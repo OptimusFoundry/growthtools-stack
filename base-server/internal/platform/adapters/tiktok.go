@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"base-server/internal/platform/clients/tiktok"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/tiktok"
 )
 
 const tiktokCharacterLimit = 2200

@@ -24,9 +24,9 @@ func TestStore_GetPlanFeaturesWithLimitsByPriceID(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name     string
-		setup    func(t *testing.T) uuid.UUID
-		wantMin  int
+		name    string
+		setup   func(t *testing.T) uuid.UUID
+		wantMin int
 	}{
 		{
 			name: "returns features for a free price with plan_feature_limits seeded",

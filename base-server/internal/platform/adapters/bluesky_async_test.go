@@ -303,4 +303,3 @@ func TestBlueskyAdapter_Finalize(t *testing.T) {
 		require.Error(t, err)
 	})
 }
-

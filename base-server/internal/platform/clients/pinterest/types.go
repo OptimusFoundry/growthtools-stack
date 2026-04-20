@@ -29,8 +29,8 @@ type CreatePinResponse struct {
 
 // PinAnalytics contains engagement metrics for a Pinterest Pin.
 type PinAnalytics struct {
-	Impressions   int
-	PinClicks     int
-	Saves         int
+	Impressions    int
+	PinClicks      int
+	Saves          int
 	OutboundClicks int
 }

@@ -13,12 +13,12 @@ import (
 )
 
 var (
-	ErrStreamConversation    = errors.New("failed to stream conversation")
-	ErrListConversations     = errors.New("failed to list conversations")
-	ErrGetConversation       = errors.New("failed to get conversation")
-	ErrDeleteConversation    = errors.New("failed to delete conversation")
-	ErrConversationNotFound  = errors.New("conversation not found")
-	ErrSaveMessage           = errors.New("failed to save message")
+	ErrStreamConversation   = errors.New("failed to stream conversation")
+	ErrListConversations    = errors.New("failed to list conversations")
+	ErrGetConversation      = errors.New("failed to get conversation")
+	ErrDeleteConversation   = errors.New("failed to delete conversation")
+	ErrConversationNotFound = errors.New("conversation not found")
+	ErrSaveMessage          = errors.New("failed to save message")
 )
 
 const (

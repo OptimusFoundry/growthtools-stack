@@ -111,7 +111,7 @@ func (m *mockPublishStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) (
 // mockRetryStore implements RetryStore for testing
 type mockRetryStore struct {
 	mockPublishStore
-	getRetryablePlatformPosts      func(ctx context.Context, now time.Time, limit int) ([]store.RetryablePlatformPost, error)
+	getRetryablePlatformPosts       func(ctx context.Context, now time.Time, limit int) ([]store.RetryablePlatformPost, error)
 	getStuckPublishingPlatformPosts func(ctx context.Context, stuckBefore time.Time, limit int) ([]store.RetryablePlatformPost, error)
 }
 
@@ -131,7 +131,7 @@ func (m *mockRetryStore) GetStuckPublishingPlatformPosts(ctx context.Context, st
 
 // mockAdapter implements adapters.PlatformAdapter for testing
 type mockAdapter struct {
-	publishFn       func(ctx context.Context, content string, mediaURLs []string, conn store.PlatformConnection) (adapters.PlatformPostResult, error)
+	publishFn        func(ctx context.Context, content string, mediaURLs []string, conn store.PlatformConnection) (adapters.PlatformPostResult, error)
 	publishCallCount int
 }
 

@@ -241,7 +241,6 @@ func segmentsToJSON(segs []socialposts.Segment) []map[string]any {
 	return out
 }
 
-
 // mustMarshal marshals v to JSON, returning an empty object string on error.
 func mustMarshal(v any) string {
 	b, err := json.Marshal(v)

@@ -17,16 +17,16 @@ import (
 
 // linkedinAPIServer handles LinkedIn REST API endpoints needed by adapter tests.
 type linkedinAPIServer struct {
-	t                  *testing.T
-	createPostErr      bool
-	initUploadErr      bool
-	uploadImageErr     bool
-	postURN            string
-	uploadURL          string
-	imageURN           string
-	createPostCalls    int
-	initUploadCalls    int
-	uploadImageCalls   int
+	t                *testing.T
+	createPostErr    bool
+	initUploadErr    bool
+	uploadImageErr   bool
+	postURN          string
+	uploadURL        string
+	imageURN         string
+	createPostCalls  int
+	initUploadCalls  int
+	uploadImageCalls int
 }
 
 func (s *linkedinAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -61,8 +61,8 @@ func TestHandler_HandleWebhook(t *testing.T) {
 					Return(nil)
 			},
 			headers: map[string]string{
-				"X-GitHub-Event":    "push",
-				"X-GitHub-Delivery": "delivery-123",
+				"X-GitHub-Event":      "push",
+				"X-GitHub-Delivery":   "delivery-123",
 				"X-Hub-Signature-256": "sha256=sig",
 			},
 			body:       []byte(`{}`),

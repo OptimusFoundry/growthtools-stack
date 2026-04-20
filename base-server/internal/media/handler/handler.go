@@ -11,8 +11,8 @@ import (
 
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
-	"base-server/internal/media/processor"
 	"base-server/internal/infra/store"
+	"base-server/internal/media/processor"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

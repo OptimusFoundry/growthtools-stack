@@ -17,7 +17,7 @@ const defaultModel = "gemini-2.5-flash-lite"
 var (
 	ErrAPIRequest  = errors.New("gemini api request failed")
 	ErrAPIResponse = errors.New("gemini api response error")
-	ErrStreaming    = errors.New("gemini streaming error")
+	ErrStreaming   = errors.New("gemini streaming error")
 )
 
 // Client is a Gemini API client that implements the aiclient.Client interface.

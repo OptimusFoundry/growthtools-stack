@@ -107,10 +107,10 @@ func (w *CaptureResultWorker) handle(ctx context.Context, key, value []byte) err
 	var payload any
 	if msg.Success {
 		payload = map[string]any{
-			"commit":      msg.SHA,
-			"captureDir":  msg.CaptureDir,
-			"stepCount":   msg.StepCount,
-			"uploaded":    msg.Uploaded,
+			"commit":     msg.SHA,
+			"captureDir": msg.CaptureDir,
+			"stepCount":  msg.StepCount,
+			"uploaded":   msg.Uploaded,
 		}
 	} else {
 		errMsg := msg.Error

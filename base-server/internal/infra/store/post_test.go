@@ -149,8 +149,8 @@ func TestListPosts_TitleFallback(t *testing.T) {
 	// 2. Post with NULL title + base_content — list should derive from base_content.
 	baseIdea := "Ship the new onboarding flow today and announce it"
 	_, err = s.CreatePost(ctx, CreatePostParams{
-		AccountID: accountID,
-		Content:   "Generated social copy for the launch.",
+		AccountID:   accountID,
+		Content:     "Generated social copy for the launch.",
 		BaseContent: &baseIdea,
 		ContentType: ContentTypeText, Status: PostStatusDraft, Source: PostSourceManual,
 	})
@@ -160,7 +160,7 @@ func TestListPosts_TitleFallback(t *testing.T) {
 	contentOnly := "Just shipped a tiny fix for the calendar view bug that everyone hated."
 	_, err = s.CreatePost(ctx, CreatePostParams{
 		AccountID: accountID,
-		Content: contentOnly, ContentType: ContentTypeText,
+		Content:   contentOnly, ContentType: ContentTypeText,
 		Status: PostStatusDraft, Source: PostSourceManual,
 	})
 	require.NoError(t, err)
@@ -538,4 +538,3 @@ func TestRewriteSegmentsAfterUnlink(t *testing.T) {
 		assert.True(t, hasKey)
 	})
 }
-

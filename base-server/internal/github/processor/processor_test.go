@@ -842,11 +842,11 @@ func TestGitHubProcessor_CompleteOAuth(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:  "invalid state returns ErrInvalidOAuthState",
-			state: "nonexistent-state",
-			code:  "somecode",
-			setup: func(proc *GitHubProcessor) {},
-			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {},
+			name:    "invalid state returns ErrInvalidOAuthState",
+			state:   "nonexistent-state",
+			code:    "somecode",
+			setup:   func(proc *GitHubProcessor) {},
+			mocks:   func(s *MockGitHubStore, c *MockGitHubClient) {},
 			wantErr: ErrInvalidOAuthState,
 		},
 		{

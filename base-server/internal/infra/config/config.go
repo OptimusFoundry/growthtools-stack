@@ -232,7 +232,6 @@ func Load() (*Config, error) {
 	cfg.GitHub.OAuthClientID = getEnvWithDefault("GITHUB_OAUTH_CLIENT_ID", "")
 	cfg.GitHub.OAuthClientSecret = getEnvWithDefault("GITHUB_OAUTH_CLIENT_SECRET", "")
 
-
 	// Kafka configuration
 	cfg.Kafka.Brokers = getEnvWithDefault("KAFKA_BROKERS", "localhost:9092")
 	cfg.Kafka.ConsumerGroup = getEnvWithDefault("KAFKA_CONSUMER_GROUP", "growth-tools-consumers")

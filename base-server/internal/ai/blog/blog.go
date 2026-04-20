@@ -64,7 +64,7 @@ type BlogDoneEvent struct{ Result Result }
 type BlogErrorEvent struct{ Err error }
 
 func (BlogChunkEvent) isBlogEvent() {}
-func (BlogDoneEvent)  isBlogEvent() {}
+func (BlogDoneEvent) isBlogEvent()  {}
 func (BlogErrorEvent) isBlogEvent() {}
 
 const (

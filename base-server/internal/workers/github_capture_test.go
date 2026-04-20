@@ -70,12 +70,12 @@ func TestCaptureResultWorker_Handle(t *testing.T) {
 	}
 
 	tests := []struct {
-		name              string
-		value             []byte
-		store             CaptureResultStore
-		publisher         DraftEventPublisher
-		wantErr           bool
-		assertPublish     func(t *testing.T, pub *mockDraftPublisher)
+		name          string
+		value         []byte
+		store         CaptureResultStore
+		publisher     DraftEventPublisher
+		wantErr       bool
+		assertPublish func(t *testing.T, pub *mockDraftPublisher)
 	}{
 		{
 			name:  "happy path success=true persists and publishes both draft and blog events",
@@ -104,9 +104,9 @@ func TestCaptureResultWorker_Handle(t *testing.T) {
 			},
 		},
 		{
-			name:  "success=false does NOT publish",
-			value: failMsg(),
-			store: &mockCaptureStore{},
+			name:      "success=false does NOT publish",
+			value:     failMsg(),
+			store:     &mockCaptureStore{},
 			publisher: &mockDraftPublisher{},
 			assertPublish: func(t *testing.T, pub *mockDraftPublisher) {
 				t.Helper()
@@ -157,7 +157,7 @@ func TestCaptureResultWorker_Handle(t *testing.T) {
 			},
 		},
 		{
-			name:  "failure message without error text uses default",
+			name: "failure message without error text uses default",
 			value: func() []byte {
 				b, _ := json.Marshal(CaptureResultMessage{
 					CommitID: commitID,

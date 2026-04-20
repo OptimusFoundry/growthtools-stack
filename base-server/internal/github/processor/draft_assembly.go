@@ -53,8 +53,8 @@ func assemblePlatformDrafts(
 				case socialposts.MediaSegment:
 					// MediaSegment: include ImageIndex (1-based)
 					obj := map[string]interface{}{
-						"content":     s.Content,
-						"imageIndex":  s.ImageIndex,
+						"content":    s.Content,
+						"imageIndex": s.ImageIndex,
 					}
 					segments = append(segments, obj)
 				case socialposts.TextSegment:
