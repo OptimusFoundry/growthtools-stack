@@ -18,6 +18,7 @@ import (
 // AIClient is the subset of aiclient.Client used by this package.
 type AIClient interface {
 	CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
+	CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
 }
 
 // ErrClassify is returned when the AI call or response parse fails.
@@ -89,9 +90,9 @@ func (c *Classifier) Classify(ctx context.Context, message, diff string) (Verdic
 	}
 	userMessage := fmt.Sprintf("Commit message:\n%s\n\nDiff:\n```\n%s\n```", strings.TrimSpace(message), diff)
 
-	raw, err := c.aiClient.CreateMessage(ctx, systemPrompt, []aiclient.Message{
+	raw, err := c.aiClient.CreateJSONMessage(ctx, systemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMessage},
-	}, 1024)
+	}, 600_000)
 	if err != nil {
 		c.logger.Error(ctx, "failed to classify commit via ai", err)
 		return Verdict{}, ErrClassify
@@ -107,7 +108,7 @@ func (c *Classifier) Classify(ctx context.Context, message, diff string) (Verdic
 		Worthwhile bool   `json:"worthwhile"`
 		Reason     string `json:"reason"`
 	}
-	if err := json.Unmarshal([]byte(trimmed), &parsed); err != nil {
+	if err := json.Unmarshal([]byte(extractJSONObject(trimmed)), &parsed); err != nil {
 		c.logger.Error(ctx, "failed to parse commit classifier response", err)
 		return Verdict{}, ErrClassify
 	}
@@ -115,4 +116,33 @@ func (c *Classifier) Classify(ctx context.Context, message, diff string) (Verdic
 		parsed.Reason = "classifier returned no reason"
 	}
 	return Verdict{Worthwhile: parsed.Worthwhile, Reason: parsed.Reason}, nil
+}
+
+// extractJSONObject returns the JSON object substring from raw, tolerating
+// markdown code fences, single backticks, or preamble/trailing prose that
+// Gemini occasionally emits around the JSON payload.
+func extractJSONObject(raw string) string {
+	s := stripCodeFence(raw)
+	start := strings.Index(s, "{")
+	end := strings.LastIndex(s, "}")
+	if start == -1 || end == -1 || end < start {
+		return s
+	}
+	return s[start : end+1]
+}
+
+// stripCodeFence removes surrounding ```json ... ``` or ``` ... ``` markdown
+// fences that some models wrap around JSON responses despite instructions to
+// return raw JSON only. If no fence is present, the input is returned trimmed.
+func stripCodeFence(raw string) string {
+	s := strings.TrimSpace(raw)
+	if !strings.HasPrefix(s, "```") {
+		return s
+	}
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```")
+	if idx := strings.LastIndex(s, "```"); idx != -1 {
+		s = s[:idx]
+	}
+	return strings.TrimSpace(s)
 }

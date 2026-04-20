@@ -18,7 +18,7 @@ func TestClassifier_Classify_Worthwhile(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(`{"worthwhile":true,"reason":"adds new /pricing page"}`, nil)
 
 	c := New(mock, newLogger())
@@ -38,7 +38,7 @@ func TestClassifier_Classify_NotWorthwhile(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(`{"worthwhile":false,"reason":"test-only change"}`, nil)
 
 	c := New(mock, newLogger())
@@ -55,7 +55,7 @@ func TestClassifier_Classify_EmptyResponse_FailOpen(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", nil)
 
 	c := New(mock, newLogger())
@@ -72,7 +72,7 @@ func TestClassifier_Classify_AIError_ReturnsErrClassify(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mock := NewMockAIClient(ctrl)
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", errors.New("provider error"))
 
 	c := New(mock, newLogger())
@@ -88,7 +88,7 @@ func TestClassifier_Classify_DiffTruncatedAt40k(t *testing.T) {
 	mock := NewMockAIClient(ctrl)
 
 	var captured string
-	mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mock.EXPECT().CreateJSONMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, _ string, msgs []aiclient.Message, _ int) (string, error) {
 			captured = msgs[0].Content
 			return `{"worthwhile":true,"reason":"ok"}`, nil
