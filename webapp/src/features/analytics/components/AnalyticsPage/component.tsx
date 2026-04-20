@@ -76,6 +76,43 @@ function ChartSkeleton() {
 
 const VALID_RANGES: RangeKey[] = ["7d", "30d", "90d"];
 
+const RANGE_LABEL: Record<RangeKey, string> = {
+	"7d": "Last 7 days",
+	"30d": "Last 30 days",
+	"90d": "Last 90 days",
+};
+
+function AnalyticsHero({
+	range,
+	platformCount,
+}: {
+	range: RangeKey;
+	platformCount: number | null;
+}) {
+	const eyebrowRight =
+		platformCount === null
+			? RANGE_LABEL[range]
+			: `${RANGE_LABEL[range]} · ${platformCount} ${
+					platformCount === 1 ? "platform" : "platforms"
+				}`;
+	return (
+		<header className={pageStyles.pageHero}>
+			<div className={pageStyles.pageHeroText}>
+				<div className={pageStyles.pageEyebrow}>
+					PERFORMANCE · {eyebrowRight}
+				</div>
+				<h1 className={pageStyles.pageHeroTitle}>
+					The numbers, <em>without the noise</em>.
+				</h1>
+				<p className={pageStyles.pageHeroSub}>
+					Impressions, engagement, and reach across every connected platform —
+					at a glance.
+				</p>
+			</div>
+		</header>
+	);
+}
+
 export const AnalyticsPage = memo(function AnalyticsPage() {
 	// Range synced to ?range= search param. Default 30d (omits param).
 	const search = useSearch({ from: "/analytics" }) as { range?: string };
@@ -106,16 +143,7 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 			<>
 				{topbar}
 				<Stack gap="lg" className={styles.page} animate>
-					<header className={pageStyles.pageHero}>
-						<div className={pageStyles.pageHeroText}>
-							<div className={pageStyles.pageEyebrow}>
-								PERFORMANCE · loading
-							</div>
-							<h1 className={pageStyles.pageHeroTitle}>
-								The numbers, <em>without the noise</em>.
-							</h1>
-						</div>
-					</header>
+					<AnalyticsHero range={range} platformCount={null} />
 					<DateRangeTabs value={range} onChange={handleRangeChange} />
 					<StatGridSkeleton />
 					<ChartSkeleton />
@@ -130,6 +158,8 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 			<>
 				{topbar}
 				<Stack gap="lg" className={styles.page} animate>
+					<AnalyticsHero range={range} platformCount={null} />
+					<DateRangeTabs value={range} onChange={handleRangeChange} />
 					<Card variant="outlined" padding="lg">
 						<Stack gap="md" align="center">
 							<Text weight="semibold">Something went wrong</Text>
@@ -162,6 +192,7 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 			<>
 				{topbar}
 				<Stack gap="lg" className={styles.page} animate>
+					<AnalyticsHero range={range} platformCount={0} />
 					<DateRangeTabs value={range} onChange={handleRangeChange} />
 					<EmptyState
 						icon={<BarChart2 size={48} />}
@@ -189,6 +220,10 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 			<>
 				{topbar}
 				<Stack gap="lg" className={styles.page} animate>
+					<AnalyticsHero
+						range={range}
+						platformCount={platformBreakdown.length}
+					/>
 					<DateRangeTabs value={range} onChange={handleRangeChange} />
 					<EmptyState
 						icon={<BarChart2 size={48} />}
@@ -210,22 +245,7 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 		<>
 			{topbar}
 			<Stack gap="lg" className={styles.page} animate>
-				<header className={pageStyles.pageHero}>
-					<div className={pageStyles.pageHeroText}>
-						<div className={pageStyles.pageEyebrow}>
-							PERFORMANCE · {platformBreakdown.length}{" "}
-							{platformBreakdown.length === 1 ? "platform" : "platforms"}
-						</div>
-						<h1 className={pageStyles.pageHeroTitle}>
-							The numbers, <em>without the noise</em>.
-						</h1>
-						<p className={pageStyles.pageHeroSub}>
-							Impressions, engagement, and reach across every connected platform
-							— at a glance.
-						</p>
-					</div>
-				</header>
-
+				<AnalyticsHero range={range} platformCount={platformBreakdown.length} />
 				<DateRangeTabs value={range} onChange={handleRangeChange} />
 
 				<div className={styles.statsGrid}>
