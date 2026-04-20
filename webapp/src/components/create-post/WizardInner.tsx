@@ -643,7 +643,7 @@ export function WizardInner({
 							disabled={busy || !canAct}
 							aria-label="Publish post"
 						>
-							<Send size={14} /> Publish
+							<Send size={16} aria-hidden="true" />
 						</Button>
 					}
 					secondary={
@@ -654,8 +654,7 @@ export function WizardInner({
 							disabled={busy || !canAct}
 							aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
 						>
-							<CalendarClock size={14} />{" "}
-							{isScheduled ? "Reschedule" : "Schedule"}
+							<CalendarClock size={16} aria-hidden="true" />
 						</Button>
 					}
 					overflow={overflowTrigger}
