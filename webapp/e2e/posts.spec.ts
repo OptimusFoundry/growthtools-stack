@@ -526,6 +526,280 @@ test.describe("Posts", () => {
 	});
 
 	// =========================================================================
+	// Mobile topbar — viewport-specific layout assertions
+	//
+	// Verifies:
+	//   375px: single topbar (no stacked bars), back link visible, Publish
+	//          reachable, overflow menu contains Delete + Save draft.
+	//   1280px: all four buttons in topbar, breadcrumb visible, no bottom bar.
+	// =========================================================================
+
+	test.describe("Mobile topbar — 375px viewport", () => {
+		test.use({ viewport: { width: 375, height: 812 } });
+
+		test("edit page renders a single topbar with no stacked header bar", async ({
+			network,
+			page,
+		}) => {
+			// Use a draft post so the wizard renders in edit (non-readOnly) mode
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			// Before the fix there were three <header> elements: Layout's standalone
+			// header bar, Topbar's <header>, and the page editorial header inside
+			// WizardInner. After the fix the Layout header is removed, leaving exactly
+			// two (Topbar + WizardInner editorial header).
+			const visibleHeaders = page.locator("header:visible");
+			await expect(visibleHeaders).toHaveCount(2);
+		});
+
+		test("breadcrumb is replaced by a back link on mobile", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			// Back link must be visible; breadcrumb nav must not be visible.
+			const backLink = page.getByRole("link", { name: /back to posts/i });
+			await expect(backLink).toBeVisible();
+
+			const breadcrumbNav = page.getByRole("navigation", {
+				name: "Breadcrumb",
+			});
+			await expect(breadcrumbNav).not.toBeVisible();
+		});
+
+		test("Publish button is visible in MobileActionBar", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			// The MobileActionBar Publish button has aria-label "Publish post"
+			const publishBtn = page.getByRole("button", { name: /publish post/i });
+			await expect(publishBtn).toBeVisible();
+		});
+
+		test("Reschedule button is visible in MobileActionBar", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			const rescheduleBtn = page.getByRole("button", {
+				name: /reschedule post|schedule post/i,
+			});
+			await expect(rescheduleBtn).toBeVisible();
+		});
+
+		test("overflow menu opens and shows Delete and Save draft", async ({
+			network,
+			page,
+		}) => {
+			// Use a draft post so canDelete is true (draft status)
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			const overflowBtn = page.getByRole("button", {
+				name: /more post actions/i,
+			});
+			await expect(overflowBtn).toBeVisible();
+			await overflowBtn.click();
+
+			// DropdownMenu renders menu items — assert via their role
+			await expect(
+				page.getByRole("menuitem", { name: "Delete" }),
+			).toBeVisible();
+			await expect(
+				page.getByRole("menuitem", { name: "Save draft" }),
+			).toBeVisible();
+		});
+
+		test("topbar action buttons are hidden on mobile", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			// The topbar actions wrapper has display:none on mobile.
+			// The individual buttons inside it should not be visible.
+			const saveDraftBtn = page.getByRole("button", { name: /^save draft$/i });
+			await expect(saveDraftBtn).not.toBeVisible();
+		});
+	});
+
+	test.describe("Desktop topbar — 1280px viewport", () => {
+		test.use({ viewport: { width: 1280, height: 800 } });
+
+		test("all four action buttons are visible in topbar", async ({
+			network,
+			page,
+		}) => {
+			// Use a draft post so canDelete is true and all four buttons render
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			await expect(
+				page.getByRole("button", { name: /delete post/i }),
+			).toBeVisible();
+			await expect(
+				page.getByRole("button", { name: /save draft/i }),
+			).toBeVisible();
+			await expect(
+				page.getByRole("button", { name: /reschedule|schedule/i }),
+			).toBeVisible();
+			await expect(
+				page.getByRole("button", { name: /publish/i }),
+			).toBeVisible();
+		});
+
+		test("breadcrumb is visible and back link is hidden on desktop", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			const breadcrumbNav = page.getByRole("navigation", {
+				name: "Breadcrumb",
+			});
+			await expect(breadcrumbNav).toBeVisible();
+
+			const backLink = page.getByRole("link", { name: /back to posts/i });
+			await expect(backLink).not.toBeVisible();
+		});
+
+		test("MobileActionBar is not visible on desktop", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			// MobileActionBar has role="toolbar" aria-label="Post actions"
+			const mobileBar = page.getByRole("toolbar", { name: /post actions/i });
+			await expect(mobileBar).not.toBeVisible();
+		});
+
+		test("hamburger trigger is not rendered on desktop", async ({
+			network,
+			page,
+		}) => {
+			const draftDetailsResponse = {
+				post: posts[1],
+				platform_posts: [],
+				media: null,
+			};
+			network.use(
+				http.get("*/api/protected/posts/:id/details", () =>
+					HttpResponse.json(draftDetailsResponse),
+				),
+			);
+			await page.goto("/posts/post_2");
+			await page.waitForLoadState("networkidle");
+
+			// SidebarMobileTrigger returns null when !isMobile, so no button
+			// with aria-label "Open menu" should exist in the DOM.
+			const hamburger = page.getByRole("button", { name: /open menu/i });
+			await expect(hamburger).toHaveCount(0);
+		});
+	});
+
+	// =========================================================================
 	// Status Code Coverage — PUT /api/protected/posts/:id (update)
 	// =========================================================================
 

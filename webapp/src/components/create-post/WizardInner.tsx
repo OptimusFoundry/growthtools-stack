@@ -1,9 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarClock, Send, Trash2 } from "lucide-react";
+import { CalendarClock, MoreHorizontal, Send, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { fetcher } from "@/api/client";
+import { MobileActionBar } from "@/components/Layout/MobileActionBar";
 import { Topbar } from "@/components/Layout/Topbar";
+import topbarStyles from "@/components/Layout/topbar.module.scss";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -18,6 +20,10 @@ import { useBannerCenter } from "@/proto-design-system/components/feedback/Banne
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
+import {
+	DropdownMenu,
+	type MenuItemData,
+} from "@/proto-design-system/components/overlays/DropdownMenu";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -398,6 +404,7 @@ export function WizardInner({
 	const { publishPost } = usePublishPost();
 	const { deletePost, loading: deleting } = useDeletePost();
 	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [overflowOpen, setOverflowOpen] = useState(false);
 	const { saveDraft, loading: savingDraft } = useSaveDraft();
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
@@ -536,8 +543,74 @@ export function WizardInner({
 		{ label: isEditMode ? "Edit" : "New" },
 	];
 
+	const overflowItems: MenuItemData[] = readOnly
+		? []
+		: [
+				...(canDelete
+					? [
+							{
+								id: "delete",
+								label: "Delete",
+								leftIcon: <Trash2 size={14} />,
+								state: (busy || deleting
+									? "disabled"
+									: "default") as MenuItemData["state"],
+								onClick: () => {
+									setOverflowOpen(false);
+									setDeleteOpen(true);
+								},
+							} satisfies MenuItemData,
+						]
+					: []),
+				{
+					id: "save-draft",
+					label: "Save draft",
+					state: (busy || savingDraft || updatingDraft
+						? "disabled"
+						: "default") as MenuItemData["state"],
+					onClick: () => {
+						setOverflowOpen(false);
+						actions.handleSaveDraft();
+					},
+				} satisfies MenuItemData,
+			];
+
+	const overflowTrigger =
+		overflowItems.length > 0 ? (
+			<div style={{ position: "relative" }}>
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => setOverflowOpen((prev) => !prev)}
+					aria-label="More post actions"
+					aria-expanded={overflowOpen}
+					aria-haspopup="menu"
+				>
+					<MoreHorizontal size={16} />
+				</Button>
+				{overflowOpen && (
+					<div
+						style={{
+							bottom: "100%",
+							left: 0,
+							marginBottom: "var(--space-1)",
+							position: "absolute",
+							zIndex: "var(--z-dropdown)",
+						}}
+					>
+						<DropdownMenu
+							items={overflowItems}
+							onItemClick={(item) => {
+								item.onClick?.();
+							}}
+						/>
+					</div>
+				)}
+			</div>
+		) : undefined;
+
 	const topbarActions = readOnly ? undefined : (
-		<>
+		<div className={topbarStyles.actionsHiddenOnMobile}>
 			{canDelete && (
 				<Button
 					variant="ghost"
@@ -575,12 +648,41 @@ export function WizardInner({
 			>
 				<Send size={14} /> Publish
 			</Button>
-		</>
+		</div>
 	);
 
 	return (
 		<>
 			<Topbar breadcrumbs={breadcrumbs} actions={topbarActions} />
+			{!readOnly && (
+				<MobileActionBar
+					primary={
+						<Button
+							variant="primary"
+							size="sm"
+							onClick={actions.handlePublish}
+							isLoading={state.submitting}
+							disabled={busy || !canAct}
+							aria-label="Publish post"
+						>
+							<Send size={14} /> Publish
+						</Button>
+					}
+					secondary={
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={() => scheduleDrawer.setScheduleOpen(true)}
+							disabled={busy || !canAct}
+							aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
+						>
+							<CalendarClock size={14} />{" "}
+							{isScheduled ? "Reschedule" : "Schedule"}
+						</Button>
+					}
+					overflow={overflowTrigger}
+				/>
+			)}
 			<div className={styles.page}>
 				<header className={styles.header}>
 					<div className={styles.headerInner}>
