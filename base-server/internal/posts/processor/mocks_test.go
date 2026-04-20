@@ -140,6 +140,21 @@ func (mr *MockPostStoreMockRecorder) DeletePost(ctx, accountID, postID any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostStore)(nil).DeletePost), ctx, accountID, postID)
 }
 
+// GetAnalyticsByPlatformPost mocks base method.
+func (m *MockPostStore) GetAnalyticsByPlatformPost(ctx context.Context, platformPostID uuid.UUID) ([]store.PostAnalytics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAnalyticsByPlatformPost", ctx, platformPostID)
+	ret0, _ := ret[0].([]store.PostAnalytics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAnalyticsByPlatformPost indicates an expected call of GetAnalyticsByPlatformPost.
+func (mr *MockPostStoreMockRecorder) GetAnalyticsByPlatformPost(ctx, platformPostID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAnalyticsByPlatformPost", reflect.TypeOf((*MockPostStore)(nil).GetAnalyticsByPlatformPost), ctx, platformPostID)
+}
+
 // GetCalendarPlatformCounts mocks base method.
 func (m *MockPostStore) GetCalendarPlatformCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarPlatformRow, error) {
 	m.ctrl.T.Helper()
@@ -168,6 +183,21 @@ func (m *MockPostStore) GetCalendarStatusCounts(ctx context.Context, params stor
 func (mr *MockPostStoreMockRecorder) GetCalendarStatusCounts(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCalendarStatusCounts", reflect.TypeOf((*MockPostStore)(nil).GetCalendarStatusCounts), ctx, params)
+}
+
+// GetLatestAnalyticsByPost mocks base method.
+func (m *MockPostStore) GetLatestAnalyticsByPost(ctx context.Context, postID uuid.UUID) ([]store.PlatformPostLatest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLatestAnalyticsByPost", ctx, postID)
+	ret0, _ := ret[0].([]store.PlatformPostLatest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLatestAnalyticsByPost indicates an expected call of GetLatestAnalyticsByPost.
+func (mr *MockPostStoreMockRecorder) GetLatestAnalyticsByPost(ctx, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestAnalyticsByPost", reflect.TypeOf((*MockPostStore)(nil).GetLatestAnalyticsByPost), ctx, postID)
 }
 
 // GetMediaByIDs mocks base method.
