@@ -157,9 +157,18 @@
 	background: var(--color-base-100);
 }
 
-// Preview content
+// Preview content.
+// Previews render at 90% scale so the rail has room for analytics, status,
+// and actions. Width compensation keeps the card visually proportional.
 .tabPanelContent {
 	padding-top: var(--space-4);
+}
+
+.previewScale {
+	transform: scale(0.9);
+	transform-origin: top left;
+	width: calc(100% / 0.9);
+	margin-bottom: calc((1 - 0.9) * -100%);
 }
 
 // Status + timestamp below post card

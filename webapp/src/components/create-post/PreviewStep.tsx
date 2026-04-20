@@ -5,20 +5,15 @@ import { Accordion } from "@/proto-design-system/components/composite/Accordion"
 import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { PageTransition } from "@/proto-design-system/components/layout/PageTransition";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
-import {
-	Tab,
-	TabList,
-	TabPanel,
-	TabPanels,
-	Tabs,
-} from "@/proto-design-system/components/navigation/Tabs/Tabs";
 import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { MediaItem } from "@/types/media";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 import styles from "./CreatePostWizard.module.scss";
-import { PlatformPreviewCard } from "./PlatformPreviewCard";
+import { PlatformPreviewTabs } from "./PlatformPreviewTabs";
+/* PlatformPreviewTabs owns the tab + card rendering; PreviewStep stays focused
+ * on generation lifecycle (empty → streaming → adapting → review). */
 import type {
 	GenerationStatus,
 	WizardContentType,
@@ -175,8 +170,6 @@ export function PreviewStep({
 	onUpdateContent,
 	onUpdateThreadSegment,
 }: PreviewStepProps) {
-	const isThread = contentType === "thread";
-
 	const hasContent = generating || generated;
 
 	// Transition key for the section below the base accordion
@@ -247,37 +240,16 @@ export function PreviewStep({
 								/>
 							)}
 
-							<Tabs defaultTab={selectedPlatforms[0]}>
-								<TabList aria-label="Platform previews">
-									{selectedPlatforms.map((platform) => (
-										<Tab key={platform} id={platform}>
-											{PLATFORM_DISPLAY_NAMES[platform]}
-										</Tab>
-									))}
-								</TabList>
-								<TabPanels>
-									{selectedPlatforms.map((platform) => (
-										<TabPanel key={platform} id={platform}>
-											<div className={styles.tabPanelContent}>
-												<PlatformPreviewCard
-													platform={platform}
-													content={platformContent[platform] ?? ""}
-													threadSegments={threadContent[platform]}
-													isThread={isThread}
-													uploadedMedia={uploadedMedia}
-													readOnly={readOnly}
-													onContentChange={(content) =>
-														onUpdateContent(platform, content)
-													}
-													onThreadSegmentChange={(index, content) =>
-														onUpdateThreadSegment(platform, index, content)
-													}
-												/>
-											</div>
-										</TabPanel>
-									))}
-								</TabPanels>
-							</Tabs>
+							<PlatformPreviewTabs
+								selectedPlatforms={selectedPlatforms}
+								platformContent={platformContent}
+								threadContent={threadContent}
+								contentType={contentType}
+								uploadedMedia={uploadedMedia}
+								readOnly={readOnly}
+								onUpdateContent={onUpdateContent}
+								onUpdateThreadSegment={onUpdateThreadSegment}
+							/>
 						</Stack>
 					)}
 				</PageTransition>
