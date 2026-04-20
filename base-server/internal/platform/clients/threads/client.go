@@ -3,6 +3,7 @@ package threads
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,9 @@ import (
 
 	"base-server/internal/infra/observability"
 )
+
+// ErrNotFound indicates the Threads API returned 404 for the requested resource.
+var ErrNotFound = errors.New("threadsapi: not found")
 
 // Client handles HTTP communication with the Threads API.
 type Client struct {
@@ -202,6 +206,9 @@ func (c *Client) GetThreadInsights(ctx context.Context, postID, accessToken stri
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
 
+	if resp.StatusCode == http.StatusNotFound {
+		return ThreadInsights{}, fmt.Errorf("%w: thread %s", ErrNotFound, postID)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return ThreadInsights{}, fmt.Errorf("threadsapi: API returned %d: %s", resp.StatusCode, string(respBody))
 	}
@@ -241,7 +248,7 @@ func (c *Client) GetThreadInsights(ctx context.Context, postID, accessToken stri
 
 // VerifyCredentials checks if an access token is still valid by calling GET /v1.0/me.
 func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) error {
-	endpoint := c.apiBase()+"/v1.0/me?fields=id&access_token=" + accessToken
+	endpoint := c.apiBase() + "/v1.0/me?fields=id&access_token=" + accessToken
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

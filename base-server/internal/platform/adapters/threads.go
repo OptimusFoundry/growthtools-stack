@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"base-server/internal/platform/clients/threads"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/threads"
 )
 
 const threadsCharacterLimit = 500
@@ -185,6 +185,9 @@ func (a *ThreadsAdapter) ValidateContent(content string) error {
 func (a *ThreadsAdapter) GetEngagement(ctx context.Context, postID string, conn store.PlatformConnection) (Engagement, error) {
 	insights, err := a.client.GetThreadInsights(ctx, postID, conn.AccessToken)
 	if err != nil {
+		if errors.Is(err, threads.ErrNotFound) {
+			return Engagement{}, fmt.Errorf("threads adapter: %w: %v", ErrPostNotFound, err)
+		}
 		return Engagement{}, fmt.Errorf("threads adapter: %w", err)
 	}
 

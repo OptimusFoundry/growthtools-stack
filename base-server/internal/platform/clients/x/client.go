@@ -3,6 +3,7 @@ package x
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,9 @@ import (
 
 	"base-server/internal/infra/observability"
 )
+
+// ErrNotFound indicates the X API returned 404 for the requested resource.
+var ErrNotFound = errors.New("xapi: not found")
 
 // Client handles HTTP communication with the X (Twitter) API.
 type Client struct {
@@ -93,7 +97,6 @@ func (c *Client) CreateTweet(ctx context.Context, req CreateTweetRequest, access
 	return CreateTweetResponse{ID: result.Data.ID}, nil
 }
 
-
 // GetTweetMetrics retrieves public engagement metrics for a tweet.
 func (c *Client) GetTweetMetrics(ctx context.Context, tweetID, accessToken, tokenSecret string) (TweetMetrics, error) {
 	endpoint := fmt.Sprintf("%s/2/tweets/%s?tweet.fields=public_metrics", c.apiBase(), tweetID)
@@ -115,6 +118,9 @@ func (c *Client) GetTweetMetrics(ctx context.Context, tweetID, accessToken, toke
 
 	respBody, _ := io.ReadAll(resp.Body)
 
+	if resp.StatusCode == http.StatusNotFound {
+		return TweetMetrics{}, fmt.Errorf("%w: tweet %s", ErrNotFound, tweetID)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return TweetMetrics{}, fmt.Errorf("xapi: API returned %d: %s", resp.StatusCode, string(respBody))
 	}
@@ -168,4 +174,3 @@ func (c *Client) VerifyCredentials(ctx context.Context, accessToken string) erro
 
 	return nil
 }
-

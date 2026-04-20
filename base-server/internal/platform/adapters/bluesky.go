@@ -221,8 +221,7 @@ func (a *BlueskyAdapter) GetEngagement(ctx context.Context, postID string, conn 
 	}
 
 	if len(result.Posts) == 0 {
-		a.logger.Info(ctx, fmt.Sprintf("bluesky adapter: no post found for uri %s", postID))
-		return Engagement{}, nil
+		return Engagement{}, fmt.Errorf("bluesky adapter: %w: uri %s", ErrPostNotFound, postID)
 	}
 
 	post := result.Posts[0]

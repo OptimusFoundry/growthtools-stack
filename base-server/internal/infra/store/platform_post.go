@@ -383,6 +383,7 @@ WHERE pp.status = 'published'
   AND pp.platform_post_id <> ''
   AND pp.published_at > $1
   AND pp.platform IN ('x', 'threads', 'bluesky')
+  AND pp.analytics_unavailable_at IS NULL
   AND p.deleted_at IS NULL
 ORDER BY pp.published_at DESC
 LIMIT 500
@@ -395,4 +396,21 @@ func (s *Store) GetPublishedPlatformPostsForAnalytics(ctx context.Context, cutof
 		return nil, fmt.Errorf("failed to get published platform posts for analytics: %w", err)
 	}
 	return posts, nil
+}
+
+const sqlMarkPlatformPostAnalyticsUnavailable = `
+UPDATE platform_posts
+SET analytics_unavailable_at = NOW(), updated_at = NOW()
+WHERE id = $1 AND analytics_unavailable_at IS NULL
+`
+
+// MarkPlatformPostAnalyticsUnavailable flags a platform post so analytics
+// collection stops querying for it (e.g. after the platform returns not-found).
+// Idempotent: no-op if already marked.
+func (s *Store) MarkPlatformPostAnalyticsUnavailable(ctx context.Context, id uuid.UUID) error {
+	_, err := s.db.ExecContext(ctx, sqlMarkPlatformPostAnalyticsUnavailable, id)
+	if err != nil {
+		return fmt.Errorf("failed to mark platform post analytics unavailable: %w", err)
+	}
+	return nil
 }

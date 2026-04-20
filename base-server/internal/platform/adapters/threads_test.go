@@ -407,3 +407,91 @@ func TestThreadsAdapter_Finalize(t *testing.T) {
 		assert.Contains(t, err.Error(), "unmarshal")
 	})
 }
+
+func TestThreadsAdapter_GetEngagement(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		mockStatusCode  int
+		mockResponse    string
+		postID          string
+		expectError     bool
+		expectErrSubstr string
+		expectedLikes   int
+		expectedReplies int
+		expectedReposts int
+		expectedViews   int
+	}{
+		{
+			name:            "happy_path",
+			mockStatusCode:  http.StatusOK,
+			mockResponse:    `{"data":[{"name":"views","values":[{"value":200}]},{"name":"likes","values":[{"value":20}]},{"name":"replies","values":[{"value":8}]},{"name":"reposts","values":[{"value":4}]}]}`,
+			postID:          "post-123",
+			expectError:     false,
+			expectedLikes:   20,
+			expectedReplies: 8,
+			expectedReposts: 4,
+			expectedViews:   200,
+		},
+		{
+			name:            "post_not_found_returns_ErrPostNotFound",
+			mockStatusCode:  http.StatusNotFound,
+			mockResponse:    `{"error":"Not found"}`,
+			postID:          "nonexistent-post",
+			expectError:     true,
+			expectErrSubstr: "platform post not found",
+		},
+		{
+			name:            "server_error_returns_error",
+			mockStatusCode:  http.StatusInternalServerError,
+			mockResponse:    `{"error":"Server error"}`,
+			postID:          "post-123",
+			expectError:     true,
+			expectErrSubstr: "threads adapter",
+		},
+		{
+			name:            "partial_metrics",
+			mockStatusCode:  http.StatusOK,
+			mockResponse:    `{"data":[{"name":"views","values":[{"value":100}]},{"name":"likes","values":[{"value":10}]}]}`,
+			postID:          "partial-post",
+			expectError:     false,
+			expectedViews:   100,
+			expectedLikes:   10,
+			expectedReplies: 0, // not in response, should default to 0
+			expectedReposts: 0, // not in response, should default to 0
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if strings.Contains(r.URL.Path, tt.postID) && strings.Contains(r.URL.RawQuery, "metric=") {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(tt.mockStatusCode)
+					fmt.Fprint(w, tt.mockResponse)
+					return
+				}
+				http.NotFound(w, r)
+			}))
+			t.Cleanup(api.Close)
+
+			adapter := newThreadsAdapterWithAPI(api)
+			conn := store.PlatformConnection{Platform: "threads"}
+			got, err := adapter.GetEngagement(context.Background(), tt.postID, conn)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectErrSubstr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedLikes, got.Likes)
+				assert.Equal(t, tt.expectedReplies, got.Comments)
+				assert.Equal(t, tt.expectedReposts, got.Shares)
+				assert.Equal(t, tt.expectedViews, got.Impressions)
+			}
+		})
+	}
+}

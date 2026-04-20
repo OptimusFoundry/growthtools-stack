@@ -289,13 +289,11 @@ func TestBlueskyAdapter_GetEngagement(t *testing.T) {
 			expectError:      false,
 		},
 		{
-			name:             "post_not_found_empty_array",
-			mockResponse:     `{"posts":[]}`,
-			mockStatusCode:   http.StatusOK,
-			expectedLikes:    0,
-			expectedShares:   0,
-			expectedComments: 0,
-			expectError:      false,
+			name:              "post_not_found_empty_array",
+			mockResponse:      `{"posts":[]}`,
+			mockStatusCode:    http.StatusOK,
+			expectError:       true,
+			expectErrorSubstr: "platform post not found",
 		},
 		{
 			name:              "appview_http_error",
