@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { Sparkline } from "@/features/analytics/components/Sparkline/component";
+import { EngagementTimelineChart } from "@/features/analytics/components/EngagementTimelineChart/component";
 import { Card } from "@/proto-design-system/components/layout/Card";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Tooltip } from "@/proto-design-system/components/overlays/Tooltip";
@@ -44,7 +44,10 @@ export function PlatformPostAnalyticsCard({
 
 	const isUnavailable = pp.analyticsUnavailableAt !== null;
 
-	const sparkData = pp.history.map((h) => ({ value: h.impressions }));
+	const chartData = pp.history.map((h) => ({
+		collectedAt: h.collectedAt,
+		value: h.impressions,
+	}));
 
 	const lastCollected = pp.latest?.collectedAt
 		? formatDate(pp.latest.collectedAt)
@@ -111,14 +114,12 @@ export function PlatformPostAnalyticsCard({
 						<KpiCell label="Comments" value={pp.latest?.comments ?? 0} />
 						<KpiCell label="Shares" value={pp.latest?.shares ?? 0} />
 					</div>
-					{sparkData.length >= 2 && (
-						<Sparkline
-							data={sparkData}
-							stroke="var(--color-primary)"
-							height={80}
-							ariaLabel={`Impressions over time for ${platformLabel}`}
-						/>
-					)}
+					<EngagementTimelineChart
+						data={chartData}
+						stroke="var(--color-primary)"
+						height={140}
+						ariaLabel={`Impressions over time for ${platformLabel}`}
+					/>
 					{lastCollected && (
 						<span className={styles.updatedCaption}>
 							Updated {lastCollected}
