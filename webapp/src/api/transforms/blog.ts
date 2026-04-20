@@ -4,8 +4,8 @@
  * Transform between API (snake_case) and UI (camelCase) blog types
  */
 
-import type { BlogPost } from "@/types/blog";
-import type { ApiBlogPost } from "../types/blog";
+import type { BlogPost, BlogPostListItem } from "@/types/blog";
+import type { ApiBlogPost, ApiBlogPostListItem } from "../types/blog";
 
 export function toBlogPost(api: ApiBlogPost): BlogPost {
 	return {
@@ -32,4 +32,21 @@ export function toBlogPost(api: ApiBlogPost): BlogPost {
 
 export function toBlogPosts(apiPosts: ApiBlogPost[]): BlogPost[] {
 	return apiPosts.map(toBlogPost);
+}
+
+export function toBlogPostListItem(api: ApiBlogPostListItem): BlogPostListItem {
+	return {
+		id: api.id,
+		title: api.title,
+		status: api.status,
+		publishedAt: api.published_at,
+		createdAt: api.created_at,
+		updatedAt: api.updated_at,
+	};
+}
+
+export function toBlogPostListItems(
+	apiPosts: ApiBlogPostListItem[],
+): BlogPostListItem[] {
+	return apiPosts.map(toBlogPostListItem);
 }

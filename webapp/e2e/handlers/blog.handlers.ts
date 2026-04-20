@@ -46,7 +46,7 @@ const generatedBlog = {
 };
 
 export const blogEndpoints = {
-	list: setupEndpoint("GET", "*/api/protected/blog", blogPosts),
+	list: setupEndpoint("GET", "*/api/protected/blogs", blogPosts),
 	create: setupEndpoint("POST", "*/api/protected/blog", createdBlog, {
 		overrides: {
 			409: {
@@ -98,11 +98,11 @@ export const blogHandlers = Object.values(blogEndpoints).map((e) => e[200]());
 
 export const blogScenarios = {
 	/** 200: empty list */
-	empty: () => http.get("*/api/protected/blog", () => HttpResponse.json([])),
+	empty: () => http.get("*/api/protected/blogs", () => HttpResponse.json([])),
 
 	/** 200: filtered to only published posts */
 	publishedOnly: () =>
-		http.get("*/api/protected/blog", () =>
+		http.get("*/api/protected/blogs", () =>
 			HttpResponse.json(blogPosts.filter((p) => p.status === "published")),
 		),
 };

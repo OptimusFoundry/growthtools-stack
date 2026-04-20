@@ -12,6 +12,15 @@ export interface ApiBlogPostWithMedia {
 	media: ApiMediaItem[] | null;
 }
 
+export interface ApiBlogPostListItem {
+	id: string;
+	title: string;
+	status: BlogStatus;
+	published_at?: string;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface ApiBlogPost {
 	id: string;
 	account_id: string;

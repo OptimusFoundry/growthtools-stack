@@ -13,7 +13,7 @@ import type {
 	ApiTimeSeriesDataPoint,
 } from "../../../src/api/types/analytics";
 import type { ApiPrice, ApiSubscription } from "../../../src/api/types/billing";
-import type { ApiBlogPost } from "../../../src/api/types/blog";
+import type { ApiBlogPostListItem } from "../../../src/api/types/blog";
 import type { ApiMediaItem } from "../../../src/api/types/media";
 import type { ApiPlatformConnection } from "../../../src/api/types/platform";
 import type { ApiPost } from "../../../src/api/types/post";
@@ -308,44 +308,26 @@ export const mediaItems: ApiMediaItem[] = [
 // Blog Data
 // ============================================================================
 
-export const blogPosts: ApiBlogPost[] = [
+export const blogPosts: ApiBlogPostListItem[] = [
 	{
 		id: "blog_1",
-		account_id: "acc_123",
 		title: "Getting Started with Growth Tools",
-		slug: "getting-started",
-		content:
-			"A comprehensive guide to setting up your social media automation.",
-		excerpt: "Learn how to set up Growth Tools for your workflow.",
 		status: "published",
-		seo_title: "Getting Started with Growth Tools | Guide",
-		meta_description:
-			"Learn how to get started with Growth Tools for social media automation.",
-		keywords: ["growth tools", "getting started", "social media"],
 		published_at: "2025-11-01T12:00:00Z",
 		created_at: now,
 		updated_at: now,
 	},
 	{
 		id: "blog_2",
-		account_id: "acc_123",
 		title: "Top 10 Social Media Tips for Developers",
-		slug: "social-media-tips-developers",
-		content: "Developer-focused tips for building an online presence.",
-		excerpt: "Practical social media tips for software developers.",
 		status: "draft",
-		keywords: ["developers", "social media", "tips"],
 		created_at: now,
 		updated_at: now,
 	},
 	{
 		id: "blog_3",
-		account_id: "acc_123",
 		title: "Old Announcement Post",
-		slug: "old-announcement",
-		content: "This post has been archived.",
 		status: "archived",
-		keywords: ["archive"],
 		created_at: "2025-01-01T00:00:00Z",
 		updated_at: "2025-06-01T00:00:00Z",
 	},
