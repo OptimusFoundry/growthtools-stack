@@ -4,6 +4,7 @@ import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
+import { PublishedPostView } from "./PublishedPostView";
 import type { WizardState } from "./useCreatePostWizard";
 import { WizardInner } from "./WizardInner";
 
@@ -33,19 +34,34 @@ export function EditPostWizard({ editPostId }: EditPostWizardProps) {
 		overrides.scheduledAt = post.scheduledAt;
 	}
 
-	const hasBeenPublished =
-		post.status === "publishing" ||
-		post.status === "published" ||
-		post.status === "partially_published" ||
-		post.status === "failed";
+	// Published posts use a dedicated Detail-archetype view; there is nothing
+	// to edit once a post has shipped. publishing/failed stay in the wizard so
+	// the user can watch progress or retry.
+	if (post.status === "published" || post.status === "partially_published") {
+		return (
+			<PublishedPostView
+				postId={editPostId}
+				status={post.status}
+				blurb={post.content}
+				contentType={overrides.contentType ?? "text"}
+				selectedPlatforms={overrides.selectedPlatforms ?? []}
+				platformContent={overrides.platformContent ?? {}}
+				threadContent={overrides.threadContent ?? {}}
+				uploadedMedia={media}
+				platformPosts={platformPosts}
+			/>
+		);
+	}
+
+	const isReadOnly = post.status === "publishing" || post.status === "failed";
 
 	return (
 		<WizardInner
 			editPostId={editPostId}
 			initialOverrides={overrides}
 			initialBaseContent={post.baseContent}
-			readOnly={hasBeenPublished}
-			platformPosts={hasBeenPublished ? platformPosts : undefined}
+			readOnly={isReadOnly}
+			platformPosts={isReadOnly ? platformPosts : undefined}
 			postStatus={post.status}
 		/>
 	);

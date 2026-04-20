@@ -27,7 +27,6 @@ import styles from "./CreatePostWizard.module.scss";
 import { ComposeStep } from "./compose/ComposeStep";
 import { PostPublishStatus } from "./PostPublishStatus";
 import { PreviewStep } from "./PreviewStep";
-import { PublishedPostPanel } from "./PublishedPostPanel";
 import type { WizardState } from "./useCreatePostWizard";
 import { useCreatePostWizard } from "./useCreatePostWizard";
 import { useWizardSSESync } from "./useWizardSSESync";
@@ -451,9 +450,6 @@ export function WizardInner({
 	const hasFailed =
 		postStatus === "failed" || postStatus === "partially_published";
 
-	const isPublishedView =
-		postStatus === "published" || postStatus === "partially_published";
-
 	const eyebrowLabel = !isEditMode
 		? "Composer · new post"
 		: postStatus === "draft"
@@ -692,32 +688,21 @@ export function WizardInner({
 							/>
 						)}
 					</Stack>
-					{isPublishedView && editPostId ? (
-						<PublishedPostPanel
-							postId={editPostId}
-							selectedPlatforms={state.selectedPlatforms}
-							platformContent={state.platformContent}
-							threadContent={state.threadContent}
-							contentType={state.contentType}
-							uploadedMedia={state.uploadedMedia}
-						/>
-					) : (
-						<PreviewStep
-							selectedPlatforms={state.selectedPlatforms}
-							platformContent={state.platformContent}
-							threadContent={state.threadContent}
-							contentType={state.contentType}
-							generationProgress={state.generationProgress}
-							generating={state.generating}
-							generated={state.generated}
-							baseContent={sse.baseContent || initialBaseContent || ""}
-							ssePhase={sse.phase}
-							uploadedMedia={state.uploadedMedia}
-							readOnly={readOnly}
-							onUpdateContent={wizard.updatePlatformContent}
-							onUpdateThreadSegment={wizard.updateThreadSegment}
-						/>
-					)}
+					<PreviewStep
+						selectedPlatforms={state.selectedPlatforms}
+						platformContent={state.platformContent}
+						threadContent={state.threadContent}
+						contentType={state.contentType}
+						generationProgress={state.generationProgress}
+						generating={state.generating}
+						generated={state.generated}
+						baseContent={sse.baseContent || initialBaseContent || ""}
+						ssePhase={sse.phase}
+						uploadedMedia={state.uploadedMedia}
+						readOnly={readOnly}
+						onUpdateContent={wizard.updatePlatformContent}
+						onUpdateThreadSegment={wizard.updateThreadSegment}
+					/>
 				</div>
 			</div>
 
