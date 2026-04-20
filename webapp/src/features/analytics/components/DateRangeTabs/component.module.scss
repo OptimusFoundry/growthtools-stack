@@ -1,0 +1,30 @@
+.root {
+	display: inline-flex;
+	gap: var(--space-1);
+	background: var(--color-base-200);
+	border-radius: var(--radius-full);
+	padding: var(--space-1);
+}
+
+.tab {
+	padding: var(--space-1) var(--space-3);
+	border-radius: var(--radius-full);
+	border: none;
+	background: transparent;
+	font-size: var(--font-size-sm);
+	font-family: var(--font-mono);
+	color: var(--color-base-content-secondary);
+	cursor: pointer;
+	transition: background var(--duration-fast), color var(--duration-fast);
+
+	&:hover {
+		color: var(--color-base-content);
+	}
+}
+
+.active {
+	background: var(--color-surface);
+	color: var(--color-base-content);
+	font-weight: var(--font-weight-medium);
+	box-shadow: var(--shadow-xs);
+}

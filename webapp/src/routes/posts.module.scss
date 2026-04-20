@@ -297,3 +297,20 @@
     color: var(--color-error);
   }
 }
+
+.analyticsBtn {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-base-content-secondary);
+  display: flex;
+  height: var(--space-7);
+  justify-content: center;
+  text-decoration: none;
+  transition: color var(--duration-fast), background var(--duration-fast);
+  width: var(--space-7);
+
+  &:hover {
+    background: var(--color-base-200);
+    color: var(--color-primary);
+  }
+}

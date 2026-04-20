@@ -8,6 +8,8 @@
 import type {
 	ApiAnalyticsOverview,
 	ApiPlatformBreakdown,
+	ApiPlatformPostAnalytics,
+	ApiPostAnalytics,
 	ApiTimeSeriesDataPoint,
 } from "../../../src/api/types/analytics";
 import type { ApiPrice, ApiSubscription } from "../../../src/api/types/billing";
@@ -455,6 +457,70 @@ export const platformBreakdown: ApiPlatformBreakdown[] = [
 		clicks: 900,
 	},
 ];
+
+// ============================================================================
+// Post Analytics Data
+// ============================================================================
+
+const snapshot = (impressions: number, likes: number, collectedAt: string) => ({
+	impressions,
+	likes,
+	comments: Math.floor(likes / 5),
+	shares: Math.floor(likes / 10),
+	clicks: Math.floor(likes / 3),
+	collected_at: collectedAt,
+});
+
+const xPlatformPost: ApiPlatformPostAnalytics = {
+	platform_post_id: "pp_x_1",
+	platform: "x",
+	status: "published",
+	published_at: "2025-12-15T10:00:00Z",
+	post_url: "https://x.com/testuser/status/123456",
+	analytics_unavailable_at: null,
+	latest: snapshot(4200, 310, "2025-12-20T08:00:00Z"),
+	history: [
+		snapshot(1000, 80, "2025-12-16T08:00:00Z"),
+		snapshot(2500, 190, "2025-12-17T08:00:00Z"),
+		snapshot(3800, 280, "2025-12-18T08:00:00Z"),
+		snapshot(4200, 310, "2025-12-20T08:00:00Z"),
+	],
+};
+
+const threadsPlatformPost: ApiPlatformPostAnalytics = {
+	platform_post_id: "pp_threads_1",
+	platform: "threads",
+	status: "published",
+	published_at: "2025-12-15T10:00:00Z",
+	post_url: "https://www.threads.net/@testuser/post/abc123",
+	analytics_unavailable_at: null,
+	latest: snapshot(1800, 140, "2025-12-20T08:00:00Z"),
+	history: [
+		snapshot(500, 40, "2025-12-16T08:00:00Z"),
+		snapshot(1200, 90, "2025-12-18T08:00:00Z"),
+		snapshot(1800, 140, "2025-12-20T08:00:00Z"),
+	],
+};
+
+/** Happy-path fixture: two platforms with full analytics. */
+export const postAnalyticsWithTwoPlatforms: ApiPostAnalytics = {
+	platform_posts: [xPlatformPost, threadsPlatformPost],
+};
+
+/** Empty fixture: published post, no platform posts collected yet. */
+export const postAnalyticsEmpty: ApiPostAnalytics = {
+	platform_posts: [],
+};
+
+/** Fixture with one platform where analytics became unavailable. */
+export const postAnalyticsUnavailable: ApiPostAnalytics = {
+	platform_posts: [
+		{
+			...xPlatformPost,
+			analytics_unavailable_at: "2025-12-18T00:00:00Z",
+		},
+	],
+};
 
 // ============================================================================
 // Voice Profile Data

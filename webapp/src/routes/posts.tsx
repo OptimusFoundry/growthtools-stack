@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, FileText, Plus, SearchX, Trash2 } from "lucide-react";
+import {
+	BarChart2,
+	ChevronRight,
+	FileText,
+	Plus,
+	SearchX,
+	Trash2,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
@@ -278,6 +285,17 @@ function PostsPage() {
 												>
 													<Trash2 size={16} />
 												</button>
+											)}
+											{post.status === "published" && (
+												<Link
+													to="/posts/$id/analytics"
+													params={{ id: post.id }}
+													onClick={(e) => e.stopPropagation()}
+													className={styles.analyticsBtn}
+													aria-label={`View analytics for "${truncate(post.title || post.content, 40)}"`}
+												>
+													<BarChart2 size={16} />
+												</Link>
 											)}
 											<span className={styles.chevronBtn} aria-hidden>
 												<ChevronRight size={16} />

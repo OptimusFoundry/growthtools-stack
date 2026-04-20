@@ -30,3 +30,29 @@ export interface ApiPlatformBreakdown {
 	shares: number;
 	clicks: number;
 }
+
+// ── Per-post analytics (new endpoint: GET /posts/:id/analytics) ──────────────
+
+export interface ApiAnalyticsSnapshot {
+	impressions: number;
+	likes: number;
+	comments: number;
+	shares: number;
+	clicks: number;
+	collected_at: string;
+}
+
+export interface ApiPlatformPostAnalytics {
+	platform_post_id: string;
+	platform: string;
+	status: string;
+	published_at: string | null;
+	post_url: string | null;
+	analytics_unavailable_at: string | null;
+	latest: ApiAnalyticsSnapshot | null;
+	history: ApiAnalyticsSnapshot[];
+}
+
+export interface ApiPostAnalytics {
+	platform_posts: ApiPlatformPostAnalytics[];
+}

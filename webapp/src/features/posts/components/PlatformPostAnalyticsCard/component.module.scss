@@ -1,0 +1,75 @@
+@use "@/proto-design-system/mixins/responsive" as *;
+
+.header {
+	margin-bottom: var(--space-4);
+}
+
+.mono {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--color-base-content-secondary);
+}
+
+.externalLink {
+	display: flex;
+	align-items: center;
+	color: var(--color-base-content-secondary);
+	transition: color var(--duration-fast);
+
+	&:hover {
+		color: var(--color-primary);
+	}
+}
+
+.kpiGrid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--space-3);
+
+	@include breakpoint-down(sm) {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+.kpiGridFaded {
+	opacity: var(--opacity-disabled);
+}
+
+.kpiCell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.kpiLabel {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xxs);
+	text-transform: uppercase;
+	letter-spacing: var(--letter-spacing-wider);
+	color: var(--color-base-content-secondary);
+}
+
+.kpiValue {
+	font-family: var(--font-serif);
+	font-size: var(--font-size-xl);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-base-content);
+}
+
+.unavailableBody,
+.liveBody {
+	margin-top: var(--space-3);
+}
+
+.unavailableHint {
+	font-size: var(--font-size-sm);
+	color: var(--color-base-content-secondary);
+	cursor: help;
+	text-decoration: underline dotted;
+}
+
+.updatedCaption {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--color-base-content-tertiary);
+}

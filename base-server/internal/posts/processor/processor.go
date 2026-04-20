@@ -41,6 +41,8 @@ type PostStore interface {
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 	GetCalendarStatusCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarStatusRow, error)
 	GetCalendarPlatformCounts(ctx context.Context, params store.CalendarParams) ([]store.CalendarPlatformRow, error)
+	GetLatestAnalyticsByPost(ctx context.Context, postID uuid.UUID) ([]store.PlatformPostLatest, error)
+	GetAnalyticsByPlatformPost(ctx context.Context, platformPostID uuid.UUID) ([]store.PostAnalytics, error)
 }
 
 // EventPublisher publishes events to a message broker
@@ -58,6 +60,7 @@ var (
 	ErrFailedSaveDraft         = errors.New("failed to save draft")
 	ErrFailedRetryPost         = errors.New("failed to retry post")
 	ErrInvalidCalendarParams   = errors.New("invalid calendar year or month")
+	ErrFailedGetPostAnalytics  = errors.New("failed to get post analytics")
 )
 
 type PostProcessor struct {
@@ -725,4 +728,146 @@ func addPlatformCount(pb *PlatformBreakdown, platform string, n int) {
 	case store.PlatformPinterest:
 		pb.Pinterest += n
 	}
+}
+
+// AnalyticsSnapshot is one metrics point in a history slice or latest reading.
+type AnalyticsSnapshot struct {
+	Impressions int       `json:"impressions"`
+	Likes       int       `json:"likes"`
+	Comments    int       `json:"comments"`
+	Shares      int       `json:"shares"`
+	Clicks      int       `json:"clicks"`
+	CollectedAt time.Time `json:"collected_at"`
+}
+
+// PlatformPostAnalytics is the per-platform block in GetPostAnalyticsResult.
+type PlatformPostAnalytics struct {
+	PlatformPostID         string              `json:"platform_post_id"`
+	Platform               string              `json:"platform"`
+	Status                 string              `json:"status"`
+	PublishedAt            *time.Time          `json:"published_at"`
+	PostURL                *string             `json:"post_url"`
+	AnalyticsUnavailableAt *time.Time          `json:"analytics_unavailable_at"`
+	Latest                 *AnalyticsSnapshot  `json:"latest"`
+	History                []AnalyticsSnapshot `json:"history"`
+}
+
+// GetPostAnalyticsResult is the response shape for HandleGetPostAnalytics.
+type GetPostAnalyticsResult struct {
+	PlatformPosts []PlatformPostAnalytics `json:"platform_posts"`
+}
+
+// buildPostURL constructs a human-readable URL for a published platform post
+// from the raw platform_post_id string. Returns nil when platformPostIDStr is
+// nil or empty, or when the platform doesn't have a deterministic URL shape.
+func buildPostURL(platform string, platformPostIDStr *string) *string {
+	if platformPostIDStr == nil || *platformPostIDStr == "" {
+		return nil
+	}
+	id := *platformPostIDStr
+	var u string
+	switch platform {
+	case store.PlatformX:
+		u = "https://x.com/i/web/status/" + id
+	case store.PlatformBlueSky:
+		// BlueSky AT URIs are not direct web URLs; skip rather than expose raw AT URI.
+		return nil
+	case store.PlatformThreads:
+		u = "https://www.threads.net/t/" + id
+	default:
+		return nil
+	}
+	return &u
+}
+
+// GetPostAnalytics returns per-platform analytics for a single post. It first
+// verifies the post belongs to the caller's account, then fetches each
+// platform_post's latest snapshot and full history.
+func (p *PostProcessor) GetPostAnalytics(ctx context.Context, accountID, postID uuid.UUID) (GetPostAnalyticsResult, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "post_id", Value: postID.String()},
+		observability.Field{Key: "operation", Value: "get_post_analytics"},
+	)
+
+	// Verify ownership.
+	if _, err := p.store.GetPostByID(ctx, accountID, postID); err != nil {
+		p.logger.Error(ctx, "failed to verify post ownership for analytics", err)
+		if errors.Is(err, store.ErrNotFound) {
+			return GetPostAnalyticsResult{}, ErrPostNotFound
+		}
+		return GetPostAnalyticsResult{}, ErrFailedGetPostAnalytics
+	}
+
+	latestRows, err := p.store.GetLatestAnalyticsByPost(ctx, postID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get latest analytics by post", err)
+		return GetPostAnalyticsResult{}, ErrFailedGetPostAnalytics
+	}
+
+	platformPosts := make([]PlatformPostAnalytics, 0, len(latestRows))
+	for _, row := range latestRows {
+		var latest *AnalyticsSnapshot
+		if row.CollectedAt != nil {
+			imp := 0
+			if row.Impressions != nil {
+				imp = *row.Impressions
+			}
+			lk := 0
+			if row.Likes != nil {
+				lk = *row.Likes
+			}
+			cm := 0
+			if row.Comments != nil {
+				cm = *row.Comments
+			}
+			sh := 0
+			if row.Shares != nil {
+				sh = *row.Shares
+			}
+			cl := 0
+			if row.Clicks != nil {
+				cl = *row.Clicks
+			}
+			latest = &AnalyticsSnapshot{
+				Impressions: imp,
+				Likes:       lk,
+				Comments:    cm,
+				Shares:      sh,
+				Clicks:      cl,
+				CollectedAt: *row.CollectedAt,
+			}
+		}
+
+		historyRows, err := p.store.GetAnalyticsByPlatformPost(ctx, row.PlatformPostID)
+		if err != nil {
+			p.logger.Error(ctx, "failed to get analytics history for platform post", err)
+			return GetPostAnalyticsResult{}, ErrFailedGetPostAnalytics
+		}
+
+		history := make([]AnalyticsSnapshot, 0, len(historyRows))
+		for _, h := range historyRows {
+			history = append(history, AnalyticsSnapshot{
+				Impressions: h.Impressions,
+				Likes:       h.Likes,
+				Comments:    h.Comments,
+				Shares:      h.Shares,
+				Clicks:      h.Clicks,
+				CollectedAt: h.CollectedAt,
+			})
+		}
+
+		platformPosts = append(platformPosts, PlatformPostAnalytics{
+			PlatformPostID:         row.PlatformPostID.String(),
+			Platform:               row.Platform,
+			Status:                 row.Status,
+			PublishedAt:            row.PublishedAt,
+			PostURL:                buildPostURL(row.Platform, row.PlatformPostIDStr),
+			AnalyticsUnavailableAt: row.AnalyticsUnavailableAt,
+			Latest:                 latest,
+			History:                history,
+		})
+	}
+
+	return GetPostAnalyticsResult{PlatformPosts: platformPosts}, nil
 }

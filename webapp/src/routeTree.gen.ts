@@ -32,6 +32,7 @@ import { Route as BillingPlansRouteImport } from './routes/billing/plans'
 import { Route as BillingPayment_methodRouteImport } from './routes/billing/payment_method'
 import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
 import { Route as BillingPayRouteImport } from './routes/billing/pay'
+import { Route as PostsIdAnalyticsRouteImport } from './routes/posts.$id.analytics'
 
 const TestLoginRoute = TestLoginRouteImport.update({
   id: '/test-login',
@@ -148,6 +149,11 @@ const BillingPayRoute = BillingPayRouteImport.update({
   path: '/billing/pay',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PostsIdAnalyticsRoute = PostsIdAnalyticsRouteImport.update({
+  id: '/$id/analytics',
+  path: '/$id/analytics',
+  getParentRoute: () => PostsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -159,7 +165,7 @@ export interface FileRoutesByFullPath {
   '/github': typeof GithubRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
-  '/posts': typeof PostsRoute
+  '/posts': typeof PostsRouteWithChildren
   '/signin': typeof SigninRoute
   '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
   '/billing/': typeof BillingIndexRoute
+  '/posts/$id/analytics': typeof PostsIdAnalyticsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -184,7 +191,7 @@ export interface FileRoutesByTo {
   '/github': typeof GithubRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
-  '/posts': typeof PostsRoute
+  '/posts': typeof PostsRouteWithChildren
   '/signin': typeof SigninRoute
   '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/posts/$id': typeof PostsIdRoute
   '/posts/new': typeof PostsNewRoute
   '/billing': typeof BillingIndexRoute
+  '/posts/$id/analytics': typeof PostsIdAnalyticsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -210,7 +218,7 @@ export interface FileRoutesById {
   '/github': typeof GithubRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
-  '/posts': typeof PostsRoute
+  '/posts': typeof PostsRouteWithChildren
   '/signin': typeof SigninRoute
   '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/posts_/$id': typeof PostsIdRoute
   '/posts_/new': typeof PostsNewRoute
   '/billing/': typeof BillingIndexRoute
+  '/posts/$id/analytics': typeof PostsIdAnalyticsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/posts/$id'
     | '/posts/new'
     | '/billing/'
+    | '/posts/$id/analytics'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/posts/$id'
     | '/posts/new'
     | '/billing'
+    | '/posts/$id/analytics'
   id:
     | '__root__'
     | '/'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/posts_/$id'
     | '/posts_/new'
     | '/billing/'
+    | '/posts/$id/analytics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -313,7 +325,7 @@ export interface RootRouteChildren {
   GithubRoute: typeof GithubRoute
   MainRoute: typeof MainRoute
   MediaRoute: typeof MediaRoute
-  PostsRoute: typeof PostsRoute
+  PostsRoute: typeof PostsRouteWithChildren
   SigninRoute: typeof SigninRoute
   TestLoginRoute: typeof TestLoginRoute
   BillingPayRoute: typeof BillingPayRoute
@@ -492,8 +504,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillingPayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/posts/$id/analytics': {
+      id: '/posts/$id/analytics'
+      path: '/$id/analytics'
+      fullPath: '/posts/$id/analytics'
+      preLoaderRoute: typeof PostsIdAnalyticsRouteImport
+      parentRoute: typeof PostsRoute
+    }
   }
 }
+
+interface PostsRouteChildren {
+  PostsIdAnalyticsRoute: typeof PostsIdAnalyticsRoute
+}
+
+const PostsRouteChildren: PostsRouteChildren = {
+  PostsIdAnalyticsRoute: PostsIdAnalyticsRoute,
+}
+
+const PostsRouteWithChildren = PostsRoute._addFileChildren(PostsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -505,7 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   GithubRoute: GithubRoute,
   MainRoute: MainRoute,
   MediaRoute: MediaRoute,
-  PostsRoute: PostsRoute,
+  PostsRoute: PostsRouteWithChildren,
   SigninRoute: SigninRoute,
   TestLoginRoute: TestLoginRoute,
   BillingPayRoute: BillingPayRoute,

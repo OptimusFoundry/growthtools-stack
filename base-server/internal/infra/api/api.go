@@ -127,6 +127,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.DELETE("/posts/:id", a.postsHandler.HandleDeletePost)
 		protectedGroup.DELETE("/posts/:id/media/:mediaID", a.postsHandler.HandleUnlinkMedia)
 		protectedGroup.GET("/posts/:id/details", a.postsHandler.HandleGetPostDetails)
+		protectedGroup.GET("/posts/:id/analytics", a.postsHandler.HandleGetPostAnalytics)
 		protectedGroup.PUT("/posts/:id/draft", a.postsHandler.HandleUpdateDraft)
 		protectedGroup.POST("/posts/:id/publish", a.postsHandler.HandlePublishPost)
 		protectedGroup.POST("/posts/:id/retry", a.postsHandler.HandleRetryPost)

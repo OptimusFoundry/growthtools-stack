@@ -7,6 +7,7 @@ import {
 	analyticsOverview,
 	analyticsTimeseries,
 	platformBreakdown,
+	postAnalyticsWithTwoPlatforms,
 } from "../mocks/data";
 
 export const analyticsEndpoints = {
@@ -25,6 +26,11 @@ export const analyticsEndpoints = {
 		"*/api/protected/analytics/platforms",
 		platformBreakdown,
 	),
+	postAnalytics: setupEndpoint(
+		"GET",
+		"*/api/protected/posts/:id/analytics",
+		postAnalyticsWithTwoPlatforms,
+	),
 };
 
 export const analyticsHandlers = Object.values(analyticsEndpoints).map((e) =>
@@ -42,6 +48,38 @@ export const analyticsScenarios = {
 		),
 		http.get("*/api/protected/analytics/platforms", () =>
 			HttpResponse.json([]),
+		),
+	],
+	/** Post analytics with no platform posts (post not yet published). */
+	postAnalyticsEmpty: () => [
+		http.get("*/api/protected/posts/:id/analytics", () =>
+			HttpResponse.json({ platform_posts: [] }),
+		),
+	],
+	/** Post analytics where one platform has become unavailable. */
+	postAnalyticsUnavailable: () => [
+		http.get("*/api/protected/posts/:id/analytics", () =>
+			HttpResponse.json({
+				platform_posts: [
+					{
+						platform_post_id: "pp_x_1",
+						platform: "x",
+						status: "published",
+						published_at: "2025-12-15T10:00:00Z",
+						post_url: "https://x.com/testuser/status/123456",
+						analytics_unavailable_at: "2025-12-18T00:00:00Z",
+						latest: {
+							impressions: 4200,
+							likes: 310,
+							comments: 62,
+							shares: 31,
+							clicks: 103,
+							collected_at: "2025-12-18T00:00:00Z",
+						},
+						history: [],
+					},
+				],
+			}),
 		),
 	],
 };
