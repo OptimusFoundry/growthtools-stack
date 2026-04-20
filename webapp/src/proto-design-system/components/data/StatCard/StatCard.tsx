@@ -29,6 +29,8 @@ export interface StatCardProps {
 	variant?: StatCardVariant;
 	/** Additional description */
 	description?: string;
+	/** Optional footer content rendered below the value row */
+	footer?: ReactNode;
 	/** Click handler */
 	onClick?: () => void;
 	/** Additional className */
@@ -100,6 +102,7 @@ export function StatCard({
 	icon,
 	variant = "default",
 	description,
+	footer,
 	onClick,
 	className,
 }: StatCardProps) {
@@ -150,6 +153,7 @@ export function StatCard({
 					)}
 				</div>
 			)}
+			{footer && <div className={styles.footer}>{footer}</div>}
 		</Component>
 	);
 }

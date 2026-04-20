@@ -6,12 +6,18 @@
 
 import type {
 	AnalyticsOverview,
+	AnalyticsSnapshot,
 	PlatformBreakdown,
+	PlatformPostAnalytics,
+	PostAnalytics,
 	TimeSeriesDataPoint,
 } from "@/types/analytics";
 import type {
 	ApiAnalyticsOverview,
+	ApiAnalyticsSnapshot,
 	ApiPlatformBreakdown,
+	ApiPlatformPostAnalytics,
+	ApiPostAnalytics,
 	ApiTimeSeriesDataPoint,
 } from "../types/analytics";
 
@@ -51,5 +57,41 @@ export function toPlatformBreakdown(
 		comments: api.comments,
 		shares: api.shares,
 		clicks: api.clicks,
+	};
+}
+
+// ── Per-post analytics transforms ────────────────────────────────────────────
+
+export function toAnalyticsSnapshot(
+	api: ApiAnalyticsSnapshot,
+): AnalyticsSnapshot {
+	return {
+		impressions: api.impressions,
+		likes: api.likes,
+		comments: api.comments,
+		shares: api.shares,
+		clicks: api.clicks,
+		collectedAt: api.collected_at,
+	};
+}
+
+export function toPlatformPostAnalytics(
+	api: ApiPlatformPostAnalytics,
+): PlatformPostAnalytics {
+	return {
+		platformPostId: api.platform_post_id,
+		platform: api.platform,
+		status: api.status,
+		publishedAt: api.published_at,
+		postUrl: api.post_url,
+		analyticsUnavailableAt: api.analytics_unavailable_at,
+		latest: api.latest ? toAnalyticsSnapshot(api.latest) : null,
+		history: api.history.map(toAnalyticsSnapshot),
+	};
+}
+
+export function toPostAnalytics(api: ApiPostAnalytics): PostAnalytics {
+	return {
+		platformPosts: api.platform_posts.map(toPlatformPostAnalytics),
 	};
 }
