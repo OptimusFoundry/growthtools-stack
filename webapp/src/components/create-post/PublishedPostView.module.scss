@@ -1,7 +1,0 @@
-// Detail/library archetype for read-only published post view.
-// Single column, 1320px max-width (per docs/design-docs/14-composition.md C-3.1).
-// Section gap 56px (C-2.2). No 2-column editor shell — nothing to edit.
-.page {
-	padding: var(--space-9) var(--space-9) var(--space-12);
-	max-width: var(--max-width-7xl);
-}

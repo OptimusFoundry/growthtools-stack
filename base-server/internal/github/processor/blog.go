@@ -38,7 +38,14 @@ Respond with a single JSON object and nothing else. The object must have these f
 - "og_title": string — Open Graph title (max 60 chars)
 - "og_description": string — Open Graph description (max 200 chars)
 
-No markdown fences, no preamble — raw JSON only.`
+No markdown fences, no preamble — raw JSON only.
+
+CRITICAL JSON escaping rules — the output must parse as a single JSON object on the first try:
+- Every double-quote character inside a string value must be escaped as \".
+- Every backslash must be escaped as \\.
+- Never emit a raw newline inside a JSON string — use \n.
+- The "content" Markdown may reference code (identifiers, file names). Wrap such references in backticks (e.g. ` + "`FooBar`" + `) — backticks do NOT need escaping. Do NOT use double-quotes around code inside the content string.
+- Do not embed JSON-like fragments (e.g. {"key": "value"}) inside the "content" string. If you must mention JSON structure, describe it in prose or escape every inner quote as \".`
 )
 
 var (

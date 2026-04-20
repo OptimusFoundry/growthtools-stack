@@ -21,6 +21,7 @@ import (
 // AIClient is the subset of aiclient.Client used by this package.
 type AIClient interface {
 	CreateMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
+	CreateJSONMessage(ctx context.Context, systemPrompt string, messages []aiclient.Message, maxTokens int) (string, error)
 }
 
 // ErrSelectAndDecide is returned when the AI call or response parse fails.
@@ -104,9 +105,9 @@ func (p *Planner) SelectAndDecide(ctx context.Context, req SelectRequest) (Selec
 
 	userMsg := buildUserMessage(req)
 
-	raw, err := p.aiClient.CreateMessage(ctx, systemPrompt, []aiclient.Message{
+	raw, err := p.aiClient.CreateJSONMessage(ctx, systemPrompt, []aiclient.Message{
 		{Role: "user", Content: userMsg},
-	}, 1024)
+	}, 2048)
 	if err != nil {
 		p.logger.Error(ctx, "failed to select media and mode via ai", err)
 		return SelectDecision{}, ErrSelectAndDecide

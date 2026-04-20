@@ -1,12 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	BarChart2,
-	ChevronRight,
-	FileText,
-	Plus,
-	SearchX,
-	Trash2,
-} from "lucide-react";
+import { ChevronRight, FileText, Plus, SearchX, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
@@ -231,79 +224,73 @@ function PostsPage() {
 							transition={{ duration: 0.2 }}
 							className={styles.postList}
 						>
-							{posts.map((post, index) => (
-								<Link
-									key={post.id}
-									to="/posts/$id"
-									params={{ id: post.id }}
-									className={styles.postLink}
-								>
-									<div className={styles.postRow}>
-										<div className={styles.titleRow}>
-											<span className={styles.idx}>
-												№ {String(index + 1).padStart(2, "0")}
-											</span>
-											<div className={styles.postBody}>
-												<div className={styles.postTitleText}>
-													{truncate(post.title ?? "Untitled post", 80)}
-												</div>
-												<div className={styles.postMetaText}>
-													{statusLine(post)}
+							{posts.map((post, index) => {
+								const isPublished =
+									post.status === "published" ||
+									post.status === "partially_published";
+								return (
+									<Link
+										key={post.id}
+										to={isPublished ? "/posts/$id/analytics" : "/posts/$id"}
+										params={{ id: post.id }}
+										className={styles.postLink}
+									>
+										<div className={styles.postRow}>
+											<div className={styles.titleRow}>
+												<span className={styles.idx}>
+													№ {String(index + 1).padStart(2, "0")}
+												</span>
+												<div className={styles.postBody}>
+													<div className={styles.postTitleText}>
+														{truncate(post.title ?? "Untitled post", 80)}
+													</div>
+													<div className={styles.postMetaText}>
+														{statusLine(post)}
+													</div>
 												</div>
 											</div>
-										</div>
-										<div className={styles.metaRow}>
-											{post.platforms.length > 0 && (
-												<span className={styles.platformChips}>
-													{post.platforms.slice(0, 3).map((p) => (
-														<span
-															key={p}
-															className={styles.platformChip}
-															title={p}
-														>
-															{getPlatformIcon(p, 14)}
-														</span>
-													))}
+											<div className={styles.metaRow}>
+												{post.platforms.length > 0 && (
+													<span className={styles.platformChips}>
+														{post.platforms.slice(0, 3).map((p) => (
+															<span
+																key={p}
+																className={styles.platformChip}
+																title={p}
+															>
+																{getPlatformIcon(p, 14)}
+															</span>
+														))}
+													</span>
+												)}
+												<span
+													className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
+												>
+													{STATUS_LABELS[post.status]}
 												</span>
-											)}
-											<span
-												className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
-											>
-												{STATUS_LABELS[post.status]}
-											</span>
-											{(post.status === "draft" ||
-												post.status === "scheduled") && (
-												<button
-													type="button"
-													className={styles.deleteBtn}
-													onClick={(e) => {
-														e.preventDefault();
-														e.stopPropagation();
-														setDeleteTargetId(post.id);
-													}}
-													aria-label={`Delete post "${truncate(post.title ?? "Untitled post", 40)}"`}
-												>
-													<Trash2 size={16} />
-												</button>
-											)}
-											{post.status === "published" && (
-												<Link
-													to="/posts/$id/analytics"
-													params={{ id: post.id }}
-													onClick={(e) => e.stopPropagation()}
-													className={styles.analyticsBtn}
-													aria-label={`View analytics for "${truncate(post.title ?? "Untitled post", 40)}"`}
-												>
-													<BarChart2 size={16} />
-												</Link>
-											)}
-											<span className={styles.chevronBtn} aria-hidden>
-												<ChevronRight size={16} />
-											</span>
+												{(post.status === "draft" ||
+													post.status === "scheduled") && (
+													<button
+														type="button"
+														className={styles.deleteBtn}
+														onClick={(e) => {
+															e.preventDefault();
+															e.stopPropagation();
+															setDeleteTargetId(post.id);
+														}}
+														aria-label={`Delete post "${truncate(post.title ?? "Untitled post", 40)}"`}
+													>
+														<Trash2 size={16} />
+													</button>
+												)}
+												<span className={styles.chevronBtn} aria-hidden>
+													<ChevronRight size={16} />
+												</span>
+											</div>
 										</div>
-									</div>
-								</Link>
-							))}
+									</Link>
+								);
+							})}
 						</motion.div>
 					)}
 				</div>

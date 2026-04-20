@@ -1,11 +1,11 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { PostAnalyticsPage } from "@/features/posts/components/PostAnalyticsPage/component";
+import { PublishedPostPage } from "@/features/posts/components/PublishedPostPage/component";
 
 export const Route = createFileRoute("/posts_/$id_/analytics")({
-	component: PostAnalyticsRoute,
+	component: PublishedPostRoute,
 });
 
-function PostAnalyticsRoute() {
+function PublishedPostRoute() {
 	const { id } = useParams({ from: "/posts_/$id_/analytics" });
-	return <PostAnalyticsPage postId={id} />;
+	return <PublishedPostPage postId={id} />;
 }
