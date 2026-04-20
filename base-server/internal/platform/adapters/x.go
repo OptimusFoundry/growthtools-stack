@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"base-server/internal/platform/clients/x"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/clients/x"
 )
 
 const xCharacterLimit = 280
@@ -135,6 +135,9 @@ func (a *XAdapter) GetEngagement(ctx context.Context, postID string, conn store.
 
 	metrics, err := a.client.GetTweetMetrics(ctx, postID, accessToken, tokenSecret)
 	if err != nil {
+		if errors.Is(err, x.ErrNotFound) {
+			return Engagement{}, fmt.Errorf("x adapter: %w: %v", ErrPostNotFound, err)
+		}
 		return Engagement{}, fmt.Errorf("x adapter: %w", err)
 	}
 

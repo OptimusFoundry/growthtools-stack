@@ -283,3 +283,80 @@ func TestXAdapter_PublishThread(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestXAdapter_GetEngagement(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                string
+		mockStatusCode      int
+		mockResponse        string
+		tweetID             string
+		expectError         bool
+		expectErrSubstr     string
+		expectedLikes       int
+		expectedShares      int
+		expectedComments    int
+		expectedImpressions int
+	}{
+		{
+			name:                "happy_path",
+			mockStatusCode:      http.StatusOK,
+			mockResponse:        `{"data":{"public_metrics":{"impression_count":100,"like_count":15,"reply_count":5,"retweet_count":3,"quote_count":2}}}`,
+			tweetID:             "tweet-123",
+			expectError:         false,
+			expectedLikes:       15,
+			expectedShares:      5, // retweet_count + quote_count = 3 + 2
+			expectedComments:    5,
+			expectedImpressions: 100,
+		},
+		{
+			name:            "tweet_not_found_returns_ErrPostNotFound",
+			mockStatusCode:  http.StatusNotFound,
+			mockResponse:    `{"detail":"Not found"}`,
+			tweetID:         "nonexistent-tweet",
+			expectError:     true,
+			expectErrSubstr: "platform post not found",
+		},
+		{
+			name:            "server_error_returns_error",
+			mockStatusCode:  http.StatusInternalServerError,
+			mockResponse:    `{"detail":"Server error"}`,
+			tweetID:         "tweet-123",
+			expectError:     true,
+			expectErrSubstr: "x adapter",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/2/tweets/"+tt.tweetID {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(tt.mockStatusCode)
+					fmt.Fprint(w, tt.mockResponse)
+					return
+				}
+				http.NotFound(w, r)
+			}))
+			t.Cleanup(api.Close)
+
+			adapter := newXAdapterWithAPI(api)
+			conn := store.PlatformConnection{Platform: "x"}
+			got, err := adapter.GetEngagement(context.Background(), tt.tweetID, conn)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectErrSubstr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedLikes, got.Likes)
+				assert.Equal(t, tt.expectedShares, got.Shares)
+				assert.Equal(t, tt.expectedComments, got.Comments)
+				assert.Equal(t, tt.expectedImpressions, got.Impressions)
+			}
+		})
+	}
+}

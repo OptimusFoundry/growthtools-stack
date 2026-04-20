@@ -17,12 +17,12 @@ import (
 
 // blueskyAPIServer handles all Bluesky AT Protocol endpoints needed for adapter tests.
 type blueskyAPIServer struct {
-	t              *testing.T
-	sessionErr     bool
-	uploadBlobErr  bool
+	t               *testing.T
+	sessionErr      bool
+	uploadBlobErr   bool
 	createRecordErr bool
-	recordCalls    int
-	blobCalls      int
+	recordCalls     int
+	blobCalls       int
 }
 
 func (s *blueskyAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -255,4 +255,83 @@ func TestBlueskyAdapter_PublishThread(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, 2, callCount)
 	})
+}
+
+// newBlueskyAdapterWithAppView creates a BlueskyAdapter with a mock AppView server.
+func newBlueskyAdapterWithAppView(t *testing.T, appViewSrv *httptest.Server) *BlueskyAdapter {
+	t.Helper()
+	logger := observability.NewLogger()
+	client := bluesky.NewClient("http://unused-pds", appViewSrv.Client(), logger).
+		WithAppViewHost(appViewSrv.URL)
+	return NewBlueskyAdapter(client, logger)
+}
+
+func TestBlueskyAdapter_GetEngagement(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		mockResponse      string
+		mockStatusCode    int
+		expectedLikes     int
+		expectedShares    int
+		expectedComments  int
+		expectError       bool
+		expectErrorSubstr string
+	}{
+		{
+			name:             "happy_path",
+			mockResponse:     `{"posts":[{"uri":"at://did/post/rkey","likeCount":7,"repostCount":2,"replyCount":1}]}`,
+			mockStatusCode:   http.StatusOK,
+			expectedLikes:    7,
+			expectedShares:   2,
+			expectedComments: 1,
+			expectError:      false,
+		},
+		{
+			name:              "post_not_found_empty_array",
+			mockResponse:      `{"posts":[]}`,
+			mockStatusCode:    http.StatusOK,
+			expectError:       true,
+			expectErrorSubstr: "platform post not found",
+		},
+		{
+			name:              "appview_http_error",
+			mockResponse:      `{"error":"server"}`,
+			mockStatusCode:    http.StatusInternalServerError,
+			expectError:       true,
+			expectErrorSubstr: "GetEngagement",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			appViewSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/xrpc/app.bsky.feed.getPosts" {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(tt.mockStatusCode)
+					fmt.Fprint(w, tt.mockResponse)
+					return
+				}
+				http.NotFound(w, r)
+			}))
+			t.Cleanup(appViewSrv.Close)
+
+			adapter := newBlueskyAdapterWithAppView(t, appViewSrv)
+			conn := store.PlatformConnection{Platform: "bluesky"}
+			got, err := adapter.GetEngagement(context.Background(), "at://did/post/rkey", conn)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectErrorSubstr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedLikes, got.Likes)
+				assert.Equal(t, tt.expectedShares, got.Shares)
+				assert.Equal(t, tt.expectedComments, got.Comments)
+			}
+		})
+	}
 }

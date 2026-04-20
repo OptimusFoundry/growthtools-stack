@@ -3,12 +3,13 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"base-server/internal/infra/clients/kafka"
 	"base-server/internal/infra/observability"
-	"base-server/internal/platform/adapters"
 	"base-server/internal/infra/store"
+	"base-server/internal/platform/adapters"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +26,7 @@ type AnalyticsStore interface {
 	GetPlatformPostByID(ctx context.Context, id uuid.UUID) (store.PlatformPost, error)
 	ListPlatformConnectionsByAccount(ctx context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error)
 	RecordPostAnalytics(ctx context.Context, params store.RecordPostAnalyticsParams) (store.PostAnalytics, error)
+	MarkPlatformPostAnalyticsUnavailable(ctx context.Context, id uuid.UUID) error
 }
 
 // AnalyticsWorker consumes analytics.collect events and pulls metrics from platforms
@@ -114,6 +116,13 @@ func (w *AnalyticsWorker) handle(ctx context.Context, key, value []byte) error {
 
 	engagement, err := adapter.GetEngagement(ctx, *pp.PlatformPostID, conn)
 	if err != nil {
+		if errors.Is(err, adapters.ErrPostNotFound) {
+			w.logger.Info(ctx, fmt.Sprintf("platform post not found on %s; marking analytics unavailable", event.Platform))
+			if markErr := w.store.MarkPlatformPostAnalyticsUnavailable(ctx, event.PlatformPostID); markErr != nil {
+				w.logger.Error(ctx, "failed to mark analytics unavailable", markErr)
+			}
+			return nil
+		}
 		w.logger.Error(ctx, "failed to get engagement for analytics", err)
 		return nil
 	}

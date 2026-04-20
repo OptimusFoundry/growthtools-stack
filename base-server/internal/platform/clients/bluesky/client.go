@@ -13,17 +13,19 @@ import (
 
 // Client handles HTTP communication with the Bluesky AT Protocol API.
 type Client struct {
-	httpClient *http.Client
-	logger     *observability.Logger
-	baseURL    string // empty = use production PDS host
+	httpClient  *http.Client
+	logger      *observability.Logger
+	baseURL     string // empty = use production PDS host
+	appViewHost string // empty = use production AppView host
 }
 
 // NewClient creates a new Bluesky API client.
 func NewClient(baseURL string, httpClient *http.Client, logger *observability.Logger) *Client {
 	return &Client{
-		httpClient: httpClient,
-		logger:     logger,
-		baseURL:    baseURL,
+		httpClient:  httpClient,
+		logger:      logger,
+		baseURL:     baseURL,
+		appViewHost: "",
 	}
 }
 
@@ -33,6 +35,20 @@ func (c *Client) host() string {
 		return c.baseURL
 	}
 	return "https://bsky.social"
+}
+
+// appView returns the AppView host to use for read requests.
+func (c *Client) appView() string {
+	if c.appViewHost != "" {
+		return c.appViewHost
+	}
+	return "https://public.api.bsky.app"
+}
+
+// WithAppViewHost overrides the AppView host. Used in tests only.
+func (c *Client) WithAppViewHost(host string) *Client {
+	c.appViewHost = host
+	return c
 }
 
 // CreateSession authenticates with Bluesky and returns an access JWT and DID.
@@ -149,4 +165,36 @@ func (c *Client) UploadBlob(ctx context.Context, accessJwt string, data []byte, 
 		return nil, fmt.Errorf("blueskyapi: failed to parse response: %w", err)
 	}
 	return result.Blob, nil
+}
+
+// GetPosts fetches post views from the public Bluesky AppView.
+// No authentication is required. atURIs is a slice of AT URIs.
+func (c *Client) GetPosts(ctx context.Context, atURIs []string) (GetPostsResponse, error) {
+	// Build query string: ?uris=<uri1>&uris=<uri2>...
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.appView()+"/xrpc/app.bsky.feed.getPosts", nil)
+	if err != nil {
+		return GetPostsResponse{}, fmt.Errorf("blueskyapi: failed to create request: %w", err)
+	}
+	q := req.URL.Query()
+	for _, uri := range atURIs {
+		q.Add("uris", uri)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return GetPostsResponse{}, fmt.Errorf("blueskyapi: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return GetPostsResponse{}, fmt.Errorf("blueskyapi: getPosts returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result GetPostsResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return GetPostsResponse{}, fmt.Errorf("blueskyapi: failed to parse getPosts response: %w", err)
+	}
+	return result, nil
 }

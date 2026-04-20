@@ -3,10 +3,16 @@ package adapters
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"base-server/internal/infra/store"
 )
+
+// ErrPostNotFound indicates the platform returned not-found for a post
+// (typically because the user deleted it). Callers should stop collecting
+// analytics for this post rather than treating it as a transient failure.
+var ErrPostNotFound = errors.New("platform post not found")
 
 // PlatformPostResult contains the result of publishing a post to a platform.
 type PlatformPostResult struct {

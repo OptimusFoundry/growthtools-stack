@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"base-server/internal/infra/observability"
@@ -15,13 +16,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// notFoundAdapter is a PlatformAdapter whose GetEngagement returns a wrapped
+// adapters.ErrPostNotFound. Other methods are promoted from the embedded mockAdapter.
+type notFoundAdapter struct{ mockAdapter }
+
+func (a *notFoundAdapter) GetEngagement(_ context.Context, _ string, _ store.PlatformConnection) (adapters.Engagement, error) {
+	return adapters.Engagement{}, fmt.Errorf("wrap: %w", adapters.ErrPostNotFound)
+}
+
 // mockAnalyticsStore implements AnalyticsStore for testing.
 type mockAnalyticsStore struct {
-	getPlatformPostByID            func(ctx context.Context, id uuid.UUID) (store.PlatformPost, error)
+	getPlatformPostByID              func(ctx context.Context, id uuid.UUID) (store.PlatformPost, error)
 	listPlatformConnectionsByAccount func(ctx context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error)
-	recordPostAnalytics            func(ctx context.Context, params store.RecordPostAnalyticsParams) (store.PostAnalytics, error)
+	recordPostAnalytics              func(ctx context.Context, params store.RecordPostAnalyticsParams) (store.PostAnalytics, error)
+	markAnalyticsUnavailable         func(ctx context.Context, id uuid.UUID) error
 
-	recordPostAnalyticsCalls []store.RecordPostAnalyticsParams
+	recordPostAnalyticsCalls      []store.RecordPostAnalyticsParams
+	markAnalyticsUnavailableCalls []uuid.UUID
 }
 
 func (m *mockAnalyticsStore) GetPlatformPostByID(ctx context.Context, id uuid.UUID) (store.PlatformPost, error) {
@@ -44,6 +55,14 @@ func (m *mockAnalyticsStore) RecordPostAnalytics(ctx context.Context, params sto
 		return m.recordPostAnalytics(ctx, params)
 	}
 	return store.PostAnalytics{}, nil
+}
+
+func (m *mockAnalyticsStore) MarkPlatformPostAnalyticsUnavailable(ctx context.Context, id uuid.UUID) error {
+	m.markAnalyticsUnavailableCalls = append(m.markAnalyticsUnavailableCalls, id)
+	if m.markAnalyticsUnavailable != nil {
+		return m.markAnalyticsUnavailable(ctx, id)
+	}
+	return nil
 }
 
 // Compile-time check
@@ -225,6 +244,27 @@ func TestAnalyticsWorker_Handle(t *testing.T) {
 			},
 		},
 		{
+			name: "post_not_found_marks_unavailable",
+			setup: func() (*mockAnalyticsStore, adapters.PlatformAdapter) {
+				s := &mockAnalyticsStore{
+					getPlatformPostByID: func(_ context.Context, _ uuid.UUID) (store.PlatformPost, error) {
+						return defaultPP, nil
+					},
+					listPlatformConnectionsByAccount: func(_ context.Context, _ uuid.UUID) ([]store.PlatformConnection, error) {
+						return []store.PlatformConnection{defaultConn}, nil
+					},
+				}
+				return s, nil // adapter constructed inside the switch to use a local wrapper type
+			},
+			assertFn: func(t *testing.T, s *mockAnalyticsStore, err error) {
+				t.Helper()
+				require.NoError(t, err) // error is swallowed
+				require.Len(t, s.markAnalyticsUnavailableCalls, 1)
+				assert.Equal(t, platformPostID, s.markAnalyticsUnavailableCalls[0])
+				assert.Len(t, s.recordPostAnalyticsCalls, 0)
+			},
+		},
+		{
 			name:  "invalid JSON returns error (structural failure)",
 			setup: func() (*mockAnalyticsStore, adapters.PlatformAdapter) { return &mockAnalyticsStore{}, nil },
 			assertFn: func(t *testing.T, s *mockAnalyticsStore, err error) {
@@ -264,6 +304,19 @@ func TestAnalyticsWorker_Handle(t *testing.T) {
 				// But we need to test the error case — skip this variant with a note
 				// The mockAdapter returns no error, so we use a real failing adapter.
 				require.NoError(t, err) // mockAdapter returns no error, so analytics are recorded
+				return
+
+			case "post_not_found_marks_unavailable":
+				registry := adapters.NewAdapterRegistry(map[string]adapters.PlatformAdapter{"x": &notFoundAdapter{}})
+				w := &AnalyticsWorker{
+					store:          s,
+					registry:       registry,
+					tokenRefresher: &mockTokenRefresher{},
+					logger:         logger,
+				}
+				payload := makeEvent()
+				err := w.handle(context.Background(), nil, payload)
+				tc.assertFn(t, s, err)
 				return
 
 			case "token refresh error is logged and swallowed":

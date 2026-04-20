@@ -181,3 +181,304 @@ func TestUpdatePlatformPostEngagement(t *testing.T) {
 	err = s.UpdatePlatformPostEngagement(ctx, uuid.New(), JSONB{"likes": float64(1)})
 	assert.ErrorIs(t, err, ErrNotFound)
 }
+
+func TestGetPublishedPlatformPostsForAnalytics(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	// Test 1: returns_published_posts_within_window
+	t.Run("returns_published_posts_within_window", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+
+		postID1, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "post 1 " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		postID2, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "post 2 " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		postID3, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "post 3 " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		postID4, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "post 4 " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		// Create platform posts on X, Threads, BlueSky (should be included)
+		pp1, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID1.ID,
+			Platform: PlatformX,
+		})
+		require.NoError(t, err)
+
+		pp2, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID2.ID,
+			Platform: PlatformThreads,
+		})
+		require.NoError(t, err)
+
+		pp3, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID3.ID,
+			Platform: PlatformBlueSky,
+		})
+		require.NoError(t, err)
+
+		// Create platform post on LinkedIn (should be excluded)
+		pp4, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID4.ID,
+			Platform: PlatformLinkedIn,
+		})
+		require.NoError(t, err)
+
+		publishedTime := time.Now().Add(-1 * time.Hour)
+		platformPostID1 := "x_post_" + uuid.New().String()[:8]
+		platformPostID2 := "threads_post_" + uuid.New().String()[:8]
+		platformPostID3 := "bluesky_post_" + uuid.New().String()[:8]
+		platformPostID4 := "linkedin_post_" + uuid.New().String()[:8]
+
+		// Mark platform posts as published
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, platform_post_id=$3, published_at=$4, updated_at=NOW() WHERE id=$1`,
+			pp1.ID, PlatformPostStatusPublished, platformPostID1, publishedTime,
+		)
+		require.NoError(t, err)
+
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, platform_post_id=$3, published_at=$4, updated_at=NOW() WHERE id=$1`,
+			pp2.ID, PlatformPostStatusPublished, platformPostID2, publishedTime,
+		)
+		require.NoError(t, err)
+
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, platform_post_id=$3, published_at=$4, updated_at=NOW() WHERE id=$1`,
+			pp3.ID, PlatformPostStatusPublished, platformPostID3, publishedTime,
+		)
+		require.NoError(t, err)
+
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, platform_post_id=$3, published_at=$4, updated_at=NOW() WHERE id=$1`,
+			pp4.ID, PlatformPostStatusPublished, platformPostID4, publishedTime,
+		)
+		require.NoError(t, err)
+
+		cutoff := time.Now().Add(-2 * time.Hour)
+		got, err := s.GetPublishedPlatformPostsForAnalytics(ctx, cutoff)
+
+		require.NoError(t, err)
+		assert.NotNil(t, got)
+
+		// Filter to only results from this account
+		filtered := make([]RetryablePlatformPost, 0)
+		for _, p := range got {
+			if p.AccountID == accountID {
+				filtered = append(filtered, p)
+			}
+		}
+
+		assert.Equal(t, 3, len(filtered), "should have 3 results (X, Threads, BlueSky but not LinkedIn)")
+
+		platforms := make(map[string]bool)
+		for _, p := range filtered {
+			platforms[p.Platform] = true
+		}
+		assert.True(t, platforms[PlatformX], "should include X")
+		assert.True(t, platforms[PlatformThreads], "should include Threads")
+		assert.True(t, platforms[PlatformBlueSky], "should include BlueSky")
+		assert.False(t, platforms[PlatformLinkedIn], "should exclude LinkedIn")
+	})
+
+	// Test 2: excludes_posts_older_than_7_days
+	t.Run("excludes_posts_older_than_7_days", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+
+		postID, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "old post " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		pp, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID.ID,
+			Platform: PlatformX,
+		})
+		require.NoError(t, err)
+
+		// Published 8 days ago
+		publishedTime := time.Now().Add(-8 * 24 * time.Hour)
+		platformPostID := "old_" + uuid.New().String()[:8]
+
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, platform_post_id=$3, published_at=$4, updated_at=NOW() WHERE id=$1`,
+			pp.ID, PlatformPostStatusPublished, platformPostID, publishedTime,
+		)
+		require.NoError(t, err)
+
+		cutoff := time.Now().Add(-7 * 24 * time.Hour)
+		got, err := s.GetPublishedPlatformPostsForAnalytics(ctx, cutoff)
+
+		require.NoError(t, err)
+		assert.NotNil(t, got)
+
+		// Filter to only results from this account
+		filtered := make([]RetryablePlatformPost, 0)
+		for _, p := range got {
+			if p.AccountID == accountID {
+				filtered = append(filtered, p)
+			}
+		}
+
+		assert.Equal(t, 0, len(filtered), "should exclude posts older than 7 days")
+	})
+
+	// Test 3: excludes_null_platform_post_id
+	t.Run("excludes_null_platform_post_id", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+
+		postID, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "post without platform_post_id " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		pp, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID.ID,
+			Platform: PlatformX,
+		})
+		require.NoError(t, err)
+
+		// Published 3 days ago, but no platform_post_id
+		publishedTime := time.Now().Add(-3 * 24 * time.Hour)
+
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, published_at=$3, updated_at=NOW() WHERE id=$1`,
+			pp.ID, PlatformPostStatusPublished, publishedTime,
+		)
+		require.NoError(t, err)
+
+		cutoff := time.Now().Add(-4 * 24 * time.Hour)
+		got, err := s.GetPublishedPlatformPostsForAnalytics(ctx, cutoff)
+
+		require.NoError(t, err)
+		assert.NotNil(t, got)
+
+		// Filter to only results from this account
+		filtered := make([]RetryablePlatformPost, 0)
+		for _, p := range got {
+			if p.AccountID == accountID {
+				filtered = append(filtered, p)
+			}
+		}
+
+		assert.Equal(t, 0, len(filtered), "should exclude posts with NULL platform_post_id")
+	})
+
+	// Test 4: excludes_soft_deleted_parent
+	t.Run("excludes_soft_deleted_parent", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+
+		postID, err := s.CreatePost(ctx, CreatePostParams{
+			AccountID:   accountID,
+			Content:     "post to delete " + uuid.New().String()[:8],
+			ContentType: ContentTypeText,
+			Status:      PostStatusPublished,
+			Source:      PostSourceManual,
+		})
+		require.NoError(t, err)
+
+		pp, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+			PostID:   postID.ID,
+			Platform: PlatformX,
+		})
+		require.NoError(t, err)
+
+		publishedTime := time.Now().Add(-3 * 24 * time.Hour)
+		platformPostID := "deleted_" + uuid.New().String()[:8]
+
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE platform_posts SET status=$2, platform_post_id=$3, published_at=$4, updated_at=NOW() WHERE id=$1`,
+			pp.ID, PlatformPostStatusPublished, platformPostID, publishedTime,
+		)
+		require.NoError(t, err)
+
+		// Soft delete the parent post
+		_, err = s.GetDB().ExecContext(ctx,
+			`UPDATE posts SET deleted_at=NOW() WHERE id=$1`,
+			postID.ID,
+		)
+		require.NoError(t, err)
+
+		cutoff := time.Now().Add(-4 * 24 * time.Hour)
+		got, err := s.GetPublishedPlatformPostsForAnalytics(ctx, cutoff)
+
+		require.NoError(t, err)
+		assert.NotNil(t, got)
+
+		// Filter to only results from this account
+		filtered := make([]RetryablePlatformPost, 0)
+		for _, p := range got {
+			if p.AccountID == accountID {
+				filtered = append(filtered, p)
+			}
+		}
+
+		assert.Equal(t, 0, len(filtered), "should exclude posts from deleted parent")
+	})
+
+	// Test 5: empty_result_is_non_nil
+	t.Run("empty_result_is_non_nil", func(t *testing.T) {
+		t.Parallel()
+		accountID := createTestAccount(t, s)
+
+		cutoff := time.Now().Add(-1 * time.Hour)
+		got, err := s.GetPublishedPlatformPostsForAnalytics(ctx, cutoff)
+
+		require.NoError(t, err)
+		assert.NotNil(t, got, "result should be non-nil slice")
+
+		// Filter to only results from this account
+		filtered := make([]RetryablePlatformPost, 0)
+		for _, p := range got {
+			if p.AccountID == accountID {
+				filtered = append(filtered, p)
+			}
+		}
+
+		assert.Equal(t, 0, len(filtered), "should be empty for account with no published posts")
+	})
+}
