@@ -43,7 +43,7 @@ type BlogStore interface {
 	CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
 	GetBlogPostByID(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
 	GetBlogPostBySlug(ctx context.Context, accountID uuid.UUID, slug string) (store.BlogPost, error)
-	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error)
+	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
 	UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
@@ -206,7 +206,7 @@ func (p *BlogProcessor) presignBlogMedia(ctx context.Context, m *store.Media) {
 	m.S3URL = signed
 }
 
-func (p *BlogProcessor) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPost, error) {
+func (p *BlogProcessor) ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: accountID.String()},
 		observability.Field{Key: "operation", Value: "list_blog_posts"},

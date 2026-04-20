@@ -161,7 +161,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.GET("/analytics/platforms", a.analyticsHandler.HandleGetPlatformBreakdown)
 
 		// Blog
-		protectedGroup.GET("/blog", a.blogHandler.HandleListBlogs)
+		protectedGroup.GET("/blogs", a.blogHandler.HandleListBlogs)
 		protectedGroup.POST("/blog", a.blogHandler.HandleCreateBlog)
 		protectedGroup.POST("/blog/generate/stream", a.blogHandler.HandleStreamGenerateBlog)
 		protectedGroup.POST("/blog/generate", a.blogHandler.HandleGenerateBlog)

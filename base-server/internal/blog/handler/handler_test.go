@@ -203,7 +203,7 @@ func TestHandler_HandleListBlogs(t *testing.T) {
 			name: "200 happy path",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().ListBlogPosts(gomock.Any(), accountID, gomock.Any(), gomock.Any(), gomock.Any()).
-					Return([]store.BlogPost{}, nil)
+					Return([]store.BlogPostListItem{}, nil)
 			},
 			wantStatus: http.StatusOK,
 		},

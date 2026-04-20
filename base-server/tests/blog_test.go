@@ -263,7 +263,7 @@ func TestBlogAPI_ListBlogs(t *testing.T) {
 			},
 			wantStatus: http.StatusOK,
 			wantBody: func(t *testing.T, body []byte) {
-				var got []store.BlogPost
+				var got []store.BlogPostListItem
 				require.NoError(t, json.Unmarshal(body, &got))
 				assert.GreaterOrEqual(t, len(got), 1)
 			},
@@ -281,7 +281,7 @@ func TestBlogAPI_ListBlogs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			token := tt.setup(t)
-			resp, body := c.Request(t, http.MethodGet, "/api/protected/blog", nil, token)
+			resp, body := c.Request(t, http.MethodGet, "/api/protected/blogs", nil, token)
 			assert.Equal(t, tt.wantStatus, resp.StatusCode)
 			if tt.wantBody != nil {
 				tt.wantBody(t, body)
