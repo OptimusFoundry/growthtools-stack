@@ -118,7 +118,7 @@ func (p *Planner) SelectAndDecide(ctx context.Context, req SelectRequest) (Selec
 		ThreadParts int    `json:"thread_parts"`
 		Reason      string `json:"reason"`
 	}
-	if err := json.Unmarshal([]byte(stripCodeFence(raw)), &parsed); err != nil {
+	if err := json.Unmarshal([]byte(extractJSONObject(raw)), &parsed); err != nil {
 		p.logger.Error(ctx, "failed to parse media/mode selection response", err)
 		return SelectDecision{}, ErrSelectAndDecide
 	}
@@ -190,6 +190,19 @@ func buildUserMessage(req SelectRequest) string {
 		}
 	}
 	return sb.String()
+}
+
+// extractJSONObject returns the JSON object substring from raw, tolerating
+// markdown code fences, single backticks, or preamble/trailing prose that
+// Gemini occasionally emits around the JSON payload.
+func extractJSONObject(raw string) string {
+	s := stripCodeFence(raw)
+	start := strings.Index(s, "{")
+	end := strings.LastIndex(s, "}")
+	if start == -1 || end == -1 || end < start {
+		return s
+	}
+	return s[start : end+1]
 }
 
 // stripCodeFence removes surrounding ```json ... ``` or ``` ... ``` markdown

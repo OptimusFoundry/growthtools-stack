@@ -149,6 +149,53 @@ func TestPlanner_SelectAndDecide_StripsMarkdownCodeFence(t *testing.T) {
 	}
 }
 
+func TestPlanner_SelectAndDecide_ExtractsJSONFromNoisyResponse(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		resp string
+	}{
+		{
+			name: "single backtick wrapping",
+			resp: "`{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"ok\"}`",
+		},
+		{
+			name: "preamble prose before json",
+			resp: "Here is the decision:\n{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"ok\"}",
+		},
+		{
+			name: "trailing prose after json",
+			resp: "{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"ok\"}\nThat is my answer.",
+		},
+		{
+			name: "backtick inside reason string",
+			resp: "{\"keep_indexes\":[1],\"mode\":\"single\",\"thread_parts\":0,\"reason\":\"uses `MobileActionBar`\"}",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mock := mediaplanner.NewMockAIClient(ctrl)
+			mock.EXPECT().CreateMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(tc.resp, nil)
+
+			p := mediaplanner.New(mock, newLogger())
+			req := mediaplanner.SelectRequest{
+				CommitMessage: "x",
+				Descriptions:  []mediadescriber.Description{{Index: 1, Usable: true}},
+			}
+			d, err := p.SelectAndDecide(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if d.Mode != "single" || len(d.KeepIndexes) != 1 || d.KeepIndexes[0] != 1 {
+				t.Fatalf("unexpected decision: %+v", d)
+			}
+		})
+	}
+}
+
 func TestPlanner_SelectAndDecide_AIError(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
