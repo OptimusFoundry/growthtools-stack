@@ -21,6 +21,15 @@ function formatDate(iso: string): string {
 	});
 }
 
+function formatDateTime(iso: string): string {
+	return new Date(iso).toLocaleString(undefined, {
+		month: "short",
+		day: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	});
+}
+
 function formatNum(n: number): string {
 	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
 	if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -50,7 +59,7 @@ export function PlatformPostAnalyticsCard({
 	}));
 
 	const lastCollected = pp.latest?.collectedAt
-		? formatDate(pp.latest.collectedAt)
+		? formatDateTime(pp.latest.collectedAt)
 		: null;
 
 	return (
@@ -65,7 +74,9 @@ export function PlatformPostAnalyticsCard({
 				<Stack direction="row" gap="sm" align="center">
 					<Badge variant="default">{platformLabel}</Badge>
 					{pp.publishedAt && (
-						<span className={styles.mono}>{formatDate(pp.publishedAt)}</span>
+						<span className={styles.mono}>
+							Published · {formatDate(pp.publishedAt)}
+						</span>
 					)}
 				</Stack>
 				<Stack direction="row" gap="sm" align="center">
@@ -114,17 +125,15 @@ export function PlatformPostAnalyticsCard({
 						<KpiCell label="Comments" value={pp.latest?.comments ?? 0} />
 						<KpiCell label="Shares" value={pp.latest?.shares ?? 0} />
 					</div>
+					{lastCollected && (
+						<span className={styles.updatedCaption}>As of {lastCollected}</span>
+					)}
 					<EngagementTimelineChart
 						data={chartData}
 						stroke="var(--color-primary)"
 						height={140}
 						ariaLabel={`Impressions over time for ${platformLabel}`}
 					/>
-					{lastCollected && (
-						<span className={styles.updatedCaption}>
-							Updated {lastCollected}
-						</span>
-					)}
 				</Stack>
 			)}
 		</Card>
