@@ -5,6 +5,7 @@
  * Error-handling sections use a table-driven pattern: one row per HTTP status
  * the backend can return for that endpoint.
  */
+import type { NetworkFixture } from "@msw/playwright";
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
 import { posts } from "./mocks/data";
@@ -529,10 +530,24 @@ test.describe("Posts", () => {
 	// Mobile topbar — viewport-specific layout assertions
 	//
 	// Verifies:
-	//   375px: single topbar (no stacked bars), back link visible, Publish
-	//          reachable, overflow menu contains Delete + Save draft.
+	//   375px: single topbar (no stacked bars), back link visible, four icon
+	//          action buttons in MobileActionBar (Delete, Save draft,
+	//          Reschedule, Publish).
 	//   1280px: all four buttons in topbar, breadcrumb visible, no bottom bar.
 	// =========================================================================
+
+	const mockDraftDetails = (network: NetworkFixture) => {
+		const draftDetailsResponse = {
+			post: posts[1],
+			platform_posts: [],
+			media: null,
+		};
+		network.use(
+			http.get("*/api/protected/posts/:id/details", () =>
+				HttpResponse.json(draftDetailsResponse),
+			),
+		);
+	};
 
 	test.describe("Mobile topbar — 375px viewport", () => {
 		test.use({ viewport: { width: 375, height: 812 } });
@@ -541,17 +556,7 @@ test.describe("Posts", () => {
 			network,
 			page,
 		}) => {
-			// Use a draft post so the wizard renders in edit (non-readOnly) mode
-			const draftDetailsResponse = {
-				post: posts[1],
-				platform_posts: [],
-				media: null,
-			};
-			network.use(
-				http.get("*/api/protected/posts/:id/details", () =>
-					HttpResponse.json(draftDetailsResponse),
-				),
-			);
+			mockDraftDetails(network);
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
@@ -567,20 +572,10 @@ test.describe("Posts", () => {
 			network,
 			page,
 		}) => {
-			const draftDetailsResponse = {
-				post: posts[1],
-				platform_posts: [],
-				media: null,
-			};
-			network.use(
-				http.get("*/api/protected/posts/:id/details", () =>
-					HttpResponse.json(draftDetailsResponse),
-				),
-			);
+			mockDraftDetails(network);
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// Back link must be visible; breadcrumb nav must not be visible.
 			const backLink = page.getByRole("link", { name: /back to posts/i });
 			await expect(backLink).toBeVisible();
 
@@ -590,81 +585,27 @@ test.describe("Posts", () => {
 			await expect(breadcrumbNav).not.toBeVisible();
 		});
 
-		test("Publish button is visible in MobileActionBar", async ({
+		test("MobileActionBar exposes all four icon action buttons", async ({
 			network,
 			page,
 		}) => {
-			const draftDetailsResponse = {
-				post: posts[1],
-				platform_posts: [],
-				media: null,
-			};
-			network.use(
-				http.get("*/api/protected/posts/:id/details", () =>
-					HttpResponse.json(draftDetailsResponse),
-				),
-			);
+			mockDraftDetails(network);
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// The MobileActionBar Publish button has aria-label "Publish post"
-			const publishBtn = page.getByRole("button", { name: /publish post/i });
-			await expect(publishBtn).toBeVisible();
-		});
-
-		test("Reschedule button is visible in MobileActionBar", async ({
-			network,
-			page,
-		}) => {
-			const draftDetailsResponse = {
-				post: posts[1],
-				platform_posts: [],
-				media: null,
-			};
-			network.use(
-				http.get("*/api/protected/posts/:id/details", () =>
-					HttpResponse.json(draftDetailsResponse),
-				),
-			);
-			await page.goto("/posts/post_2");
-			await page.waitForLoadState("networkidle");
-
-			const rescheduleBtn = page.getByRole("button", {
-				name: /reschedule post|schedule post/i,
-			});
-			await expect(rescheduleBtn).toBeVisible();
-		});
-
-		test("overflow menu opens and shows Delete and Save draft", async ({
-			network,
-			page,
-		}) => {
-			// Use a draft post so canDelete is true (draft status)
-			const draftDetailsResponse = {
-				post: posts[1],
-				platform_posts: [],
-				media: null,
-			};
-			network.use(
-				http.get("*/api/protected/posts/:id/details", () =>
-					HttpResponse.json(draftDetailsResponse),
-				),
-			);
-			await page.goto("/posts/post_2");
-			await page.waitForLoadState("networkidle");
-
-			const overflowBtn = page.getByRole("button", {
-				name: /more post actions/i,
-			});
-			await expect(overflowBtn).toBeVisible();
-			await overflowBtn.click();
-
-			// DropdownMenu renders menu items — assert via their role
+			const bar = page.getByRole("toolbar", { name: /post actions/i });
+			await expect(bar).toBeVisible();
 			await expect(
-				page.getByRole("menuitem", { name: "Delete" }),
+				bar.getByRole("button", { name: /delete post/i }),
 			).toBeVisible();
 			await expect(
-				page.getByRole("menuitem", { name: "Save draft" }),
+				bar.getByRole("button", { name: /^save draft$/i }),
+			).toBeVisible();
+			await expect(
+				bar.getByRole("button", { name: /reschedule post|schedule post/i }),
+			).toBeVisible();
+			await expect(
+				bar.getByRole("button", { name: /publish post/i }),
 			).toBeVisible();
 		});
 
@@ -672,23 +613,16 @@ test.describe("Posts", () => {
 			network,
 			page,
 		}) => {
-			const draftDetailsResponse = {
-				post: posts[1],
-				platform_posts: [],
-				media: null,
-			};
-			network.use(
-				http.get("*/api/protected/posts/:id/details", () =>
-					HttpResponse.json(draftDetailsResponse),
-				),
-			);
+			mockDraftDetails(network);
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// The topbar actions wrapper has display:none on mobile.
-			// The individual buttons inside it should not be visible.
-			const saveDraftBtn = page.getByRole("button", { name: /^save draft$/i });
-			await expect(saveDraftBtn).not.toBeVisible();
+			// The topbar actions wrapper has display:none below lg (1024px).
+			// Scope to the topbar <header> so we don't also match the MobileActionBar.
+			const topbar = page.locator("header").first();
+			await expect(
+				topbar.getByRole("button", { name: /^save draft$/i }),
+			).not.toBeVisible();
 		});
 	});
 

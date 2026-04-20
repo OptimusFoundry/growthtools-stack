@@ -86,7 +86,7 @@
 // Hide the entire actions slot on mobile when MobileActionBar is present.
 // Applied via a class on the wrapper div in WizardInner.
 .actionsHiddenOnMobile {
-  @include breakpoint-down("md") {
+  @include breakpoint-down("lg") {
     display: none;
   }
 }

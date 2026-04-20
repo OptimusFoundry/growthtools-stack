@@ -14,7 +14,7 @@
 	// Reserve space for the fixed MobileActionBar on mobile so the last
 	// content isn't hidden behind it. Roughly: button height + vertical
 	// padding (space-3 × 2) + safe-area inset.
-	@include breakpoint-down("md") {
+	@include breakpoint-down("lg") {
 		padding-bottom: calc(var(--space-14) + env(safe-area-inset-bottom));
 	}
 }

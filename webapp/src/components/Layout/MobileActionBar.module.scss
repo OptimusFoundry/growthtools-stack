@@ -7,7 +7,7 @@
   // Hidden on desktop — shown only below 768px
   display: none;
 
-  @include breakpoint-down("md") {
+  @include breakpoint-down("lg") {
     align-items: center;
     backdrop-filter: blur(10px);
     background-color: oklch(from var(--color-background) l c h / 0.85);
