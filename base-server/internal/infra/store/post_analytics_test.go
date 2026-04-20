@@ -157,6 +157,131 @@ func TestGetAnalyticsTimeSeries(t *testing.T) {
 	assert.Empty(t, series)
 }
 
+func TestStore_GetLatestAnalyticsByPost(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name   string
+		setup  func(t *testing.T) uuid.UUID // returns postID
+		assert func(t *testing.T, rows []PlatformPostLatest)
+	}{
+		{
+			name: "returns one row per platform_post with latest analytics",
+			setup: func(t *testing.T) uuid.UUID {
+				accountID := createTestAccount(t, s)
+				post, err := s.CreatePost(ctx, CreatePostParams{
+					AccountID: accountID, Content: "hello",
+					ContentType: ContentTypeText, Status: PostStatusPublished,
+					Source: PostSourceManual,
+				})
+				require.NoError(t, err)
+				pp, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+					PostID: post.ID, Platform: PlatformX,
+				})
+				require.NoError(t, err)
+				// two analytics rows — only the later one should be "latest"
+				_, err = s.RecordPostAnalytics(ctx, RecordPostAnalyticsParams{
+					PlatformPostID: pp.ID, Platform: PlatformX,
+					Impressions: 100, Likes: 5,
+				})
+				require.NoError(t, err)
+				_, err = s.RecordPostAnalytics(ctx, RecordPostAnalyticsParams{
+					PlatformPostID: pp.ID, Platform: PlatformX,
+					Impressions: 200, Likes: 10,
+				})
+				require.NoError(t, err)
+				return post.ID
+			},
+			assert: func(t *testing.T, rows []PlatformPostLatest) {
+				require.Len(t, rows, 1)
+				assert.Equal(t, PlatformX, rows[0].Platform)
+				require.NotNil(t, rows[0].Impressions)
+				assert.Equal(t, 200, *rows[0].Impressions)
+				require.NotNil(t, rows[0].Likes)
+				assert.Equal(t, 10, *rows[0].Likes)
+			},
+		},
+		{
+			name: "returns row with nil analytics when no analytics recorded",
+			setup: func(t *testing.T) uuid.UUID {
+				accountID := createTestAccount(t, s)
+				post, err := s.CreatePost(ctx, CreatePostParams{
+					AccountID: accountID, Content: "no analytics",
+					ContentType: ContentTypeText, Status: PostStatusPublished,
+					Source: PostSourceManual,
+				})
+				require.NoError(t, err)
+				_, err = s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+					PostID: post.ID, Platform: PlatformLinkedIn,
+				})
+				require.NoError(t, err)
+				return post.ID
+			},
+			assert: func(t *testing.T, rows []PlatformPostLatest) {
+				require.Len(t, rows, 1)
+				assert.Equal(t, PlatformLinkedIn, rows[0].Platform)
+				assert.Nil(t, rows[0].Impressions)
+				assert.Nil(t, rows[0].CollectedAt)
+			},
+		},
+		{
+			name: "returns analytics_unavailable_at when marked",
+			setup: func(t *testing.T) uuid.UUID {
+				accountID := createTestAccount(t, s)
+				post, err := s.CreatePost(ctx, CreatePostParams{
+					AccountID: accountID, Content: "deleted post",
+					ContentType: ContentTypeText, Status: PostStatusPublished,
+					Source: PostSourceManual,
+				})
+				require.NoError(t, err)
+				pp, err := s.CreatePlatformPost(ctx, CreatePlatformPostParams{
+					PostID: post.ID, Platform: PlatformX,
+				})
+				require.NoError(t, err)
+				err = s.MarkPlatformPostAnalyticsUnavailable(ctx, pp.ID)
+				require.NoError(t, err)
+				return post.ID
+			},
+			assert: func(t *testing.T, rows []PlatformPostLatest) {
+				require.Len(t, rows, 1)
+				assert.NotNil(t, rows[0].AnalyticsUnavailableAt)
+			},
+		},
+		{
+			name: "returns empty slice when post has no platform_posts",
+			setup: func(t *testing.T) uuid.UUID {
+				accountID := createTestAccount(t, s)
+				post, err := s.CreatePost(ctx, CreatePostParams{
+					AccountID: accountID, Content: "no platforms",
+					ContentType: ContentTypeText, Status: PostStatusDraft,
+					Source: PostSourceManual,
+				})
+				require.NoError(t, err)
+				return post.ID
+			},
+			assert: func(t *testing.T, rows []PlatformPostLatest) {
+				assert.Empty(t, rows)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			postID := tt.setup(t)
+			rows, err := s.GetLatestAnalyticsByPost(ctx, postID)
+			require.NoError(t, err)
+			tt.assert(t, rows)
+		})
+	}
+}
+
 func TestGetAnalyticsByPlatform(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {

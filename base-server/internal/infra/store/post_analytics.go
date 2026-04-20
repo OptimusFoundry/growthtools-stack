@@ -66,6 +66,61 @@ func (s *Store) GetAnalyticsByPlatformPost(ctx context.Context, platformPostID u
 	return analytics, nil
 }
 
+// PlatformPostLatest is the return type for GetLatestAnalyticsByPost. It joins
+// platform_posts with the most-recent post_analytics row per platform_post.
+// Analytics columns are nullable because a platform_post may have no analytics
+// rows yet.
+type PlatformPostLatest struct {
+	PlatformPostID         uuid.UUID  `db:"platform_post_id"          json:"platform_post_id"`
+	Platform               string     `db:"platform"                  json:"platform"`
+	Status                 string     `db:"status"                    json:"status"`
+	PublishedAt            *time.Time `db:"published_at"              json:"published_at"`
+	PlatformPostIDStr      *string    `db:"platform_post_id_str"      json:"-"`
+	AnalyticsUnavailableAt *time.Time `db:"analytics_unavailable_at"  json:"analytics_unavailable_at"`
+	Impressions            *int       `db:"impressions"               json:"impressions"`
+	Likes                  *int       `db:"likes"                     json:"likes"`
+	Comments               *int       `db:"comments"                  json:"comments"`
+	Shares                 *int       `db:"shares"                    json:"shares"`
+	Clicks                 *int       `db:"clicks"                    json:"clicks"`
+	CollectedAt            *time.Time `db:"collected_at"              json:"collected_at"`
+	PostURL                *string    `db:"-"                         json:"post_url"`
+}
+
+const sqlGetLatestAnalyticsByPost = `
+SELECT
+    pp.id                          AS platform_post_id,
+    pp.platform                    AS platform,
+    pp.status                      AS status,
+    pp.published_at                AS published_at,
+    pp.platform_post_id            AS platform_post_id_str,
+    pp.analytics_unavailable_at    AS analytics_unavailable_at,
+    latest.impressions             AS impressions,
+    latest.likes                   AS likes,
+    latest.comments                AS comments,
+    latest.shares                  AS shares,
+    latest.clicks                  AS clicks,
+    latest.collected_at            AS collected_at
+FROM platform_posts pp
+LEFT JOIN LATERAL (
+    SELECT impressions, likes, comments, shares, clicks, collected_at
+    FROM post_analytics
+    WHERE platform_post_id = pp.id
+    ORDER BY collected_at DESC
+    LIMIT 1
+) latest ON TRUE
+WHERE pp.post_id = $1
+ORDER BY pp.created_at ASC
+`
+
+func (s *Store) GetLatestAnalyticsByPost(ctx context.Context, postID uuid.UUID) ([]PlatformPostLatest, error) {
+	rows := make([]PlatformPostLatest, 0)
+	err := s.db.SelectContext(ctx, &rows, sqlGetLatestAnalyticsByPost, postID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest analytics by post: %w", err)
+	}
+	return rows, nil
+}
+
 // AnalyticsOverview represents aggregated analytics for an account
 type AnalyticsOverview struct {
 	TotalImpressions int `db:"total_impressions" json:"total_impressions"`
