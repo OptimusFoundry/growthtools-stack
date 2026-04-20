@@ -113,6 +113,24 @@ test.describe("Analytics", () => {
 			await expect(page.getByText(/analytics/i)).toBeVisible();
 		});
 
+		test("renders date-range tabs (7d, 30d, 90d)", async ({ page }) => {
+			await page.goto("/analytics");
+			await page.waitForLoadState("networkidle");
+
+			await expect(page.getByRole("button", { name: "7d" })).toBeVisible();
+			await expect(page.getByRole("button", { name: "30d" })).toBeVisible();
+			await expect(page.getByRole("button", { name: "90d" })).toBeVisible();
+		});
+
+		test("shows time-series chart area", async ({ page }) => {
+			await page.goto("/analytics");
+			await page.waitForLoadState("networkidle");
+
+			// Recharts renders an SVG; verify the chart container is present
+			const svg = page.locator("svg").first();
+			await expect(svg).toBeVisible();
+		});
+
 		test("shows stats cards", async ({ page }) => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
