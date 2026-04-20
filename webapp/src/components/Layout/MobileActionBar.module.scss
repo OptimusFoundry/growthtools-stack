@@ -4,7 +4,7 @@
 // Hidden on desktop. Rendered in the DOM always to avoid JS media query.
 
 .bar {
-  // Hidden on desktop — shown only below 768px
+  // Hidden on desktop — shown only below 1024px
   display: none;
 
   @include breakpoint-down("lg") {

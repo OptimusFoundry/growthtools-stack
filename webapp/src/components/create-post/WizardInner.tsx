@@ -587,48 +587,56 @@ export function WizardInner({
 				hideActionsOnMobile={!readOnly}
 			/>
 			{!readOnly && (
-				<MobileActionBar>
-					{canDelete && (
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => setDeleteOpen(true)}
-							disabled={busy || deleting}
-							aria-label="Delete post"
-						>
-							<Trash2 size={18} aria-hidden="true" />
-						</Button>
-					)}
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={actions.handleSaveDraft}
-						isLoading={savingDraft || updatingDraft}
-						disabled={busy}
-						aria-label="Save draft"
-					>
-						<Save size={18} aria-hidden="true" />
-					</Button>
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={() => scheduleDrawer.setScheduleOpen(true)}
-						disabled={busy || !canAct}
-						aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
-					>
-						<CalendarClock size={18} aria-hidden="true" />
-					</Button>
-					<Button
-						variant="primary"
-						size="sm"
-						onClick={actions.handlePublish}
-						isLoading={state.submitting}
-						disabled={busy || !canAct}
-						aria-label="Publish post"
-					>
-						<Send size={18} aria-hidden="true" />
-					</Button>
-				</MobileActionBar>
+				<MobileActionBar
+					start={
+						<>
+							{canDelete && (
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => setDeleteOpen(true)}
+									disabled={busy || deleting}
+									aria-label="Delete post"
+								>
+									<Trash2 size={18} aria-hidden="true" />
+								</Button>
+							)}
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={actions.handleSaveDraft}
+								isLoading={savingDraft || updatingDraft}
+								disabled={busy}
+								aria-label="Save draft"
+							>
+								<Save size={18} aria-hidden="true" />
+							</Button>
+						</>
+					}
+					end={
+						<>
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={() => scheduleDrawer.setScheduleOpen(true)}
+								disabled={busy || !canAct}
+								aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
+							>
+								<CalendarClock size={18} aria-hidden="true" />
+							</Button>
+							<Button
+								variant="primary"
+								size="sm"
+								onClick={actions.handlePublish}
+								isLoading={state.submitting}
+								disabled={busy || !canAct}
+								aria-label="Publish post"
+							>
+								<Send size={18} aria-hidden="true" />
+							</Button>
+						</>
+					}
+				/>
 			)}
 			<div className={styles.page}>
 				<header className={styles.header}>
