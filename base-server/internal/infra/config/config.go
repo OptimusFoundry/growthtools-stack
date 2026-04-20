@@ -30,6 +30,7 @@ type Config struct {
 // DatabaseConfig holds database connection settings
 type DatabaseConfig struct {
 	Host     string
+	Port     string
 	Username string
 	Password string
 	Name     string
@@ -153,6 +154,7 @@ func Load() (*Config, error) {
 	if cfg.Database.Host, err = requireEnv("DB_HOST"); err != nil {
 		return nil, err
 	}
+	cfg.Database.Port = getEnvWithDefault("DB_PORT", "5432")
 	if cfg.Database.Username, err = requireEnv("DB_USERNAME"); err != nil {
 		return nil, err
 	}
@@ -274,8 +276,8 @@ func Load() (*Config, error) {
 
 // ConnectionString returns a PostgreSQL connection string
 func (c *DatabaseConfig) ConnectionString() string {
-	return fmt.Sprintf("postgres://%s:%s@%s/%s",
-		c.Username, c.Password, c.Host, c.Name)
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		c.Username, c.Password, c.Host, c.Port, c.Name)
 }
 
 // requireEnv retrieves an environment variable or returns an error if empty
