@@ -8,7 +8,7 @@
 import type { NetworkFixture } from "@msw/playwright";
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
-import { posts } from "./mocks/data";
+import { postListItems, posts } from "./mocks/data";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status-code tables
@@ -87,7 +87,41 @@ test.describe("Posts", () => {
 
 			const content = await page.textContent("body");
 			expect(content).toMatch(/posts/i);
-			expect(content).toContain(posts[0].title);
+			// postListItems[0] has a title — verify it renders as the row label
+			expect(content).toContain(postListItems[0].title);
+		});
+
+		test("shows untitled post fallback label", async ({ network, page }) => {
+			// postListItems[3] has no title — list should show "Untitled post"
+			network.use(
+				http.get("*/api/protected/posts", () =>
+					HttpResponse.json([postListItems[3]]),
+				),
+			);
+			await page.goto("/posts");
+			await page.waitForLoadState("networkidle");
+
+			const content = await page.textContent("body");
+			expect(content).toMatch(/untitled post/i);
+		});
+
+		test("shows titled post without falling back to content", async ({
+			network,
+			page,
+		}) => {
+			// The slim list item has a title but no content field.
+			// The row label must come from title, not content.
+			const titledItem = postListItems[1]; // "AI-generated tips for developers"
+			network.use(
+				http.get("*/api/protected/posts", () =>
+					HttpResponse.json([titledItem]),
+				),
+			);
+			await page.goto("/posts");
+			await page.waitForLoadState("networkidle");
+
+			const content = await page.textContent("body");
+			expect(content).toContain(titledItem.title);
 		});
 
 		test("shows post status badges", async ({ page }) => {
@@ -122,9 +156,11 @@ test.describe("Posts", () => {
 					const url = new URL(request.url);
 					const status = url.searchParams.get("status");
 					if (status === "draft") {
-						return HttpResponse.json(posts.filter((p) => p.status === "draft"));
+						return HttpResponse.json(
+							postListItems.filter((p) => p.status === "draft"),
+						);
 					}
-					return HttpResponse.json(posts);
+					return HttpResponse.json(postListItems);
 				}),
 			);
 

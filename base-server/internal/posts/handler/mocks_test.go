@@ -134,10 +134,10 @@ func (mr *MockPostProcessorMockRecorder) GetPostWithPlatformPosts(ctx, accountID
 }
 
 // ListPosts mocks base method.
-func (m *MockPostProcessor) ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error) {
+func (m *MockPostProcessor) ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.PostListItem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPosts", ctx, params)
-	ret0, _ := ret[0].([]store.Post)
+	ret0, _ := ret[0].([]store.PostListItem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

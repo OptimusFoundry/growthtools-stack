@@ -62,6 +62,127 @@ func TestPostProcessor_CreatePost(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrFailedCreatePost)
 	})
+
+	t.Run("title auto-generated when nil", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockTitler := NewMockTitleGenerator(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		mockTitler.EXPECT().GenerateTitle(gomock.Any(), "test content").
+			Return("Test Title", nil)
+		mockStore.EXPECT().CreatePost(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
+				require.NotNil(t, params.Title)
+				assert.Equal(t, "Test Title", *params.Title)
+				return store.Post{ID: postID, AccountID: accountID, Title: params.Title}, nil
+			})
+
+		proc := New(mockStore, mockPublisher, logger)
+		proc.SetTitler(mockTitler)
+
+		result, err := proc.CreatePost(context.Background(), store.CreatePostParams{
+			AccountID:   accountID,
+			Content:     "test content",
+			ContentType: "post",
+			Status:      "draft",
+			Source:      "manual",
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result.Title)
+		assert.Equal(t, "Test Title", *result.Title)
+	})
+
+	t.Run("title respected when provided", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		myTitle := "My Title"
+		mockStore.EXPECT().CreatePost(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
+				require.NotNil(t, params.Title)
+				assert.Equal(t, "My Title", *params.Title)
+				return store.Post{ID: postID, AccountID: accountID, Title: params.Title}, nil
+			})
+
+		proc := New(mockStore, mockPublisher, logger)
+
+		result, err := proc.CreatePost(context.Background(), store.CreatePostParams{
+			AccountID:   accountID,
+			Title:       &myTitle,
+			Content:     "test content",
+			ContentType: "post",
+			Status:      "draft",
+			Source:      "manual",
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result.Title)
+		assert.Equal(t, "My Title", *result.Title)
+	})
+
+	t.Run("AI failure falls back to truncation", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockTitler := NewMockTitleGenerator(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		content := "Short content line one\nLine two"
+		mockTitler.EXPECT().GenerateTitle(gomock.Any(), content).
+			Return("", errors.New("ai down"))
+		mockStore.EXPECT().CreatePost(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
+				require.NotNil(t, params.Title)
+				assert.Equal(t, "Short content line one", *params.Title)
+				return store.Post{ID: postID, AccountID: accountID, Title: params.Title}, nil
+			})
+
+		proc := New(mockStore, mockPublisher, logger)
+		proc.SetTitler(mockTitler)
+
+		result, err := proc.CreatePost(context.Background(), store.CreatePostParams{
+			AccountID:   accountID,
+			Content:     content,
+			ContentType: "post",
+			Status:      "draft",
+			Source:      "manual",
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result.Title)
+		assert.Equal(t, "Short content line one", *result.Title)
+	})
+
+	t.Run("empty content leaves title nil", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		mockStore.EXPECT().CreatePost(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
+				assert.Nil(t, params.Title)
+				return store.Post{ID: postID, AccountID: accountID}, nil
+			})
+
+		proc := New(mockStore, mockPublisher, logger)
+
+		result, err := proc.CreatePost(context.Background(), store.CreatePostParams{
+			AccountID:   accountID,
+			Content:     "",
+			ContentType: "post",
+			Status:      "draft",
+			Source:      "manual",
+		})
+
+		require.NoError(t, err)
+		assert.Nil(t, result.Title)
+	})
 }
 
 func TestPostProcessor_GetPost(t *testing.T) {
@@ -130,7 +251,7 @@ func TestPostProcessor_ListPosts(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		mockStore := NewMockPostStore(ctrl)
 		mockStore.EXPECT().ListPosts(gomock.Any(), gomock.Any()).Return(
-			[]store.Post{{ID: uuid.New(), Content: "post1"}, {ID: uuid.New(), Content: "post2"}}, nil,
+			[]store.PostListItem{{ID: uuid.New()}, {ID: uuid.New()}}, nil,
 		)
 		mockPublisher := NewMockEventPublisher(ctrl)
 		proc := New(mockStore, mockPublisher, logger)
@@ -589,6 +710,43 @@ func TestPostProcessor_SaveDraft(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, postID, result.ID)
 		assert.Equal(t, "draft", result.Status)
+	})
+
+	t.Run("auto-generates title", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		mockTitler := NewMockTitleGenerator(ctrl)
+		mockPublisher := NewMockEventPublisher(ctrl)
+
+		mockTitler.EXPECT().GenerateTitle(gomock.Any(), "Some draft content").
+			Return("Draft Title", nil)
+		mockStore.EXPECT().CreatePost(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, params store.CreatePostParams) (store.Post, error) {
+				require.NotNil(t, params.Title)
+				assert.Equal(t, "Draft Title", *params.Title)
+				return store.Post{ID: postID, AccountID: accountID, Title: params.Title, Status: "draft"}, nil
+			})
+		xContent := "adapted X text"
+		mockStore.EXPECT().CreatePlatformPost(gomock.Any(), gomock.Any()).Return(
+			store.PlatformPost{ID: uuid.New(), PostID: postID, Platform: "x"}, nil,
+		)
+
+		proc := New(mockStore, mockPublisher, logger)
+		proc.SetTitler(mockTitler)
+
+		result, err := proc.SaveDraft(context.Background(), SaveDraftParams{
+			AccountID:   accountID,
+			Content:     "Some draft content",
+			ContentType: "text",
+			Platforms: []PlatformDraftContent{
+				{Platform: "x", Content: &xContent},
+			},
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result.Title)
+		assert.Equal(t, "Draft Title", *result.Title)
 	})
 
 	t.Run("create post error returns ErrFailedSaveDraft", func(t *testing.T) {

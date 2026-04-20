@@ -26,7 +26,7 @@ import {
 	type CalendarViewMode,
 	type PlatformKey,
 } from "@/types/calendar";
-import type { Post, PostStatus } from "@/types/post";
+import type { PostListItem, PostStatus } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
 import calendarStyles from "./calendar.module.scss";
 import styles from "./page.module.scss";
@@ -93,7 +93,7 @@ function timeAgo(iso: string): string {
 	});
 }
 
-function statusLine(post: Post): string {
+function statusLine(post: PostListItem): string {
 	const when = post.publishedAt ?? post.scheduledAt ?? post.createdAt;
 	const ago = timeAgo(when);
 	if (post.status === "published") return `Published · ${ago}`;
@@ -323,7 +323,7 @@ function CalendarPage() {
 													</span>
 													<div className={postStyles.postBody}>
 														<div className={postStyles.postTitleText}>
-															{truncate(post.title || post.content, 80)}
+															{truncate(post.title ?? "Untitled post", 80)}
 														</div>
 														<div className={postStyles.postMetaText}>
 															{statusLine(post)}

@@ -9,7 +9,7 @@
 
 import { HttpResponse, http } from "msw";
 import { setupEndpoint } from "../helpers/endpoint";
-import { posts } from "../mocks/data";
+import { postListItems, posts } from "../mocks/data";
 
 // ── Endpoint table ─────────────────────────────────────────────────────────
 
@@ -97,7 +97,7 @@ export const postsEndpoints = {
 		"*/api/protected/posts/calendar",
 		fixtureCalendarMonth,
 	),
-	list: setupEndpoint("GET", "*/api/protected/posts", posts),
+	list: setupEndpoint("GET", "*/api/protected/posts", postListItems),
 	create: setupEndpoint("POST", "*/api/protected/posts", createdPost),
 	get: setupEndpoint("GET", "*/api/protected/posts/:id", posts[0]),
 	update: setupEndpoint("PUT", "*/api/protected/posts/:id", posts[0]),

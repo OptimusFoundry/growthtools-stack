@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetcher } from "@/api/client";
-import { toPosts } from "@/api/transforms/post";
-import type { ApiPost } from "@/api/types/post";
-import type { Post, PostFilters } from "@/types/post";
+import { toPostListItems } from "@/api/transforms/post";
+import type { ApiPostListItem } from "@/api/types/post";
+import type { PostFilters, PostListItem } from "@/types/post";
 import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 
 export const useGetPosts = (filters?: PostFilters) => {
-	const [posts, setPosts] = useState<Post[]>([]);
+	const [posts, setPosts] = useState<PostListItem[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -30,11 +30,11 @@ export const useGetPosts = (filters?: PostFilters) => {
 				const query = params.toString();
 				const url = `${import.meta.env.VITE_API_URL}/api/protected/posts${query ? `?${query}` : ""}`;
 
-				const response = await fetcher<ApiPost[]>(url, {
+				const response = await fetcher<ApiPostListItem[]>(url, {
 					method: "GET",
 					signal,
 				});
-				setPosts(toPosts(response));
+				setPosts(toPostListItems(response));
 			} catch (err: unknown) {
 				if (isAbortError(err)) {
 					console.debug("Request was aborted.");

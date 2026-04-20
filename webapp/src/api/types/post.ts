@@ -26,6 +26,29 @@ export interface ApiPost {
 	updated_at: string;
 }
 
+/**
+ * Slim list item returned by GET /api/protected/posts.
+ * Omits `content`, `base_content`, and `deleted_at` — use ApiPost for the
+ * single-post endpoint and create/update responses.
+ */
+export interface ApiPostListItem {
+	id: string;
+	account_id: string;
+	title?: string;
+	content_type: ContentType;
+	status: PostStatus;
+	scheduled_at?: string;
+	published_at?: string;
+	media_ids: string[];
+	tags: string[];
+	ai_generated: boolean;
+	source: PostSource;
+	github_event_id?: string;
+	platforms: string[];
+	created_at: string;
+	updated_at: string;
+}
+
 export interface ApiPlatformPost {
 	id: string;
 	post_id: string;

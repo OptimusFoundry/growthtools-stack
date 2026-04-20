@@ -39,6 +39,29 @@ export interface Post {
 	updatedAt: string;
 }
 
+/**
+ * Slim list item — mirrors Post but without `content` and `baseContent`.
+ * Returned by the list endpoint; use Post for the single-post endpoint and
+ * create/update responses.
+ */
+export interface PostListItem {
+	id: string;
+	accountId: string;
+	title?: string;
+	contentType: ContentType;
+	status: PostStatus;
+	scheduledAt?: string;
+	publishedAt?: string;
+	mediaIds: string[];
+	tags: string[];
+	aiGenerated: boolean;
+	source: PostSource;
+	githubEventId?: string;
+	platforms: string[];
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface PlatformPost {
 	id: string;
 	postId: string;

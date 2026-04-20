@@ -23,13 +23,19 @@ type URLSigner interface {
 	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
 }
 
+// TitleGenerator auto-generates a short post title from content.
+// It is optional — set via SetTitler after construction.
+type TitleGenerator interface {
+	GenerateTitle(ctx context.Context, content string) (string, error)
+}
+
 const postsMediaPresignTTL = time.Hour
 
 // PostStore defines the database operations required by PostProcessor
 type PostStore interface {
 	CreatePost(ctx context.Context, params store.CreatePostParams) (store.Post, error)
 	GetPostByID(ctx context.Context, accountID, postID uuid.UUID) (store.Post, error)
-	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error)
+	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.PostListItem, error)
 	UpdatePost(ctx context.Context, accountID, id uuid.UUID, params store.UpdatePostParams) (store.Post, error)
 	DeletePost(ctx context.Context, accountID, postID uuid.UUID) error
 	UnlinkMediaFromPost(ctx context.Context, accountID, postID, mediaID uuid.UUID) error
@@ -51,22 +57,23 @@ type EventPublisher interface {
 }
 
 var (
-	ErrPostNotFound            = errors.New("post not found")
-	ErrFailedCreatePost        = errors.New("failed to create post")
-	ErrFailedUpdatePost        = errors.New("failed to update post")
-	ErrFailedDeletePost        = errors.New("failed to delete post")
-	ErrMediaNotAttached        = errors.New("media is not attached to post")
-	ErrFailedUnlinkMedia       = errors.New("failed to unlink media from post")
-	ErrFailedSaveDraft         = errors.New("failed to save draft")
-	ErrFailedRetryPost         = errors.New("failed to retry post")
-	ErrInvalidCalendarParams   = errors.New("invalid calendar year or month")
-	ErrFailedGetPostAnalytics  = errors.New("failed to get post analytics")
+	ErrPostNotFound           = errors.New("post not found")
+	ErrFailedCreatePost       = errors.New("failed to create post")
+	ErrFailedUpdatePost       = errors.New("failed to update post")
+	ErrFailedDeletePost       = errors.New("failed to delete post")
+	ErrMediaNotAttached       = errors.New("media is not attached to post")
+	ErrFailedUnlinkMedia      = errors.New("failed to unlink media from post")
+	ErrFailedSaveDraft        = errors.New("failed to save draft")
+	ErrFailedRetryPost        = errors.New("failed to retry post")
+	ErrInvalidCalendarParams  = errors.New("invalid calendar year or month")
+	ErrFailedGetPostAnalytics = errors.New("failed to get post analytics")
 )
 
 type PostProcessor struct {
 	store     PostStore
 	publisher EventPublisher
 	urlSigner URLSigner
+	titler    TitleGenerator
 	logger    *observability.Logger
 }
 
@@ -83,6 +90,12 @@ func New(store PostStore, publisher EventPublisher, logger *observability.Logger
 // untouched (local/dev storage).
 func (p *PostProcessor) SetURLSigner(signer URLSigner) {
 	p.urlSigner = signer
+}
+
+// SetTitler wires the title-generation dependency after construction.
+// Pass nil to leave titles as whatever the caller provided (or empty).
+func (p *PostProcessor) SetTitler(t TitleGenerator) {
+	p.titler = t
 }
 
 // presignMediaURL rewrites a single media row's s3:// URL to a presigned
@@ -134,7 +147,7 @@ type PlatformBreakdown struct {
 // CalendarDay is one entry in the CalendarMonth.Days slice. Only days that
 // have at least one post are included; the frontend fills empty-day gaps.
 type CalendarDay struct {
-	Date       string            `json:"date"`        // "YYYY-MM-DD"
+	Date       string            `json:"date"` // "YYYY-MM-DD"
 	ByStatus   StatusBreakdown   `json:"by_status"`
 	ByPlatform PlatformBreakdown `json:"by_platform"`
 }
@@ -154,6 +167,14 @@ func (p *PostProcessor) CreatePost(ctx context.Context, params store.CreatePostP
 		observability.Field{Key: "account_id", Value: params.AccountID.String()},
 		observability.Field{Key: "operation", Value: "create_post"},
 	)
+
+	// Auto-generate title only when the caller did not supply one.
+	if params.Title == nil {
+		title := p.generateTitle(ctx, params.Content)
+		if title != "" {
+			params.Title = &title
+		}
+	}
 
 	created, err := p.store.CreatePost(ctx, params)
 	if err != nil {
@@ -181,7 +202,7 @@ func (p *PostProcessor) GetPost(ctx context.Context, accountID, postID uuid.UUID
 	return post, nil
 }
 
-func (p *PostProcessor) ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error) {
+func (p *PostProcessor) ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.PostListItem, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: params.AccountID.String()},
 		observability.Field{Key: "operation", Value: "list_posts"},
@@ -436,6 +457,9 @@ func (p *PostProcessor) SaveDraft(ctx context.Context, params SaveDraftParams) (
 	if source == "" {
 		source = "manual"
 	}
+	// SaveDraft always auto-generates a title from the draft content.
+	generatedTitle := p.generateTitle(ctx, params.Content)
+
 	createParams := store.CreatePostParams{
 		AccountID:     params.AccountID,
 		Content:       params.Content,
@@ -447,6 +471,9 @@ func (p *PostProcessor) SaveDraft(ctx context.Context, params SaveDraftParams) (
 		Source:        source,
 		BaseContent:   params.BaseContent,
 		GitHubEventID: params.GitHubEventID,
+	}
+	if generatedTitle != "" {
+		createParams.Title = &generatedTitle
 	}
 
 	post, err := p.store.CreatePost(ctx, createParams)
@@ -870,4 +897,29 @@ func (p *PostProcessor) GetPostAnalytics(ctx context.Context, accountID, postID 
 	}
 
 	return GetPostAnalyticsResult{PlatformPosts: platformPosts}, nil
+}
+
+// generateTitle calls the AI titler with a fail-soft fallback.
+// If content is empty, returns an empty string (caller should not set Title).
+// If the AI call fails or returns empty, truncates the first line of content to 60 chars.
+// Never blocks post creation.
+func (p *PostProcessor) generateTitle(ctx context.Context, content string) string {
+	if strings.TrimSpace(content) == "" {
+		return ""
+	}
+	if p.titler != nil {
+		title, err := p.titler.GenerateTitle(ctx, content)
+		if err == nil && strings.TrimSpace(title) != "" {
+			return strings.TrimSpace(title)
+		}
+		if err != nil {
+			p.logger.Error(ctx, "failed to generate post title via ai; using fallback", err)
+		}
+	}
+	// Fallback: first line of content, capped at 60 chars.
+	line := strings.SplitN(strings.TrimSpace(content), "\n", 2)[0]
+	if len(line) > 60 {
+		line = line[:60]
+	}
+	return line
 }

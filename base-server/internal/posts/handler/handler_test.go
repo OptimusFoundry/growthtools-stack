@@ -190,7 +190,7 @@ func TestHandler_HandleListPosts(t *testing.T) {
 			name: "200 happy path",
 			mocks: func(m *MockPostProcessor) {
 				m.EXPECT().ListPosts(gomock.Any(), gomock.Any()).
-					Return([]store.Post{{ID: uuid.New()}}, nil)
+					Return([]store.PostListItem{{ID: uuid.New()}}, nil)
 			},
 			wantStatus: http.StatusOK,
 		},
@@ -706,7 +706,6 @@ func TestHandler_HandleRetryPost(t *testing.T) {
 		})
 	}
 }
-
 
 func TestHandler_HandleUnlinkMedia(t *testing.T) {
 	t.Parallel()
