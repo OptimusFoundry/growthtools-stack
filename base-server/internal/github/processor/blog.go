@@ -20,15 +20,17 @@ import (
 
 const (
 	blogMaxScreenshots = 5
-	// blogMaxOutputTokens caps Gemini output. 2.5 Flash supports up to 65k
-	// output; 8k is enough for a long-form blog post and keeps latency +
-	// cost predictable.
-	blogMaxOutputTokens = 8192
+	// blogMaxOutputTokens caps Gemini output. Raised to 200k to give headroom
+	// well above the target post length so truncation cannot produce malformed
+	// JSON. The prompt constrains actual length to a ~3 minute read.
+	blogMaxOutputTokens = 200000
 	blogSystemPrompt    = `You are a technical engineering blog author. Write detailed, first-person blog posts about software changes. Cover what was built, why architectural decisions were made, what tradeoffs existed, and what the implementation looks like. Be specific — reference actual code, file names, and design patterns from the diff.
+
+Length: aim for a ~3 minute read (roughly 600–750 words). Do not exceed 800 words. Be concise — cut anything that doesn't sharpen the narrative.
 
 Respond with a single JSON object and nothing else. The object must have these fields:
 - "title": string — blog post title
-- "content": string — full blog post in Markdown, starting with a # heading, using H2 sections
+- "content": string — full blog post in Markdown, starting with a # heading, using H2 sections, 600–750 words
 - "excerpt": string — one-sentence summary (max 200 chars)
 - "seo_title": string — SEO-optimised title (max 60 chars)
 - "meta_description": string — meta description (max 160 chars)
@@ -170,8 +172,11 @@ func (g *BlogDraftGenerator) GenerateBlogFromCommit(ctx context.Context, commitI
 	}
 
 	var blogResp blogJSONResponse
-	if parseErr := json.Unmarshal([]byte(strings.TrimSpace(rawOutput)), &blogResp); parseErr != nil {
-		g.logger.Error(ctx, "failed to parse blog JSON response", fmt.Errorf("parse: %w, raw length=%d", parseErr, len(rawOutput)))
+	cleaned := extractJSONObject(rawOutput)
+	if parseErr := json.Unmarshal([]byte(cleaned), &blogResp); parseErr != nil {
+		snippet := rawSnippet(rawOutput, 400)
+		g.logger.Error(ctx, "failed to parse blog JSON response",
+			fmt.Errorf("parse: %w, raw length=%d, snippet=%s", parseErr, len(rawOutput), snippet))
 		return ErrBlogGenerationFailed
 	}
 
@@ -270,6 +275,38 @@ func buildBlogUserMessage(c store.GitHubCommitForBlog, diff string) string {
 	b.WriteString("\n\nFull diff:\n")
 	b.WriteString(diff)
 	return b.String()
+}
+
+// extractJSONObject pulls the JSON object substring from an AI response,
+// tolerating markdown fences or surrounding prose. Falls back to the trimmed
+// input when no braces are found so json.Unmarshal yields a useful error.
+func extractJSONObject(raw string) string {
+	s := strings.TrimSpace(raw)
+	if strings.HasPrefix(s, "```") {
+		s = strings.TrimPrefix(s, "```json")
+		s = strings.TrimPrefix(s, "```")
+		if idx := strings.LastIndex(s, "```"); idx != -1 {
+			s = s[:idx]
+		}
+		s = strings.TrimSpace(s)
+	}
+	start := strings.Index(s, "{")
+	end := strings.LastIndex(s, "}")
+	if start == -1 || end == -1 || end < start {
+		return s
+	}
+	return s[start : end+1]
+}
+
+// rawSnippet returns a length-bounded excerpt of raw — first n and last n
+// bytes, separated by an ellipsis when the input is longer than 2n. Used to
+// log just enough of a malformed AI response to diagnose without blowing up
+// log volume on long bodies.
+func rawSnippet(raw string, n int) string {
+	if len(raw) <= 2*n {
+		return raw
+	}
+	return raw[:n] + "...[truncated]..." + raw[len(raw)-n:]
 }
 
 // slugPattern strips everything that is not a-z0-9.
