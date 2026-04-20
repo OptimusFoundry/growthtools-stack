@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"base-server/internal/infra/observability"
 
@@ -22,6 +23,7 @@ func NewProducer(brokers string, logger *observability.Logger) *Producer {
 		Addr:         kafkago.TCP(brokers),
 		Balancer:     &kafkago.LeastBytes{},
 		RequiredAcks: kafkago.RequireOne,
+		BatchTimeout: 10 * time.Millisecond,
 	}
 
 	return &Producer{
