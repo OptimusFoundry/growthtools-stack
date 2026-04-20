@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BarChart, Calendar, Image, Newspaper, PenSquare } from "lucide-react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useAuth } from "@/contexts/auth";
+import { LastSevenDaysSection } from "@/features/analytics/components/LastSevenDaysSection/component";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import cardStyles from "./dashboard.module.scss";
@@ -48,6 +49,8 @@ function Index() {
 						</p>
 					</div>
 				</header>
+
+				<LastSevenDaysSection />
 
 				<Stack gap="xs">
 					<Text as="h3" size="lg" weight="semibold">
