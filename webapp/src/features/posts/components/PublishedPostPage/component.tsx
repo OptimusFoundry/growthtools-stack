@@ -1,5 +1,5 @@
 import { Navigate } from "@tanstack/react-router";
-import { PublishedPostView } from "@/components/create-post/PublishedPostView";
+import { PublishedPostView } from "@/features/posts/components/PublishedPostView/component";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
 import { Alert } from "@/proto-design-system/components/feedback/Alert";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";

@@ -1,14 +1,14 @@
+import { PlatformPreviewTabs } from "@/components/create-post/PlatformPreviewTabs";
+import { PostPublishStatus } from "@/components/create-post/PostPublishStatus";
+import type { WizardState } from "@/components/create-post/useCreatePostWizard";
 import { Topbar } from "@/components/Layout/Topbar";
+import { InlinePostAnalytics } from "@/features/posts/components/InlinePostAnalytics/component";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Text } from "@/proto-design-system/components/primitives/Text";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
-import styles from "./CreatePostWizard.module.scss";
-import { InlinePostAnalytics } from "./InlinePostAnalytics";
-import { PlatformPreviewTabs } from "./PlatformPreviewTabs";
-import { PostPublishStatus } from "./PostPublishStatus";
-import type { WizardState } from "./useCreatePostWizard";
+import styles from "./component.module.scss";
 
 interface PublishedPostViewProps {
 	postId: string;
