@@ -6,6 +6,7 @@ import (
 	commitclassifier "base-server/internal/ai/commitclassifier"
 	mediadescriber "base-server/internal/ai/mediadescriber"
 	mediaplanner "base-server/internal/ai/mediaplanner"
+	posttitler "base-server/internal/ai/posttitler"
 	socialposts "base-server/internal/ai/socialposts"
 
 	authProcessor "base-server/internal/auth/processor"
@@ -53,6 +54,7 @@ type procs struct {
 	aiPlanner    *mediaplanner.Planner
 	aiPosts      *socialposts.Generator
 	aiBlog       *aiblog.Generator
+	aiTitler     *posttitler.Titler
 }
 
 // buildProcessors constructs all processor and service instances.
@@ -99,6 +101,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	p.aiPlanner = mediaplanner.New(cl.gemini, logger)
 	p.aiPosts = socialposts.New(cl.gemini, logger)
 	p.aiBlog = aiblog.New(cl.gemini, logger)
+	p.aiTitler = posttitler.New(cl.gemini, logger)
 
 	// AI Chat
 	p.chat = chatProcessor.New(s, cl.gemini, logger)
@@ -117,6 +120,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	if cl.urlSigner != nil {
 		p.posts.SetURLSigner(cl.urlSigner)
 	}
+	p.posts.SetTitler(p.aiTitler)
 
 	// Media
 	// MEDIA_PUBLIC_URL_BASE is the source of truth for media URLs. Set it to a public S3

@@ -13,24 +13,45 @@ import (
 
 // Post represents a content item
 type Post struct {
-	ID            uuid.UUID  `db:"id" json:"id"`
-	AccountID     uuid.UUID  `db:"account_id" json:"account_id"`
-	Title         *string    `db:"title" json:"title,omitempty"`
-	Content       string     `db:"content" json:"content"`
-	ContentType   string     `db:"content_type" json:"content_type"`
-	Status        string     `db:"status" json:"status"`
-	ScheduledAt   *time.Time `db:"scheduled_at" json:"scheduled_at,omitempty"`
-	PublishedAt   *time.Time `db:"published_at" json:"published_at,omitempty"`
-	MediaIDs      UUIDArray  `db:"media_ids" json:"media_ids"`
+	ID            uuid.UUID   `db:"id" json:"id"`
+	AccountID     uuid.UUID   `db:"account_id" json:"account_id"`
+	Title         *string     `db:"title" json:"title,omitempty"`
+	Content       string      `db:"content" json:"content"`
+	ContentType   string      `db:"content_type" json:"content_type"`
+	Status        string      `db:"status" json:"status"`
+	ScheduledAt   *time.Time  `db:"scheduled_at" json:"scheduled_at,omitempty"`
+	PublishedAt   *time.Time  `db:"published_at" json:"published_at,omitempty"`
+	MediaIDs      UUIDArray   `db:"media_ids" json:"media_ids"`
 	Tags          StringArray `db:"tags" json:"tags"`
-	AIGenerated   bool       `db:"ai_generated" json:"ai_generated"`
-	BaseContent   *string    `db:"base_content" json:"base_content,omitempty"`
-	Source        string     `db:"source" json:"source"`
+	AIGenerated   bool        `db:"ai_generated" json:"ai_generated"`
+	BaseContent   *string     `db:"base_content" json:"base_content,omitempty"`
+	Source        string      `db:"source" json:"source"`
 	GitHubEventID *uuid.UUID  `db:"github_event_id" json:"github_event_id,omitempty"`
 	Platforms     StringArray `db:"platforms" json:"platforms"`
 	CreatedAt     time.Time   `db:"created_at" json:"created_at"`
 	UpdatedAt     time.Time   `db:"updated_at" json:"updated_at"`
 	DeletedAt     *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
+}
+
+// PostListItem is a slimmed-down projection of Post used by ListPosts.
+// It omits content, base_content, and deleted_at so those columns are
+// never transferred over the wire on list calls.
+type PostListItem struct {
+	ID            uuid.UUID   `db:"id"              json:"id"`
+	AccountID     uuid.UUID   `db:"account_id"      json:"account_id"`
+	Title         *string     `db:"title"           json:"title,omitempty"`
+	ContentType   string      `db:"content_type"    json:"content_type"`
+	Status        string      `db:"status"          json:"status"`
+	ScheduledAt   *time.Time  `db:"scheduled_at"    json:"scheduled_at,omitempty"`
+	PublishedAt   *time.Time  `db:"published_at"    json:"published_at,omitempty"`
+	MediaIDs      UUIDArray   `db:"media_ids"       json:"media_ids"`
+	Tags          StringArray `db:"tags"            json:"tags"`
+	AIGenerated   bool        `db:"ai_generated"    json:"ai_generated"`
+	Source        string      `db:"source"          json:"source"`
+	GitHubEventID *uuid.UUID  `db:"github_event_id" json:"github_event_id,omitempty"`
+	Platforms     StringArray `db:"platforms"       json:"platforms"`
+	CreatedAt     time.Time   `db:"created_at"      json:"created_at"`
+	UpdatedAt     time.Time   `db:"updated_at"      json:"updated_at"`
 }
 
 // CreatePostParams represents parameters for creating a post
@@ -100,9 +121,9 @@ func (s *Store) GetPostByID(ctx context.Context, accountID, id uuid.UUID) (Post,
 }
 
 const sqlListPosts = `
-SELECT p.id, p.account_id, p.title, p.content, p.content_type, p.status, p.scheduled_at, p.published_at, p.media_ids, p.tags, p.ai_generated, p.base_content, p.source, p.github_event_id,
+SELECT p.id, p.account_id, p.title, p.content_type, p.status, p.scheduled_at, p.published_at, p.media_ids, p.tags, p.ai_generated, p.source, p.github_event_id,
        COALESCE((SELECT array_agg(DISTINCT pp.platform) FROM platform_posts pp WHERE pp.post_id = p.id), '{}') AS platforms,
-       p.created_at, p.updated_at, p.deleted_at
+       p.created_at, p.updated_at
 FROM posts p
 WHERE p.account_id = $1 AND p.deleted_at IS NULL
 AND ($2::text IS NULL OR p.status = $2::post_status)
@@ -114,12 +135,12 @@ ORDER BY p.created_at DESC
 LIMIT $7 OFFSET $8
 `
 
-func (s *Store) ListPosts(ctx context.Context, params ListPostsParams) ([]Post, error) {
+func (s *Store) ListPosts(ctx context.Context, params ListPostsParams) ([]PostListItem, error) {
 	limit := params.Limit
 	if limit <= 0 {
 		limit = 20
 	}
-	posts := make([]Post, 0)
+	posts := make([]PostListItem, 0)
 	err := s.db.SelectContext(ctx, &posts, sqlListPosts,
 		params.AccountID, params.Status, params.ContentType, params.Source,
 		params.From, params.To, limit, params.Offset)
@@ -270,11 +291,11 @@ func (s *Store) UnlinkMediaFromPost(ctx context.Context, accountID, postID, medi
 // ThreadSegment array after a media slot at `removedPosition` (1-based)
 // has been spliced out of the owning post's media_ids.
 //
-// - Segments with image_index == removedPosition lose their image_index
-//   (the segment stays; its text may still read fine).
-// - Segments with image_index > removedPosition get decremented by one.
-// - Segments with image_index < removedPosition, or no image_index, are
-//   untouched.
+//   - Segments with image_index == removedPosition lose their image_index
+//     (the segment stays; its text may still read fine).
+//   - Segments with image_index > removedPosition get decremented by one.
+//   - Segments with image_index < removedPosition, or no image_index, are
+//     untouched.
 func rewriteSegmentsAfterUnlink(raw json.RawMessage, removedPosition int) (json.RawMessage, error) {
 	var segments []map[string]any
 	if err := json.Unmarshal(raw, &segments); err != nil {

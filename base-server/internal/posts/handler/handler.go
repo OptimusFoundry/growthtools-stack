@@ -20,7 +20,7 @@ import (
 type PostProcessor interface {
 	CreatePost(ctx context.Context, params store.CreatePostParams) (store.Post, error)
 	GetPost(ctx context.Context, accountID, postID uuid.UUID) (store.Post, error)
-	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error)
+	ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.PostListItem, error)
 	UpdatePost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdatePostParams) (store.Post, error)
 	DeletePost(ctx context.Context, accountID, postID uuid.UUID) error
 	UnlinkMedia(ctx context.Context, accountID, postID, mediaID uuid.UUID) error

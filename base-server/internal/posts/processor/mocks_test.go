@@ -58,6 +58,45 @@ func (mr *MockURLSignerMockRecorder) PresignGetURL(ctx, key, ttl any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresignGetURL", reflect.TypeOf((*MockURLSigner)(nil).PresignGetURL), ctx, key, ttl)
 }
 
+// MockTitleGenerator is a mock of TitleGenerator interface.
+type MockTitleGenerator struct {
+	ctrl     *gomock.Controller
+	recorder *MockTitleGeneratorMockRecorder
+	isgomock struct{}
+}
+
+// MockTitleGeneratorMockRecorder is the mock recorder for MockTitleGenerator.
+type MockTitleGeneratorMockRecorder struct {
+	mock *MockTitleGenerator
+}
+
+// NewMockTitleGenerator creates a new mock instance.
+func NewMockTitleGenerator(ctrl *gomock.Controller) *MockTitleGenerator {
+	mock := &MockTitleGenerator{ctrl: ctrl}
+	mock.recorder = &MockTitleGeneratorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTitleGenerator) EXPECT() *MockTitleGeneratorMockRecorder {
+	return m.recorder
+}
+
+// GenerateTitle mocks base method.
+func (m *MockTitleGenerator) GenerateTitle(ctx context.Context, content string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateTitle", ctx, content)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateTitle indicates an expected call of GenerateTitle.
+func (mr *MockTitleGeneratorMockRecorder) GenerateTitle(ctx, content any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateTitle", reflect.TypeOf((*MockTitleGenerator)(nil).GenerateTitle), ctx, content)
+}
+
 // MockPostStore is a mock of PostStore interface.
 type MockPostStore struct {
 	ctrl     *gomock.Controller
@@ -246,10 +285,10 @@ func (mr *MockPostStoreMockRecorder) GetPostByID(ctx, accountID, postID any) *go
 }
 
 // ListPosts mocks base method.
-func (m *MockPostStore) ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.Post, error) {
+func (m *MockPostStore) ListPosts(ctx context.Context, params store.ListPostsParams) ([]store.PostListItem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPosts", ctx, params)
-	ret0, _ := ret[0].([]store.Post)
+	ret0, _ := ret[0].([]store.PostListItem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
