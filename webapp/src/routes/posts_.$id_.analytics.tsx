@@ -1,7 +1,7 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { PostAnalyticsPage } from "@/features/posts/components/PostAnalyticsPage/component";
 
-export const Route = createFileRoute("/posts_/$id/analytics")({
+export const Route = createFileRoute("/posts_/$id_/analytics")({
 	component: PostAnalyticsRoute,
 });
 
