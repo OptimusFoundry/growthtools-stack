@@ -49,8 +49,6 @@ jobs:
           cache-dependency-path: base-server/go.sum
       - name: Install dependencies
         run: go mod download
-      - name: Build the application
-        run: go build -v ./...
       - name: Unit tests + race detector
         run: go test -race -short ./...
 
