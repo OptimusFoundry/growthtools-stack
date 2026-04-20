@@ -33,11 +33,10 @@ function truncate(text: string, max: number): string {
 /**
  * Post detail view for `published` and `partially_published` posts.
  *
- * Follows the Detail archetype from docs/design-docs/11-page-composition.md
- * and 14-composition.md rather than the Editor archetype the wizard uses.
- * Nothing here is editable — there's nothing to edit once a post has shipped.
- * Sections stack vertically with explicit heads (C-10.1), section gap 56px
- * (C-2.2), at library/dashboard max-width (C-3.1) so analytics get room.
+ * Two-column split mirroring the Editor archetype (docs/design-docs
+ * 14-composition.md C-3.4): content on the left (Publish status +
+ * Analytics), preview pinned on the right (What shipped). Nothing is
+ * editable — there's nothing to edit once a post has shipped.
  */
 export function PublishedPostView({
 	postId,
@@ -83,24 +82,30 @@ export function PublishedPostView({
 					</div>
 				</header>
 
-				<Section title="Publish status">
-					<PostPublishStatus platformPosts={platformPosts} />
-				</Section>
+				<div className={styles.twoColumn}>
+					<Stack gap="xl">
+						<Section title="Publish status">
+							<PostPublishStatus platformPosts={platformPosts} />
+						</Section>
 
-				<Section title="Analytics">
-					<InlinePostAnalytics postId={postId} />
-				</Section>
+						<Section title="Analytics">
+							<InlinePostAnalytics postId={postId} />
+						</Section>
+					</Stack>
 
-				<Section title="What shipped">
-					<PlatformPreviewTabs
-						selectedPlatforms={selectedPlatforms}
-						platformContent={platformContent}
-						threadContent={threadContent}
-						contentType={contentType}
-						uploadedMedia={uploadedMedia}
-						readOnly
-					/>
-				</Section>
+					<div className={styles.shippedColumn}>
+						<Section title="What shipped">
+							<PlatformPreviewTabs
+								selectedPlatforms={selectedPlatforms}
+								platformContent={platformContent}
+								threadContent={threadContent}
+								contentType={contentType}
+								uploadedMedia={uploadedMedia}
+								readOnly
+							/>
+						</Section>
+					</div>
+				</div>
 			</Stack>
 		</>
 	);
