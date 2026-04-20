@@ -12,7 +12,7 @@ import (
 	"google.golang.org/genai"
 )
 
-const defaultModel = "gemini-2.5-flash"
+const defaultModel = "gemini-2.5-flash-lite"
 
 var (
 	ErrAPIRequest  = errors.New("gemini api request failed")

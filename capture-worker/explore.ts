@@ -522,7 +522,7 @@ export interface ExploreInput {
 	captureDir: string;       // base capture dir; explore writes to {captureDir}/explore/
 	maxExploreSteps?: number; // default 40
 	wallClockMs?: number;     // default 4 * 60_000
-	model?: string;           // default "gemini-2.5-flash"
+	model?: string;           // default "gemini-2.5-flash-lite"
 }
 
 export interface ExploreResult {
@@ -543,7 +543,7 @@ export async function runExplore(input: ExploreInput): Promise<ExploreResult> {
 		captureDir,
 		maxExploreSteps = 100,
 		wallClockMs = 8 * 60_000,
-		model = "gemini-2.5-flash",
+		model = "gemini-2.5-flash-lite",
 	} = input;
 
 	const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_AI_API_KEY;
