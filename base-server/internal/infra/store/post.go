@@ -36,6 +36,10 @@ type Post struct {
 // PostListItem is a slimmed-down projection of Post used by ListPosts.
 // It omits content, base_content, and deleted_at so those columns are
 // never transferred over the wire on list calls.
+//
+// Title is derived in SQL: when posts.title is NULL/blank, it falls back
+// to the first 50 chars of base_content (user idea/instructions) or
+// content — so the UI always has something to render.
 type PostListItem struct {
 	ID            uuid.UUID   `db:"id"              json:"id"`
 	AccountID     uuid.UUID   `db:"account_id"      json:"account_id"`
@@ -121,7 +125,9 @@ func (s *Store) GetPostByID(ctx context.Context, accountID, id uuid.UUID) (Post,
 }
 
 const sqlListPosts = `
-SELECT p.id, p.account_id, p.title, p.content_type, p.status, p.scheduled_at, p.published_at, p.media_ids, p.tags, p.ai_generated, p.source, p.github_event_id,
+SELECT p.id, p.account_id,
+       COALESCE(NULLIF(btrim(p.title), ''), LEFT(COALESCE(NULLIF(btrim(p.base_content), ''), p.content), 50)) AS title,
+       p.content_type, p.status, p.scheduled_at, p.published_at, p.media_ids, p.tags, p.ai_generated, p.source, p.github_event_id,
        COALESCE((SELECT array_agg(DISTINCT pp.platform) FROM platform_posts pp WHERE pp.post_id = p.id), '{}') AS platforms,
        p.created_at, p.updated_at
 FROM posts p

@@ -127,6 +127,59 @@ func TestListPosts(t *testing.T) {
 	assert.Empty(t, posts)
 }
 
+func TestListPosts_TitleFallback(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	// 1. Post with an explicit title — preserved verbatim.
+	explicit := "Explicit Title"
+	_, err := s.CreatePost(ctx, CreatePostParams{
+		AccountID: accountID, Title: &explicit,
+		Content: "body goes here", ContentType: ContentTypeText,
+		Status: PostStatusDraft, Source: PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	// 2. Post with NULL title + base_content — list should derive from base_content.
+	baseIdea := "Ship the new onboarding flow today and announce it"
+	_, err = s.CreatePost(ctx, CreatePostParams{
+		AccountID: accountID,
+		Content:   "Generated social copy for the launch.",
+		BaseContent: &baseIdea,
+		ContentType: ContentTypeText, Status: PostStatusDraft, Source: PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	// 3. Post with NULL title AND no base_content — falls back to content.
+	contentOnly := "Just shipped a tiny fix for the calendar view bug that everyone hated."
+	_, err = s.CreatePost(ctx, CreatePostParams{
+		AccountID: accountID,
+		Content: contentOnly, ContentType: ContentTypeText,
+		Status: PostStatusDraft, Source: PostSourceManual,
+	})
+	require.NoError(t, err)
+
+	posts, err := s.ListPosts(ctx, ListPostsParams{AccountID: accountID, Limit: 10})
+	require.NoError(t, err)
+	require.Len(t, posts, 3)
+
+	// Ordered DESC by created_at — newest first = contentOnly, then baseIdea, then explicit.
+	require.NotNil(t, posts[0].Title)
+	assert.Equal(t, contentOnly[:50], *posts[0].Title)
+
+	require.NotNil(t, posts[1].Title)
+	assert.Equal(t, baseIdea[:50], *posts[1].Title)
+
+	require.NotNil(t, posts[2].Title)
+	assert.Equal(t, explicit, *posts[2].Title)
+}
+
 func TestUpdatePost(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {
