@@ -1,6 +1,6 @@
 @use "../../proto-design-system/mixins" as *;
 
-// MobileActionBar — sticky bottom action bar, mobile only.
+// MobileActionBar — fixed bottom action bar, mobile only.
 // Hidden on desktop. Rendered in the DOM always to avoid JS media query.
 
 .bar {
@@ -15,12 +15,13 @@
     bottom: 0;
     display: flex;
     justify-content: space-between;
+    left: 0;
     padding: var(--space-3) var(--space-4);
 
     // Safe-area inset for notched phones (iPhone X+)
     padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
-    position: sticky;
-    width: 100%;
+    position: fixed;
+    right: 0;
     z-index: var(--z-sticky);
   }
 }
