@@ -154,7 +154,9 @@ func Load() (*Config, error) {
 	if cfg.Database.Host, err = requireEnv("DB_HOST"); err != nil {
 		return nil, err
 	}
-	cfg.Database.Port = getEnvWithDefault("DB_PORT", "5432")
+	if cfg.Database.Port, err = requireEnv("DB_PORT"); err != nil {
+		return nil, err
+	}
 	if cfg.Database.Username, err = requireEnv("DB_USERNAME"); err != nil {
 		return nil, err
 	}

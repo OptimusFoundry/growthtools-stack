@@ -17,7 +17,7 @@ func SetupTestStore(t *testing.T) *Store {
 	t.Helper()
 
 	host := envOrDefault("TEST_DB_HOST", "localhost")
-	port := envOrDefault("TEST_DB_PORT", "5433")
+	port := requireEnvT(t, "TEST_DB_PORT")
 	user := envOrDefault("TEST_DB_USER", "base_user")
 	pass := envOrDefault("TEST_DB_PASS", "base_password")
 	name := envOrDefault("TEST_DB_NAME", "base_db")
@@ -71,6 +71,15 @@ func envOrDefault(key, defaultVal string) string {
 		return v
 	}
 	return defaultVal
+}
+
+func requireEnvT(t *testing.T, key string) string {
+	t.Helper()
+	v := os.Getenv(key)
+	if v == "" {
+		t.Fatalf("%s is not set", key)
+	}
+	return v
 }
 
 func strPtr(s string) *string {
