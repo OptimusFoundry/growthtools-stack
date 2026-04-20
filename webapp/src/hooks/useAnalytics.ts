@@ -22,12 +22,14 @@ import { getErrorMessage, isAbortError } from "@/utils/errorHandler";
 export type RangeKey = "7d" | "30d" | "90d";
 
 export interface DateWindow {
-	from: string; // ISO date string "YYYY-MM-DD"
+	from: string; // RFC3339 timestamp, e.g. "2026-04-19T00:00:00.000Z"
 	to: string;
 }
 
 /**
- * Converts a RangeKey into {from, to} relative to today (UTC).
+ * Converts a RangeKey into {from, to} relative to now (UTC) as RFC3339
+ * timestamps. Backend (base-server/internal/analytics/handler) parses with
+ * time.RFC3339, so date-only strings are rejected.
  */
 export function rangeToDates(range: RangeKey): DateWindow {
 	const to = new Date();
@@ -35,8 +37,8 @@ export function rangeToDates(range: RangeKey): DateWindow {
 	const days = range === "7d" ? 7 : range === "90d" ? 90 : 30;
 	from.setUTCDate(from.getUTCDate() - days);
 	return {
-		from: from.toISOString().slice(0, 10),
-		to: to.toISOString().slice(0, 10),
+		from: from.toISOString(),
+		to: to.toISOString(),
 	};
 }
 
@@ -47,16 +49,12 @@ export function rangeToDates(range: RangeKey): DateWindow {
 export function priorWindow(current: DateWindow): DateWindow {
 	const fromDate = new Date(current.from);
 	const toDate = new Date(current.to);
-	const days = Math.round(
-		(toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24),
-	);
-	const priorTo = new Date(fromDate);
-	priorTo.setUTCDate(priorTo.getUTCDate() - 1);
-	const priorFrom = new Date(priorTo);
-	priorFrom.setUTCDate(priorFrom.getUTCDate() - days);
+	const span = toDate.getTime() - fromDate.getTime();
+	const priorTo = new Date(fromDate.getTime() - 1);
+	const priorFrom = new Date(priorTo.getTime() - span);
 	return {
-		from: priorFrom.toISOString().slice(0, 10),
-		to: priorTo.toISOString().slice(0, 10),
+		from: priorFrom.toISOString(),
+		to: priorTo.toISOString(),
 	};
 }
 
