@@ -51,7 +51,7 @@ export interface DemoInput {
 	/** Hard caps on the agent loop. */
 	maxSteps?: number;
 	wallClockMs?: number;
-	/** Gemini model id. Defaults to gemini-2.5-flash. */
+	/** Gemini model id. Defaults to gemini-2.5-flash-lite. */
 	model?: string;
 	/**
 	 * If provided, skip Pass 1 and use this plan directly.
@@ -438,7 +438,7 @@ export async function runDemo(input: DemoInput): Promise<DemoResult> {
 		// Generous budget because Gemini free tier caps at 5 RPM so a 20-step
 		// run will likely spend a couple of minutes waiting out 429s.
 		wallClockMs = 5 * 60_000,
-		model = "gemini-2.5-flash",
+		model = "gemini-2.5-flash-lite",
 	} = input;
 
 	const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_AI_API_KEY;
