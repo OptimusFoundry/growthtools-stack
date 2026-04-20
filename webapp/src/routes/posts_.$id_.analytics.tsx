@@ -6,6 +6,6 @@ export const Route = createFileRoute("/posts_/$id_/analytics")({
 });
 
 function PostAnalyticsRoute() {
-	const { id } = useParams({ from: "/posts_/$id/analytics" });
+	const { id } = useParams({ from: "/posts_/$id_/analytics" });
 	return <PostAnalyticsPage postId={id} />;
 }
