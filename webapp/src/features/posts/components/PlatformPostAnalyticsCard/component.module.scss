@@ -1,3 +1,5 @@
+@use "@/proto-design-system/mixins/responsive" as *;
+
 .header {
 	margin-bottom: var(--space-4);
 }
@@ -24,13 +26,13 @@
 	grid-template-columns: repeat(4, 1fr);
 	gap: var(--space-3);
 
-	@media (max-width: 600px) {
+	@include breakpoint-down(sm) {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
 
 .kpiGridFaded {
-	opacity: 0.5;
+	opacity: var(--opacity-disabled);
 }
 
 .kpiCell {
@@ -43,7 +45,7 @@
 	font-family: var(--font-mono);
 	font-size: var(--font-size-xxs);
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: var(--letter-spacing-wider);
 	color: var(--color-base-content-secondary);
 }
 

@@ -1,3 +1,5 @@
+@use "@/proto-design-system/mixins/responsive" as *;
+
 .page {
 	display: flex;
 	flex-direction: column;
@@ -11,7 +13,7 @@
 	grid-template-columns: repeat(4, 1fr);
 	gap: var(--space-4);
 
-	@media (max-width: 768px) {
+	@include breakpoint-down(md) {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
@@ -23,14 +25,14 @@
 	padding: var(--space-4);
 	border: 1px solid var(--color-border);
 	border-radius: var(--radius-md);
-	min-height: 96px;
+	min-height: var(--space-14);
 }
 
 .chartEyebrow {
 	font-family: var(--font-mono);
 	font-size: var(--font-size-xs);
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	letter-spacing: var(--letter-spacing-wider);
 	color: var(--color-base-content-secondary);
 }
 
@@ -47,7 +49,7 @@
 		font-family: var(--font-mono);
 		font-size: var(--font-size-xxs);
 		text-transform: uppercase;
-		letter-spacing: 0.06em;
+		letter-spacing: var(--letter-spacing-wider);
 		color: var(--color-base-content-secondary);
 		font-weight: var(--font-weight-medium);
 		padding: var(--space-2) var(--space-4);
@@ -85,12 +87,12 @@
 }
 
 .trendChip--up {
-	background: color-mix(in srgb, var(--color-success) 12%, transparent);
+	background: var(--color-success-bg);
 	color: var(--color-success);
 }
 
 .trendChip--down {
-	background: color-mix(in srgb, var(--color-error) 12%, transparent);
+	background: var(--color-error-bg);
 	color: var(--color-error);
 }
 
