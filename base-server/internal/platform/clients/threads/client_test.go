@@ -54,6 +54,15 @@ func TestClient_GetThreadInsights(t *testing.T) {
 			validateResp:   nil,
 		},
 		{
+			name:           "graph_object_missing_400_returns_ErrNotFound",
+			mockStatusCode: http.StatusBadRequest,
+			mockResponse:   `{"error":{"message":"Unsupported get request. Object with ID 'x' does not exist","type":"THApiException","code":100,"error_subcode":33,"fbtrace_id":"abc"}}`,
+			postID:         "18142020445502460",
+			expectErr:      true,
+			expectErrType:  ErrNotFound,
+			validateResp:   nil,
+		},
+		{
 			name:           "server_error_500",
 			mockStatusCode: http.StatusInternalServerError,
 			mockResponse:   `{"error":"Server error"}`,

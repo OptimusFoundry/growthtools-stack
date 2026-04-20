@@ -17,6 +17,22 @@ import (
 // ErrNotFound indicates the Threads API returned 404 for the requested resource.
 var ErrNotFound = errors.New("threadsapi: not found")
 
+// isGraphObjectMissing reports whether a Graph API error body signals that the
+// requested object does not exist or is inaccessible (code 100, subcode 33).
+// The Threads/Graph API returns this as HTTP 400 rather than 404.
+func isGraphObjectMissing(body []byte) bool {
+	var parsed struct {
+		Error struct {
+			Code         int `json:"code"`
+			ErrorSubcode int `json:"error_subcode"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return false
+	}
+	return parsed.Error.Code == 100 && parsed.Error.ErrorSubcode == 33
+}
+
 // Client handles HTTP communication with the Threads API.
 type Client struct {
 	httpClient *http.Client
@@ -210,6 +226,10 @@ func (c *Client) GetThreadInsights(ctx context.Context, postID, accessToken stri
 		return ThreadInsights{}, fmt.Errorf("%w: thread %s", ErrNotFound, postID)
 	}
 	if resp.StatusCode != http.StatusOK {
+		// Graph API signals "object does not exist / no permission" as 400 with code 100, subcode 33.
+		if isGraphObjectMissing(respBody) {
+			return ThreadInsights{}, fmt.Errorf("%w: thread %s", ErrNotFound, postID)
+		}
 		return ThreadInsights{}, fmt.Errorf("threadsapi: API returned %d: %s", resp.StatusCode, string(respBody))
 	}
 
