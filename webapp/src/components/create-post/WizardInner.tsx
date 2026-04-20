@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarClock, MoreHorizontal, Send, Trash2 } from "lucide-react";
+import { CalendarClock, Save, Send, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { fetcher } from "@/api/client";
@@ -19,10 +19,6 @@ import { useBannerCenter } from "@/proto-design-system/components/feedback/Banne
 import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
-import {
-	Dropdown,
-	type DropdownItem,
-} from "@/proto-design-system/components/overlays/Dropdown/Dropdown";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -541,48 +537,6 @@ export function WizardInner({
 		{ label: isEditMode ? "Edit" : "New" },
 	];
 
-	const overflowItems: DropdownItem[] = readOnly
-		? []
-		: [
-				...(canDelete
-					? [
-							{
-								id: "delete",
-								label: "Delete",
-								icon: <Trash2 size={14} />,
-								disabled: busy || deleting,
-								danger: true,
-							} satisfies DropdownItem,
-						]
-					: []),
-				{
-					id: "save-draft",
-					label: "Save draft",
-					disabled: busy || savingDraft || updatingDraft,
-				} satisfies DropdownItem,
-			];
-
-	const overflowTrigger =
-		overflowItems.length > 0 ? (
-			<Dropdown
-				items={overflowItems}
-				placement="top"
-				align="start"
-				variant="ghost"
-				size="sm"
-				iconOnly
-				trigger={<MoreHorizontal size={16} aria-hidden="true" />}
-				triggerAriaLabel="More post actions"
-				onChange={(id) => {
-					if (id === "delete") {
-						setDeleteOpen(true);
-					} else if (id === "save-draft") {
-						actions.handleSaveDraft();
-					}
-				}}
-			/>
-		) : undefined;
-
 	const topbarActions = readOnly ? undefined : (
 		<Stack direction="row" gap="sm" align="center">
 			{canDelete && (
@@ -633,32 +587,48 @@ export function WizardInner({
 				hideActionsOnMobile={!readOnly}
 			/>
 			{!readOnly && (
-				<MobileActionBar
-					primary={
+				<MobileActionBar>
+					{canDelete && (
 						<Button
-							variant="primary"
+							variant="ghost"
 							size="sm"
-							onClick={actions.handlePublish}
-							isLoading={state.submitting}
-							disabled={busy || !canAct}
-							aria-label="Publish post"
+							onClick={() => setDeleteOpen(true)}
+							disabled={busy || deleting}
+							aria-label="Delete post"
 						>
-							<Send size={16} aria-hidden="true" />
+							<Trash2 size={18} aria-hidden="true" />
 						</Button>
-					}
-					secondary={
-						<Button
-							variant="secondary"
-							size="sm"
-							onClick={() => scheduleDrawer.setScheduleOpen(true)}
-							disabled={busy || !canAct}
-							aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
-						>
-							<CalendarClock size={16} aria-hidden="true" />
-						</Button>
-					}
-					overflow={overflowTrigger}
-				/>
+					)}
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={actions.handleSaveDraft}
+						isLoading={savingDraft || updatingDraft}
+						disabled={busy}
+						aria-label="Save draft"
+					>
+						<Save size={18} aria-hidden="true" />
+					</Button>
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={() => scheduleDrawer.setScheduleOpen(true)}
+						disabled={busy || !canAct}
+						aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
+					>
+						<CalendarClock size={18} aria-hidden="true" />
+					</Button>
+					<Button
+						variant="primary"
+						size="sm"
+						onClick={actions.handlePublish}
+						isLoading={state.submitting}
+						disabled={busy || !canAct}
+						aria-label="Publish post"
+					>
+						<Send size={18} aria-hidden="true" />
+					</Button>
+				</MobileActionBar>
 			)}
 			<div className={styles.page}>
 				<header className={styles.header}>
