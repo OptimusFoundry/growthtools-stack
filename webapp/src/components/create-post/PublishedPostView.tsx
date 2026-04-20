@@ -94,7 +94,10 @@ export function PublishedPostView({
 					</Stack>
 
 					<div className={styles.shippedColumn}>
-						<Section title="What shipped">
+						<Stack gap="md">
+							<Text as="h3" size="lg" weight="medium">
+								Post
+							</Text>
 							<PlatformPreviewTabs
 								selectedPlatforms={selectedPlatforms}
 								platformContent={platformContent}
@@ -103,7 +106,7 @@ export function PublishedPostView({
 								uploadedMedia={uploadedMedia}
 								readOnly
 							/>
-						</Section>
+						</Stack>
 					</div>
 				</div>
 			</Stack>
