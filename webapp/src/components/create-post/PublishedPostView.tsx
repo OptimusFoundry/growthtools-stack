@@ -1,21 +1,18 @@
-import type { ReactNode } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import pageStyles from "@/routes/page.module.scss";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
+import styles from "./CreatePostWizard.module.scss";
 import { InlinePostAnalytics } from "./InlinePostAnalytics";
 import { PlatformPreviewTabs } from "./PlatformPreviewTabs";
 import { PostPublishStatus } from "./PostPublishStatus";
-import styles from "./PublishedPostView.module.scss";
 import type { WizardState } from "./useCreatePostWizard";
 
 interface PublishedPostViewProps {
 	postId: string;
 	status: "published" | "partially_published";
-	blurb: string;
 	contentType: WizardState["contentType"];
 	selectedPlatforms: PlatformType[];
 	platformContent: Partial<Record<PlatformType, string>>;
@@ -24,24 +21,18 @@ interface PublishedPostViewProps {
 	platformPosts: PlatformPost[];
 }
 
-function truncate(text: string, max: number): string {
-	const trimmed = text.trim();
-	if (trimmed.length <= max) return trimmed;
-	return `${trimmed.slice(0, max).trimEnd()}…`;
-}
-
 /**
- * Post detail view for `published` and `partially_published` posts.
- *
- * Two-column split mirroring the Editor archetype (docs/design-docs
- * 14-composition.md C-3.4): content on the left (Publish status +
- * Analytics), preview pinned on the right (What shipped). Nothing is
- * editable — there's nothing to edit once a post has shipped.
+ * Read-only detail page for published / partially_published posts. Literal
+ * strip of the edit wizard page: same shell, same hero rhythm, same two-col
+ * split, same right-pane "Review Content" heading over PlatformPreviewTabs.
+ * Omits idea input, platform toggle, post config, base-content accordion, and
+ * the edit/save/schedule/publish topbar actions — none of those apply once a
+ * post has shipped. Adds InlinePostAnalytics below the publish status in the
+ * left column.
  */
 export function PublishedPostView({
 	postId,
 	status,
-	blurb,
 	contentType,
 	selectedPlatforms,
 	platformContent,
@@ -49,80 +40,57 @@ export function PublishedPostView({
 	uploadedMedia,
 	platformPosts,
 }: PublishedPostViewProps) {
-	const platformCount = selectedPlatforms.length;
-	const eyebrow = `${status === "partially_published" ? "Partially published" : "Published"} · ${platformCount} ${platformCount === 1 ? "platform" : "platforms"}`;
-
-	const title: ReactNode =
-		status === "partially_published" ? (
-			<>
-				Partial ship — <em>some needed retries</em>.
-			</>
-		) : (
-			<>
-				Out the door. <em>Now we watch.</em>
-			</>
-		);
-
-	const excerpt = truncate(blurb, 140) || "Published post";
-
 	const breadcrumbs = [
 		{ label: "Posts", href: "/posts" as const },
-		{ label: "Analytics" as const },
+		{ label: "View" },
 	];
+
+	const eyebrowLabel = `Composer · ${status === "partially_published" ? "partially published" : "published"}`;
 
 	return (
 		<>
 			<Topbar breadcrumbs={breadcrumbs} />
-			<Stack gap="xl" className={styles.page} animate>
-				<header className={pageStyles.pageHero}>
-					<div className={pageStyles.pageHeroText}>
-						<div className={pageStyles.pageEyebrow}>{eyebrow}</div>
-						<h1 className={pageStyles.pageHeroTitle}>{title}</h1>
-						<p className={pageStyles.pageHeroSub}>{excerpt}</p>
+			<div className={styles.page}>
+				<header className={styles.header}>
+					<div className={styles.headerInner}>
+						<Stack direction="column" gap="0">
+							<div className={styles.eyebrow}>{eyebrowLabel}</div>
+							<h1 className={styles.title}>
+								<em>Shipped.</em> Here's how it landed.
+							</h1>
+							<p className={styles.sub}>
+								View your published post and see how each platform rendered it.
+							</p>
+						</Stack>
 					</div>
 				</header>
 
 				<div className={styles.twoColumn}>
-					<Stack gap="xl">
-						<Section title="Publish status">
-							<PostPublishStatus platformPosts={platformPosts} />
-						</Section>
-
-						<Section title="Analytics">
-							<InlinePostAnalytics postId={postId} />
-						</Section>
-					</Stack>
-
-					<div className={styles.shippedColumn}>
+					<Stack gap="lg">
+						<PostPublishStatus platformPosts={platformPosts} />
 						<Stack gap="md">
 							<Text as="h3" size="lg" weight="medium">
-								Post
+								Analytics
 							</Text>
-							<PlatformPreviewTabs
-								selectedPlatforms={selectedPlatforms}
-								platformContent={platformContent}
-								threadContent={threadContent}
-								contentType={contentType}
-								uploadedMedia={uploadedMedia}
-								readOnly
-							/>
+							<InlinePostAnalytics postId={postId} />
 						</Stack>
-					</div>
-				</div>
-			</Stack>
-		</>
-	);
-}
+					</Stack>
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-	return (
-		<section>
-			<Stack gap="md">
-				<Text as="h2" size="xl" weight="semibold">
-					{title}
-				</Text>
-				{children}
-			</Stack>
-		</section>
+					<Stack gap="md">
+						<Text as="h3" size="lg" weight="medium">
+							Review Content
+						</Text>
+						<PlatformPreviewTabs
+							selectedPlatforms={selectedPlatforms}
+							platformContent={platformContent}
+							threadContent={threadContent}
+							contentType={contentType}
+							uploadedMedia={uploadedMedia}
+							readOnly
+						/>
+					</Stack>
+				</div>
+			</div>
+		</>
 	);
 }

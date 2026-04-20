@@ -47,7 +47,6 @@ export function PublishedPostPage({ postId }: PublishedPostPageProps) {
 		<PublishedPostView
 			postId={postId}
 			status={post.status}
-			blurb={post.content}
 			contentType={post.contentType === "thread" ? "thread" : "text"}
 			selectedPlatforms={selectedPlatforms}
 			platformContent={platformContent}
