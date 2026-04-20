@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
 import styles from "./MobileActionBar.module.scss";
 
 export interface MobileActionBarProps {
@@ -26,11 +27,13 @@ export function MobileActionBar({
 }: MobileActionBarProps) {
 	return (
 		<div className={styles.bar} role="toolbar" aria-label="Post actions">
-			<div className={styles.start}>
+			<Stack direction="row" gap="sm" align="center">
 				{overflow}
 				{secondary}
-			</div>
-			<div className={styles.end}>{primary}</div>
+			</Stack>
+			<Stack direction="row" align="center">
+				{primary}
+			</Stack>
 		</div>
 	);
 }

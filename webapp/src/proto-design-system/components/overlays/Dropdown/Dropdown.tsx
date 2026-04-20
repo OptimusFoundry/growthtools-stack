@@ -53,6 +53,12 @@ export interface DropdownProps {
 	fullWidth?: boolean;
 	/** Align dropdown menu */
 	align?: "start" | "end";
+	/** Whether the menu opens above or below the trigger */
+	placement?: "top" | "bottom";
+	/** Accessible label for the trigger button (use when trigger has no visible text) */
+	triggerAriaLabel?: string;
+	/** Remove min-width from trigger — use when trigger is icon-only */
+	iconOnly?: boolean;
 	/** Additional className */
 	className?: string;
 }
@@ -84,6 +90,9 @@ export function Dropdown({
 	disabled = false,
 	fullWidth = false,
 	align = "start",
+	placement = "bottom",
+	triggerAriaLabel,
+	iconOnly = false,
 	className,
 }: DropdownProps) {
 	const [isOpen, setIsOpen] = useState(false);
@@ -293,7 +302,9 @@ export function Dropdown({
 			className={cn(
 				styles.dropdown,
 				styles[`size-${size}`],
+				styles[`placement-${placement}`],
 				fullWidth && styles.fullWidth,
+				iconOnly && styles.iconOnly,
 				className,
 			)}
 		>
@@ -310,6 +321,7 @@ export function Dropdown({
 				disabled={disabled}
 				aria-haspopup="listbox"
 				aria-expanded={isOpen}
+				aria-label={triggerAriaLabel}
 			>
 				{trigger || (
 					<span className={styles.triggerContent}>

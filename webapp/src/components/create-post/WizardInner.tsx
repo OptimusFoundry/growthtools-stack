@@ -5,7 +5,6 @@ import { useState } from "react";
 import { fetcher } from "@/api/client";
 import { MobileActionBar } from "@/components/Layout/MobileActionBar";
 import { Topbar } from "@/components/Layout/Topbar";
-import topbarStyles from "@/components/Layout/topbar.module.scss";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishPost } from "@/hooks/usePublishPost";
@@ -21,9 +20,9 @@ import { TextField } from "@/proto-design-system/components/forms/TextField";
 import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
 import {
-	DropdownMenu,
-	type MenuItemData,
-} from "@/proto-design-system/components/overlays/DropdownMenu";
+	Dropdown,
+	type DropdownItem,
+} from "@/proto-design-system/components/overlays/Dropdown/Dropdown";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
@@ -404,7 +403,6 @@ export function WizardInner({
 	const { publishPost } = usePublishPost();
 	const { deletePost, loading: deleting } = useDeletePost();
 	const [deleteOpen, setDeleteOpen] = useState(false);
-	const [overflowOpen, setOverflowOpen] = useState(false);
 	const { saveDraft, loading: savingDraft } = useSaveDraft();
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
@@ -543,7 +541,7 @@ export function WizardInner({
 		{ label: isEditMode ? "Edit" : "New" },
 	];
 
-	const overflowItems: MenuItemData[] = readOnly
+	const overflowItems: DropdownItem[] = readOnly
 		? []
 		: [
 				...(canDelete
@@ -551,66 +549,42 @@ export function WizardInner({
 							{
 								id: "delete",
 								label: "Delete",
-								leftIcon: <Trash2 size={14} />,
-								state: (busy || deleting
-									? "disabled"
-									: "default") as MenuItemData["state"],
-								onClick: () => {
-									setOverflowOpen(false);
-									setDeleteOpen(true);
-								},
-							} satisfies MenuItemData,
+								icon: <Trash2 size={14} />,
+								disabled: busy || deleting,
+								danger: true,
+							} satisfies DropdownItem,
 						]
 					: []),
 				{
 					id: "save-draft",
 					label: "Save draft",
-					state: (busy || savingDraft || updatingDraft
-						? "disabled"
-						: "default") as MenuItemData["state"],
-					onClick: () => {
-						setOverflowOpen(false);
-						actions.handleSaveDraft();
-					},
-				} satisfies MenuItemData,
+					disabled: busy || savingDraft || updatingDraft,
+				} satisfies DropdownItem,
 			];
 
 	const overflowTrigger =
 		overflowItems.length > 0 ? (
-			<div style={{ position: "relative" }}>
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={() => setOverflowOpen((prev) => !prev)}
-					aria-label="More post actions"
-					aria-expanded={overflowOpen}
-					aria-haspopup="menu"
-				>
-					<MoreHorizontal size={16} />
-				</Button>
-				{overflowOpen && (
-					<div
-						style={{
-							bottom: "100%",
-							left: 0,
-							marginBottom: "var(--space-1)",
-							position: "absolute",
-							zIndex: "var(--z-dropdown)",
-						}}
-					>
-						<DropdownMenu
-							items={overflowItems}
-							onItemClick={(item) => {
-								item.onClick?.();
-							}}
-						/>
-					</div>
-				)}
-			</div>
+			<Dropdown
+				items={overflowItems}
+				placement="top"
+				align="start"
+				variant="ghost"
+				size="sm"
+				iconOnly
+				trigger={<MoreHorizontal size={16} aria-hidden="true" />}
+				triggerAriaLabel="More post actions"
+				onChange={(id) => {
+					if (id === "delete") {
+						setDeleteOpen(true);
+					} else if (id === "save-draft") {
+						actions.handleSaveDraft();
+					}
+				}}
+			/>
 		) : undefined;
 
 	const topbarActions = readOnly ? undefined : (
-		<div className={topbarStyles.actionsHiddenOnMobile}>
+		<Stack direction="row" gap="sm" align="center">
 			{canDelete && (
 				<Button
 					variant="ghost"
@@ -648,12 +622,16 @@ export function WizardInner({
 			>
 				<Send size={14} /> Publish
 			</Button>
-		</div>
+		</Stack>
 	);
 
 	return (
 		<>
-			<Topbar breadcrumbs={breadcrumbs} actions={topbarActions} />
+			<Topbar
+				breadcrumbs={breadcrumbs}
+				actions={topbarActions}
+				hideActionsOnMobile={!readOnly}
+			/>
 			{!readOnly && (
 				<MobileActionBar
 					primary={
@@ -686,11 +664,11 @@ export function WizardInner({
 			<div className={styles.page}>
 				<header className={styles.header}>
 					<div className={styles.headerInner}>
-						<div>
+						<Stack direction="column" gap="0">
 							<div className={styles.eyebrow}>{eyebrowLabel}</div>
 							<h1 className={styles.title}>{titleFragment}</h1>
 							<p className={styles.sub}>{subLine}</p>
-						</div>
+						</Stack>
 					</div>
 				</header>
 

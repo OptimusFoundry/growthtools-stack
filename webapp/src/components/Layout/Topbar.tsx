@@ -19,6 +19,12 @@ interface TopbarProps {
 	 * own internal guard. Pass null to suppress the default.
 	 */
 	leading?: ReactNode;
+	/**
+	 * When true, the actions slot is hidden on mobile viewports (<768px).
+	 * Use when a MobileActionBar provides the same actions at the bottom of
+	 * the screen on small screens.
+	 */
+	hideActionsOnMobile?: boolean;
 }
 
 export function Topbar({
@@ -27,6 +33,7 @@ export function Topbar({
 	actions,
 	children,
 	leading,
+	hideActionsOnMobile = false,
 }: TopbarProps) {
 	const hasBreadcrumbs = !!breadcrumbs && breadcrumbs.length > 0;
 	// The first breadcrumb item that has an href is the parent to navigate back to.
@@ -67,7 +74,17 @@ export function Topbar({
 				)}
 			</div>
 			{children}
-			{actions && <div className={styles.actions}>{actions}</div>}
+			{actions && (
+				<div
+					className={
+						hideActionsOnMobile
+							? `${styles.actions} ${styles.actionsHiddenOnMobile}`
+							: styles.actions
+					}
+				>
+					{actions}
+				</div>
+			)}
 		</header>
 	);
 }
