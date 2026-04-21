@@ -4,7 +4,6 @@ import (
 	"base-server/internal/billing/products"
 	"base-server/internal/billing/subscriptions"
 	"base-server/internal/infra/observability"
-	"base-server/internal/infra/store"
 	"base-server/internal/infra/stripeclient"
 	"context"
 	"errors"
@@ -47,84 +46,6 @@ func TestNew(t *testing.T) {
 	if processor.webhostURL != "http://localhost:3000" {
 		t.Errorf("expected webhostURL to be 'http://localhost:3000', got %s", processor.webhostURL)
 	}
-}
-
-func TestGetPaymentMethodForUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := NewMockBillingStore(ctrl)
-	mockProductService := NewMockProductService(ctrl)
-	mockSubscriptionService := NewMockSubscriptionService(ctrl)
-	mockEmailService := NewMockEmailService(ctrl)
-	logger := observability.NewLogger()
-
-	processor := New(
-		"test_stripe_key",
-		"test_webhook_secret",
-		"http://localhost:3000",
-		mockStore,
-		mockProductService,
-		mockSubscriptionService,
-		mockEmailService,
-		logger,
-		stripeclient.New("sk_test_fake", "protoapp", logger),
-	)
-
-	ctx := context.Background()
-	userID := uuid.New()
-
-	t.Run("success", func(t *testing.T) {
-		expectedPaymentMethod := &store.PaymentMethod{
-			ID:           uuid.New(),
-			UserID:       userID,
-			StripeID:     "pm_test123",
-			CardBrand:    "visa",
-			CardLast4:    "4242",
-			CardExpMonth: 12,
-			CardExpYear:  2025,
-		}
-
-		mockStore.EXPECT().
-			GetPaymentMethodByUserID(gomock.Any(), userID).
-			Return(expectedPaymentMethod, nil)
-
-		result, err := processor.GetPaymentMethodForUser(ctx, userID)
-
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-		if result.ID != expectedPaymentMethod.ID {
-			t.Errorf("expected ID %v, got %v", expectedPaymentMethod.ID, result.ID)
-		}
-		if result.CardBrand != expectedPaymentMethod.CardBrand {
-			t.Errorf("expected CardBrand %s, got %s", expectedPaymentMethod.CardBrand, result.CardBrand)
-		}
-		if result.CardLast4 != expectedPaymentMethod.CardLast4 {
-			t.Errorf("expected CardLast4 %s, got %s", expectedPaymentMethod.CardLast4, result.CardLast4)
-		}
-		if result.CardExpMonth != expectedPaymentMethod.CardExpMonth {
-			t.Errorf("expected CardExpMonth %d, got %d", expectedPaymentMethod.CardExpMonth, result.CardExpMonth)
-		}
-		if result.CardExpYear != expectedPaymentMethod.CardExpYear {
-			t.Errorf("expected CardExpYear %d, got %d", expectedPaymentMethod.CardExpYear, result.CardExpYear)
-		}
-	})
-
-	t.Run("store error", func(t *testing.T) {
-		mockStore.EXPECT().
-			GetPaymentMethodByUserID(gomock.Any(), userID).
-			Return(nil, errors.New("database error"))
-
-		_, err := processor.GetPaymentMethodForUser(ctx, userID)
-
-		if err == nil {
-			t.Error("expected error, got nil")
-		}
-		if !errors.Is(err, ErrFailedToGetPaymentMethod) {
-			t.Errorf("expected ErrFailedToGetPaymentMethod, got %v", err)
-		}
-	})
 }
 
 func TestListPrices(t *testing.T) {

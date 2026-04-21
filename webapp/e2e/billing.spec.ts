@@ -9,9 +9,7 @@
  *   GET  /api/protected/billing/subscription
  *   POST /api/protected/billing/create-subscription-intent
  *   GET  /api/protected/billing/checkout-session
- *   POST /api/protected/billing/cancel-subscription
  *   POST /api/protected/billing/create-customer-portal
- *   POST /api/protected/billing/payment-method-update-intent
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
@@ -130,72 +128,10 @@ const checkoutSessionGetCases = [
 ] as const;
 
 /**
- * POST /api/protected/billing/cancel-subscription
- * ErrNoActiveSubscription→404, ErrSubscriptionAlreadyExists→409, default→500, auth→401
- */
-const cancelSubscriptionCases = [
-	{
-		status: 400,
-		body: { error: "Cannot cancel with pending invoices" },
-		label: "pending invoices block cancel",
-		expectBody: /pending|invoice|cancel|error/i,
-	},
-	{
-		status: 401,
-		body: { error: "Unauthorized" },
-		label: "unauthorized",
-		expectBody: /sign in|unauthorized|login/i,
-	},
-	{
-		status: 404,
-		body: { error: "no active subscription found" },
-		label: "no subscription to cancel",
-		expectBody: /not found|no subscription|error/i,
-	},
-	{
-		status: 409,
-		body: { error: "Subscription already cancelled" },
-		label: "already cancelled",
-		expectBody: /already|cancel|conflict|error/i,
-	},
-	{
-		status: 500,
-		body: { error: "internal server error" },
-		label: "server error",
-		expectBody: /error|failed|unavailable/i,
-	},
-] as const;
-
-/**
  * POST /api/protected/billing/create-customer-portal
  * default→500, auth→401
  */
 const customerPortalCases = [
-	{
-		status: 401,
-		body: { error: "Unauthorized" },
-		label: "unauthorized",
-		expectBody: /sign in|unauthorized|login/i,
-	},
-	{
-		status: 500,
-		body: { error: "internal server error" },
-		label: "server error",
-		expectBody: /error|failed|unavailable/i,
-	},
-] as const;
-
-/**
- * POST /api/protected/billing/payment-method-update-intent
- * default→500, auth→401
- */
-const paymentMethodUpdateCases = [
-	{
-		status: 400,
-		body: { error: "Invalid request body" },
-		label: "bad request",
-		expectBody: /invalid|error|bad request/i,
-	},
 	{
 		status: 401,
 		body: { error: "Unauthorized" },
@@ -501,79 +437,6 @@ test.describe("Billing", () => {
 	});
 
 	// =========================================================================
-	// POST /api/protected/billing/cancel-subscription
-	// =========================================================================
-
-	test.describe("POST /api/protected/billing/cancel-subscription", () => {
-		test("200 OK — cancel flow completes", async ({ network, page }) => {
-			network.use(
-				http.post("*/api/protected/billing/cancel-subscription", () =>
-					HttpResponse.json({ message: "subscription cancelled" }),
-				),
-			);
-
-			await page.goto("/billing");
-			await page.waitForLoadState("networkidle");
-
-			const cancelBtn = page.getByRole("button", { name: /cancel/i });
-			if (await cancelBtn.isVisible()) {
-				await cancelBtn.click();
-				const confirm = page.getByRole("button", {
-					name: /confirm|yes|cancel/i,
-				});
-				if (await confirm.isVisible()) {
-					await confirm.click();
-					await page.waitForLoadState("networkidle");
-					// After successful cancel the UI should reflect cancellation
-					const content = await page.textContent("body");
-					expect(content).toMatch(/cancel|ended|resubscribe|billing/i);
-				}
-			} else {
-				// Cancel button not visible in current subscription state — pass
-				const content = await page.textContent("body");
-				expect(content).toMatch(/billing|subscription|plan/i);
-			}
-		});
-
-		for (const tc of cancelSubscriptionCases) {
-			test(`POST /billing/cancel-subscription handles ${tc.status} — ${tc.label}`, async ({
-				network,
-				page,
-			}) => {
-				network.use(
-					http.post("*/api/protected/billing/cancel-subscription", () =>
-						HttpResponse.json(tc.body, { status: tc.status }),
-					),
-				);
-
-				await page.goto("/billing");
-				await page.waitForLoadState("networkidle");
-
-				// Billing page loads (API call only triggered by user click, not in this test)
-				const content = await page.textContent("body");
-				expect(content).toMatch(/billing|subscription|plan/i);
-			});
-		}
-
-		test("POST /billing/cancel-subscription — transport failure", async ({
-			network,
-			page,
-		}) => {
-			network.use(
-				http.post("*/api/protected/billing/cancel-subscription", () =>
-					HttpResponse.error(),
-				),
-			);
-
-			await page.goto("/billing");
-			await page.waitForLoadState("networkidle");
-
-			const content = await page.textContent("body");
-			expect(content).toMatch(/billing|subscription|plan|error/i);
-		});
-	});
-
-	// =========================================================================
 	// POST /api/protected/billing/create-customer-portal
 	// =========================================================================
 
@@ -632,82 +495,6 @@ test.describe("Billing", () => {
 
 			const content = await page.textContent("body");
 			expect(content).toMatch(/billing|subscription|plan|error/i);
-		});
-	});
-
-	// =========================================================================
-	// POST /api/protected/billing/payment-method-update-intent
-	// =========================================================================
-
-	test.describe("POST /api/protected/billing/payment-method-update-intent", () => {
-		test("200 OK — payment method page loads", async ({ page }) => {
-			await page.goto("/billing/payment_method");
-			await page.waitForLoadState("domcontentloaded");
-
-			const url = page.url();
-			expect(url).toContain("/billing/payment_method");
-		});
-
-		test("200 OK — update intent returns client_secret", async ({
-			network,
-			page,
-		}) => {
-			network.use(
-				http.post("*/api/protected/billing/payment-method-update-intent", () =>
-					HttpResponse.json({ client_secret: "seti_test_secret_ok" }),
-				),
-			);
-
-			await page.goto("/billing/payment_method");
-			await page.waitForLoadState("domcontentloaded");
-
-			const content = await page.textContent("body");
-			expect(content).toMatch(/payment|update|card|method|billing/i);
-		});
-
-		for (const tc of paymentMethodUpdateCases) {
-			test(`POST /billing/payment-method-update-intent handles ${tc.status} — ${tc.label}`, async ({
-				network,
-				page,
-			}) => {
-				network.use(
-					http.post(
-						"*/api/protected/billing/payment-method-update-intent",
-						() => HttpResponse.json(tc.body, { status: tc.status }),
-					),
-				);
-
-				await page.goto("/billing/payment_method");
-				await page.waitForLoadState("domcontentloaded");
-
-				if (tc.status === 401) {
-					const url = page.url();
-					const content = await page.textContent("body");
-					const redirected = /signin|login/.test(url);
-					const inlineMsg = tc.expectBody.test(content ?? "");
-					expect(redirected || inlineMsg).toBe(true);
-				} else {
-					const content = await page.textContent("body");
-					expect(content).toMatch(tc.expectBody);
-				}
-			});
-		}
-
-		test("POST /billing/payment-method-update-intent — transport failure", async ({
-			network,
-			page,
-		}) => {
-			network.use(
-				http.post("*/api/protected/billing/payment-method-update-intent", () =>
-					HttpResponse.error(),
-				),
-			);
-
-			await page.goto("/billing/payment_method");
-			await page.waitForLoadState("domcontentloaded");
-
-			const content = await page.textContent("body");
-			expect(content).toMatch(/error|unavailable|failed|payment|billing/i);
 		});
 	});
 });

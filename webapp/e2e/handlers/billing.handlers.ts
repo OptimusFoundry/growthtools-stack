@@ -38,28 +38,10 @@ export const billingEndpoints = {
 		"*/api/protected/billing/checkout-session",
 		{ client_secret: "cs_test_secret_123" },
 	),
-	cancelSubscription: setupEndpoint(
-		"POST",
-		"*/api/protected/billing/cancel-subscription",
-		{ message: "Subscription cancelled successfully" },
-		{
-			successStatus: 200,
-			overrides: {
-				404: { error: "no active subscription found", code: "NOT_FOUND" },
-				409: { error: "Subscription already cancelled", code: "CONFLICT" },
-			},
-		},
-	),
 	createCustomerPortal: setupEndpoint(
 		"POST",
 		"*/api/protected/billing/create-customer-portal",
 		{ url: "https://billing.stripe.com/session/test_portal_123" },
-		{ successStatus: 200 },
-	),
-	paymentMethodUpdateIntent: setupEndpoint(
-		"POST",
-		"*/api/protected/billing/payment-method-update-intent",
-		{ client_secret: "seti_test_secret_123" },
 		{ successStatus: 200 },
 	),
 };

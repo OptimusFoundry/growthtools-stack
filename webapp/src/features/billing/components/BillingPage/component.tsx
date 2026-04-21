@@ -6,6 +6,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { CreditCard, ExternalLink } from "lucide-react";
 import { memo, useCallback, useEffect } from "react";
+
 import { ErrorState } from "@/components/error/error";
 import { useCreateCustomerPortal } from "@/hooks/useCreateCustomerPortal";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
@@ -79,16 +80,11 @@ function useBillingActions() {
 		navigate({ to: "/billing/plans" });
 	}, [navigate]);
 
-	const handleUpdatePaymentMethod = useCallback(() => {
-		navigate({ to: "/billing/payment_method" });
-	}, [navigate]);
-
 	return {
 		portalLoading,
 		portalUrl: portalData?.url,
 		handleManageSubscription,
 		handleChangePlan,
-		handleUpdatePaymentMethod,
 	};
 }
 
@@ -148,7 +144,6 @@ interface BillingActionsProps {
 	portalLoading: boolean;
 	onManage: () => void;
 	onChangePlan: () => void;
-	onUpdatePayment: () => void;
 }
 
 /** Billing action buttons */
@@ -158,7 +153,6 @@ const BillingActions = memo(function BillingActions({
 	portalLoading,
 	onManage,
 	onChangePlan,
-	onUpdatePayment,
 }: BillingActionsProps) {
 	return (
 		<section className={styles.section}>
@@ -169,7 +163,8 @@ const BillingActions = memo(function BillingActions({
 						<div className={styles.actionInfo}>
 							<span className={styles.actionLabel}>Billing Portal</span>
 							<span className={styles.actionDescription}>
-								View invoices, billing history, and manage your subscription
+								View invoices, update payment method, and manage your
+								subscription
 							</span>
 						</div>
 						<Button
@@ -195,24 +190,6 @@ const BillingActions = memo(function BillingActions({
 							{status === "canceled" ? "Resubscribe" : "Change Plan"}
 						</Button>
 					</div>
-
-					<div className={styles.divider} />
-
-					<div className={styles.actionRow}>
-						<div className={styles.actionInfo}>
-							<span className={styles.actionLabel}>Payment Method</span>
-							<span className={styles.actionDescription}>
-								Update your credit card or payment details
-							</span>
-						</div>
-						<Button
-							variant="secondary"
-							leftIcon={<CreditCard size={16} />}
-							onClick={onUpdatePayment}
-						>
-							Update
-						</Button>
-					</div>
 				</div>
 			</div>
 		</section>
@@ -235,7 +212,6 @@ export const BillingPage = memo(function BillingPage() {
 		portalUrl,
 		handleManageSubscription,
 		handleChangePlan,
-		handleUpdatePaymentMethod,
 	} = useBillingActions();
 
 	// Loading state
@@ -281,7 +257,6 @@ export const BillingPage = memo(function BillingPage() {
 				portalLoading={portalLoading}
 				onManage={handleManageSubscription}
 				onChangePlan={handleChangePlan}
-				onUpdatePayment={handleUpdatePaymentMethod}
 			/>
 		</Stack>
 	);

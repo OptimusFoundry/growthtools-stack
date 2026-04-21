@@ -2,30 +2,12 @@ package handler
 
 import (
 	"base-server/internal/infra/apierrors"
-	"base-server/internal/infra/observability"
 	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v85/webhook"
 )
-
-func (h *Handler) HandleGetPaymentMethod(c *gin.Context) {
-	ctx := c.Request.Context()
-	userID := c.MustGet("User-ID")
-	parsedUserID := uuid.MustParse(userID.(string))
-	ctx = observability.WithFields(ctx, observability.Field{Key: "user_id", Value: parsedUserID})
-
-	paymentMethod, err := h.processor.GetPaymentMethodForUser(ctx, parsedUserID)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, paymentMethod)
-	return
-}
 
 func (h *Handler) HandleWebhook(c *gin.Context) {
 	ctx := c.Request.Context()

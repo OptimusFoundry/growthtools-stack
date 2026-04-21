@@ -46,34 +46,6 @@ func (m *MockBillingProcessorInterface) EXPECT() *MockBillingProcessorInterfaceM
 	return m.recorder
 }
 
-// CancelSubscription mocks base method.
-func (m *MockBillingProcessorInterface) CancelSubscription(ctx context.Context, userID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelSubscription", ctx, userID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CancelSubscription indicates an expected call of CancelSubscription.
-func (mr *MockBillingProcessorInterfaceMockRecorder) CancelSubscription(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscription", reflect.TypeOf((*MockBillingProcessorInterface)(nil).CancelSubscription), ctx, userID)
-}
-
-// CancelSubscriptionBySubscriptionExternalID mocks base method.
-func (m *MockBillingProcessorInterface) CancelSubscriptionBySubscriptionExternalID(ctx context.Context, stripSubID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelSubscriptionBySubscriptionExternalID", ctx, stripSubID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CancelSubscriptionBySubscriptionExternalID indicates an expected call of CancelSubscriptionBySubscriptionExternalID.
-func (mr *MockBillingProcessorInterfaceMockRecorder) CancelSubscriptionBySubscriptionExternalID(ctx, stripSubID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscriptionBySubscriptionExternalID", reflect.TypeOf((*MockBillingProcessorInterface)(nil).CancelSubscriptionBySubscriptionExternalID), ctx, stripSubID)
-}
-
 // CreateCheckoutSession mocks base method.
 func (m *MockBillingProcessorInterface) CreateCheckoutSession(ctx context.Context, userID uuid.UUID, priceID string) (*stripe.CheckoutSession, error) {
 	m.ctrl.T.Helper()
@@ -90,18 +62,18 @@ func (mr *MockBillingProcessorInterfaceMockRecorder) CreateCheckoutSession(ctx, 
 }
 
 // CreateCustomerPortal mocks base method.
-func (m *MockBillingProcessorInterface) CreateCustomerPortal(ctx context.Context, userID uuid.UUID, priceID *string) (string, error) {
+func (m *MockBillingProcessorInterface) CreateCustomerPortal(ctx context.Context, userID uuid.UUID) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCustomerPortal", ctx, userID, priceID)
+	ret := m.ctrl.Call(m, "CreateCustomerPortal", ctx, userID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateCustomerPortal indicates an expected call of CreateCustomerPortal.
-func (mr *MockBillingProcessorInterfaceMockRecorder) CreateCustomerPortal(ctx, userID, priceID any) *gomock.Call {
+func (mr *MockBillingProcessorInterfaceMockRecorder) CreateCustomerPortal(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCustomerPortal", reflect.TypeOf((*MockBillingProcessorInterface)(nil).CreateCustomerPortal), ctx, userID, priceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCustomerPortal", reflect.TypeOf((*MockBillingProcessorInterface)(nil).CreateCustomerPortal), ctx, userID)
 }
 
 // CreateFreeSubscription mocks base method.
@@ -163,21 +135,6 @@ func (mr *MockBillingProcessorInterfaceMockRecorder) GetCheckoutSession(ctx, ses
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCheckoutSession", reflect.TypeOf((*MockBillingProcessorInterface)(nil).GetCheckoutSession), ctx, sessionID)
 }
 
-// GetPaymentMethodForUser mocks base method.
-func (m *MockBillingProcessorInterface) GetPaymentMethodForUser(ctx context.Context, userID uuid.UUID) (PaymentMethod, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPaymentMethodForUser", ctx, userID)
-	ret0, _ := ret[0].(PaymentMethod)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPaymentMethodForUser indicates an expected call of GetPaymentMethodForUser.
-func (mr *MockBillingProcessorInterfaceMockRecorder) GetPaymentMethodForUser(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaymentMethodForUser", reflect.TypeOf((*MockBillingProcessorInterface)(nil).GetPaymentMethodForUser), ctx, userID)
-}
-
 // HandleWebhook mocks base method.
 func (m *MockBillingProcessorInterface) HandleWebhook(ctx context.Context, event stripe.Event) error {
 	m.ctrl.T.Helper()
@@ -190,34 +147,6 @@ func (m *MockBillingProcessorInterface) HandleWebhook(ctx context.Context, event
 func (mr *MockBillingProcessorInterfaceMockRecorder) HandleWebhook(ctx, event any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleWebhook", reflect.TypeOf((*MockBillingProcessorInterface)(nil).HandleWebhook), ctx, event)
-}
-
-// InvoicePaymentFailed mocks base method.
-func (m *MockBillingProcessorInterface) InvoicePaymentFailed(ctx context.Context, invoice stripe.Invoice) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InvoicePaymentFailed", ctx, invoice)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InvoicePaymentFailed indicates an expected call of InvoicePaymentFailed.
-func (mr *MockBillingProcessorInterfaceMockRecorder) InvoicePaymentFailed(ctx, invoice any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvoicePaymentFailed", reflect.TypeOf((*MockBillingProcessorInterface)(nil).InvoicePaymentFailed), ctx, invoice)
-}
-
-// InvoicePaymentPaid mocks base method.
-func (m *MockBillingProcessorInterface) InvoicePaymentPaid(ctx context.Context, invoice stripe.Invoice) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InvoicePaymentPaid", ctx, invoice)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InvoicePaymentPaid indicates an expected call of InvoicePaymentPaid.
-func (mr *MockBillingProcessorInterfaceMockRecorder) InvoicePaymentPaid(ctx, invoice any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvoicePaymentPaid", reflect.TypeOf((*MockBillingProcessorInterface)(nil).InvoicePaymentPaid), ctx, invoice)
 }
 
 // ListPrices mocks base method.
@@ -233,18 +162,6 @@ func (m *MockBillingProcessorInterface) ListPrices(ctx context.Context) ([]produ
 func (mr *MockBillingProcessorInterfaceMockRecorder) ListPrices(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrices", reflect.TypeOf((*MockBillingProcessorInterface)(nil).ListPrices), ctx)
-}
-
-// PaymentIntentSucceeded mocks base method.
-func (m *MockBillingProcessorInterface) PaymentIntentSucceeded(ctx context.Context, paymentIntent stripe.PaymentIntent) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PaymentIntentSucceeded", ctx, paymentIntent)
-}
-
-// PaymentIntentSucceeded indicates an expected call of PaymentIntentSucceeded.
-func (mr *MockBillingProcessorInterfaceMockRecorder) PaymentIntentSucceeded(ctx, paymentIntent any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PaymentIntentSucceeded", reflect.TypeOf((*MockBillingProcessorInterface)(nil).PaymentIntentSucceeded), ctx, paymentIntent)
 }
 
 // PriceCreated mocks base method.
@@ -301,21 +218,6 @@ func (m *MockBillingProcessorInterface) ProductCreated(ctx context.Context, prod
 func (mr *MockBillingProcessorInterfaceMockRecorder) ProductCreated(ctx, productCreated any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProductCreated", reflect.TypeOf((*MockBillingProcessorInterface)(nil).ProductCreated), ctx, productCreated)
-}
-
-// SetupPaymentMethodUpdateIntent mocks base method.
-func (m *MockBillingProcessorInterface) SetupPaymentMethodUpdateIntent(ctx context.Context, userID uuid.UUID) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetupPaymentMethodUpdateIntent", ctx, userID)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SetupPaymentMethodUpdateIntent indicates an expected call of SetupPaymentMethodUpdateIntent.
-func (mr *MockBillingProcessorInterfaceMockRecorder) SetupPaymentMethodUpdateIntent(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupPaymentMethodUpdateIntent", reflect.TypeOf((*MockBillingProcessorInterface)(nil).SetupPaymentMethodUpdateIntent), ctx, userID)
 }
 
 // SubscriptionCreated mocks base method.
@@ -397,21 +299,6 @@ func (m *MockBillingStore) GetFreePriceStripeID(ctx context.Context) (string, er
 func (mr *MockBillingStoreMockRecorder) GetFreePriceStripeID(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFreePriceStripeID", reflect.TypeOf((*MockBillingStore)(nil).GetFreePriceStripeID), ctx)
-}
-
-// GetPaymentMethodByUserID mocks base method.
-func (m *MockBillingStore) GetPaymentMethodByUserID(ctx context.Context, userID uuid.UUID) (*store.PaymentMethod, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPaymentMethodByUserID", ctx, userID)
-	ret0, _ := ret[0].(*store.PaymentMethod)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPaymentMethodByUserID indicates an expected call of GetPaymentMethodByUserID.
-func (mr *MockBillingStoreMockRecorder) GetPaymentMethodByUserID(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaymentMethodByUserID", reflect.TypeOf((*MockBillingStore)(nil).GetPaymentMethodByUserID), ctx, userID)
 }
 
 // GetPriceByID mocks base method.
