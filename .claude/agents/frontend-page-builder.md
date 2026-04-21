@@ -28,6 +28,8 @@ Your task spec from the plan is self-contained — it includes the JSX shell ske
 
 **Authoritative design rules** — before writing any JSX, read `docs/design-docs/00-overview.md`, `11-page-composition.md`, `12-judgment.md`, `13-recipes.md`, `14-composition.md`, `15-states.md`, `19-typography-decisions.md`, `20-spacing-decisions.md`. These govern shell, heading, eyebrow, section rhythm, empty/loading/error states, and the 60-second review.
 
+**Authoritative code structure rules** — invoke the `react-composition-patterns` skill **before writing JSX**. It is binding. Forbidden in route files: nested ternaries >2 levels, per-route `timeAgo`/`truncate`/`STATUS_LABELS` copies, hardcoded user-facing strings, `useState<string | null>` + `<Modal>` delete wiring. Required: slot-based shells, custom hooks (`useConfirmableDelete`, `useFilterCounts`), config-driven `*_STATUS_META` co-located with the type. If a sibling route already does something similar, extract the shared shell **before** adding a second copy.
+
 If the plan is missing something (a component prop, an existing page's structure), use LSP `goToDefinition` or `hover` to look it up. Read an existing route file in full only if you are extending it — one file maximum.
 
 ## Decision Tree

@@ -26,7 +26,12 @@ import {
 	type CalendarViewMode,
 	type PlatformKey,
 } from "@/types/calendar";
-import type { PostListItem, PostStatus } from "@/types/post";
+import {
+	POST_STATUS_META,
+	type PostListItem,
+	type PostStatus,
+} from "@/types/post";
+import { timeAgo, truncate } from "@/utils/format";
 import { getPlatformIcon } from "@/utils/platformIcons";
 import calendarStyles from "./calendar.module.scss";
 import styles from "./page.module.scss";
@@ -52,45 +57,12 @@ const MONTHS = [
 	"December",
 ];
 
-const STATUS_CLASS: Record<PostStatus, string> = {
-	draft: "statusDraft",
-	scheduled: "statusScheduled",
-	publishing: "statusPublishing",
-	published: "statusPublished",
-	failed: "statusFailed",
-	partially_published: "statusPartial",
-};
-
-const STATUS_ROW_LABELS: Record<PostStatus, string> = {
-	draft: "Draft",
-	scheduled: "Scheduled",
-	publishing: "Publishing",
-	published: "Published",
-	failed: "Failed",
-	partially_published: "Partial",
-};
-
 function getDaysInMonth(year: number, month: number): number {
 	return new Date(year, month + 1, 0).getDate();
 }
 
 function getFirstDayOfMonth(year: number, month: number): number {
 	return new Date(year, month, 1).getDay();
-}
-
-function timeAgo(iso: string): string {
-	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-	if (seconds < 60) return "just now";
-	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes}m ago`;
-	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours}h ago`;
-	const days = Math.floor(hours / 24);
-	if (days < 7) return `${days}d ago`;
-	return new Date(iso).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-	});
 }
 
 function statusLine(post: PostListItem): string {
@@ -102,16 +74,6 @@ function statusLine(post: PostListItem): string {
 	if (post.status === "publishing") return `Publishing · ${ago}`;
 	if (post.status === "partially_published") return `Partial · ${ago}`;
 	return `Draft · edited ${ago}`;
-}
-
-function truncate(text: string, maxLen: number): string {
-	if (text.length <= maxLen) return text;
-	const truncated = text.slice(0, maxLen);
-	const lastSpace = truncated.lastIndexOf(" ");
-	return (
-		(lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) +
-		"..."
-	);
 }
 
 function formatDisplayDate(dateStr: string): string {
@@ -345,9 +307,9 @@ function CalendarPage() {
 														</span>
 													)}
 													<span
-														className={`${postStyles.statusBadge} ${postStyles[STATUS_CLASS[post.status]]}`}
+														className={`${postStyles.statusBadge} ${postStyles[POST_STATUS_META[post.status].className]}`}
 													>
-														{STATUS_ROW_LABELS[post.status]}
+														{POST_STATUS_META[post.status].label}
 													</span>
 													<span className={postStyles.chevronBtn} aria-hidden>
 														<ChevronRight size={16} />

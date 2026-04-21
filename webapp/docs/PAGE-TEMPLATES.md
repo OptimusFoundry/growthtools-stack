@@ -19,102 +19,119 @@ as its shell. The `.page` class lives in a `.module.scss` sibling with
 
 ## 1. List page
 
-A header row with title + action button, optional filters, a list or grid
-below, `EmptyState` when empty.
+Use the `<ResourceListPage>` shell from `src/components/patterns/ResourceListPage/`
+— it owns the topbar, hero, filter slot, async-list state machine, and
+overlay plumbing. Route files only declare resource-specific slots.
+
+**Do NOT copy a full list-page skeleton from scratch** — if you are tempted
+to hand-roll loading/empty/empty-filtered ternaries, a deleteTargetId
+useState, or per-route timeAgo/truncate helpers, invoke the
+`react-composition-patterns` skill first.
 
 ```tsx
 // routes/posts.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, Plus, SearchX } from "lucide-react";
-import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
+import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
+import { PostRow } from "@/features/posts/components/PostRow/PostRow";
+import {
+  PostsEmpty,
+  PostsEmptyFiltered,
+} from "@/features/posts/components/PostsEmptyStates/PostsEmptyStates";
+import { PostsHero } from "@/features/posts/components/PostsHero/PostsHero";
+import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
+import { useDeletePost } from "@/hooks/useDeletePost";
+import { useFilterCounts } from "@/hooks/useFilterCounts";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
 import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
-import styles from "./page.module.scss";
+import type { PostStatus } from "@/types/post";
 
 export const Route = createFileRoute("/posts")({ component: PostsPage });
 
+const FILTER_KEYS = [
+  { id: "", label: "All" },
+  { id: "draft", label: "Drafts" },
+  { id: "published", label: "Published" },
+] as const satisfies readonly { id: "" | PostStatus; label: string }[];
+
 function PostsPage() {
-  const [filter, setFilter] = useState("");
-  const { posts, loading } = useGetPosts({ filter });
-  const hasFilter = filter !== "";
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const filters = useMemo(
+    () => ({ status: (statusFilter || undefined) as PostStatus | undefined }),
+    [statusFilter],
+  );
+
+  const { posts: allPosts } = useGetPosts();
+  const { posts, loading, refetch } = useGetPosts(filters);
+  const { deletePost, loading: deleting } = useDeletePost();
+
+  const deleteFlow = useConfirmableDelete({
+    mutate: deletePost,
+    mutating: deleting,
+    onSuccess: refetch,
+    copy: {
+      resource: "post",
+      confirmBody: "Are you sure? This cannot be undone.",
+    },
+  });
+
+  const filterItems = useFilterCounts(allPosts, FILTER_KEYS, (p) => p.status);
 
   return (
-    <Stack gap="lg" className={styles.page} animate>
-      {/* Header */}
-      <Stack direction="row" justify="between" align="start" wrap>
-        <Stack gap="xs">
-          <Text as="h1" size="2xl" weight="bold">
-            Posts
-          </Text>
-          <Text color="muted">
-            Create, manage, and publish your social media posts
-          </Text>
-        </Stack>
+    <ResourceListPage
+      title="Posts"
+      topbarAction={
         <Link to="/posts/new">
-          <Button variant="primary" leftIcon={<Plus size={16} />}>
-            Create Post
+          <Button variant="primary">
+            <Plus size={16} /> Create Post
           </Button>
         </Link>
-      </Stack>
-
-      {/* Filters (optional) */}
-      <Stack direction="row" gap="sm">
-        {/* <Dropdown items={...} value={filter} onChange={setFilter} /> */}
-      </Stack>
-
-      {/* Content */}
-      {loading ? (
-        <Spinner />
-      ) : posts.length === 0 && hasFilter ? (
-        <EmptyState
-          icon={<SearchX size={48} />}
-          title="No matching posts"
-          description="Try adjusting your filters."
-          action={
-            <Button variant="secondary" onClick={() => setFilter("")}>
-              Clear filters
-            </Button>
-          }
+      }
+      hero={<PostsHero count={allPosts.length} />}
+      filters={
+        <FilterTabs
+          value={statusFilter}
+          onChange={setStatusFilter}
+          items={filterItems}
+          aria-label="Filter posts by status"
         />
-      ) : posts.length === 0 ? (
-        <EmptyState
-          icon={<FileText size={48} />}
-          title="No posts yet"
-          description="Create your first post to get started."
-          action={
-            <Link to="/posts/new">
-              <Button variant="primary" leftIcon={<Plus size={16} />}>
-                Create Post
-              </Button>
-            </Link>
-          }
+      }
+      loading={loading}
+      items={posts}
+      hasActiveFilter={statusFilter !== ""}
+      empty={<PostsEmpty />}
+      emptyFiltered={<PostsEmptyFiltered onClear={() => setStatusFilter("")} />}
+      renderItem={(post, i) => (
+        <PostRow
+          key={post.id}
+          post={post}
+          index={i}
+          onDelete={deleteFlow.request}
         />
-      ) : (
-        <Stack gap="xs">
-          {posts.map((post) => (/* card per item */))}
-        </Stack>
       )}
-    </Stack>
+      overlays={<ConfirmDeleteModal flow={deleteFlow} />}
+    />
   );
 }
 ```
 
-```scss
-// routes/page.module.scss (shared)
-.page {
-  padding: var(--space-5);
-}
-```
+**What lives where** (for a new resource `foo`):
+- `src/types/foo.ts` — `FooStatus` type + `FOO_STATUS_META` Record<status, {label, className}>
+- `src/features/foo/components/FooRow/` — row JSX + row-level status line
+- `src/features/foo/components/FooHero/` — editorial header
+- `src/features/foo/components/FooEmptyStates/` — `FooEmpty` + `FooEmptyFiltered`
+- `src/routes/foo.tsx` — thin route; composes the above into `<ResourceListPage>` (≤ 100 lines)
 
-**Key choices:**
-- Title weight is always `bold`, subtitle color always `muted`.
-- Two EmptyState branches: filtered-empty (with "Clear" secondary action) vs truly-empty (with primary create action).
-- List gap: `gap="xs"` for tight stacks of cards, `gap="sm"` for roomy ones.
-- Action button goes inside the row Stack, not outside the header.
+**Key rules (from `react-composition-patterns` skill):**
+- Route file ≤ 200 lines. If it grows, extract more into `features/foo/components/`.
+- No local `timeAgo` / `truncate` — import from `@/utils/format`.
+- No local `STATUS_LABELS` / `STATUS_CLASS` — put `FOO_STATUS_META` next to the type.
+- No `useState<string \| null>(null)` for delete state — use `useConfirmableDelete`.
+- No render ternary deeper than 2 levels — `<AsyncList>` (wrapped by `<ResourceListPage>`) handles loading/empty/list.
+- No nested ternary for filter counts — `useFilterCounts(items, FILTER_KEYS, keyFn)`.
 
 ---
 

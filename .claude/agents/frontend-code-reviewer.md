@@ -29,6 +29,7 @@ You review frontend code for quality, correctness, and adherence to project stan
 3. Read `webapp/docs/COMPONENT-PATTERNS.md` — component structure and TypeScript patterns
 4. Read `webapp/docs/DESIGN-GUIDELINES.md` — design token reference, component API
 5. Read `webapp/docs/ARCHITECTURE.md` — module structure, hook patterns, API layer
+6. **Invoke `react-composition-patterns` skill** — authoritative review rubric for route/page/feature code. Flag every item in its red-flag table as a blocking review comment.
 
 ## Review Process
 
@@ -74,6 +75,16 @@ Flag deprecated patterns:
 - [ ] Logic extracted into hooks when complex (3+ `useState` = custom hook)
 - [ ] No duplicate code
 - [ ] No `index.ts` barrel re-exports
+
+### Composition (see `react-composition-patterns` skill)
+
+- [ ] Route file < 200 lines
+- [ ] No render-branching ternary deeper than 2 levels (use `<AsyncList>` / early returns)
+- [ ] No per-route `timeAgo` / `truncate` / inline status-label maps — moved to `utils/` / `types/`
+- [ ] No inline user-facing strings for resource nouns in generic components (use `copy` / `labels` prop)
+- [ ] `useState<string | null>` + `<Modal>` delete wiring → extracted to `useConfirmableDelete`
+- [ ] Mutation + `addBanner` success/error + `refetch` → extracted to a hook
+- [ ] If a sibling route already exists with similar structure, shared shell extracted before the second copy lands
 
 ### Security
 
