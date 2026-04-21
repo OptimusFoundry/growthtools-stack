@@ -33,12 +33,14 @@ test-down:
 	docker compose -f docker-compose.test.yml down -v
 
 # Run unit + store + integration tests against the isolated test stack.
-# Brings the stack up, runs everything, tears it down. On failure the stack
-# is left running so you can inspect it — clean up with `make test-down`.
+# Brings the stack up, sources env.test (single source of truth for DB
+# creds, JWT secret, etc.), runs everything, tears it down. On failure the
+# stack is left running so you can inspect it — clean up with `make test-down`.
 test: test-up
-	go test -race -short ./...
-	TEST_DB_PORT=5433 go test -race ./internal/infra/store/...
-	TEST_DB_PORT=5433 go test -v -race -tags=integration ./tests/...
+	set -a; . ./env.test; set +a; \
+	go test -race -short ./... && \
+	go test -race ./internal/infra/store/... && \
+	go test -v -race -tags=integration ./tests/...
 	$(MAKE) test-down
 
 # =============================================================================

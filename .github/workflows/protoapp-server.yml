@@ -58,10 +58,6 @@ jobs:
     defaults:
       run:
         working-directory: base-server
-    env:
-      # Store tests read TEST_DB_PORT directly via SetupTestStore; must match
-      # the host port exposed by docker-compose.test.yml's db service.
-      TEST_DB_PORT: 5433
     steps:
       - uses: actions/checkout@v5
 
@@ -102,11 +98,18 @@ jobs:
           docker compose -f docker-compose.test.yml up -d --wait db kafka
           docker compose -f docker-compose.test.yml up flyway
 
+      # Source env.test so DB_* and other test config match the isolated test
+      # stack. Same file the Makefile's `test` target uses — single source of
+      # truth for store + integration test config.
       - name: Store tests
-        run: go test -race ./internal/infra/store/...
+        run: |
+          set -a; . ./env.test; set +a
+          go test -race ./internal/infra/store/...
 
       - name: Integration tests
-        run: go test -v -race -tags=integration ./tests/...
+        run: |
+          set -a; . ./env.test; set +a
+          go test -v -race -tags=integration ./tests/...
 
       - name: Dump compose logs on failure
         if: failure()

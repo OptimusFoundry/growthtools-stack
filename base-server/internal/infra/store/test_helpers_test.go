@@ -12,18 +12,18 @@ import (
 )
 
 // SetupTestStore creates a Store connected to the test PostgreSQL database.
-// It uses environment variables with defaults matching docker-compose.services.yml.
+// Reads DB_* vars from env (see env.test).
 func SetupTestStore(t *testing.T) *Store {
 	t.Helper()
 
-	host := envOrDefault("TEST_DB_HOST", "localhost")
-	port := os.Getenv("TEST_DB_PORT")
+	host := envOrDefault("DB_HOST", "localhost")
+	port := os.Getenv("DB_PORT")
 	if port == "" {
-		t.Fatal("TEST_DB_PORT is not set")
+		t.Fatal("DB_PORT is not set (source env.test or run via `make test`)")
 	}
-	user := envOrDefault("TEST_DB_USER", "base_user")
-	pass := envOrDefault("TEST_DB_PASS", "base_password")
-	name := envOrDefault("TEST_DB_NAME", "base_db")
+	user := envOrDefault("DB_USERNAME", "base_user")
+	pass := envOrDefault("DB_PASSWORD", "base_password")
+	name := envOrDefault("DB_NAME", "base_db")
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, port, name)
 	logger := observability.NewLogger()
