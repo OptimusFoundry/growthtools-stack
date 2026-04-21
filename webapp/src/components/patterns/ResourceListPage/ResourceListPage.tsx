@@ -15,11 +15,14 @@ export interface ResourceListPageProps<T> {
 	filters?: ReactNode;
 	loading: boolean;
 	items: readonly T[];
-	hasActiveFilter: boolean;
+	/** Defaults to false — pages without filters can omit. */
+	hasActiveFilter?: boolean;
 	/** Empty-state slot when no items and no filter. */
 	empty: ReactNode;
-	/** Empty-state slot when no items but a filter is active. */
-	emptyFiltered: ReactNode;
+	/** Empty-state slot when no items but a filter is active. Defaults to `empty`. */
+	emptyFiltered?: ReactNode;
+	/** Override the list container class (e.g. for grid layouts). */
+	listClassName?: string;
 	renderItem: (item: T, index: number) => ReactNode;
 	/** Confirmation modal or any overlays belonging to this page. */
 	overlays?: ReactNode;
@@ -41,6 +44,7 @@ export function ResourceListPage<T>({
 	hasActiveFilter,
 	empty,
 	emptyFiltered,
+	listClassName,
 	renderItem,
 	overlays,
 }: ResourceListPageProps<T>) {
@@ -57,6 +61,7 @@ export function ResourceListPage<T>({
 						hasActiveFilter={hasActiveFilter}
 						empty={empty}
 						emptyFiltered={emptyFiltered}
+						listClassName={listClassName}
 						renderItem={renderItem}
 					/>
 				</div>
