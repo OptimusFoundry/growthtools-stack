@@ -2,7 +2,7 @@ name: growth-tools-dev
 
 services:
   db:
-    container_name: base-server-dev-db
+    container_name: growth-tools-dev-db
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: base_db
@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - dev_postgres_data:/var/lib/postgresql/data
+      - growth_tools_dev_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U base_user -d base_db"]
       interval: 5s
@@ -21,7 +21,7 @@ services:
     command: ["postgres", "-c", "fsync=off", "-c", "full_page_writes=off"]
 
   flyway:
-    container_name: base-server-dev-flyway
+    container_name: growth-tools-dev-flyway
     image: flyway/flyway
     depends_on:
       db:
@@ -37,7 +37,7 @@ services:
     command: migrate
 
   kafka:
-    container_name: base-server-dev-kafka
+    container_name: growth-tools-dev-kafka
     image: confluentinc/cp-kafka:latest
     ports:
       - "9092:9092"
@@ -62,7 +62,7 @@ services:
       retries: 5
 
   capture-worker:
-    container_name: capture-worker
+    container_name: growth-tools-dev-capture-worker
     build:
       context: ./capture-worker
       dockerfile: Dockerfile
@@ -93,4 +93,4 @@ services:
       retries: 3
 
 volumes:
-  dev_postgres_data:
+  growth_tools_dev_postgres_data:

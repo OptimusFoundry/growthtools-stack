@@ -1,8 +1,8 @@
-name: base-server-test
+name: growth-tools-test
 
 services:
   db:
-    container_name: base-server-test-db
+    container_name: growth-tools-test-db
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: base_db
@@ -12,7 +12,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - test_postgres_data:/var/lib/postgresql/data
+      - growth_tools_test_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U base_user -d base_db"]
       interval: 5s
@@ -21,7 +21,7 @@ services:
     command: ["postgres", "-c", "fsync=off", "-c", "full_page_writes=off"]
 
   flyway:
-    container_name: base-server-test-flyway
+    container_name: growth-tools-test-flyway
     image: flyway/flyway
     depends_on:
       db:
@@ -37,7 +37,7 @@ services:
     command: migrate
 
   kafka:
-    container_name: base-server-test-kafka
+    container_name: growth-tools-test-kafka
     image: confluentinc/cp-kafka:latest
     environment:
       KAFKA_NODE_ID: 1
@@ -63,4 +63,4 @@ services:
       start_period: 5s
 
 volumes:
-  test_postgres_data:
+  growth_tools_test_postgres_data:
