@@ -58,6 +58,10 @@ jobs:
     defaults:
       run:
         working-directory: base-server
+    env:
+      # Store tests read TEST_DB_PORT directly via SetupTestStore; must match
+      # the host port exposed by docker-compose.test.yml's db service.
+      TEST_DB_PORT: 5433
     steps:
       - uses: actions/checkout@v5
 
