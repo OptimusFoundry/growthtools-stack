@@ -4,14 +4,15 @@
 
 ```bash
 go build ./...               # Build
-go test ./...                # All unit tests
-make dev-up                  # Start Docker services (DB, Kafka)
-make dev-test-unit           # Unit tests (mocked, no deps)
-make dev-test-store          # Store tests (needs dev-up)
-make dev-test-integration    # Integration tests (needs dev-up; server is in-process)
-make docker-test-all         # Full isolated run (matches CI)
-go run main.go               # Run server locally
+go test -short ./...         # Unit tests (no deps)
+make dev-up                  # Start local dev stack (DB, Kafka, migrations)
+make dev-run                 # Run server + Stripe listener (hivemind)
+make test-up                 # Start isolated test stack
+make test                    # Run all tests against test stack (up → run → down)
+make test-down               # Stop test stack (for cleanup after a failed run)
 ```
+
+Makefile scope is local dev only — CI invokes `go test` and `docker compose` directly and does not depend on these targets.
 
 ## Architecture
 
