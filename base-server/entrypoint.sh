@@ -1,6 +1,6 @@
 #!/bin/sh
 # Set Flyway configuration variables
-export FLYWAY_URL="jdbc:postgresql://$DB_HOST:5432/base_db"
+export FLYWAY_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/base_db"
 export FLYWAY_USER="$DB_USERNAME"
 export FLYWAY_PASSWORD="$DB_PASSWORD"
 

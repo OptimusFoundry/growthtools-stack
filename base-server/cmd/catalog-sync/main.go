@@ -118,8 +118,12 @@ func run(file, env string, dryRun, stripeOnly, dbOnly bool) error {
 		if key == "" {
 			return errors.New("STRIPE_SECRET_KEY not set")
 		}
+		productName := os.Getenv("PRODUCT_NAME")
+		if productName == "" {
+			return errors.New("PRODUCT_NAME not set")
+		}
 		stripe.Key = key
-		if err := syncStripe(ctx, cat, ids, dryRun); err != nil {
+		if err := syncStripe(ctx, cat, ids, dryRun, productName); err != nil {
 			return fmt.Errorf("stripe phase: %w", err)
 		}
 	}
@@ -205,17 +209,17 @@ func (c *Catalog) validate() error {
 
 // ---------- Stripe phase ----------
 
-func syncStripe(ctx context.Context, cat *Catalog, ids *stripeIDs, dryRun bool) error {
+func syncStripe(ctx context.Context, cat *Catalog, ids *stripeIDs, dryRun bool, productName string) error {
 	fmt.Println("→ Stripe phase")
 	for _, p := range cat.Products {
-		prodID, err := upsertStripeProduct(ctx, p, dryRun)
+		prodID, err := upsertStripeProduct(ctx, p, dryRun, productName)
 		if err != nil {
 			return fmt.Errorf("product %q: %w", p.Key, err)
 		}
 		ids.productByKey[p.Key] = prodID
 
 		for _, pr := range p.Prices {
-			priceID, err := upsertStripePrice(ctx, prodID, pr, dryRun)
+			priceID, err := upsertStripePrice(ctx, prodID, pr, dryRun, productName)
 			if err != nil {
 				return fmt.Errorf("price %q: %w", pr.Key, err)
 			}
@@ -225,7 +229,7 @@ func syncStripe(ctx context.Context, cat *Catalog, ids *stripeIDs, dryRun bool) 
 	return nil
 }
 
-func upsertStripeProduct(ctx context.Context, p Product, dryRun bool) (string, error) {
+func upsertStripeProduct(ctx context.Context, p Product, dryRun bool, productName string) (string, error) {
 	// Search by our catalog_key metadata.
 	searchParams := &stripe.ProductSearchParams{
 		SearchParams: stripe.SearchParams{Query: fmt.Sprintf("metadata['catalog_key']:'%s'", p.Key)},
@@ -247,7 +251,10 @@ func upsertStripeProduct(ctx context.Context, p Product, dryRun bool) (string, e
 	created, err := product.New(&stripe.ProductParams{
 		Name:        stripe.String(p.Name),
 		Description: stripe.String(p.Description),
-		Metadata:    map[string]string{"catalog_key": p.Key},
+		Metadata: map[string]string{
+			"catalog_key": p.Key,
+			"product":     productName,
+		},
 	})
 	if err != nil {
 		return "", fmt.Errorf("create: %w", err)
@@ -256,7 +263,7 @@ func upsertStripeProduct(ctx context.Context, p Product, dryRun bool) (string, e
 	return created.ID, nil
 }
 
-func upsertStripePrice(ctx context.Context, stripeProductID string, p Price, dryRun bool) (string, error) {
+func upsertStripePrice(ctx context.Context, stripeProductID string, p Price, dryRun bool, productName string) (string, error) {
 	// Lookup by lookup_key. Restrict to active prices — archived prices can't be
 	// used for new subscriptions, so we want to create a fresh one and transfer
 	// the lookup_key over.
@@ -300,6 +307,9 @@ func upsertStripePrice(ctx context.Context, stripeProductID string, p Price, dry
 		UnitAmount:        stripe.Int64(p.UnitAmount),
 		LookupKey:         stripe.String(p.Key),
 		TransferLookupKey: stripe.Bool(true),
+		Metadata: map[string]string{
+			"product": productName,
+		},
 	}
 	if p.Interval != "" && p.Interval != "once" {
 		params.Recurring = &stripe.PriceRecurringParams{Interval: stripe.String(p.Interval)}

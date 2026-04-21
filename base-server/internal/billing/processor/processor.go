@@ -7,13 +7,13 @@ import (
 	"base-server/internal/billing/subscriptions"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/infra/stripeclient"
 	"context"
 	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v85"
-	"github.com/stripe/stripe-go/v85/customer"
 )
 
 // BillingProcessorInterface defines the contract for billing operations
@@ -94,12 +94,13 @@ type BillingProcessor struct {
 	productService      ProductService
 	subscriptionService SubscriptionService
 	emailService        EmailService
+	stripeClient        *stripeclient.Client
 }
 
 func New(stripKey string, webhookSecret string, webhostURL string, store BillingStore,
 	productService ProductService, subService SubscriptionService,
-	emailService EmailService, logger *observability.Logger) BillingProcessor {
-	stripe.Key = stripKey
+	emailService EmailService, logger *observability.Logger,
+	sc *stripeclient.Client) BillingProcessor {
 	return BillingProcessor{
 		stripKey:            stripKey,
 		WebhookSecret:       webhookSecret,
@@ -109,6 +110,7 @@ func New(stripKey string, webhookSecret string, webhostURL string, store Billing
 		subscriptionService: subService,
 		emailService:        emailService,
 		logger:              logger,
+		stripeClient:        sc,
 	}
 }
 
@@ -119,7 +121,7 @@ func (p *BillingProcessor) CreateStripeCustomer(ctx context.Context, email strin
 		Email: stripe.String(email),
 	}
 
-	customer, err := customer.New(params)
+	customer, err := p.stripeClient.CustomerCreate(params)
 	if err != nil {
 		p.logger.Error(ctx, "failed to create customer", err)
 		return "", ErrFailedToCreateCustomer

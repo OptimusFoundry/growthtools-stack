@@ -30,6 +30,7 @@ type Config struct {
 // DatabaseConfig holds database connection settings
 type DatabaseConfig struct {
 	Host     string
+	Port     string
 	Username string
 	Password string
 	Name     string
@@ -51,6 +52,7 @@ type ServicesConfig struct {
 	ResendAPIKey        string
 	DefaultEmailSender  string
 	WebAppURI           string
+	ProductName         string // platform-shared identifier stamped on Stripe metadata for cross-product webhook filtering
 }
 
 // ServerConfig holds HTTP server configuration
@@ -153,6 +155,9 @@ func Load() (*Config, error) {
 	if cfg.Database.Host, err = requireEnv("DB_HOST"); err != nil {
 		return nil, err
 	}
+	if cfg.Database.Port, err = requireEnv("DB_PORT"); err != nil {
+		return nil, err
+	}
 	if cfg.Database.Username, err = requireEnv("DB_USERNAME"); err != nil {
 		return nil, err
 	}
@@ -200,6 +205,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	if cfg.Services.WebAppURI, err = requireEnv("WEBAPP_URI"); err != nil {
+		return nil, err
+	}
+	if cfg.Services.ProductName, err = requireEnv("PRODUCT_NAME"); err != nil {
 		return nil, err
 	}
 
@@ -274,8 +282,8 @@ func Load() (*Config, error) {
 
 // ConnectionString returns a PostgreSQL connection string
 func (c *DatabaseConfig) ConnectionString() string {
-	return fmt.Sprintf("postgres://%s:%s@%s/%s",
-		c.Username, c.Password, c.Host, c.Name)
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		c.Username, c.Password, c.Host, c.Port, c.Name)
 }
 
 // requireEnv retrieves an environment variable or returns an error if empty

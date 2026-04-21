@@ -18,6 +18,7 @@ import (
 	"base-server/internal/infra/httpclient"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	stripeclient "base-server/internal/infra/stripeclient"
 	"base-server/internal/infra/tiers"
 
 	analyticsProcessor "base-server/internal/analytics/processor"
@@ -67,6 +68,10 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	// billingProcessor takes a pointer so it can share the store with auth.
 	productService := products.New(cfg.Services.StripeSecretKey, *s, logger)
 	subscriptionService := subscriptions.New(logger, cfg.Services.StripeSecretKey, *s)
+
+	// Initialize Stripe client wrapper (stamps product metadata on all creates)
+	sc := stripeclient.New(cfg.Services.StripeSecretKey, cfg.Services.ProductName, logger)
+
 	p.billing = billingProcessor.New(
 		cfg.Services.StripeSecretKey,
 		cfg.Services.StripeWebhookSecret,
@@ -76,6 +81,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 		&subscriptionService,
 		cl.emailService,
 		logger,
+		sc,
 	)
 
 	// Tier service
