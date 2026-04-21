@@ -52,6 +52,7 @@ type ServicesConfig struct {
 	ResendAPIKey        string
 	DefaultEmailSender  string
 	WebAppURI           string
+	ProductName         string // platform-shared identifier stamped on Stripe metadata for cross-product webhook filtering
 }
 
 // ServerConfig holds HTTP server configuration
@@ -204,6 +205,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	if cfg.Services.WebAppURI, err = requireEnv("WEBAPP_URI"); err != nil {
+		return nil, err
+	}
+	if cfg.Services.ProductName, err = requireEnv("PRODUCT_NAME"); err != nil {
 		return nil, err
 	}
 

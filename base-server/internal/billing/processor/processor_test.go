@@ -5,6 +5,7 @@ import (
 	"base-server/internal/billing/subscriptions"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
+	"base-server/internal/infra/stripeclient"
 	"context"
 	"errors"
 	"testing"
@@ -34,6 +35,7 @@ func TestNew(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	if processor.stripKey != "test_stripe_key" {
@@ -66,6 +68,7 @@ func TestGetPaymentMethodForUser(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -143,6 +146,7 @@ func TestListPrices(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -230,6 +234,7 @@ func TestGetActiveSubscription(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -314,6 +319,7 @@ func TestProductCreated(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -374,6 +380,7 @@ func TestPriceCreated(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -438,6 +445,7 @@ func TestPriceUpdated(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -502,6 +510,7 @@ func TestPriceDeleted(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -558,6 +567,7 @@ func TestSubscriptionCreated(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -630,6 +640,7 @@ func TestSubscriptionUpdated(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -738,6 +749,7 @@ func TestSubscriptionDeleted(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -796,6 +808,7 @@ func TestHandleWebhook(t *testing.T) {
 		mockSubscriptionService,
 		mockEmailService,
 		logger,
+		stripeclient.New("sk_test_fake", "protoapp", logger),
 	)
 
 	ctx := context.Background()
@@ -814,7 +827,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("product.created event", func(t *testing.T) {
-		productJSON := []byte(`{"id": "prod_test123", "name": "Test Product", "description": "A test product"}`)
+		productJSON := []byte(`{"id": "prod_test123", "name": "Test Product", "description": "A test product", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "product.created",
@@ -851,7 +864,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("price.created event", func(t *testing.T) {
-		priceJSON := []byte(`{"id": "price_test123", "nickname": "Monthly Plan", "product": "prod_test123"}`)
+		priceJSON := []byte(`{"id": "price_test123", "nickname": "Monthly Plan", "product": "prod_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "price.created",
@@ -872,7 +885,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("price.updated event", func(t *testing.T) {
-		priceJSON := []byte(`{"id": "price_test123", "nickname": "Updated Monthly Plan", "product": "prod_test123"}`)
+		priceJSON := []byte(`{"id": "price_test123", "nickname": "Updated Monthly Plan", "product": "prod_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "price.updated",
@@ -893,7 +906,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("price.deleted event", func(t *testing.T) {
-		priceJSON := []byte(`{"id": "price_test123"}`)
+		priceJSON := []byte(`{"id": "price_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "price.deleted",
@@ -914,7 +927,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("customer.subscription.deleted event", func(t *testing.T) {
-		subscriptionJSON := []byte(`{"id": "sub_test123", "status": "canceled"}`)
+		subscriptionJSON := []byte(`{"id": "sub_test123", "status": "canceled", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "customer.subscription.deleted",
@@ -935,7 +948,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("customer.subscription.updated event with previous status incomplete", func(t *testing.T) {
-		subscriptionJSON := []byte(`{"id": "sub_test123", "status": "active", "items": {"data": [{"price": {"id": "price_test123"}}]}, "current_period_start": 1609459200, "current_period_end": 1612137600, "customer": "cus_test123"}`)
+		subscriptionJSON := []byte(`{"id": "sub_test123", "status": "active", "items": {"data": [{"price": {"id": "price_test123"}}]}, "current_period_start": 1609459200, "current_period_end": 1612137600, "customer": "cus_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "customer.subscription.updated",
@@ -959,7 +972,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("customer.subscription.updated event with previous status active", func(t *testing.T) {
-		subscriptionJSON := []byte(`{"id": "sub_test123", "status": "active", "items": {"data": [{"price": {"id": "price_test123"}}]}, "current_period_end": 1612137600}`)
+		subscriptionJSON := []byte(`{"id": "sub_test123", "status": "active", "items": {"data": [{"price": {"id": "price_test123"}}]}, "current_period_end": 1612137600, "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "customer.subscription.updated",
@@ -983,7 +996,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("price.created event with service error", func(t *testing.T) {
-		priceJSON := []byte(`{"id": "price_test123", "nickname": "Monthly Plan", "product": "prod_test123"}`)
+		priceJSON := []byte(`{"id": "price_test123", "nickname": "Monthly Plan", "product": "prod_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "price.created",
@@ -1004,7 +1017,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("price.updated event with service error", func(t *testing.T) {
-		priceJSON := []byte(`{"id": "price_test123", "nickname": "Updated Plan", "product": "prod_test123"}`)
+		priceJSON := []byte(`{"id": "price_test123", "nickname": "Updated Plan", "product": "prod_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "price.updated",
@@ -1025,7 +1038,7 @@ func TestHandleWebhook(t *testing.T) {
 	})
 
 	t.Run("price.deleted event with service error", func(t *testing.T) {
-		priceJSON := []byte(`{"id": "price_test123"}`)
+		priceJSON := []byte(`{"id": "price_test123", "metadata": {"product": "protoapp"}}`)
 		event := stripe.Event{
 			ID:   "evt_test123",
 			Type: "price.deleted",
@@ -1058,6 +1071,127 @@ func TestHandleWebhook(t *testing.T) {
 
 		if err == nil {
 			t.Error("expected error for invalid JSON, got nil")
+		}
+	})
+
+	t.Run("product.created skipped — wrong product", func(t *testing.T) {
+		productJSON := []byte(`{"id":"prod_other","name":"Other","metadata":{"product":"other"}}`)
+		event := stripe.Event{
+			ID:   "evt_skip1",
+			Type: "product.created",
+			Data: &stripe.EventData{Raw: productJSON},
+		}
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("price.created skipped — wrong product", func(t *testing.T) {
+		priceJSON := []byte(`{"id":"price_other","nickname":"Other","metadata":{"product":"other"}}`)
+		event := stripe.Event{
+			ID:   "evt_skip2",
+			Type: "price.created",
+			Data: &stripe.EventData{Raw: priceJSON},
+		}
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("customer.subscription.created skipped — no product tag", func(t *testing.T) {
+		subJSON := []byte(`{"id":"sub_other","status":"active","metadata":{}}`)
+		event := stripe.Event{
+			ID:   "evt_skip3",
+			Type: "customer.subscription.created",
+			Data: &stripe.EventData{Raw: subJSON},
+		}
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("customer.subscription.updated skipped — wrong product", func(t *testing.T) {
+		subJSON := []byte(`{"id":"sub_other","status":"active","metadata":{"product":"other"}}`)
+		event := stripe.Event{
+			ID:   "evt_skip4",
+			Type: "customer.subscription.updated",
+			Data: &stripe.EventData{Raw: subJSON},
+		}
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("customer.subscription.deleted skipped — wrong product", func(t *testing.T) {
+		subJSON := []byte(`{"id":"sub_other","status":"canceled","metadata":{"product":"other"}}`)
+		event := stripe.Event{
+			ID:   "evt_skip5",
+			Type: "customer.subscription.deleted",
+			Data: &stripe.EventData{Raw: subJSON},
+		}
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("product.created passes through — correct tag", func(t *testing.T) {
+		productJSON := []byte(`{"id":"prod_gt","name":"GrowthTools Pro","metadata":{"product":"protoapp"}}`)
+		event := stripe.Event{
+			ID:   "evt_pass1",
+			Type: "product.created",
+			Data: &stripe.EventData{Raw: productJSON},
+		}
+		mockProductService.EXPECT().CreateProduct(gomock.Any(), gomock.Any()).Return(nil)
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("price.created passes through — correct tag", func(t *testing.T) {
+		priceJSON := []byte(`{"id":"price_gt","nickname":"GrowthTools Price","metadata":{"product":"protoapp"}}`)
+		event := stripe.Event{
+			ID:   "evt_pass2",
+			Type: "price.created",
+			Data: &stripe.EventData{Raw: priceJSON},
+		}
+		mockProductService.EXPECT().CreatePrice(gomock.Any(), gomock.Any()).Return(nil)
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("customer.subscription.updated passes through — correct tag", func(t *testing.T) {
+		subJSON := []byte(`{"id":"sub_gt","status":"active","metadata":{"product":"protoapp"}}`)
+		event := stripe.Event{
+			ID:   "evt_pass3",
+			Type: "customer.subscription.updated",
+			Data: &stripe.EventData{Raw: subJSON, PreviousAttributes: map[string]interface{}{"status": "incomplete"}},
+		}
+		mockSubscriptionService.EXPECT().CreateSubscription(gomock.Any(), gomock.Any()).Return(nil)
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("customer.subscription.deleted passes through — correct tag", func(t *testing.T) {
+		subJSON := []byte(`{"id":"sub_gt","status":"canceled","metadata":{"product":"protoapp"}}`)
+		event := stripe.Event{
+			ID:   "evt_pass4",
+			Type: "customer.subscription.deleted",
+			Data: &stripe.EventData{Raw: subJSON},
+		}
+		mockSubscriptionService.EXPECT().CancelSubscription(gomock.Any(), "sub_gt", gomock.Any()).Return(nil)
+		err := processor.HandleWebhook(ctx, event)
+		if err != nil {
+			t.Errorf("expected nil, got %v", err)
 		}
 	})
 }

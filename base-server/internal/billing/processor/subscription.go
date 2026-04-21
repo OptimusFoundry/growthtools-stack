@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v85"
-	"github.com/stripe/stripe-go/v85/checkout/session"
+	checkoutsession "github.com/stripe/stripe-go/v85/checkout/session"
 	"github.com/stripe/stripe-go/v85/subscription"
 )
 
@@ -44,7 +44,7 @@ func (p *BillingProcessor) CreateFreeSubscription(ctx context.Context, stripeCus
 		},
 	}
 
-	_, err = subscription.New(params)
+	_, err = p.stripeClient.SubscriptionCreate(params)
 	if err != nil {
 		p.logger.Error(ctx, "failed to create free subscription", err)
 		return ErrFailedToCreateFreeSubscription
@@ -205,13 +205,13 @@ func (p *BillingProcessor) CreateCheckoutSession(ctx context.Context, userID uui
 		AutomaticTax: &stripe.CheckoutSessionAutomaticTaxParams{Enabled: stripe.Bool(true)},
 	}
 
-	session, err := session.New(params)
+	checkoutSession, err := p.stripeClient.CheckoutSessionCreate(params)
 	if err != nil {
 		p.logger.Error(ctx, "failed to create checkout session", err)
 		return nil, errors.New("failed to create checkout session")
 	}
 
-	return session, nil
+	return checkoutSession, nil
 
 }
 
@@ -224,15 +224,15 @@ type CheckoutSessionInfo struct {
 func (p *BillingProcessor) GetCheckoutSession(ctx context.Context, sessionID string) (CheckoutSessionInfo, error) {
 	ctx = observability.WithFields(ctx, observability.Field{Key: "session_id", Value: sessionID})
 
-	session, err := session.Get(sessionID, nil)
+	cs, err := checkoutsession.Get(sessionID, nil)
 	if err != nil {
 		p.logger.Error(ctx, "failed to get checkout session", err)
 		return CheckoutSessionInfo{}, errors.New("failed to get checkout session")
 	}
 
 	return CheckoutSessionInfo{
-		SessionID:     session.ID,
-		Status:        string(session.Status),
-		PaymentStatus: string(session.PaymentStatus),
+		SessionID:     cs.ID,
+		Status:        string(cs.Status),
+		PaymentStatus: string(cs.PaymentStatus),
 	}, nil
 }
