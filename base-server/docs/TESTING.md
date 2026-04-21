@@ -4,11 +4,19 @@
 
 ## The Three Test Levels
 
-| Level | Location | What it tests | Dependencies | Command |
-|-------|----------|---------------|--------------|---------|
-| **Store** | `internal/infra/store/*_test.go` | Every exported store method against real Postgres | Real DB | `make dev-test-store` |
-| **Unit** | `internal/*/processor/*_test.go` and `internal/*/handler/*_test.go` | Processor + handler logic with interface mocks | None (mocks) | `make dev-test-unit` |
-| **Integration** | `tests/*_test.go` | Real HTTP requests against the real router + real DB, asserting response + DB state | Real DB | `make dev-test-integration` |
+| Level | Location | What it tests | Dependencies |
+|-------|----------|---------------|--------------|
+| **Unit** | `internal/*/processor/*_test.go` and `internal/*/handler/*_test.go` | Processor + handler logic with interface mocks | None (mocks) |
+| **Store** | `internal/infra/store/*_test.go` | Every exported store method against real Postgres | Real DB |
+| **Integration** | `tests/*_test.go` | Full HTTP API via an in-process `httptest.Server`, asserting response + DB state | Real DB |
+
+All three run together with `make test`, which brings up the isolated test stack, sources `env.test`, executes each level in order, then tears the stack down. See the Makefile for the exact invocations.
+
+## env.test is the source of truth
+
+`base-server/env.test` holds every knob needed to run the suite — DB creds, `JWT_SECRET`, Stripe test keys, Kafka brokers, platform tokens. Both the Makefile `test` target and the CI workflow source it with `set -a; . ./env.test; set +a` before `go test`. The integration harness also loads it at runtime via `testenv.Start`, as belt-and-suspenders for anyone running `go test` directly. Store tests read `DB_*` vars from the process env — no file loading — which is why sourcing `env.test` first is required.
+
+Changing a port, secret, or token is a single-file edit to `env.test`.
 
 ## Universal Rules (apply to ALL test levels)
 
@@ -39,11 +47,9 @@
 
 **Coverage requirement: every exported method on `*Store` has at least one test.** If you add a store method, add a test in the same PR. A PR that leaves a store method untested gets rejected.
 
-- Use the real Postgres running via `make dev-up` (or `docker-up` in CI).
-- Seed via `SetupTestStore(t)` + `createTestAccount(t, s)` helpers in `internal/infra/store/test_helpers_test.go`. Add new helpers there if you need a fresh fixture (e.g. `createTestPost`).
+- Use `SetupTestStore(t)` from `internal/infra/store/test_helpers_test.go` — it reads `DB_*` from env and opens a connection. Seed via `createTestAccount(t, s)` and add new helpers there as needed (e.g. `createTestPost`).
 - `if testing.Short() { t.Skip(...) }` at the top so `-short` runs skip store tests.
 - Every method gets: happy path + each error branch. CREATE → insert succeeds + constraint violation (unique, FK) when applicable. GET → found + not-found + wrong-account. LIST → populated + empty + filter applied. UPDATE/DELETE → success + not-found (rows_affected=0).
-- Use table-driven form even for single-method tests so future cases extend cleanly.
 
 ```go
 func TestStore_CreatePost(t *testing.T) {
@@ -113,10 +119,9 @@ func TestStore_CreatePost(t *testing.T) {
   go generate ./internal/<feature>/processor/...
   go generate ./internal/<feature>/handler/...
   ```
-- If a handler takes a **concrete processor struct** today, extract an interface in the handler package first, wire the handler to the interface, then add the generate directive and generate the mock. The handler test will mock the interface, not the struct.
+- If a handler takes a **concrete processor struct** today, extract an interface in the handler package first, wire the handler to the interface, then add the generate directive and generate the mock.
 - For handler tests, set up a `gin.TestMode` router (gate with `sync.Once` so parallel tests don't race the global), fire the request with `httptest.NewRecorder()`, assert status + body shape.
 - Cover every branch of `handleError` — each `errors.Is` case should have a test that hits it.
-- Table-driven with a `mocks func(m *MockStore)` field that registers expectations per case:
 
 ```go
 func TestPostProcessor_GetPost(t *testing.T) {
@@ -144,14 +149,6 @@ func TestPostProcessor_GetPost(t *testing.T) {
             },
             wantErr: ErrPostNotFound,
         },
-        {
-            name: "other store error maps to generic failure",
-            mock: func(m *MockPostStore) {
-                m.EXPECT().GetPostByID(gomock.Any(), accountID, postID).
-                    Return(store.Post{}, errors.New("db exploded"))
-            },
-            wantErr: ErrFailedGetPost,
-        },
     }
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
@@ -174,23 +171,32 @@ func TestPostProcessor_GetPost(t *testing.T) {
 
 Handler tests follow the same table pattern but fire an HTTP request through the Gin router and assert the status code + JSON body shape.
 
-## Level 3: Integration Tests
+## Level 3: Integration Tests (in-process server)
 
-**These are real API tests against a server that is already running.** Real HTTP client → real server (in docker or `go run main.go`) → real Postgres. The test process does NOT boot its own server — no `httptest.NewServer`, no `bootstrap.Initialize`, no in-process Gin router. If you need an in-process router, you're writing a handler unit test, not an integration test.
+**The entire server boots in-process inside the test binary** — no Docker server image, no OS port binding. The test talks to an `httptest.Server` wrapping the real Gin router, backed by the real Postgres from the test stack. Build tag `//go:build integration`.
 
-- Tests live in `base-server/tests/*_test.go` with `//go:build integration` so they only run when explicitly requested.
-- The target server runs out-of-band. Locally: `make dev-up` plus `go run main.go` in another shell. In CI/docker: `make docker-up` brings up the `server` compose service.
-- Tests read `TEST_API_HOST` / `TEST_API_PORT` (defaults `localhost:8080`) to form the base URL and fire real HTTP requests via `http.DefaultClient`.
-- Seed the DB **directly through the store package** (same DB container — `TEST_DB_*` env vars). The store handle is for fixture setup and post-mutation assertions; it is not for driving behavior.
-- `JWT_SECRET` for minting test tokens MUST match what the running server was started with. Both read it from env; tests default to the value in `base-server/env.test`.
-- **Cover every status code the endpoint can return.** 200/201/204 happy paths plus 400/401/403/404/409/422 sad paths as applicable.
-- **Do not integration-test paths that call third-party services** (Stripe, Resend, GitHub API, OAuth providers, social platforms). Those are covered by processor/handler unit tests with gomock. Integration tests stay fast and deterministic by only exercising DB-backed behavior.
-- Assert both the HTTP response and, when the endpoint mutates state, the DB row directly via the store.
+What `testenv.Start` does (see `tests/testenv/env.go`):
+
+1. Stands up one `httptest.Server` per upstream HTTP client (Google OAuth, GitHub, X, LinkedIn, Bluesky, Facebook, Instagram, Threads, TikTok, Pinterest).
+2. Sets env vars (`GOOGLE_OAUTH_TOKEN_URL`, `X_API_BASE`, etc.) so the real client constructors point at those mocks instead of the internet.
+3. Loads `env.test` for DB creds, `JWT_SECRET`, Stripe test keys, platform tokens. Already-set env vars (the mock URLs just set above) take precedence.
+4. Sets `GO_ENV=test` and calls `config.Load()`.
+5. Calls `bootstrap.Initialize()` and `server.New(...).Setup()` to build the real router.
+6. Wraps the router in `httptest.NewServer` and opens a direct `*store.Store` handle for fixture seeding and post-mutation assertions.
+
+Background workers are **not** started — `server.Start()` is never called. Only HTTP-in/HTTP-out code paths run.
+
+Rules:
+
+- Cover every status code the endpoint can return. 200/201/204 happy paths plus 400/401/403/404/409/422 sad paths as applicable.
+- Do not integration-test paths that call third-party services (Stripe, Resend, OAuth providers, social platforms) except via the mock `httptest.Server`s. Those paths stay covered by processor/handler unit tests with gomock.
+- Assert both the HTTP response and, when the endpoint mutates state, the DB row directly via the store handle.
+- `JWT_SECRET` used to mint test tokens comes from `env.test` via `config.Load()` — same value the in-process server was started with.
 
 ```go
 func TestPostsAPI_GetPost(t *testing.T) {
     t.Parallel()
-    c := testClient(t) // reads TEST_API_HOST/PORT + TEST_DB_*
+    c := testClient(t)
 
     tests := []struct {
         name       string
@@ -246,24 +252,27 @@ func TestPostsAPI_GetPost(t *testing.T) {
 ## Running Tests
 
 ```bash
-# Local DB / kafka via docker compose
-make dev-up
+# Full suite — brings stack up, sources env.test, runs all three levels, tears down
+make test
 
-# Then:
-make dev-test-unit         # mocked, fast, no deps
-make dev-test-store        # needs dev-up
-make dev-test-integration  # needs dev-up
+# Just the test stack (inspect it between runs, or iterate manually)
+make test-up
+set -a; . ./env.test; set +a
+go test -race -short ./...                       # unit
+go test -race ./internal/infra/store/...         # store
+go test -v -race -tags=integration ./tests/...   # integration
+make test-down
 
-# Fully isolated (matches CI):
-make docker-test-all
-
-# Single test:
-go test -run TestPostsAPI_GetPost ./tests/... -tags=integration
+# Single test
+set -a; . ./env.test; set +a
+go test -run TestPostsAPI_GetPost -tags=integration ./tests/...
 ```
+
+CI invokes `go test` and `docker compose` directly (not via `make`) but uses the same `env.test` sourcing pattern — see `.github/workflows/*-server.yml`.
 
 ## Before Completing Any Task
 
 1. Run tests at every level you touched: store tests if the store changed, unit tests if a processor or handler changed, integration tests if an endpoint's behavior changed.
 2. `go generate ./...` if you changed a processor or handler interface — the gomock mocks need to regenerate.
-3. `go test -race -short ./...` before pushing — catches concurrent-write bugs the per-level runs miss.
-4. If you add a new store method, a new processor method, a new handler, or a new endpoint, the same PR must add the corresponding test. A PR that ships new surface with zero test coverage is not mergeable.
+3. `make test` before pushing — catches concurrent-write bugs the per-level runs miss.
+4. If you add a new store method, a new processor method, a new handler, or a new endpoint, the same PR must add the corresponding test.
