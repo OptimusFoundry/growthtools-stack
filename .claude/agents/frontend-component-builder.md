@@ -32,6 +32,7 @@ Your task spec from the plan is self-contained — it includes the component nam
 2. **Verify no duplicate** — `ls webapp/src/proto-design-system/components/` to confirm the component doesn't already exist (the plan should have checked, but verify)
 3. Use LSP `goToDefinition` on any existing component you compose from to inspect its props — do not read those files in full
 4. **Delegate to `frontend-page-builder`** if the ask is a route, page, tab, or form — not a reusable primitive
+5. **Invoke `react-composition-patterns` skill** for any component that renders lists, branches on async state, or wraps a mutation + confirmation flow. Prefer slot/children props over config blobs; prefer custom hooks over HOCs; never hardcode resource-specific strings inside a generic component.
 
 ## Component Placement
 
