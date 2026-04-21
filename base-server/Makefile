@@ -29,12 +29,12 @@ dev-test-unit:
 # Run store tests locally (requires dev-up first)
 dev-test-store:
 	@echo "Running store tests locally..."
-	go test -race ./internal/infra/store/...
+	TEST_DB_PORT=$${TEST_DB_PORT:-5432} go test -race ./internal/infra/store/...
 
 # Run integration tests locally (requires dev-up; server is in-process)
 dev-test-integration:
 	@echo "Running integration tests locally (in-process server)..."
-	go test -v -race -tags=integration ./tests/...
+	TEST_DB_PORT=$${TEST_DB_PORT:-5432} go test -v -race -tags=integration ./tests/...
 
 # =============================================================================
 # ISOLATED DOCKER TESTING (uses separate test DB — won't pollute local)
@@ -56,7 +56,7 @@ docker-down:
 # Run integration tests against the in-process server (requires docker-up first)
 docker-test-integration:
 	@echo "Running integration tests (in-process server)..."
-	go test -v -race -tags=integration ./tests/...
+	TEST_DB_PORT=5433 go test -v -race -tags=integration ./tests/...
 
 # Run all tests (unit + store + integration) after docker-up
 docker-test-all:
@@ -66,7 +66,7 @@ docker-test-all:
 	@$(MAKE) dev-test-unit
 	@echo ""
 	@echo ">>> Running store tests..."
-	@$(MAKE) dev-test-store
+	@$(MAKE) TEST_DB_PORT=5433 dev-test-store
 	@echo ""
 	@echo ">>> Running integration tests..."
 	@$(MAKE) docker-test-integration
