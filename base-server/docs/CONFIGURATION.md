@@ -7,6 +7,7 @@ Required variables (loaded from `env.local` in development):
 ```bash
 # Database
 DB_HOST=
+DB_PORT=
 DB_USERNAME=
 DB_PASSWORD=
 DB_NAME=
