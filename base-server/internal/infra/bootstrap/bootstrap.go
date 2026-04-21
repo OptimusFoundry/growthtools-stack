@@ -11,7 +11,7 @@ import (
 	// Auth & billing
 	adminHandler "base-server/internal/admin/handler"
 	authHandler "base-server/internal/auth/handler"
-	billingHandler "base-server/internal/billing/handler"
+	billingHandler "base-server/internal/money/billing/handler"
 
 	// Growth Tools handlers
 	analyticsHandler "base-server/internal/analytics/handler"

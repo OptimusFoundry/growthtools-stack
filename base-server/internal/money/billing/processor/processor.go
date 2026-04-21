@@ -3,8 +3,8 @@ package processor
 //go:generate go run go.uber.org/mock/mockgen@latest -source=processor.go -destination=mocks_test.go -package=processor
 
 import (
-	"base-server/internal/billing/products"
-	"base-server/internal/billing/subscriptions"
+	"base-server/internal/money/products"
+	"base-server/internal/money/subscriptions"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 	"base-server/internal/infra/stripeclient"

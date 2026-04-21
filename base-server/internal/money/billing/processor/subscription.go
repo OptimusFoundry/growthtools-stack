@@ -1,7 +1,7 @@
 package processor
 
 import (
-	"base-server/internal/billing/subscriptions"
+	"base-server/internal/money/subscriptions"
 	"base-server/internal/infra/observability"
 	"context"
 	"errors"

@@ -10,9 +10,9 @@ import (
 	socialposts "base-server/internal/ai/socialposts"
 
 	authProcessor "base-server/internal/auth/processor"
-	billingProcessor "base-server/internal/billing/processor"
-	"base-server/internal/billing/products"
-	"base-server/internal/billing/subscriptions"
+	billingProcessor "base-server/internal/money/billing/processor"
+	"base-server/internal/money/products"
+	"base-server/internal/money/subscriptions"
 	contentProcessor "base-server/internal/content/processor"
 	"base-server/internal/infra/config"
 	"base-server/internal/infra/httpclient"

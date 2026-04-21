@@ -1,7 +1,7 @@
 package processor
 
 import (
-	"base-server/internal/billing/products"
+	"base-server/internal/money/products"
 	"context"
 )
 
