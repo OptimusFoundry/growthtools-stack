@@ -29,7 +29,6 @@ import { Route as GithubIdRouteImport } from './routes/github_.$id'
 import { Route as BlogNewRouteImport } from './routes/blog_.new'
 import { Route as BlogIdRouteImport } from './routes/blog_.$id'
 import { Route as BillingPlansRouteImport } from './routes/billing/plans'
-import { Route as BillingPayment_methodRouteImport } from './routes/billing/payment_method'
 import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
 import { Route as BillingPayRouteImport } from './routes/billing/pay'
 import { Route as PostsIdAnalyticsRouteImport } from './routes/posts_.$id_.analytics'
@@ -134,11 +133,6 @@ const BillingPlansRoute = BillingPlansRouteImport.update({
   path: '/billing/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BillingPayment_methodRoute = BillingPayment_methodRouteImport.update({
-  id: '/billing/payment_method',
-  path: '/billing/payment_method',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BillingPayment_attemptRoute = BillingPayment_attemptRouteImport.update({
   id: '/billing/payment_attempt',
   path: '/billing/payment_attempt',
@@ -170,7 +164,6 @@ export interface FileRoutesByFullPath {
   '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
-  '/billing/payment_method': typeof BillingPayment_methodRoute
   '/billing/plans': typeof BillingPlansRoute
   '/blog/$id': typeof BlogIdRoute
   '/blog/new': typeof BlogNewRoute
@@ -196,7 +189,6 @@ export interface FileRoutesByTo {
   '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
-  '/billing/payment_method': typeof BillingPayment_methodRoute
   '/billing/plans': typeof BillingPlansRoute
   '/blog/$id': typeof BlogIdRoute
   '/blog/new': typeof BlogNewRoute
@@ -223,7 +215,6 @@ export interface FileRoutesById {
   '/test-login': typeof TestLoginRoute
   '/billing/pay': typeof BillingPayRoute
   '/billing/payment_attempt': typeof BillingPayment_attemptRoute
-  '/billing/payment_method': typeof BillingPayment_methodRoute
   '/billing/plans': typeof BillingPlansRoute
   '/blog_/$id': typeof BlogIdRoute
   '/blog_/new': typeof BlogNewRoute
@@ -251,7 +242,6 @@ export interface FileRouteTypes {
     | '/test-login'
     | '/billing/pay'
     | '/billing/payment_attempt'
-    | '/billing/payment_method'
     | '/billing/plans'
     | '/blog/$id'
     | '/blog/new'
@@ -277,7 +267,6 @@ export interface FileRouteTypes {
     | '/test-login'
     | '/billing/pay'
     | '/billing/payment_attempt'
-    | '/billing/payment_method'
     | '/billing/plans'
     | '/blog/$id'
     | '/blog/new'
@@ -303,7 +292,6 @@ export interface FileRouteTypes {
     | '/test-login'
     | '/billing/pay'
     | '/billing/payment_attempt'
-    | '/billing/payment_method'
     | '/billing/plans'
     | '/blog_/$id'
     | '/blog_/new'
@@ -330,7 +318,6 @@ export interface RootRouteChildren {
   TestLoginRoute: typeof TestLoginRoute
   BillingPayRoute: typeof BillingPayRoute
   BillingPayment_attemptRoute: typeof BillingPayment_attemptRoute
-  BillingPayment_methodRoute: typeof BillingPayment_methodRoute
   BillingPlansRoute: typeof BillingPlansRoute
   BlogIdRoute: typeof BlogIdRoute
   BlogNewRoute: typeof BlogNewRoute
@@ -484,13 +471,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillingPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/billing/payment_method': {
-      id: '/billing/payment_method'
-      path: '/billing/payment_method'
-      fullPath: '/billing/payment_method'
-      preLoaderRoute: typeof BillingPayment_methodRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/billing/payment_attempt': {
       id: '/billing/payment_attempt'
       path: '/billing/payment_attempt'
@@ -530,7 +510,6 @@ const rootRouteChildren: RootRouteChildren = {
   TestLoginRoute: TestLoginRoute,
   BillingPayRoute: BillingPayRoute,
   BillingPayment_attemptRoute: BillingPayment_attemptRoute,
-  BillingPayment_methodRoute: BillingPayment_methodRoute,
   BillingPlansRoute: BillingPlansRoute,
   BlogIdRoute: BlogIdRoute,
   BlogNewRoute: BlogNewRoute,

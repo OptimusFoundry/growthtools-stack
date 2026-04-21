@@ -34,14 +34,6 @@ export interface Subscription {
 // Response Types (for convenience)
 // ============================================================================
 
-export interface CancelSubscriptionResponse {
-	message: string;
-}
-
-export interface PaymentMethodUpdateIntentResponse {
-	clientSecret: string;
-}
-
 export interface CustomerPortalResponse {
 	url: string;
 }

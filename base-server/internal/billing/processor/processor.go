@@ -23,8 +23,6 @@ type BillingProcessorInterface interface {
 
 	// Subscription Management
 	CreateFreeSubscription(ctx context.Context, stripeCustomerID string) error
-	CancelSubscription(ctx context.Context, userID uuid.UUID) error
-	CancelSubscriptionBySubscriptionExternalID(ctx context.Context, stripSubID string) error
 	GetActiveSubscription(ctx context.Context, userID uuid.UUID) (subscriptions.Subscription, error)
 
 	// Checkout & Portal Management
@@ -32,19 +30,12 @@ type BillingProcessorInterface interface {
 	GetCheckoutSession(ctx context.Context, sessionID string) (CheckoutSessionInfo, error)
 	CreateCustomerPortal(ctx context.Context, userID uuid.UUID) (string, error)
 
-	// Payment Method Management
-	SetupPaymentMethodUpdateIntent(ctx context.Context, userID uuid.UUID) (string, error)
-	GetPaymentMethodForUser(ctx context.Context, userID uuid.UUID) (PaymentMethod, error)
-
 	// Pricing Management
 	ListPrices(ctx context.Context) ([]products.Price, error)
 
 	// Webhook Handlers
-	PaymentIntentSucceeded(ctx context.Context, paymentIntent stripe.PaymentIntent)
 	SubscriptionUpdated(ctx context.Context, subscription stripe.Subscription) error
 	SubscriptionCreated(ctx context.Context, subscription stripe.Subscription) error
-	InvoicePaymentFailed(ctx context.Context, invoice stripe.Invoice) error
-	InvoicePaymentPaid(ctx context.Context, invoice stripe.Invoice) error
 	ProductCreated(ctx context.Context, productCreated stripe.Product) error
 	PriceCreated(ctx context.Context, priceCreated stripe.Price) error
 	PriceUpdated(ctx context.Context, priceUpdated stripe.Price) error
@@ -56,7 +47,6 @@ type BillingProcessorInterface interface {
 // BillingStore defines the database operations required by BillingProcessor
 type BillingStore interface {
 	GetStripeCustomerIDByUserExternalID(ctx context.Context, ID uuid.UUID) (string, error)
-	GetPaymentMethodByUserID(ctx context.Context, userID uuid.UUID) (*store.PaymentMethod, error)
 	GetPriceByID(ctx context.Context, priceID string) (store.Price, error)
 	GetFreePriceStripeID(ctx context.Context) (string, error)
 }

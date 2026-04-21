@@ -13,23 +13,6 @@ type CreateCheckoutSessionRequest struct {
 	PriceID string `json:"price_id" binding:"required"`
 }
 
-func (h *Handler) HandleCancelSubscription(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	userID := c.MustGet("User-ID")
-	parsedUserID := uuid.MustParse(userID.(string))
-	ctx = observability.WithFields(ctx, observability.Field{Key: "user_id", Value: parsedUserID})
-
-	err := h.processor.CancelSubscription(ctx, parsedUserID)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "subscription cancelled"})
-	return
-}
-
 func (h *Handler) HandleCreateCheckoutSession(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID := c.MustGet("User-ID")

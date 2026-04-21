@@ -10,15 +10,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v85"
 	checkoutsession "github.com/stripe/stripe-go/v85/checkout/session"
-	"github.com/stripe/stripe-go/v85/subscription"
 )
 
 var (
 	// ErrNoActiveSubscription is returned when no active subscription is found for a user
 	ErrNoActiveSubscription           = errors.New("no active subscription found")
 	ErrSubscriptionAlreadyExists      = errors.New("user already has an active subscription")
-	ErrFailedToCancelSubscription     = errors.New("failed to cancel subscription")
-	ErrFailedToUpdateSubscription     = errors.New("failed to update subscription")
 	ErrFailedToGetSubscription        = errors.New("failed to get subscription")
 	ErrFailedToCreateFreeSubscription = errors.New("failed to create free subscription")
 )
@@ -48,89 +45,6 @@ func (p *BillingProcessor) CreateFreeSubscription(ctx context.Context, stripeCus
 	if err != nil {
 		p.logger.Error(ctx, "failed to create free subscription", err)
 		return ErrFailedToCreateFreeSubscription
-	}
-
-	return nil
-}
-
-func (p *BillingProcessor) CancelSubscription(ctx context.Context, userID uuid.UUID) error {
-	ctx = observability.WithFields(ctx, observability.Field{Key: "user_id", Value: userID})
-
-	activeSub, err := p.GetActiveSubscription(ctx, userID)
-	if err != nil {
-		p.logger.Error(ctx, "failed to get active stripe subscription", err)
-		return ErrNoActiveSubscription
-	}
-
-	_, err = subscription.Cancel(activeSub.StripeID, nil)
-	if err != nil {
-		p.logger.Error(ctx, "failed to cancel subscription", err)
-		return ErrFailedToCancelSubscription
-	}
-
-	return nil
-}
-
-func (p *BillingProcessor) CancelSubscriptionBySubscriptionExternalID(ctx context.Context, stripSubID string) error {
-	ctx = observability.WithFields(ctx, observability.Field{Key: "stripe_subscription_id", Value: stripSubID})
-
-	_, err := subscription.Cancel(stripSubID, nil)
-	if err != nil {
-		p.logger.Error(ctx, "failed to cancel subscription", err)
-		return ErrFailedToCancelSubscription
-	}
-
-	return nil
-}
-
-func (p *BillingProcessor) UpdateSubscription(ctx context.Context, userID uuid.UUID, priceID string) error {
-	ctx = observability.WithFields(ctx,
-		observability.Field{Key: "user_id", Value: userID},
-		observability.Field{Key: "price_id", Value: priceID})
-
-	activeSub, err := p.GetActiveSubscription(ctx, userID)
-	if err != nil {
-		p.logger.Error(ctx, "failed to get active stripe subscription", err)
-		return ErrNoActiveSubscription
-	}
-
-	// Fetch the subscription from Stripe to get the subscription item ID
-	// The subscription item ID (si_xxx) is different from subscription ID (sub_xxx)
-	stripeSub, err := subscription.Get(activeSub.StripeID, nil)
-	if err != nil {
-		p.logger.Error(ctx, "failed to get subscription from stripe", err)
-		return ErrFailedToUpdateSubscription
-	}
-
-	if len(stripeSub.Items.Data) == 0 {
-		p.logger.Error(ctx, "subscription has no items", nil)
-		return ErrFailedToUpdateSubscription
-	}
-
-	// Get the Stripe price ID from our internal price ID
-	price, err := p.store.GetPriceByID(ctx, priceID)
-	if err != nil {
-		p.logger.Error(ctx, "failed to get price by id", err)
-		return ErrFailedToUpdateSubscription
-	}
-
-	// Use the subscription item ID, not the subscription ID
-	subscriptionItemID := stripeSub.Items.Data[0].ID
-
-	params := &stripe.SubscriptionParams{
-		Items: []*stripe.SubscriptionItemsParams{
-			{
-				ID:    stripe.String(subscriptionItemID),
-				Price: stripe.String(price.StripeID),
-			},
-		},
-		ProrationBehavior: stripe.String("create_prorations"),
-	}
-
-	_, err = subscription.Update(activeSub.StripeID, params)
-	if err != nil {
-		p.logger.Error(ctx, "failed to update subscription", err)
-		return ErrFailedToUpdateSubscription
 	}
 
 	return nil

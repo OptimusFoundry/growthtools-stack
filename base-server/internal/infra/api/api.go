@@ -112,7 +112,6 @@ func (a *API) RegisterRoutes() {
 
 		// Billing routes
 		protectedGroup.GET("billing/subscription", a.billingHandler.HandleGetSubscription)
-		protectedGroup.DELETE("billing/cancel-subscription", a.billingHandler.HandleCancelSubscription)
 		protectedGroup.POST("billing/create-customer-portal", a.billingHandler.HandleCreateCustomerPortal)
 		protectedGroup.POST("billing/create-checkout-session", a.billingHandler.HandleCreateCheckoutSession)
 		protectedGroup.GET("billing/checkout-session", a.billingHandler.GetCheckoutSession)

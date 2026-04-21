@@ -36,14 +36,6 @@ export interface ApiSubscription {
 // Response Types
 // ============================================================================
 
-export interface ApiCancelSubscriptionResponse {
-	message: string;
-}
-
-export interface ApiPaymentMethodUpdateIntentResponse {
-	client_secret: string;
-}
-
 export interface ApiCustomerPortalResponse {
 	url: string;
 }
