@@ -1,17 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FileIcon, ImageIcon, Trash2, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useCallback, useRef } from "react";
-import { Topbar } from "@/components/Layout/Topbar";
+import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
+import { MediaCard } from "@/features/media/components/MediaCard/MediaCard";
+import { MediaEmpty } from "@/features/media/components/MediaEmpty/MediaEmpty";
+import { MediaHero } from "@/features/media/components/MediaHero/MediaHero";
 import { useMedia } from "@/hooks/useMedia";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
 import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { formatFileSize, isImageType, isVideoType } from "@/types/media";
-import mediaStyles from "./media.module.scss";
-import styles from "./page.module.scss";
+import styles from "./media.module.scss";
 
 export const Route = createFileRoute("/media")({
 	component: MediaPage,
@@ -45,9 +42,17 @@ function MediaPage() {
 
 	return (
 		<>
-			<Topbar
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept="image/*,video/*"
+				onChange={handleFileChange}
+				className={styles.hiddenInput}
+				aria-label="Upload media file"
+			/>
+			<ResourceListPage
 				title="Media"
-				actions={
+				topbarAction={
 					<Button
 						variant="primary"
 						onClick={handleUploadClick}
@@ -56,105 +61,13 @@ function MediaPage() {
 						<Upload size={16} /> Upload
 					</Button>
 				}
+				hero={<MediaHero count={media.length} />}
+				loading={loading}
+				items={media}
+				empty={<MediaEmpty onUpload={handleUploadClick} />}
+				listClassName={styles.mediaGrid}
+				renderItem={(item) => <MediaCard key={item.id} item={item} />}
 			/>
-			<input
-				ref={fileInputRef}
-				type="file"
-				accept="image/*,video/*"
-				onChange={handleFileChange}
-				className={mediaStyles.hiddenInput}
-				aria-label="Upload media file"
-			/>
-			<Stack gap="lg" className={styles.page} animate>
-				<header className={styles.pageHero}>
-					<div className={styles.pageHeroText}>
-						<div className={styles.pageEyebrow}>
-							Library · {String(media.length).padStart(2, "0")}{" "}
-							{media.length === 1 ? "item" : "items"}
-						</div>
-						<h1 className={styles.pageHeroTitle}>
-							Every asset, <em>one tap away</em>.
-						</h1>
-						<p className={styles.pageHeroSub}>
-							Drop in images and videos to drag into any post. Upload once,
-							reuse everywhere.
-						</p>
-					</div>
-				</header>
-
-				<Stack gap="md">
-					{loading ? (
-						<Spinner />
-					) : media.length === 0 ? (
-						<EmptyState
-							title="No media yet"
-							description="Upload images and videos to use in your posts."
-							icon={<ImageIcon size={48} />}
-							action={
-								<Button variant="primary" onClick={handleUploadClick}>
-									<Upload size={16} /> Upload Media
-								</Button>
-							}
-						/>
-					) : (
-						<div className={mediaStyles.mediaGrid}>
-							{media.map((item) => (
-								<div key={item.id} className={mediaStyles.mediaCard}>
-									<div className={mediaStyles.thumbnail}>
-										{isImageType(item.contentType) ? (
-											<img
-												src={item.url}
-												alt={item.altText ?? item.filename}
-												className={mediaStyles.thumbnailImage}
-											/>
-										) : isVideoType(item.contentType) ? (
-											<video
-												src={item.url}
-												controls
-												preload="metadata"
-												className={mediaStyles.thumbnailImage}
-												aria-label={item.altText ?? item.filename}
-											>
-												<track kind="captions" />
-											</video>
-										) : (
-											<div className={mediaStyles.filePlaceholder}>
-												<FileIcon size={32} />
-											</div>
-										)}
-									</div>
-									<div className={mediaStyles.mediaInfo}>
-										<Stack gap="xs">
-											<span
-												className={mediaStyles.filename}
-												title={item.filename}
-											>
-												{item.filename}
-											</span>
-											<Stack direction="row" gap="xs" align="center">
-												<Badge variant="outline" size="sm">
-													{item.contentType.split("/")[1]?.toUpperCase() ??
-														"FILE"}
-												</Badge>
-												<span className={mediaStyles.fileSize}>
-													{formatFileSize(item.sizeBytes)}
-												</span>
-											</Stack>
-										</Stack>
-										<Button
-											variant="ghost"
-											size="sm"
-											aria-label={`Delete ${item.filename}`}
-										>
-											<Trash2 size={14} />
-										</Button>
-									</div>
-								</div>
-							))}
-						</div>
-					)}
-				</Stack>
-			</Stack>
 		</>
 	);
 }
