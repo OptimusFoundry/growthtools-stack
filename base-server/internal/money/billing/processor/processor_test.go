@@ -1,8 +1,8 @@
 package processor
 
 import (
-	"base-server/internal/billing/products"
-	"base-server/internal/billing/subscriptions"
+	"base-server/internal/money/products"
+	"base-server/internal/money/subscriptions"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/stripeclient"
 	"context"

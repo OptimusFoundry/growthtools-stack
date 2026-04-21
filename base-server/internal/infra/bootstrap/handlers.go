@@ -7,7 +7,7 @@ import (
 
 	adminHandler "base-server/internal/admin/handler"
 	authHandler "base-server/internal/auth/handler"
-	billingHandler "base-server/internal/billing/handler"
+	billingHandler "base-server/internal/money/billing/handler"
 
 	analyticsHandler "base-server/internal/analytics/handler"
 	blogHandler "base-server/internal/blog/handler"

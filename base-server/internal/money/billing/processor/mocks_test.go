@@ -10,8 +10,8 @@
 package processor
 
 import (
-	products "base-server/internal/billing/products"
-	subscriptions "base-server/internal/billing/subscriptions"
+	products "base-server/internal/money/products"
+	subscriptions "base-server/internal/money/subscriptions"
 	store "base-server/internal/infra/store"
 	context "context"
 	reflect "reflect"

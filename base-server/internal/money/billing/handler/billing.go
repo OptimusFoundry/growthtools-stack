@@ -3,7 +3,7 @@ package handler
 import (
 	"errors"
 
-	"base-server/internal/billing/processor"
+	"base-server/internal/money/billing/processor"
 	"base-server/internal/infra/apierrors"
 	"base-server/internal/infra/observability"
 
