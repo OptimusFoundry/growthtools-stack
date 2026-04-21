@@ -288,27 +288,34 @@ func (p *GitHubProcessor) handleWorkflowRun(ctx context.Context, repo store.GitH
 	return nil
 }
 
-// appURLFromReadme extracts the first app URL advertised in a README.
-// Policy: README always contains the app URL (per project convention);
-// we scan for the first https:// token that points at something other
-// than github.com. Returns "" if nothing sensible is found so the
-// caller can fall through to APP_URL env default.
+// appURLFromReadme extracts the app URL advertised in a README.
+// Policy: README can list multiple URLs (app, docs, repo badges, etc.);
+// we only accept a URL on a line that mentions "App" (case-insensitive)
+// so the capture worker hits the live app rather than a docs or repo
+// link. Returns errAppURLNotFound when no such URL is present — callers
+// should bail rather than guess.
 var readmeURLRE = regexp.MustCompile(`https?://[^\s)>"']+`)
 
-func appURLFromReadme(readme string) string {
-	for _, candidate := range readmeURLRE.FindAllString(readme, -1) {
-		// Strip trailing punctuation that markdown likes to leave behind.
-		candidate = strings.TrimRight(candidate, ".,;:)")
-		lower := strings.ToLower(candidate)
-		if strings.Contains(lower, "github.com") || strings.Contains(lower, "githubusercontent.com") {
+var errAppURLNotFound = errors.New("no app URL found on an \"App\" line in README")
+
+func appURLFromReadme(readme string) (string, error) {
+	for _, line := range strings.Split(readme, "\n") {
+		if !strings.Contains(strings.ToLower(line), "app") {
 			continue
 		}
-		if strings.Contains(lower, "shields.io") || strings.Contains(lower, "badge") {
-			continue
+		for _, candidate := range readmeURLRE.FindAllString(line, -1) {
+			candidate = strings.TrimRight(candidate, ".,;:)")
+			lower := strings.ToLower(candidate)
+			if strings.Contains(lower, "github.com") || strings.Contains(lower, "githubusercontent.com") {
+				continue
+			}
+			if strings.Contains(lower, "shields.io") || strings.Contains(lower, "badge") {
+				continue
+			}
+			return candidate, nil
 		}
-		return candidate
 	}
-	return ""
+	return "", errAppURLNotFound
 }
 
 // frontendPathPrefixes lists the monorepo paths whose changes can surface
@@ -368,10 +375,18 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 		return
 	}
 
-	// One README lookup per push.
-	var appURL string
-	if readme, readmeErr := p.githubClient.GetRepoReadme(ctx, conn.AccessToken, repo.Owner, repo.Name); readmeErr == nil {
-		appURL = appURLFromReadme(readme)
+	// One README lookup per push. The README is the source of truth for
+	// the live app URL — if it isn't there, bail rather than enqueue a
+	// capture that'll hit the wrong target.
+	readme, readmeErr := p.githubClient.GetRepoReadme(ctx, conn.AccessToken, repo.Owner, repo.Name)
+	if readmeErr != nil {
+		p.logger.Error(ctx, fmt.Sprintf("failed to fetch README for %s/%s; skipping capture enqueue", repo.Owner, repo.Name), readmeErr)
+		return
+	}
+	appURL, appURLErr := appURLFromReadme(readme)
+	if appURLErr != nil {
+		p.logger.Error(ctx, fmt.Sprintf("no app URL found in README for %s/%s; skipping capture enqueue", repo.Owner, repo.Name), appURLErr)
+		return
 	}
 
 	const maxDiffChars = 40_000
