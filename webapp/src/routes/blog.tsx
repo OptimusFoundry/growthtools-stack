@@ -13,7 +13,8 @@ import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { BlogStatus } from "@/types/blog";
+import { BLOG_STATUS_META, type BlogStatus } from "@/types/blog";
+import { timeAgo, truncate } from "@/utils/format";
 import styles from "./blog.module.scss";
 import pageStyles from "./page.module.scss";
 
@@ -27,43 +28,6 @@ const FILTER_KEYS = [
 	{ id: "published", label: "Published" },
 	{ id: "archived", label: "Archived" },
 ] as const;
-
-const STATUS_CLASS: Record<BlogStatus, string> = {
-	draft: "statusDraft",
-	published: "statusPublished",
-	archived: "statusArchived",
-};
-
-const STATUS_LABELS: Record<BlogStatus, string> = {
-	draft: "Draft",
-	published: "Published",
-	archived: "Archived",
-};
-
-function timeAgo(iso: string): string {
-	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-	if (seconds < 60) return "just now";
-	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes}m ago`;
-	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours}h ago`;
-	const days = Math.floor(hours / 24);
-	if (days < 7) return `${days}d ago`;
-	return new Date(iso).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-	});
-}
-
-function truncate(text: string, maxLen: number): string {
-	if (text.length <= maxLen) return text;
-	const truncated = text.slice(0, maxLen);
-	const lastSpace = truncated.lastIndexOf(" ");
-	return (
-		(lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) +
-		"..."
-	);
-}
 
 function BlogPage() {
 	const [statusFilter, setStatusFilter] = useState<string>("");
@@ -220,9 +184,9 @@ function BlogPage() {
 										</div>
 										<div className={styles.metaRow}>
 											<span
-												className={`${styles.statusBadge} ${styles[STATUS_CLASS[post.status]]}`}
+												className={`${styles.statusBadge} ${styles[BLOG_STATUS_META[post.status].className]}`}
 											>
-												{STATUS_LABELS[post.status]}
+												{BLOG_STATUS_META[post.status].label}
 											</span>
 											{post.status === "draft" && (
 												<button

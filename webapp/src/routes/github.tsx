@@ -12,6 +12,7 @@ import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Pagination } from "@/proto-design-system/components/navigation/Pagination";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { timeAgo, truncate } from "@/utils/format";
 import styles from "./github.module.scss";
 import pageStyles from "./page.module.scss";
 
@@ -74,31 +75,6 @@ const STATUS_LABELS: Record<CommitState["kind"], string> = {
 	blog: "Blogged",
 	blog_deleted: "Blog deleted",
 };
-
-function timeAgo(iso: string): string {
-	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-	if (seconds < 60) return "just now";
-	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes}m ago`;
-	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours}h ago`;
-	const days = Math.floor(hours / 24);
-	if (days < 7) return `${days}d ago`;
-	return new Date(iso).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-	});
-}
-
-function truncate(text: string, maxLen: number): string {
-	if (text.length <= maxLen) return text;
-	const truncated = text.slice(0, maxLen);
-	const lastSpace = truncated.lastIndexOf(" ");
-	return (
-		(lastSpace > maxLen * 0.6 ? truncated.slice(0, lastSpace) : truncated) +
-		"..."
-	);
-}
 
 function metaLine(commit: GitHubCommitSummary): string {
 	const parts: string[] = [];

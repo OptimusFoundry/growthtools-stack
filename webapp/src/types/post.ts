@@ -5,6 +5,23 @@ export type PostStatus =
 	| "published"
 	| "failed"
 	| "partially_published";
+
+/**
+ * Display metadata for each PostStatus. `className` is the key into the
+ * owning route's CSS module (posts.module.scss declares `statusDraft`,
+ * `statusScheduled`, etc.). Keep these in sync with that module.
+ */
+export const POST_STATUS_META: Record<
+	PostStatus,
+	{ label: string; className: string }
+> = {
+	draft: { label: "Draft", className: "statusDraft" },
+	scheduled: { label: "Scheduled", className: "statusScheduled" },
+	publishing: { label: "Publishing", className: "statusPublishing" },
+	published: { label: "Published", className: "statusPublished" },
+	failed: { label: "Failed", className: "statusFailed" },
+	partially_published: { label: "Partial", className: "statusPartial" },
+};
 export type ContentType =
 	| "text"
 	| "image"
