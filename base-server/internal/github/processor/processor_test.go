@@ -1077,7 +1077,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
 				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
-					Return("# App\nhttps://app.example.com", nil)
+					Return("App: https://app.example.com", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "be0001").
 					Return("diff --git a/base-server/main.go b/base-server/main.go\n+foo", nil)
 				s.EXPECT().
@@ -1148,7 +1148,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
 				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
-					Return("", nil)
+					Return("App: https://myapp.example.com", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "sha-first").
 					Return("", errors.New("timeout"))
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "sha-second").
@@ -1170,7 +1170,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
 				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
-					Return("", nil)
+					Return("App: https://myapp.example.com", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "longsha").
 					Return(longDiff, nil)
 				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
@@ -1197,7 +1197,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
 				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
-				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("", nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("App: https://myapp.example.com", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "skipsha").
 					Return("lockfile diff", nil)
 				// No Publish expectation — strict controller fails if called.
@@ -1220,7 +1220,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
 				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
-				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("", nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("App: https://myapp.example.com", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "failopensha").
 					Return("real diff", nil)
 				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
@@ -1243,7 +1243,7 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
 				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
-				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("", nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").Return("App: https://myapp.example.com", nil)
 				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "keepsha").
 					Return("pricing diff", nil)
 				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
@@ -1257,8 +1257,9 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			},
 		},
 		{
-			// GetRepoReadme failure: AppURL="" but Publish is still called.
-			name: "readme failure – publishes with empty AppURL",
+			// GetRepoReadme failure: we bail before fetching diffs or publishing —
+			// without an app URL the capture worker has nothing to hit.
+			name: "readme fetch error – bails, publisher never called",
 			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
 				return []store.GitHubCommit{makeCommit("readme-err-sha", "add feature")}
 			},
@@ -1267,19 +1268,22 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
 				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
 					Return("", errors.New("readme not found"))
-				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "readme-err-sha").
-					Return("some diff", nil)
-				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
-					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
-						req := payload.(CaptureRequest)
-						if req.AppURL != "" {
-							t.Errorf("expected empty AppURL on readme error, got %q", req.AppURL)
-						}
-						if req.Diff != "some diff" {
-							t.Errorf("unexpected Diff: %q", req.Diff)
-						}
-						return nil
-					})
+				// No GetCommitDiff, no Publish — strict controller fails if called.
+			},
+		},
+		{
+			// README present but no line mentions "App" — bail rather than
+			// publish against a wrong/empty URL.
+			name: "readme has no App line – bails, publisher never called",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("no-app-sha", "add feature")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("# Project\n\nSee docs at https://docs.example.com for details.", nil)
+				// No GetCommitDiff, no Publish — strict controller fails if called.
 			},
 		},
 	}
