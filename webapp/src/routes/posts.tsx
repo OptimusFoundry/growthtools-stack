@@ -1,23 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, FileText, Plus, SearchX, Trash2 } from "lucide-react";
-import { motion } from "motion/react";
-import { useCallback, useMemo, useState } from "react";
-import { Topbar } from "@/components/Layout/Topbar";
+import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
+import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
+import { PostRow } from "@/features/posts/components/PostRow/PostRow";
+import {
+	PostsEmpty,
+	PostsEmptyFiltered,
+} from "@/features/posts/components/PostsEmptyStates/PostsEmptyStates";
+import { PostsHero } from "@/features/posts/components/PostsHero/PostsHero";
+import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeletePost } from "@/hooks/useDeletePost";
+import { useFilterCounts } from "@/hooks/useFilterCounts";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
-import { POST_STATUS_META, type PostStatus } from "@/types/post";
-import { timeAgo, truncate } from "@/utils/format";
-import { getPlatformIcon } from "@/utils/platformIcons";
-import pageStyles from "./page.module.scss";
-import styles from "./posts.module.scss";
+import type { PostStatus } from "@/types/post";
 
 export const Route = createFileRoute("/posts")({
 	component: PostsPage,
@@ -29,23 +27,10 @@ const FILTER_KEYS = [
 	{ id: "scheduled", label: "Scheduled" },
 	{ id: "published", label: "Published" },
 	{ id: "failed", label: "Needs retry" },
-] as const;
-
-function statusLine(post: {
-	status: PostStatus;
-	publishedAt?: string;
-	scheduledAt?: string;
-	createdAt: string;
-}): string {
-	const when = post.publishedAt ?? post.scheduledAt ?? post.createdAt;
-	const ago = timeAgo(when);
-	if (post.status === "published") return `Published · ${ago}`;
-	if (post.status === "scheduled") return `Queued · ${ago}`;
-	if (post.status === "failed") return `Failed · needs retry`;
-	if (post.status === "publishing") return `Publishing · ${ago}`;
-	if (post.status === "partially_published") return `Partial · ${ago}`;
-	return `Draft · edited ${ago}`;
-}
+] as const satisfies readonly {
+	id: "" | PostStatus;
+	label: string;
+}[];
 
 function PostsPage() {
 	const [statusFilter, setStatusFilter] = useState<string>("");
@@ -60,225 +45,54 @@ function PostsPage() {
 	const { posts: allPosts } = useGetPosts();
 	const { posts, loading, refetch } = useGetPosts(filters);
 	const { deletePost, loading: deleting } = useDeletePost();
-	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-	const { addBanner } = useBannerCenter();
 
-	const handleDeleteConfirm = useCallback(async () => {
-		if (!deleteTargetId) return;
-		try {
-			await deletePost(deleteTargetId);
-			setDeleteTargetId(null);
-			addBanner({
-				type: "success",
-				title: "Post deleted",
-				dismissible: true,
-			});
-			refetch();
-		} catch {
-			addBanner({
-				type: "error",
-				title: "Couldn't delete post",
-				description: "Please try again.",
-				dismissible: true,
-			});
-		}
-	}, [deleteTargetId, deletePost, refetch, addBanner]);
+	const deleteFlow = useConfirmableDelete({
+		mutate: deletePost,
+		mutating: deleting,
+		onSuccess: refetch,
+		copy: {
+			resource: "post",
+			modalTitle: "Delete post",
+			confirmBody:
+				"Are you sure you want to delete this post? This action cannot be undone.",
+		},
+	});
 
-	const hasActiveFilter = statusFilter !== "";
-	const postCount = allPosts.length;
-	const publishedCount = allPosts.filter(
-		(p) => p.status === "published",
-	).length;
-	const draftCount = allPosts.filter((p) => p.status === "draft").length;
-	const scheduledCount = allPosts.filter(
-		(p) => p.status === "scheduled",
-	).length;
-	const failedCount = allPosts.filter((p) => p.status === "failed").length;
-
-	const filterItems = FILTER_KEYS.map((f) => ({
-		id: f.id,
-		label: f.label,
-		count:
-			f.id === ""
-				? postCount
-				: f.id === "draft"
-					? draftCount
-					: f.id === "scheduled"
-						? scheduledCount
-						: f.id === "published"
-							? publishedCount
-							: failedCount,
-	}));
+	const filterItems = useFilterCounts(allPosts, FILTER_KEYS, (p) => p.status);
 
 	return (
-		<>
-			<Topbar
-				title="Posts"
-				actions={
-					<Link to="/posts/new">
-						<Button variant="primary">
-							<Plus size={16} /> Create Post
-						</Button>
-					</Link>
-				}
-			/>
-			<Stack gap="lg" className={styles.page} animate>
-				<header className={pageStyles.pageHero}>
-					<div className={pageStyles.pageHeroText}>
-						<div className={pageStyles.pageEyebrow}>
-							Library · {String(postCount).padStart(2, "0")}{" "}
-							{postCount === 1 ? "entry" : "entries"}
-						</div>
-						<h1 className={pageStyles.pageHeroTitle}>
-							Everything you've <em>written</em>, in one room.
-						</h1>
-						<p className={pageStyles.pageHeroSub}>
-							Drafts, scheduled, and published — sorted the way your week
-							actually works. Click through to edit in the composer.
-						</p>
-					</div>
-				</header>
-
+		<ResourceListPage
+			title="Posts"
+			topbarAction={
+				<Link to="/posts/new">
+					<Button variant="primary">
+						<Plus size={16} /> Create Post
+					</Button>
+				</Link>
+			}
+			hero={<PostsHero count={allPosts.length} />}
+			filters={
 				<FilterTabs
 					value={statusFilter}
 					onChange={setStatusFilter}
 					items={filterItems}
 					aria-label="Filter posts by status"
 				/>
-
-				<div className={styles.content}>
-					{loading ? (
-						<div className={styles.loadingState}>
-							<Spinner />
-						</div>
-					) : posts.length === 0 && hasActiveFilter ? (
-						<EmptyState
-							title="No matching posts"
-							description="Try adjusting your filters to find what you're looking for."
-							icon={<SearchX size={48} />}
-							action={
-								<Button variant="secondary" onClick={() => setStatusFilter("")}>
-									Clear filters
-								</Button>
-							}
-						/>
-					) : posts.length === 0 ? (
-						<EmptyState
-							title="No posts yet"
-							description="Create your first post to get started."
-							icon={<FileText size={48} />}
-							action={
-								<Link to="/posts/new">
-									<Button variant="primary">
-										<Plus size={16} /> Create Post
-									</Button>
-								</Link>
-							}
-						/>
-					) : (
-						<motion.div
-							initial={{ opacity: 0, y: 8 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.2 }}
-							className={styles.postList}
-						>
-							{posts.map((post, index) => {
-								const isPublished =
-									post.status === "published" ||
-									post.status === "partially_published";
-								return (
-									<Link
-										key={post.id}
-										to={isPublished ? "/posts/$id/analytics" : "/posts/$id"}
-										params={{ id: post.id }}
-										className={styles.postLink}
-									>
-										<div className={styles.postRow}>
-											<div className={styles.titleRow}>
-												<span className={styles.idx}>
-													№ {String(index + 1).padStart(2, "0")}
-												</span>
-												<div className={styles.postBody}>
-													<div className={styles.postTitleText}>
-														{truncate(post.title ?? "Untitled post", 80)}
-													</div>
-													<div className={styles.postMetaText}>
-														{statusLine(post)}
-													</div>
-												</div>
-											</div>
-											<div className={styles.metaRow}>
-												{post.platforms.length > 0 && (
-													<span className={styles.platformChips}>
-														{post.platforms.slice(0, 3).map((p) => (
-															<span
-																key={p}
-																className={styles.platformChip}
-																title={p}
-															>
-																{getPlatformIcon(p, 14)}
-															</span>
-														))}
-													</span>
-												)}
-												<span
-													className={`${styles.statusBadge} ${styles[POST_STATUS_META[post.status].className]}`}
-												>
-													{POST_STATUS_META[post.status].label}
-												</span>
-												{(post.status === "draft" ||
-													post.status === "scheduled") && (
-													<button
-														type="button"
-														className={styles.deleteBtn}
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															setDeleteTargetId(post.id);
-														}}
-														aria-label={`Delete post "${truncate(post.title ?? "Untitled post", 40)}"`}
-													>
-														<Trash2 size={16} />
-													</button>
-												)}
-												<span className={styles.chevronBtn} aria-hidden>
-													<ChevronRight size={16} />
-												</span>
-											</div>
-										</div>
-									</Link>
-								);
-							})}
-						</motion.div>
-					)}
-				</div>
-
-				<Modal
-					isOpen={deleteTargetId !== null}
-					onClose={() => setDeleteTargetId(null)}
-					title="Delete post"
-					size="sm"
-					footer={
-						<Stack direction="row" gap="sm" justify="end">
-							<Button variant="ghost" onClick={() => setDeleteTargetId(null)}>
-								Cancel
-							</Button>
-							<Button
-								variant="destructive"
-								onClick={handleDeleteConfirm}
-								isLoading={deleting}
-							>
-								Delete
-							</Button>
-						</Stack>
-					}
-				>
-					<Text color="secondary">
-						Are you sure you want to delete this post? This action cannot be
-						undone.
-					</Text>
-				</Modal>
-			</Stack>
-		</>
+			}
+			loading={loading}
+			items={posts}
+			hasActiveFilter={statusFilter !== ""}
+			empty={<PostsEmpty />}
+			emptyFiltered={<PostsEmptyFiltered onClear={() => setStatusFilter("")} />}
+			renderItem={(post, i) => (
+				<PostRow
+					key={post.id}
+					post={post}
+					index={i}
+					onDelete={deleteFlow.request}
+				/>
+			)}
+			overlays={<ConfirmDeleteModal flow={deleteFlow} />}
+		/>
 	);
 }
