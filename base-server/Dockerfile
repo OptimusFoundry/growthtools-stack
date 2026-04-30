@@ -1,6 +1,11 @@
 # syntax=docker/dockerfile:1.7
-# Start from the official Golang base image
-FROM golang:1.25-alpine AS builder
+# Builder pinned to the runner's native arch ($BUILDPLATFORM) so multi-arch
+# builds cross-compile via Go's toolchain instead of running the whole stage
+# under QEMU emulation. TARGETOS/TARGETARCH come from buildx --platform.
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -22,9 +27,9 @@ COPY . .
 # `-installsuffix cgo` is a pre-modules relic.
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=0 GOOS=linux go build -o main .
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o main .
 
-# Start a new stage from scratch
+# Final image is per-target-arch; buildx assembles the multi-arch manifest.
 FROM alpine:latest
 
 RUN apk --no-cache add curl

@@ -145,18 +145,26 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # QEMU registers binfmt handlers so the runtime stage (alpine + apk)
+      # can execute under arm64 during the final image build. The Go build
+      # stage itself cross-compiles natively from amd64 (BUILDPLATFORM).
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       # Single buildx invocation: build, tag, and push in one pass with GHA
       # layer cache. `mode=max` exports the full builder stage so the next run
-      # starts warm even on Dockerfile tweaks.
+      # starts warm even on Dockerfile tweaks. arm64-only — ECS hosts are
+      # Graviton (t4g).
       - name: Build and push image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker buildx build \
             --file Dockerfile \
+            --platform linux/arm64 \
             --tag "$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}" \
             --tag "$REGISTRY/$ECR_REPOSITORY:latest" \
             --cache-from type=gha,scope=server \
