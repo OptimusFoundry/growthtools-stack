@@ -129,7 +129,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	p.posts.SetTitler(p.aiTitler)
 
 	// Media
-	// MEDIA_PUBLIC_URL_BASE is the source of truth for media URLs. Set it to a public S3
+	// STORAGE_PUBLIC_URL_BASE is the source of truth for media URLs. Set it to a public S3
 	// URL (https://bucket.s3.region.amazonaws.com) for direct fetches, or to a proxy
 	// endpoint (https://api.example.com/public/media/file) when the bucket is private.
 	p.media = mediaProcessor.New(s, cl.fileStore, cfg.Storage.PublicURLBase, logger)

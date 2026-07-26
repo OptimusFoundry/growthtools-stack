@@ -76,7 +76,7 @@ func TestBillingAPI_Webhook(t *testing.T) {
 	env := testenv.GlobalEnv
 
 	// Read the webhook secret from the test environment.
-	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
+	webhookSecret := os.Getenv("PAYMENTS_STRIPE_WEBHOOK_SECRET")
 	if webhookSecret == "" {
 		webhookSecret = "whsec_test_fake_secret" // matches env.test default
 	}

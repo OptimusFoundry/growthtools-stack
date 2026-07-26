@@ -169,16 +169,16 @@ func Load() (*Config, error) {
 	}
 
 	// Auth configuration
-	if cfg.Auth.JWTSecret, err = requireEnv("JWT_SECRET"); err != nil {
+	if cfg.Auth.JWTSecret, err = requireEnv("AUTH_JWT_SECRET"); err != nil {
 		return nil, err
 	}
-	if cfg.Auth.GoogleClientID, err = requireEnv("GOOGLE_CLIENT_ID"); err != nil {
+	if cfg.Auth.GoogleClientID, err = requireEnv("AUTH_GOOGLE_OAUTH_CLIENT_ID"); err != nil {
 		return nil, err
 	}
-	if cfg.Auth.GoogleClientSecret, err = requireEnv("GOOGLE_CLIENT_SECRET"); err != nil {
+	if cfg.Auth.GoogleClientSecret, err = requireEnv("AUTH_GOOGLE_OAUTH_CLIENT_SECRET"); err != nil {
 		return nil, err
 	}
-	if cfg.Auth.GoogleRedirectURI, err = requireEnv("GOOGLE_REDIRECT_URI"); err != nil {
+	if cfg.Auth.GoogleRedirectURI, err = requireEnv("AUTH_GOOGLE_REDIRECT_URI"); err != nil {
 		return nil, err
 	}
 
@@ -192,72 +192,72 @@ func Load() (*Config, error) {
 	}
 
 	// Services configuration
-	if cfg.Services.StripeSecretKey, err = requireEnv("STRIPE_SECRET_KEY"); err != nil {
+	if cfg.Services.StripeSecretKey, err = requireEnv("PAYMENTS_STRIPE_SECRET_KEY"); err != nil {
 		return nil, err
 	}
-	if cfg.Services.StripeWebhookSecret, err = requireEnv("STRIPE_WEBHOOK_SECRET"); err != nil {
+	if cfg.Services.StripeWebhookSecret, err = requireEnv("PAYMENTS_STRIPE_WEBHOOK_SECRET"); err != nil {
 		return nil, err
 	}
-	if cfg.Services.ResendAPIKey, err = requireEnv("RESEND_API_KEY"); err != nil {
+	if cfg.Services.ResendAPIKey, err = requireEnv("EMAIL_RESEND_API_KEY"); err != nil {
 		return nil, err
 	}
-	if cfg.Services.DefaultEmailSender, err = requireEnv("DEFAULT_EMAIL_SENDER_ADDRESS"); err != nil {
+	if cfg.Services.DefaultEmailSender, err = requireEnv("EMAIL_SENDER_ADDRESS"); err != nil {
 		return nil, err
 	}
-	if cfg.Services.WebAppURI, err = requireEnv("WEBAPP_URI"); err != nil {
+	if cfg.Services.WebAppURI, err = requireEnv("APP_WEBAPP_URI"); err != nil {
 		return nil, err
 	}
-	if cfg.Services.ProductName, err = requireEnv("PRODUCT_NAME"); err != nil {
+	if cfg.Services.ProductName, err = requireEnv("APP_PRODUCT_NAME"); err != nil {
 		return nil, err
 	}
 
 	// Server configuration
-	serverPort, err := requireEnv("SERVER_PORT")
+	serverPort, err := requireEnv("APP_SERVER_PORT")
 	if err != nil {
 		return nil, err
 	}
 	cfg.Server.Port, err = strconv.Atoi(serverPort)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse SERVER_PORT: %w", err)
+		return nil, fmt.Errorf("failed to parse APP_SERVER_PORT: %w", err)
 	}
 
 	// Gemini configuration (optional in dev)
-	cfg.Gemini.APIKey = getEnvWithDefault("GOOGLE_AI_API_KEY", "")
+	cfg.Gemini.APIKey = getEnvWithDefault("AI_GEMINI_API_KEY", "")
 
 	// S3 configuration (optional in dev)
-	cfg.S3.Bucket = getEnvWithDefault("S3_BUCKET", "")
-	cfg.S3.Region = getEnvWithDefault("S3_REGION", "us-east-1")
-	cfg.S3.AccessKeyID = getEnvWithDefault("S3_ACCESS_KEY_ID", "")
-	cfg.S3.SecretAccessKey = getEnvWithDefault("S3_SECRET_ACCESS_KEY", "")
+	cfg.S3.Bucket = getEnvWithDefault("STORAGE_S3_BUCKET", "")
+	cfg.S3.Region = getEnvWithDefault("STORAGE_S3_REGION", "us-east-1")
+	cfg.S3.AccessKeyID = getEnvWithDefault("STORAGE_S3_ACCESS_KEY_ID", "")
+	cfg.S3.SecretAccessKey = getEnvWithDefault("STORAGE_S3_SECRET_ACCESS_KEY", "")
 
 	// Storage configuration
 	cfg.Storage.Type = getEnvWithDefault("STORAGE_TYPE", "local")
 	cfg.Storage.MediaDir = getEnvWithDefault("MEDIA_DIR", "./media-uploads")
-	cfg.Storage.PublicURLBase = getEnvWithDefault("MEDIA_PUBLIC_URL_BASE", "")
+	cfg.Storage.PublicURLBase = getEnvWithDefault("STORAGE_PUBLIC_URL_BASE", "")
 
 	// GitHub configuration (optional in dev)
-	cfg.GitHub.WebhookSecret = getEnvWithDefault("GITHUB_WEBHOOK_SECRET", "")
-	cfg.GitHub.OAuthClientID = getEnvWithDefault("GITHUB_OAUTH_CLIENT_ID", "")
-	cfg.GitHub.OAuthClientSecret = getEnvWithDefault("GITHUB_OAUTH_CLIENT_SECRET", "")
+	cfg.GitHub.WebhookSecret = getEnvWithDefault("SOCIAL_GITHUB_WEBHOOK_SECRET", "")
+	cfg.GitHub.OAuthClientID = getEnvWithDefault("AUTH_GITHUB_OAUTH_CLIENT_ID", "")
+	cfg.GitHub.OAuthClientSecret = getEnvWithDefault("AUTH_GITHUB_OAUTH_CLIENT_SECRET", "")
 
 	// Kafka configuration
-	cfg.Kafka.Brokers = getEnvWithDefault("KAFKA_BROKERS", "localhost:9092")
-	cfg.Kafka.ConsumerGroup = getEnvWithDefault("KAFKA_CONSUMER_GROUP", "growth-tools-consumers")
+	cfg.Kafka.Brokers = getEnvWithDefault("EVENTS_BROKERS", "localhost:9092")
+	cfg.Kafka.ConsumerGroup = getEnvWithDefault("EVENTS_CONSUMER_GROUP", "growth-tools-consumers")
 
 	// Platform API credentials (all optional — empty means platform not configured)
-	cfg.Platforms.XAPIKey = getEnvWithDefault("X_API_KEY", "")
-	cfg.Platforms.XAPISecret = getEnvWithDefault("X_API_SECRET", "")
-	cfg.Platforms.LinkedInClientID = getEnvWithDefault("LINKEDIN_CLIENT_ID", "")
-	cfg.Platforms.LinkedInSecret = getEnvWithDefault("LINKEDIN_CLIENT_SECRET", "")
-	cfg.Platforms.MetaAppID = getEnvWithDefault("META_APP_ID", "")
-	cfg.Platforms.MetaAppSecret = getEnvWithDefault("META_APP_SECRET", "")
-	cfg.Platforms.ThreadsAppID = getEnvWithDefault("THREADS_APP_ID", "")
-	cfg.Platforms.ThreadsAppSecret = getEnvWithDefault("THREADS_APP_SECRET", "")
-	cfg.Platforms.ThreadsAccessToken = getEnvWithDefault("THREADS_ACCESS_TOKEN", "")
-	cfg.Platforms.TikTokClientKey = getEnvWithDefault("TIKTOK_CLIENT_KEY", "")
-	cfg.Platforms.TikTokClientSecret = getEnvWithDefault("TIKTOK_CLIENT_SECRET", "")
-	cfg.Platforms.PinterestAppID = getEnvWithDefault("PINTEREST_APP_ID", "")
-	cfg.Platforms.PinterestAppSecret = getEnvWithDefault("PINTEREST_APP_SECRET", "")
+	cfg.Platforms.XAPIKey = getEnvWithDefault("SOCIAL_X_API_KEY", "")
+	cfg.Platforms.XAPISecret = getEnvWithDefault("SOCIAL_X_API_SECRET", "")
+	cfg.Platforms.LinkedInClientID = getEnvWithDefault("SOCIAL_LINKEDIN_CLIENT_ID", "")
+	cfg.Platforms.LinkedInSecret = getEnvWithDefault("SOCIAL_LINKEDIN_CLIENT_SECRET", "")
+	cfg.Platforms.MetaAppID = getEnvWithDefault("SOCIAL_META_APP_ID", "")
+	cfg.Platforms.MetaAppSecret = getEnvWithDefault("SOCIAL_META_APP_SECRET", "")
+	cfg.Platforms.ThreadsAppID = getEnvWithDefault("SOCIAL_THREADS_APP_ID", "")
+	cfg.Platforms.ThreadsAppSecret = getEnvWithDefault("SOCIAL_THREADS_APP_SECRET", "")
+	cfg.Platforms.ThreadsAccessToken = getEnvWithDefault("SOCIAL_THREADS_ACCESS_TOKEN", "")
+	cfg.Platforms.TikTokClientKey = getEnvWithDefault("SOCIAL_TIKTOK_CLIENT_KEY", "")
+	cfg.Platforms.TikTokClientSecret = getEnvWithDefault("SOCIAL_TIKTOK_CLIENT_SECRET", "")
+	cfg.Platforms.PinterestAppID = getEnvWithDefault("SOCIAL_PINTEREST_APP_ID", "")
+	cfg.Platforms.PinterestAppSecret = getEnvWithDefault("SOCIAL_PINTEREST_APP_SECRET", "")
 
 	// External URL overrides (for integration tests; empty = production)
 	cfg.ExternalURLs.GoogleOAuthTokenURL = getEnvWithDefault("GOOGLE_OAUTH_TOKEN_URL", "https://oauth2.googleapis.com/token")

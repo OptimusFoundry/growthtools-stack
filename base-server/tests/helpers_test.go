@@ -76,7 +76,7 @@ func (c *Client) Request(t *testing.T, method, path string, body any, token stri
 //	iss="base-server", aud="base-server"
 func newJWT(t *testing.T, userID, accountID uuid.UUID) string {
 	t.Helper()
-	secret := envOrDefault("JWT_SECRET", "base_secret")
+	secret := envOrDefault("AUTH_JWT_SECRET", "base_secret")
 	now := time.Now()
 	claims := jwt.MapClaims{
 		"sub":        userID.String(),
