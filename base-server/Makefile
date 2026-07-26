@@ -53,6 +53,6 @@ catalog-dry-run:
 catalog-apply:
 	go run ./cmd/catalog-sync --env=test
 
-# Requires caller to export prod DB_* and STRIPE_SECRET_KEY.
+# Requires caller to export prod DB_* and PAYMENTS_STRIPE_SECRET_KEY.
 catalog-apply-prod:
 	CONFIRM=prod go run ./cmd/catalog-sync --env=prod
