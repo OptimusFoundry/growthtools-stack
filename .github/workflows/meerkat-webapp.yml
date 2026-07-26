@@ -1,4 +1,4 @@
-name: Build and Deploy protoapp-webapp
+name: Build and Deploy meerkat-webapp
 
 permissions:
   id-token: write
@@ -10,10 +10,10 @@ on:
     branches: [ "main" ]
     paths:
       - 'webapp/**'
-      - '.github/workflows/protoapp-webapp.yml'
+      - '.github/workflows/meerkat-webapp.yml'
 
 env:
-  PRODUCT_SLUG: protoapp
+  PRODUCT_SLUG: meerkat
   AWS_REGION: us-east-1
   DEPLOY_ROLE: arn:aws:iam::339713122183:role/github-actions-admin-aws
 

@@ -1,4 +1,4 @@
-name: Build and Deploy protoapp-capture-worker
+name: Build and Deploy meerkat-capture-worker
 
 permissions:
   id-token: write
@@ -10,10 +10,10 @@ on:
     branches: [ "main" ]
     paths:
       - 'capture-worker/**'
-      - '.github/workflows/protoapp-capture-worker.yml'
+      - '.github/workflows/meerkat-capture-worker.yml'
 
 env:
-  PRODUCT_SLUG: protoapp
+  PRODUCT_SLUG: meerkat
   AWS_REGION: us-east-1
   DEPLOY_ROLE: arn:aws:iam::339713122183:role/github-actions-admin-aws
 
@@ -97,7 +97,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy-ecs:
-    name: Deploy to protoapp
+    name: Deploy to meerkat
     runs-on: ubuntu-latest
     needs: docker-build-and-push
     steps:
