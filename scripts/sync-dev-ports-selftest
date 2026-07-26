@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""Self-test for sync-dev-ports.py's registry resolution.
+
+There is no test framework in these repos and no dependency may be added, so
+this is stdlib `unittest` behind a hand-rolled runner: no arguments, exit 0 on
+pass, non-zero on failure, one summary line on stdout.
+
+It must pass on BOTH stock macOS /usr/bin/python3 (3.9) and whatever python3
+resolves to. Nothing in here may branch on sys.version_info.
+
+Every fixture is built inside a tempfile.TemporaryDirectory. The live workspace
+is never read: sibling discovery walks real directories, and a test pinned to
+the developer's own checkout would pass or fail for the wrong reason.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import importlib.machinery
+import importlib.util
+import io
+import json
+import os
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+TARGET = HERE / "sync-dev-ports.py"
+
+# Importing the target writes scripts/__pycache__/ into whichever product repo
+# this is vendored into, and most of them do not gitignore it. A test run must
+# not leave anything behind in the tree it is checking.
+sys.dont_write_bytecode = True
+
+
+def load_target():
+    """Import sync-dev-ports.py, whose hyphenated name `import` cannot reach."""
+    loader = importlib.machinery.SourceFileLoader("sync_dev_ports", str(TARGET))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+sdp = load_target()
+
+
+class FakeResult:
+    def __init__(self, returncode, stdout):
+        self.returncode = returncode
+        self.stdout = stdout
+
+
+class SiblingDiscovery(unittest.TestCase):
+    def _workspace(self, registry_dirname, schema=True):
+        """Build workspace/{some-product/base-server, <registry_dirname>/registry.json}."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        ws = Path(tmp.name)
+        product = ws / "some-product"
+        (product / "base-server").mkdir(parents=True)
+        reg_dir = ws / registry_dirname
+        reg_dir.mkdir()
+        body = {"schema_version": 1, "products": []} if schema else {"nope": 1}
+        (reg_dir / "registry.json").write_text(json.dumps(body))
+        return str(product), str(reg_dir / "registry.json")
+
+    def test_finds_registry_regardless_of_directory_name(self):
+        # The whole point: the next rename must not touch five repos again.
+        for name in ("dev-ports", "env-registry", "renamed-yet-again"):
+            product, expected = self._workspace(name)
+            self.assertEqual(sdp.find_sibling_registry(product), expected)
+
+    def test_ignores_a_registry_json_without_schema_version(self):
+        product, _ = self._workspace("decoy", schema=False)
+        self.assertIsNone(sdp.find_sibling_registry(product))
+
+    def test_returns_none_when_no_sibling_holds_a_registry(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        product = Path(tmp.name) / "lonely"
+        (product / "base-server").mkdir(parents=True)
+        self.assertIsNone(sdp.find_sibling_registry(str(product)))
+
+
+class ResolutionOrder(unittest.TestCase):
+    def setUp(self):
+        self._saved = {k: os.environ.get(k) for k in ("ENV_REGISTRY", "DEV_PORTS_REGISTRY")}
+        for k in self._saved:
+            os.environ.pop(k, None)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.lonely = Path(self._tmp.name) / "lonely"
+        (self.lonely / "base-server").mkdir(parents=True)
+
+    def tearDown(self):
+        for k, v in self._saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    def _registry_file(self, marker):
+        path = Path(self._tmp.name) / ("registry-%s.json" % marker)
+        path.write_text(json.dumps({"schema_version": 1, "marker": marker, "products": []}))
+        return str(path)
+
+    def test_explicit_argument_beats_environment(self):
+        explicit = self._registry_file("explicit")
+        os.environ["ENV_REGISTRY"] = self._registry_file("env")
+        _, text = sdp.resolve_registry(explicit=explicit, root=str(self.lonely))
+        self.assertEqual(json.loads(text)["marker"], "explicit")
+
+    def test_env_registry_beats_sibling_discovery(self):
+        os.environ["ENV_REGISTRY"] = self._registry_file("env")
+        _, text = sdp.resolve_registry(root=str(self.lonely))
+        self.assertEqual(json.loads(text)["marker"], "env")
+
+    def test_legacy_env_var_still_works_and_warns(self):
+        os.environ["DEV_PORTS_REGISTRY"] = self._registry_file("legacy")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            _, text = sdp.resolve_registry(root=str(self.lonely))
+        self.assertEqual(json.loads(text)["marker"], "legacy")
+        self.assertIn("deprecated", err.getvalue())
+
+    def test_falls_back_to_gh_and_tries_the_legacy_repo_second(self):
+        # This is the test that proves the migration is safe: run BEFORE the
+        # rename, the new resolver still reaches the still-named dev-ports repo.
+        calls = []
+
+        def fake(cmd, **kwargs):
+            calls.append(cmd[2])
+            if "env-registry" in cmd[2]:
+                return FakeResult(1, "")
+            return FakeResult(0, json.dumps({"schema_version": 1, "marker": "legacy-repo"}))
+
+        label, text = sdp.resolve_registry(root=str(self.lonely), runner=fake)
+        self.assertEqual(json.loads(text)["marker"], "legacy-repo")
+        self.assertEqual(calls, [
+            "repos/SAVentures/env-registry/contents/registry.json",
+            "repos/SAVentures/dev-ports/contents/registry.json",
+        ])
+        self.assertIn("dev-ports", label)
+
+    def test_unresolvable_registry_names_all_three_fixes(self):
+        def fake(cmd, **kwargs):
+            return FakeResult(1, "")
+
+        with self.assertRaises(RuntimeError) as cm:
+            sdp.resolve_registry(root=str(self.lonely), runner=fake)
+        msg = str(cm.exception)
+        for hint in ("git clone", "ENV_REGISTRY", "gh auth login"):
+            self.assertIn(hint, msg)
+
+
+class ScriptFreshness(unittest.TestCase):
+    def test_sha256_is_stable_across_calls(self):
+        self.assertEqual(sdp.script_sha256(), sdp.script_sha256())
+        self.assertEqual(len(sdp.script_sha256()), 64)
+
+    def test_canonical_sha_is_recorded_in_the_registry(self):
+        reg_path = HERE / "registry.json"
+        if not reg_path.is_file():
+            self.skipTest("vendored copy — the registry lives elsewhere")
+        recorded = json.loads(reg_path.read_text())["script"]["sha256"]
+        self.assertEqual(
+            sdp.script_sha256(), recorded,
+            "registry.json script.sha256 is stale — run: python3 sync-dev-ports.py --print-sha")
+
+    def test_stale_copy_is_reported_but_does_not_raise(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            sdp.check_script_freshness({"script": {"sha256": "0" * 64}})
+        self.assertIn("STALE", out.getvalue())
+
+    def test_registry_without_a_script_block_is_silent(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            sdp.check_script_freshness({})
+        self.assertEqual(out.getvalue(), "")
+
+
+def main():
+    suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
+    result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(suite)
+    print("sync-dev-ports selftest: %d run, %d failed, %d errored"
+          % (result.testsRun, len(result.failures), len(result.errors)))
+    return 0 if result.wasSuccessful() else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
