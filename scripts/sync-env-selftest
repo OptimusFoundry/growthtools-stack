@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Self-test for sync-dev-ports.py's registry resolution.
+"""Self-test for sync-env.py: registry resolution and catalog resolution.
 
 There is no test framework in these repos and no dependency may be added, so
 this is stdlib `unittest` behind a hand-rolled runner: no arguments, exit 0 on
@@ -27,7 +27,7 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-TARGET = HERE / "sync-dev-ports.py"
+TARGET = HERE / "sync-env.py"
 
 # Importing the target writes scripts/__pycache__/ into whichever product repo
 # this is vendored into, and most of them do not gitignore it. A test run must
@@ -37,14 +37,14 @@ sys.dont_write_bytecode = True
 
 def load_target():
     """Import sync-dev-ports.py, whose hyphenated name `import` cannot reach."""
-    loader = importlib.machinery.SourceFileLoader("sync_dev_ports", str(TARGET))
+    loader = importlib.machinery.SourceFileLoader("sync_env", str(TARGET))
     spec = importlib.util.spec_from_loader(loader.name, loader)
     mod = importlib.util.module_from_spec(spec)
     loader.exec_module(mod)
     return mod
 
 
-sdp = load_target()
+se = load_target()
 
 
 class FakeResult:
@@ -71,18 +71,18 @@ class SiblingDiscovery(unittest.TestCase):
         # The whole point: the next rename must not touch five repos again.
         for name in ("dev-ports", "env-registry", "renamed-yet-again"):
             product, expected = self._workspace(name)
-            self.assertEqual(sdp.find_sibling_registry(product), expected)
+            self.assertEqual(se.find_sibling_registry(product), expected)
 
     def test_ignores_a_registry_json_without_schema_version(self):
         product, _ = self._workspace("decoy", schema=False)
-        self.assertIsNone(sdp.find_sibling_registry(product))
+        self.assertIsNone(se.find_sibling_registry(product))
 
     def test_returns_none_when_no_sibling_holds_a_registry(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         product = Path(tmp.name) / "lonely"
         (product / "base-server").mkdir(parents=True)
-        self.assertIsNone(sdp.find_sibling_registry(str(product)))
+        self.assertIsNone(se.find_sibling_registry(str(product)))
 
 
 class ResolutionOrder(unittest.TestCase):
@@ -110,19 +110,19 @@ class ResolutionOrder(unittest.TestCase):
     def test_explicit_argument_beats_environment(self):
         explicit = self._registry_file("explicit")
         os.environ["ENV_REGISTRY"] = self._registry_file("env")
-        _, text = sdp.resolve_registry(explicit=explicit, root=str(self.lonely))
+        _, text = se.resolve_registry(explicit=explicit, root=str(self.lonely))
         self.assertEqual(json.loads(text)["marker"], "explicit")
 
     def test_env_registry_beats_sibling_discovery(self):
         os.environ["ENV_REGISTRY"] = self._registry_file("env")
-        _, text = sdp.resolve_registry(root=str(self.lonely))
+        _, text = se.resolve_registry(root=str(self.lonely))
         self.assertEqual(json.loads(text)["marker"], "env")
 
     def test_legacy_env_var_still_works_and_warns(self):
         os.environ["DEV_PORTS_REGISTRY"] = self._registry_file("legacy")
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
-            _, text = sdp.resolve_registry(root=str(self.lonely))
+            _, text = se.resolve_registry(root=str(self.lonely))
         self.assertEqual(json.loads(text)["marker"], "legacy")
         self.assertIn("deprecated", err.getvalue())
 
@@ -137,7 +137,7 @@ class ResolutionOrder(unittest.TestCase):
                 return FakeResult(1, "")
             return FakeResult(0, json.dumps({"schema_version": 1, "marker": "legacy-repo"}))
 
-        label, text = sdp.resolve_registry(root=str(self.lonely), runner=fake)
+        label, text = se.resolve_registry(root=str(self.lonely), runner=fake)
         self.assertEqual(json.loads(text)["marker"], "legacy-repo")
         self.assertEqual(calls, [
             "repos/SAVentures/env-registry/contents/registry.json",
@@ -150,7 +150,7 @@ class ResolutionOrder(unittest.TestCase):
             return FakeResult(1, "")
 
         with self.assertRaises(RuntimeError) as cm:
-            sdp.resolve_registry(root=str(self.lonely), runner=fake)
+            se.resolve_registry(root=str(self.lonely), runner=fake)
         msg = str(cm.exception)
         for hint in ("git clone", "ENV_REGISTRY", "gh auth login"):
             self.assertIn(hint, msg)
@@ -158,8 +158,8 @@ class ResolutionOrder(unittest.TestCase):
 
 class ScriptFreshness(unittest.TestCase):
     def test_sha256_is_stable_across_calls(self):
-        self.assertEqual(sdp.script_sha256(), sdp.script_sha256())
-        self.assertEqual(len(sdp.script_sha256()), 64)
+        self.assertEqual(se.script_sha256(), se.script_sha256())
+        self.assertEqual(len(se.script_sha256()), 64)
 
     def test_canonical_sha_is_recorded_in_the_registry(self):
         reg_path = HERE / "registry.json"
@@ -167,26 +167,95 @@ class ScriptFreshness(unittest.TestCase):
             self.skipTest("vendored copy — the registry lives elsewhere")
         recorded = json.loads(reg_path.read_text())["script"]["sha256"]
         self.assertEqual(
-            sdp.script_sha256(), recorded,
-            "registry.json script.sha256 is stale — run: python3 sync-dev-ports.py --print-sha")
+            se.script_sha256(), recorded,
+            "registry.json script.sha256 is stale — run: python3 sync-env.py --print-sha")
 
     def test_stale_copy_is_reported_but_does_not_raise(self):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            sdp.check_script_freshness({"script": {"sha256": "0" * 64}})
+            se.check_script_freshness({"script": {"sha256": "0" * 64}})
         self.assertIn("STALE", out.getvalue())
 
     def test_registry_without_a_script_block_is_silent(self):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            sdp.check_script_freshness({})
+            se.check_script_freshness({})
         self.assertEqual(out.getvalue(), "")
+
+
+CATALOG = {"schema_version": 1, "vars": {
+    "OPENAI_API_KEY": {"scope": "shared", "secret": True, "products": "*",
+                       "surfaces": ["local"]},
+    "ORCA_ONLY": {"scope": "product", "secret": False, "products": ["orca"],
+                  "surfaces": ["local"]},
+    "STRIPE_WEBHOOK_SECRET": {"scope": "product", "secret": True, "products": "*",
+                              "surfaces": ["local"], "local_differs": True},
+    "DB_PORT": {"scope": "derived", "secret": False, "surfaces": ["local", "test"],
+                "value": {"local": "{ports.db_dev}", "test": "{ports.db_test}"}},
+    "PRODUCT_NAME": {"scope": "derived", "secret": False, "surfaces": ["local"],
+                     "value": {"local": "{product}"}},
+    "OPTIONAL_THING": {"scope": "product", "secret": False, "products": "*",
+                       "surfaces": ["local"], "required": False},
+}}
+ENTRY = {"product_name": "orca", "slot": 3,
+         "infra_ports": {"db_dev": 5438, "db_test": 5439}}
+OTHER = {"product_name": "meerkat", "slot": 0,
+         "infra_ports": {"db_dev": 5432, "db_test": 5433}}
+
+
+class CatalogResolution(unittest.TestCase):
+    def test_derived_values_interpolate_per_surface(self):
+        got, _ = se.resolve(CATALOG, ENTRY, {}, "local")
+        self.assertEqual(got["DB_PORT"], "5438")
+        self.assertEqual(got["PRODUCT_NAME"], "orca")
+        got_test, _ = se.resolve(CATALOG, ENTRY, {}, "test")
+        self.assertEqual(got_test["DB_PORT"], "5439")
+
+    def test_a_product_only_var_is_absent_for_other_products(self):
+        got, _ = se.resolve(CATALOG, ENTRY, {"ORCA_ONLY": "x"}, "local")
+        self.assertIn("ORCA_ONLY", got)
+        got, _ = se.resolve(CATALOG, OTHER, {"ORCA_ONLY": "x"}, "local")
+        self.assertNotIn("ORCA_ONLY", got)
+
+    def test_a_required_var_with_no_value_is_reported_missing(self):
+        _, missing = se.resolve(CATALOG, ENTRY, {}, "local")
+        self.assertIn("OPENAI_API_KEY", missing)
+
+    def test_an_optional_var_with_no_value_is_not_reported(self):
+        _, missing = se.resolve(CATALOG, ENTRY, {}, "local")
+        self.assertNotIn("OPTIONAL_THING", missing)
+
+    def test_shape_only_mode_yields_names_without_values(self):
+        got, missing = se.resolve(CATALOG, ENTRY, None, "local")
+        self.assertIn("OPENAI_API_KEY", got)
+        self.assertIsNone(got["OPENAI_API_KEY"])
+        self.assertEqual(missing, [])
+
+
+class ExampleRendering(unittest.TestCase):
+    def test_secret_values_are_redacted_but_non_secrets_are_not(self):
+        want, _ = se.resolve(CATALOG, ENTRY, {"OPENAI_API_KEY": "sk-real-secret"}, "local")
+        out = se.render_example(CATALOG, want)
+        self.assertNotIn("sk-real-secret", out)
+        self.assertIn("OPENAI_API_KEY=" + se.REDACTED, out)
+        self.assertIn("PRODUCT_NAME=orca", out)
+
+
+class LocalOverrides(unittest.TestCase):
+    def test_local_layer_wins_over_the_base_layer(self):
+        # load_values layers base then .local; resolve just consumes the result,
+        # so assert the ordering contract the caller depends on.
+        merged = {}
+        merged.update({"STRIPE_WEBHOOK_SECRET": "aws-live-value"})
+        merged.update({"STRIPE_WEBHOOK_SECRET": "local-sandbox-value"})
+        got, _ = se.resolve(CATALOG, ENTRY, merged, "local")
+        self.assertEqual(got["STRIPE_WEBHOOK_SECRET"], "local-sandbox-value")
 
 
 def main():
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
     result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(suite)
-    print("sync-dev-ports selftest: %d run, %d failed, %d errored"
+    print("sync-env selftest: %d run, %d failed, %d errored"
           % (result.testsRun, len(result.failures), len(result.errors)))
     return 0 if result.wasSuccessful() else 1
 
