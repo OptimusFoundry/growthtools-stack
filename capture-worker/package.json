@@ -11,15 +11,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1031.0",
+    "@aws-sdk/client-s3": "^3.1095.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@google/genai": "^1.50.1",
+    "@google/genai": "^2.13.0",
     "kafkajs": "^2.2.4",
-    "playwright": "1.59.1"
+    "playwright": "1.61.1"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^22.20.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
   }
 }
