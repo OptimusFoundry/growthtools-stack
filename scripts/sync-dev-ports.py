@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Sync a product repo's local dev config against the shared port/name registry.
 
-Copy this file into a product repo as scripts/sync-dev-ports.py. It reads the
-registry, works out which product it is from the checkout directory name, then:
+Copy this file into a product repo as scripts/sync-dev-ports.py, alongside
+sync-dev-ports-selftest. It locates the registry, works out which product it is
+from the git remote, then:
 
   --check   (default) verify committed config (compose, env.test,
             env.local.example) and env.local against the registry. Exit 1 on
@@ -15,19 +16,34 @@ registry, works out which product it is from the checkout directory name, then:
 Standard library only, by design: these repos forbid adding pyyaml to tooling,
 which is also why the registry is JSON.
 
-  python3 scripts/sync-dev-ports.py                 # check, fetch registry
+The registry repo is private, so an anonymous HTTP fetch is not an option. It is
+located in this order, and discovery is by marker file rather than by directory
+name so that renaming the registry again costs nothing:
+
+  1. --registry <path|url>
+  2. $ENV_REGISTRY  ($DEV_PORTS_REGISTRY still works, with a warning)
+  3. a sibling checkout holding a registry.json with a schema_version
+  4. gh api against SAVentures/env-registry, then SAVentures/dev-ports
+  5. failure, naming all three fixes
+
+  python3 scripts/sync-dev-ports.py                 # check
   python3 scripts/sync-dev-ports.py --apply         # fix env.local
-  python3 scripts/sync-dev-ports.py --registry ../dev-ports/registry.json
+  python3 scripts/sync-dev-ports.py --registry ../env-registry/registry.json
+  ./scripts/sync-dev-ports-selftest                 # verify the script itself
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.request
 
-DEFAULT_REGISTRY = "https://raw.githubusercontent.com/SAVentures/dev-ports/main/registry.json"
+DEFAULT_REPO = "SAVentures/env-registry"
+LEGACY_REPO = "SAVentures/dev-ports"
+MARKER_KEY = "schema_version"
 
 # Keys this tool owns in env files. Everything else is left untouched.
 #   name -> (registry lookup, formatter)
@@ -42,12 +58,104 @@ if not sys.stdout.isatty() or os.environ.get("NO_COLOR"):
     GREEN = RED = YELLOW = DIM = RESET = ""
 
 
-def load_registry(src):
+def _read_source(src):
+    """Read a registry from a filesystem path or an http(s) URL."""
     if re.match(r"^https?://", src):
         with urllib.request.urlopen(src, timeout=15) as r:
-            return json.loads(r.read().decode())
+            return r.read().decode()
     with open(src) as f:
-        return json.load(f)
+        return f.read()
+
+
+def find_sibling_registry(root):
+    """Locate a sibling checkout holding registry.json, by marker not by name.
+
+    Keyed on registry.json rather than catalog.json so this resolver can ship
+    before the catalog exists — see the migration ordering hazard in the spec.
+    Name-independent so the next rename costs nothing.
+    """
+    if not root:
+        return None
+    workspace = os.path.dirname(os.path.abspath(root))
+    try:
+        entries = sorted(os.listdir(workspace))
+    except OSError:
+        return None
+    for name in entries:
+        cand = os.path.join(workspace, name, "registry.json")
+        if not os.path.isfile(cand):
+            continue
+        try:
+            with open(cand) as f:
+                if MARKER_KEY in json.load(f):
+                    return cand
+        except (ValueError, OSError):
+            continue
+    return None
+
+
+def gh_raw(repo, path, runner=None):
+    """Fetch a file from a private repo through the authenticated gh CLI."""
+    runner = runner or subprocess.run
+    try:
+        p = runner(["gh", "api", "repos/%s/contents/%s" % (repo, path),
+                    "-H", "Accept: application/vnd.github.raw"],
+                   capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if p.returncode != 0 or not p.stdout.strip():
+        return None
+    return p.stdout
+
+
+def resolve_registry(explicit=None, root=None, runner=None):
+    """Find registry.json. Returns (label, text); raises RuntimeError if unfound.
+
+    Order: explicit flag, $ENV_REGISTRY, sibling checkout, authenticated gh api.
+    The gh step tries the new repo name first and the old one second, so this
+    identical script works both before and after the rename.
+    """
+    if explicit:
+        return explicit, _read_source(explicit)
+
+    env_new = os.environ.get("ENV_REGISTRY")
+    if env_new:
+        return env_new, _read_source(env_new)
+    env_old = os.environ.get("DEV_PORTS_REGISTRY")
+    if env_old:
+        sys.stderr.write("%sDEV_PORTS_REGISTRY is deprecated; use ENV_REGISTRY.%s\n"
+                         % (YELLOW, RESET))
+        return env_old, _read_source(env_old)
+
+    sibling = find_sibling_registry(root if root is not None else repo_root())
+    if sibling:
+        return sibling, _read_source(sibling)
+
+    for repo in (DEFAULT_REPO, LEGACY_REPO):
+        text = gh_raw(repo, "registry.json", runner=runner)
+        if text:
+            return "gh:" + repo, text
+
+    raise RuntimeError(
+        "Could not locate the registry. Any one of these fixes it:\n"
+        "  clone it beside this repo:  git clone git@github.com:%s.git\n"
+        "  point at it directly:       ENV_REGISTRY=/path/to/registry.json\n"
+        "  authenticate the CLI:       gh auth login" % DEFAULT_REPO)
+
+
+def script_sha256():
+    """Hex digest of this script file, for vendored-copy freshness checks."""
+    with open(os.path.abspath(__file__), "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def check_script_freshness(reg):
+    """Report, never fail, when this vendored copy differs from the canonical one."""
+    want = (reg.get("script") or {}).get("sha256")
+    if not want or want == script_sha256():
+        return
+    print("%sSTALE  %s this copy differs from the registry's canonical script" % (YELLOW, RESET))
+    print("%s       re-copy it from the registry checkout before trusting a pass%s" % (DIM, RESET))
 
 
 def repo_root():
@@ -63,7 +171,6 @@ def repo_root():
 def git_remote_slug(root):
     """owner/name from origin's URL, or None. Stable across worktrees and clones."""
     try:
-        import subprocess
         url = subprocess.run(["git", "-C", root, "remote", "get-url", "origin"],
                              capture_output=True, text=True, timeout=10).stdout.strip()
     except Exception:
@@ -185,7 +292,7 @@ def apply_env_local(path, product):
         while lines and not lines[-1].strip():
             lines.pop()
         lines.append("")
-        lines.append("# Added by sync-dev-ports.py — see SAVentures/dev-ports")
+        lines.append("# Added by sync-dev-ports.py — see SAVentures/env-registry")
         for key in tail:
             want = MANAGED[key](product, "local")
             lines.append(f"{key}={want}")
@@ -203,10 +310,18 @@ def apply_env_local(path, product):
 
 def main():
     ap = argparse.ArgumentParser(description="Sync local dev ports and product name against the shared registry.")
-    ap.add_argument("--registry", default=os.environ.get("DEV_PORTS_REGISTRY", DEFAULT_REGISTRY))
+    ap.add_argument("--registry", default=None,
+                    help="path or URL to registry.json (default: $ENV_REGISTRY, "
+                         "then a sibling checkout, then gh api)")
+    ap.add_argument("--print-sha", action="store_true",
+                    help="print this script's sha256 for registry.json and exit")
     ap.add_argument("--apply", action="store_true", help="rewrite env.local (default is check-only)")
     ap.add_argument("--product", help="override product lookup (defaults to the checkout directory name)")
     args = ap.parse_args()
+
+    if args.print_sha:
+        print(script_sha256())
+        return 0
 
     root = repo_root()
     if not root:
@@ -214,19 +329,22 @@ def main():
         return 2
 
     try:
-        reg = load_registry(args.registry)
+        source, text = resolve_registry(args.registry, root=root)
+        reg = json.loads(text)
     except Exception as e:
-        print(f"{RED}Could not read registry {args.registry}: {e}{RESET}")
+        print(f"{RED}{e}{RESET}")
         return 2
+    check_script_freshness(reg)
 
     product = find_product(reg, root, args.product)
     if not product:
         print(f"{RED}No registry entry for '{args.product or os.path.basename(root)}'.{RESET}")
         print(f"Known: {', '.join(p['checkout_dir'] for p in reg['products'])}")
-        print("Claim a slot in SAVentures/dev-ports, or pass --product.")
+        print("Claim a slot in SAVentures/env-registry, or pass --product.")
         return 2
 
-    print(f"{product['product_name']} (slot {product['slot']}) — {root}\n")
+    print(f"{product['product_name']} (slot {product['slot']}) — {root}")
+    print(f"{DIM}registry: {source}{RESET}\n")
 
     problems = []
     check_compose(root, product, problems)
