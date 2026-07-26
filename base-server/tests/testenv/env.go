@@ -108,7 +108,7 @@ func Start(_ *testing.M) *Env {
 	os.Setenv("TIKTOK_OAUTH_TOKEN_URL", tiktokMock.Server.URL+"/v2/oauth/token/")
 	os.Setenv("PINTEREST_OAUTH_TOKEN_URL", pinterestMock.Server.URL+"/v5/oauth/token")
 
-	// Load env.test for DB credentials, JWT_SECRET, etc.
+	// Load env.test for DB credentials, AUTH_JWT_SECRET, etc.
 	// We load manually so that mock URL env vars (already set above) are not
 	// overwritten.
 	loadEnvTestFile("env.test")

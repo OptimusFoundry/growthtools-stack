@@ -158,7 +158,7 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 	})
 
 	// Platform OAuth configs
-	oauthRedirectBase := os.Getenv("OAUTH_REDIRECT_BASE")
+	oauthRedirectBase := os.Getenv("AUTH_OAUTH_REDIRECT_BASE")
 	if oauthRedirectBase == "" {
 		oauthRedirectBase = fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
 	}

@@ -928,7 +928,7 @@ func TestPlatformsAPI_ConnectBluesky(t *testing.T) {
 }
 
 // TestPlatformsAPI_ConnectWithToken tests POST /api/protected/platforms/token.
-// The 201 path requires THREADS_ACCESS_TOKEN to be set in env.test.
+// The 201 path requires SOCIAL_THREADS_ACCESS_TOKEN to be set in env.test.
 func TestPlatformsAPI_ConnectWithToken(t *testing.T) {
 	t.Parallel()
 	env := testenv.GlobalEnv

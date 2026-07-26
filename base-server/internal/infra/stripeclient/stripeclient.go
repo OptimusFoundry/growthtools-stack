@@ -13,7 +13,7 @@ import (
 
 // ProductMetadataKey is the platform-shared metadata key used by every product
 // sharing the same Stripe account. The value (this product's name) comes from
-// the PRODUCT_NAME env var and is held on Client.
+// the APP_PRODUCT_NAME env var and is held on Client.
 const ProductMetadataKey = "product"
 
 type Client struct {

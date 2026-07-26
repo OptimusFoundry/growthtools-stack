@@ -252,6 +252,49 @@ class LocalOverrides(unittest.TestCase):
         self.assertEqual(got["STRIPE_WEBHOOK_SECRET"], "local-sandbox-value")
 
 
+class RenamedFromMigration(unittest.TestCase):
+    RENAMED_CATALOG = {"schema_version": 1, "vars": {
+        "AUTH_JWT_SECRET": {"scope": "product", "secret": True, "products": "*",
+                            "surfaces": ["local"], "renamed_from": "JWT_SECRET"},
+    }}
+
+    def _renamed(self):
+        return se.build_renamed_map(self.RENAMED_CATALOG)
+
+    def test_build_renamed_map(self):
+        self.assertEqual(self._renamed(), {"JWT_SECRET": "AUTH_JWT_SECRET"})
+
+    def test_old_name_is_reported_once_not_as_missing_and_extra(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        path = os.path.join(tmp.name, "env.local")
+        with open(path, "w") as f:
+            f.write("JWT_SECRET=abc123\n")
+        want = {"AUTH_JWT_SECRET": None}
+        known = {"AUTH_JWT_SECRET"}
+        problems = []
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            se.check_file(path, "env.local", want, known, True, problems, self._renamed())
+        self.assertEqual([p[2] for p in problems], ["stale-name"])
+        out = buf.getvalue()
+        self.assertNotIn("MISSING", out)
+        self.assertNotIn("EXTRA", out)
+
+    def test_apply_rewrites_the_key_in_place_preserving_its_value(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        path = os.path.join(tmp.name, "env.local")
+        with open(path, "w") as f:
+            f.write("JWT_SECRET=my-local-value\nOTHER=untouched\n")
+        want = {"AUTH_JWT_SECRET": None}
+        se.apply_env_local(path, want, self._renamed())
+        lines = open(path).read().splitlines()
+        self.assertIn("AUTH_JWT_SECRET=my-local-value", lines)
+        self.assertNotIn("JWT_SECRET=my-local-value", lines)
+        self.assertIn("OTHER=untouched", lines)
+
+
 def main():
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
     result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(suite)
