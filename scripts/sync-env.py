@@ -314,37 +314,13 @@ def catalog_keys(catalog, product_entry, surface):
             if surface in s.get("surfaces", []) and applicable(s, product)}
 
 
-def build_renamed_map(catalog):
-    """old_name -> new_name, from every var's renamed_from.
-
-    Lets a stale env.local be reported and fixed under its new name rather
-    than as simultaneously MISSING (the new name) and EXTRA (the old one).
-    """
-    out = {}
-    for new_name, spec in catalog.get("vars", {}).items():
-        old_name = spec.get("renamed_from")
-        if old_name and old_name != new_name:
-            out[old_name] = new_name
-    return out
-
-
-def check_file(path, label, want, known, shape_only, problems, renamed):
+def check_file(path, label, want, known, shape_only, problems):
     env = read_env(path)
     if env is None:
         print("  %s%s: absent%s" % (DIM, label, RESET))
         return
-    new_to_old = {}
-    for old, new in renamed.items():
-        new_to_old.setdefault(new, old)
-    stale = set()
     for key in sorted(want):
         if key not in env:
-            old = new_to_old.get(key)
-            if old and old in env:
-                problems.append((label, key, "stale-name"))
-                print("  %sRENAMED%s %s: %s is now %s" % (YELLOW, RESET, label, old, key))
-                stale.add(old)
-                continue
             problems.append((label, key, "unset"))
             print("  %sMISSING%s %s: %s" % (RED, RESET, label, key))
         elif not shape_only and want[key] is not None and env[key][1] != want[key]:
@@ -352,14 +328,13 @@ def check_file(path, label, want, known, shape_only, problems, renamed):
             print("  %sDRIFT  %s %s: %s" % (RED, RESET, label, key))
     # `known` is every var the catalog grants this product, including ones with
     # no stored value. Without it, a var reported as NO VALUE would be reported
-    # a second time as EXTRA, which reads as two unrelated problems. `stale` is
-    # excluded for the same reason: it was already reported once, as RENAMED.
-    for key in sorted(set(env) - known - stale):
+    # a second time as EXTRA, which reads as two unrelated problems.
+    for key in sorted(set(env) - known):
         print("  %sEXTRA  %s %s: %s is not in the catalog for this product"
               % (YELLOW, RESET, label, key))
 
 
-def apply_env_local(path, want, renamed):
+def apply_env_local(path, want):
     """Rewrite catalog-managed keys, preserving comments and unmanaged lines."""
     if os.path.isfile(path):
         lines = open(path, errors="replace").read().split("\n")
@@ -368,19 +343,9 @@ def apply_env_local(path, want, renamed):
     seen, changed = set(), []
     for i, line in enumerate(lines):
         m = re.match(r"^([A-Z0-9_]+)=(.*)$", line)
-        if not m:
+        if not m or m.group(1) not in want:
             continue
         key = m.group(1)
-        new_key = renamed.get(key)
-        if new_key and new_key in want and new_key not in seen:
-            # Rename in place, keeping the value the local file already has —
-            # local secrets often deliberately differ from the catalog value.
-            lines[i] = "%s=%s" % (new_key, m.group(2))
-            seen.add(new_key)
-            changed.append("%s -> %s" % (key, new_key))
-            continue
-        if key not in want:
-            continue
         seen.add(key)
         if want[key] is not None and m.group(2).strip() != want[key]:
             lines[i] = "%s=%s" % (key, want[key])
@@ -488,22 +453,20 @@ def main():
                   % (GREEN, len(want), RESET))
         return 0
 
-    renamed = build_renamed_map(catalog)
-
     if args.apply:
-        apply_env_local(os.path.join(base, "env.local"), want, renamed)
+        apply_env_local(os.path.join(base, "env.local"), want)
         return 0
 
     problems = []
     known_local = catalog_keys(catalog, product, "local")
     check_file(os.path.join(base, "env.local"), "env.local", want, known_local,
-               shape_only, problems, renamed)
+               shape_only, problems)
     # env.test holds deliberately different values (test database, placeholder
     # keys), so only its variable NAMES are checked against the catalog.
     want_test, _ = resolve(catalog, product, values, "test")
     known_test = catalog_keys(catalog, product, "test")
     check_file(os.path.join(base, "env.test"), "env.test", want_test, known_test,
-               True, problems, renamed)
+               True, problems)
 
     if problems or missing:
         print("\n%s%d mismatch(es).%s Run with --apply to fix env.local."
