@@ -14,8 +14,8 @@ COPY *.ts ./
 COPY fixtures ./fixtures
 
 ENV NODE_ENV=production
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=8090
+EXPOSE 8090
 
 # Using tsx so we don't ship a separate build step for this thin service.
 CMD ["npx", "tsx", "server.ts"]
