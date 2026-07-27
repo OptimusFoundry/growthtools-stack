@@ -252,21 +252,30 @@ def load_values(values_dir, product, surface):
 
 
 def interpolate(template, product_entry):
-    """Resolve {product} and {ports.*} against the registry entry."""
+    """Resolve {product}, {ports.*}, and {extra_ports.*} against the registry entry."""
     out = template.replace("{product}", product_entry["product_name"])
 
     def port(m):
-        return str(product_entry["infra_ports"][m.group(1)])
+        key = m.group(1)
+        ports = product_entry["infra_ports"]
+        if key not in ports:
+            ports = product_entry["app_ports"]
+        return str(ports[key])
 
-    return re.sub(r"\{ports\.([a-z_]+)\}", port, out)
+    def extra_port(m):
+        return str(product_entry["app_ports"]["extra"][m.group(1)])
+
+    out = re.sub(r"\{ports\.([a-z_]+)\}", port, out)
+    out = re.sub(r"\{extra_ports\.([a-z0-9_-]+)\}", extra_port, out)
+    return out
 
 
 def applicable(spec, product):
     """Does this product get this var at all?"""
-    if spec.get("scope") == "derived":
-        return True
     products = spec.get("products")
-    return products == "*" or product in (products or [])
+    if products is not None:
+        return products == "*" or product in products
+    return spec.get("scope") == "derived"
 
 
 def resolve(catalog, product_entry, values, surface):

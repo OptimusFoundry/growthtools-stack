@@ -10,7 +10,7 @@
 //                     local invocation produces the same artefacts.
 //
 // Env:
-//   PORT (default 8080)
+//   PORT (default 8090)
 //   APP_URL, APP_EMAIL, APP_PASSWORD — defaults used when request omits them
 //   GEMINI_API_KEY (or GOOGLE_AI_API_KEY) — forwarded to the agent
 //   S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY — uploads
@@ -51,7 +51,7 @@ const config = JSON.parse(
 ) as GuineaPig;
 
 const sharedSecret = process.env.CAPTURE_WORKER_SHARED_SECRET ?? "";
-const port = Number.parseInt(process.env.PORT ?? "8080", 10);
+const port = Number.parseInt(process.env.PORT ?? "8090", 10);
 
 async function readBody(req: http.IncomingMessage): Promise<string> {
 	return new Promise((resolve, reject) => {

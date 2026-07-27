@@ -67,8 +67,9 @@ services:
       context: ./capture-worker
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8090:8090"
     environment:
+      PORT: "8090"
       # Default: capture the webapp running on the host. Override if you want
       # to run it against protoapp.xyz — remember the worker needs to be able
       # to hit /test-login there.
@@ -87,7 +88,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8090/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
