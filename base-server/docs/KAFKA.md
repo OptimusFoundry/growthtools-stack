@@ -1,6 +1,6 @@
 # Kafka Integration Patterns
 
-Uses `github.com/segmentio/kafka-go`. Env vars: `KAFKA_BROKERS`, `KAFKA_TOPIC`, `KAFKA_CONSUMER_GROUP`.
+Uses `github.com/segmentio/kafka-go`. Env vars: `EVENTS_BROKERS`, `EVENTS_TOPIC`, `EVENTS_CONSUMER_GROUP`.
 
 ## Event Type Definition
 
