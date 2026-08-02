@@ -18,7 +18,7 @@ linked tech plan (created by plan-writer).
 
 | Epic | Feature | PRD | Plan | Status |
 |------|---------|-----|------|--------|
-| EP-001 | Publish Blog Posts to shubhanshu.dev | docs/prds/2026-08-02-blog-site-publish.md | — | Spec'd |
+| EP-001 | Publish Blog Posts to shubhanshu.dev | docs/prds/2026-08-02-blog-site-publish.md | docs/plans/2026-08-02-blog-site-publish.md | Planned |
 
 ---
 
