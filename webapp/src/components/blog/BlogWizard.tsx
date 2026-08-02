@@ -259,11 +259,20 @@ export function BlogWizard({
 				postId = created.id;
 			}
 			const result = await publishBlog(postId as string);
-			addBanner({
-				type: "success",
-				title: "Blog post published",
-				dismissible: true,
-			});
+			if (result.sitePublishError) {
+				addBanner({
+					type: "warning",
+					title: "Blog post published, but the GitHub push failed",
+					description: result.sitePublishError,
+					dismissible: true,
+				});
+			} else {
+				addBanner({
+					type: "success",
+					title: "Blog post published",
+					dismissible: true,
+				});
+			}
 			// Edit mode has a detail page to stay on and reflect the outcome
 			// (site-publish status row); create mode has no prior page for
 			// that post, so send the user to its freshly created detail page.

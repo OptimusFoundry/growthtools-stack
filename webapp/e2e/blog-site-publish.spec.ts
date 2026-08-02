@@ -264,4 +264,28 @@ test.describe("Blog Publish Flow", () => {
 
 		await expect(page).toHaveURL(new RegExp(`/blog/${fullBlogPost.id}$`));
 	});
+
+	test("publish with a site-publish error shows a warning banner, not a flat success banner", async ({
+		network,
+		page,
+	}) => {
+		network.use(blogEndpoints.get[200]());
+		network.use(blogScenarios.publishWithSiteError());
+
+		await page.goto(detailUrl);
+		await page.waitForLoadState("networkidle");
+
+		await page
+			.getByRole("button", { name: /publish/i })
+			.first()
+			.click();
+		await page.waitForLoadState("networkidle");
+
+		await expect(
+			page.getByText("Blog post published, but the GitHub push failed"),
+		).toBeVisible();
+		await expect(
+			page.getByText("Blog post published", { exact: true }),
+		).not.toBeVisible();
+	});
 });
