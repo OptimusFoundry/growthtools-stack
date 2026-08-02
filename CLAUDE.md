@@ -25,38 +25,42 @@ growth-tools/
 > **IMPORTANT:** At the start of every session, check what skills and MCP tools are available and use them throughout.
 
 - **Superpowers skills** — invoke with the `Skill` tool. Check available skills before starting any task; there is likely a skill that applies. Key skills: `superpowers:writing-plans`, `superpowers:using-git-worktrees`, `superpowers:finishing-a-development-branch`.
-- **Backend subagent coordination** — for Go backend work, use `backend-subagent-development` instead of `superpowers:subagent-driven-development`. It dispatches backend-* agents in parallel batches by phase (code agents first, then test agents), which is safe because agents write to isolated files.
-- **Frontend composition patterns** — for any webapp page/feature work (CRUD lists, forms, detail views, routes), invoke `react-composition-patterns` **before coding**. Enforces slot-based shells, custom-hook extraction (`useConfirmableDelete`), config-driven status maps, and bans nested render ternaries + hardcoded inline strings. Pair with `playwright-coverage-check`.
+- **Backend subagent coordination** — for Go backend work, dispatch the `backend-supervisor` agent. It orchestrates backend-* workers in parallel batches by phase (code agents first, then test agents — safe because they write to isolated files), runs the build/vet/test gate + pre-commit, and commits.
+- **Frontend composition patterns** — for any webapp page/feature work (CRUD lists, forms, detail views, routes), invoke `frontend-composition-rules` **before coding**. Enforces slot-based shells, custom-hook extraction (`useConfirmableDelete`), config-driven status maps, and bans nested render ternaries + hardcoded inline strings. Pair with `frontend-e2e-rules`.
 - **Language Server (LSP)** — use the `LSP` tool for precise Go and TypeScript navigation: go-to-definition, find-references, type information. Prefer this over grep when exploring types or tracing call chains. **LSP is a deferred tool** — load it once per session with `ToolSearch(query: "select:LSP", max_results: 1)` before first use. Pass the same instruction to any subagent you dispatch that will navigate code.
 - **Browser automation** — `mcp__claude-in-chrome__*` tools available for testing frontend features in a real browser. Use for verifying UI changes end-to-end.
 - **Playwright MCP** — `mcp__plugin_playwright_*` tools for browser automation and E2E verification.
 
 When in doubt, run `ToolSearch` to discover available tools for a task before doing it manually.
 
+> **Agent routing is hook-enforced.** `.claude/hooks/agent-routing-guard.py` runs on every `Agent`/`Task` dispatch and checks it against `.claude/agents/routing.yml`; `.claude/hooks/lsp-hint.py` nudges `Bash`/`Grep`/`Read` calls toward `LSP` when the query is symbol-shaped. Both are wired up in `.claude/settings.json`.
+
 ## Agent Dispatch
 
-- **Dispatch guide:** [.claude/agents/README.md](.claude/agents/README.md) — read this before spinning up agents. Lists every agent, its model tier (haiku/sonnet/opus), which docs it reads, and parallelisation rules.
+- **Dispatch guide:** [.claude/agents/README.md](.claude/agents/README.md) — read this before spinning up agents. Lists every agent, its model tier (sonnet/opus), which docs it reads, and parallelisation rules. Spawn tree: [.claude/agents/NESTED-SUBAGENTS.md](.claude/agents/NESTED-SUBAGENTS.md).
+- Agents are grouped into department subfolders (`engineering/` — with `backend/` + `frontend/` build cells, the plan/spec cell, and shared tools; `qa/` — all review + audit; `ops/` — prod debugging) but are dispatched by `name`, so the folders don't affect invocation. `engineering/ios/` ships in this harness for template parity but has no applicable target in this repo (no `ios/` track) — ignore it.
 
 > **IMPORTANT — implementation workflow (always three steps):**
 >
 > **Step 0 — Isolate:** Use the `superpowers:using-git-worktrees` skill to create an isolated git worktree before ANY work begins — features, bugfixes, refactors, migrations, or config changes. Never work directly on `main`.
 >
-> **Step 1 — Architect:** Use `plan-writer` to investigate the PRD, tracker, and docs, then produce a detailed implementation plan (DB changes, API contracts, UI changes). Only reads code to fill specific gaps the docs don't cover.
+> **Step 1 — Architect:** Capture the feature as a PRD with the `shared-writing-prds` skill (interactive; writes `docs/prds/<feature>.md` + an epic row in `docs/TRACKER.md`). Then dispatch `plan-writer` on that PRD path — it orchestrates parallel `plan-researcher` subagents (db/api/fe) to resolve each layer's contract and synthesizes a **code-free** tech plan (contracts + signatures, no code bodies) with a ticket table.
 >
 > **Step 2 — Execute:** Choose the right executor for the plan:
-> - Full-stack feature (both layers) → dispatch `fullstack-supervisor` agent
-> - Backend-only → invoke `backend-subagent-development` skill (stays in main session, batches haiku agents directly)
+> - Full-stack feature (both layers), from a PRD → dispatch `feature-manager` agent (PRD → tech spec → build); for many features at once → `epic-supervisor`
+> - Backend-only → dispatch `backend-supervisor` agent
 > - Frontend-only → dispatch `frontend-supervisor` agent
 >
 > Never write code directly. Always isolate in a worktree first, then architect, then supervise.
 
-### Backend agents (`backend-*` prefix)
-Haiku — batch freely (pattern-backed, read docs then execute):
+### Backend agents (`engineering/backend/`)
+Haiku/sonnet — batch freely (pattern-backed, read docs then execute):
 
 | Agent | Task |
 |-------|------|
 | `backend-feature-scaffold` | Scaffold new handler/processor/store module |
 | `backend-api-endpoint` | Add endpoint to existing feature |
+| `backend-code-editor` | Targeted edits to existing backend code |
 | `backend-error-handler` | Add error types + handleError mapping |
 | `backend-store-crud` | Add store CRUD methods |
 | `backend-migration-gen` | Generate Flyway SQL migration |
@@ -71,11 +75,10 @@ Sonnet — run individually (judgment required):
 | Agent | Task |
 |-------|------|
 | `backend-supervisor` | Execute a full plan end-to-end: code → tests → build/vet/test → pre-commit → commit |
-| `backend-code-reviewer` | Go backend pattern validation |
 | `backend-debug-helper` | Trace execution paths, root cause analysis |
 | `backend-go-specialist` | Idiomatic Go + architectural guidance |
 
-### Frontend agents (`frontend-*` prefix)
+### Frontend agents (`engineering/frontend/`)
 Sonnet — run individually (judgment required):
 
 | Agent | Task |
@@ -83,8 +86,9 @@ Sonnet — run individually (judgment required):
 | `frontend-supervisor` | Execute a full plan end-to-end: code → tests → build/lint → pre-commit → commit |
 | `frontend-page-builder` | Scaffold routes, pages, tabs, and forms |
 | `frontend-component-builder` | Build React 19 design system components |
+| `frontend-code-editor` | Targeted edits to existing frontend code |
+| `frontend-theme-designer` | Research/apply per-theme font pairings |
 | `frontend-e2e-test-writer` | Write exhaustive Playwright E2E tests |
-| `frontend-code-reviewer` | React/TypeScript/design-system pattern validation |
 
 Haiku — batch freely:
 
@@ -93,9 +97,25 @@ Haiku — batch freely:
 | `frontend-style-checker` | Validate SCSS against design tokens |
 | `frontend-test-fixer` | Fix failing frontend tests |
 
-### Other agents
-- `pre-commit` (haiku) — CI checks for both backend + frontend
-- `pr-prep`, `code-reviewer`, `security-auditor` (sonnet/opus) — cross-cutting
+### Plan/spec cell (`engineering/`)
+- `plan-writer`, `plan-critic`, `plan-researcher` — PRD → code-free tech plan, with an adversarial critique pass
+- `feature-manager`, `epic-supervisor` — end-to-end PRD → spec → build orchestration
+- `codemod-supervisor`, `codemod-worker`, `code-explorer` — repo-wide mechanical refactors
+- `node-service-code-editor` — edits outside base-server/webapp (e.g. capture-worker)
+
+### QA agents (`qa/`)
+- `code-reviewer`, `backend-code-reviewer`, `frontend-code-reviewer` — pattern validation
+- `security-auditor` — OWASP-focused review
+- `consistency-auditor`, `audit-checker`, `review-checker` — cross-cutting consistency + review-quality gates
+- `frontend-a11y-auditor`, `frontend-a11y-checker` — accessibility
+- `test-auditor` — test-coverage gaps
+- `pr-prep`, `pr-supervisor` — pre-PR checklist and PR orchestration
+
+### Ops agents (`ops/`)
+- `prod-debug` (coordinator), `prod-db-query`, `prod-logs` — production investigation, dispatched via `prod-debug` only
+
+### Other
+- `pre-commit` (`engineering/pre-commit.md`) — CI checks for both backend + frontend
 
 ## Quick Reference
 
