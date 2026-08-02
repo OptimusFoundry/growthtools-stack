@@ -277,7 +277,7 @@ Backlog → Spec'd → Planned → In progress → Shipped. Tickets live in the 
 
 | Epic | Feature | PRD | Plan | Status |
 |------|---------|-----|------|--------|
-| EP-001 | Storybook Capture → Social Post | docs/prds/2026-08-02-storybook-social-autopost.md | docs/plans/2026-08-02-storybook-social-autopost.md | Planned |
+| EP-001 | Storybook Capture → Social Post | docs/prds/2026-08-02-storybook-social-autopost.md | docs/plans/2026-08-02-storybook-social-autopost.md | Shipped |
 
 ---
 
