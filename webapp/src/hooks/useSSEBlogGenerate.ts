@@ -1,10 +1,15 @@
 import { useCallback, useRef, useState } from "react";
 import type { ApiBlogPost } from "@/api/types/blog";
+import { extractJSONStringField } from "@/utils/streamingJson";
 
 type BlogSSEPhase = "idle" | "generating";
 
 interface SSEBlogGenerateState {
 	phase: BlogSSEPhase;
+	// Raw text of the model's in-progress JSON response, accumulated as
+	// chunks arrive — never rendered directly. `streamingContent` (derived
+	// from this) is what the UI shows.
+	rawJSON: string;
 	streamingContent: string;
 	blogPost: ApiBlogPost | null;
 	loading: boolean;
@@ -13,6 +18,7 @@ interface SSEBlogGenerateState {
 
 const initialState: SSEBlogGenerateState = {
 	phase: "idle",
+	rawJSON: "",
 	streamingContent: "",
 	blogPost: null,
 	loading: false,
@@ -94,10 +100,17 @@ export function useSSEBlogGenerate() {
 								}
 							} else if (currentEvent === "chunk") {
 								const payload = JSON.parse(data) as { text: string };
-								setState((prev) => ({
-									...prev,
-									streamingContent: prev.streamingContent + payload.text,
-								}));
+								setState((prev) => {
+									const rawJSON = prev.rawJSON + payload.text;
+									return {
+										...prev,
+										rawJSON,
+										streamingContent: extractJSONStringField(
+											rawJSON,
+											"content",
+										),
+									};
+								});
 							} else if (currentEvent === "done") {
 								const post = JSON.parse(data) as ApiBlogPost;
 								setState((prev) => ({

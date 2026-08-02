@@ -10,9 +10,11 @@
  *   DELETE /api/protected/blog/:id        → 200 (delete), 404, 500
  *   POST   /api/protected/blog/generate   → 201 (generate), 400, 500
  *   POST   /api/protected/blog/:id/publish → 200 (publish), 404, 500
+ *   POST   /api/protected/blog/generate/stream → SSE (streaming generate)
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
+import { blogScenarios } from "./handlers/blog.handlers";
 import { setupEndpoint } from "./helpers/endpoint";
 import { blogPosts } from "./mocks/data";
 
@@ -480,6 +482,45 @@ test.describe("Blog", () => {
 
 			const body = await page.textContent("body");
 			expect(body).toBeTruthy();
+		});
+	});
+
+	test.describe("Streaming Generate — Live Preview", () => {
+		test("never renders raw JSON while streaming, and decodes escapes once done", async ({
+			network,
+			page,
+		}) => {
+			network.use(blogScenarios.streamGenerate());
+
+			await page.goto("/blog/new");
+			await page.waitForLoadState("networkidle");
+
+			await page
+				.getByPlaceholder(/what should this blog post be about/i)
+				.fill("Write about testing.");
+
+			const generateClick = page
+				.getByRole("button", { name: /generate/i })
+				.click();
+
+			// Poll the whole time generation is in flight — the raw JSON
+			// envelope markers (`{"title"`, `"content":"`) must never leak into
+			// the DOM at any point, not just once the stream settles.
+			const assertNoRawJsonLeak = async () => {
+				for (let i = 0; i < 20; i++) {
+					const bodyText = await page.locator("body").innerText();
+					expect(bodyText).not.toContain('"content":"');
+					expect(bodyText).not.toContain('{"title"');
+					await page.waitForTimeout(25);
+				}
+			};
+
+			await Promise.all([generateClick, assertNoRawJsonLeak()]);
+			await page.waitForLoadState("networkidle");
+
+			// The decoded escape sequences (embedded quote, newlines) render as
+			// real characters, not literal `\"` / `\n` JSON escapes.
+			await expect(page.getByText('He said "hello".')).toBeVisible();
 		});
 	});
 });

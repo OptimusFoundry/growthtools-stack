@@ -203,4 +203,70 @@ export const blogScenarios = {
 				site_publish_error: undefined,
 			}),
 		),
+
+	/**
+	 * 200: SSE stream for POST /blog/generate/stream. The backend streams the
+	 * model's raw JSON response as arbitrary text fragments (see
+	 * base-server/internal/ai/blog/blog.go) — chunk boundaries here are
+	 * deliberately split mid-escape-sequence (right after the `\` of a `\"`)
+	 * to exercise the client's incremental JSON-field extractor, not just its
+	 * happy path.
+	 */
+	streamGenerate: () =>
+		http.post("*/api/protected/blog/generate/stream", () => {
+			const streamedContent = 'Line one.\nHe said "hello".\nLine two.';
+			const payload = {
+				title: "Streaming Test Post",
+				content: streamedContent,
+				excerpt: "A streamed post.",
+				seo_title: "Streaming Test Post",
+				meta_description: "m",
+				keywords: ["streaming"],
+				og_title: "Streaming Test Post",
+				og_description: "d",
+			};
+			const rawJSON = JSON.stringify(payload);
+			const splitAt = rawJSON.indexOf('\\"hello') + 1; // land mid-escape
+			const textChunks = [
+				rawJSON.slice(0, splitAt),
+				rawJSON.slice(splitAt, splitAt + 30),
+				rawJSON.slice(splitAt + 30),
+			];
+
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(
+						encoder.encode(
+							`event: phase\ndata: ${JSON.stringify({ phase: "generating" })}\n\n`,
+						),
+					);
+					for (const text of textChunks) {
+						controller.enqueue(
+							encoder.encode(
+								`event: chunk\ndata: ${JSON.stringify({ text })}\n\n`,
+							),
+						);
+					}
+					controller.enqueue(
+						encoder.encode(
+							`event: done\ndata: ${JSON.stringify({
+								...generatedBlog,
+								title: payload.title,
+								content: payload.content,
+							})}\n\n`,
+						),
+					);
+					controller.close();
+				},
+			});
+
+			return new HttpResponse(stream, {
+				headers: {
+					"Content-Type": "text/event-stream",
+					"Cache-Control": "no-cache",
+					Connection: "keep-alive",
+				},
+			});
+		}),
 };
