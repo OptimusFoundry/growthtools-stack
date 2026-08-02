@@ -1,6 +1,6 @@
 # Publish Blog Posts to shubhanshu.dev — Tech Plan
 
-**Epic:** EP-001   **PRD:** docs/prds/2026-08-02-blog-site-publish.md   **Scope:** full-stack
+**Epic:** EP-002   **PRD:** docs/prds/2026-08-02-blog-site-publish.md   **Scope:** full-stack
 
 ## AC coverage
 
@@ -18,17 +18,17 @@
 
 | Ticket | Epic | Layer | Depends-on | AC refs | Status |
 |--------|------|-------|-----------|---------|--------|
-| B1 | EP-001 | db  | —          | AC1,AC5 | Todo |
-| B2 | EP-001 | db  | B1         | AC1,AC5 | Todo |
-| B3 | EP-001 | api | —          | AC2 | Todo |
-| B4 | EP-001 | api | B2,B3      | AC2,AC3,AC4,AC7 | Todo |
-| B5 | EP-001 | api | B2,B4      | AC2,AC5,AC6,AC7 | Todo |
-| B6 | EP-001 | api | B5         | AC2,AC5,AC6 | Todo |
-| B7 | EP-001 | api | B2         | AC1 | Todo |
-| F1 | EP-001 | fe  | B6,B7      | AC1,AC5,AC6 | Todo |
-| F2 | EP-001 | fe  | F1         | AC1 | Todo |
-| F3 | EP-001 | fe  | F1         | AC5,AC6,AC7 | Todo |
-| F4 | EP-001 | fe  | F2,F3      | AC1,AC2,AC5,AC6,AC7 | Todo |
+| B1 | EP-002 | db  | —          | AC1,AC5 | Todo |
+| B2 | EP-002 | db  | B1         | AC1,AC5 | Todo |
+| B3 | EP-002 | api | —          | AC2 | Todo |
+| B4 | EP-002 | api | B2,B3      | AC2,AC3,AC4,AC7 | Todo |
+| B5 | EP-002 | api | B2,B4      | AC2,AC5,AC6,AC7 | Todo |
+| B6 | EP-002 | api | B5         | AC2,AC5,AC6 | Todo |
+| B7 | EP-002 | api | B2         | AC1 | Todo |
+| F1 | EP-002 | fe  | B6,B7      | AC1,AC5,AC6 | Todo |
+| F2 | EP-002 | fe  | F1         | AC1 | Todo |
+| F3 | EP-002 | fe  | F1         | AC5,AC6,AC7 | Todo |
+| F4 | EP-002 | fe  | F2,F3      | AC1,AC2,AC5,AC6,AC7 | Todo |
 
 ## Shared contract
 
