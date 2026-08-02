@@ -13,6 +13,9 @@
 export type ThemeName =
 	| "editorial"
 	| "light"
+	| "oat"
+	| "ember"
+	| "mono"
 	| "dark"
 	| "brutal"
 	| "cosmos"
@@ -39,7 +42,9 @@ export type ThemeName =
 	| "radio"
 	| "riso"
 	| "vinyl"
-	| "zen";
+	| "zen"
+	| "whisper"
+	| "chalk";
 
 export interface Theme {
 	name: ThemeName;
@@ -50,6 +55,9 @@ export interface Theme {
 export const themes: Record<ThemeName, Theme> = {
 	editorial: { name: "editorial", label: "Editorial", colorScheme: "light" },
 	light: { name: "light", label: "Light", colorScheme: "light" },
+	oat: { name: "oat", label: "Oat", colorScheme: "light" },
+	ember: { name: "ember", label: "Ember", colorScheme: "light" },
+	mono: { name: "mono", label: "Mono", colorScheme: "light" },
 	dark: { name: "dark", label: "Dark", colorScheme: "dark" },
 	brutal: { name: "brutal", label: "Brutal", colorScheme: "light" },
 	cosmos: { name: "cosmos", label: "Cosmos", colorScheme: "dark" },
@@ -77,6 +85,8 @@ export const themes: Record<ThemeName, Theme> = {
 	riso: { name: "riso", label: "Riso", colorScheme: "light" },
 	vinyl: { name: "vinyl", label: "Vinyl", colorScheme: "dark" },
 	zen: { name: "zen", label: "Zen", colorScheme: "light" },
+	whisper: { name: "whisper", label: "Whisper", colorScheme: "light" },
+	chalk: { name: "chalk", label: "Chalk", colorScheme: "light" },
 };
 
 export const themeNames = Object.keys(themes) as ThemeName[];

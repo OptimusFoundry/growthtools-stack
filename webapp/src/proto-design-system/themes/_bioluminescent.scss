@@ -91,4 +91,59 @@
 
   // Header background (more visible in bioluminescent theme)
   --color-header-bg: var(--color-base-300);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0.018 206deg);   // Lc -35.2 / 5.33:1, non-content only
+  --color-accent-bg:      oklch(19% 0.045 158deg);
+  --color-success-active:  oklch(67% 0.16 148deg);
+  --color-warning-active:  oklch(71% 0.14 78deg);
+  --color-error-active:  oklch(38% 0.14 22deg);
+  --color-info-active:  oklch(38% 0.07 235deg);
+  --shadow-xs: 0 1px 2px 0 oklch(3% 0.018 226deg / 0.40);
+  --shadow-sm: 0 2px 4px -1px oklch(3% 0.018 226deg / 0.50), 0 1px 2px -1px oklch(3% 0.018 226deg / 0.35);
+  --shadow-md: 0 8px 16px -4px oklch(2% 0.018 226deg / 0.60), 0 2px 4px -2px oklch(2% 0.018 226deg / 0.40);
+  --shadow-lg: 0 20px 32px -8px oklch(2% 0.018 226deg / 0.65), 0 4px 8px -4px oklch(2% 0.018 226deg / 0.45);
+  --shadow-xl: 0 32px 48px -12px oklch(1% 0.018 226deg / 0.70), 0 8px 16px -8px oklch(1% 0.018 226deg / 0.50);
+  --shadow-primary: 0 8px 24px 0 oklch(76% 0.120 215deg / 0.35);
+  --shadow-accent:  0 8px 24px 0 oklch(83% 0.15 158deg / 0.30);
+
+  // Motion — the brief is drift, not sparkle: bioluminescent creatures
+  // propel with a fast contraction then coast on drag through a viscous
+  // medium, they don't snap into place like land-based UI chrome. J-9's
+  // hover-150ms/accordion-tabs-240ms/400ms-ceiling numbers are house-wide
+  // contracts, not this theme's to renegotiate (--duration-instant and
+  // focus-ring timing are untouched per the hard rule, and every other
+  // --duration-* is left at house default too) — the two levers pulled are
+  // curve *shape*, not pace, on the two tokens this theme's own components
+  // actually consume directly:
+  // - --ease-out (the house-wide default curve — every hover fill, modal/
+  //   dropdown/toast/alert/banner/drawer/page enter-exit, and the
+  //   transition-colors/-transform/-opacity/-shadow mixins all resolve
+  //   through it) reshaped from the house's quick-settle quad
+  //   (cubic-bezier(0.22, 1, 0.36, 1), y hits 1 by roughly x=0.4-0.5) to an
+  //   expo-out glide (y1=1 at x1=0.19 - the pulse - then a long, nearly
+  //   flat tail out to x2=0.22 - the coast) - same rise speed, a
+  //   materially longer decay, at the *same* duration tokens, so this reads
+  //   as "coasts to rest" everywhere without breaking the 150/240/400ms
+  //   contract.
+  // - --spring-gentle (Button's default press spring, motion.dev-driven)
+  //   detuned from the house's 120/14/1 (zeta 0.64, wn 10.95 rad/s - a
+  //   light, slightly underdamped snap) to 90/20/1.4 (zeta 0.89, wn 8.02
+  //   rad/s - lower natural frequency reads as heavier/slower to respond,
+  //   higher damping ratio removes the house's small rebound so the press
+  //   settles like it's pushing against water instead of rubber).
+  // Declined, with reason: --spring-stiff (Tabs indicator) and
+  // --spring-slow (StatCard counter) already read as a quick fin-flick and
+  // a settled count-up respectively - no theme-specific story improves
+  // either, and StatCard's counter isn't a "drift" surface in the first
+  // place. --ease-bounce/--ease-elastic/--spring-bouncy/--spring-wobbly are
+  // reserved for genuine delight moments per J-9.4 (toast entry, success) -
+  // this theme has no bespoke delight-moment need beyond the house default,
+  // so they're left alone rather than retuned for their own sake.
+  // --ease-in-out (ambient shimmer/pulse loaders) is likewise left at house
+  // default - those loaders already read as a breathing pulse and a second
+  // themed curve there would be change for its own sake, not a reason.
+  --ease-out:      cubic-bezier(0.19, 1, 0.22, 1);
+  --spring-gentle: 90, 20, 1.4;
 }

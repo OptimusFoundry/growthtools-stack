@@ -100,4 +100,29 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(65% 0.014 40deg);  // non-content only — Lc 53.6, 2.98:1
+  --color-accent-bg:      oklch(96.5% 0.050 125deg);  // was missing — see header fix #4
+  --color-success-active:  oklch(40% 0.101 150deg);
+  --color-warning-active:  oklch(87% 0.102 75deg);
+  --color-error-active:  oklch(44% 0.161 22deg);
+  --color-info-active:  oklch(40% 0.073 230deg);
+
+  // Colored glows — primary/accent cast their own hue; fixes the prior
+  // silent fallthrough to :root's indigo H275 default (see header
+  // anti-generic note).
+  --shadow-primary: 0 8px 24px 0 oklch(56% 0.160 40deg / 0.35);
+  --shadow-accent:  0 8px 24px 0 oklch(76% 0.172 125deg / 0.30);
+
+  // Chrome — was missing; added per contract (light/ember both set this).
+  --color-header-bg: var(--color-base-100);
+
+  // Motion — see header rationale. --duration-fast (hover) and
+  // --duration-instant (focus ring) are never touched.
+  --duration-normal: 195ms;
+  --duration-enter:  230ms;
+  --duration-exit:   175ms;
+  --spring-gentle:   150, 12, 1;
 }

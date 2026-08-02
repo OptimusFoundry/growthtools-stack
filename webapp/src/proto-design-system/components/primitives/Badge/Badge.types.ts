@@ -4,6 +4,7 @@ export type BadgeVariant =
 	| "default"
 	| "primary"
 	| "secondary"
+	| "accent"
 	| "success"
 	| "warning"
 	| "error"

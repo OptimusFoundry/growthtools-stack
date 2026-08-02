@@ -77,4 +77,50 @@
   --shadow-accent: 0 4px 16px 0 oklch(62% 0.08 130deg / 0.20);
   --focus-ring-color: oklch(50% 0.16 30deg / 0.25);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(66% 0.014 55deg);   // non-content only — Lc 50.7 / 2.80:1
+
+  // Motion — the identity above is built on *weight* (cool stone base,
+  // warm-ink content) and on restraint (no gradient, no glow, no third
+  // type role); motion follows those two ideas rather than borrowing
+  // another theme's device (not riso's decisive press, not editorial's
+  // trimmed-paper damping):
+  //   - --duration-enter 280 -> 300ms / --duration-exit 220 -> 180ms:
+  //     widens the house's existing enter>exit asymmetry rather than
+  //     closing it — an element arrives with a stone's worth of weight
+  //     (ma, the deliberate pause before full presence) and leaves
+  //     without lingering (mono no aware — nothing is held onto). Both
+  //     stay well clear of the 400ms ceiling.
+  //   - --ease-out is deliberately left at the house soft ease-out-quad —
+  //     it's already the "settle, don't spring" curve this theme's
+  //     ink-wash restraint wants, so re-curving it here would just be
+  //     change for its own sake.
+  //   - --ease-bounce (0.34, 1.56, 0.64, 1) -> (0.34, 1.08, 0.64, 1) and
+  //     --spring-bouncy 300,10,1 -> 280,24,1: J-9.4's delight-only device
+  //     (toast entry, success checkmark) still exists but is pared back
+  //     to the quietest version that's still visibly a spring, not a flat
+  //     ease — a single ripple settling on still water, not a rubber-ball
+  //     bounce. Stiffness trimmed slightly alongside the damping raise
+  //     (10 -> 24) so the JS spring settles in about one motion, matching
+  //     the CSS curve's near-1.0 overshoot.
+  // Declined (left at house value, not omitted by oversight):
+  //   - --duration-instant and focus-ring timing: hard constraints, never
+  //     themed.
+  //   - --duration-fast (150ms hover) / --duration-normal (240ms
+  //     accordion/tab): J-9.1's fixed shared cadence — no identity gap
+  //     here worth breaking cross-theme interaction consistency for.
+  //   - --duration-slow/-slower/-slowest/-complex/-page/-ambient and
+  //     --ease-linear/-in/-in-out/-smooth: no specific referent in this
+  //     theme's brief — route-level and ambient/looping motion aren't
+  //     part of the stone/ink, weight/impermanence story the way
+  //     component enter/exit and the delight-moment spring are.
+  //   - --ease-elastic and --spring-gentle/-wobbly/-stiff/-slow: same
+  //     restraint — only the one spring role this theme has an actual
+  //     opinion about (bounce/delight) is touched.
+  --duration-enter: 300ms;
+  --duration-exit:  180ms;
+  --ease-bounce:    cubic-bezier(0.34, 1.08, 0.64, 1);
+  --spring-bouncy:  280, 24, 1;
 }

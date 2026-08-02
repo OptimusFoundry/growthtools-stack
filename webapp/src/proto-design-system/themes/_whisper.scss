@@ -1,0 +1,318 @@
+// =============================================================================
+// WHISPER THEME
+// =============================================================================
+// Reference: obvious.ai — the previous revision (2026-08-01, still below)
+// measured the MARKETING site and got a warm olive-cream premise. This pass
+// supersedes that with better data: getComputedStyle pulled directly from
+// the live, SIGNED-IN PRODUCT APP (app.obvious.ai), which is what "whisper"
+// is actually meant to read as (a real product surface, not a landing page).
+// The product app turns out to be near-white and fully achromatic, not
+// cream — and its text hierarchy is a literal black-alpha opacity ramp
+// (rgba(0,0,0,N)) composited over that near-white, not a set of distinct
+// muted hues. Three measured anchors + one measured border, flattened to
+// opaque oklch (this token contract has no alpha-channel tokens) via linear-
+// space alpha compositing — since black's channels are 0 in both linear and
+// gamma space, flattened_linear = bg_linear * (1 - alpha), then gamma-
+// re-encoded and converted to OKLCH using this repo's own oklchToLinearSrgb
+// matrix, inverted (scripts/theme-contrast-check.mjs's conversion, run
+// forward+backward; round-tripped rgb(252,252,252) through both directions
+// to confirm the inverse matrix is exact):
+//   page background            rgb(252,252,252)          -> oklch(99.1% 0 0deg)
+//   primary/headings  (a=0.80) rgb(252*.2)  = rgb(122,122,122) -> oklch(58.0% 0 0deg)
+//   secondary/body    (a=0.64) rgb(252*.36) = rgb(160,160,160) -> oklch(70.5% 0 0deg)
+//   tertiary/labels   (a=0.40) rgb(252*.6)  = rgb(201,201,201) -> oklch(83.6% 0 0deg)
+//   hairline border   (a=0.08) rgb(252*.92) = rgb(243,243,243) -> oklch(96.4% 0 0deg)
+// (Linear-space compositing renders lighter than naive sRGB-gamma blending
+// would — e.g. the 0.80 tier would land at rgb(50,50,50)/L31.7% blended
+// naively in gamma space, which is closer to what a browser actually paints
+// for `rgba(0,0,0,0.8)` over a light bg, since CSS alpha-blends in sRGB by
+// spec, not linear light. This revision follows the linear-space method
+// deliberately requested for consistency with this repo's own OKLCH
+// pipeline; the gamma-space numbers are the closer "what you'd screenshot"
+// approximation if that's ever needed instead.)
+// The whole neutral family (background, the base-50..950 scale, and the two
+// surfaces directly tied to background's hue) moves off the old warm ~90-95
+// deg olive-cream to flat achromatic (chroma 0) to match — a mismatched
+// warm ramp sitting under an achromatic background/content system would be
+// exactly the "desaturated afterthought" neutral ramp the house craft rules
+// warn against. base-50..950 keep their PRIOR relative lightness spacing
+// (same deltas from the previous revision's ramp), shifted by the same
+// +1.8L the background itself moved (97.3% -> 99.1%), chroma zeroed.
+// Five content tokens, three measured data points — mapped per the brief's
+// own guidance: tertiary AND muted both take the 0.40 tier (matches the
+// app's own convention: "Recent"/"Teams" nav section labels are the ONLY
+// thing at that alpha, so tertiary/muted sharing it is the accurate port,
+// not a shortcut). text-disabled has no direct measurement; placed lighter
+// than tertiary at an interpolated alpha 0.22 (rgb(226,226,226) ->
+// oklch(91.2% 0 0deg)) — judgment call, disabled should read quieter than
+// the lightest MEASURED text tier, not competing with it.
+// --color-border-hover, primary/secondary/accent + their -content pairs,
+// the shadow system (still tinted to the OLD warm 78deg ink — out of this
+// pass's scope), and border-width are all explicitly out of scope for this
+// pass and left exactly as the prior revision set them; see that revision's
+// notes below, still accurate for everything this pass didn't touch.
+// LOW CONTRAST IS STILL INTENTIONAL for the text hierarchy — this is the
+// repo's one deliberate exception to the house APCA/WCAG contrast gate, and
+// it gets MORE pronounced with this product-app data, not less (the app's
+// own 0.8-alpha "emphasis" tier is still only ~3.5:1 on the new near-white
+// background — see the numbers in `scripts/theme-contrast-check.mjs`'s
+// output, quoted in the PR/report, not re-derived here).
+// `scripts/theme-contrast-check.mjs` numbers are documented in the revision
+// report so the choice is informed, not unmeasured; a failing/low score on
+// the base content tiers is the brief being met, not a defect to fix.
+// THE HIERARCHY TRICK (unchanged from the marketing-site pass, now backed by
+// product-app data instead of inferred from it): obvious.ai doesn't wash
+// everything out uniformly. Body copy AND headings render hushed, while a
+// separate near-black ink is held in reserve for small, deliberate emphasis
+// moments (an active nav state, a bolded word, solid buttons). This theme
+// ports that two-tier structure onto the full token contract:
+//   - --color-base-content / -secondary / -tertiary / --color-muted / and
+//     --color-text-disabled ALL sit in the flattened black-alpha zone
+//     (L58-91%, chroma 0) — this is the token group that stays "hushed."
+//   - --color-primary carries the reserved near-black ink (oklch(23% 0.006
+//     90deg), unchanged this pass) — it is the theme's one high-contrast
+//     token family, used only where obvious.ai itself spends contrast:
+//     solid buttons and active states, never running text.
+//   - Secondary (quiet cool slate, hue 235) and accent (warm olive-gold,
+//     hue 88) round out the interactive palette, unchanged this pass.
+// Fonts: Host Grotesk (sans) + Fragment Mono (mono, unchanged — not part of
+// this revision's brief). obvious.ai's own faces (Sharp Grotesk, Booton)
+// are proprietary/paid, so this substitutes a free Google Fonts grotesk
+// with the same character: quiet, confident, wide-aperture, non-decorative.
+// Host Grotesk is a variable humanist-grotesk (weights 400/500/600 covered)
+// designed for calm, legible brand voice at small UI sizes — the same
+// "quiet, not candy-bubbly" register the brief asked for, and not already
+// claimed by another theme (checked against themes.ts: Familjen Grotesk,
+// Schibsted Grotesk, Hanken Grotesk and Onest — the other candidates named
+// in the brief — are all already in use elsewhere).
+// Shadows: unchanged this pass, still tinted to the PRIOR revision's warm
+// oklch(60% 0.011 78deg) ink rather than re-derived to match the new
+// achromatic content system — explicitly out of scope (see above); the
+// house pill-vs-hue mismatch this leaves is a known, accepted leftover.
+// Radius: xs/sm/md/lg/xl ladder unchanged this pass (6/10/14/20/28px minus
+// the earlier Checkbox/Radio-collision fix already baked in below — see
+// that fix's own note). --radius-full is NOT set by this theme at all, so
+// it inherits the house default (`tokens/_radius.scss`: `--radius-full:
+// 9999px`) — already a true pill, confirmed by inspection, no change
+// needed for the reference's pill-button/pill-active-nav-state signature.
+// Border-width stays at the house 1px default: this theme's "barely-there"
+// quality is color, not geometry.
+
+[data-theme="whisper"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Host Grotesk", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Fragment Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
+
+  // Base scale — near-white, achromatic (measured, product app), NOT the
+  // prior warm olive-cream. Same relative L spacing as the prior ramp,
+  // shifted +1.8L to track how far the background itself moved (97.3% ->
+  // 99.1%), chroma zeroed throughout so the neutral family reads as one
+  // deliberate achromatic ramp, not a mismatched cream ramp under a white bg.
+  --color-background: oklch(99.1% 0 0deg);   // measured: rgb(252,252,252)
+  --color-base-50:  oklch(99.5% 0 0deg);   // capped below the ramp's naive +1.8 (100.3%) to avoid pure white
+  --color-base-100: oklch(97.8% 0 0deg);
+  --color-base-200: oklch(94.8% 0 0deg);
+  --color-base-300: oklch(89.8% 0 0deg);
+  --color-base-400: oklch(81.8% 0 0deg);
+  --color-base-500: oklch(71.8% 0 0deg);
+  --color-base-600: oklch(61.8% 0 0deg);
+  --color-base-700: oklch(51.8% 0 0deg);
+  --color-base-800: oklch(41.8% 0 0deg);
+  --color-base-900: oklch(33.8% 0 0deg);
+  --color-base-950: oklch(25.8% 0 0deg);
+
+  // Content — the "hushed" tier, now the flattened black-alpha ramp measured
+  // in the live product app (rgba(0,0,0,N) composited over rgb(252,252,252)
+  // in linear space, then re-encoded to opaque oklch — see header math).
+  // tertiary and muted share the app's own 0.40 tier (that's the ONE alpha
+  // the app uses for both "Recent"/"Teams" nav-group labels); disabled has
+  // no direct measurement and sits lighter still (interpolated alpha 0.22).
+  --color-base-content:           oklch(58.0% 0 0deg); // flattened rgba(0,0,0,0.80)
+  --color-base-content-secondary: oklch(70.5% 0 0deg); // flattened rgba(0,0,0,0.64)
+  --color-base-content-tertiary:  oklch(83.6% 0 0deg); // flattened rgba(0,0,0,0.40)
+  --color-muted:                  oklch(83.6% 0 0deg); // aliases tertiary, house convention
+  --color-text-disabled:          oklch(91.2% 0 0deg); // interpolated alpha 0.22, unmeasured — judgment call
+
+  // Surfaces — a whisper lighter/flatter than background, same (now
+  // achromatic) hue family; deltas compressed vs the prior revision since
+  // the new background already sits close to the white ceiling.
+  --color-surface:          oklch(99.4% 0 0deg);
+  --color-surface-elevated: oklch(99.7% 0 0deg);
+  --color-surface-overlay:  oklch(23%   0.006 90deg / 0.30); // primary-ink veil, unchanged (primary out of scope)
+
+  // Borders — hairline weight (1px, see header) AND hairline color, now the
+  // flattened rgba(0,0,0,0.08) measured hairline. --color-border-hover is
+  // explicitly out of this pass's scope (brief names --color-border only)
+  // and is left at its prior warm-tinted value — accepted as a residual
+  // hue mismatch (chroma 0.010 is faint enough not to read as a defect).
+  --color-border:       oklch(96.4% 0 0deg); // flattened rgba(0,0,0,0.08)
+  --color-border-hover: oklch(83% 0.010 88deg);
+
+  // Primary — the reserved near-black emphasis ink (measured rgb(28,29,27),
+  // hue folded to the theme's warm-neutral family at 90deg since the raw
+  // sample's chroma was too low for its hue to be meaningful). This is the
+  // theme's ONE high-contrast token family, spent only where obvious.ai
+  // spends contrast: solid CTAs and active states.
+  --color-primary:         oklch(23% 0.006 90deg);
+  --color-primary-hover:   oklch(18% 0.006 90deg);
+  --color-primary-active:  oklch(14% 0.005 90deg);
+  --color-primary-content: oklch(97% 0.006 95deg); // near-cream on near-black, real contrast on purpose
+
+  // Secondary — quiet cool slate, counterpoint to primary's warmth, kept
+  // well clear of the old lavender/violet hue.
+  --color-secondary:         oklch(45% 0.025 235deg);
+  --color-secondary-hover:   oklch(38% 0.028 235deg);
+  --color-secondary-active:  oklch(32% 0.028 235deg);
+  --color-secondary-content: oklch(96% 0.006 95deg);
+
+  // Accent — warm olive-gold, same hue family as the background (88deg vs
+  // background's 95deg) but pushed to real chroma so it still reads as a
+  // distinct, deliberate accent rather than disappearing into the paper.
+  --color-accent:         oklch(68% 0.090 88deg);
+  --color-accent-hover:   oklch(60% 0.100 88deg);
+  --color-accent-active:  oklch(52% 0.100 88deg);
+  --color-accent-content: oklch(20% 0.020 88deg);
+  --color-accent-bg:      oklch(94% 0.025 88deg);
+
+  // Semantics — functional colors get real, legible contrast (they're
+  // interactive/status surfaces, the same "deliberate emphasis" register as
+  // primary/secondary/accent, not part of the hushed text hierarchy).
+  --color-success:         oklch(55% 0.100 150deg);
+  --color-success-hover:   oklch(48% 0.110 150deg);
+  --color-success-active:  oklch(41% 0.110 150deg);
+  --color-success-bg:      oklch(94% 0.030 150deg);
+  --color-success-content: oklch(97% 0.020 150deg);
+  --color-warning:         oklch(75% 0.130 75deg);
+  --color-warning-hover:   oklch(68% 0.140 75deg);
+  --color-warning-active:  oklch(61% 0.120 75deg); // chroma trimmed at this L to stay in-gamut
+  --color-warning-bg:      oklch(95% 0.030 75deg);
+  --color-warning-content: oklch(24% 0.030 75deg);
+  --color-error:         oklch(55% 0.160 25deg);
+  --color-error-hover:   oklch(48% 0.170 25deg);
+  --color-error-active:  oklch(42% 0.170 25deg);
+  --color-error-bg:      oklch(95% 0.020 25deg); // chroma trimmed at this L to stay in-gamut
+  --color-error-content: oklch(97% 0.010 25deg); // chroma trimmed at this L to stay in-gamut
+  --color-info:         oklch(55% 0.090 230deg); // chroma trimmed to stay in-gamut at this hue/L
+  --color-info-hover:   oklch(48% 0.085 230deg);
+  --color-info-active:  oklch(42% 0.075 230deg);
+  --color-info-bg:      oklch(95% 0.020 230deg);
+  --color-info-content: oklch(97% 0.010 230deg);
+
+  // Shadows — misty soft-elevation system, unchanged this pass (see header
+  // Shadows note: still tinted to the prior revision's warm ink, not the
+  // new achromatic content system — explicitly out of scope).
+  --shadow-color:        oklch(60% 0.011 78deg / 0.04);
+  --shadow-color-strong: oklch(60% 0.011 78deg / 0.09);
+  --shadow-xs: 0 1px 2px 0 oklch(60% 0.011 78deg / 0.03);
+  --shadow-sm: 0 2px 8px -1px oklch(60% 0.011 78deg / 0.04), 0 1px 3px 0 oklch(60% 0.011 78deg / 0.03);
+  --shadow-md: 0 8px 24px -4px oklch(60% 0.011 78deg / 0.05), 0 2px 6px -1px oklch(60% 0.011 78deg / 0.03);
+  --shadow-lg: 0 20px 48px -10px oklch(60% 0.011 78deg / 0.06), 0 6px 12px -2px oklch(60% 0.011 78deg / 0.03);
+  --shadow-xl: 0 36px 80px -16px oklch(60% 0.011 78deg / 0.08), 0 10px 20px -4px oklch(60% 0.011 78deg / 0.04);
+  --shadow-primary: 0 8px 32px 0 oklch(23% 0.006 90deg / 0.12);
+  --shadow-accent:  0 8px 32px 0 oklch(68% 0.090 88deg / 0.14);
+  --focus-ring-color: oklch(23% 0.006 90deg / 0.22);
+  --color-header-bg: var(--color-base-100);
+
+  // obvious.ai's own modals give the header a light-tint bar distinct from
+  // the white body (measured: rgba(0,0,0,0.04) over its near-white canvas —
+  // the same tier --color-base-100 already flattens to, see header notes
+  // above). Modal.module.scss's .header defaults to transparent for every
+  // other theme; whisper is the one theme opting into this tint.
+  --color-modal-header-bg: var(--color-base-100);
+
+  // Tight top padding on the tinted header bar — space-6 (32px) and space-5
+  // (24px) both read as too much in practice; space-3 (12px) is the value
+  // that actually looks right against the space-4 (16px) bottom/divider gap.
+  --modal-header-padding-top: var(--space-3);
+
+  // Card evolved past a tinted-bar-with-divider into "white card inside a
+  // grey card": the whole outlined/elevated shell (--color-card-bg) takes
+  // the tint, and CardBody becomes an inset white panel floating inside it
+  // (--color-card-body-bg + a margin so the tint shows as a frame around
+  // it) rather than a flat region separated by a border line — no divider
+  // needed once the white panel's own edge does that job. All of these
+  // default to transparent/0 in Card.module.scss, so every other theme is
+  // unaffected; this is a deliberate whisper-only exception to J-4.2's
+  // "no divider" default, matching the reference's connector-detail cards.
+  --color-card-bg: var(--color-base-100);
+  --card-header-padding-top: var(--space-3);
+
+  // 0, not a small value — .body's own --card-body-inset-top (space-3,
+  // below) is the entire gap between the header text and the white panel.
+  // Leaving this at the house space-5 default double-spaced the two.
+  --card-header-padding-bottom: 0;
+  --color-card-body-bg: var(--color-surface);
+  --card-body-inset-radius: var(--radius-lg);
+
+  // Left/right/bottom frame the white panel tightly; top gets more room
+  // since the header title sits directly above it on the tinted shell.
+  --card-body-inset-top: var(--space-3);
+  --card-body-inset-x: var(--space-1);
+  --card-body-inset-bottom: var(--space-1);
+
+  // Radius — soft, pillowed corners; a shape decision separate from this
+  // color revision (see header). xs/sm capped below 8px (half of Checkbox's
+  // 16px `size-sm` box, which applies `--radius-sm` directly) so a square
+  // checkbox doesn't clip into a circle and become indistinguishable from
+  // Radio's `--radius-full` — md/lg/xl (used on rectangular/larger surfaces
+  // that don't hit this collision) stay at the original pillowed values.
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  // Motion — the "hushed" premise (body copy washed out, one reserved
+  // near-black ink spent only on deliberate emphasis) extends past color
+  // into pace: most motion should read as unhurried and even-tempered, with
+  // the house's one truly loud gesture (--ease-bounce/--spring-bouncy, J-9.4's
+  // delight reserve) left alone rather than also softened — the theme
+  // already gets its "one loud thing" from primary ink, and re-spending that
+  // same idea on the toast/success spring would double up the trick rather
+  // than sharpen it. (chalk — read second, after this file — independently
+  // reached the identical call for the identical reason before whisper's own
+  // motion pass existed; this file originates the decision, chalk inherits
+  // it as its sibling.)
+  // J-9's numbers are house-wide contracts, not this theme's to renegotiate:
+  // hovers stay 150ms, accordions/tabs stay 240ms, nothing state-transition-
+  // shaped crosses 400ms, and --duration-instant/focus-ring timing are
+  // untouched per the hard rule. A full grep of every component reading a
+  // motion token confirms modal/toast/banner/alert/drawer-exit/dropdown/
+  // popover fades all route through --duration-fast/-normal already — left
+  // wholesale untouched here too.
+  // Two levers are actually free of any locked value, and both get the
+  // same "quieter, not louder" treatment color already established:
+  //   1. Curve character. --ease-out is reused from the house's own
+  //      --ease-smooth shape (cubic-bezier(0.25, 0.1, 0.25, 1), the classic
+  //      even ease) rather than the brisker default quad — every fade that
+  //      already reads this token (hover color, dropdown/popover/modal/
+  //      toast/banner/alert, page transitions, Grid/Stack stagger) settles
+  //      more gently, no duration moved.
+  //   2. Ambient loops + JS springs, which the token file's own comments
+  //      already carve out as separate from state-transition motion.
+  //      --duration-slower/-slowest/--duration-ambient (spinner spin,
+  //      skeleton shimmer/pulse, progress indeterminate bar) are pushed
+  //      ~8-10% slower for a calmer idle read — deliberately a smaller push
+  //      than chalk's ~11-13% (chalk is the theme that goes further on
+  //      every other axis too; whisper, as the measured-product-app
+  //      original, holds a hair short of chalk's extremity here as well,
+  //      so the pair reads as a consistent gradient rather than two
+  //      unrelated guesses). --spring-gentle (Button/LinkButton's press-
+  //      release) and --spring-slow (StatCard's counter) are damped further
+  //      toward critical than house defaults, again less than chalk:
+  //      spring-gentle's damping ratio moves from house's zeta~0.64 to
+  //      whisper's zeta~0.73 (chalk: ~0.84); spring-slow moves from house's
+  //      already-critical zeta~1.0 to whisper's mildly overdamped zeta~1.11
+  //      (chalk: ~1.32, more pronounced no-overshoot glide). Same direction
+  //      as chalk on every lever, smaller magnitude on every lever — the
+  //      motion equivalent of chalk's color relationship to this file.
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1); // = house --ease-smooth's curve
+  --duration-slower:  540ms;  // was 500ms — spinner spin/pulse, skeleton pulse, button spin
+  --duration-slowest: 760ms;  // was 700ms — progress indeterminate loop
+  --duration-ambient: 1650ms; // was 1500ms — skeleton shimmer
+  --spring-gentle: 105, 15, 1; // was 120, 14, 1 — Button/LinkButton press-release, zeta 0.64 -> 0.73
+  --spring-slow:   90, 21, 1;  // was 100, 20, 1 — StatCard counter, zeta 1.0 -> 1.11 (mildly overdamped, no overshoot)
+}

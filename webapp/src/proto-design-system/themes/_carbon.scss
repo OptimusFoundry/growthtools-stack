@@ -77,4 +77,37 @@
   --shadow-accent: 0 0 0 1px oklch(72% 0.14 195deg);
   --focus-ring-color: oklch(60% 0.22 255deg / 0.5);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0.009 49deg);   // non-content only — Lc 34.7, was missing entirely
+
+  // Motion — the two-material duality already driving color (matte
+  // structural carbon-fiber vs. the glowing carbon-filament) extends to how
+  // things move, not just how they look. Durations are left at house
+  // default (hover/tab/accordion pace has no identity-driven reason to
+  // change) and so are the base easings (--ease-out/-in-out stay the
+  // neutral backdrop for both material states — Modal/Dropdown/Toast/
+  // Banner/Alert/PageTransition all key off these and don't need a theme
+  // opinion). Only the three springs the motion bridge actually wires to a
+  // component get remapped, each toward one of the two materials:
+  //   - --spring-gentle (Button's default press-feedback preset) goes from
+  //     underdamped (stiffness 120/damping 14 → damping ratio 0.64, a
+  //     visible squish) to near-critical (260/30 → ratio 0.93) — a press
+  //     should feel like a rigid carbon-fiber click, not a soft bounce.
+  //   - --spring-stiff (Tabs' active-indicator preset) goes past critical
+  //     (400/30 → ratio 0.75, a faint overshoot wobble, to 480/46 → ratio
+  //     1.05) — the indicator should snap into place like a relay
+  //     engaging, not settle with a wobble.
+  //   - --spring-slow (StatCard's counter preset) goes further overdamped
+  //     and lower-stiffness (100/20 → ratio 1.0 exactly-critical, to
+  //     70/22 → ratio 1.32) — numbers should climb the way a lit filament
+  //     warms up to full brightness: slow, smooth, no snap.
+  // --ease-bounce/--spring-bouncy are untouched and unused here — J-9.4
+  // reserves genuine bounce for toast/success delight moments, which this
+  // theme's mechanical-precision identity has no reason to borrow for
+  // routine presses/indicators.
+  --spring-gentle: 260, 30, 1;
+  --spring-stiff:  480, 46, 1;
+  --spring-slow:   70, 22, 1;
 }

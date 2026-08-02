@@ -77,4 +77,86 @@
   --shadow-accent: 4px 4px 0 0 oklch(48% 0.10 230deg);
   --focus-ring-color: oklch(68% 0.22 45deg / 0.5);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled: oklch(64% 0.005 250deg);
+
+  // Chamfered-arris corners — poured/cast concrete edges are broken with a
+  // small fixed-size chamfer strip in the formwork (to stop the raw square
+  // arris from spalling), not scaled up on bigger pours. So this ladder stays
+  // tight and close together end to end (3-10px) instead of sweeping open
+  // like the house default (2-20px+) or a soft theme's — it reads as one
+  // consistent cast detail repeated at every size, not a rounding style.
+  // This is also the deliberate split from `brutal`: brutal is flat print-
+  // grid paper (zero-chroma shadows, pure #fff bg, zero radius); concrete is
+  // an actual formed material (warm rust-tinted offset shadows, tinted
+  // blue-grey base ramp) with a real, if small, cast edge. Ladder stays
+  // monotonic (J-10.1): button/input sit on --radius-md, card/modal on
+  // --radius-xl, so the card's chamfer is visibly larger than the button's
+  // where they meet on a card footer (J-10.2).
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  // Border-width: deliberately NOT remapped (J-10.4 stays at house 1px
+  // here). J-10.4's carve-out is for themes built on line weight as the
+  // identity — brutal, blueprint, a future technical/schematic theme where
+  // a bold or fine stroke IS the content. Concrete's identity already lives
+  // in two other devices above: the hard-cast shadow shape and the tight
+  // chamfer radius ladder. A real formwork seam / control joint in poured
+  // concrete is a thin, precise reveal groove, not a bold stroke — a
+  // thickened border would misrepresent that material detail AND stack a
+  // third "boldness" signal on top of shadow+chamfer, which is the same
+  // over-decoration this system's craft rules warn against elsewhere. It
+  // would also blur the split from `brutal`, which already owns the
+  // line-weight-as-identity slot in this system. 1px --border-width-sm is
+  // the materially correct choice, not an oversight.
+
+  // Motion — poured, set, solid. The shadow/radius devices above already
+  // encode this theme's physics (a hard zero-blur cast, a small fixed
+  // chamfer, not a soft glow or a sweeping curve); motion follows the same
+  // logic instead of introducing a new one. J-9's hover-150ms/accordion-
+  // 240ms/400ms-ceiling numbers are house-wide contracts this theme doesn't
+  // renegotiate (--duration-fast/-normal untouched), and --duration-instant
+  // and focus-ring timing are untouched per the hard rule. The lever this
+  // theme pulls instead is curve *character*:
+  //   - --ease-out (the curve backing nearly every hover/reveal transition
+  //     house-wide) trades the house's soft, long-floating easeOutQuint for
+  //     easeOutCubic — same 150/240ms envelope, but the motion resolves
+  //     decisively instead of cushioning into rest, the way a heavy cast
+  //     object settles once it's down rather than drifting to a stop.
+  //   - --spring-gentle (the live Button press-spring) is retuned toward
+  //     near-critical damping (zeta ~0.94, up from house's ~0.64) with
+  //     added mass — pressing the button reads as contact with a dense,
+  //     barely-giving surface, not a springy cushion.
+  //   - --ease-bounce/-elastic and their JS backers --spring-bouncy/-wobbly
+  //     are J-9.4's reserved delight-moment tokens (toast entry, success).
+  //     House ships these as rubber-band overshoot; concrete reshapes them
+  //     into a single firm settle-thud (zeta ~0.76-0.89, overshoot trimmed
+  //     from 156%/-55%/155% to a handful of percent) — even a delight
+  //     moment in this theme reads as something dropping and setting once,
+  //     not bouncing. --spring-stiff (Tabs) and --spring-slow (StatCard
+  //     counter) are left at house default — no theme-specific reason to
+  //     diverge there.
+  // This is also the split from `brutal`'s own motion pass (already landed
+  // in this worktree): brutal goes `--ease-out: linear` (a mechanical stamp
+  // with zero deceleration curve at all) and speeds --duration-normal to
+  // 160ms — flat print-grid urgency, matching its zero-chroma, unchanging-
+  // offset shadow. Concrete keeps the house's 240ms pace (a poured slab
+  // doesn't snap into place, it settles at its own rate) and keeps a real,
+  // if firmer, deceleration curve rather than brutal's dead-stop linear —
+  // physical resistance, not machine precision. The two --spring-gentle
+  // retunes read differently for the same reason: brutal's 500/40/1
+  // (zeta ~0.89, omega_n ~22 rad/s) is a fast, hard switch-click; concrete's
+  // 280/36/1.3 (zeta ~0.94, omega_n ~15 rad/s) is comparably firm but ~35%
+  // slower to settle — the extra mass reads as density, not hesitation.
+  --ease-out:      cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-bounce:   cubic-bezier(0.34, 1.08, 0.64, 1);
+  --ease-elastic:  cubic-bezier(0.5, -0.02, 0.3, 1.04);
+  --spring-gentle: 280, 36, 1.3;
+  --spring-bouncy: 300, 30, 1.3;
+  --spring-wobbly: 220, 30, 1.3;
 }

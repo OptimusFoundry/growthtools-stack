@@ -86,4 +86,83 @@
   --shadow-accent:  0 8px 24px 0 oklch(72% 0.17 55deg / 0.30);
   --focus-ring-color: oklch(48% 0.20 275deg / 0.40);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(76% 0.015 240deg);
+
+  // Radius — trimmed paper-stock corners, not the stock Tailwind/shadcn
+  // curve (2/4/8/12/20) this theme inherited by default. A letterpress card
+  // or a ledger stub has a small, deliberate corner clip from the trimmer's
+  // blade — not a soft app-bubble round. Every step here is roughly half
+  // the house default at the same rung, keeping the ladder monotonic
+  // (J-10.1: --radius-button/--radius-input stay on --radius-md = 4px;
+  // --radius-card/--radius-modal stay on --radius-xl = 10px) and the
+  // meeting-corner rule intact (J-10.2: a card at 10px always reads
+  // tighter-cornered on its 4px button/input children, never the reverse).
+  // Distinct from blueprint's drafting-table 2/3/4/6 (near-square,
+  // technical) and porcelain's near-0 (0/1/2/4/8) — editorial sits between
+  // "cut paper" and "engineering diagram," matching a print object's real
+  // physical corner, not a ruler's.
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 10px;
+
+  // Motion — a sheet settling flush, not a UI element floating to rest.
+  // Same physical referent as the elevation system above (paper on a
+  // lamplit desk): this theme's objects are light, thin, and DAMPED — a
+  // page dropped onto a stack lands and stops, it doesn't jiggle like
+  // rubber. Three moves, each tied to something already established above:
+  // - --duration-normal 240 -> 200ms: the default opacity/transform/shadow
+  //   transition (also what J-9.1 pins accordions/tabs to at house scale).
+  //   A ~17% trim — the same "trimmed paper stock" instinct as the radius
+  //   ladder above, but duration can't be cut in half like a corner radius
+  //   without reading as broken/twitchy, so this is a deliberate, modest
+  //   crop, not a proportional match to radius's ~50% cut.
+  // - --duration-enter 280 -> 230ms / --duration-exit 220 -> 160ms: kept
+  //   ASYMMETRIC on purpose, and widened the gap rather than closing it —
+  //   a page is placed deliberately (enter still the slower half) but
+  //   removed in one clean motion (exit now well under half of enter),
+  //   matching the elevation system's own "sheet lifts, then peels away"
+  //   narrative rather than a generic fade-both-ways.
+  // - --spring-bouncy stiffness unchanged (300), damping 10 -> 26: the JS
+  //   spring behind toast entry / Button press (per J-9.4, still reserved
+  //   for delight moments only — this doesn't touch that scoping, only its
+  //   character). House's damping-10 spring visibly overshoots and settles
+  //   over 2-3 oscillations — springy in the rubber-band sense. Raising
+  //   damping toward critical removes the oscillation almost entirely: the
+  //   element still arrives with a touch of give (it's not linear/robotic)
+  //   but settles in one motion, the way a dropped sheet of paper does, not
+  //   a bounced ball.
+  // - --ease-bounce cubic-bezier(0.34, 1.56, 0.64, 1) -> (0.34, 1.12, 0.64,
+  //   1): the CSS-side sibling of the spring change above, same reasoning
+  //   applied to the curve's overshoot term (1.56 -> 1.12, well clear of
+  //   1.0 so it's still visibly a bounce, not a flat ease-out) — kept in
+  //   sync so a CSS-only bounce moment and a JS-spring moment read as the
+  //   same physical material.
+  // Declined (left at house value, not omitted by oversight):
+  // - --duration-instant (0ms) and focus-ring timing: hard constraints,
+  //   never themed (J-9.1's "focus rings are instant" is load-bearing for
+  //   keyboard users regardless of theme concept).
+  // - --duration-fast (150ms, hovers): J-9.1's "hovers are always 150ms"
+  //   already reads brisk/print-appropriate as-is — no identity gap to
+  //   close here, so left alone rather than trimmed for trimming's sake.
+  // - --duration-slow/-slower/-slowest/-complex/-page/-ambient and
+  //   --ease-linear/-in/-in-out/-smooth/-out: no specific physical referent
+  //   in this theme's brief points at these (page-route transitions and
+  //   long-running/ambient states aren't part of the "paper on a desk"
+  //   story the way component-level enter/exit and elevation are) —
+  //   changing them would be decoration, not character.
+  // - --spring-gentle/-wobbly/-stiff/-slow: same restraint — only the one
+  //   spring role this theme's identity actually has an opinion about
+  //   (the bounce/delight one) is touched; touching the rest risks
+  //   diluting the single damping-driven idea into generic "everything's
+  //   a bit different now" noise.
+  --duration-normal: 200ms;
+  --duration-enter:  230ms;
+  --duration-exit:   160ms;
+  --ease-bounce:     cubic-bezier(0.34, 1.12, 0.64, 1);
+  --spring-bouncy:   300, 26, 1;
 }

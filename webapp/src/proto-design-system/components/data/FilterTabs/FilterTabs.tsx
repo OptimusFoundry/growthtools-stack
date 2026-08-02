@@ -13,7 +13,7 @@ export interface FilterTabItem {
 	icon?: ReactNode;
 }
 
-export type FilterTabsSize = "sm" | "md";
+export type FilterTabsSize = "sm" | "md" | "lg";
 
 export interface FilterTabsProps {
 	items: FilterTabItem[];

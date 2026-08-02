@@ -92,4 +92,33 @@
 
   // Header background (more visible in terminal theme)
   --color-header-bg: var(--color-base-300);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0.133 128deg);  // Lc -36.5 / 5.48:1 on bg (Lc30 floor +6.5)
+  --color-accent-bg:      oklch(18% 0.028 178deg);  // Lc -89.1 base-content on top
+  --color-success-active:  oklch(66% 0.147 128deg);
+  --color-warning-active:  oklch(66% 0.120 72deg);
+  --color-error-active:  oklch(66% 0.184 38deg);  // darker
+  --color-info-active:  oklch(66% 0.103 178deg);
+
+  // Elevation shadows — phosphor-glow pass (green, no offset) layered with a
+  // darker green-tinted grounding pass (single implied downward light
+  // source; never flat rgba(0,0,0,x)).
+  --shadow-xs: 0 0 2px 0 oklch(70% 0.155 128deg / 0.15);
+  --shadow-sm: 0 0 6px 0 oklch(70% 0.155 128deg / 0.20), 0 1px 2px 0 oklch(4% 0.010 128deg / 0.40);
+  --shadow-md: 0 0 12px 0 oklch(70% 0.155 128deg / 0.22), 0 4px 8px -2px oklch(4% 0.010 128deg / 0.50);
+  --shadow-lg: 0 0 24px 0 oklch(70% 0.155 128deg / 0.25), 0 8px 16px -4px oklch(4% 0.010 128deg / 0.55);
+  --shadow-xl: 0 0 40px 0 oklch(70% 0.155 128deg / 0.30), 0 16px 32px -8px oklch(4% 0.010 128deg / 0.60);
+  --shadow-primary: 0 0 24px 0 oklch(78% 0.173 128deg / 0.45);
+  --shadow-accent:  0 0 24px 0 oklch(78% 0.122 178deg / 0.40);
+
+  // Motion — see header rationale (phosphor persistence: bloom-and-settle,
+  // not matrix's zero-overshoot precision). --duration-fast (hover) and
+  // --duration-instant (focus ring) are never touched.
+  --spring-gentle: 260, 20, 1;
+  --spring-stiff:  380, 24, 1;
+  --spring-slow:   55, 15, 1;
+  --duration-slower:  600ms;
+  --duration-ambient: 1800ms;
 }

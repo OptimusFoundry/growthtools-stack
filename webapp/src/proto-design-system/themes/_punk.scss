@@ -77,4 +77,21 @@
   --shadow-accent: 4px 4px 0 0 oklch(12% 0 0deg);
   --focus-ring-color: oklch(52% 0.26 25deg / 0.6);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(58% 0.010 40deg);  // non-content only
+
+  // Razor-cut paste-up corners — the hard offset shadow above is a flat
+  // rectangular silhouette that only reads as "cut paper" against a square
+  // card; the house --radius-md: 8px default made every panel a softly
+  // rounded card wearing a hard-edged square shadow. See refit #2 above.
+  --radius-xs: 0; --radius-sm: 0; --radius-md: 0;
+  --radius-lg: 0; --radius-xl: 0;
+
+  // Motion — impact, not glide. See "2026-08 motion refit" above for the
+  // full rationale; --duration-instant and focus-ring timing are untouched.
+  --ease-out:        cubic-bezier(0, 0, 0, 1);
+  --duration-fast:   100ms;
+  --duration-normal: 150ms;
 }

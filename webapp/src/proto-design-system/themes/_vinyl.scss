@@ -77,4 +77,32 @@
   --shadow-accent: 0 4px 20px 0 oklch(68% 0.18 72deg / 0.45);
   --focus-ring-color: oklch(78% 0.15 82deg / 0.45);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(58% 0.055 35deg); // non-content only
+
+  // Motion — a turntable's tonearm mechanism, not a "warm crackly" cliche
+  // (this theme is instrument-precision brass hardware + numeric-fitted
+  // contrast, not lo-fi imperfection — see header). A tonearm's cueing
+  // lever is gimbal-mounted and hydraulically damped: real inertia, a
+  // deliberate settle, never a hard digital snap and never a loose bounce.
+  // --duration-normal (accordions/tabs, PageTransition, Grid/Stack/List
+  // stagger) lifts 240ms -> 280ms — enough to read as weighted mechanical
+  // travel, still under the 400ms ceiling and still clearing
+  // --duration-fast (150ms, untouched — hovers stay at house speed per
+  // J-9.1). --spring-gentle (the press-spring Button/LinkButton actually
+  // consume) moves from the house's underdamped 120/14/1 (damping ratio
+  // ~0.64, a visible bounce-back) to 180/20/1 (ratio ~0.75): a press now
+  // reads as a gimbal-bearing settle — real give, no snap, no loose
+  // wobble — short of brutal's near-critical 500/40/1 "hard stamp," which
+  // is the wrong register here. --ease-bounce (toast entry / success
+  // checkmark, delight-only per J-9.4) trims its overshoot from 1.56 to
+  // 1.2 — the needle-drop settle this theme's concept implies, not a
+  // cartoon spring. Everything else, including --duration-instant and
+  // focus-ring timing, stays at house defaults — the former is a hard
+  // constraint, the latter is J-9.1's "focus feedback is never themed."
+  --duration-normal: 280ms;
+  --spring-gentle:   180, 20, 1;
+  --ease-bounce:     cubic-bezier(0.34, 1.2, 0.64, 1);
 }

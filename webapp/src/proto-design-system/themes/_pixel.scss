@@ -107,4 +107,27 @@
   // Chunky borders
   --border-width: 3px;
   --border-width-thick: 4px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(72% 0.015 63deg);   // Lc 36.5 / 2.07:1
+  --color-accent-bg:      oklch(92% 0.045 72deg);   // pale coin wash
+  --color-success-active:  oklch(28% 0.085 145deg);
+  --color-warning-active:  oklch(78% 0.155 88deg);   // Lc 64.8 / 9.95:1
+  --color-error-active:  oklch(37% 0.144 25deg);
+  --color-info-active:  oklch(28% 0.050 215deg);
+  --shadow-primary: 4px 4px 0 0 var(--shadow-color-strong);
+  --shadow-accent:  3px 3px 0 0 var(--shadow-color);
+
+  // Motion — constant-velocity, not decelerating (see file header for the
+  // full rationale, incl. why `linear` and not steps()). Durations are
+  // untouched: --duration-fast/--duration-normal stay house-pinned per J-9.
+  --ease-out: linear;
+  --ease-in-out: linear;
+
+  // Header chrome
+  --color-header-bg: var(--color-base-100);
+
+  // NO border radius (pixels are square!)
+  --radius-xs: 0;
 }

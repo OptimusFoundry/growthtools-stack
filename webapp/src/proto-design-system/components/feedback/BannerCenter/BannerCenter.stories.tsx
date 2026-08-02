@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Bell, Gift, ShieldAlert, Zap } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "../../primitives/Button";

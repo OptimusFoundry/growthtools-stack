@@ -1,0 +1,223 @@
+// =============================================================================
+// EMBER THEME
+// =============================================================================
+// The "Light" theme's orange sibling: brand hue rotates from electric blue to
+// a deep saturated "Fanta" orange primary, accent flips to blue (orange's
+// complement). Type pairing is Schibsted Grotesk (a bold, high-contrast
+// grotesque with real personality — not Light's neutral Geist) + Chivo Mono
+// (a real, distinct monospace, not aliased to sans) — the pairing is the
+// "punchy soda-can label" register the color palette establishes: display-
+// weight grotesque for the brand voice, technical mono for numerals/eyebrows.
+// Note: upstream registers this pairing via themes.ts's googleFontsHref
+// mechanism — Growth Tools rejects that font-loading mechanism (see F1/C1),
+// so these font-family values are static fallbacks only, not centrally synced.
+// This pass fixes three real, checkable bugs — not a repaint:
+// 1. Ladder failures (webapp/scripts/theme-contrast-check.mjs + manual
+//    hover/active checks against the same apcaLc/wcagRatio implementation):
+//    primary-content on primary/-hover/-active was Lc 50.7 / 44.8 / 38.8 —
+//    all three fail the Lc60 UI-text minimum (a filled button's resting
+//    state failed, not just an edge case). warning-content on -hover/-active
+//    was Lc 51.9 / 42.7, also failing; the base state passed at only Lc 61.8
+//    (a 1.8pt margin — fragile). Root cause: both ramps get DARKER on hover/
+//    active while using dark ink text — for a light fill + dark text pair,
+//    a darker fill is *closer* in lightness to the dark text, which shrinks
+//    contrast, not grows it (confirmed by sweeping ink lightness from 24%
+//    to 0%: even pure black text on the old active-state fills only reached
+//    Lc ~41, a hard ceiling — no ink color could have fixed this without
+//    moving the fill). Fixed by inverting the state direction for these two
+//    families only: primary/warning now get LIGHTER (not darker) on hover/
+//    active, which is the only physically-consistent way to keep dark ink
+//    text AND grow contrast on interaction — same principle every other
+//    on-dark-text pairing in this file already uses in the opposite polarity
+//    (accent/secondary/success/error/info all darken toward white text and
+//    gain contrast; primary/warning previously darkened toward dark text and
+//    lost it).
+//    Primary base lightened 72%→78% (chroma ceiling there is ~0.145; still
+//    a vivid, clearly-orange fill, just short of the outer edge of gamut).
+//    New numbers, all comfortably clear Lc60: primary-content on primary/
+//    -hover/-active = Lc 62.4 / 65.7 / 69.6. warning-content on warning/
+//    -hover/-active = Lc 64.6 / 68.0 / 71.5 (base gained margin too, no
+//    longer fragile).
+// 2. Craft-rule violation: --color-background/-surface/-surface-elevated
+//    were literal pure white (oklch(100% 0 0deg)) — the exact mistake
+//    Light's own header documents fixing for itself. Also the base scale
+//    used flat 0-chroma "no hue tint," the exact "desaturated afterthought"
+//    this system's neutral-ramp rule bans. Fixed: the whole neutral ramp
+//    (background → base-950, content ramp, surfaces, borders, overlay) now
+//    carries a whisper-low warm ember tint at hue 50 (matching the primary
+//    hue and the shadow tint below) — same discipline Light used to anchor
+//    its own steel-cool hue 250 tint to its cobalt primary, just warm
+//    instead of cool. No token in this file is a literal #fff/#000 anymore.
+// 3. Distinctiveness: previously the base grayscale, all 20 semantic tokens,
+//    and all 5 shadow tokens were near-identical to Light's, leaving only
+//    primary/accent/focus-ring (9 of ~75 properties) actually theme-specific
+//    — a swap with Light would have gone unnoticed. The retint above now
+//    makes the entire neutral/surface/border/shadow system Ember-specific.
+//    Semantics (success/warning/error/info) intentionally still share their
+//    hue family with Light — functional colors, not brand, the same
+//    disclosed convention `oat` uses ("carried from light, not brand").
+// Accepted trade-offs (documented, not accidental):
+// - Primary's base fill moved from a punchier 72%/0.180 to 78%/0.133 to
+//   clear Lc60 with dark text — less saturated than the original "Fanta can"
+//   read, but the original was clipping the ladder outright with no ink
+//   color able to fix it; this is the closest in-gamut fit to the brief that
+//   actually passes.
+// - content-secondary on background: Lc 87.4 / 8.52:1 — clears the Lc75
+//   minimum comfortably, sits ~2.6pts under the Lc90 preferred bar
+//   (informational, not a failure; same shortfall order as Light's own
+//   84.3).
+// - border on background: Lc 19.7 / 1.42:1 — clears the APCA Lc15 hairline
+//   floor with real margin (up from 17.0) but still short of WCAG 1.4.11's
+//   3:1 non-text floor if ever used as a meaningful boundary (e.g. an input
+//   outline) rather than decoration. Not an Ember-specific gap — Light's own
+//   border scores nearly identically (Lc 19.9/1.42:1) — pushing further
+//   would mean abandoning hairline weight for a heavier line the rest of
+//   the house system doesn't use; left matching the house baseline.
+// Motion: punchy, poppy personality — the soda-can-label energy expressed as
+// timing, not just color. Two coherent overrides, everything else stays
+// house default:
+// - --duration-normal: 240ms -> 200ms, a ~17% cut. Speeds up the things this
+//   token actually drives (Modal/Toast fade+rise, Grid/Stack/List mount
+//   stagger, Accordion collapse) toward a snappier, more energetic register.
+//   --duration-fast (150ms — the literal J-9.1 hover rule, via
+//   --transition-colors) and --duration-instant (0ms focus ring) are
+//   deliberately untouched; this theme doesn't get to move either through
+//   the back door.
+// - --spring-gentle: 120,14,1 -> 320,13,1 (damping ratio 0.64 -> 0.36, more
+//   underdamped). This is Button/LinkButton's default press-spring (J-9.2's
+//   "buttons scale 0.98 on press"). House's value settles with almost no
+//   overshoot; the retuned version pops back with a visible springy
+//   overshoot on release — like a can lid snapping open — while settling in
+//   about the same real time as house (the higher stiffness offsets the
+//   lower damping ratio), so it reads as livelier, not slower.
+// --spring-stiff (Tabs indicator) and --spring-slow (StatCard counter) stay
+// house default: the Tabs indicator is nav, which J-9.4 explicitly excludes
+// from bounce/spring personality, and StatCard's counter role is "settled
+// tally" — retuning either would drift the token away from the role its
+// name promises elsewhere in the system (same reasoning blueprint/candy
+// already applied to these two). --ease-bounce/-elastic and
+// --spring-bouncy/-wobbly are also left at house default — verified no live
+// component reads them beyond Foundations' token-listing table, so tuning
+// them now would be speculative, not theme-motivated. --ease-out stays
+// default too: the duration + press-spring changes above already carry this
+// theme's punch without reshaping every transition curve site-wide.
+[data-theme="ember"] {
+  color-scheme: light;
+
+  --font-family-sans:    "Schibsted Grotesk", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Chivo Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
+
+  // Base scale — warm ember tint, hue 50 (matches --color-primary and the
+  // shadow tint below), same whisper-low chroma shape Light uses for its own
+  // hue-anchored ramp. No step is a flat #fff/#000 afterthought.
+  --color-background: oklch(98.6% 0.006 50deg);
+  --color-base-50:  oklch(98.2% 0.007 50deg);
+  --color-base-100: oklch(96.8% 0.010 50deg);
+  --color-base-200: oklch(93.8% 0.012 50deg);
+  --color-base-300: oklch(87.8% 0.014 50deg);
+  --color-base-400: oklch(71.8% 0.016 50deg);
+  --color-base-500: oklch(55%   0.018 50deg);
+  --color-base-600: oklch(42%   0.016 50deg);
+  --color-base-700: oklch(32%   0.014 50deg);
+  --color-base-800: oklch(22%   0.013 50deg);
+  --color-base-900: oklch(15%   0.012 50deg);
+  --color-base-950: oklch(8%    0.011 50deg);
+
+  // Text ramp — same warm hue, APCA-verified against the new tinted
+  // background (see header: previously flat, now earns its chroma).
+  --color-base-content:           oklch(30%   0.014 50deg);   // body/headings — Lc 97.2, 13.08:1
+  --color-base-content-secondary: oklch(41%   0.013 50deg);   // supporting copy — Lc 87.4, 8.52:1
+  --color-base-content-tertiary:  oklch(50.5% 0.012 50deg);   // captions/eyebrows — Lc 76.4, 5.62:1
+  --color-muted:                  oklch(50.5% 0.012 50deg);   // aliases tertiary — muted copy is still content
+  --color-text-disabled:          oklch(68%   0.010 50deg);   // non-content only — Lc 52.0, 2.75:1
+  // Surfaces sit lighter than the canvas, same pattern oat/light use — never
+  // literal #fff.
+  --color-surface:          oklch(99.3% 0.003  50deg);
+  --color-surface-elevated: oklch(99.7% 0.0013 50deg);
+  --color-surface-overlay:  oklch(15% 0.012 50deg / 0.5);
+  --color-border:       oklch(87% 0.008 50deg);   // Lc 19.7, 1.42:1 — hairline floor cleared
+  --color-border-hover: oklch(76% 0.011 50deg);
+
+  // Primary — "Fanta" orange. Lightened 72%→78% base (chroma ceiling there
+  // is ~0.145) so dark ink text clears Lc60; hover/active get LIGHTER, not
+  // darker (see header — the only direction that keeps dark text AND grows
+  // contrast on interaction). Dark text clears Lc60 on every state
+  // (62.4 / 65.7 / 69.6).
+  --color-primary:         oklch(78% 0.133 52deg);
+  --color-primary-hover:   oklch(80% 0.119 52deg);
+  --color-primary-active:  oklch(82% 0.105 52deg);
+  --color-primary-content: oklch(20% 0.045 55deg);
+
+  // Secondary — neutral gray (the quiet, non-brand action).
+  --color-secondary:         oklch(45% 0 0deg);
+  --color-secondary-hover:   oklch(35% 0 0deg);
+  --color-secondary-active:  oklch(28% 0 0deg);
+  --color-secondary-content: oklch(100% 0 0deg);
+
+  // Accent — electric blue, the complement to the orange primary (mirrors
+  // Light's blue-primary / coral-accent pairing, flipped). Gamut-refit,
+  // white content clears AA comfortably on every state (6.03 / 7.81 / 9.56).
+  --color-accent:         oklch(50% 0.138 250deg);
+  --color-accent-hover:   oklch(44% 0.122 250deg);
+  --color-accent-active:  oklch(39% 0.108 250deg);
+  --color-accent-content: oklch(100% 0 0deg);
+  --color-accent-bg:      oklch(96% 0.018 250deg);
+
+  // Semantics — functional colors, not brand; hue/lightness intentionally
+  // shared with Light (same disclosed convention `oat` uses). success/error/
+  // info are unchanged from the prior pass (already gamut-fit, all states
+  // clear Lc75+ with light content). Warning's ramp is rebuilt: same "gets
+  // darker with dark text" bug primary had (base was only Lc 61.8 — a 1.8pt
+  // margin — and hover/active failed outright at Lc 51.9/42.7). Now gets
+  // LIGHTER on hover/active like primary; every state clears Lc60 with
+  // margin (64.6 / 68.0 / 71.5).
+  --color-success:         oklch(50% 0.135 150deg);
+  --color-success-hover:   oklch(45% 0.121 150deg);
+  --color-success-active:  oklch(40% 0.108 150deg);
+  --color-success-bg:      oklch(95% 0.065 150deg);
+  --color-success-content: oklch(99% 0.014 150deg);
+  --color-warning:         oklch(79% 0.150 82deg);
+  --color-warning-hover:   oklch(81% 0.154 82deg);
+  --color-warning-active:  oklch(83% 0.158 82deg);
+  --color-warning-bg:      oklch(96% 0.036 82deg);
+  --color-warning-content: oklch(22% 0.05 82deg);
+  --color-error:         oklch(54% 0.213 22deg);
+  --color-error-hover:   oklch(48% 0.190 22deg);
+  --color-error-active:  oklch(43% 0.170 22deg);
+  --color-error-bg:      oklch(96% 0.018 22deg);
+  --color-error-content: oklch(99% 0.004 22deg);
+  --color-info:         oklch(50% 0.086 215deg);
+  --color-info-hover:   oklch(44% 0.075 215deg);
+  --color-info-active:  oklch(39% 0.066 215deg);
+  --color-info-bg:      oklch(96% 0.028 215deg);
+  --color-info-content: oklch(99% 0.007 215deg);
+
+  // Warm ember-ink shadow tint (hue 50, matching the retinted base ramp and
+  // primary) — this system's craft rule bans flat rgba(0,0,0,x)-style black
+  // shadows; the shadow now shares the same hue anchor as the rest of the
+  // theme instead of being a swappable neutral.
+  --shadow-color:        oklch(20% 0.015 50deg / 0.08);
+  --shadow-color-strong: oklch(20% 0.015 50deg / 0.15);
+  --shadow-xs: 0 1px 2px 0 oklch(20% 0.015 50deg / 0.05);
+  --shadow-sm: 0 2px 4px -1px oklch(20% 0.015 50deg / 0.06), 0 1px 2px -1px oklch(20% 0.015 50deg / 0.04);
+  --shadow-md: 0 8px 16px -4px oklch(20% 0.015 50deg / 0.08), 0 2px 4px -2px oklch(20% 0.015 50deg / 0.04);
+  --shadow-lg: 0 20px 32px -8px oklch(20% 0.015 50deg / 0.10), 0 4px 8px -4px oklch(20% 0.015 50deg / 0.05);
+  --shadow-xl: 0 32px 48px -12px oklch(20% 0.015 50deg / 0.14), 0 8px 16px -8px oklch(20% 0.015 50deg / 0.06);
+
+  // Vibrant coloured glows — orange primary + blue accent cast their own
+  // hue (shadow-primary updated to match primary's new 78%/0.133 base).
+  --shadow-primary: 0 8px 24px 0 oklch(78% 0.133 52deg / 0.38);
+  --shadow-accent:  0 8px 24px 0 oklch(50% 0.138 250deg / 0.28);
+
+  // Focus ring uses a deeper, more saturated orange than any primary fill
+  // state so it stays visible against the now-lighter primary too.
+  --focus-ring-color: oklch(56% 0.140 52deg / 0.55);
+  --color-header-bg: var(--color-base-100);
+
+  // Motion — punchy/poppy (see header rationale). --duration-fast (hover,
+  // 150ms) and --duration-instant (focus ring, 0ms) are never touched.
+  --duration-normal: 200ms;
+  --spring-gentle: 320, 13, 1;
+}

@@ -77,4 +77,30 @@
   --shadow-accent: 0 0 24px 0 oklch(80% 0.22 140deg / 0.5);
   --focus-ring-color: oklch(78% 0.18 75deg / 0.5);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(58% 0.085 70deg);
+
+  // Motion — the theme concept is a mechanical archival machine (crank-driven
+  // microfilm reel, indexed frame advance), not a playful consumer surface,
+  // so the one motion lever this theme pulls is curve *character*, never
+  // duration magnitude: J-9's hover-150ms/accordion-240ms/400ms-ceiling
+  // numbers are house-wide contracts, not this theme's to renegotiate, and
+  // --duration-instant/focus-ring timing is untouched per the hard rule.
+  // --ease-bounce and --ease-elastic (and the --spring-bouncy/-wobbly
+  // presets that back them in JS) are the only tokens reserved for genuine
+  // delight moments (toast entry, success states) per J-9 — house ships
+  // those as underdamped rubber-band overshoots (zeta ~0.29-0.39), which
+  // reads as a toy bouncing, not a reel clicking into a sprocket. Archive
+  // reshapes them into a near-critically-damped mechanical settle instead
+  // (zeta ~0.84-0.90, close to house's own --spring-stiff shape) so a
+  // delight moment in this theme still feels like a physical detent
+  // locking into place, not a spring. --spring-gentle/-stiff/-slow and all
+  // durations/other easings are left at house defaults — no theme-specific
+  // reason to diverge there.
+  --ease-bounce:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-elastic:  cubic-bezier(0.65, 0, 0.35, 1);
+  --spring-bouncy: 280, 32, 1.3;
+  --spring-wobbly: 200, 28, 1.2;
 }

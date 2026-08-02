@@ -81,4 +81,30 @@
 
   // Muted color
   --color-muted: oklch(55% 0.01 145deg);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --shadow-xs:
+  --shadow-sm:
+  --shadow-md:
+  --shadow-lg:
+  --shadow-xl:
+  --shadow-primary: 0 8px 24px 0 oklch(48% 0.14 145deg / 0.28);
+  --shadow-accent:  0 8px 24px 0 oklch(46% 0.078 180deg / 0.26);
+  --color-accent-bg: oklch(93% 0.045 180deg);
+  --color-success-active: oklch(34% 0.082 150deg);
+  --color-warning-active: oklch(86% 0.10 80deg);
+  --color-error-active: oklch(45% 0.17 25deg);
+  --color-info-active: oklch(40% 0.078 240deg);
+
+  // Non-content only — Lc 45.7 (clear of the Lc 30 disabled floor); WCAG
+  // 2.37:1 is expected here (WCAG 1.4.3 exempts inactive UI text).
+  --color-text-disabled: oklch(72% 0.020 145deg);
+  --color-header-bg: var(--color-base-100);
+
+  // Motion — smoother/fluid settle (see header rationale). --duration-fast
+  // (hover, 150ms) and --duration-instant (focus ring, 0ms) are never
+  // touched.
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --spring-gentle: 120, 20, 1;
 }

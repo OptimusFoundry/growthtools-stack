@@ -77,4 +77,25 @@
   --shadow-accent: 0 0 32px 0 oklch(76% 0.26 345deg / 0.6), 0 0 64px 0 oklch(72% 0.18 200deg / 0.3);
   --focus-ring-color: oklch(68% 0.24 310deg / 0.55);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(59% 0.040 310deg);   // Lc -32.9, was missing entirely
+
+  // Motion — thin-film interference is a continuous phenomenon (color shifts
+  // gradually as the film thickens; there's no discrete "arrival" frame), so
+  // the house --ease-out's fast-start-then-decelerate curve — built to read as
+  // a snappy, punchy landing — fights the premise. Rebound to --ease-smooth
+  // (already a house token, unmodified) so hovers, dropdown/modal entry, and
+  // Stack/Grid stagger glide at a constant-feeling rate instead of snapping to
+  // rest, matching an optical-bench register rather than a UI-toy one.
+  // Durations, --spring-gentle (Button press), --spring-stiff (Tabs
+  // indicator) and --spring-slow (StatCard counter) stay at house defaults —
+  // each already reads as precise/instrument-like unmodified (spring-stiff's
+  // damping ratio is 0.75, already tight; spring-slow's is 1.0, already
+  // critically damped with no overshoot), and J-9.4 reserves bounce/elastic
+  // liveliness for one-off delight moments this theme doesn't touch. No
+  // duration change either: nothing in this theme's identity argues flux
+  // should feel objectively faster or slower than house, only smoother.
+  --ease-out: var(--ease-smooth);
 }

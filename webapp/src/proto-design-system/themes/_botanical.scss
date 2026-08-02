@@ -77,4 +77,43 @@
   --shadow-accent: 0 8px 24px 0 oklch(62% 0.12 15deg / 0.30);
   --focus-ring-color: oklch(42% 0.10 145deg / 0.3);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled: oklch(70% 0.025 130deg);
+
+  // Motion (see header rationale). --ease-out and --spring-slow are left at
+  // house defaults on purpose: house's ease-out-quad is already the soft
+  // curve this theme wants for hover/nav/tabs/accordion, and --spring-slow
+  // (StatCard counter, 100/20/1) is already critically damped (zeta = 1.0)
+  // — numbers already climb smoothly with no snap, nothing to improve.
+  // --ease-elastic/--spring-wobbly are also untouched: their aggressive
+  // double-overshoot dip/snap has no organic-growth reading, so there's no
+  // reason to invent a botanical variant of a shape this theme won't use.
+  // - --duration-normal: 240ms -> 280ms, reusing the house's own
+  //   --duration-enter value rather than an arbitrary number. Drives Modal/
+  //   Toast entry, Grid/Stack/List mount stagger, and the Accordion reveal
+  //   — all read as unfurling a beat slower, comfortably inside the 400ms
+  //   ceiling.
+  // - --spring-gentle (Button/LinkButton press): 120/14/1 (zeta 0.639,
+  //   underdamped, a faint bounce-back on release) -> 100/20/1 (zeta 1.0,
+  //   critically damped) — a soft press with no rebound, like pressing into
+  //   moss instead of rubber.
+  // - --spring-stiff (Tabs indicator): 400/30/1 (zeta 0.75, a faint
+  //   mechanical-snap wobble) -> 260/30/1 (zeta 0.930, near-critical) — the
+  //   indicator glides into place like a tendril extending, not a relay
+  //   clicking.
+  // - --ease-bounce/--spring-bouncy (J-9.4: reserved for toast/success
+  //   delight moments; no house component wires either yet, same
+  //   reserved-for-future status _archive's and candy's motion passes left
+  //   them in): house's overshoot reads as a toy bounce. Softened here so
+  //   the moment a delight interaction lands on these tokens, botanical
+  //   already has its own — --ease-bounce's peak overshoot 1.56 -> 1.2;
+  //   --spring-bouncy 300/10/1 (zeta 0.289) -> 220/17/1 (zeta 0.573), still
+  //   underdamped/springy but a calmer bloom-pop, not a rubber ball.
+  --duration-normal: 280ms;
+  --spring-gentle:   100, 20, 1;
+  --spring-stiff:    260, 30, 1;
+  --ease-bounce:     cubic-bezier(0.24, 1.2, 0.4, 1);
+  --spring-bouncy:   220, 17, 1;
 }

@@ -106,4 +106,25 @@
   // Thin precise borders
   --border-width: 1px;
   --border-width-thick: 2px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled: oklch(66% 0.012 230deg);
+  --color-accent-bg: oklch(94% 0.045 95deg);
+  --color-success-active: oklch(40% 0.1 150deg);
+  --color-warning-active: oklch(70% 0.13 85deg);
+  --color-error-active: oklch(45% 0.1656 25deg);
+  --color-info-active: oklch(40% 0.069 225deg);
+  --shadow-primary: 0 8px 24px 0 oklch(50% 0.078 210deg / 0.32);
+  --shadow-accent: 0 8px 24px 0 oklch(65% 0.12 95deg / 0.3);
+
+  // Chrome — a step off the paper canvas, like a title-block strip.
+  --color-header-bg: var(--color-base-100);
+
+  // Motion — mechanical/precise (see header rationale). --duration-fast
+  // (hover, 150ms) and --duration-instant (focus ring, 0ms) are never
+  // touched.
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-normal: 190ms;
+  --spring-gentle: 260, 30, 1;
 }

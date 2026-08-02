@@ -76,4 +76,8 @@
   --shadow-accent:  0 8px 24px 0 oklch(78% 0.17 55deg / 0.30);
   --focus-ring-color: oklch(68% 0.22 275deg / 0.50);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0 0deg);   // non-content only — Lc -35
 }

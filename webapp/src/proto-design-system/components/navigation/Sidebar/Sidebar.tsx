@@ -597,7 +597,7 @@ export function SidebarSection({
 			onKeyDown={handleKeyDown}
 		>
 			{title && !collapsed && (
-				<div className={styles.sectionTitle}>{title}</div>
+				<div className={styles.navSectionLabel}>{title}</div>
 			)}
 			<div className={styles.sectionItems}>{children}</div>
 		</div>
@@ -609,6 +609,10 @@ export interface SidebarItemProps {
 	icon?: ReactNode;
 	/** Item href (renders as link) */
 	href?: string;
+	/** Anchor target (e.g. "_blank" for external links) */
+	target?: string;
+	/** Anchor rel attribute */
+	rel?: string;
 	/** Active state */
 	active?: boolean;
 	/** Disabled state */
@@ -634,6 +638,8 @@ export interface SidebarItemProps {
 export function SidebarItem({
 	icon,
 	href,
+	target,
+	rel,
 	active = false,
 	disabled = false,
 	badge,
@@ -691,6 +697,8 @@ export function SidebarItem({
 		return (
 			<a
 				href={href}
+				target={target}
+				rel={rel ?? (target === "_blank" ? "noopener noreferrer" : undefined)}
 				className={itemClass}
 				aria-current={active ? "page" : undefined}
 				onClick={handleClick}

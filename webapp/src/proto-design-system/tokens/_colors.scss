@@ -98,6 +98,7 @@
 	--focus-ring-color:  oklch(48% 0.20 275deg / 0.4);
 	--focus-ring-width:  3px;
 	--focus-ring-offset: 2px;
+	--focus-ring-error:  oklch(from var(--color-error) l c h / 0.2);
 
 	// Component-specific -------------------------------------------------------
 	--color-switch-thumb: oklch(100% 0 0deg);
@@ -107,6 +108,17 @@
 	--color-hover-overlay-strong: oklch(from var(--color-base-content) l c h / 0.10);
 	--color-active-overlay:       oklch(from var(--color-base-content) l c h / 0.12);
 	--color-selected-overlay:     oklch(from var(--color-base-content) l c h / 0.08);
+
+	// Hover overlay for use ON filled/colored surfaces (where a dark-ink overlay
+	// would be invisible) — e.g. a dismiss button on a filled banner.
+	--color-hover-overlay-on-color: oklch(100% 0 0 / 0.15);
+
+	// Primary-tinted overlays — the canonical "selected" row/option treatment.
+	--color-overlay-primary:        oklch(from var(--color-primary) l c h / 0.10);
+	--color-overlay-primary-strong: oklch(from var(--color-primary) l c h / 0.15);
+
+	// Error-tinted overlay — destructive item hover.
+	--color-overlay-error:          oklch(from var(--color-error) l c h / 0.10);
 
 	// Table / grid header + row backgrounds ------------------------------------
 	--color-header-bg:  var(--color-base-100);

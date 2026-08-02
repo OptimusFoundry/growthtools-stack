@@ -77,4 +77,79 @@
   --shadow-accent: 0 0 0 1px oklch(64% 0.10 240deg / 0.5), 0 4px 16px 0 oklch(64% 0.10 240deg / 0.3);
   --focus-ring-color: oklch(88% 0.012 230deg / 0.4);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0.017 235deg);   // non-content only — was missing entirely
+
+  // Motion — two real physical states drive two different motion registers,
+  // matching the color story above (inert near-achromatic primary vs. the
+  // rare ionized-vapor accent). Quicksilver is famously LOW-viscosity and
+  // fast — the opposite of a slow/honey-like liquid, and a different read
+  // than a drifting/water-resistance theme — but also densely cohesive:
+  // surface tension pulls a disturbed bead back to a clean, non-oscillating
+  // stop almost immediately, it doesn't slosh or ring like water does. So
+  // structural motion (--ease-out, the two springs below) reads quick and
+  // decisive with a hard, clean stop — never soft/lingering, never springy.
+  // The accent's ionized-vapor-discharge character (hue 280, ≤2 uses/page)
+  // gets the opposite register — a sharp electric flicker — but ONLY on the
+  // already-reserved delight moments per J-9.4 (toast entry, success),
+  // never bleeding into routine nav/hover.
+  // --duration-fast (150ms hover, J-9.1) and --duration-instant/focus-ring
+  // (0ms) are never touched, per the hard rule.
+  // - --duration-normal: 240ms -> 190ms (-21%). This is the token nearly
+  //   every structural transition reads (Modal, Drawer, Toast, Alert,
+  //   Banner, PageTransition, Grid/Stack/List mount-stagger, and
+  //   useMotionConfig()'s default duration) — cutting it alone gives the
+  //   whole theme quicksilver's "darts, doesn't linger" quality without
+  //   touching individual components. Still well above --duration-fast
+  //   (150ms, so hover stays the fastest thing on the page) and nowhere
+  //   near J-9's 400ms ceiling.
+  // - --ease-out: house's cubic-bezier(0.22,1,0.36,1) is already fast-out/
+  //   soft-settle; mercury pushes further toward "decisive stop" with
+  //   cubic-bezier(0.16,1,0.3,1) (an ease-out-expo shape) — velocity peaks
+  //   earlier and the curve is essentially flat well before t=1, so motion
+  //   reads as arriving and stopping cleanly rather than gently floating in
+  //   over the last few frames. This is the single curve nearly every
+  //   entrance/exit + Dropdown's (still 150ms) open reads, so retuning it
+  //   alone reshapes the theme's whole motion signature.
+  // - --spring-gentle (Button/LinkButton's default press-spring via
+  //   useMotionConfig()): 120,14,1 (zeta 0.64, underdamped — a soft squish-
+  //   and-settle overshoot) -> 170,26,1.4 (zeta = 26/(2*sqrt(170*1.4)) =
+  //   0.84, near-critically-damped, no visible overshoot; heavier mass for
+  //   a weighted, dense press). Pressing a button reads as pressing into a
+  //   cohesive, heavy liquid-metal bead that yields and cleanly re-forms —
+  //   not a springy digital pop.
+  // - --spring-slow (StatCard's counter spring — the "instrument dial"
+  //   register the mono pairing rationale above already names: Source Code
+  //   Pro reads as a thermometer/barometer numeric readout): 100,20,1
+  //   (zeta 1.0, already critically damped) -> 160,24,1 (zeta =
+  //   24/(2*sqrt(160)) = 0.95, still non-oscillating but a higher natural
+  //   frequency/faster rise) — the counter still never bounces, it just
+  //   snaps to its reading with instrument-needle precision instead of a
+  //   slow settle.
+  // - --spring-bouncy (the JS-side of J-9.4's delight reservation — toast
+  //   entry, success; paired with --ease-bounce, left at house default
+  //   since only the spring physics need to change, not the curve shape):
+  //   300,10,1 (zeta 0.29, wn 17.3 rad/s) -> 380,9,0.85 (zeta =
+  //   9/(2*sqrt(380*0.85)) = 0.25, wn = sqrt(380/0.85) = 21.1 rad/s) —
+  //   slightly more underdamped AND a higher oscillation frequency reads as
+  //   a sharp electric flicker/spark rather than a rubbery bounce, tying
+  //   the accent's rare ionized-vapor-discharge moments to its own distinct
+  //   motion register. Still scoped to delight only, per J-9.4.
+  // Declined: --duration-enter/-exit/-complex/-page and --spring-wobbly/
+  // --ease-in-out have no live component consumer in this codebase today
+  // (verified by grep — only parsed into MotionTokens or read by the
+  // Foundations token-listing demo), so overriding them wouldn't reach any
+  // real UI. --ease-bounce/--ease-elastic have no direct consumer either —
+  // their JS-facing role is fully carried by --spring-bouncy above.
+  // --spring-stiff (Tabs' active-indicator slide) is left at house default:
+  // it's already close to critically damped (zeta 0.75) and reads precise/
+  // immediate, which is exactly the clean-stop quality mercury wants — no
+  // change needed to already get the right character.
+  --duration-normal: 190ms;
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-gentle: 170, 26, 1.4;
+  --spring-slow:   160, 24, 1;
+  --spring-bouncy: 380, 9, 0.85;
 }

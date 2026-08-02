@@ -7,15 +7,44 @@ import {
 	type ReactNode,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./Popover.module.scss";
 
 export type PopoverPlacement = "top" | "bottom" | "left" | "right";
 export type PopoverAlign = "start" | "center" | "end";
+
+const POPOVER_OFFSET = 4;
+
+// Content variants vary by placement, so this is a factory rather than a
+// static object. It's still hoisted to module scope (no closures) and the
+// component memoizes its result keyed on `placement` — otherwise a new
+// object identity on every parent re-render would restart an in-progress
+// enter/exit transition, the same risk a static hoist avoids.
+function getPopoverContentVariants(placement: PopoverPlacement) {
+	const offset = POPOVER_OFFSET;
+	const variants = {
+		top: { hidden: { opacity: 0, y: offset }, visible: { opacity: 1, y: 0 } },
+		bottom: {
+			hidden: { opacity: 0, y: -offset },
+			visible: { opacity: 1, y: 0 },
+		},
+		left: {
+			hidden: { opacity: 0, x: offset },
+			visible: { opacity: 1, x: 0 },
+		},
+		right: {
+			hidden: { opacity: 0, x: -offset },
+			visible: { opacity: 1, x: 0 },
+		},
+	};
+	return variants[placement];
+}
 
 export interface PopoverProps {
 	/** Trigger element */
@@ -44,6 +73,16 @@ export interface PopoverProps {
 	className?: string;
 	/** Additional className for trigger wrapper */
 	triggerClassName?: string;
+	/**
+	 * Skip Popover's own card chrome (background/border/shadow/radius) and
+	 * the body's padding. Use when `children` is already a fully-surfaced
+	 * component (e.g. `DropdownMenu`) — without this, the child's own
+	 * border/shadow stacks inside Popover's identical one, and its content
+	 * sits inset by Popover's body padding on top of the child's own, both
+	 * reading as a surface nested inside a surface. Ignored together with
+	 * `title`/`showClose`, which need the header chrome this strips.
+	 */
+	unstyled?: boolean;
 }
 
 /**
@@ -73,41 +112,25 @@ export function Popover({
 	trapFocus = true,
 	className,
 	triggerClassName,
+	unstyled = false,
 }: PopoverProps) {
 	const [internalOpen, setInternalOpen] = useState(false);
 	const isControlled = controlledOpen !== undefined;
 	const isOpen = isControlled ? controlledOpen : internalOpen;
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const triggerRef = useRef<HTMLElement>(null);
 
-	// Animation configuration based on placement
-	const getAnimationVariants = () => {
-		const offset = 4;
-		const variants = {
-			top: { hidden: { opacity: 0, y: offset }, visible: { opacity: 1, y: 0 } },
-			bottom: {
-				hidden: { opacity: 0, y: -offset },
-				visible: { opacity: 1, y: 0 },
-			},
-			left: {
-				hidden: { opacity: 0, x: offset },
-				visible: { opacity: 1, x: 0 },
-			},
-			right: {
-				hidden: { opacity: 0, x: -offset },
-				visible: { opacity: 1, x: 0 },
-			},
-		};
-		return variants[placement];
-	};
-
-	const contentVariants = getAnimationVariants();
+	const contentVariants = useMemo(
+		() => getPopoverContentVariants(placement),
+		[placement],
+	);
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration: 0.15, ease: [0, 0, 0.2, 1] as const };
+		: { duration: motionTokens.duration.fast, ease: motionTokens.easeOut };
 
 	const setOpen = useCallback(
 		(value: boolean) => {
@@ -243,6 +266,7 @@ export function Popover({
 						ref={contentRef}
 						className={cn(
 							styles.content,
+							unstyled && styles.unstyled,
 							styles[`placement-${placement}`],
 							styles[`align-${align}`],
 							className,
@@ -270,7 +294,9 @@ export function Popover({
 								)}
 							</div>
 						)}
-						<div className={styles.body}>{children}</div>
+						<div className={cn(styles.body, unstyled && styles.bodyUnstyled)}>
+							{children}
+						</div>
 					</motion.div>
 				)}
 			</AnimatePresence>

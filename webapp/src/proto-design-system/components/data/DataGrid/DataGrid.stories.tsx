@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { DataGrid, type DataGridColumn } from "./DataGrid";
 
@@ -14,7 +14,7 @@ interface User {
 const sampleData: User[] = Array.from({ length: 50 }, (_, i) => ({
 	id: i + 1,
 	name: `User ${i + 1}`,
-	email: `user${i + 1}@example.com`,
+	email: `user${i + 1}@tickuptoks.com`,
 	role: ["Admin", "Editor", "Viewer"][i % 3] as string,
 	status: i % 4 === 0 ? "inactive" : "active",
 	lastLogin: new Date(

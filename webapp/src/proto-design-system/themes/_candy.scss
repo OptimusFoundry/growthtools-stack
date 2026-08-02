@@ -77,4 +77,79 @@
   --shadow-accent:  0 6px 24px 0 oklch(82% 0.20 130deg / 0.6);
   --focus-ring-color: oklch(68% 0.22 340deg / 0.45);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(68% 0.050 312deg); // non-content only
+
+  // Radius — bubblegum/gumdrop corner language, deliberately rounder than
+  // the house default ladder (2/4/8/12/20px). The stock ladder is the exact
+  // Tailwind/shadcn scale and reads generic on a candy-shop brief; this one
+  // leans into "soft, bouncy, inflated" the way the Nunito sans already does.
+  // J-10.1 monotonic per element type: buttons/inputs sit at --radius-md
+  // (16px, well short of pill so a rect toolbar button still reads distinct
+  // from the r-full hero CTA), cards at --radius-lg/xl (24/32px). J-10.2 outer
+  // radius > inner: card (24-32px) > input/button (16px) > badge/avatar
+  // (r-full, unaffected by this ladder) holds at every step.
+  // xs/sm capped below the 8px collision threshold: Checkbox applies
+  // --radius-sm directly to its 16px box regardless of size variant, and any
+  // value >= 8px (half that box) gets clipped to a full circle by CSS —
+  // indistinguishable from Radio's --radius-full. 12px (the original value)
+  // clipped it outright; 5/7px keeps candy's roundest-of-the-pilot-set feel
+  // while staying safely square. md/lg/xl (buttons/cards, not square 16px
+  // controls) are untouched.
+  --radius-xs:  5px;
+  --radius-sm:  7px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  // Motion — the one lever J-9.4 actually grants a "bouncy" identity:
+  // --ease-bounce/--ease-elastic and the springs that back them in JS
+  // (--spring-bouncy/--spring-wobbly) are reserved for genuine delight
+  // moments (toast entry, success checkmark, single-use spring interactions)
+  // — never for nav, tabs, or hover, which is a hard house rule regardless of
+  // theme personality. So this section touches exactly those four tokens and
+  // nothing else:
+  // - Durations are untouched. Hovers stay 150ms, accordions/tabs stay
+  //   240ms, nothing exceeds 400ms, --duration-instant and focus-ring timing
+  //   are unthemed per the hard rule — candy's bounce lives in curve
+  //   *character*, not in slowing anything down.
+  // - --ease-out/--ease-in-out (the curves actually driving hover, nav,
+  //   tabs, accordion) are untouched too — a theme cannot re-point the
+  //   house's routine-interaction easing at bounce; that's the exact
+  //   "--ease-out globally to bounce" move J-9.4 forbids.
+  // - --spring-gentle (Button/LinkButton press) and --spring-stiff (Tabs
+  //   indicator) and --spring-slow (StatCard counter) are also left at
+  //   house defaults on purpose: those are routine, always-on interactions,
+  //   not delight moments, so re-tuning them here would be the same
+  //   violation one token family over.
+  // House already ships --ease-bounce/--spring-bouncy as a mild overshoot
+  // (the only theme-family tokens with any spring character at all); candy
+  // amplifies that overshoot further, in the same "gumdrop popping off the
+  // counter" register as the shadow system above, rather than inventing a
+  // new curve shape:
+  // - --ease-bounce: peak overshoot raised from house's 1.56 to 1.76 (first
+  //   control point) — a snappier, more pronounced settle-past-then-back.
+  // - --ease-elastic: house's already-extreme double-overshoot dip/snap
+  //   pushed slightly further (-0.55/1.55 -> -0.65/1.65) for the same reason.
+  // - --spring-bouncy: stiffness 300->340, damping 10->8 — damping ratio
+  //   0.289 -> 0.217 (computed, not eyeballed), i.e. more underdamped/
+  //   visible bounce, settling faster thanks to the added stiffness so it
+  //   still reads snappy, not sluggish.
+  // - --spring-wobbly: stiffness 180->190, damping 12->9 — damping ratio
+  //   0.447 -> 0.326, same more-underdamped direction, kept short of
+  //   spring-bouncy's ratio so the two presets stay distinct from each
+  //   other, not just both "more bouncy" by the same amount.
+  // As of this pass no house component actually wires --ease-bounce/
+  // -elastic or --spring-bouncy/-wobbly to an interaction yet (verified: no
+  // .tsx/.scss reference outside tokens/_motion.scss and the theme files
+  // themselves) — same reserved-for-future status _archive's motion pass
+  // left them in. Tuned now so the moment a toast/success/delight
+  // interaction lands on these tokens, candy already has its own bounce
+  // ready rather than inheriting house's.
+  --ease-bounce:   cubic-bezier(0.34, 1.76, 0.64, 1);
+  --ease-elastic:  cubic-bezier(0.64, -0.65, 0.24, 1.65);
+  --spring-bouncy: 340, 8, 1;
+  --spring-wobbly: 190, 9, 1;
 }

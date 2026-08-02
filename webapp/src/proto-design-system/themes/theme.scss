@@ -15,6 +15,9 @@
 // Import themes
 @use "editorial";
 @use "light";
+@use "oat";
+@use "ember";
+@use "mono";
 @use "dark";
 @use "brutal";
 @use "cosmos";
@@ -42,6 +45,8 @@
 @use "riso";
 @use "vinyl";
 @use "zen";
+@use "whisper";
+@use "chalk";
 
 // Import base styles
 @use "../base/reset";

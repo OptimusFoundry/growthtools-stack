@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Badge } from "../../primitives/Badge";
 import { Label } from "./Label";
 

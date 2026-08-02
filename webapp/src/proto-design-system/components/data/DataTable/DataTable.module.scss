@@ -1,0 +1,123 @@
+// =============================================================================
+// DataTable — div-based grid table for R-3.1 hairline row lists.
+// Uses --dt-cols CSS custom property for column widths.
+// Phase 3.5 canonical component.
+// =============================================================================
+@use "../../../mixins" as *;
+
+.table {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-width-sm, 1px) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: var(--color-surface);
+}
+
+.headerRow,
+.dataRow {
+  display: grid;
+  grid-template-columns: var(--dt-cols, 1fr);
+  align-items: center;
+}
+
+.headerRow {
+  background-color: var(--color-header-bg);
+  border-bottom: var(--border-width-sm, 1px) solid var(--color-border);
+}
+
+.dataRow {
+  border-bottom: var(--border-width-sm, 1px) solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-out);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: var(--color-row-hover);
+  }
+}
+
+// Clickable row — button semantics
+.dataRowClickable {
+  cursor: pointer;
+  background: none;
+  border-radius: 0;
+  text-align: left;
+  width: 100%;
+
+  @include focus-ring;
+}
+
+// Header cell
+.headerCell {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-widest);
+  text-transform: uppercase;
+  color: var(--color-base-content-tertiary, var(--color-base-content-secondary));
+}
+
+// Data cell
+.dataCell {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-base-content);
+  min-width: 0;
+}
+
+// Align variants
+.alignRight {
+  text-align: right;
+}
+
+// Density
+.comfortable {
+  .headerCell,
+  .dataCell {
+    padding: var(--space-4) var(--space-6);
+  }
+}
+
+.compact {
+  .headerCell,
+  .dataCell {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+// Loading skeleton shimmer
+.skeletonRow {
+  display: grid;
+  grid-template-columns: var(--dt-cols, 1fr);
+  border-bottom: var(--border-width-sm, 1px) solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.skeletonCell {
+  padding: var(--space-4) var(--space-6);
+}
+
+.skeletonBar {
+  height: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--color-base-100) 25%,
+    var(--color-base-200) 50%,
+    var(--color-base-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer var(--duration-ambient) var(--ease-in-out) infinite;
+  width: 60%;
+}
+
+// Empty state container
+.emptyContainer {
+  padding: var(--space-8);
+}

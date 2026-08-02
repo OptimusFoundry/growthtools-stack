@@ -23,8 +23,8 @@
 // =============================================================================
 
 .line {
-  border-bottom: 1px solid var(--color-border);
-  gap: var(--space-4);
+  border-bottom: var(--border-width-sm) solid var(--color-border);
+  gap: var(--space-7);
   position: relative;
 }
 
@@ -67,7 +67,6 @@
 // Line variant tabs
 .line .tab {
   margin-bottom: -1px;
-  padding-bottom: var(--space-3);
 
   &.active {
     color: var(--color-primary);
@@ -81,14 +80,13 @@
 .indicator {
   background-color: var(--color-primary);
   bottom: 0;
-  height: 2px;
+  height: var(--border-width-md);
   position: absolute;
 }
 
 // Enclosed variant tabs
 .enclosed .tab {
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
 
   &.active {
     background-color: var(--color-surface);
@@ -100,7 +98,6 @@
 // Pill variant tabs
 .pill .tab {
   border-radius: var(--radius-full);
-  padding: var(--space-2) var(--space-4);
 
   &.active {
     background-color: var(--color-primary);
@@ -116,10 +113,15 @@
 // =============================================================================
 // SIZES
 // =============================================================================
+// Padding is scoped per variant+size combo (rather than set once on the
+// variant) because each variant uses a different padding model: `line` is
+// bottom-only (it hugs the underline), while `enclosed`/`pill` are full
+// padding (they're filled, card/pill-shaped hit areas). Setting padding only
+// on `.size-* .tab` previously got clobbered by `.enclosed .tab` / `.pill
+// .tab`'s padding shorthand, so size only ever changed the `line` variant.
 
 .size-sm .tab {
   font-size: var(--font-size-xs);
-  padding-bottom: var(--space-2);
 }
 
 .size-md .tab {
@@ -128,7 +130,42 @@
 
 .size-lg .tab {
   font-size: var(--font-size-base);
+}
+
+.line.size-sm .tab {
+  padding-bottom: var(--space-2);
+}
+
+.line.size-md .tab {
+  padding-bottom: var(--space-3);
+}
+
+.line.size-lg .tab {
   padding-bottom: var(--space-4);
+}
+
+.enclosed.size-sm .tab {
+  padding: var(--space-1) var(--space-2);
+}
+
+.enclosed.size-md .tab {
+  padding: var(--space-2) var(--space-3);
+}
+
+.enclosed.size-lg .tab {
+  padding: var(--space-3) var(--space-4);
+}
+
+.pill.size-sm .tab {
+  padding: var(--space-1) var(--space-3);
+}
+
+.pill.size-md .tab {
+  padding: var(--space-2) var(--space-4);
+}
+
+.pill.size-lg .tab {
+  padding: var(--space-3) var(--space-5);
 }
 
 // =============================================================================
