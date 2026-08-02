@@ -10,5 +10,31 @@
       "mcp__claude-in-chrome__*",
       "Read(//Users/shubh/Workspaces/first-saas-repo/.claude/agents/**)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo \"${CLAUDE_PROJECT_DIR:-.}\"); f=\"$r/.claude/hooks/agent-routing-guard.py\"; [ -r \"$f\" ] || exit 0; python3 \"$f\" || exit 0'",
+            "timeout": 10,
+            "statusMessage": "Checking agent routing..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Grep|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo \"${CLAUDE_PROJECT_DIR:-.}\"); f=\"$r/.claude/hooks/lsp-hint.py\"; [ -r \"$f\" ] || exit 0; python3 \"$f\" || exit 0'",
+            "timeout": 10,
+            "statusMessage": "Checking for LSP-answerable lookup..."
+          }
+        ]
+      }
+    ]
   }
 }
