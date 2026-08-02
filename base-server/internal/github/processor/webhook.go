@@ -34,9 +34,12 @@ type CaptureRequest struct {
 	// user's OAuth token, so the capture-worker doesn't need a local git
 	// checkout or any credentials of its own. May be empty for commits
 	// GitHub considers too large to render.
-	Diff    string `json:"diff,omitempty"`
-	AppURL  string `json:"app_url,omitempty"`
-	TwoPass bool   `json:"two_pass,omitempty"`
+	Diff            string            `json:"diff,omitempty"`
+	AppURL          string            `json:"app_url,omitempty"`
+	TwoPass         bool              `json:"two_pass,omitempty"`
+	StoryIDs        []string          `json:"story_ids,omitempty"`
+	StorybookURL    string            `json:"storybook_url,omitempty"`
+	StoryComponents map[string]string `json:"story_components,omitempty"`
 }
 
 // pushPayload is the subset of GitHub's push-event payload we actually use.
@@ -416,6 +419,11 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 			continue
 		}
 
+		storyIDs, storyComponents, storyErr := p.resolveStoryIDs(ctx, repo, diff)
+		if storyErr != nil {
+			p.logger.Error(ctx, fmt.Sprintf("failed to resolve story IDs for %s; proceeding without Storybook capture", commit.SHA), storyErr)
+		}
+
 		// AI-driven filter: drop commits that aren't worth the capture +
 		// post cost. Nil classifier or classifier errors fall through —
 		// we'd rather capture noise than silently swallow a user feature.
@@ -446,6 +454,13 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 			Diff:     diff,
 			AppURL:   appURL,
 			TwoPass:  true,
+		}
+		if len(storyIDs) > 0 {
+			req.StoryIDs = storyIDs
+			if repo.StorybookURL != nil {
+				req.StorybookURL = *repo.StorybookURL
+			}
+			req.StoryComponents = storyComponents
 		}
 		if err := p.publisher.Publish(ctx, TopicCaptureRequests, commit.ID.String(), req); err != nil {
 			p.logger.Error(ctx, fmt.Sprintf("failed to enqueue capture request for %s", commit.SHA), err)

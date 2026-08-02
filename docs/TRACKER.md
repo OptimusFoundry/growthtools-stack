@@ -270,6 +270,18 @@ Terraform, Docker, CI/CD (Epic 13) for production deployment.
 
 ---
 
+## PRD-Tracked Epics
+
+Each row is a feature epic spec'd via `shared-writing-prds`. Status flows:
+Backlog → Spec'd → Planned → In progress → Shipped. Tickets live in the linked tech plan.
+
+| Epic | Feature | PRD | Plan | Status |
+|------|---------|-----|------|--------|
+| EP-001 | Storybook Capture → Social Post | docs/prds/2026-08-02-storybook-social-autopost.md | docs/plans/2026-08-02-storybook-social-autopost.md | Shipped |
+| EP-002 | Publish Blog Posts to shubhanshu.dev | docs/prds/2026-08-02-blog-site-publish.md | docs/plans/2026-08-02-blog-site-publish.md | Shipped (279c698, 083a133) |
+
+---
+
 ## How to Use This Tracker
 
 1. **Claim a task:** Update status to `in-progress` and add your agent/branch name in Notes

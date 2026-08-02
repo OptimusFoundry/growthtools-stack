@@ -115,16 +115,17 @@ never be blocked or rolled back by a site-publish failure) · no site publish ta
 
 ## B1 — Migration: blog_posts site-PR columns + site_publish_targets table
 
-**Files:** `base-server/migrations/V0053__blog_posts_site_pr_fields.sql`,
-`base-server/migrations/V0054__create_site_publish_targets.sql`
-**Placement:** confirm `V0052` is still the latest (`ls base-server/migrations | tail -1`) before
-assigning V0053/V0054.
+**Files:** `base-server/migrations/V0054__blog_posts_site_pr_fields.sql`,
+`base-server/migrations/V0055__create_site_publish_targets.sql`
+**Placement:** originally assigned V0053/V0054; renumbered to V0054/V0055 on merge with `main`,
+which had independently shipped `V0053__add_storybook_columns_to_github_repos.sql` in the
+meantime.
 
-**V0053 contract** — `ALTER TABLE blog_posts`: add `site_pr_url` (TEXT, nullable), add
+**V0054 contract** — `ALTER TABLE blog_posts`: add `site_pr_url` (TEXT, nullable), add
 `site_pr_opened_at` (TIMESTAMPTZ, nullable). No default, no backfill needed (new rows/existing rows
 alike start NULL).
 
-**V0054 contract** — `CREATE TABLE site_publish_targets`, matching `voice_profiles`' exact
+**V0055 contract** — `CREATE TABLE site_publish_targets`, matching `voice_profiles`' exact
 conventions (confirmed from `V0001__init.sql` / `voice_profile.go`): `id` UUID PK default
 `uuid_generate_v4()` (not `gen_random_uuid()` — `uuid-ossp` extension already enabled, no new
 `CREATE EXTENSION`), `account_id` UUID NOT NULL REFERENCES `accounts(id)` ON DELETE CASCADE,

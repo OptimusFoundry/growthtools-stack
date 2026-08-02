@@ -12,6 +12,7 @@ package processor
 import (
 	commitclassifier "base-server/internal/ai/commitclassifier"
 	github "base-server/internal/infra/clients/github"
+	storybook "base-server/internal/infra/clients/storybook"
 	store "base-server/internal/infra/store"
 	context "context"
 	json "encoding/json"
@@ -682,6 +683,45 @@ func (m *MockGitHubClient) ListUserRepos(ctx context.Context, token string, page
 func (mr *MockGitHubClientMockRecorder) ListUserRepos(ctx, token, page any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRepos", reflect.TypeOf((*MockGitHubClient)(nil).ListUserRepos), ctx, token, page)
+}
+
+// MockStorybookClient is a mock of StorybookClient interface.
+type MockStorybookClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockStorybookClientMockRecorder
+	isgomock struct{}
+}
+
+// MockStorybookClientMockRecorder is the mock recorder for MockStorybookClient.
+type MockStorybookClientMockRecorder struct {
+	mock *MockStorybookClient
+}
+
+// NewMockStorybookClient creates a new mock instance.
+func NewMockStorybookClient(ctrl *gomock.Controller) *MockStorybookClient {
+	mock := &MockStorybookClient{ctrl: ctrl}
+	mock.recorder = &MockStorybookClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStorybookClient) EXPECT() *MockStorybookClientMockRecorder {
+	return m.recorder
+}
+
+// FetchIndex mocks base method.
+func (m *MockStorybookClient) FetchIndex(ctx context.Context, baseURL string) (storybook.Index, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchIndex", ctx, baseURL)
+	ret0, _ := ret[0].(storybook.Index)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchIndex indicates an expected call of FetchIndex.
+func (mr *MockStorybookClientMockRecorder) FetchIndex(ctx, baseURL any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchIndex", reflect.TypeOf((*MockStorybookClient)(nil).FetchIndex), ctx, baseURL)
 }
 
 // MockEventPublisher is a mock of EventPublisher interface.

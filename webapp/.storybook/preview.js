@@ -1,4 +1,5 @@
 import "../src/index.css";
+import { showcaseDecorator } from "../src/proto-design-system/storybook/showcaseDecorator";
 
 const preview = {
 	parameters: {
@@ -9,6 +10,7 @@ const preview = {
 			},
 		},
 	},
+	decorators: [showcaseDecorator],
 };
 
 export default preview;

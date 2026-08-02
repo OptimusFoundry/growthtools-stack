@@ -39,6 +39,8 @@ func TestStore_CreateGitHubRepo(t *testing.T) {
 			assert: func(t *testing.T, got GitHubRepo) {
 				assert.NotEqual(t, uuid.Nil, got.ID)
 				assert.True(t, got.Enabled)
+				assert.Nil(t, got.StorybookURL)
+				assert.Empty(t, got.ComponentGlobs)
 			},
 		},
 		{
@@ -185,6 +187,8 @@ func TestStore_GetGitHubRepoByConnectionAndName(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, owner, got.Owner)
 			assert.Equal(t, name, got.Name)
+			assert.Nil(t, got.StorybookURL)
+			assert.Empty(t, got.ComponentGlobs)
 		})
 	}
 }
@@ -241,6 +245,8 @@ func TestStore_GetGitHubRepoByGitHubID(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, ghRepoID, got.GitHubRepoID)
+			assert.Nil(t, got.StorybookURL)
+			assert.Empty(t, got.ComponentGlobs)
 		})
 	}
 }
@@ -298,6 +304,8 @@ func TestStore_GetGitHubRepoByOwnerName(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, owner, got.Owner)
 			assert.Equal(t, name, got.Name)
+			assert.Nil(t, got.StorybookURL)
+			assert.Empty(t, got.ComponentGlobs)
 		})
 	}
 }

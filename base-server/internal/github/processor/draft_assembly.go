@@ -102,3 +102,18 @@ func buildDraftPrompt(commit store.GitHubCommitForDraft) string {
 	sb.WriteString("\n\nTurn this into a thread that reads like the builder talking to peers — what changed, why it matters, how it feels to use. Do not reference commit shas, branch names, or internal repo mechanics.")
 	return sb.String()
 }
+
+// buildComponentDraftPrompt produces a prompt framed around the given
+// component name(s) (comma-joined) and commit.Message — same repo/commit
+// framing buildDraftPrompt uses, but leading with "this is a UI/component
+// update to <names>" rather than a generic shipped-change blurb, so the
+// generated copy references the component explicitly.
+func buildComponentDraftPrompt(commit store.GitHubCommitForDraft, componentNames []string) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "This is a UI/component update to %s — write social posts announcing the change.\n\n", strings.Join(componentNames, ", "))
+	fmt.Fprintf(&sb, "Repository: %s/%s\n", commit.RepoOwner, commit.RepoName)
+	sb.WriteString("Commit message:\n")
+	sb.WriteString(commit.Message)
+	sb.WriteString("\n\nTurn this into a thread that reads like the builder talking to peers — what changed about the component, why it matters, how it feels to use. Do not reference commit shas, branch names, or internal repo mechanics.")
+	return sb.String()
+}

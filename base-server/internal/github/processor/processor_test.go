@@ -13,6 +13,7 @@ import (
 
 	"base-server/internal/ai/commitclassifier"
 	githubclient "base-server/internal/infra/clients/github"
+	storybookclient "base-server/internal/infra/clients/storybook"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
@@ -1022,6 +1023,14 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 		// the processor with the given expectations. Leave nil to exercise
 		// the unfiltered path.
 		classifierMocks func(cl *MockCommitClassifier, s *MockGitHubStore)
+		// repoOverride, when non-nil, mutates the repo built by makeRepo
+		// before commits/mocks run — used by Storybook wiring cases that
+		// need StorybookURL/ComponentGlobs set on the repo.
+		repoOverride func(repo store.GitHubRepo) store.GitHubRepo
+		// storybookMocks, when non-nil, wires a MockStorybookClient into the
+		// processor via SetStorybookClient with the given expectations.
+		// Leave nil to exercise the "no Storybook client wired" path.
+		storybookMocks func(sc *MockStorybookClient)
 		// assertPublished records the CaptureRequest values passed to Publish
 		// for cases that need payload inspection. When nil, no payload
 		// assertions are made (publisher.Publish expectations are set in mocks).
@@ -1286,6 +1295,90 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				// No GetCommitDiff, no Publish — strict controller fails if called.
 			},
 		},
+		{
+			// Storybook wiring: repo has StorybookURL + ComponentGlobs set,
+			// the diff touches a matching component, and a MockStorybookClient
+			// is wired via SetStorybookClient — the published CaptureRequest
+			// must carry StoryIDs/StorybookURL/StoryComponents.
+			name: "storybook configured with matching component – CaptureRequest carries story fields",
+			repoOverride: func(repo store.GitHubRepo) store.GitHubRepo {
+				url := "https://sb.example.com"
+				repo.StorybookURL = &url
+				repo.ComponentGlobs = store.StringArray{"webapp/src/proto-design-system/components/**/*.tsx"}
+				return repo
+			},
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("sb001", "feat: restyle button")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("App: https://myapp.example.com", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "sb001").
+					Return("diff --git a/webapp/src/proto-design-system/components/primitives/Button/Button.tsx "+
+						"b/webapp/src/proto-design-system/components/primitives/Button/Button.tsx\n+restyled", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						if len(req.StoryIDs) != 1 || req.StoryIDs[0] != "primitives-button--default" {
+							t.Errorf("unexpected StoryIDs: %v", req.StoryIDs)
+						}
+						if req.StorybookURL != "https://sb.example.com" {
+							t.Errorf("unexpected StorybookURL: %q", req.StorybookURL)
+						}
+						if req.StoryComponents["primitives-button--default"] != "Button" {
+							t.Errorf("unexpected StoryComponents: %v", req.StoryComponents)
+						}
+						return nil
+					})
+			},
+			storybookMocks: func(sc *MockStorybookClient) {
+				sc.EXPECT().FetchIndex(gomock.Any(), "https://sb.example.com").Return(storybookclient.Index{
+					Entries: map[string]storybookclient.IndexEntry{
+						"primitives-button--default": {
+							ID:         "primitives-button--default",
+							ImportPath: "./src/proto-design-system/components/primitives/Button/Button.stories.tsx",
+							Type:       "story",
+						},
+					},
+				}, nil)
+			},
+		},
+		{
+			// AC7 regression guard: repos without Storybook configured (the
+			// default makeRepo fixture, unchanged) must publish a
+			// CaptureRequest with empty StoryIDs/StorybookURL/StoryComponents.
+			name: "storybook not configured – CaptureRequest story fields stay empty",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("nosb001", "feat: add thing")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("App: https://myapp.example.com", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "nosb001").
+					Return("diff --git a/webapp/src/App.tsx b/webapp/src/App.tsx\n+added line", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						if len(req.StoryIDs) != 0 {
+							t.Errorf("expected empty StoryIDs, got %v", req.StoryIDs)
+						}
+						if req.StorybookURL != "" {
+							t.Errorf("expected empty StorybookURL, got %q", req.StorybookURL)
+						}
+						if len(req.StoryComponents) != 0 {
+							t.Errorf("expected empty StoryComponents, got %v", req.StoryComponents)
+						}
+						return nil
+					})
+			},
+			// No storybookMocks — repo has no StorybookURL/ComponentGlobs
+			// (default makeRepo fixture), so resolveStoryIDs must short-circuit
+			// without a client wired at all.
+		},
 	}
 
 	for _, tt := range tests {
@@ -1298,6 +1391,9 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 
 			connID := uuid.New()
 			repo := makeRepo(connID)
+			if tt.repoOverride != nil {
+				repo = tt.repoOverride(repo)
+			}
 			commits := tt.commits(repo)
 
 			tt.mocks(mockStore, mockClient, mockPublisher, connID, repo)
@@ -1307,6 +1403,11 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 				mockClassifier := NewMockCommitClassifier(ctrl)
 				tt.classifierMocks(mockClassifier, mockStore)
 				proc.SetCommitClassifier(mockClassifier)
+			}
+			if tt.storybookMocks != nil {
+				mockStorybook := NewMockStorybookClient(ctrl)
+				tt.storybookMocks(mockStorybook)
+				proc.SetStorybookClient(mockStorybook)
 			}
 			proc.enqueueCaptureRequests(context.Background(), repo, commits, false)
 			// enqueueCaptureRequests returns nothing; correctness is verified

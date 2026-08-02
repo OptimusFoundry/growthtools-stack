@@ -157,6 +157,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	// Fail-open inside the processor means a classifier outage doesn't drop
 	// user features on the floor.
 	p.github.SetCommitClassifier(p.aiClassifier)
+	p.github.SetStorybookClient(cl.storybookClient)
 
 	// Blog
 	p.blog = blogProcessor.New(s, p.aiBlog, logger)

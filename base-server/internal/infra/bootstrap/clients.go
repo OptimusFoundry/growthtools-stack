@@ -15,6 +15,7 @@ import (
 	"base-server/internal/infra/clients/localdir"
 	"base-server/internal/infra/clients/mail"
 	"base-server/internal/infra/clients/s3"
+	storybookclient "base-server/internal/infra/clients/storybook"
 	"base-server/internal/infra/email"
 	"base-server/internal/infra/httpclient"
 
@@ -40,6 +41,7 @@ type clients struct {
 	gemini          *gemini.Client
 	kafka           *kafka.Producer
 	ghClient        *githubclient.Client
+	storybookClient *storybookclient.Client
 	fileStore       mediaProcessor.FileStore
 	urlSigner       githubProcessor.URLSigner
 	s3Head          githubProcessor.S3HeadClient
@@ -125,6 +127,9 @@ func buildClients(ctx context.Context, cfg *config.Config, logger *observability
 		httpclient.NewTracingClient(),
 		logger,
 	)
+
+	// Storybook client — public index.json fetch, no auth
+	c.storybookClient = storybookclient.NewClient(logger)
 
 	// Platform API clients
 	c.xClient = x.NewClient(cfg.Platforms.XAPIKey, cfg.Platforms.XAPISecret, cfg.ExternalURLs.XAPIBase, httpclient.NewTracingClient(), logger)

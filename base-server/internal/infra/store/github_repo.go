@@ -28,6 +28,9 @@ type GitHubRepo struct {
 	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt     time.Time  `db:"updated_at" json:"updated_at"`
 	DeletedAt     *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+
+	StorybookURL   *string     `db:"storybook_url" json:"storybook_url,omitempty"`
+	ComponentGlobs StringArray `db:"component_globs" json:"component_globs,omitempty"`
 }
 
 // ============================================================================
@@ -44,7 +47,7 @@ ON CONFLICT (connection_id, owner, name) DO UPDATE
       webhook_secret  = EXCLUDED.webhook_secret,
       updated_at      = NOW(),
       deleted_at      = NULL
-RETURNING id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+RETURNING id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at, storybook_url, component_globs
 `
 
 func (s *Store) CreateGitHubRepo(
@@ -66,7 +69,7 @@ func (s *Store) CreateGitHubRepo(
 }
 
 const sqlListGitHubReposByConnection = `
-SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at, storybook_url, component_globs
 FROM github_repos
 WHERE connection_id = $1 AND deleted_at IS NULL
 ORDER BY owner, name
@@ -82,7 +85,7 @@ func (s *Store) ListGitHubReposByConnection(ctx context.Context, connectionID uu
 }
 
 const sqlGetGitHubRepoByConnectionAndName = `
-SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at
+SELECT id, connection_id, github_repo_id, owner, name, default_branch, webhook_id, webhook_secret, enabled, created_at, updated_at, deleted_at, storybook_url, component_globs
 FROM github_repos
 WHERE connection_id = $1 AND owner = $2 AND name = $3 AND deleted_at IS NULL
 `
@@ -107,7 +110,7 @@ func (s *Store) GetGitHubRepoByConnectionAndName(ctx context.Context, connection
 const sqlGetGitHubRepoByGitHubID = `
 SELECT r.id, r.connection_id, a.id AS account_id, r.github_repo_id, r.owner, r.name,
        r.default_branch, r.webhook_id, r.webhook_secret, r.enabled,
-       r.created_at, r.updated_at, r.deleted_at
+       r.created_at, r.updated_at, r.deleted_at, r.storybook_url, r.component_globs
 FROM github_repos r
 JOIN github_connections c ON c.id = r.connection_id AND c.deleted_at IS NULL
 JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
@@ -132,7 +135,7 @@ func (s *Store) GetGitHubRepoByGitHubID(ctx context.Context, githubRepoID int64)
 const sqlGetGitHubRepoByOwnerName = `
 SELECT r.id, r.connection_id, a.id AS account_id, r.github_repo_id, r.owner, r.name,
        r.default_branch, r.webhook_id, r.webhook_secret, r.enabled,
-       r.created_at, r.updated_at, r.deleted_at
+       r.created_at, r.updated_at, r.deleted_at, r.storybook_url, r.component_globs
 FROM github_repos r
 JOIN github_connections c ON c.id = r.connection_id AND c.deleted_at IS NULL
 JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
@@ -157,7 +160,7 @@ func (s *Store) GetGitHubRepoByOwnerName(ctx context.Context, owner, name string
 const sqlGetGitHubRepoByID = `
 SELECT r.id, r.connection_id, a.id AS account_id, r.github_repo_id, r.owner, r.name,
        r.default_branch, r.webhook_id, r.webhook_secret, r.enabled,
-       r.created_at, r.updated_at, r.deleted_at
+       r.created_at, r.updated_at, r.deleted_at, r.storybook_url, r.component_globs
 FROM github_repos r
 JOIN github_connections c ON c.id = r.connection_id AND c.deleted_at IS NULL
 JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL

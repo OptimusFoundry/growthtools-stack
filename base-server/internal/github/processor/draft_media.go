@@ -2,6 +2,7 @@ package processor
 
 import (
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -36,6 +37,35 @@ func contentTypeFor(key string) string {
 		return "video/webm"
 	}
 	return "application/octet-stream"
+}
+
+// storybookComponentNames scans uploaded artifacts for Storybook screenshot
+// keys (containing "/storybook/"), takes each basename up to its first "--"
+// as the component name (matches capture-worker's <component>--<storyId>.png
+// encoding), dedupes, and returns a sorted non-nil slice (empty when no
+// Storybook screenshots are present).
+func storybookComponentNames(uploaded []captureUpload) []string {
+	seen := make(map[string]struct{})
+	for _, u := range uploaded {
+		if !strings.Contains(u.Key, "/storybook/") {
+			continue
+		}
+		basename := path.Base(u.Key)
+		var component string
+		if parts := strings.SplitN(basename, "--", 2); len(parts) == 2 {
+			component = parts[0]
+		} else {
+			component = strings.TrimSuffix(basename, path.Ext(basename))
+		}
+		seen[component] = struct{}{}
+	}
+
+	names := make([]string, 0, len(seen))
+	for name := range seen {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // bucketArtifacts splits uploaded items by extension. Returns the first
