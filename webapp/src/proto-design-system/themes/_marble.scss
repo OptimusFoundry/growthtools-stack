@@ -77,4 +77,14 @@
   --shadow-accent: 0 8px 24px 0 oklch(68% 0.14 80deg / 0.35);
   --focus-ring-color: oklch(34% 0.14 20deg / 0.3);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(72% 0.014 235deg);   // non-content only — Lc 41.5/2.23:1
+
+  // Motion — polished stone: low-friction glide, zero springy rebound (see
+  // header rationale). --duration-instant and focus-ring timing untouched.
+  --ease-out:      cubic-bezier(0.16, 0.84, 0.44, 1);   // long float, firm no-overshoot stop
+  --spring-gentle: 200, 32, 1.6;   // Button press — zeta ~0.89, weighted settle, no rebound
+  --spring-stiff:  380, 40, 1;     // Tabs indicator — zeta ~1.03, lands with no wobble
 }

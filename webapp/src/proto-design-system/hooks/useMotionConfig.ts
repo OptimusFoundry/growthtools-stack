@@ -1,3 +1,4 @@
+import { useMotionTokens } from "../context/MotionProvider";
 import { useReducedMotion } from "./useReducedMotion";
 
 export interface SpringConfig {
@@ -13,25 +14,21 @@ export interface MotionConfig {
 	reducedMotion: boolean;
 }
 
-const springPresets = {
-	bouncy: { stiffness: 300, damping: 10, mass: 1 },
-	gentle: { stiffness: 120, damping: 14, mass: 1 },
-	wobbly: { stiffness: 180, damping: 12, mass: 1 },
-	stiff: { stiffness: 400, damping: 30, mass: 1 },
-	slow: { stiffness: 100, damping: 20, mass: 1 },
-} as const;
-
-export type SpringPreset = keyof typeof springPresets;
+export type SpringPreset = "bouncy" | "gentle" | "wobbly" | "stiff" | "slow";
 
 /**
- * Hook to get motion.dev configuration based on user preferences
+ * Hook to get motion.dev configuration based on user preferences. Spring
+ * presets and duration come from `useMotionTokens()` (the live spring/
+ * duration tokens for the active theme), not hardcoded values — a theme
+ * can now genuinely change how a button press feels.
  */
 export function useMotionConfig(preset: SpringPreset = "gentle"): MotionConfig {
 	const reducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
 	const springConfig: SpringConfig = {
 		type: "spring",
-		...springPresets[preset],
+		...motionTokens.spring[preset],
 	};
 
 	// If reduced motion is preferred, use instant transitions
@@ -45,7 +42,7 @@ export function useMotionConfig(preset: SpringPreset = "gentle"): MotionConfig {
 
 	return {
 		springConfig,
-		duration: 200,
+		duration: motionTokens.duration.normal * 1000, // this hook's public API is ms, motionTokens is seconds
 		reducedMotion: false,
 	};
 }

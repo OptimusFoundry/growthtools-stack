@@ -1,0 +1,95 @@
+@use "../mixins/motion" as motion;
+
+.switcher {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	max-width: 100%;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+	border: var(--border-width-sm) solid var(--color-border);
+	border-radius: var(--radius-full);
+	background: var(--color-surface);
+	color: var(--color-base-content-secondary);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: var(--letter-spacing-wide);
+	cursor: pointer;
+	user-select: none;
+
+	@include motion.transition(
+		(background-color, border-color, color, transform, box-shadow)
+	);
+
+	&:hover {
+		border-color: var(--color-border-hover);
+		color: var(--color-base-content);
+		transform: translateY(-1px);
+		box-shadow: var(--shadow-sm);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring-width) solid var(--focus-ring-color);
+		outline-offset: var(--focus-ring-offset);
+	}
+
+	&[data-active] {
+		border-color: var(--color-primary);
+		color: var(--color-base-content);
+		background: var(--color-surface-elevated);
+		box-shadow:
+			0 0 0 1px var(--color-primary),
+			var(--shadow-sm);
+	}
+}
+
+.swatch {
+	display: flex;
+	width: 28px;
+	height: 20px;
+	overflow: hidden;
+	border-radius: var(--radius-full);
+	border: var(--border-width-sm) solid var(--color-border);
+	flex: none;
+
+	> span {
+		flex: 1;
+	}
+}
+
+.swBg {
+	background: var(--color-background);
+}
+
+.swPrimary {
+	background: var(--color-primary);
+}
+
+.swAccent {
+	background: var(--color-accent);
+}
+
+.label {
+	white-space: nowrap;
+}
+
+.scheme {
+	width: 6px;
+	height: 6px;
+	border-radius: var(--radius-full);
+	flex: none;
+
+	&[data-scheme="dark"] {
+		background: var(--color-base-content);
+	}
+
+	&[data-scheme="light"] {
+		background: transparent;
+		border: var(--border-width-sm) solid var(--color-base-content-tertiary);
+	}
+}

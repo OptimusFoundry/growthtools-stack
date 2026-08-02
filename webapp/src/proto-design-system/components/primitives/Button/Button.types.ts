@@ -4,6 +4,7 @@ export type ButtonVariant =
 	| "default"
 	| "primary"
 	| "secondary"
+	| "accent"
 	| "ghost"
 	| "outline"
 	| "destructive";

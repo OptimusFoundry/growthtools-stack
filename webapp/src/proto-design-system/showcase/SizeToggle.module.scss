@@ -1,0 +1,41 @@
+@use "../mixins/motion" as motion;
+
+.toggle {
+	display: inline-flex;
+	align-self: flex-start;
+	padding: var(--space-1);
+	gap: var(--space-1);
+	border: var(--border-width-sm) solid var(--color-border);
+	border-radius: var(--radius-full);
+	background: var(--color-background);
+}
+
+.toggleBtn {
+	appearance: none;
+	border: none;
+	cursor: pointer;
+	padding: var(--space-1) var(--space-4);
+	border-radius: var(--radius-full);
+	background: transparent;
+	color: var(--color-base-content-secondary);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: var(--letter-spacing-wide);
+	text-transform: uppercase;
+
+	@include motion.transition((background-color, color));
+
+	&:hover {
+		color: var(--color-base-content);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring-width) solid var(--focus-ring-color);
+		outline-offset: var(--focus-ring-offset);
+	}
+
+	&[data-active] {
+		background: var(--color-primary);
+		color: var(--color-primary-content);
+	}
+}

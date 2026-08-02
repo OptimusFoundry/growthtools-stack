@@ -15,7 +15,7 @@
 // =============================================================================
 
 .tableWrapper {
-  border: 1px solid var(--color-border);
+  border: var(--border-width-sm) solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   position: relative;
@@ -51,7 +51,7 @@
 }
 
 .loadingMessage {
-  color: var(--color-muted);
+  color: var(--color-base-content-tertiary);
   font-size: var(--font-size-sm);
   margin: 0;
 }
@@ -69,7 +69,7 @@
 
 .header {
   background-color: var(--color-header-bg);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width-sm) solid var(--color-border);
 }
 
 // =============================================================================
@@ -77,10 +77,10 @@
 // =============================================================================
 
 .head {
-  color: var(--color-muted);
+  color: var(--color-base-content-tertiary);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.05em;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-widest);
   padding: var(--space-3) var(--space-4);
   text-align: left;
   text-transform: uppercase;
@@ -121,7 +121,7 @@
 
 .body {
   .row {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-width-sm) solid var(--color-border);
 
     &:last-child {
       border-bottom: none;
@@ -142,10 +142,10 @@
 }
 
 .selected {
-  background-color: oklch(from var(--color-primary) l c h / 0.1);
+  background-color: var(--color-overlay-primary);
 
   &:hover {
-    background-color: oklch(from var(--color-primary) l c h / 0.15);
+    background-color: var(--color-overlay-primary-strong);
   }
 }
 
@@ -198,7 +198,7 @@
   transition: padding var(--duration-normal) var(--ease-out);
 
   .expandedRowVisible & {
-    border-top: 1px solid var(--color-border);
+    border-top: var(--border-width-sm) solid var(--color-border);
     padding: var(--space-4);
   }
 }
@@ -245,7 +245,7 @@
 
 .loading,
 .empty {
-  color: var(--color-muted);
+  color: var(--color-base-content-tertiary);
 }
 
 // =============================================================================
@@ -260,7 +260,7 @@
 }
 
 .pageInfo {
-  color: var(--color-muted);
+  color: var(--color-base-content-tertiary);
   font-family: var(--font-family-sans);
   font-size: var(--font-size-sm);
 }

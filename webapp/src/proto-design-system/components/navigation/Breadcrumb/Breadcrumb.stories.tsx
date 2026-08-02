@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { File, Folder, Slash } from "lucide-react";
 import { Breadcrumb } from "./Breadcrumb";
 

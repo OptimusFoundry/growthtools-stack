@@ -76,4 +76,51 @@
   --shadow-accent:  0 0 32px 0 oklch(76% 0.26 340deg / 0.60);
   --focus-ring-color: oklch(72% 0.25 295deg / 0.55);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0.020 205deg);  // Lc -35.0, clears Lc30 floor
+
+  // Motion — the brief is "electric flash, then afterglow": a program glow
+  // switches on almost instantly (digital, grid-precise — this is a HUD, not
+  // an organic surface) and then the light *persists*, decaying slowly
+  // rather than snapping off, the same phosphor-trail read as the
+  // --shadow-primary/-accent halo above. J-9's hover-150ms/accordion-tabs-
+  // 240ms/400ms-ceiling numbers are house-wide contracts, not this theme's
+  // to renegotiate — --duration-instant and focus-ring timing are untouched
+  // per the hard rule, and every other --duration-* is left at house
+  // default too. Only curve *shape* moves, on the two tokens this theme's
+  // own components actually consume (per parseMotionTokens.ts/
+  // useMotionConfig.ts):
+  // - --ease-out (the house-wide default curve — every hover fill, modal/
+  //   dropdown enter-exit, and the Grid/Stack/List stagger all resolve
+  //   through it) reshaped from the house's quick-settle quad
+  //   (cubic-bezier(0.22, 1, 0.36, 1), y effectively lands by x~0.4-0.5) to
+  //   cubic-bezier(0.09, 1, 0.35, 1): the pulse control point (x1) moves
+  //   from 0.22 to 0.09 — a near-instant flash-on, faster than any other
+  //   themed --ease-out in the registry — while the tail control point (x2)
+  //   stays out at 0.35, close to house's own 0.36. Pulling x1 in without
+  //   pulling x2 in with it is what reads as "flash then afterglow" rather
+  //   than a uniformly quick settle: almost all the perceptual motion
+  //   happens in the first tenth of the duration, and the rest of the
+  //   timeline is the light visibly decaying to rest, at the *same*
+  //   150/240/400ms duration tokens the house ladder already sets.
+  // - --spring-gentle (Button's default press spring, motion.dev-driven)
+  //   retuned from the house's 120/14/1 (zeta 0.64, wn 10.95 rad/s) to
+  //   170/15/0.75 (zeta 0.66, wn 15.06 rad/s) — damping ratio essentially
+  //   unchanged (still a light, slightly underdamped snap, not a dead
+  //   thud), but ~38% higher natural frequency reads as a quicker, more
+  //   electric discharge under the thumb.
+  // Declined, with reason: --spring-stiff (Tabs indicator) already reads as
+  // a precise mechanical slide along the grid, which is this theme's
+  // identity already, not something to improve on. --spring-slow (StatCard
+  // counter) is a settled count-up with no bespoke story here. --ease-
+  // bounce/--ease-elastic/--spring-bouncy/--spring-wobbly stay at house
+  // default per J-9.4 — reserved for genuine delight moments (toast entry,
+  // success), and this theme has no bespoke delight-moment need beyond
+  // that. --ease-in-out (ambient shimmer/pulse loaders) is likewise left
+  // alone — ambient loaders aren't this theme's identity surface, and a
+  // second themed curve there would be change for its own sake.
+  --ease-out:      cubic-bezier(0.09, 1, 0.35, 1);
+  --spring-gentle: 170, 15, 0.75;
 }

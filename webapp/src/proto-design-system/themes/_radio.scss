@@ -77,4 +77,20 @@
   --shadow-accent: 0 3px 0 0 oklch(10% 0.03 245deg / 0.85), 0 0 20px 0 oklch(86% 0.18 95deg / 0.4);
   --focus-ring-color: oklch(72% 0.22 55deg / 0.5);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Relightened 58%->61% L (refit #2): was Lc31.0, only 1pt above the Lc30
+  // disabled floor. Now Lc35.2, still clearly dimmer than muted (Lc52.1).
+  --color-text-disabled:          oklch(61% 0.03 80deg);
+
+  // Motion — analog-instrument weight (see header rationale). --duration-
+  // fast (hover, 150ms, J-9.1) and --duration-instant (focus ring, 0ms) are
+  // never touched.
+  --ease-out:         cubic-bezier(0.33, 1, 0.68, 1);
+  --duration-normal:  280ms;
+  --duration-ambient: 1800ms;
+  --spring-gentle:    220, 32, 1.3;
+  --spring-stiff:     260, 28, 1.3;
+  --spring-slow:      130, 14, 1.2;
 }

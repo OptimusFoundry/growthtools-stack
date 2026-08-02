@@ -77,4 +77,63 @@
   --shadow-accent: 0 4px 0 0 oklch(92% 0.20 100deg), 0 0 24px 0 oklch(92% 0.20 100deg / 0.6);
   --focus-ring-color: oklch(78% 0.22 200deg / 0.6);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(60% 0.08 320deg);  // non-content only — Lc -33.5
+
+  // Motion — ionization-event register, following the theme's own framing
+  // (see header): a discharge strikes near-instantly and locks with no
+  // wobble, it doesn't ease in like a UI toy. J-9.1's hard numbers
+  // (hover 150ms, accordion/tab 240ms) and --duration-instant are untouched
+  // — this theme expresses itself through curve SHAPE and spring PHYSICS,
+  // not by relitigating durations J-9 already fixes. Verified against live
+  // component usage (grep across overlays/feedback/composite/layout), not
+  // assumed:
+  // - --ease-out is the one truly universal, always-rendered lever — every
+  //   CSS --transition-* (hover/colors/transform/shadow) and every
+  //   motion/react surface in the kit (Toast, Alert, Banner, Dropdown,
+  //   DropdownMenu, MultiSelect, DatePicker, PageTransition, List, Grid,
+  //   Stack) resolves through it. Rebuilt from the house's gentle
+  //   decelerate-quad to a near-vertical strike-then-lock: cubic-bezier
+  //   (0.08, 0.9, 0.15, 1) reaches ~90% of the transition almost
+  //   immediately, then holds flat into a dead stop — a discharge, not a
+  //   glide.
+  // - --spring-gentle drives Button/LinkButton's press-release spring
+  //   (useMotionConfig() default preset) — this theme's own "molten-gold
+  //   electrode contact point" made literal. House 120/14/1 is loose and
+  //   underdamped (zeta 0.171, wn 10.95 rad/s — visible jello wobble).
+  //   Relit to 300/29/1 (zeta 0.837, wn 17.32 rad/s): ~58% faster onset,
+  //   near-critical damping — a decisive contact-closing snap, not a bounce.
+  // - --spring-stiff drives the Tabs active-indicator spring. House
+  //   400/30/1 (zeta 0.75, wn 20 rad/s) already has a faint settle-wobble.
+  //   Relit to 460/43/1 (zeta ~1.00, wn 21.45 rad/s): zero overshoot, reads
+  //   as an instrument stepping cleanly to the next channel.
+  // - --spring-slow drives StatCard's counter spring. House 100/20/1 is
+  //   already critically damped (zeta 1.0) but slow (wn 10 rad/s) — an
+  //   analog gauge climb. Relit to 260/32/1 (zeta ~0.99, wn 16.12 rad/s,
+  //   same no-overshoot shape, ~61% faster): a digital telemetry counter
+  //   ticking over, not a needle sweeping.
+  // Declined, with reason:
+  // - --duration-enter/--duration-exit/--duration-page/--duration-complex —
+  //   confirmed via grep that no shipped component reads these (every
+  //   overlay/feedback/composite surface resolves enter AND exit through
+  //   --duration-fast or --duration-normal instead). Changing an unread
+  //   token isn't an expression of identity, it's dead code with a number
+  //   attached.
+  // - --ease-bounce/--ease-elastic/--spring-bouncy/--spring-wobbly — J-9.4
+  //   reserves these for one-off delight moments (toast entry, success
+  //   checkmark), and grep confirms zero current consumers in the kit
+  //   either way. No bespoke delight moment here to re-scope, so left at
+  //   house default rather than retuned for a component that doesn't exist
+  //   yet.
+  // - --ease-in-out/--duration-ambient/--duration-slower/--duration-slowest
+  //   (Skeleton/DataTable shimmer+pulse) — a "signal noise before the
+  //   readout locks" story was considered, but it's a stretch relative to
+  //   the strike/lock read above; left at house default rather than
+  //   changed for its own sake.
+  --ease-out:      cubic-bezier(0.08, 0.9, 0.15, 1);
+  --spring-gentle: 300, 29, 1;
+  --spring-stiff:  460, 43, 1;
+  --spring-slow:   260, 32, 1;
 }

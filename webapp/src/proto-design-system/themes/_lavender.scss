@@ -100,4 +100,40 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(52% 0.02 290deg);   // non-content only — Lc 70.7 / 5.01:1, was 70% L (Lc 44.9/2.41:1, under AA)
+  // Soft-wash chip background — pairs with --color-base-content (dark ink),
+  // never with --color-accent-content; matches every other semantic's -bg
+  // role and the contrast script's own "accent-content on accent" pairing.
+  --color-accent-bg: oklch(95% 0.045 170deg);
+  --color-success-active: oklch(35% 0.077 158deg);
+  --color-warning-active: oklch(36% 0.07 84deg);
+  --color-error-active: oklch(36% 0.13 20deg);
+  --color-info-active: oklch(35% 0.10 254deg);
+  --shadow-primary:
+  --shadow-accent:
+
+  // Chrome sits a step above the canvas, on-hue
+  --color-header-bg: var(--color-base-100);
+
+  // Soft rounded corners — this theme's deliberate corner language.
+  // Ratios grow up the ladder (2.0/1.75/1.86/1.77) instead of holding flat:
+  // controls (xs/sm/md) stay compact and legible, surfaces (lg/xl) billow
+  // outward — see the 2026-08 header note for the full derivation.
+  // sm capped at 6px (was 8px): Checkbox applies --radius-sm directly to its
+  // 16px box regardless of size variant, and 8px == half that box, which CSS
+  // clips to a full circle — indistinguishable from Radio's --radius-full.
+  // 6px keeps a comfortable margin under that 8px collision threshold.
+  --radius-xs: 4px;
+
+  // Motion — "bold but soft" carried into the one curve nearly every
+  // transition reads plus the two springs with a genuine rest/lift role.
+  // See the 2026-08 header note for the full derivation and what was
+  // deliberately left untouched (--duration-fast/-normal/-instant,
+  // --spring-stiff, and every token with zero live consumers).
+  --ease-out: cubic-bezier(0.15, 1, 0.29, 1);
+  --spring-gentle: 260, 30, 1;
+  --spring-slow: 50, 18, 1.3;
 }

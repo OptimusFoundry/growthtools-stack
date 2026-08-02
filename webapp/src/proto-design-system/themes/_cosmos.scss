@@ -76,4 +76,55 @@
   --shadow-accent:  0 8px 32px 0 oklch(82% 0.18 70deg / 0.30);
   --focus-ring-color: oklch(65% 0.24 285deg / 0.55);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(64% 0.030 268deg);  // Lc -40.5
+
+  // Motion — retuned at exactly the two places this system's motion bridge
+  // (MotionProvider/useMotionConfig) hands a *mechanical* component its own
+  // spring physics, matching the "analog dial/gauge numeral fused with a
+  // control-panel toggle" instrumentation identity from the header rather
+  // than restating it as a mood. Nothing else moves:
+  //   - --duration-fast/--duration-normal are both load-bearing house
+  //     constants (J-9: hovers 150ms, accordions/tabs 240ms) shared across
+  //     dozens of unrelated components (Accordion, Card, Checkbox, Modal,
+  //     Toast, Stack/Grid stagger…) — retuning either here would either
+  //     break that hard rule or blast the theme's "instrument panel" story
+  //     onto surfaces it never claims. Left at house default.
+  //   - --duration-enter/-exit/-complex/-page have no live consumer in any
+  //     component today (parsed by parseMotionTokens.ts, not yet read by
+  //     any .tsx) — overriding a token nothing renders would be silent and
+  //     unverifiable, so left at house default too.
+  //   - --ease-out/--ease-in-out are the single most broadly shared levers
+  //     in the system (every hover, every color/shadow/opacity transition,
+  //     Modal/Toast/Dropdown/Stack/Grid). Cosmos's identity is precision at
+  //     discrete mechanical state-changes, not a wholesale re-curve of every
+  //     micro-interaction — recurving them would read as a generic global
+  //     "smoother" reskin, failing this system's own swap-test in reverse.
+  //     Left at house default.
+  //   - --spring-slow (StatCard's counter, its only consumer) is declined
+  //     as a deliberate non-change, not an oversight: house default
+  //     (100, 20, 1) is already critically damped (ζ = 20/(2*sqrt(100)) =
+  //     1.0) — a stat ticking up with zero overshoot already reads as a
+  //     precise instrument readout. Re-declaring the same three numbers
+  //     would be a no-op.
+  // --spring-gentle — Button/LinkButton's whileTap press feedback, this
+  // theme's only touchpoint for it. House (120, 14, 1) is underdamped
+  // (ζ = 14/(2*sqrt(120)) = 0.64): a soft, doughy press with a little
+  // bounce-back, tuned for a generic UI button. Cosmos
+  // retunes it to a heavier, near-critically-damped detent click —
+  // stiffness 260, damping 34, mass 1.2 → ζ = 34/(2*sqrt(260*1.2)) = 0.96 —
+  // decisive stop, negligible bounce, extra mass reading as a physically
+  // heavier control-panel toggle rather than a soft software affordance.
+  --spring-gentle: 260, 34, 1.2;
+
+  // --spring-stiff — Tabs' active-indicator slide, this theme's only
+  // touchpoint for it. House (400, 30, 1) is underdamped (ζ = 0.75): a
+  // quick slide with a faint springy overshoot at the end. Cosmos retunes
+  // toward ζ ≈ 1 — stiffness 420, damping 42, mass 1 → ζ = 42/(2*sqrt(420))
+  // = 1.03 — so the indicator settles on the new tab the way a gauge
+  // needle settles on a reading: fast, with zero oscillation, not a UI
+  // element springing into place.
+  --spring-stiff: 420, 42, 1;
 }

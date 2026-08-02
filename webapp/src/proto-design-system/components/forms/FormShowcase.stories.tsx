@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Eye, EyeOff, Link2, Mail } from "lucide-react";
 import { useState } from "react";
 import { Card, CardBody, CardFooter, CardHeader } from "../layout/Card";

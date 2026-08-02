@@ -76,4 +76,45 @@
   --shadow-accent:  0 0 32px 0 oklch(88% 0.25 115deg / 0.55);
   --focus-ring-color: oklch(70% 0.30 330deg / 0.60);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(62% 0.006 300deg);  // Lc -37.4
+
+  // Motion — the concept is neon-lit signage circuitry (a sign relay
+  // snapping to a new state, a HUD readout ticking over), not a soft
+  // consumer float, so the lever pulled is curve/spring *character*, never
+  // duration magnitude: J-9's hover-150ms / accordion-tabs-240ms /
+  // 400ms-ceiling numbers are house-wide contracts (same read as
+  // _archive.scss's header), and --duration-instant plus focus-ring timing
+  // are untouched per the hard rule — every --duration-* token here is
+  // left at house default.
+  // --ease-out is the one curve override, because it's the one that's
+  // actually wired to visible motion (Modal/Dropdown/Toast fades, Grid/
+  // Stack stagger entrance, plus every --transition-colors/-opacity/
+  // -transform/-shadow hover/press in kit.css) — --ease-in-out and
+  // --duration-enter/-exit/-page/-complex are declared in _motion.scss but
+  // not consumed by any component yet, so retuning them here would be a
+  // silent no-op, not a real personality change. Swapped the house's soft,
+  // slightly-lingering decelerate for a harder expo-out (near-instant
+  // initial velocity, abrupt stop, no float) — reads as a relay snapping
+  // into its new state instead of easing there.
+  // The three structural (non-delight) springs get the same treatment:
+  // stiffness/damping raised together so each settles into a crisp,
+  // near-critically-damped stop (zeta ~0.8-1.0, i.e. still not overshoot/
+  // bounce) but noticeably faster than house — a mechanical click, not a
+  // wobble. --spring-bouncy/-wobbly and --ease-bounce/-elastic are
+  // deliberately left at house default: J-9.4 reserves that overshoot
+  // register for genuine delight moments (toast entry, success check),
+  // which this theme doesn't touch or re-scope.
+  // - --spring-gentle (Button press-spring): zeta .639 -> .813, faster settle.
+  // - --spring-stiff (Tabs indicator): zeta .75 -> 1.03, indicator snaps to
+  //   the new tab position with zero wobble, like a relay switching.
+  // - --spring-slow (StatCard counter): zeta 1.0 -> 1.01 (still critically
+  //   damped, no overshoot) but ~2x the stiffness, so a counter ticks over
+  //   like a fast digital readout instead of a slow analog gauge climb.
+  --ease-out:      cubic-bezier(0.19, 1, 0.22, 1);
+  --spring-gentle: 340, 30, 1;
+  --spring-stiff:  500, 46, 1;
+  --spring-slow:   220, 30, 1;
 }

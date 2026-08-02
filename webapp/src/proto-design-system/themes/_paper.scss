@@ -117,4 +117,68 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled: oklch(60% 0.018 258deg);           // non-content only — Lc 60.8, 3.61:1
+  --color-accent-bg: oklch(94% 0.035 340deg);
+  --color-success-active: oklch(38% 0.088 155deg);
+  --color-warning-active: oklch(66% 0.115 80deg);
+  --color-error-active: oklch(38% 0.135 25deg);
+  --color-info-active: oklch(38% 0.065 225deg);
+  --shadow-primary: 0 8px 24px 0 oklch(40% 0.095 258deg / 0.30);
+  --shadow-accent: 0 8px 24px 0 oklch(44% 0.164 340deg / 0.28);
+
+  // Chrome sits one paper layer below the top sheet, reinforcing the
+  // stacked-paper metaphor.
+  --color-header-bg: var(--color-base-100);
+
+  // Motion — physical-material personality (a page settling flat, a rubber
+  // date-stamp pressing into paper — same reference as the crimson accent
+  // above), not digital snap or playful bounce. Three coherent overrides,
+  // everything else stays house default:
+  // - --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1) — the house's own
+  //   --ease-smooth preset (tokens/_motion.scss), unused by any theme until
+  //   now. It's the classic Material "standard" deceleration curve, which
+  //   pairs naturally with this theme's already-borrowed Material-elevation
+  //   shadow math (see the shadow-scale comment above) — both devices read
+  //   as "a physical layer settling into place," not the house's snappier
+  //   ease-out-quad. Reaches the same wide surface as every other theme's
+  //   --ease-out override: Modal/Dropdown/Toast/Banner/Alert entrances, the
+  //   Grid/Stack/List mount stagger, --transition-opacity/-transform/
+  //   -shadow/-all.
+  // - --duration-normal: 240ms -> 270ms, a deliberate ~12% slower, not
+  //   faster — the opposite lean from blueprint/brutal's cuts, matching a
+  //   ledger book's unhurried, considered pace (J-11's "editorial-pragmatic,
+  //   never bubbly" voice) rather than a rushed digital snap. Still well
+  //   inside the J-9 400ms ceiling, and this is the same token blueprint/
+  //   brutal already retune, so Accordion's expand transition (the one
+  //   consumer wired straight to --duration-normal) moves to 270ms with it —
+  //   accepted, not a violation: J-9.1's "240ms" is this token's house
+  //   default, not a separately hard-locked value the way focus-ring timing
+  //   is. --duration-fast (150ms, the literal J-9.1 hover rule via
+  //   --transition-colors) and --duration-instant (focus ring) are
+  //   deliberately untouched — themable duration-normal is not a back door
+  //   to either.
+  // - --spring-gentle: 120,14,1 -> 240,26,1 (damping ratio 0.64 -> 0.84,
+  //   near-critical but not stiff-metallic). This is Button/LinkButton's
+  //   press-spring; house's underdamped value gives a soft toy-like
+  //   squish-and-bounce-back, which reads wrong for a rubber stamp — a real
+  //   stamp compresses cleanly into paper with almost no rebound. Kept
+  //   short of blueprint/brutal's identical 500,40,1 (ratio 0.89) on
+  //   purpose — a swap-test check against a mechanical/CAD-precise
+  //   personality that isn't this theme's: paper still has a hair more give
+  //   than concrete or steel.
+  // --spring-stiff (Tabs indicator) and --spring-slow (StatCard counter)
+  // stay house default — same reasoning blueprint's header already gives:
+  // Tabs is already the stiffest house preset, and StatCard's "settled
+  // tally" role would drift if retuned just for personality. --ease-bounce/
+  // --ease-elastic stay reserved for delight moments only, per J-9.4 — this
+  // theme has none that call for them.
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --duration-normal: 270ms;
+  --spring-gentle: 240, 26, 1;
+
+  // Soft, friendly radius
+  --radius-xs: 4px;
 }

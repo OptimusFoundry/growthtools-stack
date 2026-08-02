@@ -106,4 +106,31 @@
   --radius-md: 6px;
   --radius-lg: 10px;
   --radius-xl: 14px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  // was missing entirely (contract violation) — achromatic, matches the rest
+  // of this content ramp; Lc38.9/2.01:1 on background, clears the Lc30 floor
+  --color-text-disabled: oklch(78% 0 0deg);
+  --color-accent-bg: oklch(97% 0.04 100deg);  // was missing entirely
+  --color-success-active: oklch(62% 0.25 150deg);  // was missing entirely
+  --color-warning-active: oklch(78% 0.2 90deg);  // was missing entirely
+  --color-error-active: oklch(52% 0.28 25deg);  // was missing entirely
+  --color-info-active: oklch(52% 0.22 260deg);  // was missing entirely
+  --shadow-primary: 0 8px 24px 0 oklch(62% 0.3 330deg / 0.35);  // was missing entirely
+  --shadow-accent: 0 8px 24px 0 oklch(92% 0.2 100deg / 0.3);  // was missing entirely
+
+  // Header background
+  --color-header-bg: var(--color-base-100);  // was missing entirely
+
+  // Motion — see header rationale. --duration-fast/-normal, --duration-
+  // instant, and focus-ring timing are never touched.
+  --ease-out:         cubic-bezier(0.12, 1, 0.28, 1);
+  --ease-in-out:      cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-ambient: 950ms;
+  --duration-slower:  380ms;
+  --duration-slowest: 520ms;
+  --spring-gentle:    360, 34, 1;
+  --spring-stiff:     560, 50, 1;
+  --spring-slow:      260, 34, 1;
 }

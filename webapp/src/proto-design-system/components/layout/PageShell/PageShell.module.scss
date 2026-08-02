@@ -1,0 +1,58 @@
+// =============================================================================
+// PAGE SHELL STYLES
+// =============================================================================
+// The standard full-page container. All product pages wrap their content in
+// PageShell, which applies consistent max-width, gutter, and top/bottom padding.
+// =============================================================================
+@use "../../../mixins" as *;
+
+.shell {
+  // Left-aligned within the main scroll area. Matches the un-migrated pages
+  // (CampaignsListPage etc.) which use width:100% + max-width without
+  // margin-inline:auto. On wide viewports this keeps the content where the
+  // eye expects it instead of pushing it to the centre with large gutters.
+  width: 100%;
+  max-width: var(--page-max-width);
+  padding-inline: var(--page-gutter-x);
+  padding-block-start: var(--page-gutter-y-top);
+  padding-block-end: var(--page-gutter-y-bottom);
+  row-gap: var(--page-section-gap);
+  column-gap: var(--page-grid-gap);
+}
+
+// =============================================================================
+// VARIANTS
+// =============================================================================
+
+// narrow — 1024px max, for auth-style or form-only pages
+.variant-narrow {
+  max-width: var(--page-max-width-narrow);
+}
+
+// full — no max-width, for full-bleed builder surfaces (never combine with app chrome)
+.variant-full {
+  max-width: none;
+}
+
+// =============================================================================
+// PAGE-LEVEL FADE-IN (replaces broken Grid+animate path)
+// =============================================================================
+// Lightweight CSS-only fade-in for the whole shell, used when `animate` prop
+// is set. No per-child stagger — just a single subtle reveal of the page.
+// Restoring per-child stagger requires fixing Grid's motion wrapper to
+// preserve grid-column span on GridItem children.
+
+.animateFadeIn {
+  @include animate(pageShellFadeIn);
+}
+
+@keyframes pageShellFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

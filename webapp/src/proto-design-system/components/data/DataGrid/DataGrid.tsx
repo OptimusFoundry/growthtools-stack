@@ -1,9 +1,9 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { Checkbox } from "@/proto-design-system/components/forms/Checkbox/Checkbox";
+import { Pagination } from "@/proto-design-system/components/navigation/Pagination/Pagination";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import { cn } from "../../../utils/cn";
-import { Checkbox } from "../../forms/Checkbox";
-import { Pagination } from "../../navigation/Pagination";
-import { Spinner } from "../../primitives/Spinner";
 import styles from "./DataGrid.module.scss";
 
 export type SortDirection = "asc" | "desc" | null;

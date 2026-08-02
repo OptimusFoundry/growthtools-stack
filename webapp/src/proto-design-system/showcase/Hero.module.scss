@@ -1,0 +1,189 @@
+@use "../mixins/motion" as motion;
+
+.hero {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+	padding-block: var(--space-16) var(--space-14);
+	padding-inline: var(--space-8);
+	background: var(--color-background);
+	border-bottom: var(--border-width-sm) solid var(--color-border);
+}
+
+// Animated gradient mesh — built from theme tokens so it recolors on switch.
+// Negative inset keeps edges covered while the layer drifts/scales.
+.backdrop {
+	position: absolute;
+	inset: -25%;
+	z-index: -2;
+	background:
+		radial-gradient(
+			38% 48% at 12% 18%,
+			color-mix(in oklch, var(--color-primary) 26%, transparent),
+			transparent 70%
+		),
+		radial-gradient(
+			34% 42% at 88% 12%,
+			color-mix(in oklch, var(--color-secondary) 22%, transparent),
+			transparent 70%
+		),
+		radial-gradient(
+			46% 52% at 78% 88%,
+			color-mix(in oklch, var(--color-accent) 20%, transparent),
+			transparent 72%
+		);
+	animation: heroDrift 22s var(--ease-in-out) infinite alternate;
+	will-change: transform;
+}
+
+// Faint blueprint grid, masked to fade out toward the edges.
+.gridLines {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background-image:
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--color-border) 60%, transparent) 1px,
+			transparent 1px
+		),
+		linear-gradient(
+			to bottom,
+			color-mix(in oklch, var(--color-border) 60%, transparent) 1px,
+			transparent 1px
+		);
+	background-size: 48px 48px;
+	mask-image: radial-gradient(
+		120% 100% at 50% 0%,
+		oklch(0% 0 0deg) 35%,
+		transparent 80%
+	);
+	opacity: 0.6;
+}
+
+.inner {
+	position: relative;
+	max-width: 920px;
+	margin-inline: auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	gap: var(--space-5);
+}
+
+.eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: var(--letter-spacing-widest);
+	text-transform: uppercase;
+	color: var(--color-base-content-tertiary);
+
+	&::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		border-radius: var(--radius-full);
+		background: var(--color-primary);
+		box-shadow: var(--shadow-primary);
+	}
+}
+
+.title {
+	margin: 0;
+	font-family: var(--font-family-sans);
+	font-weight: var(--font-weight-semibold);
+	font-size: clamp(2.25rem, 6vw, 4rem);
+	line-height: var(--line-height-tight);
+	letter-spacing: var(--letter-spacing-tighter);
+	color: var(--color-base-content);
+	text-wrap: balance;
+
+	em {
+		font-style: normal;
+		background: linear-gradient(
+			100deg,
+			var(--color-primary),
+			var(--color-secondary)
+		);
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
+	}
+}
+
+.lede {
+	margin: 0;
+	max-width: 60ch;
+	font-size: var(--font-size-lg);
+	line-height: var(--line-height-relaxed);
+	color: var(--color-base-content-secondary);
+	text-wrap: pretty;
+}
+
+.stats {
+	margin: var(--space-2) 0 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--space-5) var(--space-8);
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.statValue {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-4xl);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-none);
+	color: var(--color-base-content);
+}
+
+.statLabel {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xxs);
+	letter-spacing: var(--letter-spacing-wider);
+	text-transform: uppercase;
+	color: var(--color-base-content-tertiary);
+}
+
+.switcherBlock {
+	margin-top: var(--space-4);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-3);
+	width: 100%;
+}
+
+.switcherLabel {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: var(--letter-spacing-wider);
+	text-transform: uppercase;
+	color: var(--color-base-content-tertiary);
+}
+
+@keyframes heroDrift {
+	from {
+		transform: translate3d(0, 0, 0) scale(1);
+	}
+
+	to {
+		transform: translate3d(3%, 2%, 0) scale(1.12);
+	}
+}
+
+@include motion.reduced-motion {
+	.backdrop {
+		animation: none;
+	}
+}

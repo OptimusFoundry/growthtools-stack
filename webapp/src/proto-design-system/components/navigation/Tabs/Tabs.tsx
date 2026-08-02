@@ -10,6 +10,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./Tabs.module.scss";
@@ -171,6 +172,7 @@ export function TabList({
 	const internalContext = useContext(TabsContextInternal);
 	const tabListRef = useRef<HTMLDivElement>(null);
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
 	// Register ref with parent
 	useEffect(() => {
@@ -253,7 +255,7 @@ export function TabList({
 					transition={
 						prefersReducedMotion
 							? { duration: 0 }
-							: { type: "spring", stiffness: 400, damping: 30 }
+							: { type: "spring", ...motionTokens.spring.stiff }
 					}
 				/>
 			)}

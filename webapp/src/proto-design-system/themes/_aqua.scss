@@ -71,4 +71,75 @@
   --shadow-xs: inset 0 1px 0 0 oklch(100% 0 0 / 0.25), 0 1px 2px 0 oklch(0% 0 0 / 0.2);
   --focus-ring-color: oklch(72% 0.18 235deg / 0.55);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(64% 0.014 235deg);  // Lc -39.3/5.16:1 — real margin above both floors, see header
+  --shadow-sm: 0 2px 4px -1px oklch(4% 0.02 235deg / 0.45), 0 1px 2px -1px oklch(4% 0.02 235deg / 0.3);
+  --shadow-md: 0 8px 16px -4px oklch(4% 0.02 235deg / 0.55), 0 2px 4px -2px oklch(4% 0.02 235deg / 0.3);
+  --shadow-lg: 0 20px 32px -8px oklch(4% 0.02 235deg / 0.65), 0 4px 8px -4px oklch(4% 0.02 235deg / 0.4);
+  --shadow-xl: 0 32px 48px -12px oklch(4% 0.02 235deg / 0.75), 0 8px 16px -8px oklch(4% 0.02 235deg / 0.4);
+  --shadow-primary: 0 8px 24px 0 oklch(50% 0.095 235deg / 0.35);
+  --shadow-accent:  0 8px 24px 0 oklch(76% 0.115 185deg / 0.30);
+
+  // Motion — this theme's colors already tell a "submerged, weighted, drift"
+  // story (background sits at a deliberate 22% L twilight-over-water read
+  // rather than near-black; primary/secondary/success/error/info all *darken
+  // and gain chroma* on hover/active — sinking deeper rather than popping
+  // brighter; shadows are ink-tinted at the theme's own hue for one implied
+  // light source). Motion should read the same way: things settle with
+  // inertia and drag, not snap. Five coherent overrides follow that story;
+  // --duration-fast (150ms, the fixed house hover/Dropdown-open timing) and
+  // --duration-instant/focus-ring (0ms) are never touched — J-9.1's hover
+  // contract stays crisp on purpose, so the slower structural motion below
+  // reads as *contrast* against instant feedback, not a uniformly slower UI.
+  // - --duration-normal: 240ms -> 280ms (+17%). This is the one token nearly
+  //   every structural transition reads (Modal, Toast entry, PageTransition,
+  //   Grid/Stack/List mount-stagger items, Accordion's grid-template-rows
+  //   expand, Progress width fill) — nudging it alone gives the whole theme
+  //   more inertia without touching a single component. 280ms also lands
+  //   exactly on house's own --duration-enter, so "things arrive slowly" now
+  //   reads as one consistent number instead of two nearby-but-different
+  //   ones. Still comfortably under J-9's 400ms ceiling.
+  // - --ease-out: house's cubic-bezier(0.22,1,0.36,1) is fast-out/soft-settle
+  //   (quick initial motion, brief ease at the end). Aqua's is a longer,
+  //   gentler deceleration tail with no quick snap at the start — reads as
+  //   drifting to rest against water resistance rather than easing to a
+  //   stop. This is the single curve nearly every entrance/exit + the
+  //   Dropdown's (still 150ms) open reads, so retuning it alone reshapes the
+  //   theme's whole motion signature.
+  // - --spring-gentle (Button's default press-spring, house's default
+  //   preset used by useMotionConfig()): 120,14,1 (zeta 0.64, underdamped — a soft
+  //   squish-and-settle overshoot) -> 95,17,1.15 (zeta ~0.81, close to
+  //   critically damped, negligible overshoot, slower resolve from the added
+  //   mass) — pressing a button reads as pressing *through* something with
+  //   resistance, not a springy digital pop.
+  // - --spring-slow (StatCard's counter spring): 100,20,1 (zeta 1.0,
+  //   already critically damped — a "settled tally," per blueprint's
+  //   precedent for this token's role) -> 85,24,1.2 (zeta ~1.19, overdamped,
+  //   still zero overshoot, just a slower approach). This *reinforces* the
+  //   settled-tally role rather than drifting from it — the counter still
+  //   never bounces, it just takes its time getting there, matching
+  //   sediment/bubbles settling rather than a snap-to-value.
+  // - --spring-bouncy (the JS-side of J-9.4's delight reservation — toast
+  //   entry, success moments; paired with --ease-bounce, left at house
+  //   default since no aqua-specific reason to reshape the curve itself):
+  //   300,10,1 (zeta 0.29, sharp rubber-band snap) -> 260,13,1.15 (zeta
+  //   ~0.38, still clearly underdamped/bouncy so the delight read survives,
+  //   but softer and slightly slower from the added mass) — a buoyant bubble
+  //   breaking the surface rather than a mechanical pop, tying the rare
+  //   editorial turquoise accent's "delight" moments to the theme's water
+  //   identity. Still scoped to delight only, per J-9.4 — not repurposed for
+  //   nav or hovers.
+  // --ease-bounce/--ease-elastic and --spring-stiff/-wobbly are left at
+  // house default: no component in this system reads --ease-bounce/-elastic
+  // directly (their JS-facing role is carried by --spring-bouncy above), and
+  // Tabs' indicator (--spring-stiff) benefits from staying precise/immediate
+  // for wayfinding regardless of the theme's mood, matching blueprint's
+  // identical reasoning for that token.
+  --duration-normal: 280ms;
+  --ease-out:      cubic-bezier(0.16, 0.84, 0.44, 1);
+  --spring-gentle:  95, 17, 1.15;
+  --spring-slow:    85, 24, 1.2;
+  --spring-bouncy: 260, 13, 1.15;
 }

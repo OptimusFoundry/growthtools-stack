@@ -77,4 +77,15 @@
   --shadow-accent: 0 0 24px 0 oklch(76% 0.18 195deg / 0.7);
   --focus-ring-color: oklch(82% 0.26 145deg / 0.55);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(57% 0.155 142deg);
+
+  // Motion — see header rationale. --duration-fast (hover) and
+  // --duration-instant (focus ring) are never touched.
+  --duration-normal: 175ms;
+  --spring-gentle: 320, 32, 0.85;
+  --spring-stiff:  520, 58, 0.9;
+  --spring-slow:   200, 28, 1;
 }

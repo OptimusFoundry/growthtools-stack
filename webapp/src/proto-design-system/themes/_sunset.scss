@@ -76,4 +76,59 @@
   --shadow-accent:  0 8px 32px 0 oklch(84% 0.18 85deg / 0.30);
   --focus-ring-color: oklch(75% 0.18 45deg / 0.55);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(58% 0.018 50deg);  // Lc -31.6, non-content only
+
+  // Motion — "the light lingers, then it's gone": dusk isn't a snap to
+  // night, it's a slow gather of warmth that holds a beat before it fades.
+  // Three overrides, each grounded in a verified live consumer (grepped
+  // against every component that reads useMotionTokens()/useMotionConfig(),
+  // not just this file's own tokens):
+  // - --duration-normal: 240ms -> 300ms (+25%, still well under J-9's 400ms
+  //   ceiling). This is the workhorse duration Toast/Modal/PageTransition's
+  //   default entrance, Accordion collapse, Sidebar, CommandPalette,
+  //   Progress, FileUpload, DataGrid and Table all resolve through — moving
+  //   it is the same accepted "accordions drift off the stated 240ms in
+  //   exchange for the theme's own pace, disclosed, still under the hard
+  //   ceiling" trade already documented in oat/ember. Every arrival here
+  //   gets an unhurried, golden-hour beat instead of a brisk snap.
+  // - --ease-out: cubic-bezier(0.22, 1, 0.36, 1) -> cubic-bezier(0.19, 1,
+  //   0.22, 1) (the standard "easeOutExpo" curve). House's curve resolves
+  //   most of its motion by ~40-50% of the timeline; this one front-loads
+  //   even harder and then trails a long, soft tail for the rest — the same
+  //   shape as light fading at the horizon, not a mechanical settle. Feeds
+  //   every themed component above, plus Dropdown's fast-duration open/close.
+  // - --spring-gentle: 120,14,1 -> 100,16,1 (damping ratio 0.64 -> 0.80,
+  //   stiffness down). This is Button's default press-spring (J-9.2's
+  //   "buttons scale 0.98 on press") — softened from a light, slightly
+  //   underdamped snap to an overdamped, viscous settle: pressing a button
+  //   here feels like sinking into warm glass, not clicking a mechanical
+  //   switch.
+  // Declined, with reason:
+  // - --duration-instant and focus-ring timing: hard constraint, untouched.
+  // - --duration-fast (150ms): drives hover feedback (J-9.1's direct-
+  //   response invariant) and Dropdown's open/close duration — left alone
+  //   so hover stays pinned at 150ms exactly, house-wide.
+  // - --duration-enter/-exit/-page: verified via grep — no live component
+  //   reads any of the three (Toast/Modal/PageTransition all resolve
+  //   through --duration-normal above, not these). Tuning unused tokens
+  //   would be decoration with no on-screen effect; left at house default.
+  // - --ease-bounce/--spring-bouncy: verified via grep — the only consumer
+  //   in the whole app is Foundations' token-listing showcase table. Toast
+  //   entry (the delight moment J-9.4 names) actually resolves through
+  //   --duration-normal/--ease-out, not spring or bounce at all. Inventing
+  //   a bounce personality with zero observable effect isn't this theme's
+  //   "warm glass" restraint; left at house default.
+  // - --spring-stiff (Tabs indicator): nav, which J-9.4 explicitly excludes
+  //   from bounce/spring personality; left at house default.
+  // - --spring-wobbly, --spring-slow (StatCard counter), --ease-in-out
+  //   (ambient shimmer/pulse loaders), --ease-elastic, and
+  //   --duration-slower/-slowest/-complex/-ambient: no verified consumer
+  //   this theme has a bespoke story for; left at house default rather than
+  //   speculative tuning.
+  --duration-normal: 300ms;
+  --ease-out:      cubic-bezier(0.19, 1, 0.22, 1);
+  --spring-gentle: 100, 16, 1;
 }

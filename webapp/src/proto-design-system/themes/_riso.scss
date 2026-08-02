@@ -77,4 +77,30 @@
   --shadow-accent: 3px 3px 0 0 oklch(28% 0.18 265deg);
   --focus-ring-color: oklch(65% 0.25 350deg / 0.5);
   --color-header-bg: var(--color-base-100);
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled: oklch(68% 0.045 265deg); // non-content only
+
+  // Motion: riso's whole visual language is a hard-edged, unblurred ink
+  // stamp (see --shadow-* above — flat offset blocks, no blur, no soft
+  // glow). Motion should read the same way: a decisive press-and-release,
+  // not a soft editorial glide. --ease-out swaps the house's gentle
+  // ease-out-quad for a steep, near-abrupt deceleration (the curve a
+  // press lands with, not a curve that eases into rest) — this reaches
+  // every hover/opacity/transform/shadow transition since they all key
+  // off --ease-out, with duration untouched. --duration-enter/-exit
+  // tighten to match (elements land and leave in a beat, not a float);
+  // both stay under the 400ms ceiling and don't touch the hard-ruled
+  // --duration-fast (150ms hover) or --duration-normal (240ms
+  // accordion/tab) values. --spring-bouncy is retuned from a wobbly,
+  // multi-oscillation bounce to a stiff, heavily-damped single "thunk" —
+  // still reserved for its house-approved delight moments only (toast
+  // entry, success checkmark per J-9.4), just re-cast as a print-press
+  // hit rather than a rubber-ball bounce. --duration-instant and focus
+  // ring timing are deliberately left untouched (never themed).
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-enter: 200ms;
+  --duration-exit: 140ms;
+  --spring-bouncy: 420, 26, 1;
 }

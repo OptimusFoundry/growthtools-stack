@@ -20,6 +20,9 @@
 	--duration-complex: 600ms;
 	--duration-page:    350ms;
 
+	// Ambient/looping durations (infinite animations, not state transitions) --
+	--duration-ambient: 1500ms;
+
 	// Easing functions --------------------------------------------------------
 	--ease-linear: linear;
 	--ease-in:     cubic-bezier(0.4, 0, 1, 1);

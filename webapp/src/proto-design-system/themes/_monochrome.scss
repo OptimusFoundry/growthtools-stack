@@ -92,4 +92,56 @@
   // Tighter letter spacing for headlines
   --letter-spacing-tight: -0.03em;
   --letter-spacing-tighter: -0.05em;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(66% 0 0deg);   // Lc 54.0 / 2.93:1 — non-content only, clears the Lc 30 floor
+  --color-accent-bg: oklch(90% 0 0deg);   // was missing — rendered transparent under Compositions.module.scss's fill
+  --color-success-active: oklch(16% 0 0deg);
+  --color-warning-active: oklch(30% 0 0deg);
+  --color-error-active: oklch(8% 0 0deg);
+  --color-info-active: oklch(40% 0 0deg);
+
+  // Shadow scale — was missing entirely; without it this theme silently
+  // inherited :root's indigo/amber-tinted defaults, breaking "no color."
+  --shadow-xs: 0 1px 2px 0 var(--shadow-color);
+  --shadow-sm: 0 2px 4px -1px var(--shadow-color), 0 1px 2px -1px oklch(0% 0 0deg / 0.04);
+  --shadow-md: 0 8px 16px -4px var(--shadow-color), 0 2px 4px -2px oklch(0% 0 0deg / 0.04);
+  --shadow-lg: 0 20px 32px -8px oklch(0% 0 0deg / 0.10), 0 4px 8px -4px oklch(0% 0 0deg / 0.05);
+  --shadow-xl: 0 32px 48px -12px var(--shadow-color-strong), 0 8px 16px -8px oklch(0% 0 0deg / 0.06);
+
+  // Primary/accent glows tint from their own token's lightness (mono's
+  // pattern) rather than a hue — still grayscale, still legible as "cast by
+  // this brand tone."
+  --shadow-primary: 0 8px 24px 0 oklch(0% 0 0deg / 0.25);
+  --shadow-accent:  0 8px 24px 0 oklch(50% 0 0deg / 0.20);
+
+  // Chrome
+  --color-header-bg: var(--color-base-100);
+
+  // Custom: Sharp corners for editorial feel
+  --radius-xs: 0;
+
+  // Motion — mechanical/instrument-precise, following from the zero-radius,
+  // pure-ink-on-paper identity above: swaps the house's soft cushioned
+  // ease-out (0.22, 1, 0.36, 1, a gentle settle) for a symmetric,
+  // no-overshoot curve — the same "ruler snapping into place" quality as
+  // the sharp corners, reached automatically by every --transition-* alias
+  // that composites --ease-out/--ease-in-out (they're not redeclared here).
+  // Hover (150ms, --duration-fast) and accordion/tab (240ms,
+  // --duration-normal) timings are untouched per J-9.1 — this theme changes
+  // HOW things move, not those fixed durations. Mount/dismiss/page are
+  // tightened for a decisive cut instead of a lingering dissolve, still
+  // under J-9.1's 400ms ceiling. --ease-bounce/--spring-bouncy keep their
+  // J-9.4 reserved-for-delight role (toast entry, success checkmark) but
+  // with overshoot trimmed — even this theme's one permitted flourish stays
+  // restrained, not playful. --duration-instant and focus-ring timing are
+  // untouched — instant and unthemed per the hard rule.
+  --ease-out:      cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-in-out:   cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-bounce:   cubic-bezier(0.34, 1.2, 0.64, 1);
+  --spring-bouncy: 320, 22, 1;
+  --duration-enter: 200ms;
+  --duration-exit:  140ms;
+  --duration-page:  260ms;
 }

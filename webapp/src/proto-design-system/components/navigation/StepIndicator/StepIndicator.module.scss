@@ -37,7 +37,7 @@
   .connector {
     background-color: var(--color-border);
     flex: 1;
-    height: 2px;
+    height: var(--border-width-md);
     margin: 0 var(--space-2);
     min-width: var(--space-4);
   }
@@ -72,7 +72,7 @@
     left: calc(var(--space-5) - 1px);
     position: absolute;
     top: var(--space-6);
-    width: 2px;
+    width: var(--border-width-md);
   }
 
   .completed .connector {
@@ -119,7 +119,7 @@
 .indicator {
   align-items: center;
   background-color: var(--color-surface);
-  border: 2px solid var(--color-border);
+  border: var(--border-width-md) solid var(--color-border);
   border-radius: var(--radius-full);
   color: var(--color-base-content-tertiary);
   display: flex;

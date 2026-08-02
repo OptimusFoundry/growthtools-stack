@@ -81,4 +81,31 @@
   --color-header-bg: var(--color-base-100);
   --radius-xs: 0; --radius-sm: 1px; --radius-md: 2px;
   --radius-lg: 4px; --radius-xl: 8px;
+
+
+  // --- New tokens adopted from saas-template sync (additive only) ---
+  --color-text-disabled:          oklch(66% 0.010 45deg); // non-content only — Lc 55.4, 3.00:1
+
+  // Motion — the same "precise, no wobble" throughline as the near-zero
+  // radius and hairline rules above: a museum specimen label settles into
+  // place exactly once, it doesn't bounce. --duration-normal
+  // (Modal/Alert/Toast/Banner/PageTransition/Stack+Grid+List stagger)
+  // tightens 240ms -> 200ms — still above the untouched --duration-fast
+  // (150ms; hovers stay fixed per J-9.1, and Dropdown/Popover/
+  // DropdownMenu/DatePicker/MultiSelect/Drawer's open transition stay at
+  // house speed) so the duration ladder stays monotonic, just crisper than
+  // the editorial default without reaching for `brutal`'s harder snap.
+  // --spring-gentle — the press-spring Button/LinkButton actually consume —
+  // moves from the house's underdamped 120/14/1 (damping ratio ~0.64, a
+  // soft bounce-back) to an exactly critically-damped 256/32/1 (ratio 1.0):
+  // a press settles once, precisely, with zero overshoot — no wobble, but
+  // no mechanical over-correction either. Left --ease-out alone (already a
+  // non-bouncy decelerate, doesn't need `brutal`'s linear override), and
+  // Tabs' --spring-stiff / StatCard's --spring-slow alone (slow is already
+  // ratio ~1.0; stiff's mild overshoot reads as intentional indicator
+  // travel, not fragility). --duration-instant and focus-ring timing stay
+  // untouched per the house hard rule (J-9.1) that focus feedback is never
+  // themed.
+  --duration-normal: 200ms;
+  --spring-gentle:   256, 32, 1;
 }

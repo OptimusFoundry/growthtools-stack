@@ -106,6 +106,22 @@
   }
 }
 
+.accent {
+  --_btn-bg: var(--color-accent);
+  --_btn-fg: var(--color-accent-content);
+  --_btn-border: var(--color-accent);
+
+  &:hover:not(:disabled) {
+    --_btn-bg: var(--color-accent-hover);
+    --_btn-border: var(--color-accent-hover);
+  }
+
+  &:active:not(:disabled) {
+    --_btn-bg: var(--color-accent-active);
+    --_btn-border: var(--color-accent-active);
+  }
+}
+
 .ghost {
   --_btn-bg: transparent;
   --_btn-fg: var(--color-base-content);

@@ -1,4 +1,9 @@
-import type { CSSProperties, ElementType, ReactNode } from "react";
+import type {
+	CSSProperties,
+	ElementType,
+	MouseEvent as ReactMouseEvent,
+	ReactNode,
+} from "react";
 import { cn } from "../../../utils/cn";
 import styles from "./Card.module.scss";
 
@@ -22,6 +27,8 @@ export interface CardProps {
 	style?: CSSProperties;
 	/** Click handler for interactive cards */
 	onClick?: () => void;
+	/** Context-menu (right-click) handler — e.g. canvas nodes with a custom menu */
+	onContextMenu?: (e: ReactMouseEvent) => void;
 }
 
 /**
@@ -44,6 +51,7 @@ export function Card({
 	className,
 	style,
 	onClick,
+	onContextMenu,
 }: CardProps) {
 	return (
 		<Component
@@ -56,6 +64,7 @@ export function Card({
 			)}
 			style={style}
 			onClick={onClick}
+			onContextMenu={onContextMenu}
 			role={interactive ? "button" : undefined}
 			tabIndex={interactive ? 0 : undefined}
 		>

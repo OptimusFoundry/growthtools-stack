@@ -158,8 +158,8 @@
   }
 }
 
-// Skeleton loading animation
-@keyframes skeleton {
+// Shimmer sweep — ambient loading animation (Skeleton, DataTable skeleton rows)
+@keyframes shimmer {
   0% {
     background-position: 200% 0;
   }
