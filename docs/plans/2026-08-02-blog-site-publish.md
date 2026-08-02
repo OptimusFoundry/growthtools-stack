@@ -6,20 +6,20 @@
 
 | AC | Description | Tickets |
 |----|------|---------|
-| AC1 | Site publish target settings form, upsert | B2, B7, F1, F2 |
-| AC2 | Publish → branch + commit + PR via existing GitHub OAuth | B3, B4, B5, B6 |
+| AC1 | Site publish target settings form, upsert | B2, B7, F1, F2, F4 |
+| AC2 | Publish → branch + commit + PR via existing GitHub OAuth | B3, B4, B5, B6, F4 |
 | AC3 | Frontmatter: title/pubDate/description/tags/readingTime | B4 |
 | AC4 | Media URLs rewritten to permanent public URLs | B4 |
-| AC5 | PR URL stored + shown as "View PR" link | B2, B5, B6, F1, F3 |
-| AC6 | GitHub failure never blocks internal publish; retry action | B5, B6, F1, F3 |
-| AC7 | No target configured → publish behaves as today, no error | B4, B5, F3 |
+| AC5 | PR URL stored + shown as "View PR" link | B2, B5, B6, F1, F3, F4 |
+| AC6 | GitHub failure never blocks internal publish; retry action | B5, B6, F1, F3, F4 |
+| AC7 | No target configured → publish behaves as today, no error | B4, B5, F3, F4 |
 
 ## Tickets
 
 | Ticket | Epic | Layer | Depends-on | AC refs | Status |
 |--------|------|-------|-----------|---------|--------|
-| B1 | EP-001 | db  | —          | AC1,AC2,AC5 | Todo |
-| B2 | EP-001 | db  | B1         | AC1,AC2,AC5 | Todo |
+| B1 | EP-001 | db  | —          | AC1,AC5 | Todo |
+| B2 | EP-001 | db  | B1         | AC1,AC5 | Todo |
 | B3 | EP-001 | api | —          | AC2 | Todo |
 | B4 | EP-001 | api | B2,B3      | AC2,AC3,AC4,AC7 | Todo |
 | B5 | EP-001 | api | B2,B4      | AC2,AC5,AC6,AC7 | Todo |
@@ -85,9 +85,9 @@ never be blocked or rolled back by a site-publish failure) · no site publish ta
 4. **Fresh branch every time.** Both `PublishBlogPost`'s site-publish tail and `RetrySitePublish` run
    the identical attempt logic (branch off base → commit → PR) — no resume/update of a prior PR, per
    the PRD's explicit non-goal.
-5. **Migration versions**: last migration on disk is `V0053__add_storybook_columns_to_github_repos.sql`
-   (confirmed via fresh glob — a migration landed after this plan's initial drafting). Use **V0054**
-   and **V0055**. `backend-migration-gen` must re-check `ls base-server/migrations | tail -1` at
+5. **Migration versions**: last migration on disk is `V0052__reseed_growth_tools_plan_feature_limits_gt_free.sql`
+   (confirmed via `ls base-server/migrations | sort -V | tail -5` in this worktree). Use **V0053**
+   and **V0054**. `backend-migration-gen` must re-check `ls base-server/migrations | tail -1` at
    build time in case another migration lands first.
 6. **`PublishBlogPost` signature change is breaking.** Return type changes from `(store.BlogPost,
    error)` to `(BlogPublishResult, error)`. Every caller/mock across `blog/processor` and
@@ -115,16 +115,16 @@ never be blocked or rolled back by a site-publish failure) · no site publish ta
 
 ## B1 — Migration: blog_posts site-PR columns + site_publish_targets table
 
-**Files:** `base-server/migrations/V0054__blog_posts_site_pr_fields.sql`,
-`base-server/migrations/V0055__create_site_publish_targets.sql`
-**Placement:** confirm `V0053` is still the latest (`ls base-server/migrations | tail -1`) before
-assigning V0054/V0055.
+**Files:** `base-server/migrations/V0053__blog_posts_site_pr_fields.sql`,
+`base-server/migrations/V0054__create_site_publish_targets.sql`
+**Placement:** confirm `V0052` is still the latest (`ls base-server/migrations | tail -1`) before
+assigning V0053/V0054.
 
-**V0054 contract** — `ALTER TABLE blog_posts`: add `site_pr_url` (TEXT, nullable), add
+**V0053 contract** — `ALTER TABLE blog_posts`: add `site_pr_url` (TEXT, nullable), add
 `site_pr_opened_at` (TIMESTAMPTZ, nullable). No default, no backfill needed (new rows/existing rows
 alike start NULL).
 
-**V0055 contract** — `CREATE TABLE site_publish_targets`, matching `voice_profiles`' exact
+**V0054 contract** — `CREATE TABLE site_publish_targets`, matching `voice_profiles`' exact
 conventions (confirmed from `V0001__init.sql` / `voice_profile.go`): `id` UUID PK default
 `uuid_generate_v4()` (not `gen_random_uuid()` — `uuid-ossp` extension already enabled, no new
 `CREATE EXTENSION`), `account_id` UUID NOT NULL REFERENCES `accounts(id)` ON DELETE CASCADE,
@@ -155,9 +155,29 @@ follow the same omission). New `SetBlogPostSitePR` method appended after `Publis
 ```
 func (s *Store) SetBlogPostSitePR(ctx context.Context, accountID, postID uuid.UUID, prURL string) (BlogPost, error)
 
-type SitePublishTarget struct { ID, AccountID uuid.UUID; RepoOwner, RepoName, BaseBranch, ContentPath string; CreatedAt, UpdatedAt time.Time }
-type CreateSitePublishTargetParams struct { AccountID uuid.UUID; RepoOwner, RepoName, BaseBranch, ContentPath string }
-type UpdateSitePublishTargetParams struct { RepoOwner, RepoName, BaseBranch, ContentPath *string }
+type SitePublishTarget struct {
+    ID          uuid.UUID `db:"id" json:"id"`
+    AccountID   uuid.UUID `db:"account_id" json:"account_id"`
+    RepoOwner   string    `db:"repo_owner" json:"repo_owner"`
+    RepoName    string    `db:"repo_name" json:"repo_name"`
+    BaseBranch  string    `db:"base_branch" json:"base_branch"`
+    ContentPath string    `db:"content_path" json:"content_path"`
+    CreatedAt   time.Time `db:"created_at" json:"created_at"`
+    UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
+}
+type CreateSitePublishTargetParams struct {
+    AccountID   uuid.UUID `db:"account_id" json:"account_id"`
+    RepoOwner   string    `db:"repo_owner" json:"repo_owner"`
+    RepoName    string    `db:"repo_name" json:"repo_name"`
+    BaseBranch  string    `db:"base_branch" json:"base_branch"`
+    ContentPath string    `db:"content_path" json:"content_path"`
+}
+type UpdateSitePublishTargetParams struct {
+    RepoOwner   *string `db:"repo_owner" json:"repo_owner,omitempty"`
+    RepoName    *string `db:"repo_name" json:"repo_name,omitempty"`
+    BaseBranch  *string `db:"base_branch" json:"base_branch,omitempty"`
+    ContentPath *string `db:"content_path" json:"content_path,omitempty"`
+}
 
 func (s *Store) CreateSitePublishTarget(ctx context.Context, params CreateSitePublishTargetParams) (SitePublishTarget, error)
 func (s *Store) GetSitePublishTargetByAccount(ctx context.Context, accountID uuid.UUID) (SitePublishTarget, error)
