@@ -1,0 +1,181 @@
+# routing.yml — single source of truth for layer -> executor and for path ownership.
+#
+# Consumers: scripts/tickets (layer -> executor), .claude/hooks/agent-routing-guard.py
+# (paths.owned + paths.exempt + its deny message), and .claude/agents/README.md's dispatch
+# table — which is the human-readable VIEW of this file, not a second copy. Three copies of
+# routing (plan rows, hook, README prose) is the drift this file exists to end: change routing
+# here, never in a consumer.
+#
+# ---------------------------------------------------------------------------------------
+# PARSING SUBSET
+#
+# Why this section exists: there is no pyyaml in this repo and none may be added — hooks and
+# scripts are Python 3 stdlib only. This file is therefore read by a small hand-rolled reader,
+# and is restricted to a subset chosen so a real YAML parser reads it IDENTICALLY to that
+# reader. Adding a construct outside this list silently changes what one of the two sees.
+#
+#   - `#` comments and blank lines are ignored. No tabs anywhere.
+#   - Exactly two nesting levels: section keys at column 0 (`heads:`), entries at exactly
+#     2-space indent as `  key: value`, list items at 2-space indent as `  - value`.
+#     A third level at 4-space indent is permitted ONLY under `paths:`.
+#   - A section may legally have zero entries (see `exact:`).
+#   - A section is either all `key: value` entries or all `- value` items, never both.
+#   - Values are plain scalars. NO flow collections (`[a, b]`), anchors, aliases, multi-line
+#     scalars, multi-document markers, or nested maps beyond the levels above.
+#   - Any key containing a space, parenthesis, colon or `#` MUST be double-quoted
+#     (`"api (worker)": backend-kafka-integration`). The reader splits an entry on the FIRST
+#     UNQUOTED `:`, so this is the one rule that keeps the subset safe.
+#   - Values are never quoted and MAY contain `:` — `skill:shared-repo-tooling` is a plain scalar in
+#     both parsers, since a `:` not followed by whitespace does not open a mapping.
+#   - Anything outside the subset is a hard error carrying file + line number. The CLI reports
+#     it and exits 2; a hook catches it, degrades, and allows.
+#
+# ---------------------------------------------------------------------------------------
+# TARGET GRAMMAR — two forms, each validated against its own directory:
+#
+#   <agent-name>        MUST resolve to .claude/agents/**/<name>.md
+#   skill:<skill-name>  MUST resolve to .claude/skills/<name>/SKILL.md
+#
+# The skill form exists because some layers execute on a skill rather than an agent; the
+# "every agent name resolves to a real file" rule is unaffected, it just applies per form.
+#
+# ---------------------------------------------------------------------------------------
+# RESOLUTION — three levels, first match wins, over the layer value normalized to
+# lowercase + stripped + internal whitespace runs collapsed to one space:
+#
+#   1 exact      the whole normalized value against `exact:`.
+#   2 qualifier  if a parenthetical is present, tokenize its contents on [^a-z0-9]+ and walk
+#                the tokens IN TEXT ORDER; a token matches a `qualifiers:` entry if it equals
+#                that entry or BEGINS WITH it (so `providers` matches `provider`). First
+#                matching token wins -> look up `<head>.<qualifier>` in `qualified:`, where
+#                <head> is alias-expanded first (so `backend (nanobanana provider)` composes
+#                `api.provider`). An absent composed key falls through to level 3.
+#   3 head       the bare token before any parenthetical, alias-expanded, against `heads:`.
+#
+# No match at any level -> NO AGENT, surfaced as "needs routing". Never `general-purpose`,
+# never a silent default — a wrong-but-plausible executor is the failure this file prevents.
+# The parenthetical is NEVER stripped before routing: for ~14% of live rows the qualifier is
+# the only thing selecting the right agent.
+
+version: 1
+
+# Head synonyms, collapsed before levels 2 and 3.
+aliases:
+  be: api
+  backend: api
+
+# Scanned in this order as prefix-matchable tokens at level 2. Order is significant: for
+# `api (producer/worker/bridge cleanup)` the first token in TEXT order that matches any entry
+# wins, so this list decides nothing on its own — but a token matching two entries resolves
+# to whichever appears here first.
+qualifiers:
+  - migration
+  - worker
+  - producer
+  - kafka
+  - handler
+  - processor
+  - store
+  - e2e
+  - msw
+  - tests
+  - client
+  - provider
+  - bootstrap
+
+# Level 1 — full-value overrides. Deliberately empty: no live layer value needs one. This is
+# the escape hatch for a value the lower tiers get wrong, e.g.
+#   "api (worker)": backend-kafka-integration
+exact:
+
+# Level 2 — <head>.<qualifier>, head already alias-expanded.
+qualified:
+  api.worker: backend-kafka-integration
+  api.producer: backend-kafka-integration
+  api.kafka: backend-kafka-integration
+  api.handler: backend-api-endpoint
+  api.processor: backend-code-editor
+  api.provider: backend-code-editor
+  api.bootstrap: backend-code-editor
+  api.tests: backend-unit-test-writer
+  api.store: backend-store-crud
+  api.migration: backend-migration-gen
+  db.migration: backend-migration-gen
+  db.store: backend-store-crud
+  fe.e2e: frontend-e2e-test-writer
+  fe.msw: frontend-e2e-test-writer
+  fe.tests: frontend-e2e-test-writer
+  infra.client: backend-code-editor
+  infra.config: backend-code-editor
+  infra.kafka: backend-kafka-integration
+  domain.provider: backend-code-editor
+  wiring.bootstrap: backend-code-editor
+
+# Level 3 — bare head, alias-expanded.
+#
+# DECISION 1 — layer names are global, so this epic's own config layer is namespaced
+# `harness-config`. Bare `config` already has exactly one meaning here — Go configuration
+# under base-server/internal/infra/config — and keeps mapping to backend-code-editor. One
+# layer name, one meaning: this file carries no deliberate misroutes, and no warning class
+# exists downstream to excuse one.
+#
+# DECISION 2 — `processor`, `handler`, `migration`, `node`, `worker` and `e2e` are live at
+# level 2 AND present here as heads. They never occur as bare layer values in any plan table,
+# so adding them changes zero existing rows (verified against the live corpus). They are here
+# because a human hand-filing a ticket types the bare word: `tickets file "x" --layer processor`
+# must resolve rather than report "needs routing".
+#
+# DELIBERATELY ABSENT: `pipeline`, `providers`, `bootstrap` (1 row each). They have no correct
+# executor today; they must surface as "needs routing" so the gap stays visible.
+#
+# DECISION 3 — the iOS track's layers are namespaced `ios-*` even though several bare words
+# they'd otherwise want (`model`, `store`, `screen`, `test`) are free or already taken (`store`
+# is backend-store-crud). iOS tickets are filed by `ios-plan-writer`, never hand-typed, so there
+# is no ergonomics cost to the prefix — and it keeps the iOS pipeline's ticket layers visually
+# distinct from backend's in a shared docs/plans/ corpus, the same reasoning as `harness-config`.
+heads:
+  fe: frontend-code-editor
+  api: backend-code-editor
+  db: backend-store-crud
+  infra: backend-code-editor
+  domain: backend-code-editor
+  wiring: backend-code-editor
+  workers: backend-kafka-integration
+  store: backend-store-crud
+  render-svc: node-service-code-editor
+  kafka: backend-kafka-integration
+  config: backend-code-editor
+  tooling: skill:shared-repo-tooling
+  hooks: skill:shared-repo-tooling
+  harness-config: skill:shared-repo-tooling
+  docs: skill:shared-repo-tooling
+  processor: backend-code-editor
+  handler: backend-api-endpoint
+  migration: backend-migration-gen
+  node: node-service-code-editor
+  worker: backend-kafka-integration
+  e2e: frontend-e2e-test-writer
+  ios-model: ios-model-scaffold
+  ios-networking: ios-networking-endpoint
+  ios-design-system: ios-design-system
+  ios-screen: ios-screen-builder
+  ios-test: ios-test-writer
+  ios-snapshot: ios-snapshot-test-writer
+  ios-uitest: ios-uitest-writer
+
+# Path ownership for the PreToolUse routing guard. `owned` tokens are matched with word
+# boundaries; `exempt` tokens contain `/` or `.` and are matched as plain substrings.
+# Exempt is checked FIRST — tooling prompts routinely name owned services in prose, and
+# self-blocking the tooling executor is the worse failure.
+paths:
+  owned:
+    base-server: backend-code-editor
+    webapp: frontend-code-editor
+    render-service: node-service-code-editor
+    zapier-integration: node-service-code-editor
+    ios: ios-supervisor
+  exempt:
+    - .claude/
+    - .githooks/
+    - scripts/
+    - landing/
