@@ -175,6 +175,7 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 
 	// Step 1: bucket artifacts by type (video + images)
 	videoKey, imageKeys := bucketArtifacts(payload.Uploaded)
+	componentNames := storybookComponentNames(payload.Uploaded)
 
 	// Step 2: fetch media bytes from S3
 	mediaBytes := make(map[string][]byte)
@@ -318,8 +319,12 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 
 	// Step 8: call socialposts.Generator
 	mode := socialposts.Mode(decision.Mode)
+	prompt := buildDraftPrompt(commit)
+	if len(componentNames) > 0 {
+		prompt = buildComponentDraftPrompt(commit, componentNames)
+	}
 	genReq := socialposts.Request{
-		Prompt:      buildDraftPrompt(commit),
+		Prompt:      prompt,
 		Platforms:   targets,
 		Mode:        mode,
 		ThreadParts: decision.ThreadParts,

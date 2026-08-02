@@ -10,9 +10,6 @@ import (
 	socialposts "base-server/internal/ai/socialposts"
 
 	authProcessor "base-server/internal/auth/processor"
-	billingProcessor "base-server/internal/money/billing/processor"
-	"base-server/internal/money/products"
-	"base-server/internal/money/subscriptions"
 	contentProcessor "base-server/internal/content/processor"
 	"base-server/internal/infra/config"
 	"base-server/internal/infra/httpclient"
@@ -20,6 +17,9 @@ import (
 	"base-server/internal/infra/store"
 	stripeclient "base-server/internal/infra/stripeclient"
 	"base-server/internal/infra/tiers"
+	billingProcessor "base-server/internal/money/billing/processor"
+	"base-server/internal/money/products"
+	"base-server/internal/money/subscriptions"
 
 	analyticsProcessor "base-server/internal/analytics/processor"
 	blogProcessor "base-server/internal/blog/processor"
@@ -157,6 +157,7 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	// Fail-open inside the processor means a classifier outage doesn't drop
 	// user features on the floor.
 	p.github.SetCommitClassifier(p.aiClassifier)
+	p.github.SetStorybookClient(cl.storybookClient)
 
 	// Blog
 	p.blog = blogProcessor.New(s, p.aiBlog, logger)

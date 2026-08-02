@@ -15,6 +15,8 @@
 
 import { Admin, Consumer, Kafka, Producer } from "kafkajs";
 import { runCapture, uploadCommitArtifacts } from "./capture.ts";
+import type { CaptureOutput } from "./capture.ts";
+import { runStorybookCapture } from "./storybook.ts";
 
 const TOPIC_REQUESTS = "github.capture.requests";
 const TOPIC_RESULTS = "github.capture.results";
@@ -30,6 +32,12 @@ interface CaptureRequestMessage {
 	app_url?: string;
 	/** If true, the worker runs the explore pass before recording. */
 	two_pass?: boolean;
+	/** Non-empty ⇒ direct-navigate Storybook capture instead of login+explore. */
+	story_ids?: string[];
+	/** Base URL for `{storybook_url}/iframe.html?id=...`. */
+	storybook_url?: string;
+	/** storyID → component name, used to name the uploaded screenshot files. */
+	story_components?: Record<string, string>;
 }
 
 interface CaptureResultMessage {
@@ -144,22 +152,32 @@ export async function startKafkaBridge(): Promise<KafkaBridge | null> {
 			};
 
 			try {
-				const appUrl = request.app_url || defaultAppUrl;
-				if (!appUrl || !defaultEmail || !defaultPassword) {
-					throw new Error(
-						"missing app_url / demo credentials — set APP_URL, APP_EMAIL, APP_PASSWORD or pass app_url in the request",
-					);
+				let output: CaptureOutput;
+				if (request.story_ids && request.story_ids.length > 0) {
+					output = await runStorybookCapture({
+						commit: request.sha,
+						storybookUrl: request.storybook_url ?? "",
+						storyIds: request.story_ids,
+						storyComponents: request.story_components,
+					});
+				} else {
+					const appUrl = request.app_url || defaultAppUrl;
+					if (!appUrl || !defaultEmail || !defaultPassword) {
+						throw new Error(
+							"missing app_url / demo credentials — set APP_URL, APP_EMAIL, APP_PASSWORD or pass app_url in the request",
+						);
+					}
+					output = await runCapture({
+						commit: request.sha,
+						appUrl,
+						email: defaultEmail,
+						password: defaultPassword,
+						goal: request.message,
+						summary: request.message,
+						diff: request.diff ?? "",
+						twoPass: request.two_pass === true,
+					});
 				}
-				const output = await runCapture({
-					commit: request.sha,
-					appUrl,
-					email: defaultEmail,
-					password: defaultPassword,
-					goal: request.message,
-					summary: request.message,
-					diff: request.diff ?? "",
-					twoPass: request.two_pass === true,
-				});
 				result.success = true;
 				result.step_count = output.stepCount;
 				result.capture_dir = output.captureDir;

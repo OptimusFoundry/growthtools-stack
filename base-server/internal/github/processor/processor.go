@@ -11,6 +11,7 @@ import (
 
 	"base-server/internal/ai/commitclassifier"
 	githubclient "base-server/internal/infra/clients/github"
+	storybookclient "base-server/internal/infra/clients/storybook"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
@@ -85,6 +86,13 @@ type GitHubClient interface {
 	GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error)
 }
 
+// StorybookClient fetches a Storybook deployment's story index so pushed
+// commits touching design-system components can be matched to their story
+// IDs for direct-navigate capture.
+type StorybookClient interface {
+	FetchIndex(ctx context.Context, baseURL string) (storybookclient.Index, error)
+}
+
 // EventPublisher is the Kafka producer dependency (post and github both
 // already use this shape elsewhere in the codebase).
 type EventPublisher interface {
@@ -106,14 +114,15 @@ type oauthStateEntry struct {
 }
 
 type GitHubProcessor struct {
-	store         GitHubStore
-	githubClient  GitHubClient
-	publisher     EventPublisher
-	urlSigner     URLSigner
-	classifier    CommitClassifier
-	webhookSecret string
-	webAppHost    string
-	oauthClientID string
+	store           GitHubStore
+	githubClient    GitHubClient
+	publisher       EventPublisher
+	urlSigner       URLSigner
+	classifier      CommitClassifier
+	storybookClient StorybookClient
+	webhookSecret   string
+	webAppHost      string
+	oauthClientID   string
 	// oauthStates maps random state string → oauthStateEntry. Pointer so
 	// the processor can still be passed by value (sync.Map itself embeds
 	// sync.noCopy and can't be copied).
@@ -133,6 +142,14 @@ func (p *GitHubProcessor) SetURLSigner(signer URLSigner) {
 // falls back to capturing every commit, matching the pre-filter behaviour.
 func (p *GitHubProcessor) SetCommitClassifier(c CommitClassifier) {
 	p.classifier = c
+}
+
+// SetStorybookClient wires the Storybook index client used to resolve
+// changed components to story IDs. Nil is valid — disables Storybook
+// resolution entirely (the resolver treats a nil client as a no-op, not a
+// panic), matching the nil-classifier fallback pattern.
+func (p *GitHubProcessor) SetStorybookClient(c StorybookClient) {
+	p.storybookClient = c
 }
 
 func New(store GitHubStore, webhookSecret string, logger *observability.Logger) GitHubProcessor {
