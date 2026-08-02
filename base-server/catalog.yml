@@ -17,7 +17,7 @@ products:
     name: "Growth Tools Free"
     description: "Free tier — get started with Growth Tools"
     prices:
-      - key: free
+      - key: gt_free
         unit_amount: 0
         currency: usd
         interval: month
@@ -81,7 +81,7 @@ features:
 #   * A row with enabled:true + no limit means "unlimited".
 #   * A row with limit:0 is the soft-off switch.
 plans:
-  - price: free
+  - price: gt_free
     features:
       platform_connections:  { enabled: true }
       ai_content_generation: { enabled: false }

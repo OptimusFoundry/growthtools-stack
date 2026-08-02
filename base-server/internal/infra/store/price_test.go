@@ -388,7 +388,7 @@ func TestStore_GetFreePriceStripeID(t *testing.T) {
 				err := s.CreatePrice(ctx, Price{
 					ProductID:   product.ID,
 					StripeID:    "price_free_" + uuid.New().String()[:8],
-					Description: "free",
+					Description: "gt_free",
 					UnitAmount:  &amt,
 					Currency:    &cur,
 				})

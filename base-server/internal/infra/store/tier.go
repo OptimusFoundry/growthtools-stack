@@ -178,7 +178,7 @@ func (s *Store) GetTierInfoByAccountID(ctx context.Context, accountID uuid.UUID)
 const sqlGetFreePriceID = `
 SELECT id
 FROM prices
-WHERE description = 'free' AND deleted_at IS NULL
+WHERE description = 'gt_free' AND deleted_at IS NULL
 LIMIT 1
 `
 
@@ -205,7 +205,7 @@ func getDefaultFreeTier() TierInfo {
 	teamMembers := 1
 
 	return TierInfo{
-		PriceDescription: "free",
+		PriceDescription: "gt_free",
 		Features: map[string]bool{
 			"email_verification":   false,
 			"referral_system":      false,

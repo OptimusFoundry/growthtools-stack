@@ -104,7 +104,7 @@ func (s *Store) GetPriceByID(ctx context.Context, priceID string) (Price, error)
 const sqlGetFreePriceStripeID = `
 SELECT stripe_id
 FROM prices
-WHERE description = 'free' AND deleted_at IS NULL
+WHERE description = 'gt_free' AND deleted_at IS NULL
 LIMIT 1
 `
 
