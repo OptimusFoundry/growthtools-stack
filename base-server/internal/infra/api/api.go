@@ -168,10 +168,13 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.PUT("/blog/:id", a.blogHandler.HandleUpdateBlog)
 		protectedGroup.DELETE("/blog/:id", a.blogHandler.HandleDeleteBlog)
 		protectedGroup.POST("/blog/:id/publish", a.blogHandler.HandlePublishBlog)
+		protectedGroup.POST("/blog/:id/retry-site-publish", a.blogHandler.HandleRetrySitePublish)
 
 		// Settings
 		protectedGroup.GET("/settings/voice", a.settingsHandler.HandleGetVoiceProfile)
 		protectedGroup.PUT("/settings/voice", a.settingsHandler.HandleUpdateVoiceProfile)
+		protectedGroup.GET("/settings/site-publish", a.settingsHandler.HandleGetSitePublishTarget)
+		protectedGroup.PUT("/settings/site-publish", a.settingsHandler.HandleUpdateSitePublishTarget)
 
 		// GitHub OAuth + repo management
 		protectedGroup.GET("/github/oauth/init", a.githubHandler.HandleInitOAuth)

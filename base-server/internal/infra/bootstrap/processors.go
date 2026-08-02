@@ -10,9 +10,6 @@ import (
 	socialposts "base-server/internal/ai/socialposts"
 
 	authProcessor "base-server/internal/auth/processor"
-	billingProcessor "base-server/internal/money/billing/processor"
-	"base-server/internal/money/products"
-	"base-server/internal/money/subscriptions"
 	contentProcessor "base-server/internal/content/processor"
 	"base-server/internal/infra/config"
 	"base-server/internal/infra/httpclient"
@@ -20,6 +17,9 @@ import (
 	"base-server/internal/infra/store"
 	stripeclient "base-server/internal/infra/stripeclient"
 	"base-server/internal/infra/tiers"
+	billingProcessor "base-server/internal/money/billing/processor"
+	"base-server/internal/money/products"
+	"base-server/internal/money/subscriptions"
 
 	analyticsProcessor "base-server/internal/analytics/processor"
 	blogProcessor "base-server/internal/blog/processor"
@@ -161,6 +161,9 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	// Blog
 	p.blog = blogProcessor.New(s, p.aiBlog, logger)
 	p.blog.SetURLSigner(cl.urlSigner)
+
+	p.github.SetPublicURLBase(cfg.Storage.PublicURLBase)
+	p.blog.SetSitePublisher(&p.github)
 
 	// Analytics
 	p.analytics = analyticsProcessor.New(s, logger)

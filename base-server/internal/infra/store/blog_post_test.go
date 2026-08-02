@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -245,4 +246,94 @@ func TestPublishBlogPost(t *testing.T) {
 	// Not found
 	_, err = s.PublishBlogPost(ctx, accountID, uuid.New())
 	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+// ============================================================================
+// SetBlogPostSitePR
+// ============================================================================
+
+func TestStore_SetBlogPostSitePR(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name     string
+		setup    func(t *testing.T) (accountID, postID uuid.UUID, prURL string)
+		wantErr  error
+		assertFn func(t *testing.T, prURL string, got BlogPost)
+	}{
+		{
+			name: "happy path sets site PR URL and opened-at timestamp",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID, string) {
+				t.Helper()
+				accountID := createTestAccount(t, s)
+				created, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+					AccountID: accountID,
+					Title:     "Site PR Test",
+					Slug:      "site-pr-test-" + uuid.New().String()[:8],
+					Content:   "Content",
+					Status:    BlogStatusDraft,
+				})
+				require.NoError(t, err)
+				prURL := "https://github.com/acme/site/pull/" + uuid.New().String()[:8]
+				return accountID, created.ID, prURL
+			},
+			assertFn: func(t *testing.T, prURL string, got BlogPost) {
+				t.Helper()
+				require.NotNil(t, got.SitePRURL)
+				assert.Equal(t, prURL, *got.SitePRURL)
+				require.NotNil(t, got.SitePROpenedAt)
+				assert.WithinDuration(t, time.Now(), *got.SitePROpenedAt, 10*time.Second)
+				assert.WithinDuration(t, time.Now(), got.UpdatedAt, 10*time.Second)
+			},
+		},
+		{
+			name: "not found for non-existent post",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID, string) {
+				t.Helper()
+				accountID := createTestAccount(t, s)
+				return accountID, uuid.New(), "https://github.com/acme/site/pull/1"
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			name: "not found for wrong account (tenant isolation)",
+			setup: func(t *testing.T) (uuid.UUID, uuid.UUID, string) {
+				t.Helper()
+				ownerAccountID := createTestAccount(t, s)
+				created, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+					AccountID: ownerAccountID,
+					Title:     "Wrong Account Test",
+					Slug:      "wrong-account-test-" + uuid.New().String()[:8],
+					Content:   "Content",
+					Status:    BlogStatusDraft,
+				})
+				require.NoError(t, err)
+				otherAccountID := createTestAccount(t, s)
+				return otherAccountID, created.ID, "https://github.com/acme/site/pull/2"
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			accountID, postID, prURL := tt.setup(t)
+			got, err := s.SetBlogPostSitePR(ctx, accountID, postID, prURL)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.assertFn != nil {
+				tt.assertFn(t, prURL, got)
+			}
+		})
+	}
 }

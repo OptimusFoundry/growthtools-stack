@@ -42,6 +42,21 @@ func (m *MockSettingsProcessor) EXPECT() *MockSettingsProcessorMockRecorder {
 	return m.recorder
 }
 
+// GetSitePublishTarget mocks base method.
+func (m *MockSettingsProcessor) GetSitePublishTarget(ctx context.Context, accountID uuid.UUID) (store.SitePublishTarget, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSitePublishTarget", ctx, accountID)
+	ret0, _ := ret[0].(store.SitePublishTarget)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSitePublishTarget indicates an expected call of GetSitePublishTarget.
+func (mr *MockSettingsProcessorMockRecorder) GetSitePublishTarget(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSitePublishTarget", reflect.TypeOf((*MockSettingsProcessor)(nil).GetSitePublishTarget), ctx, accountID)
+}
+
 // GetVoiceProfile mocks base method.
 func (m *MockSettingsProcessor) GetVoiceProfile(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error) {
 	m.ctrl.T.Helper()
@@ -55,6 +70,21 @@ func (m *MockSettingsProcessor) GetVoiceProfile(ctx context.Context, accountID u
 func (mr *MockSettingsProcessorMockRecorder) GetVoiceProfile(ctx, accountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVoiceProfile", reflect.TypeOf((*MockSettingsProcessor)(nil).GetVoiceProfile), ctx, accountID)
+}
+
+// UpdateSitePublishTarget mocks base method.
+func (m *MockSettingsProcessor) UpdateSitePublishTarget(ctx context.Context, accountID uuid.UUID, repoOwner, repoName, baseBranch, contentPath string) (store.SitePublishTarget, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSitePublishTarget", ctx, accountID, repoOwner, repoName, baseBranch, contentPath)
+	ret0, _ := ret[0].(store.SitePublishTarget)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateSitePublishTarget indicates an expected call of UpdateSitePublishTarget.
+func (mr *MockSettingsProcessorMockRecorder) UpdateSitePublishTarget(ctx, accountID, repoOwner, repoName, baseBranch, contentPath any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSitePublishTarget", reflect.TypeOf((*MockSettingsProcessor)(nil).UpdateSitePublishTarget), ctx, accountID, repoOwner, repoName, baseBranch, contentPath)
 }
 
 // UpdateVoiceProfile mocks base method.

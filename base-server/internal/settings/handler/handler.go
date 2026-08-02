@@ -20,6 +20,8 @@ import (
 type SettingsProcessor interface {
 	GetVoiceProfile(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error)
 	UpdateVoiceProfile(ctx context.Context, accountID uuid.UUID, tone, style string, examplePosts []string, industry, targetAudience, customInstructions *string) (store.VoiceProfile, error)
+	GetSitePublishTarget(ctx context.Context, accountID uuid.UUID) (store.SitePublishTarget, error)
+	UpdateSitePublishTarget(ctx context.Context, accountID uuid.UUID, repoOwner, repoName, baseBranch, contentPath string) (store.SitePublishTarget, error)
 }
 
 type Handler struct {
@@ -41,6 +43,13 @@ type UpdateVoiceProfileRequest struct {
 	Industry           *string  `json:"industry"`
 	TargetAudience     *string  `json:"target_audience"`
 	CustomInstructions *string  `json:"custom_instructions"`
+}
+
+type UpdateSitePublishTargetRequest struct {
+	RepoOwner   string `json:"repo_owner" binding:"required"`
+	RepoName    string `json:"repo_name" binding:"required"`
+	BaseBranch  string `json:"base_branch" binding:"required"`
+	ContentPath string `json:"content_path" binding:"required"`
 }
 
 // HandleGetVoiceProfile returns the voice profile for the authenticated account
@@ -100,10 +109,63 @@ func (h *Handler) HandleUpdateVoiceProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
+// HandleGetSitePublishTarget returns the site publish target for the authenticated account
+func (h *Handler) HandleGetSitePublishTarget(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accountID, ok := h.getAccountID(c)
+	if !ok {
+		return
+	}
+	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
+
+	target, err := h.processor.GetSitePublishTarget(ctx, accountID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, target)
+}
+
+// HandleUpdateSitePublishTarget upserts the site publish target for the authenticated account
+func (h *Handler) HandleUpdateSitePublishTarget(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accountID, ok := h.getAccountID(c)
+	if !ok {
+		return
+	}
+	ctx = observability.WithFields(ctx, observability.Field{Key: "account_id", Value: accountID.String()})
+
+	var req UpdateSitePublishTargetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		apierrors.ValidationError(c, err)
+		return
+	}
+
+	target, err := h.processor.UpdateSitePublishTarget(
+		ctx,
+		accountID,
+		req.RepoOwner,
+		req.RepoName,
+		req.BaseBranch,
+		req.ContentPath,
+	)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, target)
+}
+
 func (h *Handler) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, processor.ErrVoiceProfileNotFound):
 		apierrors.NotFound(c, "Voice profile not found")
+	case errors.Is(err, processor.ErrSitePublishTargetNotFound):
+		apierrors.NotFound(c, "Site publish target not found")
 	default:
 		apierrors.InternalError(c, err)
 	}

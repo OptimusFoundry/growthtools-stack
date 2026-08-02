@@ -28,6 +28,8 @@ var (
 	ErrFailedDisconnect    = errors.New("failed to disconnect github")
 	ErrCommitNotFound      = errors.New("github commit not found")
 	ErrFailedGetCommit     = errors.New("failed to get github commit")
+	ErrGitHubNotConnected  = errors.New("github account not connected")
+	ErrSitePublishFailed   = errors.New("site publish failed")
 )
 
 // GitHubStore defines the database operations required by GitHubProcessor
@@ -65,6 +67,11 @@ type GitHubStore interface {
 	CountGitHubCommitsByConnection(ctx context.Context, connectionID uuid.UUID) (int, error)
 	GetGitHubCommitByIDForUser(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error)
 	MarkGitHubCommitSkipped(ctx context.Context, commitID uuid.UUID, reason string) error
+
+	// Blog site-publish operations
+	GetAccountByID(ctx context.Context, accountID uuid.UUID) (store.Account, error)
+	GetSitePublishTargetByAccount(ctx context.Context, accountID uuid.UUID) (store.SitePublishTarget, error)
+	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
 // CommitClassifier decides whether a pushed commit is worth running the
@@ -83,6 +90,9 @@ type GitHubClient interface {
 	DeleteWebhook(ctx context.Context, token, owner, name string, hookID int64) error
 	GetRepoReadme(ctx context.Context, token, owner, name string) (string, error)
 	GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error)
+	CreateBranch(ctx context.Context, token, owner, repo, baseBranch, newBranch string) error
+	CreateOrUpdateFileContents(ctx context.Context, token, owner, repo, filePath, branch string, content []byte, commitMessage string) error
+	CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, error)
 }
 
 // EventPublisher is the Kafka producer dependency (post and github both
@@ -113,6 +123,7 @@ type GitHubProcessor struct {
 	classifier    CommitClassifier
 	webhookSecret string
 	webAppHost    string
+	publicURLBase string
 	oauthClientID string
 	// oauthStates maps random state string → oauthStateEntry. Pointer so
 	// the processor can still be passed by value (sync.Map itself embeds
@@ -133,6 +144,12 @@ func (p *GitHubProcessor) SetURLSigner(signer URLSigner) {
 // falls back to capturing every commit, matching the pre-filter behaviour.
 func (p *GitHubProcessor) SetCommitClassifier(c CommitClassifier) {
 	p.classifier = c
+}
+
+// SetPublicURLBase wires the base URL used to rewrite s3 media keys into
+// permanent public URLs when publishing blog posts to the external site.
+func (p *GitHubProcessor) SetPublicURLBase(base string) {
+	p.publicURLBase = base
 }
 
 func New(store GitHubStore, webhookSecret string, logger *observability.Logger) GitHubProcessor {

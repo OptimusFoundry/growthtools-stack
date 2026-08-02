@@ -25,6 +25,13 @@ type URLSigner interface {
 	PresignGetURL(ctx context.Context, key string, ttl time.Duration) (string, error)
 }
 
+// SitePublisher pushes a published blog post to an external static site repo
+// as a branch + commit + PR. Declared locally (same "avoid import cycle"
+// rationale as URLSigner) — GitHubProcessor satisfies this structurally.
+type SitePublisher interface {
+	PublishBlogToSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (prURL string, err error)
+}
+
 // BlogGenerator is the interface for the AI blog generator.
 type BlogGenerator interface {
 	Generate(ctx context.Context, req aiblog.Request) (aiblog.Result, error)
@@ -47,6 +54,7 @@ type BlogStore interface {
 	UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
+	SetBlogPostSitePR(ctx context.Context, accountID, postID uuid.UUID, prURL string) (store.BlogPost, error)
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
@@ -54,6 +62,7 @@ var (
 	ErrBlogPostNotFound     = errors.New("blog post not found")
 	ErrSlugAlreadyExists    = errors.New("slug already exists")
 	ErrBlogGenerationFailed = errors.New("blog generation failed")
+	ErrBlogPostNotPublished = errors.New("blog post is not published")
 )
 
 // BlogStreamCallbacks holds callbacks for streaming blog generation.
@@ -70,6 +79,14 @@ type BlogStreamCallbacks struct {
 type BlogPostWithMedia struct {
 	Post  store.BlogPost `json:"post"`
 	Media []store.Media  `json:"media"`
+}
+
+// BlogPublishResult is the response envelope for both publish and
+// retry-publish. SitePublishError is a transient report of the last
+// site-publish attempt only — never persisted.
+type BlogPublishResult struct {
+	Post             store.BlogPost `json:"post"`
+	SitePublishError string         `json:"site_publish_error,omitempty"`
 }
 
 // blogSlugPattern strips everything that is not a-z0-9.
@@ -104,10 +121,11 @@ func (p *BlogProcessor) blogResolveUniqueSlug(ctx context.Context, accountID uui
 }
 
 type BlogProcessor struct {
-	store     BlogStore
-	blogGen   BlogGenerator
-	urlSigner URLSigner
-	logger    *observability.Logger
+	store         BlogStore
+	blogGen       BlogGenerator
+	urlSigner     URLSigner
+	sitePublisher SitePublisher
+	logger        *observability.Logger
 }
 
 func New(store BlogStore, blogGen BlogGenerator, logger *observability.Logger) BlogProcessor {
@@ -124,6 +142,13 @@ func New(store BlogStore, blogGen BlogGenerator, logger *observability.Logger) B
 // nil, `s3://` URLs are skipped.
 func (p *BlogProcessor) SetURLSigner(signer URLSigner) {
 	p.urlSigner = signer
+}
+
+// SetSitePublisher wires the dependency that pushes a published blog post to
+// an external site repo. Nil (the default) means site-publish is a no-op —
+// matches SetURLSigner's optional-dependency pattern.
+func (p *BlogProcessor) SetSitePublisher(sp SitePublisher) {
+	p.sitePublisher = sp
 }
 
 func (p *BlogProcessor) CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error) {
@@ -255,7 +280,7 @@ func (p *BlogProcessor) DeleteBlogPost(ctx context.Context, accountID, postID uu
 	return nil
 }
 
-func (p *BlogProcessor) PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error) {
+func (p *BlogProcessor) PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (BlogPublishResult, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: accountID.String()},
 		observability.Field{Key: "post_id", Value: postID.String()},
@@ -266,20 +291,71 @@ func (p *BlogProcessor) PublishBlogPost(ctx context.Context, accountID, postID u
 	if err != nil {
 		p.logger.Error(ctx, "failed to get blog post for publishing", err)
 		if errors.Is(err, store.ErrNotFound) {
-			return store.BlogPost{}, ErrBlogPostNotFound
+			return BlogPublishResult{}, ErrBlogPostNotFound
 		}
-		return store.BlogPost{}, err
+		return BlogPublishResult{}, err
 	}
 
 	published, err := p.store.PublishBlogPost(ctx, accountID, postID)
 	if err != nil {
 		p.logger.Error(ctx, "failed to publish blog post", err)
 		if errors.Is(err, store.ErrNotFound) {
-			return store.BlogPost{}, ErrBlogPostNotFound
+			return BlogPublishResult{}, ErrBlogPostNotFound
 		}
-		return store.BlogPost{}, err
+		return BlogPublishResult{}, err
 	}
-	return published, nil
+
+	return p.attemptSitePublish(ctx, accountID, postID, published), nil
+}
+
+// attemptSitePublish runs the site-publish attempt for an already-published
+// post and folds the outcome into a BlogPublishResult. Internal publish state
+// (published) is never rolled back regardless of outcome (AC6).
+func (p *BlogProcessor) attemptSitePublish(ctx context.Context, accountID, postID uuid.UUID, published store.BlogPost) BlogPublishResult {
+	if p.sitePublisher == nil {
+		return BlogPublishResult{Post: published}
+	}
+
+	prURL, err := p.sitePublisher.PublishBlogToSite(ctx, accountID, published)
+	if err != nil {
+		p.logger.Error(ctx, "failed to publish blog post to site", err)
+		return BlogPublishResult{Post: published, SitePublishError: err.Error()}
+	}
+	if prURL == "" {
+		return BlogPublishResult{Post: published}
+	}
+
+	updated, err := p.store.SetBlogPostSitePR(ctx, accountID, postID, prURL)
+	if err != nil {
+		p.logger.Error(ctx, "failed to persist site PR url", err)
+		return BlogPublishResult{Post: published, SitePublishError: err.Error()}
+	}
+	return BlogPublishResult{Post: updated}
+}
+
+// RetrySitePublish re-runs the site-publish attempt for an already-published
+// post without re-flipping internal status — a fresh branch/commit/PR every
+// time, no resume of a prior attempt.
+func (p *BlogProcessor) RetrySitePublish(ctx context.Context, accountID, postID uuid.UUID) (BlogPublishResult, error) {
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "post_id", Value: postID.String()},
+		observability.Field{Key: "operation", Value: "retry_site_publish"},
+	)
+
+	post, err := p.store.GetBlogPostByID(ctx, accountID, postID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get blog post for retry", err)
+		if errors.Is(err, store.ErrNotFound) {
+			return BlogPublishResult{}, ErrBlogPostNotFound
+		}
+		return BlogPublishResult{}, err
+	}
+	if post.Status != store.BlogStatusPublished {
+		return BlogPublishResult{}, ErrBlogPostNotPublished
+	}
+
+	return p.attemptSitePublish(ctx, accountID, postID, post), nil
 }
 
 // GenerateBlogPost uses the AI to generate a blog post from the given

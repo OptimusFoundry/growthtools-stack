@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -315,4 +316,202 @@ func (c *Client) DeleteWebhook(ctx context.Context, token, owner, name string, h
 		return fmt.Errorf("github delete webhook returned status %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// GitRefResponse is returned by GET /repos/{owner}/{repo}/git/ref/{ref}
+type GitRefResponse struct {
+	Object GitRefObject `json:"object"`
+}
+
+// GitRefObject holds the SHA a git ref points at
+type GitRefObject struct {
+	SHA string `json:"sha"`
+}
+
+// RepoContentResponse is returned by GET /repos/{owner}/{repo}/contents/{path}
+type RepoContentResponse struct {
+	SHA string `json:"sha"`
+}
+
+// PullRequestResponse is returned by POST /repos/{owner}/{repo}/pulls
+type PullRequestResponse struct {
+	HTMLURL string `json:"html_url"`
+}
+
+// CreateBranch creates newBranch pointing at the current tip of baseBranch
+func (c *Client) CreateBranch(ctx context.Context, token, owner, repo, baseBranch, newBranch string) error {
+	refURL := fmt.Sprintf("%s/repos/%s/%s/git/ref/heads/%s", c.apiBase, owner, repo, baseBranch)
+	refReq, err := http.NewRequestWithContext(ctx, http.MethodGet, refURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create get ref request: %w", err)
+	}
+	refReq.Header.Set("Authorization", "Bearer "+token)
+	refReq.Header.Set("Accept", "application/vnd.github+json")
+
+	refResp, err := c.httpClient.Do(refReq)
+	if err != nil {
+		c.logger.Error(ctx, "failed to get base branch ref", err)
+		return fmt.Errorf("failed to get base branch ref: %w", err)
+	}
+	defer refResp.Body.Close()
+
+	if refResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("github get ref returned status %d", refResp.StatusCode)
+	}
+
+	refBody, err := io.ReadAll(refResp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read get ref response: %w", err)
+	}
+
+	var ref GitRefResponse
+	if err := json.Unmarshal(refBody, &ref); err != nil {
+		return fmt.Errorf("failed to parse get ref response: %w", err)
+	}
+
+	payload := map[string]any{
+		"ref": "refs/heads/" + newBranch,
+		"sha": ref.Object.SHA,
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal create ref payload: %w", err)
+	}
+
+	createURL := fmt.Sprintf("%s/repos/%s/%s/git/refs", c.apiBase, owner, repo)
+	createReq, err := http.NewRequestWithContext(ctx, http.MethodPost, createURL, strings.NewReader(string(body)))
+	if err != nil {
+		return fmt.Errorf("failed to create create-ref request: %w", err)
+	}
+	createReq.Header.Set("Authorization", "Bearer "+token)
+	createReq.Header.Set("Accept", "application/vnd.github+json")
+	createReq.Header.Set("Content-Type", "application/json")
+
+	createResp, err := c.httpClient.Do(createReq)
+	if err != nil {
+		c.logger.Error(ctx, "failed to create branch", err)
+		return fmt.Errorf("failed to create branch: %w", err)
+	}
+	defer createResp.Body.Close()
+
+	if createResp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(createResp.Body)
+		return fmt.Errorf("github create ref returned status %d: %s", createResp.StatusCode, string(respBody))
+	}
+	return nil
+}
+
+// CreateOrUpdateFileContents creates or updates a file at filePath on branch with content, committing with commitMessage
+func (c *Client) CreateOrUpdateFileContents(ctx context.Context, token, owner, repo, filePath, branch string, content []byte, commitMessage string) error {
+	getURL := fmt.Sprintf("%s/repos/%s/%s/contents/%s?ref=%s", c.apiBase, owner, repo, filePath, branch)
+	getReq, err := http.NewRequestWithContext(ctx, http.MethodGet, getURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create get content request: %w", err)
+	}
+	getReq.Header.Set("Authorization", "Bearer "+token)
+	getReq.Header.Set("Accept", "application/vnd.github+json")
+
+	getResp, err := c.httpClient.Do(getReq)
+	if err != nil {
+		c.logger.Error(ctx, "failed to get file contents", err)
+		return fmt.Errorf("failed to get file contents: %w", err)
+	}
+	defer getResp.Body.Close()
+
+	var sha string
+	if getResp.StatusCode == http.StatusOK {
+		getBody, err := io.ReadAll(getResp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read get content response: %w", err)
+		}
+		var existing RepoContentResponse
+		if err := json.Unmarshal(getBody, &existing); err != nil {
+			return fmt.Errorf("failed to parse get content response: %w", err)
+		}
+		sha = existing.SHA
+	} else if getResp.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("github get contents returned status %d", getResp.StatusCode)
+	}
+
+	payload := map[string]any{
+		"message": commitMessage,
+		"content": base64.StdEncoding.EncodeToString(content),
+		"branch":  branch,
+	}
+	if sha != "" {
+		payload["sha"] = sha
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal file contents payload: %w", err)
+	}
+
+	putURL := fmt.Sprintf("%s/repos/%s/%s/contents/%s", c.apiBase, owner, repo, filePath)
+	putReq, err := http.NewRequestWithContext(ctx, http.MethodPut, putURL, strings.NewReader(string(body)))
+	if err != nil {
+		return fmt.Errorf("failed to create put content request: %w", err)
+	}
+	putReq.Header.Set("Authorization", "Bearer "+token)
+	putReq.Header.Set("Accept", "application/vnd.github+json")
+	putReq.Header.Set("Content-Type", "application/json")
+
+	putResp, err := c.httpClient.Do(putReq)
+	if err != nil {
+		c.logger.Error(ctx, "failed to put file contents", err)
+		return fmt.Errorf("failed to put file contents: %w", err)
+	}
+	defer putResp.Body.Close()
+
+	if putResp.StatusCode != http.StatusOK && putResp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(putResp.Body)
+		return fmt.Errorf("github put contents returned status %d: %s", putResp.StatusCode, string(respBody))
+	}
+	return nil
+}
+
+// CreatePullRequest opens a PR from headBranch into baseBranch, returning the PR's HTML URL
+func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, error) {
+	payload := map[string]any{
+		"title": title,
+		"head":  headBranch,
+		"base":  baseBranch,
+		"body":  body,
+	}
+	reqBody, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal pull request payload: %w", err)
+	}
+
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/pulls", c.apiBase, owner, repo)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, strings.NewReader(string(reqBody)))
+	if err != nil {
+		return "", fmt.Errorf("failed to create pull request request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		c.logger.Error(ctx, "failed to create pull request", err)
+		return "", fmt.Errorf("failed to create pull request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("github create pull request returned status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read pull request response: %w", err)
+	}
+
+	var pr PullRequestResponse
+	if err := json.Unmarshal(respBody, &pr); err != nil {
+		return "", fmt.Errorf("failed to parse pull request response: %w", err)
+	}
+	return pr.HTMLURL, nil
 }

@@ -106,6 +106,21 @@ func (mr *MockGitHubStoreMockRecorder) CreateOrUpdateGitHubConnection(ctx, userI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdateGitHubConnection", reflect.TypeOf((*MockGitHubStore)(nil).CreateOrUpdateGitHubConnection), ctx, userID, githubUserID, username, token, scope)
 }
 
+// GetAccountByID mocks base method.
+func (m *MockGitHubStore) GetAccountByID(ctx context.Context, accountID uuid.UUID) (store.Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountByID", ctx, accountID)
+	ret0, _ := ret[0].(store.Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountByID indicates an expected call of GetAccountByID.
+func (mr *MockGitHubStoreMockRecorder) GetAccountByID(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByID", reflect.TypeOf((*MockGitHubStore)(nil).GetAccountByID), ctx, accountID)
+}
+
 // GetGitHubCommitByIDForUser mocks base method.
 func (m *MockGitHubStore) GetGitHubCommitByIDForUser(ctx context.Context, userID, commitID uuid.UUID) (store.GitHubCommit, error) {
 	m.ctrl.T.Helper()
@@ -239,6 +254,36 @@ func (m *MockGitHubStore) GetGitHubRepoByOwnerName(ctx context.Context, owner, n
 func (mr *MockGitHubStoreMockRecorder) GetGitHubRepoByOwnerName(ctx, owner, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubRepoByOwnerName", reflect.TypeOf((*MockGitHubStore)(nil).GetGitHubRepoByOwnerName), ctx, owner, name)
+}
+
+// GetMediaByIDs mocks base method.
+func (m *MockGitHubStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMediaByIDs", ctx, ids)
+	ret0, _ := ret[0].([]store.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMediaByIDs indicates an expected call of GetMediaByIDs.
+func (mr *MockGitHubStoreMockRecorder) GetMediaByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMediaByIDs", reflect.TypeOf((*MockGitHubStore)(nil).GetMediaByIDs), ctx, ids)
+}
+
+// GetSitePublishTargetByAccount mocks base method.
+func (m *MockGitHubStore) GetSitePublishTargetByAccount(ctx context.Context, accountID uuid.UUID) (store.SitePublishTarget, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSitePublishTargetByAccount", ctx, accountID)
+	ret0, _ := ret[0].(store.SitePublishTarget)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSitePublishTargetByAccount indicates an expected call of GetSitePublishTargetByAccount.
+func (mr *MockGitHubStoreMockRecorder) GetSitePublishTargetByAccount(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSitePublishTargetByAccount", reflect.TypeOf((*MockGitHubStore)(nil).GetSitePublishTargetByAccount), ctx, accountID)
 }
 
 // InsertGitHubCommit mocks base method.
@@ -490,6 +535,49 @@ func NewMockGitHubClient(ctrl *gomock.Controller) *MockGitHubClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGitHubClient) EXPECT() *MockGitHubClientMockRecorder {
 	return m.recorder
+}
+
+// CreateBranch mocks base method.
+func (m *MockGitHubClient) CreateBranch(ctx context.Context, token, owner, repo, baseBranch, newBranch string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBranch", ctx, token, owner, repo, baseBranch, newBranch)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateBranch indicates an expected call of CreateBranch.
+func (mr *MockGitHubClientMockRecorder) CreateBranch(ctx, token, owner, repo, baseBranch, newBranch any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBranch", reflect.TypeOf((*MockGitHubClient)(nil).CreateBranch), ctx, token, owner, repo, baseBranch, newBranch)
+}
+
+// CreateOrUpdateFileContents mocks base method.
+func (m *MockGitHubClient) CreateOrUpdateFileContents(ctx context.Context, token, owner, repo, filePath, branch string, content []byte, commitMessage string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrUpdateFileContents", ctx, token, owner, repo, filePath, branch, content, commitMessage)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateOrUpdateFileContents indicates an expected call of CreateOrUpdateFileContents.
+func (mr *MockGitHubClientMockRecorder) CreateOrUpdateFileContents(ctx, token, owner, repo, filePath, branch, content, commitMessage any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdateFileContents", reflect.TypeOf((*MockGitHubClient)(nil).CreateOrUpdateFileContents), ctx, token, owner, repo, filePath, branch, content, commitMessage)
+}
+
+// CreatePullRequest mocks base method.
+func (m *MockGitHubClient) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePullRequest", ctx, token, owner, repo, headBranch, baseBranch, title, body)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePullRequest indicates an expected call of CreatePullRequest.
+func (mr *MockGitHubClientMockRecorder) CreatePullRequest(ctx, token, owner, repo, headBranch, baseBranch, title, body any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePullRequest", reflect.TypeOf((*MockGitHubClient)(nil).CreatePullRequest), ctx, token, owner, repo, headBranch, baseBranch, title, body)
 }
 
 // CreateWebhook mocks base method.

@@ -28,6 +28,8 @@ type BlogPost struct {
 	SourceInstruction *string     `db:"source_instruction" json:"source_instruction,omitempty"`
 	MediaIDs          UUIDArray   `db:"media_ids" json:"media_ids"`
 	PublishedAt       *time.Time  `db:"published_at" json:"published_at,omitempty"`
+	SitePRURL         *string     `db:"site_pr_url" json:"site_pr_url,omitempty"`
+	SitePROpenedAt    *time.Time  `db:"site_pr_opened_at" json:"site_pr_opened_at,omitempty"`
 	CreatedAt         time.Time   `db:"created_at" json:"created_at"`
 	UpdatedAt         time.Time   `db:"updated_at" json:"updated_at"`
 	DeletedAt         *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
@@ -66,7 +68,7 @@ type CreateBlogPostParams struct {
 const sqlCreateBlogPost = `
 INSERT INTO blog_posts (account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 `
 
 func (s *Store) CreateBlogPost(ctx context.Context, params CreateBlogPostParams) (BlogPost, error) {
@@ -87,7 +89,7 @@ func (s *Store) CreateBlogPost(ctx context.Context, params CreateBlogPostParams)
 }
 
 const sqlGetBlogPostByID = `
-SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
+SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 FROM blog_posts
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
 `
@@ -105,7 +107,7 @@ func (s *Store) GetBlogPostByID(ctx context.Context, accountID, id uuid.UUID) (B
 }
 
 const sqlGetBlogPostBySlug = `
-SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
+SELECT id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 FROM blog_posts
 WHERE account_id = $1 AND slug = $2 AND deleted_at IS NULL
 `
@@ -177,7 +179,7 @@ SET title = COALESCE($3, title),
     media_ids = COALESCE($15, media_ids),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
-RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 `
 
 func (s *Store) UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, params UpdateBlogPostParams) (BlogPost, error) {
@@ -221,7 +223,7 @@ const sqlPublishBlogPost = `
 UPDATE blog_posts
 SET status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
-RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, created_at, updated_at, deleted_at
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 `
 
 func (s *Store) PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (BlogPost, error) {
@@ -232,6 +234,25 @@ func (s *Store) PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (B
 			return BlogPost{}, ErrNotFound
 		}
 		return BlogPost{}, fmt.Errorf("failed to publish blog post: %w", err)
+	}
+	return bp, nil
+}
+
+const sqlSetBlogPostSitePR = `
+UPDATE blog_posts
+SET site_pr_url = $3, site_pr_opened_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
+RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
+`
+
+func (s *Store) SetBlogPostSitePR(ctx context.Context, accountID, postID uuid.UUID, prURL string) (BlogPost, error) {
+	var bp BlogPost
+	err := s.db.GetContext(ctx, &bp, sqlSetBlogPostSitePR, postID, accountID, prURL)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return BlogPost{}, ErrNotFound
+		}
+		return BlogPost{}, fmt.Errorf("failed to set blog post site PR: %w", err)
 	}
 	return bp, nil
 }

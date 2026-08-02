@@ -28,7 +28,8 @@ type BlogProcessor interface {
 	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
 	UpdateBlogPost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
-	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
+	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPublishResult, error)
+	RetrySitePublish(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPublishResult, error)
 	GenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID) (store.BlogPost, error)
 	StreamGenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID, cb processor.BlogStreamCallbacks) error
 }
@@ -326,6 +327,34 @@ func (h *Handler) HandlePublishBlog(c *gin.Context) {
 	c.JSON(http.StatusOK, published)
 }
 
+func (h *Handler) HandleRetrySitePublish(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accountID, ok := h.getAccountID(c)
+	if !ok {
+		return
+	}
+
+	postID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", "Invalid blog post ID format")
+		return
+	}
+
+	ctx = observability.WithFields(ctx,
+		observability.Field{Key: "account_id", Value: accountID.String()},
+		observability.Field{Key: "post_id", Value: postID.String()},
+	)
+
+	result, err := h.processor.RetrySitePublish(ctx, accountID, postID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func (h *Handler) HandleGenerateBlog(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -463,6 +492,8 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 		apierrors.Conflict(c, "SLUG_EXISTS", "A blog post with this slug already exists")
 	case errors.Is(err, processor.ErrBlogGenerationFailed):
 		apierrors.InternalError(c, err)
+	case errors.Is(err, processor.ErrBlogPostNotPublished):
+		apierrors.Conflict(c, "BLOG_NOT_PUBLISHED", "Blog post is not published yet")
 	default:
 		apierrors.InternalError(c, err)
 	}

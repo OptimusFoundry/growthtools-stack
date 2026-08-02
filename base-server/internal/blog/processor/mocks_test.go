@@ -31,6 +31,15 @@ func (m *MockBlogGenerator) GenerateStream(ctx context.Context, req aiblog.Reque
 	return ch, nil
 }
 
+// MockSitePublisher is a manual mock for SitePublisher
+type MockSitePublisher struct {
+	PublishBlogToSiteFn func(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (string, error)
+}
+
+func (m *MockSitePublisher) PublishBlogToSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (string, error) {
+	return m.PublishBlogToSiteFn(ctx, accountID, post)
+}
+
 // MockBlogStore is a manual mock for BlogStore
 type MockBlogStore struct {
 	CreateBlogPostFn    func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
@@ -40,6 +49,7 @@ type MockBlogStore struct {
 	UpdateBlogPostFn    func(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
 	DeleteBlogPostFn    func(ctx context.Context, accountID, postID uuid.UUID) error
 	PublishBlogPostFn   func(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
+	SetBlogPostSitePRFn func(ctx context.Context, accountID, postID uuid.UUID, prURL string) (store.BlogPost, error)
 	GetMediaByIDsFn     func(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
 }
 
@@ -69,6 +79,10 @@ func (m *MockBlogStore) DeleteBlogPost(ctx context.Context, accountID, postID uu
 
 func (m *MockBlogStore) PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error) {
 	return m.PublishBlogPostFn(ctx, accountID, id)
+}
+
+func (m *MockBlogStore) SetBlogPostSitePR(ctx context.Context, accountID, postID uuid.UUID, prURL string) (store.BlogPost, error) {
+	return m.SetBlogPostSitePRFn(ctx, accountID, postID, prURL)
 }
 
 func (m *MockBlogStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {

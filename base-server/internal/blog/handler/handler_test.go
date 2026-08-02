@@ -35,6 +35,14 @@ func setupBlogRouter(h Handler, accountID uuid.UUID) *gin.Engine {
 	r.PUT("/blogs/:id", h.HandleUpdateBlog)
 	r.DELETE("/blogs/:id", h.HandleDeleteBlog)
 	r.POST("/blogs/:id/publish", h.HandlePublishBlog)
+	r.POST("/blogs/:id/publish/retry", h.HandleRetrySitePublish)
+	return r
+}
+
+func setupBlogRouterNoAuth(h Handler) *gin.Engine {
+	blogGinOnce.Do(func() { gin.SetMode(gin.TestMode) })
+	r := gin.New()
+	r.POST("/blogs/:id/publish/retry", h.HandleRetrySitePublish)
 	return r
 }
 
@@ -299,19 +307,36 @@ func TestHandler_HandlePublishBlog(t *testing.T) {
 	postID := uuid.New()
 
 	tests := []struct {
-		name       string
-		mocks      func(m *MockBlogProcessor)
-		postID     string
-		wantStatus int
+		name        string
+		mocks       func(m *MockBlogProcessor)
+		postID      string
+		wantStatus  int
+		wantSiteErr string
+		checkBody   bool
 	}{
 		{
-			name: "200 happy path",
+			name: "200 happy path with no site publish error",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().PublishBlogPost(gomock.Any(), accountID, postID).
-					Return(store.BlogPost{ID: postID}, nil)
+					Return(processor.BlogPublishResult{Post: store.BlogPost{ID: postID}}, nil)
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusOK,
+			checkBody:  true,
+		},
+		{
+			name: "200 happy path with site publish error surfaced in body",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().PublishBlogPost(gomock.Any(), accountID, postID).
+					Return(processor.BlogPublishResult{
+						Post:             store.BlogPost{ID: postID},
+						SitePublishError: "site is unreachable",
+					}, nil)
+			},
+			postID:      postID.String(),
+			wantStatus:  http.StatusOK,
+			checkBody:   true,
+			wantSiteErr: "site is unreachable",
 		},
 		{
 			name:       "400 invalid UUID",
@@ -323,7 +348,7 @@ func TestHandler_HandlePublishBlog(t *testing.T) {
 			name: "404 not found",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().PublishBlogPost(gomock.Any(), accountID, postID).
-					Return(store.BlogPost{}, processor.ErrBlogPostNotFound)
+					Return(processor.BlogPublishResult{}, processor.ErrBlogPostNotFound)
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusNotFound,
@@ -332,7 +357,7 @@ func TestHandler_HandlePublishBlog(t *testing.T) {
 			name: "500 unexpected error",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().PublishBlogPost(gomock.Any(), accountID, postID).
-					Return(store.BlogPost{}, errors.New("boom"))
+					Return(processor.BlogPublishResult{}, errors.New("boom"))
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusInternalServerError,
@@ -353,7 +378,114 @@ func TestHandler_HandlePublishBlog(t *testing.T) {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			assert.Equal(t, tt.wantStatus, w.Code)
+			require.Equal(t, tt.wantStatus, w.Code)
+
+			if tt.checkBody {
+				var body map[string]any
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+				if tt.wantSiteErr != "" {
+					assert.Equal(t, tt.wantSiteErr, body["site_publish_error"])
+				} else {
+					_, present := body["site_publish_error"]
+					assert.False(t, present, "site_publish_error should be omitted when empty")
+				}
+			}
+		})
+	}
+}
+
+func TestHandleRetrySitePublish(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	postID := uuid.New()
+
+	tests := []struct {
+		name       string
+		mocks      func(m *MockBlogProcessor)
+		postID     string
+		noAuth     bool
+		wantStatus int
+		wantCode   string
+	}{
+		{
+			name: "200 happy path",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().RetrySitePublish(gomock.Any(), accountID, postID).
+					Return(processor.BlogPublishResult{Post: store.BlogPost{ID: postID}}, nil)
+			},
+			postID:     postID.String(),
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "400 invalid blog post ID",
+			mocks:      func(m *MockBlogProcessor) {},
+			postID:     "not-a-uuid",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "401 unauthorized when account ID missing from context",
+			mocks:      func(m *MockBlogProcessor) {},
+			postID:     postID.String(),
+			noAuth:     true,
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "404 not found",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().RetrySitePublish(gomock.Any(), accountID, postID).
+					Return(processor.BlogPublishResult{}, processor.ErrBlogPostNotFound)
+			},
+			postID:     postID.String(),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "409 not published yet",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().RetrySitePublish(gomock.Any(), accountID, postID).
+					Return(processor.BlogPublishResult{}, processor.ErrBlogPostNotPublished)
+			},
+			postID:     postID.String(),
+			wantStatus: http.StatusConflict,
+			wantCode:   "BLOG_NOT_PUBLISHED",
+		},
+		{
+			name: "500 unexpected error",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().RetrySitePublish(gomock.Any(), accountID, postID).
+					Return(processor.BlogPublishResult{}, errors.New("boom"))
+			},
+			postID:     postID.String(),
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := NewMockBlogProcessor(ctrl)
+			tt.mocks(m)
+
+			h := New(m, logger)
+			var router *gin.Engine
+			if tt.noAuth {
+				router = setupBlogRouterNoAuth(h)
+			} else {
+				router = setupBlogRouter(h, accountID)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/blogs/"+tt.postID+"/publish/retry", nil)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			require.Equal(t, tt.wantStatus, w.Code)
+
+			if tt.wantCode != "" {
+				var body map[string]any
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+				assert.Equal(t, tt.wantCode, body["code"])
+			}
 		})
 	}
 }

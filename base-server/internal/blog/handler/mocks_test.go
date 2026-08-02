@@ -118,10 +118,10 @@ func (mr *MockBlogProcessorMockRecorder) ListBlogPosts(ctx, accountID, status, l
 }
 
 // PublishBlogPost mocks base method.
-func (m *MockBlogProcessor) PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error) {
+func (m *MockBlogProcessor) PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPublishResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishBlogPost", ctx, accountID, postID)
-	ret0, _ := ret[0].(store.BlogPost)
+	ret0, _ := ret[0].(processor.BlogPublishResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -130,6 +130,21 @@ func (m *MockBlogProcessor) PublishBlogPost(ctx context.Context, accountID, post
 func (mr *MockBlogProcessorMockRecorder) PublishBlogPost(ctx, accountID, postID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishBlogPost", reflect.TypeOf((*MockBlogProcessor)(nil).PublishBlogPost), ctx, accountID, postID)
+}
+
+// RetrySitePublish mocks base method.
+func (m *MockBlogProcessor) RetrySitePublish(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPublishResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrySitePublish", ctx, accountID, postID)
+	ret0, _ := ret[0].(processor.BlogPublishResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrySitePublish indicates an expected call of RetrySitePublish.
+func (mr *MockBlogProcessorMockRecorder) RetrySitePublish(ctx, accountID, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrySitePublish", reflect.TypeOf((*MockBlogProcessor)(nil).RetrySitePublish), ctx, accountID, postID)
 }
 
 // StreamGenerateBlogPost mocks base method.
