@@ -9,78 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AccountRouteImport } from './routes/account'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AnalyticsRouteImport } from './routes/analytics'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as GithubRouteImport } from './routes/github'
-import { Route as MainRouteImport } from './routes/main'
-import { Route as MediaRouteImport } from './routes/media'
-import { Route as PostsRouteImport } from './routes/posts'
-import { Route as SigninRouteImport } from './routes/signin'
 import { Route as TestLoginRouteImport } from './routes/test-login'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as PostsRouteImport } from './routes/posts'
+import { Route as MediaRouteImport } from './routes/media'
+import { Route as MainRouteImport } from './routes/main'
+import { Route as GithubRouteImport } from './routes/github'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AccountRouteImport } from './routes/account'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as BillingIndexRouteImport } from './routes/billing/index'
-import { Route as BillingPayRouteImport } from './routes/billing/pay'
-import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
-import { Route as BillingPlansRouteImport } from './routes/billing/plans'
-import { Route as BlogIdRouteImport } from './routes/blog_.$id'
-import { Route as BlogNewRouteImport } from './routes/blog_.new'
-import { Route as GithubIdRouteImport } from './routes/github_.$id'
-import { Route as OauthSignedinRouteImport } from './routes/oauth/signedin'
-import { Route as PostsIdRouteImport } from './routes/posts_.$id'
 import { Route as PostsNewRouteImport } from './routes/posts_.new'
+import { Route as PostsIdRouteImport } from './routes/posts_.$id'
+import { Route as OauthSignedinRouteImport } from './routes/oauth/signedin'
+import { Route as GithubIdRouteImport } from './routes/github_.$id'
+import { Route as BlogNewRouteImport } from './routes/blog_.new'
+import { Route as BlogIdRouteImport } from './routes/blog_.$id'
+import { Route as BillingPlansRouteImport } from './routes/billing/plans'
+import { Route as BillingPayment_attemptRouteImport } from './routes/billing/payment_attempt'
+import { Route as BillingPayRouteImport } from './routes/billing/pay'
 import { Route as PostsIdAnalyticsRouteImport } from './routes/posts_.$id_.analytics'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountRoute = AccountRouteImport.update({
-  id: '/account',
-  path: '/account',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnalyticsRoute = AnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalendarRoute = CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GithubRoute = GithubRouteImport.update({
-  id: '/github',
-  path: '/github',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MainRoute = MainRouteImport.update({
-  id: '/main',
-  path: '/main',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MediaRoute = MediaRouteImport.update({
-  id: '/media',
-  path: '/media',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PostsRoute = PostsRouteImport.update({
-  id: '/posts',
-  path: '/posts',
+const TestLoginRoute = TestLoginRouteImport.update({
+  id: '/test-login',
+  path: '/test-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SigninRoute = SigninRouteImport.update({
@@ -88,9 +43,54 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TestLoginRoute = TestLoginRouteImport.update({
-  id: '/test-login',
-  path: '/test-login',
+const PostsRoute = PostsRouteImport.update({
+  id: '/posts',
+  path: '/posts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediaRoute = MediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainRoute = MainRouteImport.update({
+  id: '/main',
+  path: '/main',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GithubRoute = GithubRouteImport.update({
+  id: '/github',
+  path: '/github',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BillingIndexRoute = BillingIndexRouteImport.update({
@@ -98,39 +98,9 @@ const BillingIndexRoute = BillingIndexRouteImport.update({
   path: '/billing/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BillingPayRoute = BillingPayRouteImport.update({
-  id: '/billing/pay',
-  path: '/billing/pay',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BillingPayment_attemptRoute = BillingPayment_attemptRouteImport.update({
-  id: '/billing/payment_attempt',
-  path: '/billing/payment_attempt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BillingPlansRoute = BillingPlansRouteImport.update({
-  id: '/billing/plans',
-  path: '/billing/plans',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogIdRoute = BlogIdRouteImport.update({
-  id: '/blog_/$id',
-  path: '/blog/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogNewRoute = BlogNewRouteImport.update({
-  id: '/blog_/new',
-  path: '/blog/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GithubIdRoute = GithubIdRouteImport.update({
-  id: '/github_/$id',
-  path: '/github/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OauthSignedinRoute = OauthSignedinRouteImport.update({
-  id: '/oauth/signedin',
-  path: '/oauth/signedin',
+const PostsNewRoute = PostsNewRouteImport.update({
+  id: '/posts_/new',
+  path: '/posts/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsIdRoute = PostsIdRouteImport.update({
@@ -138,9 +108,39 @@ const PostsIdRoute = PostsIdRouteImport.update({
   path: '/posts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PostsNewRoute = PostsNewRouteImport.update({
-  id: '/posts_/new',
-  path: '/posts/new',
+const OauthSignedinRoute = OauthSignedinRouteImport.update({
+  id: '/oauth/signedin',
+  path: '/oauth/signedin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GithubIdRoute = GithubIdRouteImport.update({
+  id: '/github_/$id',
+  path: '/github/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogNewRoute = BlogNewRouteImport.update({
+  id: '/blog_/new',
+  path: '/blog/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIdRoute = BlogIdRouteImport.update({
+  id: '/blog_/$id',
+  path: '/blog/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingPlansRoute = BillingPlansRouteImport.update({
+  id: '/billing/plans',
+  path: '/billing/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingPayment_attemptRoute = BillingPayment_attemptRouteImport.update({
+  id: '/billing/payment_attempt',
+  path: '/billing/payment_attempt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingPayRoute = BillingPayRouteImport.update({
+  id: '/billing/pay',
+  path: '/billing/pay',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsIdAnalyticsRoute = PostsIdAnalyticsRouteImport.update({
@@ -331,74 +331,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account': {
-      id: '/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/analytics': {
-      id: '/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/github': {
-      id: '/github'
-      path: '/github'
-      fullPath: '/github'
-      preLoaderRoute: typeof GithubRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/main': {
-      id: '/main'
-      path: '/main'
-      fullPath: '/main'
-      preLoaderRoute: typeof MainRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/media': {
-      id: '/media'
-      path: '/media'
-      fullPath: '/media'
-      preLoaderRoute: typeof MediaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/posts': {
-      id: '/posts'
-      path: '/posts'
-      fullPath: '/posts'
-      preLoaderRoute: typeof PostsRouteImport
+    '/test-login': {
+      id: '/test-login'
+      path: '/test-login'
+      fullPath: '/test-login'
+      preLoaderRoute: typeof TestLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signin': {
@@ -408,11 +345,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/test-login': {
-      id: '/test-login'
-      path: '/test-login'
-      fullPath: '/test-login'
-      preLoaderRoute: typeof TestLoginRouteImport
+    '/posts': {
+      id: '/posts'
+      path: '/posts'
+      fullPath: '/posts'
+      preLoaderRoute: typeof PostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/media': {
+      id: '/media'
+      path: '/media'
+      fullPath: '/media'
+      preLoaderRoute: typeof MediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/main': {
+      id: '/main'
+      path: '/main'
+      fullPath: '/main'
+      preLoaderRoute: typeof MainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/github': {
+      id: '/github'
+      path: '/github'
+      fullPath: '/github'
+      preLoaderRoute: typeof GithubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/billing/': {
@@ -422,53 +422,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/billing/pay': {
-      id: '/billing/pay'
-      path: '/billing/pay'
-      fullPath: '/billing/pay'
-      preLoaderRoute: typeof BillingPayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/billing/payment_attempt': {
-      id: '/billing/payment_attempt'
-      path: '/billing/payment_attempt'
-      fullPath: '/billing/payment_attempt'
-      preLoaderRoute: typeof BillingPayment_attemptRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/billing/plans': {
-      id: '/billing/plans'
-      path: '/billing/plans'
-      fullPath: '/billing/plans'
-      preLoaderRoute: typeof BillingPlansRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog_/$id': {
-      id: '/blog_/$id'
-      path: '/blog/$id'
-      fullPath: '/blog/$id'
-      preLoaderRoute: typeof BlogIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog_/new': {
-      id: '/blog_/new'
-      path: '/blog/new'
-      fullPath: '/blog/new'
-      preLoaderRoute: typeof BlogNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/github_/$id': {
-      id: '/github_/$id'
-      path: '/github/$id'
-      fullPath: '/github/$id'
-      preLoaderRoute: typeof GithubIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/oauth/signedin': {
-      id: '/oauth/signedin'
-      path: '/oauth/signedin'
-      fullPath: '/oauth/signedin'
-      preLoaderRoute: typeof OauthSignedinRouteImport
+    '/posts_/new': {
+      id: '/posts_/new'
+      path: '/posts/new'
+      fullPath: '/posts/new'
+      preLoaderRoute: typeof PostsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/posts_/$id': {
@@ -478,11 +436,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PostsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/posts_/new': {
-      id: '/posts_/new'
-      path: '/posts/new'
-      fullPath: '/posts/new'
-      preLoaderRoute: typeof PostsNewRouteImport
+    '/oauth/signedin': {
+      id: '/oauth/signedin'
+      path: '/oauth/signedin'
+      fullPath: '/oauth/signedin'
+      preLoaderRoute: typeof OauthSignedinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/github_/$id': {
+      id: '/github_/$id'
+      path: '/github/$id'
+      fullPath: '/github/$id'
+      preLoaderRoute: typeof GithubIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog_/new': {
+      id: '/blog_/new'
+      path: '/blog/new'
+      fullPath: '/blog/new'
+      preLoaderRoute: typeof BlogNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog_/$id': {
+      id: '/blog_/$id'
+      path: '/blog/$id'
+      fullPath: '/blog/$id'
+      preLoaderRoute: typeof BlogIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/plans': {
+      id: '/billing/plans'
+      path: '/billing/plans'
+      fullPath: '/billing/plans'
+      preLoaderRoute: typeof BillingPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/payment_attempt': {
+      id: '/billing/payment_attempt'
+      path: '/billing/payment_attempt'
+      fullPath: '/billing/payment_attempt'
+      preLoaderRoute: typeof BillingPayment_attemptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/pay': {
+      id: '/billing/pay'
+      path: '/billing/pay'
+      fullPath: '/billing/pay'
+      preLoaderRoute: typeof BillingPayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/posts_/$id_/analytics': {
