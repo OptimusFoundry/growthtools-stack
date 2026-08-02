@@ -481,9 +481,11 @@ func TestBlogAPI_PublishBlog(t *testing.T) {
 			resp, body := c.Request(t, http.MethodPost, "/api/protected/blog/"+blogIDStr+"/publish", nil, token)
 			assert.Equal(t, tt.wantStatus, resp.StatusCode)
 			if tt.afterAssert != nil && resp.StatusCode == http.StatusOK {
-				var published store.BlogPost
-				require.NoError(t, json.Unmarshal(body, &published))
-				tt.afterAssert(t, published.AccountID, published.ID)
+				var result struct {
+					Post store.BlogPost `json:"post"`
+				}
+				require.NoError(t, json.Unmarshal(body, &result))
+				tt.afterAssert(t, result.Post.AccountID, result.Post.ID)
 			}
 		})
 	}
