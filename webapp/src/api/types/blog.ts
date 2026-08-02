@@ -40,4 +40,11 @@ export interface ApiBlogPost {
 	published_at?: string;
 	created_at: string;
 	updated_at: string;
+	site_pr_url?: string;
+	site_pr_opened_at?: string;
+}
+
+export interface ApiBlogPublishResponse {
+	post: ApiBlogPost;
+	site_publish_error?: string;
 }

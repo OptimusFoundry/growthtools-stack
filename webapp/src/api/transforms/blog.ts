@@ -4,8 +4,25 @@
  * Transform between API (snake_case) and UI (camelCase) blog types
  */
 
-import type { BlogPost, BlogPostListItem } from "@/types/blog";
-import type { ApiBlogPost, ApiBlogPostListItem } from "../types/blog";
+import type {
+	BlogPost,
+	BlogPostListItem,
+	BlogPublishResult,
+} from "@/types/blog";
+import type {
+	ApiBlogPost,
+	ApiBlogPostListItem,
+	ApiBlogPublishResponse,
+} from "../types/blog";
+
+// GitHub PR URLs end in /pull/<number>; anything else has no derivable PR number.
+function parsePrNumber(prUrl: string | undefined): number | undefined {
+	if (!prUrl) return undefined;
+	const segment = prUrl.split("/").pop();
+	if (!segment) return undefined;
+	const parsed = Number.parseInt(segment, 10);
+	return Number.isNaN(parsed) ? undefined : parsed;
+}
 
 export function toBlogPost(api: ApiBlogPost): BlogPost {
 	return {
@@ -27,6 +44,18 @@ export function toBlogPost(api: ApiBlogPost): BlogPost {
 		publishedAt: api.published_at,
 		createdAt: api.created_at,
 		updatedAt: api.updated_at,
+		sitePrUrl: api.site_pr_url,
+		sitePrOpenedAt: api.site_pr_opened_at,
+		sitePrNumber: parsePrNumber(api.site_pr_url),
+	};
+}
+
+export function toBlogPublishResult(
+	api: ApiBlogPublishResponse,
+): BlogPublishResult {
+	return {
+		post: toBlogPost(api.post),
+		sitePublishError: api.site_publish_error,
 	};
 }
 

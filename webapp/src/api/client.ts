@@ -16,6 +16,21 @@ interface FetcherOptions extends RequestInit {
 export type { ApiError };
 
 /**
+ * Error thrown by `fetcher`/`publicFetcher` on a non-2xx response. Carries
+ * the HTTP status so callers can branch on it (e.g. treating 404 as "not
+ * configured yet") without parsing the backend's free-text error message.
+ */
+export class ApiRequestError extends Error {
+	status: number;
+
+	constructor(message: string, status: number) {
+		super(message);
+		this.name = "ApiRequestError";
+		this.status = status;
+	}
+}
+
+/**
  * Authenticated fetcher that includes credentials (cookies)
  * Use this for protected API endpoints
  */
@@ -53,7 +68,7 @@ export const fetcher = async <T>(
 			const errorMessage = isApiError(data)
 				? data.error
 				: "An unknown error occurred";
-			throw new Error(errorMessage);
+			throw new ApiRequestError(errorMessage, response.status);
 		}
 
 		// Return the parsed data if response is OK

@@ -17,6 +17,7 @@ import type { ApiBlogPostListItem } from "../../../src/api/types/blog";
 import type { ApiMediaItem } from "../../../src/api/types/media";
 import type { ApiPlatformConnection } from "../../../src/api/types/platform";
 import type { ApiPost, ApiPostListItem } from "../../../src/api/types/post";
+import type { ApiSitePublishTarget } from "../../../src/api/types/sitePublishTarget";
 import type { ApiTierInfo, ApiTierName } from "../../../src/api/types/tier";
 import type { ApiUser } from "../../../src/api/types/user";
 import type { ApiVoiceProfile } from "../../../src/api/types/voiceProfile";
@@ -540,6 +541,21 @@ export const postAnalyticsUnavailable: ApiPostAnalytics = {
 // ============================================================================
 // Voice Profile Data
 // ============================================================================
+
+// ============================================================================
+// Site Publish Target Data
+// ============================================================================
+
+export const sitePublishTarget: ApiSitePublishTarget = {
+	id: "site_publish_1",
+	account_id: "acc_123",
+	repo_owner: "shubhanshu-dev",
+	repo_name: "site",
+	base_branch: "main",
+	content_path: "src/content/blog",
+	created_at: now,
+	updated_at: now,
+};
 
 export const voiceProfile: ApiVoiceProfile = {
 	id: "voice_1",

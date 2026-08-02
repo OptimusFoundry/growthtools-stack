@@ -32,7 +32,7 @@ import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { BlogPost } from "@/types/blog";
+import type { BlogPost, BlogPublishResult } from "@/types/blog";
 import type { MediaItem } from "@/types/media";
 import styles from "./blog-wizard.module.scss";
 
@@ -41,6 +41,12 @@ export interface BlogWizardProps {
 	initialMedia?: MediaItem[];
 	onDone: () => void;
 	onCancel?: () => void;
+	// Edit mode: publish succeeded and the post already has a detail page —
+	// stay put and let the caller update its tracked post/status row.
+	onPublished?: (result: BlogPublishResult) => void;
+	// Create mode: the post didn't exist before this action, so there's no
+	// page to "stay on" — send the caller to the newly created post instead.
+	onPublishedNavigate?: (postId: string) => void;
 }
 
 const slugify = (text: string): string =>
@@ -55,6 +61,8 @@ export function BlogWizard({
 	initialBlogPost,
 	initialMedia,
 	onDone,
+	onPublished,
+	onPublishedNavigate,
 }: BlogWizardProps) {
 	const isEditMode = Boolean(initialBlogPost);
 	const postStatus = initialBlogPost?.status;
@@ -250,13 +258,20 @@ export function BlogWizard({
 				});
 				postId = created.id;
 			}
-			await publishBlog(postId as string);
+			const result = await publishBlog(postId as string);
 			addBanner({
 				type: "success",
 				title: "Blog post published",
 				dismissible: true,
 			});
-			onDone();
+			// Edit mode has a detail page to stay on and reflect the outcome
+			// (site-publish status row); create mode has no prior page for
+			// that post, so send the user to its freshly created detail page.
+			if (isEditMode) {
+				onPublished?.(result);
+			} else {
+				onPublishedNavigate?.(postId as string);
+			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to publish.");
 		}
@@ -269,7 +284,8 @@ export function BlogWizard({
 		publishBlog,
 		buildRequest,
 		addBanner,
-		onDone,
+		onPublished,
+		onPublishedNavigate,
 	]);
 
 	// Suppress unused warning — reset is available for future use (e.g. cancel button)

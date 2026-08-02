@@ -46,6 +46,11 @@ import {
 	postsScenarios,
 } from "./posts.handlers";
 import { settingsEndpoints, settingsHandlers } from "./settings.handlers";
+import {
+	sitePublishEndpoints,
+	sitePublishHandlers,
+	sitePublishScenarios,
+} from "./sitePublish.handlers";
 
 /**
  * Default handlers - Pro tier user with full access
@@ -59,6 +64,7 @@ export const handlers = [
 	...blogHandlers,
 	...analyticsHandlers,
 	...settingsHandlers,
+	...sitePublishHandlers,
 	...contentHandlers,
 	...chatHandlers,
 	...adminHandlers,
@@ -90,6 +96,9 @@ export {
 	postsHandlers,
 	settingsEndpoints,
 	settingsHandlers,
+	sitePublishEndpoints,
+	sitePublishHandlers,
+	sitePublishScenarios,
 };
 
 /**
@@ -108,6 +117,7 @@ export const endpoints = {
 	platforms: platformsEndpoints,
 	posts: postsEndpoints,
 	settings: settingsEndpoints,
+	sitePublish: sitePublishEndpoints,
 };
 
 /**
@@ -125,6 +135,7 @@ export const scenarios = {
 	media: mediaScenarios,
 	platforms: platformsScenarios,
 	posts: postsScenarios,
+	sitePublish: sitePublishScenarios,
 };
 
 /**

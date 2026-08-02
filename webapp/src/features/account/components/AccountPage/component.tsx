@@ -4,7 +4,7 @@
  */
 
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { CreditCard, Mic, Share2 } from "lucide-react";
+import { CreditCard, GitBranch, Mic, Share2 } from "lucide-react";
 import { memo, useCallback } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { PageTransition } from "@/proto-design-system/components/layout/PageTransition/PageTransition";
@@ -19,13 +19,19 @@ import {
 import { BillingTab } from "./BillingTab";
 import styles from "./component.module.scss";
 import { PlatformConnectionsTab } from "./PlatformConnectionsTab";
+import { SitePublishTab } from "./SitePublishTab";
 import { VoiceProfileTab } from "./VoiceProfileTab";
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const VALID_TABS = ["billing", "voice-profile", "platforms"] as const;
+const VALID_TABS = [
+	"billing",
+	"voice-profile",
+	"platforms",
+	"site-publish",
+] as const;
 const DEFAULT_TAB = "billing";
 
 // ============================================================================
@@ -75,6 +81,9 @@ export const AccountPage = memo(function AccountPage() {
 						<Tab id="platforms" icon={<Share2 size={16} />}>
 							Platforms
 						</Tab>
+						<Tab id="site-publish" icon={<GitBranch size={16} />}>
+							Site Publish
+						</Tab>
 					</TabList>
 					<PageTransition pageKey={activeTab} type="slideUp">
 						<TabPanels>
@@ -86,6 +95,9 @@ export const AccountPage = memo(function AccountPage() {
 							</TabPanel>
 							<TabPanel id="platforms">
 								<PlatformConnectionsTab />
+							</TabPanel>
+							<TabPanel id="site-publish">
+								<SitePublishTab />
 							</TabPanel>
 						</TabPanels>
 					</PageTransition>

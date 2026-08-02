@@ -1,0 +1,10 @@
+// =============================================================================
+// Site-publish status row — inline outcome of the shubhanshu.dev PR push
+// =============================================================================
+
+.row {
+	align-items: center;
+	display: flex;
+	gap: var(--space-4);
+	justify-content: space-between;
+}

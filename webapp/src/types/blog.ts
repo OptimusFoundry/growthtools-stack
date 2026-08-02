@@ -33,6 +33,14 @@ export interface BlogPost {
 	publishedAt?: string;
 	createdAt: string;
 	updatedAt: string;
+	sitePrUrl?: string;
+	sitePrOpenedAt?: string;
+	sitePrNumber?: number;
+}
+
+export interface BlogPublishResult {
+	post: BlogPost;
+	sitePublishError?: string;
 }
 
 export interface BlogPostListItem {
