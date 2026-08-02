@@ -10,6 +10,18 @@
 
 ---
 
+## Epic Board (PRD pipeline)
+
+Each row is a feature epic run through the shared-writing-prds → plan-writer → supervisor
+pipeline. Status flows: Backlog → Spec'd → Planned → In progress → Shipped. Tickets live in the
+linked tech plan (created by plan-writer).
+
+| Epic | Feature | PRD | Plan | Status |
+|------|---------|-----|------|--------|
+| EP-001 | Publish Blog Posts to shubhanshu.dev | docs/prds/2026-08-02-blog-site-publish.md | — | Spec'd |
+
+---
+
 ## Epic 0: Foundation & Infrastructure
 
 > Project scaffolding, database, config, observability.
