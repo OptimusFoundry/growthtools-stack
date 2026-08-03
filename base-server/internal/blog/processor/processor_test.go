@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	aiblog "base-server/internal/ai/blog"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
 
@@ -582,5 +583,77 @@ func TestBlogProcessor_RetrySitePublish(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, store.BlogStatusPublished, result.Post.Status)
 		assert.Equal(t, "github unreachable", result.SitePublishError)
+	})
+}
+
+func TestBlogProcessor_GenerateBlogPost_VoiceProfile(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+
+	t.Run("voice profile configured is passed through to the generator", func(t *testing.T) {
+		t.Parallel()
+		industry := "SaaS"
+		var gotVoice *aiblog.VoiceContext
+		mockStore := &MockBlogStore{
+			GetBlogPostBySlugFn: func(ctx context.Context, aID uuid.UUID, slug string) (store.BlogPost, error) {
+				return store.BlogPost{}, store.ErrNotFound
+			},
+			CreateBlogPostFn: func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error) {
+				return store.BlogPost{ID: uuid.New(), AccountID: params.AccountID, Title: params.Title, Slug: params.Slug}, nil
+			},
+			GetVoiceProfileByAccountFn: func(ctx context.Context, aID uuid.UUID) (store.VoiceProfile, error) {
+				return store.VoiceProfile{Tone: "witty", Style: "punchy", Industry: &industry}, nil
+			},
+		}
+		mockGen := &MockBlogGenerator{
+			GenerateFn: func(ctx context.Context, req aiblog.Request) (aiblog.Result, error) {
+				gotVoice = req.Voice
+				return aiblog.Result{Title: "Test", Content: "content"}, nil
+			},
+		}
+		proc := New(mockStore, mockGen, logger)
+
+		_, err := proc.GenerateBlogPost(context.Background(), accountID, "write about X", nil, nil)
+
+		require.NoError(t, err)
+		require.NotNil(t, gotVoice)
+		assert.Equal(t, "witty", gotVoice.Tone)
+		assert.Equal(t, "punchy", gotVoice.Style)
+		assert.Equal(t, "SaaS", gotVoice.Industry)
+	})
+
+	t.Run("no voice profile configured generates without one, not an error", func(t *testing.T) {
+		t.Parallel()
+		voiceCalled := false
+		mockStore := &MockBlogStore{
+			GetBlogPostBySlugFn: func(ctx context.Context, aID uuid.UUID, slug string) (store.BlogPost, error) {
+				return store.BlogPost{}, store.ErrNotFound
+			},
+			CreateBlogPostFn: func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error) {
+				return store.BlogPost{ID: uuid.New(), AccountID: params.AccountID, Title: params.Title, Slug: params.Slug}, nil
+			},
+			GetVoiceProfileByAccountFn: func(ctx context.Context, aID uuid.UUID) (store.VoiceProfile, error) {
+				voiceCalled = true
+				return store.VoiceProfile{}, store.ErrNotFound
+			},
+		}
+		var gotVoice *aiblog.VoiceContext
+		hadVoice := false
+		mockGen := &MockBlogGenerator{
+			GenerateFn: func(ctx context.Context, req aiblog.Request) (aiblog.Result, error) {
+				gotVoice = req.Voice
+				hadVoice = true
+				return aiblog.Result{Title: "Test", Content: "content"}, nil
+			},
+		}
+		proc := New(mockStore, mockGen, logger)
+
+		_, err := proc.GenerateBlogPost(context.Background(), accountID, "write about X", nil, nil)
+
+		require.NoError(t, err)
+		assert.True(t, voiceCalled, "voice profile lookup must be attempted")
+		assert.True(t, hadVoice, "generator must still be called")
+		assert.Nil(t, gotVoice)
 	})
 }

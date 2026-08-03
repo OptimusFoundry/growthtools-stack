@@ -42,15 +42,16 @@ func (m *MockSitePublisher) PublishBlogToSite(ctx context.Context, accountID uui
 
 // MockBlogStore is a manual mock for BlogStore
 type MockBlogStore struct {
-	CreateBlogPostFn    func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
-	GetBlogPostByIDFn   func(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
-	GetBlogPostBySlugFn func(ctx context.Context, accountID uuid.UUID, slug string) (store.BlogPost, error)
-	ListBlogPostsFn     func(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
-	UpdateBlogPostFn    func(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
-	DeleteBlogPostFn    func(ctx context.Context, accountID, postID uuid.UUID) error
-	PublishBlogPostFn   func(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
-	SetBlogPostSitePRFn func(ctx context.Context, accountID, postID uuid.UUID, prURL string) (store.BlogPost, error)
-	GetMediaByIDsFn     func(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	CreateBlogPostFn           func(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error)
+	GetBlogPostByIDFn          func(ctx context.Context, accountID, postID uuid.UUID) (store.BlogPost, error)
+	GetBlogPostBySlugFn        func(ctx context.Context, accountID uuid.UUID, slug string) (store.BlogPost, error)
+	ListBlogPostsFn            func(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
+	UpdateBlogPostFn           func(ctx context.Context, accountID, id uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
+	DeleteBlogPostFn           func(ctx context.Context, accountID, postID uuid.UUID) error
+	PublishBlogPostFn          func(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
+	SetBlogPostSitePRFn        func(ctx context.Context, accountID, postID uuid.UUID, prURL string) (store.BlogPost, error)
+	GetMediaByIDsFn            func(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	GetVoiceProfileByAccountFn func(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error)
 }
 
 func (m *MockBlogStore) CreateBlogPost(ctx context.Context, params store.CreateBlogPostParams) (store.BlogPost, error) {
@@ -90,4 +91,11 @@ func (m *MockBlogStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]s
 		return m.GetMediaByIDsFn(ctx, ids)
 	}
 	return []store.Media{}, nil
+}
+
+func (m *MockBlogStore) GetVoiceProfileByAccount(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error) {
+	if m.GetVoiceProfileByAccountFn != nil {
+		return m.GetVoiceProfileByAccountFn(ctx, accountID)
+	}
+	return store.VoiceProfile{}, store.ErrNotFound
 }

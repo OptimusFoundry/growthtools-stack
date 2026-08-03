@@ -32,11 +32,24 @@ type MediaItem struct {
 	URL         string // presigned HTTPS URL
 }
 
+// VoiceContext holds optional voice profile fields for prompt injection.
+// Mirrors socialposts.VoiceContext; declared here so callers don't import
+// that package directly.
+type VoiceContext struct {
+	Tone               string   `json:"tone,omitempty"`
+	Style              string   `json:"style,omitempty"`
+	Industry           string   `json:"industry,omitempty"`
+	TargetAudience     string   `json:"target_audience,omitempty"`
+	CustomInstructions string   `json:"custom_instructions,omitempty"`
+	ExamplePosts       []string `json:"example_posts,omitempty"`
+}
+
 // Request is the input to Generate and GenerateStream.
 type Request struct {
 	Prompt   string
 	Keywords []string
 	Media    []MediaItem
+	Voice    *VoiceContext
 }
 
 // Result is the parsed AI output.
@@ -67,13 +80,27 @@ func (BlogChunkEvent) isBlogEvent() {}
 func (BlogDoneEvent) isBlogEvent()  {}
 func (BlogErrorEvent) isBlogEvent() {}
 
-const (
-	generateMaxTokens = 8192
-	systemPrompt      = `You are a technical blog author. Write engaging, first-person blog posts on the given topic. Cover the subject thoroughly with clear explanations, examples, and insights.
+const generateMaxTokens = 8192
 
-If the user provides attached images, embed EVERY image inline in the "content" markdown using the exact syntax ` + "`![alt](url)`" + ` on its own line, placed at a natural spot in the narrative where it reinforces the surrounding prose. Write descriptive alt text. Do not skip images and do not invent URLs — use only the URLs the user provided.
+// buildSystemPrompt assembles the blog-generation system prompt, injecting
+// the account's voice profile (tone/style/examples/etc.) when present so
+// generated posts match how the user actually writes rather than a fixed
+// generic voice. voice may be nil — the prompt is still valid without it.
+func buildSystemPrompt(voice *VoiceContext) string {
+	var sb strings.Builder
+	sb.WriteString("You are a technical blog author. Write engaging, first-person blog posts on the given topic. Cover the subject thoroughly with clear explanations, examples, and insights.\n\n")
 
-Respond with a single JSON object and nothing else. The object must have these fields:
+	if voice != nil {
+		sb.WriteString("## Voice Profile\n")
+		sb.WriteString("Write in this voice — tone, style, and phrasing should reflect it:\n")
+		b, _ := json.MarshalIndent(voice, "", "  ")
+		sb.Write(b)
+		sb.WriteString("\n\n")
+	}
+
+	sb.WriteString("If the user provides attached images, embed EVERY image inline in the \"content\" markdown using the exact syntax `![alt](url)` on its own line, placed at a natural spot in the narrative where it reinforces the surrounding prose. Write descriptive alt text. Do not skip images and do not invent URLs — use only the URLs the user provided.\n\n")
+
+	sb.WriteString(`Respond with a single JSON object and nothing else. The object must have these fields:
 - "title": string — blog post title
 - "content": string — full blog post in Markdown, starting with a # heading, using H2 sections
 - "excerpt": string — one-sentence summary (max 200 chars)
@@ -83,8 +110,10 @@ Respond with a single JSON object and nothing else. The object must have these f
 - "og_title": string — Open Graph title (max 60 chars)
 - "og_description": string — Open Graph description (max 200 chars)
 
-No markdown fences, no preamble — raw JSON only.`
-)
+No markdown fences, no preamble — raw JSON only.`)
+
+	return sb.String()
+}
 
 type jsonResponse struct {
 	Title           string   `json:"title"`
@@ -112,7 +141,7 @@ func New(aiClient AIClient, logger *observability.Logger) *Generator {
 func (g *Generator) Generate(ctx context.Context, req Request) (Result, error) {
 	ctx = observability.WithFields(ctx, observability.Field{Key: "operation", Value: "blog_generate"})
 	userMsg := buildUserMessage(req)
-	raw, err := g.aiClient.CreateMessage(ctx, systemPrompt, []aiclient.Message{{Role: "user", Content: userMsg}}, generateMaxTokens)
+	raw, err := g.aiClient.CreateMessage(ctx, buildSystemPrompt(req.Voice), []aiclient.Message{{Role: "user", Content: userMsg}}, generateMaxTokens)
 	if err != nil {
 		g.logger.Error(ctx, "AI blog generation failed", err)
 		return Result{}, ErrGenerate
@@ -137,7 +166,7 @@ func (g *Generator) runStream(ctx context.Context, req Request, ch chan<- BlogEv
 	userMsg := buildUserMessage(req)
 
 	var rawBuilder strings.Builder
-	err := g.aiClient.StreamJSONMessage(ctx, systemPrompt, []aiclient.Message{{Role: "user", Content: userMsg}}, generateMaxTokens, func(chunk string) {
+	err := g.aiClient.StreamJSONMessage(ctx, buildSystemPrompt(req.Voice), []aiclient.Message{{Role: "user", Content: userMsg}}, generateMaxTokens, func(chunk string) {
 		rawBuilder.WriteString(chunk)
 		ch <- BlogChunkEvent{Chunk: chunk}
 	})

@@ -56,6 +56,7 @@ type BlogStore interface {
 	PublishBlogPost(ctx context.Context, accountID, id uuid.UUID) (store.BlogPost, error)
 	SetBlogPostSitePR(ctx context.Context, accountID, postID uuid.UUID, prURL string) (store.BlogPost, error)
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	GetVoiceProfileByAccount(ctx context.Context, accountID uuid.UUID) (store.VoiceProfile, error)
 }
 
 var (
@@ -368,7 +369,8 @@ func (p *BlogProcessor) GenerateBlogPost(ctx context.Context, accountID uuid.UUI
 	)
 
 	mediaItems := p.buildMediaItems(ctx, mediaIDs)
-	req := aiblog.Request{Prompt: instruction, Keywords: keywords, Media: mediaItems}
+	voice := p.getVoiceContext(ctx, accountID)
+	req := aiblog.Request{Prompt: instruction, Keywords: keywords, Media: mediaItems, Voice: voice}
 
 	result, err := p.blogGen.Generate(ctx, req)
 	if err != nil {
@@ -444,9 +446,10 @@ func (p *BlogProcessor) StreamGenerateBlogPost(
 	)
 
 	mediaItems := p.buildMediaItems(ctx, mediaIDs)
+	voice := p.getVoiceContext(ctx, accountID)
 	cb.OnPhase("generating")
 
-	ch, _ := p.blogGen.GenerateStream(ctx, aiblog.Request{Prompt: instruction, Keywords: keywords, Media: mediaItems})
+	ch, _ := p.blogGen.GenerateStream(ctx, aiblog.Request{Prompt: instruction, Keywords: keywords, Media: mediaItems, Voice: voice})
 	for evt := range ch {
 		switch e := evt.(type) {
 		case aiblog.BlogChunkEvent:
@@ -509,6 +512,33 @@ func (p *BlogProcessor) StreamGenerateBlogPost(
 		}
 	}
 	return nil
+}
+
+// getVoiceContext fetches the account's voice profile and converts it to
+// aiblog.VoiceContext. Mirrors content/processor.getVoiceContext — voice is
+// optional, so any error (including "not configured") just means the post
+// generates without one rather than failing the request.
+func (p *BlogProcessor) getVoiceContext(ctx context.Context, accountID uuid.UUID) *aiblog.VoiceContext {
+	vp, err := p.store.GetVoiceProfileByAccount(ctx, accountID)
+	if err != nil {
+		return nil
+	}
+
+	vc := &aiblog.VoiceContext{
+		Tone:         vp.Tone,
+		Style:        vp.Style,
+		ExamplePosts: vp.ExamplePosts,
+	}
+	if vp.Industry != nil {
+		vc.Industry = *vp.Industry
+	}
+	if vp.TargetAudience != nil {
+		vc.TargetAudience = *vp.TargetAudience
+	}
+	if vp.CustomInstructions != nil {
+		vc.CustomInstructions = *vp.CustomInstructions
+	}
+	return vc
 }
 
 // buildMediaItems converts store media rows into aiblog.MediaItem, presigning

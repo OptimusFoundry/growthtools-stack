@@ -35,7 +35,7 @@ func TestGenerate_HappyPath(t *testing.T) {
 	}`
 
 	mockAI.EXPECT().
-		CreateMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens).
+		CreateMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens).
 		Return(validJSON, nil)
 
 	req := Request{
@@ -79,6 +79,30 @@ func TestCleanKeywords_StripsEmbeddedQuotes(t *testing.T) {
 	}
 }
 
+func TestBuildSystemPrompt_InjectsVoiceProfileWhenPresent(t *testing.T) {
+	t.Parallel()
+
+	withoutVoice := buildSystemPrompt(nil)
+	if strings.Contains(withoutVoice, "Voice Profile") {
+		t.Errorf("expected no Voice Profile section when voice is nil, got: %s", withoutVoice)
+	}
+
+	voice := &VoiceContext{
+		Tone:  "witty and direct",
+		Style: "short punchy sentences",
+	}
+	withVoice := buildSystemPrompt(voice)
+	if !strings.Contains(withVoice, "Voice Profile") {
+		t.Error("expected a Voice Profile section when voice is set")
+	}
+	if !strings.Contains(withVoice, "witty and direct") {
+		t.Error("expected the voice's tone to appear in the prompt")
+	}
+	if !strings.Contains(withVoice, "short punchy sentences") {
+		t.Error("expected the voice's style to appear in the prompt")
+	}
+}
+
 func TestGenerate_AIError(t *testing.T) {
 	t.Parallel()
 
@@ -90,7 +114,7 @@ func TestGenerate_AIError(t *testing.T) {
 	gen := New(mockAI, logger)
 
 	mockAI.EXPECT().
-		CreateMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens).
+		CreateMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens).
 		Return("", errors.New("ai service down"))
 
 	req := Request{Prompt: "Write about testing"}
@@ -117,7 +141,7 @@ func TestGenerate_ParseError(t *testing.T) {
 	invalidJSON := `{invalid json}`
 
 	mockAI.EXPECT().
-		CreateMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens).
+		CreateMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens).
 		Return(invalidJSON, nil)
 
 	req := Request{Prompt: "Write about testing"}
@@ -178,7 +202,7 @@ func TestGenerate_MissingTitleOrContent(t *testing.T) {
 			gen := New(mockAI, logger)
 
 			mockAI.EXPECT().
-				CreateMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens).
+				CreateMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens).
 				Return(tt.json, nil)
 
 			req := Request{Prompt: "Write about testing"}
@@ -205,7 +229,7 @@ func TestGenerateStream_HappyPath(t *testing.T) {
 	gen := New(mockAI, logger)
 
 	mockAI.EXPECT().
-		StreamJSONMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens, gomock.Any()).
+		StreamJSONMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens, gomock.Any()).
 		DoAndReturn(func(ctx context.Context, sysPrompt string, msgs []aiclient.Message, maxTokens int, onChunk func(string)) error {
 			// Simulate streaming chunks
 			onChunk(`{"title": "Stream Test", "content": "# Stream Test\n\nContent.", `)
@@ -265,7 +289,7 @@ func TestGenerateStream_AIStreamError(t *testing.T) {
 	gen := New(mockAI, logger)
 
 	mockAI.EXPECT().
-		StreamJSONMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens, gomock.Any()).
+		StreamJSONMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens, gomock.Any()).
 		Return(errors.New("stream connection lost"))
 
 	req := Request{Prompt: "Write about streaming"}
@@ -301,7 +325,7 @@ func TestGenerateStream_ParseError(t *testing.T) {
 	gen := New(mockAI, logger)
 
 	mockAI.EXPECT().
-		StreamJSONMessage(gomock.Any(), systemPrompt, gomock.Any(), generateMaxTokens, gomock.Any()).
+		StreamJSONMessage(gomock.Any(), buildSystemPrompt(nil), gomock.Any(), generateMaxTokens, gomock.Any()).
 		DoAndReturn(func(ctx context.Context, sysPrompt string, msgs []aiclient.Message, maxTokens int, onChunk func(string)) error {
 			onChunk(`{invalid json}`)
 			return nil
