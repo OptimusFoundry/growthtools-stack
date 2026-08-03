@@ -171,10 +171,22 @@ func parseResult(ctx context.Context, logger *observability.Logger, raw string) 
 		Excerpt:         resp.Excerpt,
 		SEOTitle:        resp.SEOTitle,
 		MetaDescription: resp.MetaDescription,
-		Keywords:        resp.Keywords,
+		Keywords:        cleanKeywords(resp.Keywords),
 		OGTitle:         resp.OGTitle,
 		OGDescription:   resp.OGDescription,
 	}, nil
+}
+
+// cleanKeywords strips stray double-quote characters the model sometimes
+// embeds around multi-word keyword phrases (e.g. `"API optimization"` as the
+// literal string content, not just `API optimization`) — cosmetic model
+// inconsistency, not meaningful data.
+func cleanKeywords(keywords []string) []string {
+	cleaned := make([]string, len(keywords))
+	for i, kw := range keywords {
+		cleaned[i] = strings.Trim(strings.TrimSpace(kw), `"`)
+	}
+	return cleaned
 }
 
 func buildUserMessage(req Request) string {

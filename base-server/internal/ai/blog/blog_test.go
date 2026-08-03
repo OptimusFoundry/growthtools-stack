@@ -62,6 +62,23 @@ func TestGenerate_HappyPath(t *testing.T) {
 	}
 }
 
+func TestCleanKeywords_StripsEmbeddedQuotes(t *testing.T) {
+	t.Parallel()
+
+	in := []string{`"API optimization"`, "GoLang", `"backend performance"`, "  DTOs  ", `"web development"`}
+	want := []string{"API optimization", "GoLang", "backend performance", "DTOs", "web development"}
+
+	got := cleanKeywords(in)
+	if len(got) != len(want) {
+		t.Fatalf("expected %d keywords, got %d: %v", len(want), len(got), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("keyword %d: expected %q, got %q", i, want[i], got[i])
+		}
+	}
+}
+
 func TestGenerate_AIError(t *testing.T) {
 	t.Parallel()
 

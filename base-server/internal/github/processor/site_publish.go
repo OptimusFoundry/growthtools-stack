@@ -110,7 +110,10 @@ func buildBlogMarkdown(post store.BlogPost, media []store.Media, publicURLBase s
 
 	tags := make([]string, 0, len(post.Keywords))
 	for _, kw := range post.Keywords {
-		tags = append(tags, fmt.Sprintf("%q", kw))
+		// Defensive: strip any stray quote characters already baked into a
+		// stored keyword (e.g. from AI generation before this was fixed at
+		// the source) so republishing an existing post also self-heals.
+		tags = append(tags, fmt.Sprintf("%q", strings.Trim(strings.TrimSpace(kw), `"`)))
 	}
 
 	content := post.Content

@@ -416,6 +416,19 @@ func TestBuildBlogMarkdown(t *testing.T) {
 			},
 		},
 		{
+			name: "keywords with embedded quote characters are cleaned before being written as tags",
+			post: store.BlogPost{
+				Title:    "Quoted Keywords",
+				Content:  "short content",
+				Keywords: store.StringArray{`"API optimization"`, "GoLang", `"backend performance"`},
+			},
+			publicURLBase: "https://example.com",
+			assert: func(t *testing.T, got string) {
+				assert.Contains(t, got, `tags: ["API optimization", "GoLang", "backend performance"]`)
+				assert.NotContains(t, got, `\"API optimization\"`)
+			},
+		},
+		{
 			name: "no media items leaves content unchanged",
 			post: store.BlogPost{
 				Title:   "No Media",
