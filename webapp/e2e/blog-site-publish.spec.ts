@@ -55,6 +55,28 @@ test.describe("Blog Detail — Site Publish Status", () => {
 		await expect(prLink).toHaveAttribute("target", "_blank");
 	});
 
+	test("PR status renders above the editor form, not after it", async ({
+		network,
+		page,
+	}) => {
+		network.use(blogScenarios.getWithPr());
+
+		await page.goto(detailUrl);
+		await page.waitForLoadState("networkidle");
+
+		const prLink = page.getByRole("link", { name: /pushed to github/i });
+		const instructionField = page.getByText("Idea or instructions");
+
+		const prBox = await prLink.boundingBox();
+		const formBox = await instructionField.boundingBox();
+		expect(prBox).not.toBeNull();
+		expect(formBox).not.toBeNull();
+		// The status link must sit above the (long, scrollable) editor form —
+		// regression guard for it having previously rendered after the whole
+		// form + markdown preview, requiring a full scroll to find.
+		expect(prBox!.y).toBeLessThan(formBox!.y);
+	});
+
 	test("site publish error — alert shown with retry button", async ({
 		network,
 		page,

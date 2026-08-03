@@ -42,21 +42,21 @@ function EditBlogEditorLoaded({
 	const statusHook = useBlogSitePublishStatus(post);
 
 	return (
-		<>
-			<BlogWizard
-				initialBlogPost={statusHook.post}
-				initialMedia={media}
-				onDone={() => navigate({ to: "/blog" })}
-				onCancel={() => navigate({ to: "/blog" })}
-				onPublished={statusHook.applyPublishResult}
-			/>
-			<BlogSitePublishStatus
-				post={statusHook.post}
-				sitePublishError={statusHook.sitePublishError}
-				onRetry={statusHook.handleRetry}
-				retrying={statusHook.retrying}
-			/>
-		</>
+		<BlogWizard
+			initialBlogPost={statusHook.post}
+			initialMedia={media}
+			onDone={() => navigate({ to: "/blog" })}
+			onCancel={() => navigate({ to: "/blog" })}
+			onPublished={statusHook.applyPublishResult}
+			statusSlot={
+				<BlogSitePublishStatus
+					post={statusHook.post}
+					sitePublishError={statusHook.sitePublishError}
+					onRetry={statusHook.handleRetry}
+					retrying={statusHook.retrying}
+				/>
+			}
+		/>
 	);
 }
 

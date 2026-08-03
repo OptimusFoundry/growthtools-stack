@@ -47,6 +47,9 @@ export interface BlogWizardProps {
 	// Create mode: the post didn't exist before this action, so there's no
 	// page to "stay on" — send the caller to the newly created post instead.
 	onPublishedNavigate?: (postId: string) => void;
+	// Site-publish status (PR link / error / retry), rendered right below the
+	// page header — above the fold, not after the whole two-column form.
+	statusSlot?: ReactNode;
 }
 
 const slugify = (text: string): string =>
@@ -63,6 +66,7 @@ export function BlogWizard({
 	onDone,
 	onPublished,
 	onPublishedNavigate,
+	statusSlot,
 }: BlogWizardProps) {
 	const isEditMode = Boolean(initialBlogPost);
 	const postStatus = initialBlogPost?.status;
@@ -422,6 +426,8 @@ export function BlogWizard({
 						</div>
 					</div>
 				</header>
+
+				{statusSlot}
 
 				{error && <Alert variant="error">{error}</Alert>}
 				{generateError && <Alert variant="error">{generateError}</Alert>}
