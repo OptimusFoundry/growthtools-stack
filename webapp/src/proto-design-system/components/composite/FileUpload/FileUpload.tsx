@@ -5,6 +5,7 @@ import {
 	FileArchive,
 	FileText,
 	Image,
+	Star,
 	Upload,
 	X,
 } from "lucide-react";
@@ -61,6 +62,10 @@ export interface FileUploadProps {
 	existingFiles?: ExistingFile[];
 	/** Called when the X on an existing file row is clicked. */
 	onRemoveExisting?: (id: string) => void;
+	/** Id of the existing file currently marked as the featured image. */
+	featuredId?: string;
+	/** Called with the clicked tile's id (toggle semantics owned by the caller). */
+	onSetFeatured?: (id: string) => void;
 	/** Disabled state */
 	disabled?: boolean;
 	/** Dropzone label */
@@ -117,6 +122,8 @@ export function FileUpload({
 	onFilesChange,
 	existingFiles = [],
 	onRemoveExisting,
+	featuredId,
+	onSetFeatured,
 	disabled = false,
 	label = "Drag & drop files here",
 	description = "or click to browse",
@@ -277,7 +284,10 @@ export function FileUpload({
 						return (
 							<li
 								key={`existing-${existing.id}`}
-								className={styles.existingTile}
+								className={cn(
+									styles.existingTile,
+									existing.id === featuredId && styles.existingTileFeatured,
+								)}
 							>
 								<div className={styles.existingThumb}>
 									{existing.url && isImage ? (
@@ -299,6 +309,24 @@ export function FileUpload({
 										</video>
 									) : (
 										<FallbackIcon className={styles.existingFallbackIcon} />
+									)}
+									{isImage && onSetFeatured && (
+										<button
+											type="button"
+											className={styles.existingSetFeaturedButton}
+											onClick={() => onSetFeatured(existing.id)}
+											aria-label={
+												existing.id === featuredId
+													? `${existing.name} is the featured image`
+													: `Set ${existing.name} as featured image`
+											}
+										>
+											<Star
+												fill={
+													existing.id === featuredId ? "currentColor" : "none"
+												}
+											/>
+										</button>
 									)}
 									{onRemoveExisting && (
 										<button

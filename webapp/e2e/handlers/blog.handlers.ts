@@ -9,7 +9,7 @@
  */
 import { HttpResponse, http } from "msw";
 import { setupEndpoint } from "../helpers/endpoint";
-import { blogPosts } from "../mocks/data";
+import { blogPosts, mediaItems } from "../mocks/data";
 
 const now = new Date().toISOString();
 
@@ -184,6 +184,20 @@ export const blogScenarios = {
 	getPublishedNoPr: () =>
 		http.get("*/api/protected/blog/:id", () =>
 			HttpResponse.json({ post: publishedBlogNoPr, media: [] }),
+		),
+
+	/**
+	 * 200: GET /blog/:id — post with a featured image already selected
+	 * (media_1) plus a second attached image (media_3), used to test
+	 * hydration of the featured-image toggle from `initialBlogPost` without
+	 * mutating the shared `fullBlogPost` export.
+	 */
+	getWithFeaturedImage: () =>
+		http.get("*/api/protected/blog/:id", () =>
+			HttpResponse.json({
+				post: { ...fullBlogPost, featured_image_id: mediaItems[0].id },
+				media: [mediaItems[0], mediaItems[2]],
+			}),
 		),
 
 	/** 200: publish succeeds but the site publish side-effect failed. */

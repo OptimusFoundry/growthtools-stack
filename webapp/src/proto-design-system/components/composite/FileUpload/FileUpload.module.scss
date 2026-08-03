@@ -244,9 +244,47 @@
   }
 }
 
+.existingSetFeaturedButton {
+  align-items: center;
+  appearance: none;
+  background: oklch(0% 0 0 / 0.55);
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-base-content-inverse, #fff);
+  cursor: pointer;
+  display: flex;
+  height: var(--space-5);
+  justify-content: center;
+  left: var(--space-1);
+  opacity: 0;
+  padding: 0;
+  position: absolute;
+  top: var(--space-1);
+  width: var(--space-5);
+
+  @include transition-colors;
+  @include focus-ring;
+
+  &:hover {
+    background: oklch(from var(--color-primary) l c h / 0.85);
+  }
+
+  svg {
+    height: var(--space-3);
+    width: var(--space-3);
+  }
+}
+
 .existingTile:hover .existingRemoveButton,
-.existingRemoveButton:focus-visible {
+.existingRemoveButton:focus-visible,
+.existingTile:hover .existingSetFeaturedButton,
+.existingSetFeaturedButton:focus-visible {
   opacity: 1;
+}
+
+.existingTileFeatured .existingThumb {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
 }
 
 .existingFileName {

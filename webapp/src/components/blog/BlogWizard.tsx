@@ -93,6 +93,9 @@ export function BlogWizard({
 	const [existingMedia, setExistingMedia] = useState<MediaItem[]>(
 		initialMedia ?? [],
 	);
+	const [featuredImageId, setFeaturedImageId] = useState<string | undefined>(
+		initialBlogPost?.featuredImageId,
+	);
 	const managedMedia = useManagedMediaUpload({
 		onUploaded: (media) => setExistingMedia((prev) => [...prev, media]),
 	});
@@ -155,6 +158,15 @@ export function BlogWizard({
 		[existingMedia],
 	);
 
+	const handleRemoveMedia = useCallback((id: string) => {
+		setExistingMedia((prev) => prev.filter((m) => m.id !== id));
+		setFeaturedImageId((prev) => (prev === id ? undefined : prev));
+	}, []);
+
+	const handleSetFeatured = useCallback((id: string) => {
+		setFeaturedImageId((prev) => (prev === id ? undefined : id));
+	}, []);
+
 	const handleTitleBlur = useCallback(() => {
 		if (title && !slug) {
 			setSlug(slugify(title));
@@ -205,6 +217,7 @@ export function BlogWizard({
 			source_instruction: instruction || undefined,
 			media_ids: existingMediaIds,
 			published_at: publishedAt || undefined,
+			featured_image_id: featuredImageId || undefined,
 		}),
 		[
 			title,
@@ -219,6 +232,7 @@ export function BlogWizard({
 			instruction,
 			publishedAt,
 			existingMediaIds,
+			featuredImageId,
 		],
 	);
 
@@ -459,9 +473,9 @@ export function BlogWizard({
 							pendingFiles={managedMedia.uploadingFiles}
 							existingMedia={existingMediaFiles}
 							onFilesChange={managedMedia.onFilesChange}
-							onRemoveExisting={(id) =>
-								setExistingMedia((prev) => prev.filter((m) => m.id !== id))
-							}
+							onRemoveExisting={handleRemoveMedia}
+							featuredImageId={featuredImageId}
+							onSetFeatured={handleSetFeatured}
 						/>
 
 						<Divider />

@@ -11,6 +11,8 @@ interface MediaUploadSectionProps {
 	existingMedia: ExistingFile[];
 	onFilesChange: (files: UploadedFile[]) => void;
 	onRemoveExisting: (id: string) => void;
+	featuredImageId?: string;
+	onSetFeatured?: (id: string) => void;
 }
 
 export function MediaUploadSection({
@@ -18,6 +20,8 @@ export function MediaUploadSection({
 	existingMedia,
 	onFilesChange,
 	onRemoveExisting,
+	featuredImageId,
+	onSetFeatured,
 }: MediaUploadSectionProps) {
 	return (
 		<Stack gap="sm">
@@ -33,6 +37,8 @@ export function MediaUploadSection({
 				onFilesChange={onFilesChange}
 				existingFiles={existingMedia}
 				onRemoveExisting={onRemoveExisting}
+				featuredId={featuredImageId}
+				onSetFeatured={onSetFeatured}
 				label="Drag & drop files here"
 				description="or click to browse"
 			/>
