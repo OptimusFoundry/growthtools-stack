@@ -43,6 +43,7 @@ type BlogPostListItem struct {
 	Title       string     `db:"title"        json:"title"`
 	Status      string     `db:"status"       json:"status"`
 	PublishedAt *time.Time `db:"published_at" json:"published_at,omitempty"`
+	SitePRURL   *string    `db:"site_pr_url"  json:"site_pr_url,omitempty"`
 	CreatedAt   time.Time  `db:"created_at"   json:"created_at"`
 	UpdatedAt   time.Time  `db:"updated_at"   json:"updated_at"`
 }
@@ -126,7 +127,7 @@ func (s *Store) GetBlogPostBySlug(ctx context.Context, accountID uuid.UUID, slug
 }
 
 const sqlListBlogPosts = `
-SELECT id, title, status, published_at, created_at, updated_at
+SELECT id, title, status, published_at, site_pr_url, created_at, updated_at
 FROM blog_posts
 WHERE account_id = $1 AND deleted_at IS NULL
 AND ($2::text IS NULL OR status = $2::blog_status)

@@ -258,27 +258,35 @@ func TestBlogProcessor_DeleteBlogPost(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockBlogStore{
+			GetBlogPostByIDFn: func(ctx context.Context, aID, pID uuid.UUID) (store.BlogPost, error) {
+				return store.BlogPost{ID: postID, Slug: "some-slug"}, nil
+			},
 			DeleteBlogPostFn: func(ctx context.Context, aID, pID uuid.UUID) error {
 				return nil
 			},
 		}
 		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
-		err := proc.DeleteBlogPost(context.Background(), accountID, postID)
+		result, err := proc.DeleteBlogPost(context.Background(), accountID, postID)
 
 		require.NoError(t, err)
+		assert.Equal(t, "Blog post deleted successfully", result.Message)
+		assert.Empty(t, result.SiteDeleteError)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found (store-level)", func(t *testing.T) {
 		t.Parallel()
 		mockStore := &MockBlogStore{
+			GetBlogPostByIDFn: func(ctx context.Context, aID, pID uuid.UUID) (store.BlogPost, error) {
+				return store.BlogPost{ID: postID, Slug: "some-slug"}, nil
+			},
 			DeleteBlogPostFn: func(ctx context.Context, aID, pID uuid.UUID) error {
 				return store.ErrNotFound
 			},
 		}
 		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
-		err := proc.DeleteBlogPost(context.Background(), accountID, postID)
+		_, err := proc.DeleteBlogPost(context.Background(), accountID, postID)
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrBlogPostNotFound)
@@ -288,16 +296,92 @@ func TestBlogProcessor_DeleteBlogPost(t *testing.T) {
 		t.Parallel()
 		dbErr := errors.New("db error")
 		mockStore := &MockBlogStore{
+			GetBlogPostByIDFn: func(ctx context.Context, aID, pID uuid.UUID) (store.BlogPost, error) {
+				return store.BlogPost{}, nil
+			},
 			DeleteBlogPostFn: func(ctx context.Context, aID, pID uuid.UUID) error {
 				return dbErr
 			},
 		}
 		proc := New(mockStore, &MockBlogGenerator{}, logger)
 
-		err := proc.DeleteBlogPost(context.Background(), accountID, postID)
+		result, err := proc.DeleteBlogPost(context.Background(), accountID, postID)
+
+		assert.ErrorIs(t, err, dbErr)
+		assert.Empty(t, result)
+	})
+
+	t.Run("post-not-found short-circuit", func(t *testing.T) {
+		t.Parallel()
+		mockStore := &MockBlogStore{
+			GetBlogPostByIDFn: func(ctx context.Context, aID, pID uuid.UUID) (store.BlogPost, error) {
+				return store.BlogPost{}, store.ErrNotFound
+			},
+			// DeleteBlogPostFn intentionally left nil — calling it would panic,
+			// proving the store-level delete is never attempted.
+		}
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
+		proc.SetSitePublisher(&MockSitePublisher{
+			// DeleteBlogFromSiteFn intentionally left nil — calling it would panic,
+			// proving the site-delete is never attempted.
+		})
+
+		result, err := proc.DeleteBlogPost(context.Background(), accountID, postID)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, dbErr)
+		assert.ErrorIs(t, err, ErrBlogPostNotFound)
+		assert.Empty(t, result)
+	})
+
+	t.Run("site-delete success — no error captured", func(t *testing.T) {
+		t.Parallel()
+		mockStore := &MockBlogStore{
+			GetBlogPostByIDFn: func(ctx context.Context, aID, pID uuid.UUID) (store.BlogPost, error) {
+				return store.BlogPost{ID: postID, Slug: "some-slug"}, nil
+			},
+			DeleteBlogPostFn: func(ctx context.Context, aID, pID uuid.UUID) error {
+				return nil
+			},
+		}
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
+		proc.SetSitePublisher(&MockSitePublisher{
+			DeleteBlogFromSiteFn: func(ctx context.Context, aID uuid.UUID, post store.BlogPost) error {
+				return nil
+			},
+		})
+
+		result, err := proc.DeleteBlogPost(context.Background(), accountID, postID)
+
+		require.NoError(t, err)
+		assert.Empty(t, result.SiteDeleteError)
+		assert.Equal(t, "Blog post deleted successfully", result.Message)
+	})
+
+	t.Run("site-delete error captured but store-delete still proceeds", func(t *testing.T) {
+		t.Parallel()
+		storeDeleteCalled := false
+		mockStore := &MockBlogStore{
+			GetBlogPostByIDFn: func(ctx context.Context, aID, pID uuid.UUID) (store.BlogPost, error) {
+				return store.BlogPost{ID: postID, Slug: "some-slug"}, nil
+			},
+			DeleteBlogPostFn: func(ctx context.Context, aID, pID uuid.UUID) error {
+				storeDeleteCalled = true
+				return nil
+			},
+		}
+		proc := New(mockStore, &MockBlogGenerator{}, logger)
+		proc.SetSitePublisher(&MockSitePublisher{
+			DeleteBlogFromSiteFn: func(ctx context.Context, aID uuid.UUID, post store.BlogPost) error {
+				return errors.New("github unreachable")
+			},
+		})
+
+		result, err := proc.DeleteBlogPost(context.Background(), accountID, postID)
+
+		require.NoError(t, err)
+		assert.True(t, storeDeleteCalled, "store delete must still proceed after site-delete failure")
+		assert.Equal(t, "github unreachable", result.SiteDeleteError)
+		assert.Equal(t, "Blog post deleted successfully", result.Message)
 	})
 }
 

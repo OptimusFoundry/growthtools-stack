@@ -129,8 +129,8 @@ func TestHandler_HandleCreateBlog(t *testing.T) {
 			wantStatus: http.StatusCreated,
 		},
 		{
-			name:       "400 on malformed published_at",
-			mocks:      func(m *MockBlogProcessor) {},
+			name:  "400 on malformed published_at",
+			mocks: func(m *MockBlogProcessor) {},
 			body: map[string]any{
 				"title":        "My Blog",
 				"slug":         "my-blog",
@@ -346,18 +346,39 @@ func TestHandler_HandleDeleteBlog(t *testing.T) {
 	postID := uuid.New()
 
 	tests := []struct {
-		name       string
-		mocks      func(m *MockBlogProcessor)
-		postID     string
-		wantStatus int
+		name           string
+		mocks          func(m *MockBlogProcessor)
+		postID         string
+		wantStatus     int
+		checkBody      bool
+		wantMessage    string
+		wantSiteDelErr string
 	}{
 		{
 			name: "200 happy path",
 			mocks: func(m *MockBlogProcessor) {
-				m.EXPECT().DeleteBlogPost(gomock.Any(), accountID, postID).Return(nil)
+				m.EXPECT().DeleteBlogPost(gomock.Any(), accountID, postID).
+					Return(processor.DeleteBlogPostResult{Message: "Blog post deleted successfully"}, nil)
 			},
-			postID:     postID.String(),
-			wantStatus: http.StatusOK,
+			postID:      postID.String(),
+			wantStatus:  http.StatusOK,
+			checkBody:   true,
+			wantMessage: "Blog post deleted successfully",
+		},
+		{
+			name: "200 with site_delete_error",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().DeleteBlogPost(gomock.Any(), accountID, postID).
+					Return(processor.DeleteBlogPostResult{
+						Message:         "Blog post deleted successfully",
+						SiteDeleteError: "github unreachable",
+					}, nil)
+			},
+			postID:         postID.String(),
+			wantStatus:     http.StatusOK,
+			checkBody:      true,
+			wantMessage:    "Blog post deleted successfully",
+			wantSiteDelErr: "github unreachable",
 		},
 		{
 			name:       "400 invalid UUID",
@@ -369,7 +390,7 @@ func TestHandler_HandleDeleteBlog(t *testing.T) {
 			name: "404 not found",
 			mocks: func(m *MockBlogProcessor) {
 				m.EXPECT().DeleteBlogPost(gomock.Any(), accountID, postID).
-					Return(processor.ErrBlogPostNotFound)
+					Return(processor.DeleteBlogPostResult{}, processor.ErrBlogPostNotFound)
 			},
 			postID:     postID.String(),
 			wantStatus: http.StatusNotFound,
@@ -390,7 +411,19 @@ func TestHandler_HandleDeleteBlog(t *testing.T) {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			assert.Equal(t, tt.wantStatus, w.Code)
+			require.Equal(t, tt.wantStatus, w.Code)
+
+			if tt.checkBody {
+				var body map[string]any
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+				assert.Equal(t, tt.wantMessage, body["message"])
+				if tt.wantSiteDelErr != "" {
+					assert.Equal(t, tt.wantSiteDelErr, body["site_delete_error"])
+				} else {
+					_, present := body["site_delete_error"]
+					assert.False(t, present, "site_delete_error should be omitted when empty")
+				}
+			}
 		})
 	}
 }

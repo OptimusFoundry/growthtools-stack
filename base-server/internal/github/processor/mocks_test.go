@@ -597,6 +597,20 @@ func (mr *MockGitHubClientMockRecorder) CreateWebhook(ctx, token, owner, name, w
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWebhook", reflect.TypeOf((*MockGitHubClient)(nil).CreateWebhook), ctx, token, owner, name, webhookURL, secret)
 }
 
+// DeleteFileContents mocks base method.
+func (m *MockGitHubClient) DeleteFileContents(ctx context.Context, token, owner, repo, filePath, branch, commitMessage string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFileContents", ctx, token, owner, repo, filePath, branch, commitMessage)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFileContents indicates an expected call of DeleteFileContents.
+func (mr *MockGitHubClientMockRecorder) DeleteFileContents(ctx, token, owner, repo, filePath, branch, commitMessage any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileContents", reflect.TypeOf((*MockGitHubClient)(nil).DeleteFileContents), ctx, token, owner, repo, filePath, branch, commitMessage)
+}
+
 // DeleteWebhook mocks base method.
 func (m *MockGitHubClient) DeleteWebhook(ctx context.Context, token, owner, name string, hookID int64) error {
 	m.ctrl.T.Helper()

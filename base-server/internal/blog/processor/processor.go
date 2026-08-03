@@ -30,6 +30,7 @@ type URLSigner interface {
 // rationale as URLSigner) — GitHubProcessor satisfies this structurally.
 type SitePublisher interface {
 	PublishBlogToSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (prURL string, err error)
+	DeleteBlogFromSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) error
 }
 
 // BlogGenerator is the interface for the AI blog generator.
@@ -88,6 +89,14 @@ type BlogPostWithMedia struct {
 type BlogPublishResult struct {
 	Post             store.BlogPost `json:"post"`
 	SitePublishError string         `json:"site_publish_error,omitempty"`
+}
+
+// DeleteBlogPostResult is the response envelope for delete. SiteDeleteError
+// is a transient report of the last site-delete attempt only — never
+// persisted, and never blocks the internal delete succeeding.
+type DeleteBlogPostResult struct {
+	Message         string `json:"message"`
+	SiteDeleteError string `json:"site_delete_error,omitempty"`
 }
 
 // blogSlugPattern strips everything that is not a-z0-9.
@@ -263,22 +272,39 @@ func (p *BlogProcessor) UpdateBlogPost(ctx context.Context, accountID, postID uu
 	return updated, nil
 }
 
-func (p *BlogProcessor) DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error {
+func (p *BlogProcessor) DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) (DeleteBlogPostResult, error) {
 	ctx = observability.WithFields(ctx,
 		observability.Field{Key: "account_id", Value: accountID.String()},
 		observability.Field{Key: "post_id", Value: postID.String()},
 		observability.Field{Key: "operation", Value: "delete_blog_post"},
 	)
 
-	err := p.store.DeleteBlogPost(ctx, accountID, postID)
+	post, err := p.store.GetBlogPostByID(ctx, accountID, postID)
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return DeleteBlogPostResult{}, ErrBlogPostNotFound
+		}
+		p.logger.Error(ctx, "failed to get blog post for deletion", err)
+		return DeleteBlogPostResult{}, err
+	}
+
+	var siteDeleteError string
+	if p.sitePublisher != nil {
+		if err := p.sitePublisher.DeleteBlogFromSite(ctx, accountID, post); err != nil {
+			p.logger.Error(ctx, "failed to delete blog post from site", err)
+			siteDeleteError = err.Error()
+		}
+	}
+
+	if err := p.store.DeleteBlogPost(ctx, accountID, postID); err != nil {
 		p.logger.Error(ctx, "failed to delete blog post", err)
 		if errors.Is(err, store.ErrNotFound) {
-			return ErrBlogPostNotFound
+			return DeleteBlogPostResult{}, ErrBlogPostNotFound
 		}
-		return err
+		return DeleteBlogPostResult{}, err
 	}
-	return nil
+
+	return DeleteBlogPostResult{Message: "Blog post deleted successfully", SiteDeleteError: siteDeleteError}, nil
 }
 
 func (p *BlogProcessor) PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (BlogPublishResult, error) {

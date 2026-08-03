@@ -33,11 +33,16 @@ func (m *MockBlogGenerator) GenerateStream(ctx context.Context, req aiblog.Reque
 
 // MockSitePublisher is a manual mock for SitePublisher
 type MockSitePublisher struct {
-	PublishBlogToSiteFn func(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (string, error)
+	PublishBlogToSiteFn  func(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (string, error)
+	DeleteBlogFromSiteFn func(ctx context.Context, accountID uuid.UUID, post store.BlogPost) error
 }
 
 func (m *MockSitePublisher) PublishBlogToSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) (string, error) {
 	return m.PublishBlogToSiteFn(ctx, accountID, post)
+}
+
+func (m *MockSitePublisher) DeleteBlogFromSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) error {
+	return m.DeleteBlogFromSiteFn(ctx, accountID, post)
 }
 
 // MockBlogStore is a manual mock for BlogStore

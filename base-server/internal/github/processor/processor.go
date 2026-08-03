@@ -31,6 +31,7 @@ var (
 	ErrFailedGetCommit     = errors.New("failed to get github commit")
 	ErrGitHubNotConnected  = errors.New("github account not connected")
 	ErrSitePublishFailed   = errors.New("site publish failed")
+	ErrSiteDeleteFailed    = errors.New("site delete failed")
 )
 
 // GitHubStore defines the database operations required by GitHubProcessor
@@ -95,6 +96,7 @@ type GitHubClient interface {
 	CreateOrUpdateFileContents(ctx context.Context, token, owner, repo, filePath, branch string, content []byte, commitMessage string) error
 	CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, int, error)
 	MergePullRequest(ctx context.Context, token, owner, repo string, prNumber int) error
+	DeleteFileContents(ctx context.Context, token, owner, repo, filePath, branch, commitMessage string) error
 }
 
 // StorybookClient fetches a Storybook deployment's story index so pushed

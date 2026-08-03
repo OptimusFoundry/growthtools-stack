@@ -28,7 +28,7 @@ type BlogProcessor interface {
 	GetBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPostWithMedia, error)
 	ListBlogPosts(ctx context.Context, accountID uuid.UUID, status *string, limit, offset int) ([]store.BlogPostListItem, error)
 	UpdateBlogPost(ctx context.Context, accountID, postID uuid.UUID, params store.UpdateBlogPostParams) (store.BlogPost, error)
-	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error
+	DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.DeleteBlogPostResult, error)
 	PublishBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPublishResult, error)
 	RetrySitePublish(ctx context.Context, accountID, postID uuid.UUID) (processor.BlogPublishResult, error)
 	GenerateBlogPost(ctx context.Context, accountID uuid.UUID, instruction string, keywords []string, mediaIDs []uuid.UUID) (store.BlogPost, error)
@@ -322,12 +322,13 @@ func (h *Handler) HandleDeleteBlog(c *gin.Context) {
 		observability.Field{Key: "post_id", Value: postID.String()},
 	)
 
-	if err := h.processor.DeleteBlogPost(ctx, accountID, postID); err != nil {
+	result, err := h.processor.DeleteBlogPost(ctx, accountID, postID)
+	if err != nil {
 		h.handleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Blog post deleted successfully"})
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) HandlePublishBlog(c *gin.Context) {

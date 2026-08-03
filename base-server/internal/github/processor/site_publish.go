@@ -92,6 +92,73 @@ func (p *GitHubProcessor) PublishBlogToSite(ctx context.Context, accountID uuid.
 	return prURL, nil
 }
 
+// DeleteBlogFromSite removes a published blog post's markdown file from the
+// account's configured site repo via branch + delete + PR (best-effort
+// auto-merge). Returns nil immediately when post.SitePRURL is nil (never
+// published to the site — zero store/GitHub calls).
+func (p *GitHubProcessor) DeleteBlogFromSite(ctx context.Context, accountID uuid.UUID, post store.BlogPost) error {
+	if post.SitePRURL == nil {
+		return nil
+	}
+
+	target, err := p.store.GetSitePublishTargetByAccount(ctx, accountID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil
+		}
+		p.logger.Error(ctx, "failed to get site publish target for site delete", err)
+		return ErrSiteDeleteFailed
+	}
+
+	account, err := p.store.GetAccountByID(ctx, accountID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get account for site delete", err)
+		return ErrGitHubNotConnected
+	}
+
+	conn, err := p.store.GetGitHubConnectionByUserID(ctx, account.OwnerUserID)
+	if err != nil {
+		p.logger.Error(ctx, "failed to get github connection for site delete", err)
+		return ErrGitHubNotConnected
+	}
+
+	filePath := path.Join(target.ContentPath, post.Slug+".md")
+
+	suffix, err := randomHexSuffix(8)
+	if err != nil {
+		p.logger.Error(ctx, "failed to generate branch suffix for site delete", err)
+		return ErrSiteDeleteFailed
+	}
+	branchName := fmt.Sprintf("blog/remove-%s-%s", post.Slug, suffix)
+
+	token := conn.AccessToken
+
+	if err := p.githubClient.CreateBranch(ctx, token, target.RepoOwner, target.RepoName, target.BaseBranch, branchName); err != nil {
+		p.logger.Error(ctx, "failed to create branch for site delete", err)
+		return ErrSiteDeleteFailed
+	}
+
+	commitMessage := fmt.Sprintf("blog: remove %q", post.Title)
+	if err := p.githubClient.DeleteFileContents(ctx, token, target.RepoOwner, target.RepoName, filePath, branchName, commitMessage); err != nil {
+		p.logger.Error(ctx, "failed to delete blog file for site delete", err)
+		return ErrSiteDeleteFailed
+	}
+
+	_, prNumber, err := p.githubClient.CreatePullRequest(ctx, token, target.RepoOwner, target.RepoName, branchName, target.BaseBranch,
+		fmt.Sprintf("Remove: %s", post.Title), "Automated PR removing a blog post from the site.")
+	if err != nil {
+		p.logger.Error(ctx, "failed to create pull request for site delete", err)
+		return ErrSiteDeleteFailed
+	}
+
+	// Best-effort auto-merge: see PublishBlogToSite for rationale.
+	if err := p.githubClient.MergePullRequest(ctx, token, target.RepoOwner, target.RepoName, prNumber); err != nil {
+		p.logger.Error(ctx, "failed to auto-merge pull request for site delete", err)
+	}
+
+	return nil
+}
+
 // buildBlogMarkdown renders the post as YAML frontmatter + markdown body,
 // rewriting any private s3 media URLs embedded in the content to their
 // permanent public equivalents.

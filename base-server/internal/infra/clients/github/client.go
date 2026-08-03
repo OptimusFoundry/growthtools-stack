@@ -471,6 +471,77 @@ func (c *Client) CreateOrUpdateFileContents(ctx context.Context, token, owner, r
 	return nil
 }
 
+// DeleteFileContents removes a file at filePath on branch, committing with
+// commitMessage. A 404 on the GET-for-sha step is treated as already-deleted
+// (not an error) — no DELETE request is issued in that case.
+func (c *Client) DeleteFileContents(ctx context.Context, token, owner, repo, filePath, branch, commitMessage string) error {
+	getURL := fmt.Sprintf("%s/repos/%s/%s/contents/%s?ref=%s", c.apiBase, owner, repo, filePath, branch)
+	getReq, err := http.NewRequestWithContext(ctx, http.MethodGet, getURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create get content request: %w", err)
+	}
+	getReq.Header.Set("Authorization", "Bearer "+token)
+	getReq.Header.Set("Accept", "application/vnd.github+json")
+
+	getResp, err := c.httpClient.Do(getReq)
+	if err != nil {
+		c.logger.Error(ctx, "failed to get file contents", err)
+		return fmt.Errorf("failed to get file contents: %w", err)
+	}
+	defer getResp.Body.Close()
+
+	if getResp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	var sha string
+	if getResp.StatusCode == http.StatusOK {
+		getBody, err := io.ReadAll(getResp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read get content response: %w", err)
+		}
+		var existing RepoContentResponse
+		if err := json.Unmarshal(getBody, &existing); err != nil {
+			return fmt.Errorf("failed to parse get content response: %w", err)
+		}
+		sha = existing.SHA
+	} else {
+		return fmt.Errorf("github get contents returned status %d", getResp.StatusCode)
+	}
+
+	payload := map[string]any{
+		"message": commitMessage,
+		"sha":     sha,
+		"branch":  branch,
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal delete contents payload: %w", err)
+	}
+
+	deleteURL := fmt.Sprintf("%s/repos/%s/%s/contents/%s", c.apiBase, owner, repo, filePath)
+	deleteReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, deleteURL, strings.NewReader(string(body)))
+	if err != nil {
+		return fmt.Errorf("failed to create delete content request: %w", err)
+	}
+	deleteReq.Header.Set("Authorization", "Bearer "+token)
+	deleteReq.Header.Set("Accept", "application/vnd.github+json")
+	deleteReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(deleteReq)
+	if err != nil {
+		c.logger.Error(ctx, "failed to delete file contents", err)
+		return fmt.Errorf("failed to delete file contents: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("github delete contents returned status %d: %s", resp.StatusCode, string(respBody))
+	}
+	return nil
+}
+
 // CreatePullRequest opens a PR from headBranch into baseBranch, returning the PR's HTML URL and number
 func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, int, error) {
 	payload := map[string]any{

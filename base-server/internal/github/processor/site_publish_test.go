@@ -548,6 +548,293 @@ func TestComputeReadingTime(t *testing.T) {
 	}
 }
 
+var deleteBranchNameRe = regexp.MustCompile(`^blog/remove-([a-zA-Z0-9-]+)-([0-9a-f]{8})$`)
+
+func TestGitHubProcessor_DeleteBlogFromSite(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	ownerUserID := uuid.New()
+
+	prURL := "https://github.com/acme/site/pull/42"
+
+	postNoPR := store.BlogPost{
+		ID:    uuid.New(),
+		Title: "My Great Post",
+		Slug:  "my-great-post",
+	}
+	postWithPR := store.BlogPost{
+		ID:        uuid.New(),
+		Title:     "My Great Post",
+		Slug:      "my-great-post",
+		SitePRURL: &prURL,
+	}
+
+	target := store.SitePublishTarget{
+		ID:          uuid.New(),
+		AccountID:   accountID,
+		RepoOwner:   "acme",
+		RepoName:    "site",
+		BaseBranch:  "main",
+		ContentPath: "src/content/blog",
+	}
+
+	account := store.Account{ID: accountID, OwnerUserID: ownerUserID}
+	conn := store.GitHubConnection{ID: uuid.New(), UserID: ownerUserID, AccessToken: "gh-token"}
+
+	tests := []struct {
+		name    string
+		post    store.BlogPost
+		mocks   func(s *MockGitHubStore, c *MockGitHubClient)
+		wantErr error
+	}{
+		{
+			name: "post never published to site – nil SitePRURL is a silent no-op with zero store/GitHub calls",
+			post: postNoPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				// Strict controller — fails the test if any store or client
+				// call occurs.
+			},
+		},
+		{
+			name: "no site publish target configured – silent no-op",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(store.SitePublishTarget{}, store.ErrNotFound)
+			},
+		},
+		{
+			name: "get account fails returns ErrGitHubNotConnected",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(store.Account{}, errors.New("account not found"))
+			},
+			wantErr: ErrGitHubNotConnected,
+		},
+		{
+			name: "get github connection fails returns ErrGitHubNotConnected",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(store.GitHubConnection{}, store.ErrNotFound)
+			},
+			wantErr: ErrGitHubNotConnected,
+		},
+		{
+			name: "create branch fails returns ErrSiteDeleteFailed",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(errors.New("branch create failed"))
+			},
+			wantErr: ErrSiteDeleteFailed,
+		},
+		{
+			name: "delete file contents fails returns ErrSiteDeleteFailed",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+					Return(errors.New("file delete failed"))
+			},
+			wantErr: ErrSiteDeleteFailed,
+		},
+		{
+			name: "create pull request fails returns ErrSiteDeleteFailed",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
+					Return("", 0, errors.New("pr create failed"))
+			},
+			wantErr: ErrSiteDeleteFailed,
+		},
+		{
+			name: "merge fails after successful PR creation – best-effort, PR left open, returns nil",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
+					Return("https://github.com/acme/site/pull/99", 99, nil)
+				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 99).
+					Return(errors.New("merge conflict"))
+			},
+		},
+		{
+			name: "happy path – full branch, delete, PR, merge succeeds",
+			post: postWithPR,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+
+				var branchName string
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _, _, _, newBranch string) error {
+						branchName = newBranch
+						assert.True(t, strings.HasPrefix(newBranch, "blog/remove-my-great-post-"), "branch %q must have prefix blog/remove-my-great-post-", newBranch)
+						return nil
+					})
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _, _, _, branch, commitMessage string) error {
+						assert.Equal(t, branchName, branch, "file delete branch must match created branch")
+						assert.Contains(t, commitMessage, postWithPR.Title, "commit message must contain post title")
+						return nil
+					})
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
+					DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
+						assert.Equal(t, branchName, headBranch, "PR head branch must match created branch")
+						return "https://github.com/acme/site/pull/42", 42, nil
+					})
+				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mockStore := NewMockGitHubStore(ctrl)
+			mockClient := NewMockGitHubClient(ctrl)
+			tt.mocks(mockStore, mockClient)
+
+			proc := NewWithOAuth(mockStore, mockClient, NewMockEventPublisher(ctrl), testWebhookSecret, "client-id", "http://localhost", logger)
+
+			err := proc.DeleteBlogFromSite(context.Background(), accountID, tt.post)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+// TestGitHubProcessor_DeleteBlogFromSite_BranchNameShape isolates the delete
+// branch naming contract (blog/remove-<slug>-<8-hex-suffix>) since it depends
+// on a randomly generated suffix and can't be asserted with a fixed
+// expectation.
+func TestGitHubProcessor_DeleteBlogFromSite_BranchNameShape(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	ownerUserID := uuid.New()
+
+	prURL := "https://github.com/acme/site/pull/1"
+	post := store.BlogPost{
+		ID:        uuid.New(),
+		Title:     "My Great Post",
+		Slug:      "my-great-post",
+		SitePRURL: &prURL,
+	}
+	target := store.SitePublishTarget{
+		ID:          uuid.New(),
+		AccountID:   accountID,
+		RepoOwner:   "acme",
+		RepoName:    "site",
+		BaseBranch:  "main",
+		ContentPath: "src/content/blog",
+	}
+	account := store.Account{ID: accountID, OwnerUserID: ownerUserID}
+	conn := store.GitHubConnection{ID: uuid.New(), UserID: ownerUserID, AccessToken: "gh-token"}
+
+	tests := []struct {
+		name string
+	}{
+		{name: "branch name has blog/remove-<slug>-<8hex> shape and is reused for both calls"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			mockStore := NewMockGitHubStore(ctrl)
+			mockClient := NewMockGitHubClient(ctrl)
+
+			var seenBranches []string
+
+			mockStore.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).Return(target, nil)
+			mockStore.EXPECT().GetAccountByID(gomock.Any(), accountID).Return(account, nil)
+			mockStore.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).Return(conn, nil)
+
+			mockClient.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, _, _, _, newBranch string) error {
+					seenBranches = append(seenBranches, newBranch)
+					return nil
+				})
+			mockClient.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, _, _, _, branch, _ string) error {
+					seenBranches = append(seenBranches, branch)
+					return nil
+				})
+			mockClient.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
+				DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
+					seenBranches = append(seenBranches, headBranch)
+					return "https://github.com/acme/site/pull/1", 1, nil
+				})
+			mockClient.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 1).
+				Return(nil)
+
+			proc := NewWithOAuth(mockStore, mockClient, NewMockEventPublisher(ctrl), testWebhookSecret, "client-id", "http://localhost", logger)
+			err := proc.DeleteBlogFromSite(context.Background(), accountID, post)
+
+			require.NoError(t, err)
+
+			require.Len(t, seenBranches, 3)
+			for _, b := range seenBranches {
+				assert.True(t, strings.HasPrefix(b, "blog/remove-my-great-post-"), "branch %q must have prefix blog/remove-my-great-post-", b)
+				assert.Regexp(t, deleteBranchNameRe, b, "branch %q must match blog/remove-<slug>-<8hex> shape", b)
+				assert.Equal(t, seenBranches[0], b, "same branch name must be used across all three calls")
+			}
+		})
+	}
+}
+
 // mustParseTime parses a YYYY-MM-DD date string for test fixtures.
 func mustParseTime(t *testing.T, s string) time.Time {
 	t.Helper()

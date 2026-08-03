@@ -59,11 +59,12 @@ func (mr *MockBlogProcessorMockRecorder) CreateBlogPost(ctx, params any) *gomock
 }
 
 // DeleteBlogPost mocks base method.
-func (m *MockBlogProcessor) DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) error {
+func (m *MockBlogProcessor) DeleteBlogPost(ctx context.Context, accountID, postID uuid.UUID) (processor.DeleteBlogPostResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteBlogPost", ctx, accountID, postID)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(processor.DeleteBlogPostResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteBlogPost indicates an expected call of DeleteBlogPost.

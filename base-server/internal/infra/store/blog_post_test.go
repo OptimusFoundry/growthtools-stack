@@ -151,6 +151,59 @@ func TestListBlogPosts(t *testing.T) {
 	assert.Empty(t, posts)
 }
 
+func TestListBlogPosts_SitePRURL(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	withPR, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+		AccountID: accountID,
+		Title:     "Post With Site PR",
+		Slug:      "post-with-site-pr-" + uuid.New().String()[:8],
+		Content:   "Content",
+		Status:    BlogStatusDraft,
+	})
+	require.NoError(t, err)
+
+	prURL := "https://github.com/acme/site/pull/" + uuid.New().String()[:8]
+	_, err = s.SetBlogPostSitePR(ctx, accountID, withPR.ID, prURL)
+	require.NoError(t, err)
+
+	withoutPR, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+		AccountID: accountID,
+		Title:     "Post Without Site PR",
+		Slug:      "post-without-site-pr-" + uuid.New().String()[:8],
+		Content:   "Content",
+		Status:    BlogStatusDraft,
+	})
+	require.NoError(t, err)
+
+	posts, err := s.ListBlogPosts(ctx, accountID, nil, 10, 0)
+	require.NoError(t, err)
+
+	var gotWithPR, gotWithoutPR *BlogPostListItem
+	for i := range posts {
+		switch posts[i].ID {
+		case withPR.ID:
+			gotWithPR = &posts[i]
+		case withoutPR.ID:
+			gotWithoutPR = &posts[i]
+		}
+	}
+
+	require.NotNil(t, gotWithPR, "expected post with site PR to appear in list")
+	require.NotNil(t, gotWithPR.SitePRURL)
+	assert.Equal(t, prURL, *gotWithPR.SitePRURL)
+
+	require.NotNil(t, gotWithoutPR, "expected post without site PR to appear in list")
+	assert.Nil(t, gotWithoutPR.SitePRURL)
+}
+
 func TestUpdateBlogPost(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {
