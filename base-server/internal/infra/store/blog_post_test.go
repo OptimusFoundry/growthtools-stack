@@ -187,6 +187,44 @@ func TestUpdateBlogPost(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
+func TestUpdateBlogPost_PublishedAt(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	created, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+		AccountID: accountID,
+		Title:     "Backdate Test",
+		Slug:      "backdate-test-" + uuid.New().String()[:8],
+		Content:   "content",
+		Status:    BlogStatusDraft,
+	})
+	require.NoError(t, err)
+	assert.Nil(t, created.PublishedAt)
+
+	backdate := time.Date(2020, 1, 15, 0, 0, 0, 0, time.UTC)
+	updated, err := s.UpdateBlogPost(ctx, accountID, created.ID, UpdateBlogPostParams{
+		PublishedAt: &backdate,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated.PublishedAt)
+	assert.True(t, backdate.Equal(*updated.PublishedAt))
+
+	// A nil PublishedAt in the params leaves the stored date untouched.
+	newTitle := "Retitled"
+	untouched, err := s.UpdateBlogPost(ctx, accountID, created.ID, UpdateBlogPostParams{
+		Title: &newTitle,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, untouched.PublishedAt)
+	assert.True(t, backdate.Equal(*untouched.PublishedAt))
+}
+
 func TestDeleteBlogPost(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {
@@ -246,6 +284,36 @@ func TestPublishBlogPost(t *testing.T) {
 	// Not found
 	_, err = s.PublishBlogPost(ctx, accountID, uuid.New())
 	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestPublishBlogPost_PreservesBackdatedPublishedAt(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping store test in short mode")
+	}
+
+	s := SetupTestStore(t)
+	accountID := createTestAccount(t, s)
+	ctx := context.Background()
+
+	created, err := s.CreateBlogPost(ctx, CreateBlogPostParams{
+		AccountID: accountID,
+		Title:     "Backdated Publish Test",
+		Slug:      "backdated-publish-test-" + uuid.New().String()[:8],
+		Content:   "content",
+		Status:    BlogStatusDraft,
+	})
+	require.NoError(t, err)
+
+	backdate := time.Date(2019, 6, 1, 0, 0, 0, 0, time.UTC)
+	_, err = s.UpdateBlogPost(ctx, accountID, created.ID, UpdateBlogPostParams{PublishedAt: &backdate})
+	require.NoError(t, err)
+
+	published, err := s.PublishBlogPost(ctx, accountID, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, BlogStatusPublished, published.Status)
+	require.NotNil(t, published.PublishedAt)
+	assert.True(t, backdate.Equal(*published.PublishedAt), "publish must not overwrite a pre-set published_at")
 }
 
 // ============================================================================

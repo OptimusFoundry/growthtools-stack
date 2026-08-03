@@ -63,11 +63,12 @@ type CreateBlogPostParams struct {
 	FeaturedImageID   *uuid.UUID
 	SourceInstruction *string
 	MediaIDs          UUIDArray
+	PublishedAt       *time.Time
 }
 
 const sqlCreateBlogPost = `
-INSERT INTO blog_posts (account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO blog_posts (account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 `
 
@@ -81,7 +82,7 @@ func (s *Store) CreateBlogPost(ctx context.Context, params CreateBlogPostParams)
 		params.AccountID, params.Title, params.Slug, params.Content,
 		params.Excerpt, params.Status, params.SEOTitle, params.MetaDescription,
 		params.Keywords, params.OGTitle, params.OGDescription, params.FeaturedImageID,
-		params.SourceInstruction, mediaIDs)
+		params.SourceInstruction, mediaIDs, params.PublishedAt)
 	if err != nil {
 		return BlogPost{}, fmt.Errorf("failed to create blog post: %w", err)
 	}
@@ -160,6 +161,7 @@ type UpdateBlogPostParams struct {
 	FeaturedImageID   *uuid.UUID
 	SourceInstruction *string
 	MediaIDs          UUIDArray
+	PublishedAt       *time.Time
 }
 
 const sqlUpdateBlogPost = `
@@ -177,6 +179,7 @@ SET title = COALESCE($3, title),
     featured_image_id = COALESCE($13, featured_image_id),
     source_instruction = COALESCE($14, source_instruction),
     media_ids = COALESCE($15, media_ids),
+    published_at = COALESCE($16, published_at),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
 RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
@@ -188,7 +191,7 @@ func (s *Store) UpdateBlogPost(ctx context.Context, accountID, id uuid.UUID, par
 		id, accountID, params.Title, params.Slug, params.Content,
 		params.Excerpt, params.Status, params.SEOTitle, params.MetaDescription,
 		params.Keywords, params.OGTitle, params.OGDescription, params.FeaturedImageID,
-		params.SourceInstruction, params.MediaIDs)
+		params.SourceInstruction, params.MediaIDs, params.PublishedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return BlogPost{}, ErrNotFound
@@ -219,9 +222,11 @@ func (s *Store) DeleteBlogPost(ctx context.Context, accountID, id uuid.UUID) err
 	return nil
 }
 
+// published_at only defaults to now if it wasn't already set (e.g. via a
+// backdate set before publishing) — publishing never overwrites a chosen date.
 const sqlPublishBlogPost = `
 UPDATE blog_posts
-SET status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+SET status = 'published', published_at = COALESCE(published_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL
 RETURNING id, account_id, title, slug, content, excerpt, status, seo_title, meta_description, keywords, og_title, og_description, featured_image_id, source_instruction, media_ids, published_at, site_pr_url, site_pr_opened_at, created_at, updated_at, deleted_at
 `

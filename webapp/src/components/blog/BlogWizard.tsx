@@ -85,6 +85,11 @@ export function BlogWizard({
 	const [ogDescription, setOgDescription] = useState(
 		initialBlogPost?.ogDescription ?? "",
 	);
+	// Published date as YYYY-MM-DD (what an <input type="date"> reads/writes) —
+	// the API returns a full timestamp, so slice to just the date part.
+	const [publishedAt, setPublishedAt] = useState(
+		initialBlogPost?.publishedAt?.slice(0, 10) ?? "",
+	);
 	const [existingMedia, setExistingMedia] = useState<MediaItem[]>(
 		initialMedia ?? [],
 	);
@@ -199,6 +204,7 @@ export function BlogWizard({
 			og_description: ogDescription || undefined,
 			source_instruction: instruction || undefined,
 			media_ids: existingMediaIds,
+			published_at: publishedAt || undefined,
 		}),
 		[
 			title,
@@ -211,6 +217,7 @@ export function BlogWizard({
 			ogTitle,
 			ogDescription,
 			instruction,
+			publishedAt,
 			existingMediaIds,
 		],
 	);
@@ -484,6 +491,13 @@ export function BlogWizard({
 								rows={3}
 								value={excerpt}
 								onChange={(e) => setExcerpt(e.target.value)}
+							/>
+							<TextField
+								label="Published date"
+								type="date"
+								value={publishedAt}
+								onChange={(e) => setPublishedAt(e.target.value)}
+								helperText="Backdate the post's public date, e.g. to match when the work actually happened. Leave blank to use today's date when you publish."
 							/>
 						</Stack>
 

@@ -74,6 +74,7 @@ export interface CreateBlogPostRequest {
 	featured_image_id?: string;
 	source_instruction?: string;
 	media_ids?: string[];
+	published_at?: string;
 }
 
 export interface UpdateBlogPostRequest {
@@ -90,6 +91,7 @@ export interface UpdateBlogPostRequest {
 	featured_image_id?: string;
 	source_instruction?: string;
 	media_ids?: string[];
+	published_at?: string;
 }
 
 export interface GenerateBlogRequest {

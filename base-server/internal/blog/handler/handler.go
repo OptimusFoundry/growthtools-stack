@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"base-server/internal/blog/processor"
 	"base-server/internal/infra/apierrors"
@@ -59,6 +60,7 @@ type CreateBlogRequest struct {
 	FeaturedImageID   *string  `json:"featured_image_id"`
 	SourceInstruction *string  `json:"source_instruction"`
 	MediaIDs          []string `json:"media_ids"`
+	PublishedAt       *string  `json:"published_at"`
 }
 
 type UpdateBlogRequest struct {
@@ -74,6 +76,21 @@ type UpdateBlogRequest struct {
 	FeaturedImageID   *string  `json:"featured_image_id"`
 	SourceInstruction *string  `json:"source_instruction"`
 	MediaIDs          []string `json:"media_ids"`
+	PublishedAt       *string  `json:"published_at"`
+}
+
+// parsePublishedAt parses an optional "YYYY-MM-DD" date string (the shape an
+// HTML date input sends) into a *time.Time. Used to let a post's published
+// date be backdated or moved forward — nil in, nil out.
+func parsePublishedAt(s *string) (*time.Time, error) {
+	if s == nil || *s == "" {
+		return nil, nil
+	}
+	t, err := time.Parse("2006-01-02", *s)
+	if err != nil {
+		return nil, fmt.Errorf("invalid published_at format, expected YYYY-MM-DD: %w", err)
+	}
+	return &t, nil
 }
 
 type GenerateBlogRequest struct {
@@ -97,6 +114,12 @@ func (h *Handler) HandleCreateBlog(c *gin.Context) {
 		return
 	}
 
+	publishedAt, err := parsePublishedAt(req.PublishedAt)
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", err.Error())
+		return
+	}
+
 	params := store.CreateBlogPostParams{
 		AccountID:         accountID,
 		Title:             req.Title,
@@ -111,6 +134,7 @@ func (h *Handler) HandleCreateBlog(c *gin.Context) {
 		OGDescription:     req.OGDescription,
 		SourceInstruction: req.SourceInstruction,
 		MediaIDs:          store.UUIDArray{},
+		PublishedAt:       publishedAt,
 	}
 
 	if req.FeaturedImageID != nil {
@@ -230,6 +254,12 @@ func (h *Handler) HandleUpdateBlog(c *gin.Context) {
 		return
 	}
 
+	publishedAt, err := parsePublishedAt(req.PublishedAt)
+	if err != nil {
+		apierrors.BadRequest(c, "INVALID_INPUT", err.Error())
+		return
+	}
+
 	updateParams := store.UpdateBlogPostParams{
 		Title:             req.Title,
 		Slug:              req.Slug,
@@ -240,6 +270,7 @@ func (h *Handler) HandleUpdateBlog(c *gin.Context) {
 		OGTitle:           req.OGTitle,
 		OGDescription:     req.OGDescription,
 		SourceInstruction: req.SourceInstruction,
+		PublishedAt:       publishedAt,
 	}
 	if req.Keywords != nil {
 		updateParams.Keywords = store.StringArray(req.Keywords)

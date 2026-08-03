@@ -14,7 +14,11 @@
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
-import { blogScenarios } from "./handlers/blog.handlers";
+import {
+	blogEndpoints,
+	blogScenarios,
+	fullBlogPost,
+} from "./handlers/blog.handlers";
 import { setupEndpoint } from "./helpers/endpoint";
 import { blogPosts } from "./mocks/data";
 
@@ -521,6 +525,59 @@ test.describe("Blog", () => {
 			// The decoded escape sequences (embedded quote, newlines) render as
 			// real characters, not literal `\"` / `\n` JSON escapes.
 			await expect(page.getByText('He said "hello".')).toBeVisible();
+		});
+	});
+
+	test.describe("Backdating — Published date field", () => {
+		test("editing an existing post's published date sends it as published_at on save", async ({
+			network,
+			page,
+		}) => {
+			network.use(blogEndpoints.get[200]());
+
+			let sentBody: Record<string, unknown> | undefined;
+			network.use(
+				http.put("*/api/protected/blog/:id", async ({ request }) => {
+					sentBody = (await request.json()) as Record<string, unknown>;
+					return HttpResponse.json({ post: fullBlogPost, media: [] });
+				}),
+			);
+
+			await page.goto(`/blog/${fullBlogPost.id}`);
+			await page.waitForLoadState("networkidle");
+
+			const dateField = page.getByLabel(/published date/i);
+			await dateField.fill("2019-06-01");
+
+			await page.getByRole("button", { name: /save draft/i }).click();
+			await page.waitForLoadState("networkidle");
+
+			expect(sentBody?.published_at).toBe("2019-06-01");
+		});
+
+		test("leaving the published date untouched round-trips the existing date, not blank", async ({
+			network,
+			page,
+		}) => {
+			network.use(blogEndpoints.get[200]());
+
+			let sentBody: Record<string, unknown> | undefined;
+			network.use(
+				http.put("*/api/protected/blog/:id", async ({ request }) => {
+					sentBody = (await request.json()) as Record<string, unknown>;
+					return HttpResponse.json({ post: fullBlogPost, media: [] });
+				}),
+			);
+
+			await page.goto(`/blog/${fullBlogPost.id}`);
+			await page.waitForLoadState("networkidle");
+
+			// fullBlogPost's published_at is 2025-11-01T12:00:00Z (see mocks/data) —
+			// unchanged, saving must send that same date back, not clear it.
+			await page.getByRole("button", { name: /save draft/i }).click();
+			await page.waitForLoadState("networkidle");
+
+			expect(sentBody?.published_at).toBe("2025-11-01");
 		});
 	});
 });

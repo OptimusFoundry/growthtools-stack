@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -109,6 +110,35 @@ func TestHandler_HandleCreateBlog(t *testing.T) {
 			},
 			wantStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "201 with a valid backdated published_at",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().CreateBlogPost(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, p store.CreateBlogPostParams) (store.BlogPost, error) {
+						require.NotNil(t, p.PublishedAt)
+						assert.Equal(t, "2020-01-15", p.PublishedAt.Format("2006-01-02"))
+						return store.BlogPost{ID: uuid.New()}, nil
+					})
+			},
+			body: map[string]any{
+				"title":        "My Blog",
+				"slug":         "my-blog",
+				"content":      "body",
+				"published_at": "2020-01-15",
+			},
+			wantStatus: http.StatusCreated,
+		},
+		{
+			name:       "400 on malformed published_at",
+			mocks:      func(m *MockBlogProcessor) {},
+			body: map[string]any{
+				"title":        "My Blog",
+				"slug":         "my-blog",
+				"content":      "body",
+				"published_at": "not-a-date",
+			},
+			wantStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {
@@ -122,6 +152,71 @@ func TestHandler_HandleCreateBlog(t *testing.T) {
 			router := setupBlogRouter(h, accountID)
 
 			req := httptest.NewRequest(http.MethodPost, "/blogs", blogBody(t, tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.wantStatus, w.Code)
+		})
+	}
+}
+
+func TestHandler_HandleUpdateBlog_PublishedAt(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+	accountID := uuid.New()
+	postID := uuid.New()
+
+	tests := []struct {
+		name       string
+		mocks      func(m *MockBlogProcessor)
+		body       any
+		wantStatus int
+	}{
+		{
+			name: "200 sets a backdated published_at",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().UpdateBlogPost(gomock.Any(), accountID, postID, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _ uuid.UUID, p store.UpdateBlogPostParams) (store.BlogPost, error) {
+						require.NotNil(t, p.PublishedAt)
+						assert.Equal(t, "2019-06-01", p.PublishedAt.Format("2006-01-02"))
+						return store.BlogPost{ID: postID}, nil
+					})
+			},
+			body:       map[string]any{"published_at": "2019-06-01"},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "200 with no published_at leaves it nil (unchanged)",
+			mocks: func(m *MockBlogProcessor) {
+				m.EXPECT().UpdateBlogPost(gomock.Any(), accountID, postID, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _ uuid.UUID, p store.UpdateBlogPostParams) (store.BlogPost, error) {
+						assert.Nil(t, p.PublishedAt)
+						return store.BlogPost{ID: postID}, nil
+					})
+			},
+			body:       map[string]any{"title": "Retitled"},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "400 on malformed published_at",
+			mocks:      func(m *MockBlogProcessor) {},
+			body:       map[string]any{"published_at": "15/01/2020"},
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			m := NewMockBlogProcessor(ctrl)
+			tt.mocks(m)
+
+			h := New(m, logger)
+			router := setupBlogRouter(h, accountID)
+
+			req := httptest.NewRequest(http.MethodPut, "/blogs/"+postID.String(), blogBody(t, tt.body))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
