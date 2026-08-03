@@ -340,6 +340,11 @@ func TestBuildBlogMarkdown(t *testing.T) {
 
 	excerpt := "an excerpt"
 	metaDesc := "a meta description"
+	seoTitle := "Custom SEO Title"
+	ogTitle := "Custom OG Title"
+	ogDescription := "Custom OG Description"
+	featuredMediaID := uuid.New()
+	staleFeaturedImageID := uuid.New()
 
 	tests := []struct {
 		name          string
@@ -438,6 +443,73 @@ func TestBuildBlogMarkdown(t *testing.T) {
 			publicURLBase: "https://cdn.example.com",
 			assert: func(t *testing.T, got string) {
 				assert.Contains(t, got, "plain content with no urls to rewrite")
+			},
+		},
+		{
+			name: "seoTitle, ogTitle, and ogDescription are written when all three are set on the post",
+			post: store.BlogPost{
+				Title:         "SEO Post",
+				Content:       "short content",
+				SEOTitle:      &seoTitle,
+				OGTitle:       &ogTitle,
+				OGDescription: &ogDescription,
+			},
+			publicURLBase: "https://example.com",
+			assert: func(t *testing.T, got string) {
+				assert.Contains(t, got, `seoTitle: "Custom SEO Title"`)
+				assert.Contains(t, got, `ogTitle: "Custom OG Title"`)
+				assert.Contains(t, got, `ogDescription: "Custom OG Description"`)
+			},
+		},
+		{
+			name: "seoTitle, ogTitle, and ogDescription are omitted entirely when nil (default zero-value post)",
+			post: store.BlogPost{
+				Title:   "No SEO Fields",
+				Content: "short content",
+			},
+			publicURLBase: "https://example.com",
+			assert: func(t *testing.T, got string) {
+				assert.NotContains(t, got, "seoTitle:")
+				assert.NotContains(t, got, "ogTitle:")
+				assert.NotContains(t, got, "ogDescription:")
+			},
+		},
+		{
+			name: "ogImage is written when featuredImageID matches a media item",
+			post: store.BlogPost{
+				Title:           "OG Image Post",
+				Content:         "short content",
+				FeaturedImageID: &featuredMediaID,
+			},
+			media:         []store.Media{{ID: featuredMediaID, S3Key: "path/img.png"}},
+			publicURLBase: "https://cdn.example.com",
+			assert: func(t *testing.T, got string) {
+				assert.Contains(t, got, `ogImage: "https://cdn.example.com/public/media/file/path/img.png"`)
+			},
+		},
+		{
+			name: "ogImage is omitted when featuredImageID has no matching media item (stale reference)",
+			post: store.BlogPost{
+				Title:           "Stale Featured Image",
+				Content:         "short content",
+				FeaturedImageID: &staleFeaturedImageID,
+			},
+			media:         []store.Media{{ID: uuid.New(), S3Key: "other/image.png"}},
+			publicURLBase: "https://cdn.example.com",
+			assert: func(t *testing.T, got string) {
+				assert.NotContains(t, got, "ogImage:")
+			},
+		},
+		{
+			name: "ogImage is omitted when featuredImageID is nil",
+			post: store.BlogPost{
+				Title:   "No Featured Image",
+				Content: "short content",
+			},
+			media:         nil,
+			publicURLBase: "https://cdn.example.com",
+			assert: func(t *testing.T, got string) {
+				assert.NotContains(t, got, "ogImage:")
 			},
 		},
 	}

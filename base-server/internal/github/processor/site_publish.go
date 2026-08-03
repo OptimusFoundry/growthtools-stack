@@ -127,7 +127,24 @@ func buildBlogMarkdown(post store.BlogPost, media []store.Media, publicURLBase s
 	fmt.Fprintf(&b, "title: %q\n", post.Title)
 	fmt.Fprintf(&b, "pubDate: %q\n", pubDate.Format("2006-01-02"))
 	fmt.Fprintf(&b, "description: %q\n", description)
+	if post.SEOTitle != nil {
+		fmt.Fprintf(&b, "seoTitle: %q\n", *post.SEOTitle)
+	}
+	if post.OGTitle != nil {
+		fmt.Fprintf(&b, "ogTitle: %q\n", *post.OGTitle)
+	}
+	if post.OGDescription != nil {
+		fmt.Fprintf(&b, "ogDescription: %q\n", *post.OGDescription)
+	}
 	fmt.Fprintf(&b, "tags: [%s]\n", strings.Join(tags, ", "))
+	if post.FeaturedImageID != nil {
+		for _, m := range media {
+			if m.ID == *post.FeaturedImageID {
+				fmt.Fprintf(&b, "ogImage: %q\n", fmt.Sprintf("%s/public/media/file/%s", publicURLBase, m.S3Key))
+				break
+			}
+		}
+	}
 	fmt.Fprintf(&b, "readingTime: %q\n", computeReadingTime(post.Content))
 	b.WriteString("---\n\n")
 	b.WriteString(content)
