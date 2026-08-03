@@ -34,20 +34,18 @@ export function BlogRow({ post, index, onDelete }: BlogRowProps) {
 					<span className={`${styles.statusBadge} ${styles[meta.className]}`}>
 						{meta.label}
 					</span>
-					{post.status === "draft" && (
-						<button
-							type="button"
-							className={styles.deleteBtn}
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								onDelete(post.id);
-							}}
-							aria-label={`Delete blog post "${post.title || "untitled"}"`}
-						>
-							<Trash2 size={16} />
-						</button>
-					)}
+					<button
+						type="button"
+						className={styles.deleteBtn}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							onDelete(post.id);
+						}}
+						aria-label={`Delete blog post "${post.title || "untitled"}"`}
+					>
+						<Trash2 size={16} />
+					</button>
 					<span className={styles.chevronBtn} aria-hidden>
 						<ChevronRight size={16} />
 					</span>

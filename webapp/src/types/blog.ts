@@ -43,6 +43,11 @@ export interface BlogPublishResult {
 	sitePublishError?: string;
 }
 
+export interface DeleteBlogResult {
+	message: string;
+	siteDeleteError?: string;
+}
+
 export interface BlogPostListItem {
 	id: string;
 	title: string;
@@ -50,6 +55,7 @@ export interface BlogPostListItem {
 	publishedAt?: string;
 	createdAt: string;
 	updatedAt: string;
+	sitePrUrl?: string;
 }
 
 export interface SEOMetadata {

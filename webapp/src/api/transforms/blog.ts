@@ -8,11 +8,13 @@ import type {
 	BlogPost,
 	BlogPostListItem,
 	BlogPublishResult,
+	DeleteBlogResult,
 } from "@/types/blog";
 import type {
 	ApiBlogPost,
 	ApiBlogPostListItem,
 	ApiBlogPublishResponse,
+	ApiDeleteBlogResponse,
 } from "../types/blog";
 
 // GitHub PR URLs end in /pull/<number>; anything else has no derivable PR number.
@@ -71,6 +73,7 @@ export function toBlogPostListItem(api: ApiBlogPostListItem): BlogPostListItem {
 		publishedAt: api.published_at,
 		createdAt: api.created_at,
 		updatedAt: api.updated_at,
+		sitePrUrl: api.site_pr_url,
 	};
 }
 
@@ -78,4 +81,10 @@ export function toBlogPostListItems(
 	apiPosts: ApiBlogPostListItem[],
 ): BlogPostListItem[] {
 	return apiPosts.map(toBlogPostListItem);
+}
+
+export function toDeleteBlogResult(
+	api: ApiDeleteBlogResponse,
+): DeleteBlogResult {
+	return { message: api.message, siteDeleteError: api.site_delete_error };
 }

@@ -15,7 +15,7 @@ import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useFilterCounts } from "@/hooks/useFilterCounts";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
 import { Button } from "@/proto-design-system/components/primitives/Button";
-import type { BlogStatus } from "@/types/blog";
+import type { BlogStatus, DeleteBlogResult } from "@/types/blog";
 
 export const Route = createFileRoute("/blog")({
 	component: BlogPage,
@@ -45,15 +45,20 @@ function BlogPage() {
 	const { blogPosts, loading, refetch } = useBlogPosts(filters);
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
 
-	const deleteFlow = useConfirmableDelete({
+	const deleteFlow = useConfirmableDelete<DeleteBlogResult>({
 		mutate: deleteBlog,
 		mutating: deleting,
 		onSuccess: refetch,
+		getWarning: (result) => result.siteDeleteError,
 		copy: {
 			resource: "blog post",
 			modalTitle: "Delete blog post",
-			confirmBody:
-				"Are you sure you want to delete this blog post? This action cannot be undone.",
+			confirmBody: (targetId: string) => {
+				const target = blogPosts.find((p) => p.id === targetId);
+				return target?.sitePrUrl
+					? "This post is live on shubhanshu.dev — deleting it will also open a PR to remove it from the site."
+					: "Are you sure you want to delete this blog post? This action cannot be undone.";
+			},
 		},
 	});
 

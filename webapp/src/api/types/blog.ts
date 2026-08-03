@@ -19,6 +19,7 @@ export interface ApiBlogPostListItem {
 	published_at?: string;
 	created_at: string;
 	updated_at: string;
+	site_pr_url?: string;
 }
 
 export interface ApiBlogPost {
@@ -47,4 +48,9 @@ export interface ApiBlogPost {
 export interface ApiBlogPublishResponse {
 	post: ApiBlogPost;
 	site_publish_error?: string;
+}
+
+export interface ApiDeleteBlogResponse {
+	message: string;
+	site_delete_error?: string;
 }

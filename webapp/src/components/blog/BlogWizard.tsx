@@ -8,6 +8,8 @@ import remarkGfm from "remark-gfm";
 import { toBlogPost } from "@/api/transforms/blog";
 import { MediaUploadSection } from "@/components/create-post/compose/MediaUploadSection";
 import { Topbar } from "@/components/Layout/Topbar";
+import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
+import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
@@ -28,11 +30,14 @@ import {
 	TabPanels,
 	Tabs,
 } from "@/proto-design-system/components/navigation/Tabs/Tabs";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
 import { Text } from "@/proto-design-system/components/primitives/Text";
-import type { BlogPost, BlogPublishResult } from "@/types/blog";
+import type {
+	BlogPost,
+	BlogPublishResult,
+	DeleteBlogResult,
+} from "@/types/blog";
 import type { MediaItem } from "@/types/media";
 import styles from "./blog-wizard.module.scss";
 
@@ -118,7 +123,6 @@ export function BlogWizard({
 	const { updateBlogPost, loading: updating } = useUpdateBlogPost();
 	const { publishBlog, loading: publishing } = usePublishBlog();
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
-	const [deleteOpen, setDeleteOpen] = useState(false);
 	const { addBanner } = useBannerCenter();
 
 	const saving = creating || updating || publishing;
@@ -356,28 +360,21 @@ export function BlogWizard({
 		{ label: isEditMode ? "Edit" : "New" },
 	];
 
-	const canDelete = isEditMode && postStatus === "draft" && !!initialBlogPost;
+	const canDelete = isEditMode && !!initialBlogPost;
 
-	const handleConfirmDelete = async () => {
-		if (!initialBlogPost) return;
-		try {
-			await deleteBlog(initialBlogPost.id);
-			setDeleteOpen(false);
-			addBanner({
-				type: "success",
-				title: "Blog post deleted",
-				dismissible: true,
-			});
-			onDone();
-		} catch {
-			addBanner({
-				type: "error",
-				title: "Couldn't delete blog post",
-				description: "Please try again.",
-				dismissible: true,
-			});
-		}
-	};
+	const deleteFlow = useConfirmableDelete<DeleteBlogResult>({
+		mutate: deleteBlog,
+		mutating: deleting,
+		onSuccess: () => onDone(),
+		getWarning: (result) => result.siteDeleteError,
+		copy: {
+			resource: "blog post",
+			modalTitle: "Delete blog post",
+			confirmBody: initialBlogPost?.sitePrUrl
+				? "This post is live on shubhanshu.dev — deleting it will also open a PR to remove it from the site."
+				: "Are you sure you want to delete this blog post? This action cannot be undone.",
+		},
+	});
 
 	const topbarActions = (
 		<>
@@ -385,7 +382,7 @@ export function BlogWizard({
 				<Button
 					variant="ghost"
 					size="sm"
-					onClick={() => setDeleteOpen(true)}
+					onClick={() => deleteFlow.request(initialBlogPost!.id)}
 					disabled={busy || deleting}
 					aria-label="Delete blog post"
 				>
@@ -618,31 +615,7 @@ export function BlogWizard({
 				</div>
 			</div>
 
-			<Modal
-				isOpen={deleteOpen}
-				onClose={() => setDeleteOpen(false)}
-				title="Delete blog post"
-				size="sm"
-				footer={
-					<Stack direction="row" gap="sm" justify="end">
-						<Button variant="ghost" onClick={() => setDeleteOpen(false)}>
-							Cancel
-						</Button>
-						<Button
-							variant="destructive"
-							onClick={handleConfirmDelete}
-							isLoading={deleting}
-						>
-							Delete
-						</Button>
-					</Stack>
-				}
-			>
-				<Text color="secondary">
-					Are you sure you want to delete this blog post? This action cannot be
-					undone.
-				</Text>
-			</Modal>
+			<ConfirmDeleteModal flow={deleteFlow} />
 		</>
 	);
 }

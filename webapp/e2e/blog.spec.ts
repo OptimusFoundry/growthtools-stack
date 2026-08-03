@@ -7,10 +7,13 @@
  *   GET    /api/protected/blogs           → 200 (list), 401, 500
  *   POST   /api/protected/blog            → 201 (create), 400, 409, 500
  *   PUT    /api/protected/blog/:id        → 200 (update), 400, 404, 500
- *   DELETE /api/protected/blog/:id        → 200 (delete), 404, 500
  *   POST   /api/protected/blog/generate   → 201 (generate), 400, 500
  *   POST   /api/protected/blog/:id/publish → 200 (publish), 404, 500
  *   POST   /api/protected/blog/generate/stream → SSE (streaming generate)
+ *
+ * DELETE /api/protected/blog/:id coverage lives in blog-delete.spec.ts (split
+ * out per frontend-e2e-rules "keeping spec files bounded" — response shape
+ * is `{message, site_delete_error?}`, see EP-004/F4).
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
@@ -214,81 +217,6 @@ test.describe("Blog", () => {
 	// =========================================================================
 	// Status Code Coverage — DELETE /api/protected/blog/:id
 	// =========================================================================
-
-	test.describe("Status Code Coverage — DELETE /api/protected/blog/:id", () => {
-		const deleteCases = [
-			{
-				status: 404,
-				body: { error: "Blog post not found" },
-				expect: /not found|error|failed/i,
-				label: "not found",
-			},
-			{
-				status: 500,
-				body: { error: "Internal server error" },
-				expect: /error|something went wrong|failed|unavailable/i,
-				label: "server error",
-			},
-		] as const;
-
-		for (const tc of deleteCases) {
-			test(`DELETE /blog/:id handles ${tc.status} — ${tc.label}`, async ({
-				network,
-				page,
-			}) => {
-				network.use(
-					http.delete("*/api/protected/blog/:id", () =>
-						HttpResponse.json(tc.body, { status: tc.status }),
-					),
-				);
-
-				await page.goto("/blog");
-				await page.waitForLoadState("networkidle");
-
-				// Attempt to trigger a delete action if available
-				const deleteBtn = page.getByRole("button", { name: /delete/i }).first();
-				const isVisible = await deleteBtn.isVisible().catch(() => false);
-				if (isVisible) {
-					await deleteBtn.click();
-					await page.waitForLoadState("networkidle");
-
-					// Confirm deletion in dialog if present
-					const confirmBtn = page.getByRole("button", {
-						name: /confirm|yes|delete/i,
-					});
-					const confirmVisible = await confirmBtn
-						.isVisible()
-						.catch(() => false);
-					if (confirmVisible) {
-						await confirmBtn.click();
-						await page.waitForLoadState("networkidle");
-					}
-				}
-
-				const body = await page.textContent("body");
-				// Permissive: page must remain stable; if error shown, it matches
-				expect(body).toBeTruthy();
-				if (body && /not found|error|failed/i.test(body)) {
-					expect(body).toMatch(tc.expect);
-				}
-			});
-		}
-
-		test("DELETE /blog/:id handles transport failure", async ({
-			network,
-			page,
-		}) => {
-			network.use(
-				http.delete("*/api/protected/blog/:id", () => HttpResponse.error()),
-			);
-
-			await page.goto("/blog");
-			await page.waitForLoadState("networkidle");
-
-			const body = await page.textContent("body");
-			expect(body).toBeTruthy();
-		});
-	});
 
 	// =========================================================================
 	// Status Code Coverage — PUT /api/protected/blog/:id (update)

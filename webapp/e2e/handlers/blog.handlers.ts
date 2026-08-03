@@ -209,6 +209,39 @@ export const blogScenarios = {
 			}),
 		),
 
+	/**
+	 * 200: delete succeeds, internal soft-delete goes through, but the
+	 * site-file removal side-effect failed (AC5) — surfaced as
+	 * `site_delete_error`, distinct from the plain-success `{message}` body.
+	 */
+	deleteWithSiteError: () =>
+		http.delete("*/api/protected/blog/:id", () =>
+			HttpResponse.json({
+				message: "Blog post deleted successfully",
+				site_delete_error: "GitHub delete failed: rate limited",
+			}),
+		),
+
+	/**
+	 * 200: blog list, `blog_1` reshaped to carry a `site_pr_url` (a live post).
+	 * Kept as a scenario override rather than mutating the shared `blogPosts`
+	 * fixture, since `ApiBlogPostListItem` doesn't declare `site_pr_url` yet
+	 * (lands in F1) — see F4 ticket notes.
+	 */
+	listWithLivePost: () =>
+		http.get("*/api/protected/blogs", () =>
+			HttpResponse.json(
+				blogPosts.map((p) =>
+					p.id === "blog_1"
+						? {
+								...p,
+								site_pr_url: "https://github.com/shubhanshu-dev/site/pull/42",
+							}
+						: p,
+				),
+			),
+		),
+
 	/** 200: retry succeeds — PR now opened, error cleared. */
 	retrySitePublishSuccess: () =>
 		http.post("*/api/protected/blog/:id/retry-site-publish", () =>

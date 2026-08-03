@@ -4,16 +4,18 @@ import { useBannerCenter } from "@/proto-design-system/components/feedback/Banne
 export interface ConfirmableDeleteCopy {
 	/** Resource noun, e.g. "post", "blog post". Used in banner titles. */
 	resource: string;
-	/** Body text shown inside the confirmation modal. */
-	confirmBody: string;
+	/** Body text shown inside the confirmation modal. May depend on the target id. */
+	confirmBody: string | ((targetId: string) => string);
 	/** Title shown in the modal header. Defaults to `Delete ${resource}`. */
 	modalTitle?: string;
 }
 
-export interface UseConfirmableDeleteOptions {
-	mutate: (id: string) => Promise<unknown>;
+export interface UseConfirmableDeleteOptions<TResult = unknown> {
+	mutate: (id: string) => Promise<TResult>;
 	mutating: boolean;
-	onSuccess?: () => void;
+	onSuccess?: (result: TResult) => void;
+	/** Return a warning message to surface instead of the generic success banner. */
+	getWarning?: (result: TResult) => string | undefined;
 	copy: ConfirmableDeleteCopy;
 }
 
@@ -33,12 +35,13 @@ export interface ConfirmableDeleteFlow {
  * repeats around a delete mutation. Pair with <ConfirmDeleteModal> for the
  * full UI wiring.
  */
-export function useConfirmableDelete({
+export function useConfirmableDelete<TResult = unknown>({
 	mutate,
 	mutating,
 	onSuccess,
+	getWarning,
 	copy,
-}: UseConfirmableDeleteOptions): ConfirmableDeleteFlow {
+}: UseConfirmableDeleteOptions<TResult>): ConfirmableDeleteFlow {
 	const { addBanner } = useBannerCenter();
 	const [targetId, setTargetId] = useState<string | null>(null);
 
@@ -48,14 +51,24 @@ export function useConfirmableDelete({
 	const confirm = useCallback(async () => {
 		if (!targetId) return;
 		try {
-			await mutate(targetId);
+			const result = await mutate(targetId);
 			setTargetId(null);
-			addBanner({
-				type: "success",
-				title: `${capitalize(copy.resource)} deleted`,
-				dismissible: true,
-			});
-			onSuccess?.();
+			const warning = getWarning?.(result);
+			if (warning) {
+				addBanner({
+					type: "warning",
+					title: `${capitalize(copy.resource)} deleted, but site removal failed`,
+					description: warning,
+					dismissible: true,
+				});
+			} else {
+				addBanner({
+					type: "success",
+					title: `${capitalize(copy.resource)} deleted`,
+					dismissible: true,
+				});
+			}
+			onSuccess?.(result);
 		} catch {
 			addBanner({
 				type: "error",
@@ -64,14 +77,21 @@ export function useConfirmableDelete({
 				dismissible: true,
 			});
 		}
-	}, [targetId, mutate, onSuccess, addBanner, copy.resource]);
+	}, [targetId, mutate, onSuccess, getWarning, addBanner, copy.resource]);
+
+	// Resolved here, not inside confirm(), because the modal already shows
+	// this copy before the user clicks confirm.
+	const confirmBody =
+		typeof copy.confirmBody === "function"
+			? copy.confirmBody(targetId ?? "")
+			: copy.confirmBody;
 
 	return {
 		targetId,
 		isOpen: targetId !== null,
 		isLoading: mutating,
 		modalTitle: copy.modalTitle ?? `Delete ${copy.resource}`,
-		confirmBody: copy.confirmBody,
+		confirmBody,
 		request,
 		cancel,
 		confirm,
