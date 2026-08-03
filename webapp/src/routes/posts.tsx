@@ -3,6 +3,9 @@ import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
 import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
+import { CreateShowcasePostModal } from "@/components/showcase-post/CreateShowcasePostModal";
+import { SHOWCASE_POST_COPY } from "@/components/showcase-post/copy";
+import { useCreateShowcasePostFlow } from "@/components/showcase-post/useCreateShowcasePostFlow";
 import { PostRow } from "@/features/posts/components/PostRow/PostRow";
 import {
 	PostsEmpty,
@@ -14,6 +17,7 @@ import { useDeletePost } from "@/hooks/useDeletePost";
 import { useFilterCounts } from "@/hooks/useFilterCounts";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
+import { Stack } from "@/proto-design-system/components/layout/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import type { PostStatus } from "@/types/post";
 
@@ -59,16 +63,22 @@ function PostsPage() {
 	});
 
 	const filterItems = useFilterCounts(allPosts, FILTER_KEYS, (p) => p.status);
+	const showcaseFlow = useCreateShowcasePostFlow();
 
 	return (
 		<ResourceListPage
 			title="Posts"
 			topbarAction={
-				<Link to="/posts/new">
-					<Button variant="primary">
-						<Plus size={16} /> Create Post
+				<Stack direction="row" gap="sm">
+					<Link to="/posts/new">
+						<Button variant="primary">
+							<Plus size={16} /> Create Post
+						</Button>
+					</Link>
+					<Button onClick={showcaseFlow.open}>
+						{SHOWCASE_POST_COPY.triggerLabel}
 					</Button>
-				</Link>
+				</Stack>
 			}
 			hero={<PostsHero count={allPosts.length} />}
 			filters={
@@ -92,7 +102,12 @@ function PostsPage() {
 					onDelete={deleteFlow.request}
 				/>
 			)}
-			overlays={<ConfirmDeleteModal flow={deleteFlow} />}
+			overlays={
+				<>
+					<ConfirmDeleteModal flow={deleteFlow} />
+					<CreateShowcasePostModal flow={showcaseFlow} />
+				</>
+			}
 		/>
 	);
 }

@@ -47,6 +47,11 @@ import {
 } from "./posts.handlers";
 import { settingsEndpoints, settingsHandlers } from "./settings.handlers";
 import {
+	showcaseEndpoints,
+	showcaseHandlers,
+	showcaseScenarios,
+} from "./showcase.handlers";
+import {
 	sitePublishEndpoints,
 	sitePublishHandlers,
 	sitePublishScenarios,
@@ -68,6 +73,7 @@ export const handlers = [
 	...contentHandlers,
 	...chatHandlers,
 	...adminHandlers,
+	...showcaseHandlers,
 ];
 
 /**
@@ -96,6 +102,9 @@ export {
 	postsHandlers,
 	settingsEndpoints,
 	settingsHandlers,
+	showcaseEndpoints,
+	showcaseHandlers,
+	showcaseScenarios,
 	sitePublishEndpoints,
 	sitePublishHandlers,
 	sitePublishScenarios,
@@ -118,6 +127,7 @@ export const endpoints = {
 	posts: postsEndpoints,
 	settings: settingsEndpoints,
 	sitePublish: sitePublishEndpoints,
+	showcase: showcaseEndpoints,
 };
 
 /**
@@ -136,6 +146,7 @@ export const scenarios = {
 	platforms: platformsScenarios,
 	posts: postsScenarios,
 	sitePublish: sitePublishScenarios,
+	showcase: showcaseScenarios,
 };
 
 /**
