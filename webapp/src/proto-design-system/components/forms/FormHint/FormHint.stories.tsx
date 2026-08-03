@@ -22,20 +22,20 @@ type Story = StoryObj<typeof FormHint>;
 
 export const Default: Story = {
 	args: {
-		children: "Enter your email address to receive updates.",
+		children: "We'll only use this to send booking confirmations.",
 	},
 };
 
 export const WithIcon: Story = {
 	args: {
-		children: "Your password must be at least 8 characters.",
+		children: "API keys are scoped to this workspace only.",
 		showIcon: true,
 	},
 };
 
 export const ErrorVariant: Story = {
 	args: {
-		children: "This field is required.",
+		children: "Card number is invalid.",
 		variant: "error",
 		showIcon: true,
 	},
@@ -43,7 +43,7 @@ export const ErrorVariant: Story = {
 
 export const Success: Story = {
 	args: {
-		children: "Username is available!",
+		children: "Domain verified — DNS records look good.",
 		variant: "success",
 		showIcon: true,
 	},
@@ -51,7 +51,7 @@ export const Success: Story = {
 
 export const CustomIcon: Story = {
 	args: {
-		children: "Need help? Contact support.",
+		children: "Not sure which plan fits? Talk to sales.",
 		icon: <HelpCircle size={14} />,
 	},
 };
@@ -59,7 +59,7 @@ export const CustomIcon: Story = {
 export const LongText: Story = {
 	args: {
 		children:
-			"Your username will be visible to other users. Choose something memorable but appropriate. You can change it later in your account settings.",
+			"Your webhook endpoint must respond with a 2xx status within 5 seconds or the delivery will be retried up to 3 times with exponential backoff.",
 		showIcon: true,
 	},
 	decorators: [
@@ -81,12 +81,12 @@ export const AllVariants: Story = {
 				maxWidth: "300px",
 			}}
 		>
-			<FormHint showIcon>Default hint text with helpful information.</FormHint>
+			<FormHint showIcon>Changes are saved automatically as you type.</FormHint>
 			<FormHint variant="error" showIcon>
-				Error message explaining what went wrong.
+				This subdomain is already taken by another workspace.
 			</FormHint>
 			<FormHint variant="success" showIcon>
-				Success message confirming the action.
+				Two-factor authentication is enabled.
 			</FormHint>
 		</div>
 	),
@@ -94,7 +94,50 @@ export const AllVariants: Story = {
 
 export const Hidden: Story = {
 	args: {
-		children: "This hint is hidden.",
+		children: "This hint is hidden until the field gains focus.",
 		hidden: true,
 	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "var(--space-5)",
+				maxWidth: "320px",
+			}}
+		>
+			<div>
+				<div style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>
+					Webhook signing secret
+				</div>
+				<FormHint showIcon>
+					Used to verify that events came from us. Rotate it if it's ever
+					exposed.
+				</FormHint>
+			</div>
+			<div>
+				<div style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>
+					Subdomain
+				</div>
+				<FormHint variant="error" showIcon>
+					northwind is already in use — try northwind-team.
+				</FormHint>
+			</div>
+			<div>
+				<div style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>
+					Payout account
+				</div>
+				<FormHint variant="success" showIcon>
+					Bank account ending in 4821 is verified and ready for payouts.
+				</FormHint>
+			</div>
+		</div>
+	),
 };

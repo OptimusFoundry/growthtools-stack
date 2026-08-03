@@ -90,7 +90,7 @@ Selectable/removable chips, typically for filters and taxonomies. Border by defa
 
 ## Tier Badge — `.tier`
 
-A specialized editorial badge for plan/tier labels.
+A specialized badge for plan/tier labels.
 ```html
 <span class="tier free">Free</span>
 <span class="tier pro">Pro</span>

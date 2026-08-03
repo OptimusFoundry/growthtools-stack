@@ -26,7 +26,7 @@ Primary dialog for confirmations, flows, and focused tasks.
 </div>
 ```
 - Width: 520px, radius 16px, `--shadow-xl`
-- Title: Fraunces 22px, opsz 100 SOFT 20
+- Title: Geist 600, 22px
 - Icon-well (`.ic-w`) is optional but elevates trust — semantic tint matches modal intent
 - Footer: right-aligned, ghost → primary/danger
 

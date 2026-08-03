@@ -1,213 +1,248 @@
 // =============================================================================
 // GRID COMPONENT STYLES
 // =============================================================================
+// Uses CSS custom properties for responsive column/gap control.
+// The component sets --grid-columns-{bp} (string: "1".."12"|"auto") and
+// --grid-gap-{bp} (resolved to var(--space-*)) on the element.
+// Each breakpoint cascades to the nearest smaller defined value.
+// =============================================================================
 @use "../../../mixins" as *;
+
+// Declare Grid CSS custom properties as non-inheriting (see Stack for the
+// full rationale). Without this, a nested <Grid> inherits its parent's
+// --grid-columns-base and silently renders with the wrong column count.
+@property --grid-columns-base { syntax: "*"; inherits: false; }
+
+@property --grid-columns-xs { syntax: "*"; inherits: false; }
+
+@property --grid-columns-sm { syntax: "*"; inherits: false; }
+
+@property --grid-columns-md { syntax: "*"; inherits: false; }
+
+@property --grid-columns-lg { syntax: "*"; inherits: false; }
+
+@property --grid-columns-xl { syntax: "*"; inherits: false; }
+
+@property --grid-gap-base { syntax: "*"; inherits: false; }
+
+@property --grid-gap-xs { syntax: "*"; inherits: false; }
+
+@property --grid-gap-sm { syntax: "*"; inherits: false; }
+
+@property --grid-gap-md { syntax: "*"; inherits: false; }
+
+@property --grid-gap-lg { syntax: "*"; inherits: false; }
+
+@property --grid-gap-xl { syntax: "*"; inherits: false; }
+
+@property --grid-row-gap-base { syntax: "*"; inherits: false; }
+
+@property --grid-row-gap-xs { syntax: "*"; inherits: false; }
+
+@property --grid-row-gap-sm { syntax: "*"; inherits: false; }
+
+@property --grid-row-gap-md { syntax: "*"; inherits: false; }
+
+@property --grid-row-gap-lg { syntax: "*"; inherits: false; }
+
+@property --grid-row-gap-xl { syntax: "*"; inherits: false; }
+
+@property --grid-col-gap-base { syntax: "*"; inherits: false; }
+
+@property --grid-col-gap-xs { syntax: "*"; inherits: false; }
+
+@property --grid-col-gap-sm { syntax: "*"; inherits: false; }
+
+@property --grid-col-gap-md { syntax: "*"; inherits: false; }
+
+@property --grid-col-gap-lg { syntax: "*"; inherits: false; }
+
+@property --grid-col-gap-xl { syntax: "*"; inherits: false; }
+
+// =============================================================================
+// BASE
+// =============================================================================
 
 .grid {
   display: grid;
+  grid-template-columns: repeat(var(--grid-columns-base, auto-fit), 1fr);
+  gap: var(--grid-gap-base, var(--space-md));
+
+  @include breakpoint(xs) {
+    grid-template-columns: repeat(
+      var(--grid-columns-xs, var(--grid-columns-base, auto-fit)),
+      1fr
+    );
+    gap: var(--grid-gap-xs, var(--grid-gap-base, var(--space-md)));
+  }
+
+  @include breakpoint(sm) {
+    grid-template-columns: repeat(
+      var(--grid-columns-sm, var(--grid-columns-xs, var(--grid-columns-base, auto-fit))),
+      1fr
+    );
+    gap: var(--grid-gap-sm, var(--grid-gap-xs, var(--grid-gap-base, var(--space-md))));
+  }
+
+  @include breakpoint(md) {
+    grid-template-columns: repeat(
+      var(
+        --grid-columns-md,
+        var(--grid-columns-sm, var(--grid-columns-xs, var(--grid-columns-base, auto-fit)))
+      ),
+      1fr
+    );
+    gap: var(
+      --grid-gap-md,
+      var(--grid-gap-sm, var(--grid-gap-xs, var(--grid-gap-base, var(--space-md))))
+    );
+  }
+
+  @include breakpoint(lg) {
+    grid-template-columns: repeat(
+      var(
+        --grid-columns-lg,
+        var(
+          --grid-columns-md,
+          var(--grid-columns-sm, var(--grid-columns-xs, var(--grid-columns-base, auto-fit)))
+        )
+      ),
+      1fr
+    );
+    gap: var(
+      --grid-gap-lg,
+      var(
+        --grid-gap-md,
+        var(--grid-gap-sm, var(--grid-gap-xs, var(--grid-gap-base, var(--space-md))))
+      )
+    );
+  }
+
+  @include breakpoint(xl) {
+    grid-template-columns: repeat(
+      var(
+        --grid-columns-xl,
+        var(
+          --grid-columns-lg,
+          var(
+            --grid-columns-md,
+            var(--grid-columns-sm, var(--grid-columns-xs, var(--grid-columns-base, auto-fit)))
+          )
+        )
+      ),
+      1fr
+    );
+    gap: var(
+      --grid-gap-xl,
+      var(
+        --grid-gap-lg,
+        var(
+          --grid-gap-md,
+          var(--grid-gap-sm, var(--grid-gap-xs, var(--grid-gap-base, var(--space-md))))
+        )
+      )
+    );
+  }
 }
 
 // =============================================================================
-// COLUMNS (Responsive)
-// Mobile-first: Start with 1 column, expand on larger screens
+// AUTO-FIT OVERRIDE
+// When any breakpoint resolves to "auto", the component adds .columnsAuto
 // =============================================================================
 
-.columns-1 {
-  grid-template-columns: repeat(1, 1fr);
-}
-
-.columns-2 {
-  grid-template-columns: repeat(1, 1fr);
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.columns-3 {
-  grid-template-columns: repeat(1, 1fr);
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.columns-4 {
-  grid-template-columns: repeat(1, 1fr);
-
-  @media (min-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.columns-5 {
-  grid-template-columns: repeat(1, 1fr);
-
-  @media (min-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
-.columns-6 {
-  grid-template-columns: repeat(2, 1fr);
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
-
-.columns-12 {
-  grid-template-columns: repeat(4, 1fr);
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(12, 1fr);
-  }
-}
-
-.columns-auto {
+.columnsAuto,
+.columnsAuto:is(.grid) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
+
+  @include breakpoint(xs) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
+  }
+
+  @include breakpoint(sm) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
+  }
+
+  @include breakpoint(md) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
+  }
+
+  @include breakpoint(lg) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
+  }
+
+  @include breakpoint(xl) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-32)), 1fr));
+  }
 }
 
 // =============================================================================
-// GAP (Semantic spacing tokens)
+// INDEPENDENT ROW / COLUMN GAP
+// When rowGap or columnGap are set, they override the unified gap
 // =============================================================================
 
-.gap-0 {
-  gap: 0;
+.grid[style*="--grid-row-gap-base"] {
+  row-gap: var(--grid-row-gap-base);
+
+  @include breakpoint(xs) {
+    row-gap: var(--grid-row-gap-xs, var(--grid-row-gap-base));
+  }
+
+  @include breakpoint(sm) {
+    row-gap: var(--grid-row-gap-sm, var(--grid-row-gap-xs, var(--grid-row-gap-base)));
+  }
+
+  @include breakpoint(md) {
+    row-gap: var(
+      --grid-row-gap-md,
+      var(--grid-row-gap-sm, var(--grid-row-gap-xs, var(--grid-row-gap-base)))
+    );
+  }
+
+  @include breakpoint(lg) {
+    row-gap: var(
+      --grid-row-gap-lg,
+      var(
+        --grid-row-gap-md,
+        var(--grid-row-gap-sm, var(--grid-row-gap-xs, var(--grid-row-gap-base)))
+      )
+    );
+  }
 }
 
-.gap-xs {
-  gap: var(--space-xs);
-}
+.grid[style*="--grid-col-gap-base"] {
+  column-gap: var(--grid-col-gap-base);
 
-.gap-sm {
-  gap: var(--space-sm);
-}
+  @include breakpoint(xs) {
+    column-gap: var(--grid-col-gap-xs, var(--grid-col-gap-base));
+  }
 
-.gap-md {
-  gap: var(--space-md);
-}
+  @include breakpoint(sm) {
+    column-gap: var(--grid-col-gap-sm, var(--grid-col-gap-xs, var(--grid-col-gap-base)));
+  }
 
-.gap-lg {
-  gap: var(--space-lg);
-}
+  @include breakpoint(md) {
+    column-gap: var(
+      --grid-col-gap-md,
+      var(--grid-col-gap-sm, var(--grid-col-gap-xs, var(--grid-col-gap-base)))
+    );
+  }
 
-.gap-xl {
-  gap: var(--space-xl);
-}
-
-.gap-2xl {
-  gap: var(--space-2xl);
-}
-
-.gap-3xl {
-  gap: var(--space-3xl);
-}
-
-.gap-4xl {
-  gap: var(--space-4xl);
-}
-
-// =============================================================================
-// ROW GAP (Semantic spacing tokens)
-// =============================================================================
-
-.row-gap-0 {
-  row-gap: 0;
-}
-
-.row-gap-xs {
-  row-gap: var(--space-xs);
-}
-
-.row-gap-sm {
-  row-gap: var(--space-sm);
-}
-
-.row-gap-md {
-  row-gap: var(--space-md);
-}
-
-.row-gap-lg {
-  row-gap: var(--space-lg);
-}
-
-.row-gap-xl {
-  row-gap: var(--space-xl);
-}
-
-.row-gap-2xl {
-  row-gap: var(--space-2xl);
-}
-
-.row-gap-3xl {
-  row-gap: var(--space-3xl);
-}
-
-.row-gap-4xl {
-  row-gap: var(--space-4xl);
+  @include breakpoint(lg) {
+    column-gap: var(
+      --grid-col-gap-lg,
+      var(
+        --grid-col-gap-md,
+        var(--grid-col-gap-sm, var(--grid-col-gap-xs, var(--grid-col-gap-base)))
+      )
+    );
+  }
 }
 
 // =============================================================================
-// COLUMN GAP (Semantic spacing tokens)
+// CONTAINER QUERY MODE
+// When containerQuery prop is set, the grid responds to parent container width
 // =============================================================================
 
-.column-gap-0 {
-  column-gap: 0;
-}
-
-.column-gap-xs {
-  column-gap: var(--space-xs);
-}
-
-.column-gap-sm {
-  column-gap: var(--space-sm);
-}
-
-.column-gap-md {
-  column-gap: var(--space-md);
-}
-
-.column-gap-lg {
-  column-gap: var(--space-lg);
-}
-
-.column-gap-xl {
-  column-gap: var(--space-xl);
-}
-
-.column-gap-2xl {
-  column-gap: var(--space-2xl);
-}
-
-.column-gap-3xl {
-  column-gap: var(--space-3xl);
-}
-
-.column-gap-4xl {
-  column-gap: var(--space-4xl);
+.containerQuery {
+  container-type: inline-size;
 }

@@ -2,9 +2,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
 	ChevronRight,
 	Copy,
+	CreditCard,
 	Download,
 	Edit,
 	ExternalLink,
+	LogOut,
+	Moon,
 	Settings,
 	Share,
 	Star,
@@ -74,7 +77,7 @@ export const WithSublabels: Story = {
 			{
 				id: "1",
 				label: "John Doe",
-				sublabel: "john@example.com",
+				sublabel: "john@acme.com",
 				leftIcon: <User />,
 			},
 			{
@@ -199,4 +202,29 @@ export const FileMenu: Story = {
 			{ id: "7", label: "Close", shortcut: "Ctrl+W" },
 		],
 	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const AccountMenu: Story = {
+	render: () => (
+		<DropdownMenu
+			items={[
+				{
+					id: "1",
+					label: "Jamie Rivera",
+					sublabel: "jamie@acme.com",
+					leftIcon: <User />,
+				},
+				{ id: "2", label: "Billing", leftIcon: <CreditCard /> },
+				{ id: "3", label: "Settings", leftIcon: <Settings /> },
+				{ id: "4", label: "Dark mode", leftIcon: <Moon />, checkbox: true },
+				{ type: "divider" },
+				{ id: "5", label: "Sign out", leftIcon: <LogOut /> },
+			]}
+			caption="Signed in via Google"
+		/>
+	),
 };

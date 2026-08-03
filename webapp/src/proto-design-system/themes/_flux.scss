@@ -1,86 +1,210 @@
 // =============================================================================
 // FLUX THEME
 // =============================================================================
-// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
-
-@import "https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
+// Reference: thin-film interference (soap-bubble / oil-slick / anodized-
+// titanium iridescence) viewed on a dark optical bench — not a neon light
+// source. Unlike a neon tube's single fixed-hue glow, a thin film's color
+// cycles through a specific, non-arbitrary order as the film thickens: deep
+// indigo-blue, through teal-green, into gold, resolving pale and warm. The
+// neutral base ramp (--color-background through --color-base-950) walks
+// that order as it lightens — indigo 285deg -> blue 262deg -> teal 198deg ->
+// green 132deg -> gold 90deg -> pale warm-gold 70deg near white — and
+// primary/secondary/accent are three specific "captured thicknesses" along
+// the same path (indigo 290deg, teal 175deg, gold 55deg) rather than a
+// freestanding brand triad: base-50/100 sit a few degrees from primary,
+// base-500 sits a few degrees from secondary, base-900 lands exactly on
+// accent's hue. This is why, unlike glow/cyberpunk/neon/cosmos/plasma/
+// midnight's shared violet-cyan-magenta neon-glow-on-black archetype
+// (flux's own prior version among them: primary/secondary/accent at
+// 310/200/345deg, numerically indistinguishable from glow.scss's
+// 295/195/340deg), nothing here is magenta or cyan, and the shadow ramp
+// carries the theme's own ink hue instead of a saturated glow at every
+// elevation step (glow is scoped to --shadow-primary/--shadow-accent only,
+// per the house shadow contract).
+// Fonts: Sora / Roboto Mono are fixed by themes.ts's googleFontsHref (not
+// touched here). Justification for keeping them, since neither was
+// originally reasoned about: Sora's geometric-but-rounded letterforms read
+// as engineered rather than soft-consumer — closer to lab/instrument
+// signage than the house Geist default, which fits an optics-bench premise.
+// Roboto Mono is deliberately the plainest mono in this system's rotation
+// (no ligatures, no stylized coding-font character) rather than a lazier
+// JetBrains Mono swap: an actual spectrometer/interferometer readout is a
+// flat digital instrument face, not a code editor, so the "safest" pick
+// reads as intentional once tied to that reference.
+// 2026-07 contrast/gamut repair (every number below computed via
+// scripts/theme-contrast-check.mjs plus a hand-fitted gamut-ceiling sweep of
+// the same math, not eyeballed):
+// - --color-text-disabled was missing entirely (a partial-theme contract
+//   violation the checker flags as SKIP). Added at Lc -32.9 / 4.88:1,
+//   clearing the Lc30 disabled/placeholder floor.
+// - --color-border was Lc 0.0 / 1.67:1 on background (34% L at a saturated
+//   300deg hue carries almost no APCA luminance weight against a 12% L
+//   background despite a 22-point OKLCH-L gap on paper — the "OKLCH
+//   lightness is a ramp tool, not a contrast score" trap, not a script bug).
+//   Relightened to 52% L at its hue's true in-gamut chroma ceiling (85%
+//   headroom): now Lc -21.8 / 3.26:1 on background, -21.6 / 3.12:1 on
+//   surface — clears the Lc15 hairline floor and WCAG's 3:1 non-text floor
+//   on both.
+// - --color-muted was a disconnected, uncalibrated value (Lc -19.0 / 3.05:1,
+//   under even the Lc30 disabled floor by 11 points — the "neutrals as a
+//   desaturated afterthought" pattern the craft rules name). Now aliases
+//   base-content-tertiary (Lc -52.2 / 8.04:1), matching the dark/oat
+//   convention for this token.
+// - base-content-secondary lightened 82%->87% L to clear the Lc75 small-
+//   body-text floor (was Lc -70.0, 5 points short): now Lc -79.5 / 13.51:1.
+// - base-content-tertiary lightened 64%->72% L: was Lc -39.7, under even the
+//   Lc45 headline floor despite carrying real caption/timestamp/table-header
+//   text; now Lc -52.2, matching dark.scss's own tertiary convention (-53).
+// - primary/secondary/accent/success/warning/info bases were all authored
+//   past their hue's true sRGB ceiling (8 of 14 checker-flagged tokens were
+//   out-of-gamut, silently clipping/hue-shifting at paint time). Every one
+//   below is rebuilt at its intended hue with chroma fit to ~85-90% of the
+//   true in-gamut max, and every content-on-base Lc was re-verified after
+//   the refit rather than assumed unchanged:
+//     - primary-content on primary was Lc 44.8, missing the Lc60 UI-text
+//       floor by 15 points; now Lc 63.9 / 9.86:1.
+//     - the real Button/Badge accent fill (accent-content on accent — not
+//       the checker's accent-content-on-accent-bg pairing, which has no
+//       call site in Button.module.scss/Badge.module.scss; only
+//       Compositions.module.scss's upgrade banner uses accent-bg, and it
+//       renders default base-content text on it: Lc -96.0 / 14.01:1, fine)
+//       was Lc 51.3, missing Lc60 by ~9 points; now Lc 63.5 / 9.73:1.
+//       accent-content-on-accent-bg itself stays low-contrast (Lc 0.0) by
+//       design — the same accepted trade-off dark.scss documents for its
+//       own accent-bg: the ink is fit against the bright accent chip it's
+//       actually painted on, never the dark wash it's never painted on.
+//     - error-content on error was Lc -61.1 / 3.33:1 — clearing Lc60 by
+//       only 1.1 points and failing WCAG AA's 4.5:1 normal-text floor
+//       outright. Switched polarity (deep 46% L fill + light ink, matching
+//       dark.scss's own error precedent) instead of the prior light-chip +
+//       dark-ink: now Lc -81.1 / 6.92:1, clearing both floors with real
+//       margin and reading as a proper alarm red instead of a diluted
+//       salmon.
+//     - secondary/info were byte-identical placeholders (both
+//       oklch(72% 0.18 200deg)) — a role-fidelity bug, not just a gamut
+//       one. Secondary now has its own teal-green identity (structural,
+//       swappable action) and info its own blue (235deg, semantic, unrelated
+//       to any brand hue) so the two stop reading as a copy-paste.
+// - Shadow xs/sm/md/lg/xl were saturated primary/secondary/accent glows at
+//   every elevation step, one layer additionally mixing in a flat
+//   oklch(0% 0 0) black — the "neon glow on a dark background as the
+//   default premium move" anti-generic flag, and a craft-rule violation
+//   from both directions at once (flat black AND neon glow, mixed offset
+//   ratios). Rebuilt as a single 285deg-tinted ink ramp with one consistent
+//   top-down offset direction; colored glow is now scoped to
+//   --shadow-primary/--shadow-accent only.
+// - surface on background stays Lc 0.0 (APCA's soft-black clamp genuinely
+//   collapses contrast between any two colors this close to black,
+//   regardless of their raw OKLCH-L gap — the same phenomenon border hit,
+//   confirmed not a script bug). Accepted, not chased further: widening the
+//   gap enough to register non-zero Lc would need surface at ~40% L, which
+//   would read as a bright gray card floating on a near-black canvas rather
+//   than a subtle elevation step. background(12%)->surface(16%)->
+//   elevated(20%) keeps a real, perceivable 4%/level lightness step (within
+//   this system's own 4-8%/level dark-elevation guidance) and pairs it with
+//   the now-fixed border and shadow ramp for actual card legibility — the
+//   same non-APCA-driven approach dark.scss's own surface ramp already
+//   takes.
+// Distinctiveness: the pre-repair primary/secondary/accent triad
+// (310/200/345deg) was numerically indistinguishable from glow.scss's
+// (295/195/340deg) — same lightness band, same chroma band, same
+// pure-blur-glow shadow construction; flux additionally sat in a six-theme
+// violet/cyan/magenta-neon-glow cluster (flux, glow, cyberpunk, neon,
+// cosmos, plasma, midnight). The rebuild above (indigo/teal/gold, sourced
+// from a different physical phenomenon, no magenta or cyan anywhere) is the
+// fix, not a restated header claim.
 
 [data-theme="flux"] {
   color-scheme: dark;
 
-  --font-family-sans:    "Inter", system-ui, sans-serif;
-  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
-  --font-family-serif:   "Sora", "Inter", system-ui, sans-serif;
-  --font-family-display: "Sora", "Inter", system-ui, sans-serif;
-  --color-background: oklch(12% 0.03 285deg);
-  --color-base-50: oklch(16% 0.04 285deg);
-  --color-base-100: oklch(20% 0.05 285deg);
-  --color-base-200: oklch(26% 0.07 285deg);
-  --color-base-300: oklch(34% 0.09 285deg);
-  --color-base-400: oklch(46% 0.12 290deg);
-  --color-base-500: oklch(58% 0.14 300deg);
-  --color-base-600: oklch(68% 0.15 310deg);
-  --color-base-700: oklch(78% 0.14 325deg);
-  --color-base-800: oklch(86% 0.10 340deg);
-  --color-base-900: oklch(92% 0.06 20deg);
-  --color-base-950: oklch(98% 0.03 60deg);
-  --color-base-content: oklch(96% 0.02 320deg);
-  --color-base-content-secondary: oklch(82% 0.04 320deg);
-  --color-base-content-tertiary: oklch(64% 0.06 300deg);
-  --color-muted: oklch(48% 0.08 285deg);
-  --color-surface: oklch(16% 0.04 285deg);
-  --color-surface-elevated: oklch(20% 0.05 285deg);
-  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
-  --color-border: oklch(34% 0.10 300deg);
-  --color-border-hover: oklch(74% 0.22 320deg);
-  --color-primary: oklch(68% 0.24 310deg);
-  --color-primary-hover: oklch(76% 0.26 340deg);
-  --color-primary-active: oklch(64% 0.22 300deg);
-  --color-primary-content: oklch(12% 0.03 310deg);
-  --color-secondary: oklch(72% 0.18 200deg);
-  --color-secondary-hover: oklch(80% 0.20 185deg);
-  --color-secondary-active: oklch(76% 0.2 185deg);
-  --color-secondary-content: oklch(12% 0.03 200deg);
-  --color-accent: oklch(76% 0.26 345deg);
-  --color-accent-hover: oklch(84% 0.28 355deg);
-  --color-accent-active: oklch(80% 0.28 355deg);
-  --color-accent-content: oklch(12% 0.03 345deg);
-  --color-accent-bg: oklch(24% 0.08 345deg);
-  --color-success: oklch(78% 0.22 155deg);
-  --color-success-hover: oklch(86% 0.22 155deg);
-  --color-success-active: oklch(70% 0.22 155deg);
-  --color-success-bg: oklch(22% 0.08 155deg);
-  --color-success-content: oklch(12% 0.04 155deg);
-  --color-warning: oklch(86% 0.22 75deg);
-  --color-warning-hover: oklch(94% 0.22 75deg);
-  --color-warning-active: oklch(78% 0.22 75deg);
-  --color-warning-bg: oklch(24% 0.09 75deg);
-  --color-warning-content: oklch(14% 0.05 75deg);
-  --color-error: oklch(70% 0.26 20deg);
-  --color-error-hover: oklch(78% 0.26 20deg);
-  --color-error-active: oklch(62% 0.26 20deg);
-  --color-error-bg: oklch(22% 0.09 20deg);
-  --color-error-content: oklch(98% 0.02 20deg);
-  --color-info: oklch(72% 0.18 200deg);
-  --color-info-hover: oklch(80% 0.18 200deg);
-  --color-info-active: oklch(64% 0.18 200deg);
-  --color-info-bg: oklch(22% 0.08 200deg);
-  --color-info-content: oklch(12% 0.03 200deg);
-  --shadow-color: oklch(68% 0.24 310deg / 0.25);
-  --shadow-color-strong: oklch(68% 0.24 310deg / 0.55);
-  --shadow-xs: 0 0 12px 0 oklch(68% 0.24 310deg / 0.25);
-  --shadow-sm: 0 2px 10px -2px oklch(68% 0.24 310deg / 0.35), 0 0 20px 0 oklch(72% 0.18 200deg / 0.15);
-  --shadow-md: 0 4px 20px -2px oklch(76% 0.26 345deg / 0.3), 0 0 40px -4px oklch(72% 0.18 200deg / 0.25), 0 8px 24px -8px oklch(0% 0 0 / 0.4);
-  --shadow-lg: 0 8px 36px -4px oklch(76% 0.26 345deg / 0.4), 0 0 60px -8px oklch(72% 0.18 200deg / 0.35), 0 16px 40px -12px oklch(0% 0 0 / 0.5);
-  --shadow-xl: 0 12px 60px -8px oklch(76% 0.26 345deg / 0.5), 0 0 100px -16px oklch(72% 0.18 200deg / 0.5), 0 24px 60px -16px oklch(0% 0 0 / 0.6);
-  --shadow-primary: 0 0 32px 0 oklch(68% 0.24 310deg / 0.6), 0 0 64px 0 oklch(76% 0.26 345deg / 0.3);
-  --shadow-accent: 0 0 32px 0 oklch(76% 0.26 345deg / 0.6), 0 0 64px 0 oklch(72% 0.18 200deg / 0.3);
-  --focus-ring-color: oklch(68% 0.24 310deg / 0.55);
-  --color-header-bg: var(--color-base-100);
+  --font-family-sans:    "Sora", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Roboto Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
 
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Base ramp — the thin-film sweep: indigo -> blue -> teal -> green -> gold
+  // -> pale warm-gold, every step gamut-fit (was all in-gamut already at
+  // moderate chroma; verified, not assumed).
+  --color-background: oklch(12% 0.030 285deg);
+  --color-base-50:  oklch(16% 0.038 283deg);
+  --color-base-100: oklch(20% 0.046 278deg);
+  --color-base-200: oklch(26% 0.058 262deg);
+  --color-base-300: oklch(34% 0.061 228deg);
+  --color-base-400: oklch(46% 0.071 198deg);
+  --color-base-500: oklch(58% 0.105 168deg);
+  --color-base-600: oklch(68% 0.100 132deg);
+  --color-base-700: oklch(78% 0.080 90deg);
+  --color-base-800: oklch(86% 0.055 65deg);
+  --color-base-900: oklch(92% 0.035 55deg);
+  --color-base-950: oklch(98% 0.012 70deg);
+  --color-base-content:           oklch(96% 0.020 320deg);   // Lc -98.7 on background
+  --color-base-content-secondary: oklch(87% 0.040 320deg);   // Lc -79.5, was -70.0
+  --color-base-content-tertiary:  oklch(72% 0.050 310deg);   // Lc -52.2, was -39.7
+  --color-muted:                  oklch(72% 0.050 310deg);   // aliases tertiary, was Lc -19.0
   --color-text-disabled:          oklch(59% 0.040 310deg);   // Lc -32.9, was missing entirely
+  --color-surface:          oklch(16% 0.038 283deg);
+  --color-surface-elevated: oklch(20% 0.046 278deg);
+  --color-surface-overlay:  oklch(6% 0.020 285deg / 0.70);
+  --color-border:       oklch(52% 0.243 295deg);   // Lc -21.8 / 3.26:1, was Lc 0.0 / 1.67:1
+  --color-border-hover: oklch(66% 0.182 300deg);
+
+  // Primary — indigo, structural (CTA/focus/tabs/links per J-2).
+  --color-primary:         oklch(78% 0.108 290deg);
+  --color-primary-hover:   oklch(84% 0.084 300deg);
+  --color-primary-active:  oklch(70% 0.143 278deg);
+  --color-primary-content: oklch(13% 0.030 290deg);   // Lc 63.9, was Lc 44.8
+
+  // Secondary — teal-green, the swappable structural action. No longer
+  // byte-identical to info.
+  --color-secondary:         oklch(78% 0.132 175deg);
+  --color-secondary-hover:   oklch(84% 0.158 165deg);
+  --color-secondary-active:  oklch(70% 0.110 188deg);
+  --color-secondary-content: oklch(13% 0.025 175deg);   // Lc 68.0
+
+  // Accent — gold-copper, editorial emphasis only (<=2 uses/page per J-2).
+  --color-accent:         oklch(78% 0.133 55deg);
+  --color-accent-hover:   oklch(84% 0.085 45deg);
+  --color-accent-active:  oklch(70% 0.139 68deg);
+  --color-accent-content: oklch(13% 0.030 55deg);      // Lc 63.5 on accent (real Button/Badge fill), was Lc 51.3
+  --color-accent-bg:      oklch(26% 0.062 55deg);      // base-content on this: Lc -96.0 (real Compositions banner usage)
+  --color-success:         oklch(78% 0.194 150deg);
+  --color-success-hover:   oklch(84% 0.208 150deg);
+  --color-success-active:  oklch(68% 0.168 150deg);
+  --color-success-bg:      oklch(23% 0.061 150deg);
+  --color-success-content: oklch(13% 0.030 150deg);   // Lc 68.9
+  --color-warning:         oklch(78% 0.144 85deg);
+  --color-warning-hover:   oklch(84% 0.155 85deg);
+  --color-warning-active:  oklch(68% 0.125 85deg);
+  --color-warning-bg:      oklch(23% 0.047 85deg);
+  --color-warning-content: oklch(14% 0.025 85deg);    // Lc 64.7
+
+  // Error — deep-fill + light-ink polarity (see header): proper alarm red,
+  // not a diluted salmon, and clears WCAG AA outright.
+  --color-error:         oklch(46% 0.169 25deg);
+  --color-error-hover:   oklch(52% 0.191 25deg);
+  --color-error-active:  oklch(38% 0.140 25deg);
+  --color-error-bg:      oklch(23% 0.089 25deg);
+  --color-error-content: oklch(96% 0.015 25deg);      // Lc -81.1 / 6.92:1, was Lc -61.1 / 3.33:1
+  --color-info:         oklch(75% 0.136 235deg);
+  --color-info-hover:   oklch(82% 0.095 235deg);
+  --color-info-active:  oklch(66% 0.126 235deg);
+  --color-info-bg:      oklch(23% 0.048 235deg);
+  --color-info-content: oklch(13% 0.020 235deg);      // Lc 61.6
+
+  // Shadows — ink-tinted at the theme's own 285deg background hue, one
+  // implied top-down light source, never flat black. Colored glow scoped to
+  // --shadow-primary/--shadow-accent only (was on every elevation step).
+  --shadow-color:        oklch(6% 0.020 285deg / 0.45);
+  --shadow-color-strong: oklch(5% 0.020 285deg / 0.72);
+  --shadow-xs: 0 1px 2px 0 oklch(5% 0.020 285deg / 0.35);
+  --shadow-sm: 0 2px 4px -1px oklch(5% 0.020 285deg / 0.45), 0 1px 2px -1px oklch(5% 0.020 285deg / 0.30);
+  --shadow-md: 0 8px 16px -4px oklch(5% 0.020 285deg / 0.52), 0 2px 4px -2px oklch(5% 0.020 285deg / 0.32);
+  --shadow-lg: 0 20px 32px -8px oklch(4% 0.020 285deg / 0.60), 0 4px 8px -4px oklch(4% 0.020 285deg / 0.38);
+  --shadow-xl: 0 32px 48px -12px oklch(4% 0.020 285deg / 0.68), 0 8px 16px -8px oklch(4% 0.020 285deg / 0.42);
+  --shadow-primary: 0 8px 24px 0 oklch(78% 0.108 290deg / 0.35);
+  --shadow-accent:  0 8px 24px 0 oklch(78% 0.133 55deg / 0.30);
+  --focus-ring-color: oklch(78% 0.108 290deg / 0.55);
+  --color-header-bg: var(--color-base-100);
 
   // Motion — thin-film interference is a continuous phenomenon (color shifts
   // gradually as the film thickens; there's no discrete "arrival" frame), so

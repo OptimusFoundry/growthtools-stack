@@ -33,6 +33,12 @@ export interface TagProps {
 	removable?: boolean;
 	/** Callback when remove button is clicked */
 	onRemove?: () => void;
+	/**
+	 * Accessible name for the remove button. Defaults to "Remove tag".
+	 * Override this when rendering multiple removable tags in the same list
+	 * so each control has a unique accessible name (e.g. `Remove ${value}`).
+	 */
+	removeAriaLabel?: string;
 	/** Whether the tag is disabled */
 	disabled?: boolean;
 	/** Left icon */
@@ -65,6 +71,7 @@ export const Tag = forwardRef<HTMLDivElement, TagProps>(
 			onSelectChange,
 			removable = false,
 			onRemove,
+			removeAriaLabel,
 			disabled = false,
 			leftIcon,
 			avatar,
@@ -117,7 +124,7 @@ export const Tag = forwardRef<HTMLDivElement, TagProps>(
 		const tagClasses = cn(
 			styles.tag,
 			styles[variant],
-			styles[size],
+			styles[`size-${size}`],
 			selectable && styles.selectable,
 			isSelected && styles.selected,
 			disabled && styles.disabled,
@@ -144,7 +151,7 @@ export const Tag = forwardRef<HTMLDivElement, TagProps>(
 						className={styles.removeButton}
 						onClick={handleRemove}
 						disabled={disabled}
-						aria-label="Remove tag"
+						aria-label={removeAriaLabel ?? "Remove tag"}
 						tabIndex={-1}
 					>
 						<X />

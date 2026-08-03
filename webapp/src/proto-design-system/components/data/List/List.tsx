@@ -1,6 +1,8 @@
-import { motion, type Variants } from "motion/react";
-import { Children, type ReactNode } from "react";
+import { motion } from "motion/react";
+import { Children, type ReactNode, useMemo } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
+import { staggerContainerVariants, staggerItemVariants } from "../../../motion";
 import { cn } from "../../../utils/cn";
 import styles from "./List.module.scss";
 
@@ -20,25 +22,7 @@ export interface ListProps {
 	className?: string;
 }
 
-// Animation variants for stagger effect
-const listVariants: Variants = {
-	hidden: { opacity: 1 },
-	visible: {
-		opacity: 1,
-		transition: {
-			staggerChildren: 0.05,
-		},
-	},
-};
-
-const itemVariants: Variants = {
-	hidden: { opacity: 0, x: -8 },
-	visible: {
-		opacity: 1,
-		x: 0,
-		transition: { duration: 0.2, ease: [0, 0, 0.2, 1] as const },
-	},
-};
+const listVariants = staggerContainerVariants(0.05);
 
 /**
  * List component for displaying a collection of items.
@@ -66,6 +50,16 @@ export function List({
 }: ListProps) {
 	const prefersReducedMotion = useReducedMotion();
 	const shouldAnimate = animate && !prefersReducedMotion;
+	const motionTokens = useMotionTokens();
+	const itemVariants = useMemo(
+		() =>
+			staggerItemVariants(
+				{ x: -8 },
+				motionTokens.duration.normal,
+				motionTokens.easeOut,
+			),
+		[motionTokens],
+	);
 
 	if (shouldAnimate) {
 		return (

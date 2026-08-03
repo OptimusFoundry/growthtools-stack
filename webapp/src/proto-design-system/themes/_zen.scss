@@ -1,86 +1,179 @@
 // =============================================================================
 // ZEN THEME
 // =============================================================================
-// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
-
-@import "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Sans+JP:wght@300;400;500;700&display=swap";
+// Reference: Japanese zen-garden materials, not a generic "Japanese-coded"
+// warm cream — cool suzu-iro (tin/pewter-grey) raked-gravel stone for the
+// base ramp and surfaces, set against warm sumi (ink-wash) brown-black for
+// all content/ink tokens. The cool-stone/warm-ink split is the theme's one
+// specific device, the same way marble bends warm stone into cool vein-ink
+// and botanical bends cream into foliage — inverted here (cool canvas, warm
+// ink) so it can't be mistaken for either. Structural color is aizome
+// indigo (dyed-cloth blue, --color-primary: CTA/focus/links). Editorial
+// accent is shu-iro vermillion (torii-gate red-orange, <=2 uses/page per
+// J-2, own hue — not swapped with primary's structural role). Semantics are
+// independently hued: matcha/moss success, turmeric warning, beni scarlet
+// error (hue15, 25deg off accent's hue40 so CTA-adjacent red UI never reads
+// as one color), suzu-blue info (hue222, 36deg off primary's hue258).
+// This is a full rebuild of a prior "Ported from SingaporeAtmosphere Design
+// System v2" pass — the same stale, no-rationale boilerplate line
+// _marble.scss's header already flagged as pasted into ~18 theme files
+// verbatim. That pass had real, numerically-confirmed defects (theme-
+// contrast-check.mjs, not eyeballed):
+//   - --color-primary and --color-error were the literal same oklch()
+//     triple, so CTA, focus ring, error state, and --shadow-color/
+//     -color-strong/-primary all rendered in one hue doing four jobs.
+//   - --color-background sat within a few percent L and ~5-10deg hue of
+//     oat/paper/porcelain/marble's own warm-cream ramps with no zen-specific
+//     material note anywhere — swappable with any of them, i.e. generic.
+//   - --color-muted was Lc 44.0 / 2.38:1 on background — fails WCAG AA
+//     outright (needs 3:1 even at the relaxed large/UI floor) while it's
+//     wired as real FormHint/Label/TextField reading copy, not decoration.
+//   - --color-text-disabled was absent entirely (contract violation).
+//   - --color-border was Lc 13.1 / 1.28:1 on background — under the Lc15
+//     hairline floor and far under WCAG 1.4.11's 3:1 non-text floor, real
+//     since it's the Input/Radio/Checkbox/TextArea/Select boundary color.
+//   - --color-warning-content on --color-warning missed the Lc60 UI-text
+//     floor (Lc 52.5).
+//   - --color-accent and --color-success sat only 10deg apart in hue (same
+//     muted sage/olive) — accent's J-2 editorial role blurred into a
+//     semantic state.
+//   - --color-surface-overlay was literal pure black, against the craft
+//     rule that shadows/overlays stay warm-tinted.
+// All fixed below; every leaf token re-derived from the new suzu-iro/sumi
+// material pair rather than patched in place, since the old ramp's hue/
+// chroma choices were themselves the "generic warm cream" problem.
+// Numeric fixes (theme-contrast-check.mjs unless noted):
+//   - muted/tertiary retargeted to L46% H55 -> Lc 77.2 / 6.40:1 (clears the
+//     Lc75 small-body floor and WCAG AA with margin; muted aliases tertiary,
+//     matching oat/light/marble's own muted=tertiary convention).
+//   - text-disabled added at L66% H55 -> Lc 50.7 / 2.80:1 (non-content only,
+//     clears the Lc30 disabled floor; same range as light/paper/porcelain's
+//     equivalent token).
+//   - border darkened to L58% H200 -> Lc 61.6 / 3.79:1 on background (Lc
+//     65.4 / 4.00:1 on --color-surface, the real Input/Radio/Checkbox fill)
+//     — clears both the Lc15 hairline floor and WCAG 1.4.11's 3:1 boundary
+//     floor with real margin, same "visible vein line, not a dead hairline"
+//     call marble's header documents. border-hover Lc 76.6 / 6.27:1 is
+//     unambiguously distinct from the resting state.
+//   - warning-content/warning: base lightened to L78%, content darkened to
+//     L20% (matching paper/porcelain/marble's identical fix shape) ->
+//     Lc 63.4 / 8.94:1, clears the Lc60 UI-text floor.
+//   - accent split off success's hue entirely (h40 vermillion vs h140
+//     matcha, 100deg apart, no confusion possible) and retargeted lighter
+//     (L78%, dark L15% ink content) so the real Badge/Button accent-content-
+//     on-accent pairing clears Lc60 (now Lc 62.9 / 9.51:1) — not just the
+//     script's synthetic accent-content-on-accent-bg pair (Lc 91.2 / 16.01:1).
+//   - error split from primary's exact value to its own hue (h15, beni
+//     scarlet) and refit to its true in-gamut chroma ceiling at L46 (0.1856
+//     computed; using 0.16, ~86% margin) — was flagged out-of-gamut at the
+//     old chroma. info similarly refit to its real ceiling at L46/H222
+//     (0.086 computed; using 0.075).
+//   - surface-overlay retinted off pure black to the theme's warm sumi ink
+//     hue (h55, matching --shadow-color) at L18%/0.5 alpha.
+// Fonts: Noto Sans JP + JetBrains Mono, matching themes.ts's registered
+// googleFontsHref — restored here after a color-only pass dropped the block.
 
 [data-theme="zen"] {
   color-scheme: light;
 
-  --font-family-sans:    "Noto Sans JP", "Inter", system-ui, sans-serif;
-  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
-  --font-family-serif:   "Cormorant Garamond", georgia, serif;
-  --font-family-display: "Cormorant Garamond", "Fraunces", georgia, serif;
-  --color-background: oklch(96% 0.012 75deg);
-  --color-base-50: oklch(98% 0.008 75deg);
-  --color-base-100: oklch(94% 0.012 75deg);
-  --color-base-200: oklch(90% 0.015 70deg);
-  --color-base-300: oklch(84% 0.015 65deg);
-  --color-base-400: oklch(72% 0.015 60deg);
-  --color-base-500: oklch(56% 0.015 55deg);
-  --color-base-600: oklch(42% 0.015 50deg);
-  --color-base-700: oklch(32% 0.015 50deg);
-  --color-base-800: oklch(24% 0.015 50deg);
-  --color-base-900: oklch(18% 0.015 50deg);
-  --color-base-950: oklch(10% 0.010 50deg);
-  --color-base-content: oklch(18% 0.015 50deg);
-  --color-base-content-secondary: oklch(32% 0.015 50deg);
-  --color-base-content-tertiary: oklch(52% 0.012 50deg);
-  --color-muted: oklch(70% 0.010 50deg);
-  --color-surface: oklch(98% 0.008 75deg);
-  --color-surface-elevated: oklch(99% 0.005 75deg);
-  --color-surface-overlay: oklch(0% 0 0deg / 0.5);
-  --color-border: oklch(88% 0.012 70deg);
-  --color-border-hover: oklch(70% 0.015 60deg);
-  --color-primary: oklch(50% 0.16 30deg);
-  --color-primary-hover: oklch(44% 0.18 30deg);
-  --color-primary-active: oklch(38% 0.18 30deg);
-  --color-primary-content: oklch(97% 0.008 75deg);
-  --color-secondary: oklch(32% 0.015 50deg);
-  --color-secondary-hover: oklch(22% 0.015 50deg);
-  --color-secondary-active: oklch(18% 0.015 50deg);
-  --color-secondary-content: oklch(97% 0.008 75deg);
-  --color-accent: oklch(62% 0.08 130deg);
-  --color-accent-hover: oklch(55% 0.10 130deg);
-  --color-accent-active: oklch(51% 0.1 130deg);
-  --color-accent-content: oklch(98% 0.008 75deg);
-  --color-accent-bg: oklch(94% 0.05 130deg);
-  --color-success: oklch(55% 0.10 140deg);
-  --color-success-hover: oklch(63% 0.1 140deg);
-  --color-success-active: oklch(47% 0.1 140deg);
-  --color-success-bg: oklch(94% 0.020 140deg);
-  --color-success-content: oklch(97% 0.008 75deg);
-  --color-warning: oklch(72% 0.12 70deg);
-  --color-warning-hover: oklch(80% 0.12 70deg);
-  --color-warning-active: oklch(64% 0.12 70deg);
-  --color-warning-bg: oklch(95% 0.025 70deg);
-  --color-warning-content: oklch(22% 0.04 60deg);
-  --color-error: oklch(50% 0.16 30deg);
-  --color-error-hover: oklch(58% 0.16 30deg);
-  --color-error-active: oklch(42% 0.16 30deg);
-  --color-error-bg: oklch(94% 0.025 30deg);
-  --color-error-content: oklch(97% 0.008 75deg);
-  --color-info: oklch(50% 0.08 220deg);
-  --color-info-hover: oklch(58% 0.08 220deg);
-  --color-info-active: oklch(42% 0.08 220deg);
-  --color-info-bg: oklch(94% 0.020 220deg);
-  --color-info-content: oklch(97% 0.008 75deg);
-  --shadow-color: oklch(50% 0.16 30deg / 0.25);
-  --shadow-color-strong: oklch(50% 0.16 30deg / 0.55);
-  --shadow-xs: 0 1px 0 0 oklch(18% 0.015 50deg / 0.03);
-  --shadow-sm: 0 1px 2px 0 oklch(18% 0.015 50deg / 0.04);
-  --shadow-md: 0 2px 6px -1px oklch(18% 0.015 50deg / 0.05), 0 1px 2px 0 oklch(18% 0.015 50deg / 0.03);
-  --shadow-lg: 0 8px 20px -4px oklch(18% 0.015 50deg / 0.06), 0 2px 4px 0 oklch(18% 0.015 50deg / 0.03);
-  --shadow-xl: 0 16px 40px -8px oklch(18% 0.015 50deg / 0.08), 0 4px 8px 0 oklch(18% 0.015 50deg / 0.04);
-  --shadow-primary: 0 4px 16px 0 oklch(50% 0.16 30deg / 0.20);
-  --shadow-accent: 0 4px 16px 0 oklch(62% 0.08 130deg / 0.20);
-  --focus-ring-color: oklch(50% 0.16 30deg / 0.25);
-  --color-header-bg: var(--color-base-100);
+  --font-family-sans:    "Noto Sans JP", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "JetBrains Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
 
+  // Base scale — suzu-iro (tin/pewter-grey) stone, hue200, low chroma
+  // throughout: a quiet cool neutral, never warm cream.
+  --color-background: oklch(96% 0.010 200deg);
+  --color-base-50:  oklch(97.5% 0.007 200deg);
+  --color-base-100: oklch(94% 0.011 200deg);
+  --color-base-200: oklch(90% 0.013 200deg);
+  --color-base-300: oklch(84% 0.015 200deg);
+  --color-base-400: oklch(70% 0.017 200deg);
+  --color-base-500: oklch(54% 0.018 200deg);
+  --color-base-600: oklch(42% 0.017 200deg);
+  --color-base-700: oklch(32% 0.015 200deg);
+  --color-base-800: oklch(24% 0.013 200deg);
+  --color-base-900: oklch(17% 0.011 200deg);
+  --color-base-950: oklch(10% 0.009 200deg);
 
-  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Content — warm sumi ink, hue55, deliberately opposite the base ramp's
+  // cool hue (the "cool stone, warm ink" device). Lc 97.6/89.3/77.2 —
+  // content clears Lc90, secondary clears Lc75, tertiary clears Lc75.
+  --color-base-content:           oklch(18% 0.020 55deg);   // Lc 97.6 / 16.86:1
+  --color-base-content-secondary: oklch(34% 0.018 55deg);   // Lc 89.3 / 10.51:1
+  --color-base-content-tertiary:  oklch(46% 0.016 55deg);   // Lc 77.2 / 6.40:1
+  --color-muted:                  oklch(46% 0.016 55deg);   // aliases tertiary — Lc 77.2 / 6.40:1
   --color-text-disabled:          oklch(66% 0.014 55deg);   // non-content only — Lc 50.7 / 2.80:1
+
+  // Surfaces keep the background's chroma (oat's rule) — panels read as
+  // stone, not white paper.
+  --color-surface:          oklch(98% 0.008 200deg);
+  --color-surface-elevated: oklch(99% 0.005 200deg);
+  --color-surface-overlay:  oklch(18% 0.02 55deg / 0.5);   // sumi-tinted, matches shadow hue
+
+  // Border — a genuinely visible cool "gravel seam", not a near-invisible
+  // hairline: Lc 61.6/3.79:1 on background, Lc 65.4/4.00:1 on --color-surface
+  // (the real Input/Radio/Checkbox/TextArea/Select fill).
+  --color-border:       oklch(58% 0.024 200deg);
+  --color-border-hover: oklch(46% 0.026 200deg);   // Lc 76.6/6.27:1 — clearly distinct hover step
+
+  // Primary — aizome indigo, the structural CTA/focus/link color.
+  --color-primary:         oklch(38% 0.12 258deg);
+  --color-primary-hover:   oklch(32% 0.11 258deg);
+  --color-primary-active:  oklch(27% 0.10 258deg);
+  --color-primary-content: oklch(97% 0.006 200deg);   // Lc -90.6/9.29:1
+
+  // Secondary — quiet sumi-ink action, deep + light content.
+  --color-secondary:         oklch(28% 0.020 55deg);
+  --color-secondary-hover:   oklch(21% 0.018 55deg);
+  --color-secondary-active:  oklch(16% 0.016 55deg);
+  --color-secondary-content: oklch(97% 0.006 200deg);   // Lc -97.8/13.48:1
+
+  // Accent — shu-iro vermillion (torii-gate red-orange), editorial only
+  // (<=2 uses/page). Own hue, 100deg off success's h140 (was 10deg apart in
+  // the prior pass) and 25deg off error's h15 (never confused for it).
+  --color-accent:         oklch(78% 0.12 40deg);
+  --color-accent-hover:   oklch(71% 0.13 40deg);
+  --color-accent-active:  oklch(64% 0.14 40deg);
+  --color-accent-content: oklch(15% 0.06 40deg);   // on accent (real Badge/Button pairing): Lc 62.9/9.51:1
+  --color-accent-bg:      oklch(93% 0.035 40deg);   // pale vermillion wash — accent-content on this: Lc 91.2/16.01:1
+
+  // Semantics — functional colors, each an independent hue, refit to their
+  // real in-gamut chroma ceiling (theme-contrast-check.mjs; no ⚠ below).
+  --color-success:         oklch(48% 0.13 140deg);   // matcha/moss
+  --color-success-hover:   oklch(43% 0.12 140deg);
+  --color-success-active:  oklch(38% 0.11 140deg);
+  --color-success-bg:      oklch(94% 0.03 140deg);
+  --color-success-content: oklch(97% 0.02 140deg);   // Lc -79.8/5.75:1
+  --color-warning:         oklch(78% 0.12 80deg);   // turmeric/kuchinashi
+  --color-warning-hover:   oklch(72% 0.12 80deg);
+  --color-warning-active:  oklch(66% 0.11 80deg);
+  --color-warning-bg:      oklch(95% 0.03 80deg);
+  --color-warning-content: oklch(20% 0.04 80deg);   // Lc 63.4/8.94:1, clears the Lc60 floor
+  --color-error:         oklch(46% 0.16 15deg);   // beni scarlet — own hue, split off primary's old duplicate
+  --color-error-hover:   oklch(40% 0.15 15deg);
+  --color-error-active:  oklch(35% 0.13 15deg);
+  --color-error-bg:      oklch(94% 0.025 15deg);
+  --color-error-content: oklch(97% 0.010 15deg);   // Lc -83.8/7.13:1, in gamut
+  --color-info:         oklch(46% 0.075 222deg);   // suzu-blue — 36deg off primary's h258
+  --color-info-hover:   oklch(40% 0.07 222deg);
+  --color-info-active:  oklch(35% 0.06 222deg);
+  --color-info-bg:      oklch(94% 0.020 222deg);
+  --color-info-content: oklch(97% 0.015 222deg);   // Lc -82.6/6.42:1, in gamut
+
+  // Shadows — warm sumi-ink tinted (h55, matches surface-overlay), one
+  // implied light source, never flat rgba(0,0,0,x) black.
+  --shadow-color:        oklch(20% 0.02 55deg / 0.08);
+  --shadow-color-strong: oklch(20% 0.02 55deg / 0.16);
+  --shadow-xs: 0 1px 2px 0 oklch(20% 0.02 55deg / 0.05);
+  --shadow-sm: 0 2px 4px -1px oklch(20% 0.02 55deg / 0.06), 0 1px 2px -1px oklch(20% 0.02 55deg / 0.04);
+  --shadow-md: 0 8px 16px -4px oklch(20% 0.02 55deg / 0.08), 0 2px 4px -2px oklch(20% 0.02 55deg / 0.04);
+  --shadow-lg: 0 20px 32px -8px oklch(20% 0.02 55deg / 0.10), 0 4px 8px -4px oklch(20% 0.02 55deg / 0.05);
+  --shadow-xl: 0 32px 48px -12px oklch(20% 0.02 55deg / 0.14), 0 8px 16px -8px oklch(20% 0.02 55deg / 0.06);
+  --shadow-primary: 0 8px 24px 0 oklch(38% 0.12 258deg / 0.28);
+  --shadow-accent:  0 8px 24px 0 oklch(78% 0.12 40deg / 0.24);
+  --focus-ring-color: oklch(38% 0.12 258deg / 0.40);
+  --color-header-bg: var(--color-base-100);
 
   // Motion — the identity above is built on *weight* (cool stone base,
   // warm-ink content) and on restraint (no gradient, no glow, no third

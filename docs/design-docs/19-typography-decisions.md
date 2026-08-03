@@ -6,19 +6,21 @@ Rules `T-N.M`. Anti-patterns `TAP-N`.
 
 ---
 
-## T-1. The three-family rule
+## T-1. The two-family rule
 
-The kit has three families. Each owns specific roles. Mixing roles is the most common typography bug.
+The kit has two families. Each owns specific roles. Mixing roles is the most common typography bug.
 
 | Family | Variable | Owns |
 |---|---|---|
-| **Fraunces** (serif, variable) | `--font-display`, `--font-serif` | Display, titles ≥22px, editorial prose, stat numerals, italic moments, avatar initials |
-| **Geist** (sans) | `--font-sans` | UI: buttons, inputs, labels, body 14–18px, table cells, nav items |
+| **Geist** (sans, 600–700 weight) | `--font-display`, `--font-sans` | Display, titles ≥22px, stat numerals, avatar initials |
+| **Geist** (sans, 400 weight) | `--font-sans` | UI: buttons, inputs, labels, body 14–18px, table cells, nav items, long-form prose |
 | **Geist Mono** | `--font-mono` | Eyebrows, counts, timestamps, code, filenames, keyboard hints, tabular data |
 
-**T-1.1 — The default page font is Geist.** Fraunces and Mono are deliberate overrides. If you don't explicitly choose, you're in Geist.
+There is no serif in the kit — display and body are the same Geist Sans family; only weight and size separate the roles.
 
-**T-1.2 — Each character on the page is one of these three.** If you're reaching for a fourth (Inter, Arial, system-ui), stop.
+**T-1.1 — The default page font is Geist at 400.** Heavier Geist (600–700) and Mono are deliberate overrides. If you don't explicitly choose, you're in Geist 400.
+
+**T-1.2 — Each character on the page is one of these two families.** If you're reaching for a third (Inter, Arial, system-ui, a serif), stop.
 
 **T-1.3 — One weight per role, not per mood.** Don't bold a button label for emphasis — bold is wrong on buttons. Change the variant instead.
 
@@ -30,40 +32,40 @@ Ask these questions in order. Stop at the first yes.
 
 ```
 Is it a number that represents a KPI / stat / big metric?
- → Fraunces, 56–64px, tnum on, fvs: tight     (T-5)
+ → Geist 700, 56–64px, tnum on                (T-5)
 
 Is it a page-title or hero heading?
- → Fraunces, 36–64px, display fvs, fg1        (T-3)
+ → Geist 700, 36–64px, fg1                    (T-3)
 
 Is it a card title, section head, modal title?
- → Fraunces h2 (36px) or h3 (22px)            (T-3, T-4)
+ → Geist 600–700, h2 (36px) or h3 (22px)      (T-3)
 
-Is it editorial prose (long-form reading)?
- → Fraunces serif, 18px, editorial fvs        (T-6)
+Is it long-form prose (long-form reading)?
+ → Geist 400, 18px, comfortable line-height   (T-6)
 
 Is it an eyebrow / timestamp / count / code / filename / kbd hint?
  → Geist Mono, 11–12px, uppercase (if eyebrow) (T-7)
 
 Everything else (body, buttons, inputs, labels, nav, table cells)
- → Geist, 13–15px, fg2                         (T-8)
+ → Geist 400, 13–15px, fg2                     (T-8)
 ```
 
 **T-2.1 — If you can't answer the first question definitively, the thing might not belong on the page.** Stat values in the kit are rare and loud; if yours is neither, it's probably a meta line, not a stat.
 
 ---
 
-## T-3. Fraunces display & titles
+## T-3. Geist display & titles
 
-Use for any heading ≥ 22px. Never for body.
+Use a heavier Geist weight (600–700) for any heading ≥ 22px. Never for body.
 
-| Role | Size | Weight | `fvs` | Color | Letter-spacing | Line-height |
-|---|---|---|---|---|---|---|
-| **T-3.1** Cinematic cover | 128px | 400 | `"opsz" 144, "SOFT" 20` | `--fg1` | `--ls-tightest` (-0.055em) | 0.95 |
-| **T-3.2** Editorial display | 88px | 400 | `"opsz" 144, "SOFT" 30` | `--fg1` | `--ls-tighter` (-0.04em) | 1.0 |
-| **T-3.3** Hero (sign-in, marketing) | 64px | 500 | `"opsz" 144, "SOFT" 30, "wght" 500` | `--fg1` | `--ls-tighter` | 1.05 |
-| **T-3.4** Page title (product) | 36–48px | 500 | `--fvs-display` | `--fg1` | `--ls-tight` (-0.025em) | 1.1 |
-| **T-3.5** Section head (`.ds-h2`) | 28–36px | 500 | `"opsz" 100, "SOFT" 20` | `--fg1` | `--ls-tight` | 1.15 |
-| **T-3.6** Card title (`.ds-h3`) | 22px | 600 | `--fvs-tight` | `--fg1` | `-0.015em` | 1.2 |
+| Role | Size | Weight | Color | Letter-spacing | Line-height |
+|---|---|---|---|---|---|
+| **T-3.1** Cinematic cover | 128px | 700 | `--fg1` | `--ls-tightest` (-0.055em) | 0.95 |
+| **T-3.2** Large display | 88px | 700 | `--fg1` | `--ls-tighter` (-0.04em) | 1.0 |
+| **T-3.3** Hero (sign-in, marketing) | 64px | 700 | `--fg1` | `--ls-tighter` | 1.05 |
+| **T-3.4** Page title (product) | 36–48px | 700 | `--fg1` | `--ls-tight` (-0.025em) | 1.1 |
+| **T-3.5** Section head (`.ds-h2`) | 28–36px | 600 | `--fg1` | `--ls-tight` | 1.15 |
+| **T-3.6** Card title (`.ds-h3`) | 22px | 600 | `--fg1` | `-0.015em` | 1.2 |
 
 **T-3.7 — Product pages top out at 48px** (`.ds-h1` / `.page-title`). 64px+ is for marketing / sign-in only (C-1.5).
 
@@ -73,40 +75,11 @@ Use for any heading ≥ 22px. Never for body.
 
 ---
 
-## T-4. The italic moment
-
-The signature device. Exactly one per hero.
-
-```html
-<h1 class="page-title">
-  Good morning, Alex — <em>eight</em> things to ship.
-</h1>
-```
-
-**T-4.1 — Italic uses Fraunces italic + `SOFT 70`:**
-```css
-font-style: italic;
-font-variation-settings: "opsz" 144, "SOFT" 70, "wght" 400;
-color: var(--accent);
-```
-
-**T-4.2 — The `.page-title em` selector is pre-styled.** Just write `<em>word</em>` — don't reapply.
-
-**T-4.3 — Italic moment is a single word or short phrase (1–3 words).** Never a full sentence.
-
-**T-4.4 — Budget: one per page-title. Zero in body. Zero in card titles.** Section heads may borrow the italic *only if the page-title has none* (J-6.1 trade-off).
-
-**T-4.5 — Italic color is `--accent` by default.** On pages where accent is already used elsewhere (once is the budget, J-2.10), swap italic to `--primary` instead.
-
-**T-4.6 — Italic in sans is never allowed.** If it's italic, it's Fraunces. If it's Geist, it's upright.
-
----
-
 ## T-5. Stat numerals — the signature
 
 The single loudest typographic move in the kit.
 
-**T-5.1 — Always Fraunces.** Never Geist. Never Mono.
+**T-5.1 — Always Geist at 700.** Never a lighter weight. Never Mono.
 
 **T-5.2 — Size is 56px minimum, 64px default, 88px on hero stat:**
 
@@ -114,8 +87,7 @@ The single loudest typographic move in the kit.
 .sc-val {
   font-family: var(--font-display);
   font-size: 56px;
-  font-weight: 400;
-  font-variation-settings: "opsz" 144, "SOFT" 0, "wght" 400;
+  font-weight: 700;
   font-feature-settings: "tnum" 1, "ss01" 1;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -123,9 +95,9 @@ The single loudest typographic move in the kit.
 }
 ```
 
-**T-5.3 — `tnum` and `ss01` on, always.** Tabular numbers align across a 4-up stat grid. `ss01` is Fraunces's alt '1' that disambiguates from lowercase l.
+**T-5.3 — `tnum` and `ss01` on, always.** Tabular numbers align across a 4-up stat grid. `ss01` is Geist's alt '1' that disambiguates from lowercase l.
 
-**T-5.4 — Units are smaller sans (Geist), `--fg3`, inline:**
+**T-5.4 — Units are regular-weight Geist, `--fg3`, inline:**
 
 ```html
 <div class="sc-val">4.8<small>%</small></div>
@@ -142,35 +114,34 @@ The single loudest typographic move in the kit.
 }
 ```
 
-The mixed-family contrast is the signature.
+The weight-and-color contrast (700 `--fg1` value against 500 `--fg3` unit) is the signature — same family, different jobs.
 
-**T-5.5 — Shorthand for large numbers** (`24.1k`, `1.2M`) — the `k` and `M` are part of the numeral, still Fraunces.
+**T-5.5 — Shorthand for large numbers** (`24.1k`, `1.2M`) — the `k` and `M` are part of the numeral, still Geist 700.
 
 **T-5.6 — Stats smaller than 56px aren't stats — they're meta.** Demote them (T-7).
 
 ---
 
-## T-6. Editorial prose (Fraunces serif)
+## T-6. Long-form prose (Geist, regular weight)
 
-For long-form reading: blog posts, documentation body, AI-generated content, upgrade prompts.
+For long-form reading: blog posts, documentation body, AI-generated content, upgrade prompts. Same family as everything else — just larger and looser than UI body.
 
 ```css
 .ds-prose {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 18px;
   font-weight: 400;
-  font-variation-settings: "opsz" 60, "SOFT" 40, "wght" 400;
   line-height: 1.7;
   color: var(--fg2);
   max-width: 72ch;
 }
 ```
 
-**T-6.1 — 18px is the prose default.** 16px prose is Geist (UI), not Fraunces. 20px prose is for wider landing-page essays.
+**T-6.1 — 18px is the prose default.** 16px prose is UI body territory, not long-form. 20px prose is for wider landing-page essays.
 
 **T-6.2 — Line-height 1.7.** At 18px, that's 30.6px rhythm. Tighter reads as UI, not prose.
 
-**T-6.3 — `opsz` 60 is the editorial optical size.** It's warm without being decorative.
+**T-6.3 — Weight stays 400.** Prose never goes semibold — that's what `<strong>` is for.
 
 **T-6.4 — Max-width 72ch.** 62ch for subledes. Never wider.
 
@@ -178,7 +149,7 @@ For long-form reading: blog posts, documentation body, AI-generated content, upg
 
 **T-6.6 — Inline `<strong>` in prose:** `color: --fg1; font-weight: 600`. One or two per paragraph, max.
 
-**T-6.7 — Inline `<em>` in prose:** Fraunces italic, `SOFT 50`, same color. The prose italic is lower-key than the display italic moment.
+**T-6.7 — Inline `<em>` in prose:** plain italic (`font-style: italic`), same color, same weight. Geist has no dedicated italic axis — it's a style toggle, not a mood shift.
 
 **T-6.8 — Paragraph spacing is one blank line** (`margin-bottom: 1em` at prose line-height ≈ 30px). Not indented. Never both.
 
@@ -280,8 +251,8 @@ kbd {
 
 - Button labels → Geist (T-8.2)
 - Input field values → Geist (T-8.4)
-- Body paragraphs → Geist or Fraunces serif (T-6)
-- Headings → Fraunces (T-3)
+- Body paragraphs → Geist, regular weight (T-6)
+- Headings → Geist, 600–700 (T-3)
 - Numbers in running text ("14 drafts") → Geist tnum, not Mono
 
 Mono is structural. If the content reads as content, it's not mono.
@@ -326,7 +297,7 @@ body, .ds-p {
 ```
 
 **T-8.2.1 — Button labels are 500 weight, never 400, never 600.** 500 is the single confident UI weight.
-**T-8.2.2 — Never Fraunces in buttons.** Never Mono in buttons (TAP-4).
+**T-8.2.2 — Never a heavy display weight in buttons.** Never Mono in buttons (TAP-2).
 **T-8.2.3 — Sentence case** ("Save changes"), not Title Case ("Save Changes").
 
 ### T-8.3 Labels
@@ -413,18 +384,17 @@ The full decision grid for the common roles:
 
 | Role | Family | Size | Weight | Color | Casing |
 |---|---|---|---|---|---|
-| Cover / cinematic | Fraunces | 128 | 400 | fg1 | Sentence |
-| Editorial display | Fraunces | 88 | 400 | fg1 | Sentence |
-| Hero heading | Fraunces | 64 | 500 | fg1 | Sentence |
-| Page title | Fraunces | 36–48 | 500 | fg1 | Sentence |
-| Section head h2 | Fraunces | 28–36 | 500 | fg1 | Sentence |
-| Card title h3 | Fraunces | 22 | 600 | fg1 | Sentence |
-| Modal title | Fraunces | 22 | 600 | fg1 | Sentence |
-| Sublede / lede | Fraunces serif | 18–22 | 400 | fg2 | Sentence |
-| Prose body | Fraunces serif | 18 | 400 | fg2 | Sentence |
-| Stat value | Fraunces | 56–64 | 400 | fg1 | — |
-| Italic moment | Fraunces italic | (inherit) | 400 | accent | Sentence |
-| Avatar initials | Fraunces | varies | 500 | fg1 | Uppercase |
+| Cover / cinematic | Geist | 128 | 700 | fg1 | Sentence |
+| Large display | Geist | 88 | 700 | fg1 | Sentence |
+| Hero heading | Geist | 64 | 700 | fg1 | Sentence |
+| Page title | Geist | 36–48 | 700 | fg1 | Sentence |
+| Section head h2 | Geist | 28–36 | 600 | fg1 | Sentence |
+| Card title h3 | Geist | 22 | 600 | fg1 | Sentence |
+| Modal title | Geist | 22 | 600 | fg1 | Sentence |
+| Sublede / lede | Geist | 18–22 | 400 | fg2 | Sentence |
+| Prose body | Geist | 18 | 400 | fg2 | Sentence |
+| Stat value | Geist | 56–64 | 700 | fg1 | — |
+| Avatar initials | Geist | varies | 600 | fg1 | Uppercase |
 | UI body | Geist | 15 | 400 | fg2 | Sentence |
 | Button label | Geist | 14 (sm 13, lg 15, xl 16) | 500 | — | Sentence |
 | Input value | Geist | 15 | 400 | fg1 | — |
@@ -453,7 +423,7 @@ When in doubt, go one size smaller.
 
 **T-10.2 — Mobile adds 1–2px, not 4.** Body becomes 16px on mobile (browsers expect this for tap targets). Buttons stay 14px. Eyebrows stay 11px.
 
-**T-10.3 — Never bump a size up "for emphasis."** Emphasis comes from weight (400→500), family (Geist→Fraunces), or color (fg2→fg1) — not size.
+**T-10.3 — Never bump a size up "for emphasis."** Emphasis comes from weight (400→500→700), or color (fg2→fg1) — not size.
 
 ---
 
@@ -463,16 +433,16 @@ The kit uses 4 weights, no more.
 
 | Weight | Used on |
 |---|---|
-| **400** regular | Body, prose, input values, stat numerals, editorial italic |
-| **500** medium | Buttons, labels, nav items, eyebrows, card titles' alternate, table headers |
-| **600** semibold | Card titles (T-3.6), modal titles, inline `<strong>`, tier badges |
-| **700** bold | Virtually never. Reserved for AI-generated markdown `<strong>` in prose. |
+| **400** regular | Body, prose, input values, table cells |
+| **500** medium | Buttons, labels, nav items, eyebrows, table headers |
+| **600** semibold | Card titles (T-3.6), section heads, modal titles, inline `<strong>`, tier badges, avatar initials |
+| **700** bold | Page titles, hero/display headings, stat values. The kit's loudest weight. |
 
-**T-11.1 — You probably want 500, not 600.** The jump from 400→500 is the one you notice; 500→600 is usually noise.
+**T-11.1 — Pick the weight for the role, not the moment.** Display roles are always 700; card/section roles are always 600; everything else is 400 or 500. Don't reach for a weight outside a role's assigned tier "for emphasis."
 
-**T-11.2 — Never italicize a weight other than 400.** Italic is a semantic signal, not an emphasis stack.
+**T-11.2 — Never italicize a weight other than 400.** Italic is a light-touch inline signal, not an emphasis stack.
 
-**T-11.3 — Bold is not a button style.** A "louder" button is `.primary`, not `.btn { font-weight: 700 }`.
+**T-11.3 — Bold (700) is not a button style.** A "louder" button is `.primary`, not `.btn { font-weight: 700 }` — 700 is reserved for display/stat roles.
 
 ---
 
@@ -495,7 +465,7 @@ The kit's `--fg*` tokens behave differently at different sizes. Memorize these:
 
 **T-12.2 — Error color (`--error`) is used at 12–14px only** (in hints). Never on body, never on headings. Errors are small signals, not loud claims.
 
-**T-12.3 — Accent color (`--accent`) on text is reserved for the one italic moment.** Not for links, not for bold emphasis, not for prices.
+**T-12.3 — Accent color (`--accent`) on text is reserved for the one headline highlight per page** (J-2.10). Not for links, not for bold emphasis, not for prices.
 
 **T-12.4 — Primary color on text means "link."** If it's not a link, it shouldn't be primary-colored.
 
@@ -528,7 +498,7 @@ The kit's `--fg*` tokens behave differently at different sizes. Memorize these:
 ```html
 <article class="card outlined">
   <span class="ds-eyebrow">INSTAGRAM · 2H AGO</span>  <!-- Mono 11 fg3 UPPER -->
-  <h3 class="ds-h3">                                  <!-- Fraunces 22 600 fg1 -->
+  <h3 class="ds-h3">                                  <!-- Geist 22 600 fg1 -->
     Five quiet habits that compound into a feed worth reading
   </h3>
   <p class="post-body">                               <!-- Geist 15 400 fg2 -->
@@ -541,7 +511,7 @@ The kit's `--fg*` tokens behave differently at different sizes. Memorize these:
 </article>
 ```
 
-Four type choices. Mono eyebrow, Fraunces title, Geist body, Mono meta. The rhythm is the kit.
+Three type treatments, one family. Mono eyebrow, Geist 600 title, Geist 400 body/meta. The rhythm is the kit.
 
 ### T-14.2 A stat card
 
@@ -550,7 +520,7 @@ Four type choices. Mono eyebrow, Fraunces title, Geist body, Mono meta. The rhyt
   <div class="sc-hd">
     <span class="sc-lbl">ENGAGEMENT RATE</span>       <!-- Mono 11 fg3 UPPER -->
   </div>
-  <div class="sc-val">                                <!-- Fraunces 56 400 fg1 tnum -->
+  <div class="sc-val">                                <!-- Geist 56 700 fg1 tnum -->
     4.8<small>%</small>                               <!-- Geist 20 500 fg3 -->
   </div>
   <div class="sc-row">
@@ -560,17 +530,17 @@ Four type choices. Mono eyebrow, Fraunces title, Geist body, Mono meta. The rhyt
 </div>
 ```
 
-Note the mixed-family inside `.sc-val`: Fraunces digit, Geist unit.
+Note the mixed-weight contrast inside `.sc-val`: Geist 700 digit, Geist 500 unit — same family, different jobs.
 
 ### T-14.3 A page header
 
 ```html
 <header class="page-header">
   <span class="ds-eyebrow">LIBRARY · 07 ENTRIES</span>   <!-- Mono 11 fg3 UPPER -->
-  <h1 class="page-title">                                <!-- Fraunces 48 500 fg1 -->
-    Everything you've <em>written,</em> in one room.     <!-- Fraunces italic SOFT70 accent -->
+  <h1 class="page-title">                                <!-- Geist 48 700 fg1 -->
+    Everything you've written, in one room.
   </h1>
-  <p class="page-sub">                                   <!-- Fraunces serif 18 400 fg2 -->
+  <p class="page-sub">                                   <!-- Geist 18 400 fg2 -->
     Drafts, scheduled, and published — sorted the way your week actually works.
   </p>
   <div class="page-actions">
@@ -579,27 +549,25 @@ Note the mixed-family inside `.sc-val`: Fraunces digit, Geist unit.
 </header>
 ```
 
-Four families / variants across one header: Mono eyebrow, Fraunces upright + Fraunces italic, Fraunces serif, Geist button. The cadence is what makes a Growth Tools page *feel* like one.
+One family, three weights across one header: Mono eyebrow (500), Geist 700 title, Geist 400 sublede, Geist 500 button. The cadence — not the font count — is what makes a Growth Tools page *feel* like one.
 
 ---
 
 ## T-15. Typography anti-patterns
 
-- **TAP-1** Fraunces on a button or input label. (TAP-2 for Mono.)
+- **TAP-1** A heavy display weight (600–700) on a button or input label. (TAP-2 for Mono.)
 - **TAP-2** Mono on a button label. Never.
 - **TAP-3** Body text in `--fg1`. Body is `--fg2` (J-2.6).
-- **TAP-4** Italic in Geist. Italic is always Fraunces (T-4.6).
-- **TAP-5** Stat value not in Fraunces (AP-4).
+- **TAP-5** Stat value not in Geist 700 (AP-4).
 - **TAP-6** Eyebrow in mixed case or sentence case. Always UPPERCASE.
 - **TAP-7** Eyebrow tracking < 0.18em or > 0.18em. Exactly 0.18em.
 - **TAP-8** Eyebrow below a title. Always above, 4px gap.
-- **TAP-9** More than one italic moment per page.
-- **TAP-10** Bold (700) on buttons or headings. Use 500/600 (T-11).
+- **TAP-10** A light weight (400) on a page title or stat value. Those roles are always 700 (T-11).
 - **TAP-11** Title Case in button labels. Sentence case only.
 - **TAP-12** Body at 16px. 15px default (J-3.6).
 - **TAP-13** Label at 14px. 13px (T-8.3).
 - **TAP-14** Eyebrow at 10px or 14px. 11px default.
-- **TAP-15** Weight jump 400 → 600 without going through 500.
+- **TAP-15** Weight jump 400 → 600 without a role-appropriate reason (custom hand-tuned bolding instead of the fixed role ladder).
 - **TAP-16** `--fg4` on readable content. fg4 is placeholder / separator only.
 - **TAP-17** Letter-spacing tweaks on body for "breathing room." Use line-height or size.
 - **TAP-18** Placeholder text used as label (AAP-3).
@@ -612,15 +580,14 @@ Four families / variants across one header: Mono eyebrow, Fraunces upright + Fra
 
 Scan the page in this order:
 
-1. **How many families do you see?** Should be 3 (Fraunces, Geist, Mono). If you see 4, find the intruder.
-2. **How many italic words?** Exactly 1 on a hero / page-title view.
-3. **How many type sizes?** Count them. ≤ 4 on a product page.
-4. **The big number on the page** — is it Fraunces?
-5. **The eyebrow above the title** — is it above (not below), mono, uppercase, `--fg3`?
-6. **Pick any paragraph. Check its color.** fg2, not fg1.
-7. **Pick any button. Check its font.** Geist, 500, sentence case.
-8. **Pick any label. Check its size.** 13px.
-9. **Pick any number in a row/column.** Tabular nums on?
-10. **Read the page aloud.** Does the rhythm feel editorial-pragmatic — or textbook SaaS?
+1. **How many families do you see?** Should be 2 (Geist, Geist Mono). If you see 3, find the intruder.
+2. **How many type sizes?** Count them. ≤ 4 on a product page.
+3. **The big number on the page** — is it Geist 700?
+4. **The eyebrow above the title** — is it above (not below), mono, uppercase, `--fg3`?
+5. **Pick any paragraph. Check its color.** fg2, not fg1.
+6. **Pick any button. Check its font.** Geist, 500, sentence case.
+7. **Pick any label. Check its size.** 13px.
+8. **Pick any number in a row/column.** Tabular nums on?
+9. **Read the page aloud.** Does the rhythm feel direct and pragmatic — or textbook SaaS?
 
-If all 10 pass, ship it.
+If all 9 pass, ship it.

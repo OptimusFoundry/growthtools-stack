@@ -13,8 +13,8 @@ All color tokens are OKLCH. Use `var(--*)` — never hex literals.
 --fg2   32% L          default body
 --fg3   50% L          muted / secondary
 --fg4   66% L          subtle / disabled
---ink   = --fg1        editorial ink pair
---paper = --bg         editorial paper pair
+--ink   = --fg1        ink pair
+--paper = --bg         paper pair
 ```
 
 ## Neutral base scale (50 → 950)
@@ -54,12 +54,12 @@ Use `--base-200` for skeleton highlight.
 --secondary-hover
 --secondary-fg
 
---accent         burnt amber          oklch(72% 0.17 55deg)  ← the warm editorial accent
+--accent         burnt amber          oklch(72% 0.17 55deg)  ← the warm accent
 --accent-hover
 --accent-fg      near-black on amber
 ```
 
-**Rule of thumb:** `--primary` is the reserved "brand" color — use for focus rings, links, key CTAs. `--accent` is the *warm* editorial highlight — use for italic moments, tier=creator, persona badges, and exactly **one** per page.
+**Rule of thumb:** `--primary` is the reserved "brand" color — use for focus rings, links, key CTAs. `--accent` is the *warm* highlight — use for tier=creator, persona badges, and exactly **one** per page.
 
 ## Semantic
 
@@ -89,7 +89,7 @@ Default shadows are tinted with the ink hue (not pure black) — that warmth is 
 
 | Theme       | Mood                                           | Primary               | Accent              |
 |-------------|------------------------------------------------|-----------------------|---------------------|
-| (default)   | Editorial warm white + indigo + amber          | deep indigo-violet    | burnt amber         |
+| `paper` (default) | Warm white + indigo + amber               | deep indigo-violet    | burnt amber         |
 | `light`     | Pure white, zero tint, black/gray UI           | near-black            | gray                |
 | `dark`      | Cool ink bg + violet glow                      | vivid violet          | amber               |
 | `cosmos`    | Deep space purple, luxe                        | bright violet         | gold                |

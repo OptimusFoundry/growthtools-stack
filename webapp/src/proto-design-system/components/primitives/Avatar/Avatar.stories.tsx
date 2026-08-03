@@ -52,8 +52,7 @@ const meta: Meta<typeof Avatar> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// Sample avatar URL (placeholder)
-const sampleImage = "https://i.pravatar.cc/150?img=1";
+const sampleImage = "https://i.pravatar.cc/150?img=32";
 
 // =============================================================================
 // DEFAULT
@@ -62,7 +61,7 @@ const sampleImage = "https://i.pravatar.cc/150?img=1";
 export const Default: Story = {
 	args: {
 		src: sampleImage,
-		alt: "John Doe",
+		alt: "Priya Nair",
 	},
 };
 
@@ -72,13 +71,13 @@ export const Default: Story = {
 
 export const WithInitials: Story = {
 	args: {
-		initials: "JD",
+		initials: "PN",
 	},
 };
 
 export const SingleInitial: Story = {
 	args: {
-		initials: "A",
+		initials: "M",
 	},
 };
 
@@ -98,9 +97,9 @@ export const CustomFallback: Story = {
 
 export const BrokenImage: Story = {
 	args: {
-		src: "https://broken-url.com/image.jpg",
-		alt: "Broken image",
-		initials: "BI",
+		src: "https://cdn.launchpad.dev/avatars/missing.jpg",
+		alt: "Deactivated account",
+		initials: "DA",
 	},
 };
 
@@ -111,42 +110,42 @@ export const BrokenImage: Story = {
 export const ExtraSmall: Story = {
 	args: {
 		size: "xs",
-		initials: "XS",
+		initials: "AK",
 	},
 };
 
 export const Small: Story = {
 	args: {
 		size: "sm",
-		initials: "SM",
+		initials: "RB",
 	},
 };
 
 export const Medium: Story = {
 	args: {
 		size: "md",
-		initials: "MD",
+		initials: "LT",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		initials: "LG",
+		initials: "SM",
 	},
 };
 
 export const ExtraLarge: Story = {
 	args: {
 		size: "xl",
-		initials: "XL",
+		initials: "JW",
 	},
 };
 
 export const Size2XL: Story = {
 	args: {
 		size: "2xl",
-		initials: "2X",
+		initials: "CO",
 	},
 };
 
@@ -158,7 +157,7 @@ export const Circle: Story = {
 	args: {
 		variant: "circle",
 		src: sampleImage,
-		alt: "Circle avatar",
+		alt: "Team member avatar, circle shape",
 	},
 };
 
@@ -166,7 +165,7 @@ export const Rounded: Story = {
 	args: {
 		variant: "rounded",
 		src: sampleImage,
-		alt: "Rounded avatar",
+		alt: "Team member avatar, rounded shape",
 	},
 };
 
@@ -174,7 +173,7 @@ export const Square: Story = {
 	args: {
 		variant: "square",
 		src: sampleImage,
-		alt: "Square avatar",
+		alt: "Team member avatar, square shape",
 	},
 };
 
@@ -185,25 +184,12 @@ export const Square: Story = {
 export const AllSizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-			<Avatar size="xs" initials="XS" />
-			<Avatar size="sm" initials="SM" />
-			<Avatar size="md" initials="MD" />
-			<Avatar size="lg" initials="LG" />
-			<Avatar size="xl" initials="XL" />
-			<Avatar size="2xl" initials="2X" />
-		</div>
-	),
-};
-
-export const AllSizesWithImage: Story = {
-	render: () => (
-		<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-			<Avatar size="xs" src="https://i.pravatar.cc/150?img=1" alt="User" />
-			<Avatar size="sm" src="https://i.pravatar.cc/150?img=2" alt="User" />
-			<Avatar size="md" src="https://i.pravatar.cc/150?img=3" alt="User" />
-			<Avatar size="lg" src="https://i.pravatar.cc/150?img=4" alt="User" />
-			<Avatar size="xl" src="https://i.pravatar.cc/150?img=5" alt="User" />
-			<Avatar size="2xl" src="https://i.pravatar.cc/150?img=6" alt="User" />
+			<Avatar size="xs" initials="AK" />
+			<Avatar size="sm" initials="RB" />
+			<Avatar size="md" initials="LT" />
+			<Avatar size="lg" initials="SM" />
+			<Avatar size="xl" initials="JW" />
+			<Avatar size="2xl" initials="CO" />
 		</div>
 	),
 };
@@ -218,26 +204,17 @@ export const AllVariants: Story = {
 	),
 };
 
-export const AvatarGroup: Story = {
-	render: () => (
-		<div style={{ display: "flex" }}>
-			{[1, 2, 3, 4, 5].map((i) => (
-				<div key={i} style={{ marginLeft: i > 1 ? "-0.5rem" : 0 }}>
-					<Avatar
-						src={`https://i.pravatar.cc/150?img=${i}`}
-						alt={`User ${i}`}
-						size="md"
-						style={{ border: "2px solid var(--color-surface)" }}
-					/>
-				</div>
-			))}
-		</div>
-	),
-};
-
 export const Showcase: Story = {
+	name: "Showcase: Team members list",
 	render: () => (
-		<div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "1.5rem",
+				width: "320px",
+			}}
+		>
 			<div>
 				<p
 					style={{
@@ -246,12 +223,31 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					With images
+					Design team
 				</p>
-				<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-					<Avatar size="sm" src="https://i.pravatar.cc/150?img=10" alt="User" />
-					<Avatar size="md" src="https://i.pravatar.cc/150?img=11" alt="User" />
-					<Avatar size="lg" src="https://i.pravatar.cc/150?img=12" alt="User" />
+				<div style={{ display: "flex" }}>
+					{[
+						{ img: 5, alt: "Priya Nair" },
+						{ img: 12, alt: "Marcus Webb" },
+						{ img: 47, alt: "Elena Torres" },
+						{ img: 23, alt: "Sam Okafor" },
+					].map((person, i) => (
+						<div key={person.alt} style={{ marginLeft: i > 0 ? "-0.5rem" : 0 }}>
+							<Avatar
+								src={`https://i.pravatar.cc/150?img=${person.img}`}
+								alt={person.alt}
+								size="md"
+								style={{ border: "2px solid var(--color-surface)" }}
+							/>
+						</div>
+					))}
+					<div style={{ marginLeft: "-0.5rem" }}>
+						<Avatar
+							initials="+3"
+							size="md"
+							style={{ border: "2px solid var(--color-surface)" }}
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -263,46 +259,12 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					With initials
+					Pending invites (no photo yet)
 				</p>
 				<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-					<Avatar size="sm" initials="AB" />
-					<Avatar size="md" initials="CD" />
-					<Avatar size="lg" initials="EF" />
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.75rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					Shape variants
-				</p>
-				<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-					<Avatar variant="circle" initials="CI" />
-					<Avatar variant="rounded" initials="RO" />
-					<Avatar variant="square" initials="SQ" />
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.75rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					Fallback states
-				</p>
-				<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-					<Avatar />
-					<Avatar fallback={<User size="60%" />} />
-					<Avatar initials="FB" />
+					<Avatar size="md" initials="TB" />
+					<Avatar size="md" initials="JW" />
+					<Avatar size="md" fallback={<User size="60%" />} />
 				</div>
 			</div>
 		</div>

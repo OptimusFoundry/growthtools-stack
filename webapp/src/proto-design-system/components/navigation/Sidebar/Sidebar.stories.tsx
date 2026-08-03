@@ -229,7 +229,7 @@ export const WithToggle: Story = {
 	render: () => (
 		<Sidebar>
 			<SidebarHeader>
-				<SidebarLogo>Acme Inc</SidebarLogo>
+				<SidebarLogo>Northwind</SidebarLogo>
 				<SidebarToggle />
 			</SidebarHeader>
 			<SidebarSection>
@@ -266,7 +266,7 @@ export const Controlled: Story = {
 			return (
 				<Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed}>
 					<SidebarHeader>
-						<SidebarLogo>Acme Inc</SidebarLogo>
+						<SidebarLogo>Northwind</SidebarLogo>
 						<SidebarToggle />
 					</SidebarHeader>
 					<SidebarSection>
@@ -299,7 +299,7 @@ export const Responsive: Story = {
 	render: () => (
 		<Sidebar responsive>
 			<SidebarHeader>
-				<SidebarLogo>Acme Inc</SidebarLogo>
+				<SidebarLogo>Northwind</SidebarLogo>
 				<SidebarToggle />
 			</SidebarHeader>
 			<SidebarSection>
@@ -345,7 +345,7 @@ export const CustomBreakpoint: Story = {
 	render: () => (
 		<Sidebar responsive mobileBreakpoint={1024}>
 			<SidebarHeader>
-				<SidebarLogo>Wide Breakpoint</SidebarLogo>
+				<SidebarLogo>Northwind</SidebarLogo>
 				<SidebarToggle />
 			</SidebarHeader>
 			<SidebarSection>
@@ -357,6 +357,64 @@ export const CustomBreakpoint: Story = {
 				</SidebarItem>
 				<SidebarItem icon={<FileText />} href="#">
 					Documents
+				</SidebarItem>
+			</SidebarSection>
+		</Sidebar>
+	),
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<Sidebar>
+			<SidebarHeader>
+				<SidebarLogo>Northwind</SidebarLogo>
+				<SidebarToggle />
+			</SidebarHeader>
+
+			<SidebarSection>
+				<SidebarItem icon={<Home />} href="#" active>
+					Dashboard
+				</SidebarItem>
+				<SidebarItem icon={<Inbox />} href="#" badge="8">
+					Inbox
+				</SidebarItem>
+				<SidebarItem icon={<BarChart />} href="#">
+					Analytics
+				</SidebarItem>
+			</SidebarSection>
+
+			<SidebarGroup icon={<Folder />} label="Projects" defaultExpanded>
+				<SidebarItem href="#">Website Redesign</SidebarItem>
+				<SidebarItem href="#">Mobile App v2</SidebarItem>
+				<SidebarItem href="#">Q3 Marketing Site</SidebarItem>
+			</SidebarGroup>
+
+			<SidebarDivider />
+
+			<SidebarSection title="Workspace">
+				<SidebarItem icon={<Users />} href="#">
+					Members
+				</SidebarItem>
+				<SidebarItem icon={<FileText />} href="#" disabled>
+					Advanced Reports (Pro)
+				</SidebarItem>
+				<SidebarItem icon={<Settings />} href="#">
+					Settings
+				</SidebarItem>
+			</SidebarSection>
+
+			<SidebarDivider />
+
+			<SidebarSection>
+				<SidebarItem icon={<HelpCircle />} href="#">
+					Help &amp; Support
+				</SidebarItem>
+				<SidebarItem icon={<LogOut />} href="#">
+					Log out
 				</SidebarItem>
 			</SidebarSection>
 		</Sidebar>

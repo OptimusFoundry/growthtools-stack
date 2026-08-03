@@ -65,16 +65,16 @@
 
 .size-sm {
   .trigger {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     height: var(--space-6);
     min-width: var(--space-20);
-    padding: 0 var(--space-2-5);
+    padding: 0 var(--space-3);
   }
 }
 
 .size-md {
   .trigger {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     height: var(--space-7);
     min-width: var(--space-24);
     padding: 0 var(--space-3);
@@ -83,7 +83,7 @@
 
 .size-lg {
   .trigger {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
     height: var(--space-8);
     min-width: var(--space-28);
     padding: 0 var(--space-4);
@@ -265,7 +265,7 @@
   color: var(--color-primary-content);
 
   &:hover {
-    background-color: oklch(from var(--color-primary) calc(l - 0.05) c h);
+    background-color: var(--color-primary-hover);
   }
 }
 
@@ -275,5 +275,5 @@
 
 .disabled {
   cursor: not-allowed;
-  opacity: 0.3;
+  opacity: var(--opacity-disabled);
 }

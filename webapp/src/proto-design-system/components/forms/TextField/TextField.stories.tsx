@@ -30,33 +30,33 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		label: "Email",
-		placeholder: "Enter your email",
+		label: "Work email",
+		placeholder: "you@company.com",
 	},
 };
 
 export const WithHelperText: Story = {
 	args: {
-		label: "Username",
-		placeholder: "Enter username",
-		helperText: "Choose a unique username",
+		label: "Workspace URL",
+		placeholder: "acme",
+		helperText: "This becomes acme.yourapp.com — you can change it later",
 	},
 };
 
 export const Required: Story = {
 	args: {
-		label: "Email",
-		placeholder: "Enter your email",
+		label: "Legal company name",
+		placeholder: "Acme Rocket Co.",
 		required: true,
 	},
 };
 
 export const WithError: Story = {
 	args: {
-		label: "Username",
-		placeholder: "Enter username",
-		defaultValue: "john",
-		errorMessage: "This username is already taken",
+		label: "Coupon code",
+		placeholder: "Enter code",
+		defaultValue: "LAUNCH50",
+		errorMessage: "This code expired on July 31, 2026",
 	},
 };
 
@@ -66,16 +66,16 @@ export const WithError: Story = {
 
 export const WithLeftIcon: Story = {
 	args: {
-		label: "Email",
-		placeholder: "Enter your email",
+		label: "Billing email",
+		placeholder: "billing@company.com",
 		leftElement: <Mail size={16} />,
 	},
 };
 
 export const WithRightIcon: Story = {
 	args: {
-		label: "Username",
-		placeholder: "Enter username",
+		label: "Assignee",
+		placeholder: "Search teammates...",
 		rightElement: <User size={16} />,
 	},
 };
@@ -86,8 +86,8 @@ export const WithRightIcon: Story = {
 
 export const FilledVariant: Story = {
 	args: {
-		label: "Email",
-		placeholder: "Enter your email",
+		label: "Support email",
+		placeholder: "support@company.com",
 		variant: "filled",
 	},
 };
@@ -98,24 +98,24 @@ export const FilledVariant: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small input",
-		placeholder: "Small",
+		label: "Discount code",
+		placeholder: "SAVE20",
 		size: "sm",
 	},
 };
 
 export const Medium: Story = {
 	args: {
-		label: "Medium input",
-		placeholder: "Medium",
+		label: "Project name",
+		placeholder: "Q3 Marketing Site",
 		size: "md",
 	},
 };
 
 export const Large: Story = {
 	args: {
-		label: "Large input",
-		placeholder: "Large",
+		label: "Organization name",
+		placeholder: "Northwind Traders",
 		size: "lg",
 	},
 };
@@ -126,8 +126,8 @@ export const Large: Story = {
 
 export const Disabled: Story = {
 	args: {
-		label: "Disabled field",
-		placeholder: "Cannot edit",
+		label: "Account ID",
+		placeholder: "acct_9F2KQ7XLM",
 		disabled: true,
 	},
 };
@@ -135,7 +135,7 @@ export const Disabled: Story = {
 export const HiddenLabel: Story = {
 	args: {
 		label: "Search",
-		placeholder: "Search...",
+		placeholder: "Search invoices, customers, or plans",
 		hideLabel: true,
 		"aria-label": "Search",
 	},
@@ -155,18 +155,18 @@ export const Showcase: Story = {
 				width: "300px",
 			}}
 		>
-			<TextField label="Full name" placeholder="John Doe" />
+			<TextField label="Full name" placeholder="Priya Natarajan" />
 			<TextField
-				label="Email"
-				placeholder="john@example.com"
+				label="Work email"
+				placeholder="priya@northwindtraders.com"
 				leftElement={<Mail size={16} />}
-				helperText="We'll never share your email"
+				helperText="We'll send your invoice receipts here"
 			/>
 			<TextField
-				label="Username"
-				placeholder="johndoe"
+				label="Workspace handle"
+				placeholder="northwind"
 				leftElement={<User size={16} />}
-				errorMessage="Username is already taken"
+				errorMessage="northwind is already taken — try northwind-hq"
 			/>
 			<TextField
 				label="Password"
@@ -174,7 +174,7 @@ export const Showcase: Story = {
 				placeholder="••••••••"
 				required
 			/>
-			<TextField label="Disabled" placeholder="Cannot edit" disabled />
+			<TextField label="Account ID" placeholder="acct_9F2KQ7XLM" disabled />
 		</div>
 	),
 	parameters: {

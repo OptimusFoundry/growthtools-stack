@@ -45,7 +45,7 @@ export function FilterTabs({
 	items,
 	value,
 	onChange,
-	size = "sm",
+	size = "md",
 	"aria-label": ariaLabel,
 	className,
 }: FilterTabsProps) {

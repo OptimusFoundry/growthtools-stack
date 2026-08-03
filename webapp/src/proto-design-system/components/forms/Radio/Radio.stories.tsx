@@ -25,23 +25,23 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		label: "Option 1",
-		name: "default-radio",
+		label: "Monthly billing",
+		name: "billing-cycle",
 	},
 };
 
 export const WithDescription: Story = {
 	args: {
-		label: "Pro plan",
-		description: "$9/month - Unlimited features",
-		name: "plan",
+		label: "Team plan",
+		description: "$29/month per seat, billed annually",
+		name: "plan-tier",
 	},
 };
 
 export const Checked: Story = {
 	args: {
-		label: "Selected option",
-		name: "checked-radio",
+		label: "US East (N. Virginia)",
+		name: "region",
 		defaultChecked: true,
 	},
 };
@@ -52,25 +52,25 @@ export const Checked: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small radio",
+		label: "Compact layout",
 		size: "sm",
-		name: "size-sm",
+		name: "density-sm",
 	},
 };
 
 export const Medium: Story = {
 	args: {
-		label: "Medium radio",
+		label: "Comfortable layout",
 		size: "md",
-		name: "size-md",
+		name: "density-md",
 	},
 };
 
 export const Large: Story = {
 	args: {
-		label: "Large radio",
+		label: "Spacious layout",
 		size: "lg",
-		name: "size-lg",
+		name: "density-lg",
 	},
 };
 
@@ -80,26 +80,26 @@ export const Large: Story = {
 
 export const Disabled: Story = {
 	args: {
-		label: "Disabled option",
+		label: "Dedicated hosting (upgrade required)",
 		disabled: true,
-		name: "disabled",
+		name: "hosting-disabled",
 	},
 };
 
 export const DisabledChecked: Story = {
 	args: {
-		label: "Disabled selected",
+		label: "Legacy pricing (locked in)",
 		disabled: true,
 		defaultChecked: true,
-		name: "disabled-checked",
+		name: "pricing-locked",
 	},
 };
 
 export const WithError: Story = {
 	args: {
-		label: "Required field",
+		label: "Accept the data processing agreement",
 		isError: true,
-		name: "error",
+		name: "dpa-consent",
 	},
 };
 
@@ -111,27 +111,27 @@ export const RadioGroup: Story = {
 	render: () => (
 		<fieldset style={{ border: "none", padding: 0, margin: 0 }}>
 			<legend style={{ marginBottom: "0.75rem", fontWeight: 500 }}>
-				Select a plan
+				Choose a subscription plan
 			</legend>
 			<div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
 				<Radio
-					name="plan"
-					value="free"
-					label="Free"
-					description="Basic features"
+					name="subscription-plan"
+					value="starter"
+					label="Starter"
+					description="Up to 3 team members, community support"
 				/>
 				<Radio
-					name="plan"
-					value="pro"
-					label="Pro"
-					description="$9/month"
+					name="subscription-plan"
+					value="growth"
+					label="Growth"
+					description="$49/month — unlimited members, priority support"
 					defaultChecked
 				/>
 				<Radio
-					name="plan"
+					name="subscription-plan"
 					value="enterprise"
 					label="Enterprise"
-					description="Custom pricing"
+					description="Custom SLA, SSO, and dedicated account manager"
 				/>
 			</div>
 		</fieldset>
@@ -141,9 +141,62 @@ export const RadioGroup: Story = {
 export const Sizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-			<Radio name="sizes" value="sm" label="Small" size="sm" />
-			<Radio name="sizes" value="md" label="Medium" size="md" defaultChecked />
-			<Radio name="sizes" value="lg" label="Large" size="lg" />
+			<Radio name="export-format" value="csv" label="CSV" size="sm" />
+			<Radio
+				name="export-format"
+				value="json"
+				label="JSON"
+				size="md"
+				defaultChecked
+			/>
+			<Radio name="export-format" value="parquet" label="Parquet" size="lg" />
 		</div>
+	),
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<fieldset style={{ border: "none", padding: 0, margin: 0, width: 320 }}>
+			<legend
+				style={{
+					marginBottom: "var(--space-3)",
+					fontWeight: 600,
+					fontSize: "var(--font-size-md)",
+				}}
+			>
+				How should we notify you about deploys?
+			</legend>
+			<div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+				<Radio
+					name="deploy-notifications"
+					value="all"
+					label="Every deploy"
+					description="Slack + email on every push to main"
+					defaultChecked
+				/>
+				<Radio
+					name="deploy-notifications"
+					value="failures"
+					label="Failures only"
+					description="Only get pinged when a build breaks"
+				/>
+				<Radio
+					name="deploy-notifications"
+					value="none"
+					label="Nothing"
+					description="You can still check the dashboard anytime"
+				/>
+				<Radio
+					name="deploy-notifications"
+					value="pagerduty"
+					label="Escalate to PagerDuty (Enterprise only)"
+					disabled
+				/>
+			</div>
+		</fieldset>
 	),
 };

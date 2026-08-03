@@ -139,8 +139,8 @@ export const Sizes: Story = {
 			>
 				<EmptyState
 					size="sm"
-					title="Small"
-					description="A small empty state"
+					title="No comments yet"
+					description="Be the first to leave a comment."
 					icon={<Inbox />}
 				/>
 			</div>
@@ -152,8 +152,8 @@ export const Sizes: Story = {
 			>
 				<EmptyState
 					size="md"
-					title="Medium (Default)"
-					description="A medium empty state"
+					title="No notifications"
+					description="You're all caught up. New notifications will show up here."
 					icon={<Inbox />}
 				/>
 			</div>
@@ -165,8 +165,8 @@ export const Sizes: Story = {
 			>
 				<EmptyState
 					size="lg"
-					title="Large"
-					description="A large empty state"
+					title="No campaigns yet"
+					description="Create your first email campaign to start reaching your subscribers."
 					icon={<Inbox />}
 				/>
 			</div>
@@ -198,9 +198,54 @@ export const CustomIcon: Story = {
 
 export const NoIcon: Story = {
 	args: {
-		title: "Simple empty state",
-		description: "Sometimes you just need text without an icon.",
+		title: "No billing history",
+		description: "Invoices will appear here once you're on a paid plan.",
 		icon: null,
-		action: <PrimaryButton>Take Action</PrimaryButton>,
+		action: <PrimaryButton>View Plans</PrimaryButton>,
 	},
+};
+
+export const Showcase: Story = {
+	render: () => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "1.5rem",
+				maxWidth: "480px",
+			}}
+		>
+			<div
+				style={{
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+				}}
+			>
+				<EmptyState
+					title="No support tickets"
+					description="Your inbox is empty. Tickets submitted by customers will show up here."
+					icon={<Inbox />}
+					action={
+						<PrimaryButton>
+							<Plus size={16} /> New Ticket
+						</PrimaryButton>
+					}
+				/>
+			</div>
+			<div
+				style={{
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+				}}
+			>
+				<EmptyState
+					size="sm"
+					title="No results for &ldquo;refund policy&rdquo;"
+					description="Try a different search term or browse the help categories."
+					icon={<Search />}
+					action={<SecondaryButton>Browse Categories</SecondaryButton>}
+				/>
+			</div>
+		</div>
+	),
 };

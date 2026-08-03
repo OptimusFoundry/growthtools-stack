@@ -30,13 +30,12 @@ const DrawerDemo = (props: Partial<React.ComponentProps<typeof Drawer>>) => {
 			<Drawer
 				isOpen={isOpen}
 				onClose={() => setIsOpen(false)}
-				title="Drawer Title"
+				title="Campaign Settings"
 				{...props}
 			>
 				{props.children ?? (
 					<p style={{ margin: 0, color: "var(--color-muted)" }}>
-						This is the drawer body. Place any content here — forms, details,
-						settings panels, and more.
+						Configure targeting, budget, and schedule for this campaign.
 					</p>
 				)}
 			</Drawer>
@@ -55,8 +54,8 @@ export const Default: Story = {
 export const WithDescription: Story = {
 	render: () => (
 		<DrawerDemo
-			title="Settings"
-			description="Adjust your preferences for this campaign."
+			title="Notification Preferences"
+			description="Choose which email alerts you want to receive."
 		/>
 	),
 };
@@ -133,11 +132,23 @@ export const NonDismissible: Story = {
 // =============================================================================
 
 export const Small: Story = {
-	render: () => <DrawerDemo size="sm" title="Small Drawer" />,
+	render: () => (
+		<DrawerDemo
+			size="sm"
+			title="Notification Preferences"
+			description="Toggle the alerts you want delivered by email."
+		/>
+	),
 };
 
 export const Large: Story = {
-	render: () => <DrawerDemo size="lg" title="Large Drawer" />,
+	render: () => (
+		<DrawerDemo
+			size="lg"
+			title="Team Members"
+			description="Manage who has access to this workspace."
+		/>
+	),
 };
 
 // =============================================================================

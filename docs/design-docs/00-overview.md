@@ -4,12 +4,11 @@ This folder contains the instruction set for generating **new pages and prototyp
 
 ## What is this kit?
 
-A warm, **editorial, serif-forward** design system with a mixed-type personality:
-- **Fraunces** (variable, opsz 9–144, SOFT 0–100) — display, headings, big numerals, italic "moments"
-- **Geist** — UI body, inputs, buttons
+A clean, **Geist-only** design system:
+- **Geist** — UI body, headings, inputs, buttons
 - **Geist Mono** — eyebrows, data, tabular numbers, filenames
 
-It is *not* a "SaaS blue" kit. The defaults lean warm near-white paper with deep indigo-violet primary and a burnt-amber accent. High contrast, airy spacing, oversized editorial numerals.
+Defaults to the "paper" theme (near-white background, neutral primary). High contrast, airy spacing.
 
 ## How to read these docs
 
@@ -70,7 +69,7 @@ Every HTML file starts with this skeleton. You have two stylesheets to choose fr
 ```html
 <html data-theme="porcelain">   <!-- or: dark, cosmos, cyberpunk, brutal, sunset, claude, ocean, glow, fog, light -->
 ```
-Omit `data-theme` entirely for the default "editorial" theme (warm white + indigo + amber).
+Omit `data-theme` entirely for the default "paper" theme.
 
 ## React scaffold (pinned)
 
@@ -91,9 +90,8 @@ Then mount:
 
 ## The 5 non-negotiable rules
 
-1. **Oversized Fraunces numerals** are the signature. Use them for stats, big percentages, hero KPIs. Never render a big number in a sans font.
-2. **Italic "moments."** Pick one italic Fraunces phrase per hero (`<em style="font-style:italic; font-variation-settings:'opsz' 144,'SOFT' 70,'wght' 400; color:var(--accent);">everywhere.</em>`). Not every heading.
-3. **Mono eyebrows.** Every section heading is preceded by a UPPERCASE tracked mono label (`.ds-eyebrow` or `font-family:var(--font-mono); font-size:11px; letter-spacing:0.18em; text-transform:uppercase`).
+1. **Oversized numerals** for stats, big percentages, hero KPIs — bold Geist, not a serif display face.
+2. **Mono eyebrows.** Every section heading is preceded by a UPPERCASE tracked mono label (`.ds-eyebrow` or `font-family:var(--font-mono); font-size:11px; letter-spacing:0.18em; text-transform:uppercase`).
 4. **Warm whites.** Never use `#fff` or `#000` directly — always `var(--bg)`, `var(--bg-surface)`, `var(--fg1)`. The page should feel *toned*.
 5. **Airy padding.** Page gutters are `56–64px`. Section rhythm is `56–80px`. Cards are `20–28px`. If it feels cramped, it is.
 
@@ -101,7 +99,7 @@ Then mount:
 
 When asked for "a new page," output a single HTML file that:
 - Uses the shell from `11-page-composition.md` (sidebar + topbar + page)
-- Has a `.page-header` with eyebrow, Fraunces title (+italic moment), serif sublede
+- Has a `.page-header` with eyebrow, Geist title, sublede
 - Composes 2–5 sections using components from the catalog
 - Never invents new CSS beyond trivial layout tweaks
 - Never uses emoji unless the content is explicitly about reactions/emoji

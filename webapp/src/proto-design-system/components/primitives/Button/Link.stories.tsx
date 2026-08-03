@@ -50,7 +50,7 @@ const meta: Meta<typeof Link> = {
 	},
 	args: {
 		href: "#",
-		children: "Click here",
+		children: "View documentation",
 	},
 };
 
@@ -63,7 +63,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		children: "Learn more",
+		children: "View documentation",
 	},
 };
 
@@ -74,14 +74,14 @@ export const Default: Story = {
 export const Primary: Story = {
 	args: {
 		variant: "primary",
-		children: "Primary link",
+		children: "Upgrade your plan",
 	},
 };
 
 export const Muted: Story = {
 	args: {
 		variant: "muted",
-		children: "Muted link",
+		children: "Terms of Service",
 	},
 };
 
@@ -92,21 +92,21 @@ export const Muted: Story = {
 export const Small: Story = {
 	args: {
 		size: "sm",
-		children: "Small link",
+		children: "Reset password",
 	},
 };
 
 export const Medium: Story = {
 	args: {
 		size: "md",
-		children: "Medium link",
+		children: "Manage billing",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		children: "Large link",
+		children: "Get started free",
 	},
 };
 
@@ -117,7 +117,7 @@ export const Large: Story = {
 export const UnderlineOnHover: Story = {
 	args: {
 		underlineOnHover: true,
-		children: "Hover to see underline",
+		children: "Forgot your password?",
 	},
 };
 
@@ -128,16 +128,16 @@ export const UnderlineOnHover: Story = {
 export const WithRightIcon: Story = {
 	args: {
 		rightIcon: <ArrowRight size="1em" />,
-		children: "Continue reading",
+		children: "Read the changelog",
 	},
 };
 
 export const ExternalLinkWithIcon: Story = {
 	args: {
-		href: "https://example.com",
+		href: "https://status.example.com",
 		target: "_blank",
 		rightIcon: <ExternalLink size="1em" />,
-		children: "Visit website",
+		children: "View system status",
 	},
 };
 
@@ -148,9 +148,8 @@ export const ExternalLinkWithIcon: Story = {
 export const InlineText: Story = {
 	render: () => (
 		<p style={{ maxWidth: "400px", lineHeight: 1.6 }}>
-			This is a paragraph with an <Link href="#">inline link</Link> that flows
-			naturally within the text. You can also have{" "}
-			<Link href="#">multiple links</Link> in the same paragraph.
+			Your export is ready. <Link href="#">Download the CSV</Link> now, or{" "}
+			<Link href="#">view it in the reports dashboard</Link> instead.
 		</p>
 	),
 };
@@ -185,13 +184,13 @@ export const AllVariants: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
 			<Link href="#" variant="default">
-				Default
+				View documentation
 			</Link>
 			<Link href="#" variant="primary">
-				Primary
+				Upgrade your plan
 			</Link>
 			<Link href="#" variant="muted">
-				Muted
+				Terms of Service
 			</Link>
 		</div>
 	),
@@ -201,13 +200,13 @@ export const AllSizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
 			<Link href="#" size="sm">
-				Small
+				Reset password
 			</Link>
 			<Link href="#" size="md">
-				Medium
+				Manage billing
 			</Link>
 			<Link href="#" size="lg">
-				Large
+				Get started free
 			</Link>
 		</div>
 	),
@@ -224,15 +223,15 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					Standard links
+					Account settings
 				</p>
 				<div style={{ display: "flex", gap: "1rem" }}>
-					<Link href="#">Default</Link>
+					<Link href="#">Manage billing</Link>
 					<Link href="#" variant="primary">
-						Primary
+						Upgrade your plan
 					</Link>
 					<Link href="#" variant="muted">
-						Muted
+						Deactivate account
 					</Link>
 				</div>
 			</div>
@@ -245,18 +244,18 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					With icons
+					Docs and status
 				</p>
 				<div style={{ display: "flex", gap: "1rem" }}>
 					<Link href="#" rightIcon={<ArrowRight size="1em" />}>
-						Read more
+						Read the changelog
 					</Link>
 					<Link
 						href="#"
 						target="_blank"
 						rightIcon={<ExternalLink size="1em" />}
 					>
-						External
+						View system status
 					</Link>
 				</div>
 			</div>
@@ -269,14 +268,14 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					Underline on hover
+					Auth screen and footer
 				</p>
 				<div style={{ display: "flex", gap: "1rem" }}>
 					<Link href="#" underlineOnHover>
-						Subtle link
+						Forgot your password?
 					</Link>
 					<Link href="#" underlineOnHover variant="muted">
-						Footer link
+						Privacy Policy
 					</Link>
 				</div>
 			</div>

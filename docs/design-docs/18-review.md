@@ -23,14 +23,13 @@ Rules `V-N.M`. This doc is the checklist; the others are the law.
 | Pts | Criterion | Ref |
 |---|---|---|
 | 4 | Page has exactly one `<h1>` / page-title | C-5.1, J-3.1 |
-| 2 | One italic `<em>` moment in the page-title | J-6.1 |
 | 2 | Eyebrow above title, 4px gap, mono uppercase tracked | J-11.3, J-1.1 |
 | 2 | Sublede is specific (numbers, state), not generic | J-11.2 |
 | 2 | ≤ 4 type sizes on the page | J-3.2 |
 | 2 | ≤ 1 `.btn.primary` per visible region | J-6.3 |
-| 2 | Stat values in Fraunces, tnum on, ≥ 56px | J-3.3, AP-4 |
+| 2 | Stat values in Geist 700, tnum on, ≥ 56px | J-3.3, AP-4 |
 | 2 | No emoji, no exclamation marks | J-11.8, J-11.9 |
-| 2 | No raw hex/rgb/named colors — tokens only | J-2, AP-10, I-1.4 |
+| 4 | No raw hex/rgb/named colors — tokens only | J-2, AP-10, I-1.4 |
 
 ---
 
@@ -52,7 +51,7 @@ Rules `V-N.M`. This doc is the checklist; the others are the law.
 | Pts | Criterion | Ref |
 |---|---|---|
 | 2 | Text color roles honored (fg1 headings ≥22, fg2 body, fg3 meta) | J-2 |
-| 2 | `--accent` used ≤ 2× per page (italic + one more) | J-2.10 |
+| 2 | `--accent` used ≤ 2× per page (headline highlight + one more) | J-2.10 |
 | 2 | `--primary` used for structural roles only (CTA, focus, links) | J-2.11 |
 | 2 | No nested surface stacking (card-in-card) | J-8.1 |
 | 2 | Contrast passes 4.5:1 body / 3:1 large text | A-6.1 |
@@ -108,7 +107,7 @@ Rules `V-N.M`. This doc is the checklist; the others are the law.
 | 1 | Times are relative ("2h ago") before absolute | J-11.5 |
 | 1 | Error copy is specific and actionable | S-4.6 |
 | 1 | No filler ("We couldn't find any, sorry!") | S-3.5 |
-| 1 | Italic moment in title is a word, not a phrase | J-6.1, J-11.7 |
+| 1 | Numerals consistent within a line (spelled out or digits, not mixed) | J-11.7 |
 
 ---
 
@@ -163,12 +162,11 @@ Rubrics that score ≥ 95 are expected to be sampled for audit — the reviewer 
 
 **Design fundamentals** (__/20)
 - [ ] Page has exactly one h1
-- [ ] One italic moment in title
 - [ ] Eyebrow above title, 4px gap
 - [ ] Sublede is specific
 - [ ] ≤4 type sizes
 - [ ] ≤1 primary per region
-- [ ] Stat values in Fraunces ≥56px
+- [ ] Stat values in Geist 700 ≥56px
 - [ ] No emoji / no !
 - [ ] No raw colors
 
@@ -218,7 +216,7 @@ Rubrics that score ≥ 95 are expected to be sampled for audit — the reviewer 
 - [ ] Relative times
 - [ ] Specific errors
 - [ ] No filler
-- [ ] Italic is a word
+- [ ] Numerals consistent within a line
 
 **Implementation** (__/10)
 - [ ] No !important / hex

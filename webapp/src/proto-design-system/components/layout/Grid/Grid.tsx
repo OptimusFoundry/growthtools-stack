@@ -1,8 +1,71 @@
-import { motion, type Variants } from "motion/react";
-import { Children, type ElementType, type ReactNode } from "react";
+import { motion } from "motion/react";
+import {
+	Children,
+	type CSSProperties,
+	type ElementType,
+	type ReactNode,
+	useMemo,
+} from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
+import { staggerContainerVariants, staggerItemVariants } from "../../../motion";
 import { cn } from "../../../utils/cn";
+import {
+	type Breakpoint,
+	type Responsive,
+	resolveResponsive,
+} from "../../../utils/responsive";
+import { GridItem } from "../GridItem/GridItem";
 import styles from "./Grid.module.scss";
+
+// Maps GridGap token names to CSS space variables
+const GAP_TOKEN_MAP: Record<GridGap, string> = {
+	"0": "0",
+	xs: "var(--space-xs)",
+	sm: "var(--space-sm)",
+	md: "var(--space-md)",
+	lg: "var(--space-lg)",
+	xl: "var(--space-xl)",
+	"2xl": "var(--space-2xl)",
+	"3xl": "var(--space-3xl)",
+	"4xl": "var(--space-4xl)",
+};
+
+/**
+ * Converts a Responsive<GridGap> into CSS custom property key-value pairs,
+ * with gap token names resolved to CSS space variable values.
+ */
+function buildGapVars(
+	prefix: string,
+	value: Responsive<GridGap> | undefined,
+): Record<string, string> {
+	if (value === undefined) return {};
+	const resolved = resolveResponsive(value);
+	const result: Record<string, string> = {};
+	for (const [bp, val] of Object.entries(resolved)) {
+		if (val !== undefined) {
+			result[`${prefix}-${bp}`] = GAP_TOKEN_MAP[val as GridGap] ?? "0";
+		}
+	}
+	return result;
+}
+
+/**
+ * Converts a Responsive<GridColumns> into CSS custom property key-value pairs.
+ * "auto" values are skipped — handled by the .columnsAuto class instead.
+ */
+function buildColumnVars(
+	value: Responsive<GridColumns>,
+): Record<string, string> {
+	const resolved = resolveResponsive(value);
+	const result: Record<string, string> = {};
+	for (const [bp, val] of Object.entries(resolved)) {
+		if (val !== undefined && val !== "auto") {
+			result[`--grid-columns-${bp as Breakpoint}`] = String(val);
+		}
+	}
+	return result;
+}
 
 export type GridColumns = "1" | "2" | "3" | "4" | "5" | "6" | "12" | "auto";
 export type GridGap =
@@ -17,14 +80,19 @@ export type GridGap =
 	| "4xl";
 
 export interface GridProps {
-	/** Number of columns */
-	columns?: GridColumns;
-	/** Gap between items */
-	gap?: GridGap;
-	/** Row gap (overrides gap for rows) */
-	rowGap?: GridGap;
-	/** Column gap (overrides gap for columns) */
-	columnGap?: GridGap;
+	/** Number of columns — supports responsive object e.g. `{{ base: 1, md: 3 }}` */
+	columns?: Responsive<GridColumns>;
+	/** Gap between items — supports responsive object. */
+	gap?: Responsive<GridGap>;
+	/** Row gap (overrides gap for rows). */
+	rowGap?: Responsive<GridGap>;
+	/** Column gap (overrides gap for columns). */
+	columnGap?: Responsive<GridGap>;
+	/**
+	 * When set, the component applies container-type: inline-size and
+	 * responsive CSS vars respond to @container queries at the given size threshold.
+	 */
+	containerQuery?: "sm" | "md" | "lg" | "xl" | "2xl";
 	/** Grid content */
 	children: ReactNode;
 	/** HTML element to render */
@@ -37,33 +105,21 @@ export interface GridProps {
 	className?: string;
 }
 
-// Animation variants for stagger effect
-const itemVariants: Variants = {
-	hidden: { opacity: 0, y: 10 },
-	visible: {
-		opacity: 1,
-		y: 0,
-		transition: { duration: 0.2, ease: [0, 0, 0.2, 1] as const },
-	},
-};
-
 /**
  * Grid component for CSS grid layouts.
  *
+ * Supports responsive column counts and gaps via the Responsive<T> type:
+ *
  * @example
  * ```tsx
- * <Grid columns="3" gap="md">
- *   <Card>Item 1</Card>
- *   <Card>Item 2</Card>
- *   <Card>Item 3</Card>
- * </Grid>
+ * // Fixed columns:
+ * <Grid columns="3" gap="md">...</Grid>
  *
- * // With stagger animation
- * <Grid columns="3" gap="md" animate>
- *   <Card>Item 1</Card>
- *   <Card>Item 2</Card>
- *   <Card>Item 3</Card>
- * </Grid>
+ * // Responsive columns:
+ * <Grid columns={{ base: 1, sm: 2, lg: 4 }} gap="lg">...</Grid>
+ *
+ * // With stagger animation:
+ * <Grid columns="3" gap="md" animate>...</Grid>
  * ```
  */
 export function Grid({
@@ -71,6 +127,7 @@ export function Grid({
 	gap = "md",
 	rowGap,
 	columnGap,
+	containerQuery,
 	children,
 	as: Component = "div",
 	animate = false,
@@ -79,31 +136,55 @@ export function Grid({
 }: GridProps) {
 	const prefersReducedMotion = useReducedMotion();
 	const shouldAnimate = animate && !prefersReducedMotion;
+	const motionTokens = useMotionTokens();
+	const itemVariants = useMemo(
+		() =>
+			staggerItemVariants(
+				{ y: 10 },
+				motionTokens.duration.normal,
+				motionTokens.easeOut,
+			),
+		[motionTokens],
+	);
+
+	// Build CSS custom properties for responsive columns
+	const columnVars = buildColumnVars(columns);
+
+	// Build CSS custom properties for responsive gap
+	const gapVars = {
+		...buildGapVars("--grid-gap", gap),
+		...buildGapVars("--grid-row-gap", rowGap),
+		...buildGapVars("--grid-col-gap", columnGap),
+	};
+
+	// Container query sentinel
+	const cqVars = containerQuery ? { "--grid-cq-size": containerQuery } : {};
+
+	const inlineStyle = {
+		...columnVars,
+		...gapVars,
+		...cqVars,
+	} as CSSProperties;
+
+	// Detect if any breakpoint resolves to "auto" for the autofit class
+	const resolvedColumns = resolveResponsive(columns);
+	const hasAutoColumns = Object.values(resolvedColumns).some(
+		(v) => v === "auto",
+	);
 
 	const gridClassName = cn(
 		styles.grid,
-		styles[`columns-${columns}`],
-		!rowGap && !columnGap && styles[`gap-${gap}`],
-		rowGap && styles[`row-gap-${rowGap}`],
-		columnGap && styles[`column-gap-${columnGap}`],
+		hasAutoColumns && styles.columnsAuto,
+		containerQuery && styles.containerQuery,
 		className,
 	);
 
 	if (shouldAnimate) {
-		const customGridVariants: Variants = {
-			hidden: { opacity: 1 },
-			visible: {
-				opacity: 1,
-				transition: {
-					staggerChildren: staggerDelay,
-				},
-			},
-		};
-
 		return (
 			<motion.div
 				className={gridClassName}
-				variants={customGridVariants}
+				style={inlineStyle}
+				variants={staggerContainerVariants(staggerDelay)}
 				initial="hidden"
 				animate="visible"
 			>
@@ -114,7 +195,12 @@ export function Grid({
 		);
 	}
 
-	return <Component className={gridClassName}>{children}</Component>;
+	return (
+		<Component className={gridClassName} style={inlineStyle}>
+			{children}
+		</Component>
+	);
 }
 
 Grid.displayName = "Grid";
+Grid.Item = GridItem;

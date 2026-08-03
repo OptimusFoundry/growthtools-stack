@@ -25,27 +25,27 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		label: "Accept terms and conditions",
+		label: "I agree to the Terms of Service and Privacy Policy",
 	},
 };
 
 export const WithDescription: Story = {
 	args: {
-		label: "Email notifications",
-		description: "Receive updates about your account via email",
+		label: "Weekly digest",
+		description: "A summary of your team's activity, sent every Monday",
 	},
 };
 
 export const Checked: Story = {
 	args: {
-		label: "Remember me",
+		label: "Keep me signed in on this device",
 		defaultChecked: true,
 	},
 };
 
 export const Indeterminate: Story = {
 	args: {
-		label: "Select all",
+		label: "Select all invoices",
 		indeterminate: true,
 	},
 };
@@ -56,21 +56,21 @@ export const Indeterminate: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small checkbox",
+		label: "Show line numbers",
 		size: "sm",
 	},
 };
 
 export const Medium: Story = {
 	args: {
-		label: "Medium checkbox",
+		label: "Enable syntax highlighting",
 		size: "md",
 	},
 };
 
 export const Large: Story = {
 	args: {
-		label: "Large checkbox",
+		label: "Enable dark mode",
 		size: "lg",
 	},
 };
@@ -81,14 +81,14 @@ export const Large: Story = {
 
 export const Disabled: Story = {
 	args: {
-		label: "Disabled option",
+		label: "Two-factor authentication (requires verified phone)",
 		disabled: true,
 	},
 };
 
 export const DisabledChecked: Story = {
 	args: {
-		label: "Disabled checked",
+		label: "SSO enforced by your organization",
 		disabled: true,
 		defaultChecked: true,
 	},
@@ -96,14 +96,14 @@ export const DisabledChecked: Story = {
 
 export const WithError: Story = {
 	args: {
-		label: "Required field",
+		label: "I confirm I have permission to invite these teammates",
 		isError: true,
 	},
 };
 
 export const NoLabel: Story = {
 	args: {
-		"aria-label": "Toggle option",
+		"aria-label": "Select invoice INV-2024-0093",
 	},
 };
 
@@ -114,15 +114,20 @@ export const NoLabel: Story = {
 export const Showcase: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-			<Checkbox label="Option 1" />
-			<Checkbox label="Option 2" defaultChecked />
-			<Checkbox label="Option 3" indeterminate />
+			<Checkbox label="Product updates and new features" defaultChecked />
+			<Checkbox label="Billing and invoice receipts" defaultChecked />
 			<Checkbox
-				label="With description"
-				description="This option has additional context"
+				label="Marketing emails"
+				description="Occasional tips, case studies, and promotions"
 			/>
-			<Checkbox label="Disabled" disabled />
-			<Checkbox label="Disabled checked" disabled defaultChecked />
+			<Checkbox label="Select all channels" indeterminate />
+			<Checkbox label="SMS alerts (requires verified phone number)" disabled />
+			<Checkbox
+				label="Security alerts"
+				description="Cannot be disabled for admin accounts"
+				disabled
+				defaultChecked
+			/>
 		</div>
 	),
 };
@@ -130,9 +135,9 @@ export const Showcase: Story = {
 export const Sizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-			<Checkbox label="Small" size="sm" />
-			<Checkbox label="Medium" size="md" />
-			<Checkbox label="Large" size="lg" />
+			<Checkbox label="Compact table rows" size="sm" />
+			<Checkbox label="Comfortable table rows" size="md" />
+			<Checkbox label="Spacious table rows" size="lg" />
 		</div>
 	),
 };

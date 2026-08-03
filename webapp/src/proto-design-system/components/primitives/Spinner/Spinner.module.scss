@@ -4,7 +4,7 @@
 @use "../../../mixins" as *;
 
 .spinner {
-  animation: spin var(--duration-slower) linear infinite;
+  animation: spin var(--duration-slower) var(--ease-linear) infinite;
   border: var(--border-width-md) solid transparent;
   border-radius: var(--radius-full);
   border-top-color: currentcolor;
@@ -12,7 +12,7 @@
   flex-shrink: 0;
 
   @include reduced-motion {
-    animation: pulse var(--duration-slower) ease-in-out infinite;
+    animation: pulse var(--duration-slower) var(--ease-in-out) infinite;
     border-color: currentcolor;
     border-style: dotted;
     opacity: var(--opacity-loading);
@@ -23,29 +23,29 @@
 // SIZES
 // =============================================================================
 
-.xs {
+.size-xs {
   height: var(--space-3);
   width: var(--space-3);
 }
 
-.sm {
+.size-sm {
   height: var(--space-4);
   width: var(--space-4);
 }
 
-.md {
+.size-md {
   border-width: var(--border-width-md);
   height: var(--space-5);
   width: var(--space-5);
 }
 
-.lg {
+.size-lg {
   border-width: var(--border-width-lg);
   height: var(--space-6);
   width: var(--space-6);
 }
 
-.xl {
+.size-xl {
   border-width: var(--border-width-xl);
   height: var(--space-8);
   width: var(--space-8);

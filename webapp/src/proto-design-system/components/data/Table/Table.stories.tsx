@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { Checkbox } from "../../forms/Checkbox";
+import { Checkbox } from "@/proto-design-system/components/forms/Checkbox/Checkbox";
 import {
 	type SortDirection,
 	Table,
@@ -38,36 +38,36 @@ type Story = StoryObj<typeof Table>;
 const sampleData = [
 	{
 		id: 1,
-		name: "John Doe",
-		email: "john@example.com",
+		name: "Priya Natarajan",
+		email: "priya@harborlane.io",
 		role: "Admin",
 		status: "Active",
 	},
 	{
 		id: 2,
-		name: "Jane Smith",
-		email: "jane@example.com",
+		name: "Marcus Webb",
+		email: "marcus@harborlane.io",
 		role: "Editor",
 		status: "Active",
 	},
 	{
 		id: 3,
-		name: "Bob Johnson",
-		email: "bob@example.com",
+		name: "Yuki Tanaka",
+		email: "yuki@harborlane.io",
 		role: "Viewer",
 		status: "Inactive",
 	},
 	{
 		id: 4,
-		name: "Alice Brown",
-		email: "alice@example.com",
+		name: "Elena Vasquez",
+		email: "elena@harborlane.io",
 		role: "Editor",
 		status: "Active",
 	},
 	{
 		id: 5,
-		name: "Charlie Wilson",
-		email: "charlie@example.com",
+		name: "Omar Farouk",
+		email: "omar@harborlane.io",
 		role: "Viewer",
 		status: "Active",
 	},
@@ -381,19 +381,19 @@ export const WithAlignment: Story = {
 			</TableHeader>
 			<TableBody>
 				<TableRow>
-					<TableCell>Widget A</TableCell>
+					<TableCell>Wireless Mouse</TableCell>
 					<TableCell align="center">10</TableCell>
-					<TableCell align="right">$99.00</TableCell>
+					<TableCell align="right">$29.00</TableCell>
 				</TableRow>
 				<TableRow>
-					<TableCell>Widget B</TableCell>
+					<TableCell>Mechanical Keyboard</TableCell>
 					<TableCell align="center">25</TableCell>
 					<TableCell align="right">$149.00</TableCell>
 				</TableRow>
 				<TableRow>
-					<TableCell>Widget C</TableCell>
+					<TableCell>USB-C Dock</TableCell>
 					<TableCell align="center">5</TableCell>
-					<TableCell align="right">$299.00</TableCell>
+					<TableCell align="right">$89.00</TableCell>
 				</TableRow>
 			</TableBody>
 		</Table>
@@ -561,6 +561,83 @@ export const WithNarrowColumns: Story = {
 							<TableCell>{row.name}</TableCell>
 							<TableCell>{row.email}</TableCell>
 							<TableCell>{row.role}</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		);
+	},
+};
+
+export const Showcase: Story = {
+	render: () => {
+		const [sortColumn, setSortColumn] = useState<string | null>(null);
+		const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+		const handleSort = (column: string) => {
+			if (sortColumn === column) {
+				setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+			} else {
+				setSortColumn(column);
+				setSortDirection("asc");
+			}
+		};
+
+		const rows = [...sampleData].sort((a, b) => {
+			if (!sortColumn) return 0;
+			const aVal = a[sortColumn as keyof typeof a];
+			const bVal = b[sortColumn as keyof typeof b];
+			const comparison = String(aVal).localeCompare(String(bVal));
+			return sortDirection === "asc" ? comparison : -comparison;
+		});
+
+		return (
+			<Table variant="striped">
+				<TableCaption>5 members in the Harborlane workspace</TableCaption>
+				<TableHeader>
+					<TableRow>
+						<TableHead
+							sortDirection={sortColumn === "name" ? sortDirection : null}
+							onSort={() => handleSort("name")}
+						>
+							Name
+						</TableHead>
+						<TableHead>Email</TableHead>
+						<TableHead
+							sortDirection={sortColumn === "role" ? sortDirection : null}
+							onSort={() => handleSort("role")}
+						>
+							Role
+						</TableHead>
+						<TableHead align="right">Status</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{rows.map((row) => (
+						<TableRow key={row.id}>
+							<TableCell>{row.name}</TableCell>
+							<TableCell>{row.email}</TableCell>
+							<TableCell>{row.role}</TableCell>
+							<TableCell align="right">
+								<span
+									style={{
+										padding: "0.125rem 0.5rem",
+										borderRadius: "var(--radius-full)",
+										fontSize: "var(--font-size-xs)",
+										fontWeight: 500,
+										background:
+											row.status === "Active"
+												? "var(--color-success-100)"
+												: "var(--color-base-100)",
+										color:
+											row.status === "Active"
+												? "var(--color-success)"
+												: "var(--color-muted)",
+									}}
+								>
+									{row.status}
+								</span>
+							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>

@@ -106,8 +106,7 @@ function Page() {
 <header className="page-header">
   <span className="ds-eyebrow">DASHBOARD · NOV 2025</span>
   <h1 className="page-title">
-    Good morning, Amrita. Your queue looks{' '}
-    <em>healthy.</em>
+    Good morning, Amrita. Your queue looks healthy.
   </h1>
   <p className="page-sub">
     14 posts scheduled across 4 channels. Engagement is up 12% this week.
@@ -121,8 +120,8 @@ function Page() {
 
 Parts:
 - **Eyebrow** — `.ds-eyebrow` (mono uppercase, widest tracking)
-- **Title** — Fraunces display (~48–64px), balanced, one italic `<em>` moment
-- **Sublede** — Fraunces serif editorial (18–22px, `--fg3`, max 62ch)
+- **Title** — Geist display, 700 weight (~48–64px), balanced
+- **Sublede** — Geist body (18–22px, `--fg3`, max 62ch)
 - **Actions** — right-aligned row (may sit on opposite end of header flex row)
 
 ### Section rhythm
@@ -142,11 +141,11 @@ Each section has:
 
 ## 4. Common section templates
 
-### A — Stat row (4-up editorial KPIs)
+### A — Stat row (4-up KPIs)
 ```jsx
 <section>
   <div className="section-head">
-    <h2 className="ds-h2">Performance <em>at a glance</em></h2>
+    <h2 className="ds-h2">Performance at a glance</h2>
     <div className="tabs-pill">
       <button className="tab">7d</button>
       <button className="tab active">30d</button>
@@ -193,7 +192,7 @@ Each section has:
 </section>
 ```
 
-### D — Editorial callout (upgrade / announcement)
+### D — Callout (upgrade / announcement)
 ```jsx
 <section>
   <div className="up-prompt">…</div>
@@ -212,7 +211,7 @@ On wide surfaces, mix single- and multi-column:
 
 - **Icons**: Lucide-style 24×24 line icons, `stroke-width: 2`, `stroke-linecap: round`. Always inline SVG, use `currentColor`.
 - **Images**: placeholders are fine — a solid `--base-200` rect at the right aspect ratio beats a bad stock photo.
-- **Avatars**: initials in Fraunces by default; use real images only if provided.
+- **Avatars**: initials in Geist 600 by default; use real images only if provided.
 
 ## 7. Checklist — does this page "look Growth Tools"?
 
@@ -220,10 +219,10 @@ Before delivering, verify:
 
 - [ ] Uses `kit.css` or `catalog.css` — no hand-rolled CSS for primitives
 - [ ] `<html data-theme="…">` set (even if `light` or default)
-- [ ] Page title is Fraunces with **one** italic `<em>` moment
+- [ ] Page title is Geist at 700 weight
 - [ ] Every section heading has a **mono eyebrow** above it
-- [ ] KPIs use `.sc` with Fraunces numerals — never sans
-- [ ] Post bodies use serif (`.pp-body`)
+- [ ] KPIs use `.sc` with Geist 700 numerals
+- [ ] Post bodies use `.pp-body` (Geist, regular weight)
 - [ ] Color: no raw hex on text/bg (platform chips excepted)
 - [ ] Buttons: one primary per region; secondary/ghost fill the rest
 - [ ] Spacing: page padding `56–64px`, sections gap `56–80px`, cards `20–28px`

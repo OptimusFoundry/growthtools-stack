@@ -15,8 +15,8 @@
 	flex-shrink: 0;
 	display: inline-flex;
 	align-items: center;
-	gap: var(--space-0-5);
-	padding: var(--space-0-5) var(--space-1);
+	gap: var(--space-1);
+	padding: var(--space-1) var(--space-1);
 	border: none;
 	border-radius: var(--radius-sm);
 	background-color: oklch(from var(--color-info) l c h / 0.15);

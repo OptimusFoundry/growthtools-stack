@@ -31,7 +31,7 @@ const meta: Meta<typeof Grid> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Box = ({ children }: { children: React.ReactNode }) => (
+const Tile = ({ children }: { children: React.ReactNode }) => (
 	<div
 		style={{
 			background: "var(--color-primary)",
@@ -45,6 +45,15 @@ const Box = ({ children }: { children: React.ReactNode }) => (
 	</div>
 );
 
+const teamMembers = [
+	"Priya Patel",
+	"Marcus Chen",
+	"Sofia Alvarez",
+	"Daniel Kim",
+	"Grace Osei",
+	"Liam O'Brien",
+];
+
 // =============================================================================
 // BASIC
 // =============================================================================
@@ -52,16 +61,7 @@ const Box = ({ children }: { children: React.ReactNode }) => (
 export const Default: Story = {
 	args: {
 		columns: "3",
-		children: (
-			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
-				<Box>4</Box>
-				<Box>5</Box>
-				<Box>6</Box>
-			</>
-		),
+		children: teamMembers.map((name) => <Tile key={name}>{name}</Tile>),
 	},
 };
 
@@ -70,10 +70,10 @@ export const TwoColumns: Story = {
 		columns: "2",
 		children: (
 			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
-				<Box>4</Box>
+				<Tile>Personal details</Tile>
+				<Tile>Security &amp; access</Tile>
+				<Tile>Billing address</Tile>
+				<Tile>Notification preferences</Tile>
 			</>
 		),
 	},
@@ -84,10 +84,10 @@ export const FourColumns: Story = {
 		columns: "4",
 		children: (
 			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
-				<Box>4</Box>
+				<Tile>Draft</Tile>
+				<Tile>In review</Tile>
+				<Tile>Approved</Tile>
+				<Tile>Published</Tile>
 			</>
 		),
 	},
@@ -98,11 +98,11 @@ export const AutoFit: Story = {
 		columns: "auto",
 		children: (
 			<>
-				<Box>Auto 1</Box>
-				<Box>Auto 2</Box>
-				<Box>Auto 3</Box>
-				<Box>Auto 4</Box>
-				<Box>Auto 5</Box>
+				<Tile>api-keys</Tile>
+				<Tile>webhooks</Tile>
+				<Tile>billing</Tile>
+				<Tile>team</Tile>
+				<Tile>integrations</Tile>
 			</>
 		),
 	},
@@ -118,9 +118,9 @@ export const LargeGap: Story = {
 		gap: "xl",
 		children: (
 			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
+				<Tile>Starter</Tile>
+				<Tile>Pro</Tile>
+				<Tile>Enterprise</Tile>
 			</>
 		),
 	},
@@ -131,16 +131,7 @@ export const DifferentGaps: Story = {
 		columns: "3",
 		rowGap: "xl",
 		columnGap: "sm",
-		children: (
-			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
-				<Box>4</Box>
-				<Box>5</Box>
-				<Box>6</Box>
-			</>
-		),
+		children: teamMembers.map((name) => <Tile key={name}>{name}</Tile>),
 	},
 };
 
@@ -156,8 +147,8 @@ export const ColumnVariations: Story = {
 					2 Columns
 				</p>
 				<Grid columns="2" gap="md">
-					<Box>1</Box>
-					<Box>2</Box>
+					<Tile>Free plan</Tile>
+					<Tile>Pro plan</Tile>
 				</Grid>
 			</div>
 			<div>
@@ -165,9 +156,9 @@ export const ColumnVariations: Story = {
 					3 Columns
 				</p>
 				<Grid columns="3" gap="md">
-					<Box>1</Box>
-					<Box>2</Box>
-					<Box>3</Box>
+					<Tile>Starter</Tile>
+					<Tile>Pro</Tile>
+					<Tile>Enterprise</Tile>
 				</Grid>
 			</div>
 			<div>
@@ -175,10 +166,10 @@ export const ColumnVariations: Story = {
 					4 Columns
 				</p>
 				<Grid columns="4" gap="md">
-					<Box>1</Box>
-					<Box>2</Box>
-					<Box>3</Box>
-					<Box>4</Box>
+					<Tile>Draft</Tile>
+					<Tile>In review</Tile>
+					<Tile>Approved</Tile>
+					<Tile>Published</Tile>
 				</Grid>
 			</div>
 		</div>
@@ -188,9 +179,34 @@ export const ColumnVariations: Story = {
 export const CardLayout: Story = {
 	render: () => (
 		<Grid columns="auto" gap="lg">
-			{[1, 2, 3, 4, 5, 6].map((i) => (
+			{[
+				{
+					title: "API Keys",
+					description: "Generate and revoke keys for programmatic access.",
+				},
+				{
+					title: "Webhooks",
+					description: "Subscribe to account events and replay failures.",
+				},
+				{
+					title: "Team members",
+					description: "Invite teammates and manage their roles.",
+				},
+				{
+					title: "Billing",
+					description: "View invoices and update your payment method.",
+				},
+				{
+					title: "Audit log",
+					description: "Track every change made across your workspace.",
+				},
+				{
+					title: "Integrations",
+					description: "Connect Slack, Linear, and GitHub.",
+				},
+			].map((card) => (
 				<div
-					key={i}
+					key={card.title}
 					style={{
 						background: "var(--color-surface)",
 						border: "1px solid var(--color-border)",
@@ -201,10 +217,10 @@ export const CardLayout: Story = {
 					<h3
 						style={{ margin: "0 0 0.5rem", color: "var(--color-base-content)" }}
 					>
-						Card {i}
+						{card.title}
 					</h3>
 					<p style={{ margin: 0, color: "var(--color-muted)" }}>
-						Card content goes here with some description text.
+						{card.description}
 					</p>
 				</div>
 			))}
@@ -219,9 +235,34 @@ export const CardLayout: Story = {
 export const Animated: Story = {
 	render: () => (
 		<Grid columns="3" gap="lg" animate>
-			{[1, 2, 3, 4, 5, 6].map((i) => (
+			{[
+				{
+					title: "API Keys",
+					description: "Generate and revoke keys for programmatic access.",
+				},
+				{
+					title: "Webhooks",
+					description: "Subscribe to account events and replay failures.",
+				},
+				{
+					title: "Team members",
+					description: "Invite teammates and manage their roles.",
+				},
+				{
+					title: "Billing",
+					description: "View invoices and update your payment method.",
+				},
+				{
+					title: "Audit log",
+					description: "Track every change made across your workspace.",
+				},
+				{
+					title: "Integrations",
+					description: "Connect Slack, Linear, and GitHub.",
+				},
+			].map((card) => (
 				<div
-					key={i}
+					key={card.title}
 					style={{
 						background: "var(--color-surface)",
 						border: "1px solid var(--color-border)",
@@ -232,10 +273,10 @@ export const Animated: Story = {
 					<h3
 						style={{ margin: "0 0 0.5rem", color: "var(--color-base-content)" }}
 					>
-						Card {i}
+						{card.title}
 					</h3>
 					<p style={{ margin: 0, color: "var(--color-muted)" }}>
-						Items stagger in on mount. Refresh to see animation.
+						{card.description}
 					</p>
 				</div>
 			))}
@@ -308,4 +349,110 @@ export const AnimatedDashboard: Story = {
 			},
 		},
 	},
+};
+
+// =============================================================================
+// RESPONSIVE COLUMNS (new in Phase 0)
+// =============================================================================
+
+export const ResponsiveColumns: Story = {
+	render: () => (
+		<Grid columns={{ base: "1", sm: "2", lg: "4" }} gap="md">
+			{["API Keys", "Webhooks", "Team members", "Billing"].map((label) => (
+				<div
+					key={label}
+					style={{
+						background: "var(--color-surface)",
+						border: "1px solid var(--color-border)",
+						borderRadius: "var(--radius-lg)",
+						padding: "1.5rem",
+						minHeight: "6rem",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					<span
+						style={{
+							color: "var(--color-muted)",
+							fontSize: "var(--font-size-sm)",
+						}}
+					>
+						{label}
+					</span>
+				</div>
+			))}
+		</Grid>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Responsive column count: 1 column on mobile, 2 on sm, 4 on lg+. Uses the Responsive<T> object syntax: `columns={{ base: 1, sm: 2, lg: 4 }}`.",
+			},
+		},
+	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const SettingsGridShowcase: Story = {
+	render: () => (
+		<Grid columns={{ base: "1", md: "2" }} gap="lg">
+			<div
+				style={{
+					background: "var(--color-surface)",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+					padding: "1.5rem",
+				}}
+			>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Profile</h3>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Priya Patel · priya@acme.com · Admin
+				</p>
+			</div>
+			<div
+				style={{
+					background: "var(--color-surface)",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+					padding: "1.5rem",
+				}}
+			>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Two-factor authentication</h3>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Enabled via authenticator app since Jan 4, 2026.
+				</p>
+			</div>
+			<div
+				style={{
+					background: "var(--color-surface)",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+					padding: "1.5rem",
+				}}
+			>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Current plan</h3>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Pro · $49/month · renews Sep 12, 2026.
+				</p>
+			</div>
+			<div
+				style={{
+					background: "var(--color-surface)",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+					padding: "1.5rem",
+				}}
+			>
+				<h3 style={{ margin: "0 0 0.5rem" }}>API usage</h3>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					84,201 of 100,000 monthly requests used.
+				</p>
+			</div>
+		</Grid>
+	),
 };

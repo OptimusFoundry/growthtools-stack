@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
+	ArrowDownAZ,
+	ArrowUpAZ,
+	Clock,
 	Copy,
 	Download,
 	Edit,
@@ -37,12 +40,18 @@ const meta: Meta<typeof Dropdown> = {
 export default meta;
 type Story = StoryObj<typeof Dropdown>;
 
-const basicItems = [
+const documentActions = [
 	{ id: "edit", label: "Edit", icon: <Edit /> },
-	{ id: "copy", label: "Copy", icon: <Copy /> },
+	{ id: "copy", label: "Duplicate", icon: <Copy /> },
 	{ id: "share", label: "Share", icon: <Share /> },
 	{ id: "download", label: "Download", icon: <Download />, divider: true },
 	{ id: "delete", label: "Delete", icon: <Trash2 />, danger: true },
+];
+
+const roleItems = [
+	{ id: "viewer", label: "Viewer" },
+	{ id: "editor", label: "Editor" },
+	{ id: "admin", label: "Admin" },
 ];
 
 export const Default: Story = {
@@ -51,7 +60,7 @@ export const Default: Story = {
 		return <Dropdown {...args} value={value} onChange={setValue} />;
 	},
 	args: {
-		items: basicItems,
+		items: documentActions,
 		placeholder: "Select action...",
 	},
 };
@@ -61,7 +70,7 @@ export const WithIcons: Story = {
 		const [value, setValue] = useState<string | undefined>("edit");
 		return (
 			<Dropdown
-				items={basicItems}
+				items={documentActions}
 				value={value}
 				onChange={setValue}
 				placeholder="Select action..."
@@ -76,12 +85,6 @@ export const Sizes: Story = {
 		const [md, setMd] = useState<string | undefined>();
 		const [lg, setLg] = useState<string | undefined>();
 
-		const items = [
-			{ id: "option1", label: "Option 1" },
-			{ id: "option2", label: "Option 2" },
-			{ id: "option3", label: "Option 3" },
-		];
-
 		return (
 			<div
 				style={{
@@ -92,25 +95,25 @@ export const Sizes: Story = {
 				}}
 			>
 				<Dropdown
-					items={items}
+					items={roleItems}
 					value={sm}
 					onChange={setSm}
 					size="sm"
-					placeholder="Small"
+					placeholder="Role"
 				/>
 				<Dropdown
-					items={items}
+					items={roleItems}
 					value={md}
 					onChange={setMd}
 					size="md"
-					placeholder="Medium"
+					placeholder="Role"
 				/>
 				<Dropdown
-					items={items}
+					items={roleItems}
 					value={lg}
 					onChange={setLg}
 					size="lg"
-					placeholder="Large"
+					placeholder="Role"
 				/>
 			</div>
 		);
@@ -123,30 +126,24 @@ export const Variants: Story = {
 		const [outline, setOutline] = useState<string | undefined>();
 		const [ghost, setGhost] = useState<string | undefined>();
 
-		const items = [
-			{ id: "option1", label: "Option 1" },
-			{ id: "option2", label: "Option 2" },
-			{ id: "option3", label: "Option 3" },
-		];
-
 		return (
 			<div style={{ display: "flex", gap: "1rem" }}>
 				<Dropdown
-					items={items}
+					items={roleItems}
 					value={def}
 					onChange={setDef}
 					variant="default"
 					placeholder="Default"
 				/>
 				<Dropdown
-					items={items}
+					items={roleItems}
 					value={outline}
 					onChange={setOutline}
 					variant="outline"
 					placeholder="Outline"
 				/>
 				<Dropdown
-					items={items}
+					items={roleItems}
 					value={ghost}
 					onChange={setGhost}
 					variant="ghost"
@@ -163,7 +160,7 @@ export const WithDisabledItems: Story = {
 
 		const items = [
 			{ id: "edit", label: "Edit", icon: <Edit /> },
-			{ id: "copy", label: "Copy", icon: <Copy />, disabled: true },
+			{ id: "copy", label: "Duplicate", icon: <Copy />, disabled: true },
 			{ id: "share", label: "Share", icon: <Share /> },
 			{ id: "download", label: "Download", icon: <Download />, disabled: true },
 		];
@@ -204,19 +201,20 @@ export const FullWidth: Story = {
 	render: () => {
 		const [value, setValue] = useState<string | undefined>();
 
-		const items = [
-			{ id: "option1", label: "Option 1" },
-			{ id: "option2", label: "Option 2" },
-			{ id: "option3", label: "Option 3" },
+		const sortItems = [
+			{ id: "newest", label: "Newest first", icon: <Clock /> },
+			{ id: "oldest", label: "Oldest first", icon: <Clock /> },
+			{ id: "az", label: "Name A-Z", icon: <ArrowDownAZ /> },
+			{ id: "za", label: "Name Z-A", icon: <ArrowUpAZ /> },
 		];
 
 		return (
 			<div style={{ width: "300px" }}>
 				<Dropdown
-					items={items}
+					items={sortItems}
 					value={value}
 					onChange={setValue}
-					placeholder="Select option..."
+					placeholder="Sort by..."
 					fullWidth
 				/>
 			</div>
@@ -233,7 +231,7 @@ export const AlignEnd: Story = {
 				style={{ display: "flex", justifyContent: "flex-end", width: "400px" }}
 			>
 				<Dropdown
-					items={basicItems}
+					items={documentActions}
 					value={value}
 					onChange={setValue}
 					placeholder="Actions"
@@ -247,11 +245,11 @@ export const AlignEnd: Story = {
 export const Disabled: Story = {
 	render: () => {
 		const items = [
-			{ id: "option1", label: "Option 1" },
-			{ id: "option2", label: "Option 2" },
+			{ id: "edit", label: "Edit" },
+			{ id: "copy", label: "Duplicate" },
 		];
 
-		return <Dropdown items={items} placeholder="Disabled dropdown" disabled />;
+		return <Dropdown items={items} placeholder="Select action..." disabled />;
 	},
 };
 
@@ -287,6 +285,73 @@ export const WithDescriptions: Story = {
 				onChange={setValue}
 				placeholder="Select workspace..."
 			/>
+		);
+	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => {
+		const [sort, setSort] = useState<string | undefined>("newest");
+		const [rowAction, setRowAction] = useState<string | undefined>();
+
+		const sortItems = [
+			{ id: "newest", label: "Newest first", icon: <Clock /> },
+			{ id: "oldest", label: "Oldest first", icon: <Clock /> },
+			{ id: "az", label: "Name A-Z", icon: <ArrowDownAZ /> },
+		];
+
+		return (
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "column",
+					gap: "1rem",
+					width: "360px",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-md)",
+					padding: "1rem",
+				}}
+			>
+				<div
+					style={{
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "center",
+					}}
+				>
+					<strong>Invoices</strong>
+					<Dropdown
+						items={sortItems}
+						value={sort}
+						onChange={setSort}
+						size="sm"
+					/>
+				</div>
+				<div
+					style={{
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "center",
+						padding: "0.5rem 0",
+						borderTop: "1px solid var(--color-border)",
+					}}
+				>
+					<span>Invoice #2049 — Acme Corp</span>
+					<Dropdown
+						items={documentActions}
+						value={rowAction}
+						onChange={setRowAction}
+						variant="ghost"
+						size="sm"
+						align="end"
+						placeholder="Actions"
+					/>
+				</div>
+			</div>
 		);
 	},
 };

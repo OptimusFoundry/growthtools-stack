@@ -6,8 +6,8 @@
 .stepper {
   align-items: center;
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
+  border: var(--border-width-sm) solid var(--color-border);
+  border-radius: var(--radius-md);
   display: inline-flex;
   overflow: hidden;
   width: fit-content;

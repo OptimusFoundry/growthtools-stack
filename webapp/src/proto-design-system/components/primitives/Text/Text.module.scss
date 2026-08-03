@@ -97,7 +97,8 @@
 }
 
 .weight-bold {
-  font-weight: var(--font-weight-bold);
+  // 700 retired from the loaded set; "bold" resolves to the heaviest weight (600).
+  font-weight: var(--font-weight-semibold);
 }
 
 // =============================================================================
@@ -187,7 +188,7 @@
 
 .underline {
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: var(--text-underline-offset);
 }
 
 .strikethrough {

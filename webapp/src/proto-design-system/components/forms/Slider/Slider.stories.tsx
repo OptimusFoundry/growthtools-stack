@@ -39,22 +39,23 @@ export const Default: Story = {
 
 export const WithLabel: Story = {
 	args: {
-		label: "Volume",
+		label: "Playback volume",
 		defaultValue: 50,
 	},
 };
 
 export const WithValue: Story = {
 	args: {
-		label: "Volume",
+		label: "Monthly budget alert",
 		defaultValue: 75,
 		showValue: true,
+		formatValue: (v: number) => `$${v * 10}`,
 	},
 };
 
 export const CustomRange: Story = {
 	args: {
-		label: "Temperature",
+		label: "Thermostat target",
 		min: -20,
 		max: 40,
 		defaultValue: 22,
@@ -69,7 +70,7 @@ export const CustomRange: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small",
+		label: "Zoom level",
 		defaultValue: 50,
 		size: "sm",
 	},
@@ -77,7 +78,7 @@ export const Small: Story = {
 
 export const Medium: Story = {
 	args: {
-		label: "Medium",
+		label: "Screen brightness",
 		defaultValue: 50,
 		size: "md",
 	},
@@ -85,7 +86,7 @@ export const Medium: Story = {
 
 export const Large: Story = {
 	args: {
-		label: "Large",
+		label: "Video export quality",
 		defaultValue: 50,
 		size: "lg",
 	},
@@ -97,8 +98,8 @@ export const Large: Story = {
 
 export const Disabled: Story = {
 	args: {
-		label: "Disabled",
-		defaultValue: 50,
+		label: "Storage quota (managed by admin)",
+		defaultValue: 80,
 		disabled: true,
 	},
 };
@@ -111,7 +112,7 @@ const ControlledSlider = () => {
 	const [value, setValue] = useState(50);
 	return (
 		<Slider
-			label="Controlled"
+			label="AI response creativity"
 			value={value}
 			onChange={(e) => setValue(Number(e.target.value))}
 			showValue
@@ -130,36 +131,69 @@ export const Controlled: Story = {
 export const Sizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-			<Slider label="Small" size="sm" defaultValue={30} showValue />
-			<Slider label="Medium" size="md" defaultValue={50} showValue />
-			<Slider label="Large" size="lg" defaultValue={70} showValue />
+			<Slider
+				label="Small — search radius"
+				size="sm"
+				defaultValue={30}
+				showValue
+			/>
+			<Slider
+				label="Medium — cache size"
+				size="md"
+				defaultValue={50}
+				showValue
+			/>
+			<Slider
+				label="Large — checkout timeout"
+				size="lg"
+				defaultValue={70}
+				showValue
+			/>
 		</div>
 	),
 };
 
-export const FormExample: Story = {
+export const Showcase: Story = {
 	render: () => (
-		<div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "1.5rem",
+				width: "320px",
+			}}
+		>
 			<Slider
-				label="Volume"
+				label="Alert volume"
 				defaultValue={80}
 				showValue
 				formatValue={(v: number) => `${v}%`}
 			/>
 			<Slider
-				label="Brightness"
-				defaultValue={60}
+				label="Auto-lock after inactivity"
+				min={1}
+				max={60}
+				step={1}
+				defaultValue={15}
 				showValue
-				formatValue={(v: number) => `${v}%`}
+				formatValue={(v: number) => `${v} min`}
 			/>
 			<Slider
-				label="Price range"
+				label="Monthly spend limit"
 				min={0}
-				max={1000}
-				step={10}
-				defaultValue={500}
+				max={5000}
+				step={50}
+				defaultValue={1200}
 				showValue
-				formatValue={(v: number) => `$${v}`}
+				formatValue={(v: number) => `$${v.toLocaleString()}`}
+			/>
+			<Slider
+				label="Team seats (contact sales to increase)"
+				min={1}
+				max={25}
+				defaultValue={10}
+				showValue
+				disabled
 			/>
 		</div>
 	),

@@ -3,41 +3,97 @@
 // =============================================================================
 // Pure black and white. No color. Maximum contrast. Editorial elegance.
 // Swiss design meets Japanese minimalism. Typography-focused.
+// Pure oklch(0%)/oklch(100%) — base-content, primary, secondary-content, and
+// every semantic -content token — is deliberate here, not a shortcut: the
+// whole brief is "no color, ink and paper only." This is a documented third
+// exemption (with `brutal` and `mono`) to the house "no pure black/white"
+// default — see _brutal.scss's header, updated to name all three. The flat,
+// un-tinted black shadow scale below follows the same exemption `brutal`/
+// `mono` already use: a warm ink tint would itself be "color," which this
+// theme's premise rules out.
+// Base ramp: every rung is set independently, not copied off `brutal`'s
+// scale — 50/100/300/950 already differed from it; 200/400/500/600/700/800/
+// 900 (previously byte-identical to `brutal`'s ramp) are retuned here too,
+// so no rung collides across the two files anymore.
+// Border was Lc 22.0 / 1.48:1 against the L98 background — clears the APCA
+// hairline floor but fails WCAG 1.4.11's 3:1 non-text floor, and it's the
+// *sole* boundary cue on Input/TextArea/Select/Checkbox/Radio/Card, since
+// surface (oklch 100%) sits almost flush with background (oklch 98%, Lc
+// 0.0 / 1.06:1 — left as-is: surface reads "lighter than canvas," the same
+// surface-lifts-off-background convention `oat`/`light` use, and pushing it
+// further apart would mean giving up the pure-white "paper" anchor this
+// theme is built on). Darkened border to L60 (Lc 62.7 / 3.72:1) so it now
+// carries that boundary job alone, reliably.
+// content-tertiary was pinned to muted's disabled-strength value (Lc 69.7,
+// under the Lc 75 small-text floor) even though `19-typography-decisions.md`
+// treats it as real small-body content (timestamps, captions, table
+// headers), not disabled text. Darkened to L45 (Lc 81.8 / 7.02:1); muted
+// stays aliased to it — matches `_light.scss`/`_mono.scss`/`_oat.scss`'s own
+// "muted copy is still content" convention — instead of getting a separate,
+// weaker value that only clears muted's own lower floor.
+// Filled in tokens that were silently missing and defaulting to the :root
+// editorial fallback — which broke the "no color" premise for two of them:
+// --color-accent-bg (Compositions.module.scss:107 has no CSS fallback —
+// was rendering transparent under this theme), --color-text-disabled, every
+// semantic's -active step, the full --shadow-xs…xl/-primary/-accent scale
+// (was silently inheriting :root's indigo/amber-tinted shadows), and
+// --color-header-bg/--radius-xs for full-contract parity with the theme's
+// grayscale siblings.
+// Fonts: Libre Franklin (Impallari Type's revival of Morris Fuller Benton's
+// Franklin Gothic) carries the Swiss/American-grotesque half of the brief
+// and isn't reused elsewhere in the theme set. Noto Sans Mono carries the
+// Japanese-minimalism half — it shares Noto's drawing with Noto Sans JP, so
+// the pairing has a real kinship to Japanese type design instead of being a
+// default pan-Unicode pick, and its low-personality grotesque skeleton stays
+// quiet in the data/mono role rather than competing with Libre Franklin's
+// more characterful grotesque in the display role.
 
 [data-theme="monochrome"] {
   color-scheme: light;
 
+  --font-family-sans:    "Libre Franklin", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Noto Sans Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
+
   // Background
   --color-background: oklch(98% 0 0deg);
 
-  // Base colors (pure grayscale)
-  --color-base-50: oklch(98% 0 0deg);                                   // Near white
-  --color-base-100: oklch(95% 0 0deg);                                  // Very light gray
-  --color-base-200: oklch(90% 0 0deg);                                  // Light gray
-  --color-base-300: oklch(82% 0 0deg);                                  // Medium light
-  --color-base-400: oklch(65% 0 0deg);                                  // Medium gray
-  --color-base-500: oklch(50% 0 0deg);                                  // True mid gray
-  --color-base-600: oklch(38% 0 0deg);                                  // Medium dark
-  --color-base-700: oklch(28% 0 0deg);                                  // Dark gray
-  --color-base-800: oklch(18% 0 0deg);                                  // Very dark
-  --color-base-900: oklch(10% 0 0deg);                                  // Near black
-  --color-base-950: oklch(5% 0 0deg);                                   // Pure black
+  // Base scale — independently set (not copied off brutal's ramp). Each rung
+  // below is the role it's actually used for in this theme, not a
+  // desaturated leftover of a chromatic scale.
+  --color-base-50:  oklch(98% 0 0deg);   // = background, near-white paper
+  --color-base-100: oklch(95% 0 0deg);   // subtle hover fill / zebra stripe
+  --color-base-200: oklch(88% 0 0deg);   // disabled control fill / strong divider
+  --color-base-300: oklch(82% 0 0deg);   // light hairline / inactive track
+  --color-base-400: oklch(67% 0 0deg);   // placeholder icon ink
+  --color-base-500: oklch(47% 0 0deg);   // secondary icon ink / data marks
+  --color-base-600: oklch(36% 0 0deg);   // heavy muted text tier
+  --color-base-700: oklch(25% 0 0deg);   // strong secondary ink
+  --color-base-800: oklch(15% 0 0deg);   // near-black fill swatch
+  --color-base-900: oklch(8%  0 0deg);   // deep ink block
+  --color-base-950: oklch(5%  0 0deg);   // darkest fill, just off pure black
 
   // Content colors (maximum contrast)
-  --color-base-content: oklch(0% 0 0deg);                               // Pure black
-  --color-base-content-secondary: oklch(35% 0 0deg);                    // Dark gray
-  --color-base-content-tertiary: oklch(55% 0 0deg);                     // Medium gray
+  --color-base-content:           oklch(0% 0 0deg);    // Lc 101.9 / 19.77:1
+  --color-base-content-secondary: oklch(35% 0 0deg);   // Lc 92.1 / 10.71:1
+  --color-base-content-tertiary:  oklch(45% 0 0deg);   // Lc 81.8 / 7.02:1 — clears the Lc 75 small-text floor
+  --color-muted:                  oklch(45% 0 0deg);   // aliases tertiary — muted copy is still real content
+  --color-text-disabled:          oklch(66% 0 0deg);   // Lc 54.0 / 2.93:1 — non-content only, clears the Lc 30 floor
 
   // Surface colors
   --color-surface: oklch(100% 0 0deg);                                  // Pure white
   --color-surface-elevated: oklch(100% 0 0deg);
   --color-surface-overlay: oklch(0% 0 0deg / 0.6);
 
-  // Border colors (crisp black)
-  --color-border: oklch(85% 0 0deg);
+  // Border colors — sole boundary cue for Input/Select/Checkbox/Radio/Card,
+  // so it has to clear WCAG 1.4.11's 3:1 UI floor on its own (was L85, Lc
+  // 22.0 / 1.48:1). L60 clears it with margin: Lc 62.7 / 3.72:1.
+  --color-border: oklch(60% 0 0deg);
   --color-border-hover: oklch(0% 0 0deg);
 
-  // Shadow colors (soft gray)
+  // Shadow colors — flat black by design (see header): a hue tint would be
+  // "color" in a theme whose whole premise is the absence of it.
   --shadow-color: oklch(0% 0 0deg / 0.1);
   --shadow-color-strong: oklch(0% 0 0deg / 0.2);
 
@@ -58,49 +114,31 @@
   --color-accent-hover: oklch(40% 0 0deg);
   --color-accent-active: oklch(35% 0 0deg);
   --color-accent-content: oklch(100% 0 0deg);
+  --color-accent-bg: oklch(90% 0 0deg);   // was missing — rendered transparent under Compositions.module.scss's fill
 
-  // Semantic colors (all grayscale with pattern/icon differentiation)
+  // Semantic colors (all grayscale with pattern/icon differentiation).
+  // -active added to every family below — it was missing entirely, leaving
+  // pressed states with nowhere to fall back but the browser default.
   --color-success: oklch(25% 0 0deg);
   --color-success-hover: oklch(20% 0 0deg);
+  --color-success-active: oklch(16% 0 0deg);
   --color-success-bg: oklch(95% 0 0deg);
   --color-success-content: oklch(100% 0 0deg);
   --color-warning: oklch(40% 0 0deg);
   --color-warning-hover: oklch(35% 0 0deg);
+  --color-warning-active: oklch(30% 0 0deg);
   --color-warning-bg: oklch(92% 0 0deg);
   --color-warning-content: oklch(100% 0 0deg);
   --color-error: oklch(0% 0 0deg);
   --color-error-hover: oklch(15% 0 0deg);
+  --color-error-active: oklch(8% 0 0deg);
   --color-error-bg: oklch(90% 0 0deg);
   --color-error-content: oklch(100% 0 0deg);
   --color-info: oklch(50% 0 0deg);
   --color-info-hover: oklch(45% 0 0deg);
+  --color-info-active: oklch(40% 0 0deg);
   --color-info-bg: oklch(93% 0 0deg);
   --color-info-content: oklch(100% 0 0deg);
-
-  // Focus ring
-  --focus-ring-color: oklch(0% 0 0deg / 0.4);
-
-  // Muted color
-  --color-muted: oklch(55% 0 0deg);
-
-  // Custom: Sharp corners for editorial feel
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 2px;
-  --radius-xl: 4px;
-
-  // Tighter letter spacing for headlines
-  --letter-spacing-tight: -0.03em;
-  --letter-spacing-tighter: -0.05em;
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
-  --color-text-disabled:          oklch(66% 0 0deg);   // Lc 54.0 / 2.93:1 — non-content only, clears the Lc 30 floor
-  --color-accent-bg: oklch(90% 0 0deg);   // was missing — rendered transparent under Compositions.module.scss's fill
-  --color-success-active: oklch(16% 0 0deg);
-  --color-warning-active: oklch(30% 0 0deg);
-  --color-error-active: oklch(8% 0 0deg);
-  --color-info-active: oklch(40% 0 0deg);
 
   // Shadow scale — was missing entirely; without it this theme silently
   // inherited :root's indigo/amber-tinted defaults, breaking "no color."
@@ -116,11 +154,22 @@
   --shadow-primary: 0 8px 24px 0 oklch(0% 0 0deg / 0.25);
   --shadow-accent:  0 8px 24px 0 oklch(50% 0 0deg / 0.20);
 
+  // Focus ring
+  --focus-ring-color: oklch(0% 0 0deg / 0.4);
+
   // Chrome
   --color-header-bg: var(--color-base-100);
 
   // Custom: Sharp corners for editorial feel
   --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 2px;
+  --radius-xl: 4px;
+
+  // Tighter letter spacing for headlines
+  --letter-spacing-tight: -0.03em;
+  --letter-spacing-tighter: -0.05em;
 
   // Motion — mechanical/instrument-precise, following from the zero-radius,
   // pure-ink-on-paper identity above: swaps the house's soft cushioned

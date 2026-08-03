@@ -4,7 +4,11 @@
 @use "../../../mixins" as *;
 
 .card {
-  background-color: var(--color-surface);
+  // --color-card-bg lets a theme make the outer shell of an outlined/
+  // elevated card its own tint (e.g. so CardBody can read as a white inset
+  // panel floating inside it) without touching .filled/.spec, which set
+  // their own background explicitly below and so never see this fallback.
+  background-color: var(--color-card-bg, var(--color-surface));
   border-radius: var(--radius-card);
   display: flex;
   flex-direction: column;
@@ -18,20 +22,24 @@
 // =============================================================================
 
 .elevated {
-  border: 1px solid transparent;
-  box-shadow: var(--shadow-md);
-  transition:
-    box-shadow var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+  border: var(--border-width-card) solid transparent;
+  box-shadow: var(--shadow-card);
+
+  // Compose the shadow/transform transition with the color transition in a
+  // single declaration — two separate `transition:` shorthand declarations
+  // can't coexist (the latter silently overwrites the former), which used to
+  // make elevated cards lose their color transition entirely.
+  @include transition(
+    (box-shadow, transform, background-color, border-color, color),
+    var(--duration-fast)
+  );
 
   &:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-card-hover);
     transform: translateY(-2px);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
+  @include reduced-motion {
     &:hover {
       transform: none;
     }
@@ -39,13 +47,13 @@
 }
 
 .outlined {
-  border: 1px solid var(--color-border);
+  border: var(--border-width-card) solid var(--color-border);
   box-shadow: none;
 }
 
 .filled {
   background-color: var(--color-base-100);
-  border: 1px solid transparent;
+  border: var(--border-width-card) solid transparent;
   box-shadow: none;
 }
 
@@ -53,8 +61,8 @@
 // a labelled component or content block (mirrors ui_kit catalog .spec).
 .spec {
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border: var(--border-width-card) solid var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
 }
 
@@ -70,12 +78,13 @@
   padding: var(--space-3);
 }
 
+// J-5.1 breathable card density default: 24px.
 .padding-md {
-  padding: var(--space-4);
+  padding: var(--space-card);
 }
 
 .padding-lg {
-  padding: var(--space-5);
+  padding: var(--space-6);
 }
 
 // =============================================================================
@@ -89,7 +98,6 @@
   @include focus-ring;
 
   &:hover {
-    background-color: var(--color-base-100);
     border-color: var(--color-border-hover);
   }
 
@@ -108,9 +116,24 @@
 // SUB-COMPONENTS
 // =============================================================================
 
+// J-4.2 — no divider between card header and body by house default. The 24px
+// gap does the work. Spec variant gets its divided look via .specHeader
+// explicitly setting one. A theme may opt a plain .header into a distinct
+// tinted bar (background + divider) the same way Modal's header does, via
+// --color-card-header-bg/-border — both default to transparent so every
+// theme that doesn't set them keeps the plain J-4.2 look unchanged.
 .header {
-  border-bottom: 1px solid var(--color-border);
-  padding: var(--space-4);
+  background-color: var(--color-card-header-bg, transparent);
+  border-bottom: var(--border-width-sm) solid
+    var(--color-card-header-border, transparent);
+
+  // Top/bottom both default to --space-5, matching the sides, for every
+  // theme that doesn't override them. A theme using CardBody's inset-panel
+  // vars (see Card.module.scss's .body) should also shrink
+  // --card-header-padding-bottom — otherwise this padding and .body's own
+  // margin-top both add gap above the panel and it ends up double-spaced.
+  padding: var(--card-header-padding-top, var(--space-5)) var(--space-5)
+    var(--card-header-padding-bottom, var(--space-5));
 }
 
 // Editorial header used by the `spec` variant: serif name on the left
@@ -118,6 +141,7 @@
 .specHeader {
   align-items: baseline;
   background-color: var(--color-surface);
+  border-bottom: var(--border-width-sm) solid var(--color-border);
   display: flex;
   gap: var(--space-6);
   justify-content: space-between;
@@ -149,11 +173,22 @@
 }
 
 .body {
+  // Transparent/0 for every theme by default — .card's own background and
+  // padding show through unchanged. A theme pairing --color-card-bg (above)
+  // with these turns .body into a white panel inset inside the tinted
+  // shell — "white card inside a grey card" — instead of a plain flat
+  // region; the margin values control exactly how much of the shell's
+  // tint shows on each side.
+  background-color: var(--color-card-body-bg, transparent);
+  border-radius: var(--card-body-inset-radius, 0);
   flex: 1;
-  padding: var(--space-4);
+  margin: var(--card-body-inset-top, 0) var(--card-body-inset-x, 0)
+    var(--card-body-inset-bottom, 0);
+  padding: var(--space-5);
 }
 
+// J-4.1 — footer top-border sells the "footer" role.
 .footer {
-  border-top: 1px solid var(--color-border);
-  padding: var(--space-4);
+  border-top: var(--border-width-sm) solid var(--color-border);
+  padding: var(--space-5);
 }

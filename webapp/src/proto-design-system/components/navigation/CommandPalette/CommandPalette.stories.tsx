@@ -186,25 +186,112 @@ export const WithDescriptions: Story = {
 	),
 };
 
+const manyCommandItems: CommandItem[] = [
+	{ id: "acme-corp", label: "Acme Corp", icon: <FileText />, group: "Recent" },
+	{
+		id: "globex",
+		label: "Globex Industries",
+		icon: <FileText />,
+		group: "Recent",
+	},
+	{ id: "initech", label: "Initech", icon: <FileText />, group: "Recent" },
+	{
+		id: "umbrella",
+		label: "Umbrella Corp",
+		icon: <FileText />,
+		group: "Recent",
+	},
+	{
+		id: "wayne",
+		label: "Wayne Enterprises",
+		icon: <FileText />,
+		group: "Recent",
+	},
+	{
+		id: "new-invoice",
+		label: "Create Invoice",
+		icon: <Plus />,
+		group: "Actions",
+	},
+	{ id: "new-contact", label: "Add Contact", icon: <User />, group: "Actions" },
+	{
+		id: "export-csv",
+		label: "Export as CSV",
+		icon: <FileText />,
+		group: "Actions",
+	},
+	{
+		id: "bulk-import",
+		label: "Bulk Import Contacts",
+		icon: <Plus />,
+		group: "Actions",
+	},
+	{
+		id: "go-dashboard",
+		label: "Dashboard",
+		icon: <Home />,
+		group: "Navigation",
+	},
+	{
+		id: "go-invoices",
+		label: "Invoices",
+		icon: <FileText />,
+		group: "Navigation",
+	},
+	{ id: "go-contacts", label: "Contacts", icon: <User />, group: "Navigation" },
+	{
+		id: "go-analytics",
+		label: "Analytics",
+		icon: <BarChart />,
+		group: "Navigation",
+	},
+	{
+		id: "go-settings",
+		label: "Settings",
+		icon: <Settings />,
+		group: "Navigation",
+	},
+	{
+		id: "toggle-theme",
+		label: "Toggle Dark Mode",
+		icon: <Moon />,
+		group: "Preferences",
+	},
+	{
+		id: "keyboard-shortcuts",
+		label: "View Keyboard Shortcuts",
+		icon: <Search />,
+		group: "Preferences",
+	},
+	{
+		id: "invite-teammate",
+		label: "Invite Teammate",
+		icon: <Plus />,
+		group: "Team",
+	},
+	{
+		id: "manage-roles",
+		label: "Manage Roles & Permissions",
+		icon: <Settings />,
+		group: "Team",
+	},
+	{
+		id: "billing",
+		label: "Billing & Plans",
+		icon: <FileText />,
+		group: "Team",
+	},
+	{
+		id: "help-center",
+		label: "Open Help Center",
+		icon: <Search />,
+		group: "Help",
+	},
+	{ id: "log-out", label: "Log Out", icon: <LogOut />, group: "Help" },
+];
+
 export const ManyItems: Story = {
-	render: () => (
-		<CommandPaletteDemo
-			items={Array.from({ length: 20 }, (_, i) => ({
-				id: `item-${i}`,
-				label: `Command ${i + 1}`,
-				description: `Description for command ${i + 1}`,
-				icon: <FileText />,
-				group:
-					i < 5
-						? "Recent"
-						: i < 10
-							? "Actions"
-							: i < 15
-								? "Navigation"
-								: "Other",
-			}))}
-		/>
-	),
+	render: () => <CommandPaletteDemo items={manyCommandItems} />,
 };
 
 export const CustomPlaceholder: Story = {
@@ -219,5 +306,18 @@ export const CustomPlaceholder: Story = {
 export const EmptyState: Story = {
 	render: () => (
 		<CommandPaletteDemo items={[]} emptyText="No commands available" />
+	),
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<CommandPaletteDemo
+			placeholder="Search projects, teammates, or run a command..."
+			items={sampleItems}
+		/>
 	),
 };

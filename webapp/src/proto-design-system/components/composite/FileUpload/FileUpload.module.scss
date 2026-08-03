@@ -47,7 +47,7 @@
 }
 
 .dragging {
-  background-color: oklch(from var(--color-primary) l c h / 0.05);
+  background-color: var(--color-overlay-primary);
   border-color: var(--color-primary);
 }
 
@@ -216,10 +216,10 @@
 .existingRemoveButton {
   align-items: center;
   appearance: none;
-  background: oklch(0% 0 0 / 0.55);
+  background: var(--color-surface-overlay);
   border: none;
   border-radius: var(--radius-full);
-  color: var(--color-base-content-inverse, #fff);
+  color: var(--color-white);
   cursor: pointer;
   display: flex;
   height: var(--space-5);
@@ -244,13 +244,18 @@
   }
 }
 
+.existingTile:hover .existingRemoveButton,
+.existingRemoveButton:focus-visible {
+  opacity: 1;
+}
+
 .existingSetFeaturedButton {
   align-items: center;
   appearance: none;
-  background: oklch(0% 0 0 / 0.55);
+  background: var(--color-surface-overlay);
   border: none;
   border-radius: var(--radius-full);
-  color: var(--color-base-content-inverse, #fff);
+  color: var(--color-white);
   cursor: pointer;
   display: flex;
   height: var(--space-5);
@@ -275,8 +280,6 @@
   }
 }
 
-.existingTile:hover .existingRemoveButton,
-.existingRemoveButton:focus-visible,
 .existingTile:hover .existingSetFeaturedButton,
 .existingSetFeaturedButton:focus-visible {
   opacity: 1;

@@ -217,3 +217,52 @@ export const Variants: Story = {
 		</div>
 	),
 };
+
+export const Showcase: Story = {
+	render: () => (
+		<div
+			style={{
+				display: "grid",
+				gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+				gap: "1rem",
+			}}
+		>
+			<StatCard
+				label="Monthly Recurring Revenue"
+				value="$84,210"
+				numericValue={84210}
+				formatValue={(value) => `$${value.toLocaleString()}`}
+				trend="up"
+				trendValue="+6.4%"
+				description="vs last month"
+				icon={<DollarSign />}
+			/>
+			<StatCard
+				label="Active Subscriptions"
+				value="1,284"
+				numericValue={1284}
+				trend="up"
+				trendValue="+34"
+				description="new this month"
+				icon={<Users />}
+			/>
+			<StatCard
+				label="Churn Rate"
+				value="1.8%"
+				trend="down"
+				trendValue="-0.3pt"
+				description="vs last month"
+				variant="outlined"
+			/>
+			<StatCard
+				label="Trial Conversions"
+				value="212"
+				previousValue="187"
+				trend="up"
+				trendValue="+13.4%"
+				icon={<ShoppingCart />}
+				variant="filled"
+			/>
+		</div>
+	),
+};

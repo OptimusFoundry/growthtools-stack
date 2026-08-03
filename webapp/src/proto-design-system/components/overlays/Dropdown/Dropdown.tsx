@@ -8,9 +8,18 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./Dropdown.module.scss";
+
+// Hoisted to module scope so the object reference is stable across renders;
+// motion restarts an in-progress enter/exit transition if the menu's
+// `variants` object gets a brand new identity on every parent re-render.
+const menuVariants = {
+	hidden: { opacity: 0, scale: 0.95, y: -4 },
+	visible: { opacity: 1, scale: 1, y: 0 },
+};
 
 export type DropdownSize = "sm" | "md" | "lg";
 export type DropdownVariant = "default" | "outline" | "ghost";
@@ -100,19 +109,14 @@ export function Dropdown({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const menuRef = useRef<HTMLUListElement>(null);
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
 	const selectedItem = items.find((item) => item.id === value);
 	const enabledItems = items.filter((item) => !item.disabled);
 
-	// Animation variants
-	const menuVariants = {
-		hidden: { opacity: 0, scale: 0.95, y: -4 },
-		visible: { opacity: 1, scale: 1, y: 0 },
-	};
-
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration: 0.15, ease: [0, 0, 0.2, 1] as const };
+		: { duration: motionTokens.duration.fast, ease: motionTokens.easeOut };
 
 	// Handle click outside
 	useEffect(() => {

@@ -99,7 +99,7 @@ Centered block for zero-data, zero-result, zero-filter states.
   </div>
 </div>
 ```
-The title uses Fraunces 24px. Keep the body ≤ 34ch for readability.
+The title uses Geist 600, 24px. Keep the body ≤ 34ch for readability.
 
 ## Spinner — `.spinner`
 

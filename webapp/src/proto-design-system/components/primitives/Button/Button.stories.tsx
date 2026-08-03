@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "@storybook/test";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { Button } from "./Button";
 
 const meta: Meta<typeof Button> = {
@@ -65,7 +65,7 @@ const meta: Meta<typeof Button> = {
 	},
 	args: {
 		onClick: fn(),
-		children: "Button",
+		children: "Save changes",
 	},
 };
 
@@ -79,7 +79,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	args: {
 		variant: "default",
-		children: "Default Button",
+		children: "View details",
 	},
 };
 
@@ -90,35 +90,35 @@ export const Default: Story = {
 export const Primary: Story = {
 	args: {
 		variant: "primary",
-		children: "Primary Button",
+		children: "Create workspace",
 	},
 };
 
 export const Secondary: Story = {
 	args: {
 		variant: "secondary",
-		children: "Secondary Button",
+		children: "Preview invoice",
 	},
 };
 
 export const Ghost: Story = {
 	args: {
 		variant: "ghost",
-		children: "Ghost Button",
+		children: "Dismiss",
 	},
 };
 
 export const Outline: Story = {
 	args: {
 		variant: "outline",
-		children: "Outline Button",
+		children: "Export CSV",
 	},
 };
 
 export const Destructive: Story = {
 	args: {
 		variant: "destructive",
-		children: "Delete",
+		children: "Delete workspace",
 	},
 };
 
@@ -129,21 +129,21 @@ export const Destructive: Story = {
 export const Small: Story = {
 	args: {
 		size: "sm",
-		children: "Small",
+		children: "Copy link",
 	},
 };
 
 export const Medium: Story = {
 	args: {
 		size: "md",
-		children: "Medium",
+		children: "Invite teammate",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		children: "Large Button",
+		children: "Start free trial",
 	},
 };
 
@@ -154,7 +154,7 @@ export const Large: Story = {
 export const Loading: Story = {
 	args: {
 		isLoading: true,
-		children: "Loading...",
+		children: "Uploading logo...",
 	},
 };
 
@@ -162,14 +162,14 @@ export const LoadingPrimary: Story = {
 	args: {
 		variant: "primary",
 		isLoading: true,
-		children: "Submitting...",
+		children: "Provisioning workspace...",
 	},
 };
 
 export const Disabled: Story = {
 	args: {
 		disabled: true,
-		children: "Disabled",
+		children: "Requires admin role",
 	},
 };
 
@@ -177,7 +177,7 @@ export const DisabledPrimary: Story = {
 	args: {
 		variant: "primary",
 		disabled: true,
-		children: "Disabled Primary",
+		children: "Upgrade to continue",
 	},
 };
 
@@ -188,7 +188,7 @@ export const DisabledPrimary: Story = {
 export const FullWidth: Story = {
 	args: {
 		isFullWidth: true,
-		children: "Full Width Button",
+		children: "Continue with email",
 	},
 	parameters: {
 		layout: "padded",
@@ -199,7 +199,7 @@ export const FullWidthPrimary: Story = {
 	args: {
 		variant: "primary",
 		isFullWidth: true,
-		children: "Full Width Primary",
+		children: "Complete purchase",
 	},
 	parameters: {
 		layout: "padded",
@@ -213,14 +213,14 @@ export const FullWidthPrimary: Story = {
 export const WithLeftIcon: Story = {
 	args: {
 		leftIcon: <Plus size="1em" />,
-		children: "Add Item",
+		children: "Add teammate",
 	},
 };
 
 export const WithRightIcon: Story = {
 	args: {
 		rightIcon: <ArrowRight size="1em" />,
-		children: "Next",
+		children: "Next step",
 	},
 };
 
@@ -228,7 +228,7 @@ export const WithBothIcons: Story = {
 	args: {
 		leftIcon: <ArrowLeft size="1em" />,
 		rightIcon: <ArrowRight size="1em" />,
-		children: "Navigate",
+		children: "Switch project",
 	},
 };
 
@@ -236,7 +236,7 @@ export const IconOnlyDefault: Story = {
 	args: {
 		isIconOnly: true,
 		children: <Plus size="1em" />,
-		"aria-label": "Add item",
+		"aria-label": "Add teammate",
 	},
 };
 
@@ -245,7 +245,7 @@ export const IconOnlyPrimary: Story = {
 		variant: "primary",
 		isIconOnly: true,
 		children: <Plus size="1em" />,
-		"aria-label": "Add item",
+		"aria-label": "New project",
 	},
 };
 
@@ -254,7 +254,7 @@ export const IconOnlyDestructive: Story = {
 		variant: "destructive",
 		isIconOnly: true,
 		children: <Trash2 size="1em" />,
-		"aria-label": "Delete item",
+		"aria-label": "Delete API key",
 	},
 };
 
@@ -273,27 +273,27 @@ export const AllVariants: Story = {
 					flexWrap: "wrap",
 				}}
 			>
-				<Button variant="default">Default</Button>
-				<Button variant="primary">Primary</Button>
-				<Button variant="secondary">Secondary</Button>
-				<Button variant="ghost">Ghost</Button>
-				<Button variant="outline">Outline</Button>
-				<Button variant="destructive">Destructive</Button>
+				<Button variant="default">View details</Button>
+				<Button variant="primary">Create workspace</Button>
+				<Button variant="secondary">Preview invoice</Button>
+				<Button variant="ghost">Dismiss</Button>
+				<Button variant="outline">Export CSV</Button>
+				<Button variant="destructive">Delete workspace</Button>
 			</div>
 			<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-				<Button size="sm">Small</Button>
-				<Button size="md">Medium</Button>
-				<Button size="lg">Large</Button>
+				<Button size="sm">Copy link</Button>
+				<Button size="md">Invite teammate</Button>
+				<Button size="lg">Start free trial</Button>
 			</div>
 			<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
 				<Button variant="primary" leftIcon={<Plus size="1em" />}>
-					With Icon
+					Add teammate
 				</Button>
 				<Button variant="primary" isLoading>
-					Loading
+					Saving...
 				</Button>
 				<Button variant="primary" disabled>
-					Disabled
+					Upgrade to continue
 				</Button>
 			</div>
 		</div>
@@ -307,13 +307,13 @@ export const AllSizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
 			<Button variant="primary" size="sm">
-				Small
+				Copy link
 			</Button>
 			<Button variant="primary" size="md">
-				Medium
+				Invite teammate
 			</Button>
 			<Button variant="primary" size="lg">
-				Large
+				Start free trial
 			</Button>
 		</div>
 	),
@@ -323,21 +323,21 @@ export const AllStates: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 			<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-				<Button variant="primary">Normal</Button>
+				<Button variant="primary">Save changes</Button>
 				<Button variant="primary" disabled>
-					Disabled
+					Requires admin role
 				</Button>
 				<Button variant="primary" isLoading>
-					Loading
+					Saving...
 				</Button>
 			</div>
 			<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-				<Button variant="outline">Normal</Button>
+				<Button variant="outline">Export CSV</Button>
 				<Button variant="outline" disabled>
-					Disabled
+					No data to export
 				</Button>
 				<Button variant="outline" isLoading>
-					Loading
+					Exporting...
 				</Button>
 			</div>
 		</div>
@@ -347,18 +347,66 @@ export const AllStates: Story = {
 export const IconButtons: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-			<Button variant="default" isIconOnly size="sm" aria-label="Add">
+			<Button variant="default" isIconOnly size="sm" aria-label="Add teammate">
 				<Plus size="1em" />
 			</Button>
-			<Button variant="primary" isIconOnly size="md" aria-label="Add">
+			<Button variant="primary" isIconOnly size="md" aria-label="New project">
 				<Plus size="1em" />
 			</Button>
-			<Button variant="outline" isIconOnly size="lg" aria-label="Add">
+			<Button variant="outline" isIconOnly size="lg" aria-label="Add filter">
 				<Plus size="1em" />
 			</Button>
-			<Button variant="destructive" isIconOnly aria-label="Delete">
+			<Button variant="destructive" isIconOnly aria-label="Delete API key">
 				<Trash2 size="1em" />
 			</Button>
 		</div>
 	),
+};
+
+export const Smoke: Story = {
+	args: {
+		children: "Save changes",
+		onClick: fn(),
+	},
+	play: async ({ canvasElement, args }) => {
+		const canvas = within(canvasElement);
+		const button = canvas.getByRole("button", { name: /save changes/i });
+		await expect(button).toBeVisible();
+		await userEvent.click(button);
+		await expect(args.onClick).toHaveBeenCalledTimes(1);
+	},
+};
+
+// =============================================================================
+// SHOWCASE — form action row
+// =============================================================================
+
+export const FormActionRow: Story = {
+	render: () => (
+		<div
+			style={{
+				width: 360,
+				padding: "1.5rem",
+				border: "1px solid var(--color-border)",
+				borderRadius: "var(--radius-lg)",
+			}}
+		>
+			<p style={{ marginBottom: "1rem", fontWeight: 600 }}>
+				Cancel this subscription?
+			</p>
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "flex-end",
+					gap: "0.75rem",
+				}}
+			>
+				<Button variant="ghost">Keep subscription</Button>
+				<Button variant="destructive">Cancel subscription</Button>
+			</div>
+		</div>
+	),
+	parameters: {
+		layout: "padded",
+	},
 };

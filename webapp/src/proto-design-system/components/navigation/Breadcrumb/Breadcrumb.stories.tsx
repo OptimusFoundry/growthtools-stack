@@ -55,8 +55,8 @@ export const CustomSeparator: Story = {
 	args: {
 		items: [
 			{ label: "Home", href: "/" },
-			{ label: "Library", href: "/library" },
-			{ label: "Data" },
+			{ label: "Design System", href: "/library" },
+			{ label: "Breadcrumb" },
 		],
 		separator: <Slash />,
 	},
@@ -67,7 +67,7 @@ export const TextSeparator: Story = {
 		items: [
 			{ label: "Home", href: "/" },
 			{ label: "Products", href: "/products" },
-			{ label: "Category" },
+			{ label: "Home & Kitchen" },
 		],
 		separator: "/",
 	},
@@ -127,4 +127,42 @@ export const NoHomeIcon: Story = {
 		],
 		showHomeIcon: false,
 	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+			<Breadcrumb
+				items={[
+					{ label: "Home", href: "/" },
+					{ label: "Documents", href: "/documents", icon: <Folder /> },
+					{
+						label: "Q3 Financials",
+						href: "/documents/q3-financials",
+						icon: <Folder />,
+					},
+					{ label: "board-deck-final.pdf", icon: <File /> },
+				]}
+			/>
+			<Breadcrumb
+				size="sm"
+				items={[
+					{ label: "Home", href: "/" },
+					{ label: "Catalog", href: "/catalog" },
+					{ label: "Outdoor Gear", href: "/catalog/outdoor" },
+					{ label: "Tents", href: "/catalog/outdoor/tents" },
+					{
+						label: "4-Person Backpacking Tent",
+						href: "/catalog/outdoor/tents/4p",
+					},
+					{ label: "Storm Grey" },
+				]}
+				maxItems={4}
+			/>
+		</div>
+	),
 };

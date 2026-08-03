@@ -49,11 +49,6 @@ $container-query-sizes: (
   --max-width-prose: 65ch;
   --max-width-screen: 100vw;
 
-  // Container padding
-  --container-padding-sm: var(--space-4);
-  --container-padding-md: var(--space-6);
-  --container-padding-lg: var(--space-8);
-
   // Container max-widths (CSS mirror of the $containers Sass map above).
   // Consumed by layout/Container and navigation/Navbar.
   --container-sm:  40rem;     // 640px
@@ -61,4 +56,9 @@ $container-query-sizes: (
   --container-lg:  64rem;     // 1024px
   --container-xl:  80rem;     // 1280px
   --container-2xl: 87.5rem;   // 1400px
+
+  // Container padding
+  --container-padding-sm: var(--space-4);
+  --container-padding-md: var(--space-6);
+  --container-padding-lg: var(--space-8);
 }

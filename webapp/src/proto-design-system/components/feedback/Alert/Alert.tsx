@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle, Info, X, XCircle } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./Alert.module.scss";
@@ -55,6 +56,7 @@ export function Alert({
 }: AlertProps) {
 	const iconElement = customIcon || variantIcons[variant];
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
 	// Animation variants - fade in with slight scale
 	const alertVariants = {
@@ -64,7 +66,7 @@ export function Alert({
 
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration: 0.2, ease: [0, 0, 0.2, 1] as const };
+		: { duration: motionTokens.duration.normal, ease: motionTokens.easeOut };
 
 	return (
 		<motion.div

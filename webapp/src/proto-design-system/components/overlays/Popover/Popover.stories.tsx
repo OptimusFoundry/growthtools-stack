@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Info, Settings } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../../primitives/Button";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import { Popover } from "./Popover";
 
 const meta: Meta<typeof Popover> = {
@@ -27,8 +27,11 @@ type Story = StoryObj<typeof Popover>;
 
 export const Default: Story = {
 	render: (args) => (
-		<Popover {...args} trigger={<Button>Open Popover</Button>}>
-			<p>This is some popover content. It can contain any React elements.</p>
+		<Popover {...args} trigger={<Button>Share link</Button>}>
+			<p>
+				Anyone with this link can view the document. Revoke access anytime from
+				sharing settings.
+			</p>
 		</Popover>
 	),
 	args: {
@@ -40,11 +43,11 @@ export const Default: Story = {
 export const WithTitle: Story = {
 	render: () => (
 		<Popover
-			trigger={<Button>Open Popover</Button>}
-			title="Popover Title"
+			trigger={<Button>What's new</Button>}
+			title="Release notes — v2.4"
 			showClose
 		>
-			<p>This popover has a title and a close button.</p>
+			<p>Added bulk export, faster search, and a redesigned billing page.</p>
 		</Popover>
 	),
 };
@@ -61,21 +64,21 @@ export const Placements: Story = {
 		>
 			<div />
 			<Popover trigger={<Button>Top</Button>} placement="top">
-				<p>Top placement</p>
+				<p>Appears above the trigger.</p>
 			</Popover>
 			<div />
 
 			<Popover trigger={<Button>Left</Button>} placement="left">
-				<p>Left placement</p>
+				<p>Appears to the left of the trigger.</p>
 			</Popover>
 			<div />
 			<Popover trigger={<Button>Right</Button>} placement="right">
-				<p>Right placement</p>
+				<p>Appears to the right of the trigger.</p>
 			</Popover>
 
 			<div />
 			<Popover trigger={<Button>Bottom</Button>} placement="bottom">
-				<p>Bottom placement</p>
+				<p>Appears below the trigger.</p>
 			</Popover>
 			<div />
 		</div>
@@ -98,17 +101,17 @@ export const Alignments: Story = {
 					placement="bottom"
 					align="start"
 				>
-					<p>Aligned to start</p>
+					<p>Aligned to the start edge of the trigger.</p>
 				</Popover>
 				<Popover
 					trigger={<Button>Center</Button>}
 					placement="bottom"
 					align="center"
 				>
-					<p>Aligned to center</p>
+					<p>Aligned to the center of the trigger.</p>
 				</Popover>
 				<Popover trigger={<Button>End</Button>} placement="bottom" align="end">
-					<p>Aligned to end</p>
+					<p>Aligned to the end edge of the trigger.</p>
 				</Popover>
 			</div>
 		</div>
@@ -122,19 +125,19 @@ export const Controlled: Story = {
 		return (
 			<div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
 				<Popover
-					trigger={<Button>Controlled Popover</Button>}
+					trigger={<Button>Invite teammate</Button>}
 					open={open}
 					onOpenChange={setOpen}
-					title="Controlled"
+					title="Invite by email"
 					showClose
 				>
-					<p>This popover is controlled externally.</p>
+					<p>Send an invite to join this workspace.</p>
 					<Button
 						size="sm"
 						onClick={() => setOpen(false)}
 						style={{ marginTop: "0.5rem" }}
 					>
-						Close from inside
+						Send invite
 					</Button>
 				</Popover>
 				<span>Open: {open ? "Yes" : "No"}</span>
@@ -148,24 +151,24 @@ export const RichContent: Story = {
 		<Popover
 			trigger={
 				<Button variant="outline" leftIcon={<Settings />}>
-					Settings
+					Notifications
 				</Button>
 			}
-			title="Preferences"
+			title="Notification preferences"
 			showClose
 		>
 			<div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
 				<label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
 					<input type="checkbox" defaultChecked />
-					Enable notifications
+					Email me about comments
 				</label>
 				<label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
 					<input type="checkbox" />
-					Dark mode
+					Email me about mentions
 				</label>
 				<label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
 					<input type="checkbox" defaultChecked />
-					Auto-save
+					Weekly digest
 				</label>
 			</div>
 		</Popover>
@@ -178,6 +181,7 @@ export const IconTrigger: Story = {
 			trigger={
 				<button
 					type="button"
+					aria-label="About this metric"
 					style={{
 						background: "none",
 						border: "none",
@@ -192,7 +196,10 @@ export const IconTrigger: Story = {
 			}
 			placement="right"
 		>
-			<p>Click the info icon to see more details about this feature.</p>
+			<p>
+				Monthly recurring revenue is calculated net of refunds and failed
+				payments as of the first day of the billing cycle.
+			</p>
 		</Popover>
 	),
 };
@@ -200,12 +207,59 @@ export const IconTrigger: Story = {
 export const WithoutFocusTrap: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "1rem" }}>
-			<Popover trigger={<Button>No Focus Trap</Button>} trapFocus={false}>
+			<Popover trigger={<Button>Quick tips</Button>} trapFocus={false}>
 				<p>
-					This popover does not trap focus. You can tab to elements outside.
+					This popover does not trap focus, so you can tab past it to reach the
+					next control on the page.
 				</p>
 			</Popover>
-			<Button variant="outline">Another button</Button>
+			<Button variant="outline">Skip to next field</Button>
 		</div>
 	),
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => {
+		const [open, setOpen] = useState(false);
+
+		return (
+			<Popover
+				trigger={
+					<Button variant="outline" leftIcon={<Settings />}>
+						Column settings
+					</Button>
+				}
+				open={open}
+				onOpenChange={setOpen}
+				title="Visible columns"
+				showClose
+			>
+				<div
+					style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+				>
+					{["Name", "Status", "Owner", "Last updated"].map((column) => (
+						<label
+							key={column}
+							style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+						>
+							<input type="checkbox" defaultChecked />
+							{column}
+						</label>
+					))}
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={() => setOpen(false)}
+						style={{ marginTop: "0.25rem" }}
+					>
+						Done
+					</Button>
+				</div>
+			</Popover>
+		);
+	},
 };

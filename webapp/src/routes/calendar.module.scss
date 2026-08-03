@@ -40,7 +40,7 @@
 	font-size: var(--font-size-sm);
 	font-weight: var(--font-weight-medium);
 	color: var(--color-base-content);
-	padding: var(--space-0-5) var(--space-1);
+	padding: var(--space-1) var(--space-1);
 }
 
 .dayCellButton {
@@ -65,13 +65,13 @@
 .statusStripes {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-0-5);
-	padding: 0 var(--space-0-5);
+	gap: var(--space-1);
+	padding: 0 var(--space-1);
 }
 
 .stripe {
 	display: block;
-	padding: var(--space-0-5) var(--space-1);
+	padding: var(--space-1) var(--space-1);
 	border-radius: var(--radius-xs);
 	font-size: var(--font-size-xxs);
 	font-weight: var(--font-weight-medium);

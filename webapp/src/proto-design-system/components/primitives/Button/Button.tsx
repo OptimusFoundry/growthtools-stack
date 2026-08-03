@@ -72,7 +72,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 		const buttonClasses = cn(
 			styles.button,
 			styles[variant],
-			styles[size],
+			styles[`size-${size}`],
 			isFullWidth && styles.fullWidth,
 			isIconOnly && styles.iconOnly,
 			isLoading && styles.loading,

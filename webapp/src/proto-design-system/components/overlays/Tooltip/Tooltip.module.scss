@@ -21,13 +21,14 @@
 .tooltip {
   background-color: var(--color-base-900);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-tooltip);
   color: var(--color-base-100);
   font-family: var(--font-family-sans);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-tight);
   max-width: var(--space-32);
   opacity: 0;
-  padding: var(--space-1-5) var(--space-2-5);
+  padding: var(--space-2) var(--space-3);
   pointer-events: none;
   position: absolute;
   text-align: center;

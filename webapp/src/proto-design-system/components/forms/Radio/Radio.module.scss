@@ -4,9 +4,15 @@
 @use "../../../mixins" as *;
 
 .container {
-  align-items: flex-start;
+  // Label-only is a single line — center the control with it. A description
+  // makes the content multi-line, so top-align in that case via .hasDescription.
+  align-items: center;
   display: inline-flex;
   gap: var(--space-2);
+}
+
+.hasDescription {
+  align-items: flex-start;
 }
 
 .disabled {
@@ -56,7 +62,7 @@
 .radio {
   align-items: center;
   background-color: var(--color-surface);
-  border: 2px solid var(--color-border);
+  border: var(--border-width-md) solid var(--color-border);
   border-radius: var(--radius-full);
   display: flex;
   justify-content: center;
@@ -98,18 +104,18 @@
   width: var(--space-5);
 
   .dot {
-    height: var(--space-2-5);
-    width: var(--space-2-5);
+    height: var(--space-3);
+    width: var(--space-3);
   }
 }
 
 .size-lg {
-  height: var(--space-5);
-  width: var(--space-5);
+  height: var(--space-6);
+  width: var(--space-6);
 
   .dot {
-    height: var(--space-3);
-    width: var(--space-3);
+    height: var(--space-4);
+    width: var(--space-4);
   }
 }
 
@@ -128,7 +134,7 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-0-5);
+  gap: var(--space-1);
 }
 
 .label {
@@ -139,15 +145,15 @@
 }
 
 .label-sm {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
 }
 
 .label-md {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
 }
 
 .label-lg {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
 }
 
 .description {

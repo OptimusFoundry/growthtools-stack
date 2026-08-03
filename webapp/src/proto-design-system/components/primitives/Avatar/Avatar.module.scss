@@ -19,31 +19,31 @@
 // SIZES
 // =============================================================================
 
-.xs {
+.size-xs {
   font-size: var(--font-size-xs);
   height: var(--space-5);
   width: var(--space-5);
 }
 
-.sm {
+.size-sm {
   font-size: var(--font-size-xs);
   height: var(--space-6);
   width: var(--space-6);
 }
 
-.md {
+.size-md {
   font-size: var(--font-size-sm);
   height: var(--space-7);
   width: var(--space-7);
 }
 
-.lg {
+.size-lg {
   font-size: var(--font-size-base);
   height: var(--space-8);
   width: var(--space-8);
 }
 
-.xl {
+.size-xl {
   font-size: var(--font-size-lg);
   height: var(--space-10);
   width: var(--space-10);
@@ -60,7 +60,7 @@
 // =============================================================================
 
 .circle {
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-avatar);
 }
 
 .rounded {

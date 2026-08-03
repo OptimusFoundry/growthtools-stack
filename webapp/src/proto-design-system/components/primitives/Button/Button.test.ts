@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const STORYBOOK_URL = "http://localhost:6006";
+const STORYBOOK_URL = "http://localhost:6009";
 
 test.describe("Button Component", () => {
 	// ===========================================================================

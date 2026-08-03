@@ -46,7 +46,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
 	) => {
 		const [imageError, setImageError] = useState(false);
 
-		const sizeClass = size === "2xl" ? styles["size-2xl"] : styles[size];
+		const sizeClass = styles[`size-${size}`];
 		const avatarClasses = cn(
 			styles.avatar,
 			sizeClass,

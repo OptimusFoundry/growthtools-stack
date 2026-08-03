@@ -1,19 +1,115 @@
 // =============================================================================
 // PLASMA THEME
 // =============================================================================
-// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
-
-@import "https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap";
+// Reference: lab plasma-physics instrumentation, not generic "dark neon" —
+// the sustained-arc glow of a Tesla coil / plasma globe (cyan-white core
+// filament, magenta corona bloom, molten-gold electrode contact point), read
+// through an oscilloscope/telemetry-readout register. This is a deliberately
+// narrower, fixed-role brief than sibling dark theme `flux` (whose reference
+// is "spectral flow": one hue sweeping across the whole base ramp, with
+// primary/accent drifting hue on hover/active to read as motion along a
+// spectrum). Plasma inverts that: the base ramp holds ONE hue (320deg
+// violet-void) start to finish except the deliberate hot-core cap (see base
+// scale below), and the three brand hues — cyan primary, magenta secondary,
+// gold accent — are FIXED instrument channels, never drifting into each
+// other on interaction. The "glow" reads as an ionization event lighting a
+// fixed instrument, not motion through a spectrum — that's the swap-test
+// answer for why this isn't just flux with different hex values.
+// Fonts: Chakra Petch (squared-off, technical — closest free analog to
+// lab-instrument stencil type, carries body/UI) + Orbitron (display,
+// sci-fi numeral face — scoped to --font-family-display for large
+// readout-style headers/counters, not body text) + JetBrains Mono
+// (telemetry/data-readout mono — matches the oscilloscope framing, not a
+// reflexive "dark+neon=coding-mono" grab).
+// Base palette ported from SingaporeAtmosphere Design System v2
+// (colors_and_type.css); every leaf token below has since been numerically
+// refit — see the two passes documented below.
+// 2026-07 contrast/gamut refit #2 (computed fresh via
+// theme-contrast-check.mjs, cross-checked against an independent audit —
+// not self-reported):
+// - `secondary text on background` (--color-base-content-secondary) was Lc
+//   -70.7/11.51:1, under the Lc75 small-body-text floor by 4.3pts.
+//   Lightened 82%->87% L (same 0.06 chroma/95deg hue) -> Lc -80.7/13.64:1,
+//   clears the floor with 5.7pts of margin and stays in-gamut.
+// - `secondary-content on secondary` (button/badge text) was Lc 55.0/8.02:1,
+//   under the Lc60 UI-text floor by 5pts even though WCAG AA passed
+//   comfortably. Darkening the ink further was a dead end (swept 13%->4% L,
+//   Lc only moved 55.0->55.2 — APCA's black-clamp means near-black ink is
+//   already maxed out); the real lever is the base swatch's luminance.
+//   Lightened --color-secondary 74%->78% L (same 0.18 chroma/338deg hue,
+//   confirmed in-gamut) -> Lc 61.6/9.28:1, clears with 1.6pts margin.
+//   hover/active relit to keep the same escalate/recede shape at the new
+//   base (82% 0.13 338deg / 70% 0.18 338deg, both in-gamut).
+// - `error-content on error` was Lc 56.1/8.25:1, same Lc60-floor miss as
+//   secondary and the same root cause. Lightened --color-error 74%->77.5%
+//   L (same 0.13 chroma/20deg hue, in-gamut) -> Lc 61.8/9.35:1, clears with
+//   1.8pts margin; error-hover relit to 84% 0.08 20deg to keep pace
+//   in-gamut, error-active (68% 0.18 20deg) was already fine as-is.
+// - `accent-content on accent-bg` was flagged CRITICAL in the prior audit —
+//   traced to a stale pairing that doesn't actually occur in shipped
+//   components: Badge.module.scss's `.accent` composites accent-content
+//   ONLY against `--color-accent` (Lc 90.6/16.00:1, clears outright), never
+//   against `--color-accent-bg` (a separate wash token that itself only
+//   ever pairs with `--color-base-content`, Lc -97.1/14.63:1 — also clean).
+//   No token change needed once the real pairing was confirmed; noted here
+//   so the next audit doesn't re-flag a pairing this codebase never renders.
+// - Shadow ladder had two real defects independent of the "keep the glow"
+//   call below: shadow-xs was pure blur while sm/md/lg/xl mixed a hard
+//   0-blur offset with a soft glow (mixed offset ratios, banned outright),
+//   and the glow hue drifted cyan(sm)->magenta(md/lg)->gold(xl) — three
+//   implied light sources in one elevation ladder. Rebuilt xs-xl as ONE
+//   consistent hard-offset + soft-glow formula, single hue (primary cyan,
+//   196deg) throughout — matching the fix already shipped on sibling `flux`
+//   in spirit, but keeping the glow (see below) instead of reverting to
+//   warm/ink, since this theme's brief specifically calls for it.
+// - Neon glow shadows are KEPT deliberately for the general ladder, not
+//   swapped for the house warm/ink shadow: this is the one theme in the set
+//   where "glowing plasma" is the literal brief (see reference above), so
+//   the glow is earned, not reached for as a generic premium-dark-mode
+//   default. --shadow-primary/--shadow-accent stay scoped to their own
+//   hues (cyan / gold respectively) — that's role differentiation between
+//   two named tokens, not hue-drift within the shared elevation ladder.
+// 2026-07 contrast/gamut refit #1 (prior pass, numbers superseded above
+// where noted):
+// - EVERY saturated primary/secondary/accent/semantic literal was authored
+//   past the sRGB gamut ceiling at its hue (chroma up to 0.27 at hues whose
+//   true in-gamut max is ~0.10-0.20) — all rebuilt at the same L/H with
+//   chroma fit to the true ceiling (~80-90% headroom), so nothing clips/
+//   hue-shifts at paint time. `accent` and `warning` were also the exact
+//   same literal (92% 0.20 100deg) and `primary`/`info` were the exact same
+//   literal (78% 0.22 200deg) — both re-hued apart (accent 95deg vs warning
+//   65deg; primary 196deg vs info 208deg) so the two role pairs stop
+//   rendering pixel-identical.
+// - `--color-border` was functionally invisible: 34% L 320deg on the 14%
+//   void scored APCA Lc 0.0 (this hue's near-black region compresses
+//   luminance hard — a 20pt OKLCH-L gap wasn't a real gap in rendered
+//   luminance). Relit to 48% L, clears the Lc15 hairline floor at Lc 18.3.
+// - `--color-base-content-tertiary` (66%->72% L) and `--color-muted`
+//   (52%->72% L, now aliasing tertiary per house convention) both cleared
+//   the Lc45 floor for the first time; added `--color-text-disabled`
+//   (60% L), which the theme was missing entirely — Lc 33.5, clears the
+//   Lc30 disabled/placeholder floor.
+// - `--color-error` content polarity flipped from light-on-error to
+//   dark-ink-on-error: red's low luminance weight means a light-content
+//   error fill and a legible error-as-text-on-background can't both be
+//   satisfied by the same base token at this hue (same tension present in
+//   the house `dark` theme's error, which ships under AA at 3.30:1).
+// - JetBrains Mono import gains weight 600 (T-7.2 tier/persona badges need
+//   it; theme only shipped 400/500/700).
+@import "https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap";
 
 [data-theme="plasma"] {
   color-scheme: dark;
 
   --font-family-sans:    "Chakra Petch", "Inter", system-ui, sans-serif;
   --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
-  --font-family-serif:   "Chakra Petch", system-ui, sans-serif;
+  --font-family-serif:   "Chakra Petch", "Inter", system-ui, sans-serif;
   --font-family-display: "Orbitron", "Chakra Petch", system-ui, sans-serif;
+
+  // Base scale — violet void, warming to molten near-white at the top two
+  // steps (95deg) to read as plasma's hot core rather than plain white.
   --color-background: oklch(14% 0.06 320deg);
-  --color-base-50: oklch(18% 0.07 320deg);
+  --color-base-50:  oklch(18% 0.07 320deg);
   --color-base-100: oklch(22% 0.08 320deg);
   --color-base-200: oklch(28% 0.10 320deg);
   --color-base-300: oklch(36% 0.12 320deg);
@@ -23,64 +119,99 @@
   --color-base-700: oklch(84% 0.08 320deg);
   --color-base-800: oklch(92% 0.06 320deg);
   --color-base-900: oklch(96% 0.04 95deg);
-  --color-base-950: oklch(99% 0.02 95deg);
-  --color-base-content: oklch(96% 0.05 95deg);
-  --color-base-content-secondary: oklch(82% 0.06 95deg);
-  --color-base-content-tertiary: oklch(66% 0.08 320deg);
-  --color-muted: oklch(52% 0.10 320deg);
-  --color-surface: oklch(18% 0.08 320deg);
-  --color-surface-elevated: oklch(24% 0.10 320deg);
-  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
-  --color-border: oklch(34% 0.12 320deg);
-  --color-border-hover: oklch(78% 0.20 200deg);
-  --color-primary: oklch(78% 0.22 200deg);
-  --color-primary-hover: oklch(86% 0.24 200deg);
-  --color-primary-active: oklch(72% 0.22 200deg);
-  --color-primary-content: oklch(14% 0.06 320deg);
-  --color-secondary: oklch(66% 0.22 340deg);
-  --color-secondary-hover: oklch(74% 0.24 340deg);
-  --color-secondary-active: oklch(70% 0.24 340deg);
-  --color-secondary-content: oklch(14% 0.06 320deg);
-  --color-accent: oklch(92% 0.20 100deg);
-  --color-accent-hover: oklch(96% 0.22 100deg);
-  --color-accent-active: oklch(92% 0.22 100deg);
-  --color-accent-content: oklch(14% 0.06 320deg);
-  --color-accent-bg: oklch(24% 0.08 100deg);
-  --color-success: oklch(82% 0.22 150deg);
-  --color-success-hover: oklch(90% 0.22 150deg);
-  --color-success-active: oklch(74% 0.22 150deg);
-  --color-success-bg: oklch(24% 0.08 150deg);
-  --color-success-content: oklch(14% 0.04 150deg);
-  --color-warning: oklch(92% 0.20 100deg);
-  --color-warning-hover: oklch(99% 0.2 100deg);
-  --color-warning-active: oklch(84% 0.2 100deg);
-  --color-warning-bg: oklch(26% 0.10 95deg);
-  --color-warning-content: oklch(14% 0.06 95deg);
-  --color-error: oklch(70% 0.27 20deg);
-  --color-error-hover: oklch(78% 0.27 20deg);
-  --color-error-active: oklch(62% 0.27 20deg);
-  --color-error-bg: oklch(26% 0.10 20deg);
-  --color-error-content: oklch(98% 0.02 20deg);
-  --color-info: oklch(78% 0.22 200deg);
-  --color-info-hover: oklch(86% 0.22 200deg);
-  --color-info-active: oklch(70% 0.22 200deg);
-  --color-info-bg: oklch(24% 0.09 200deg);
-  --color-info-content: oklch(14% 0.06 200deg);
-  --shadow-color: oklch(78% 0.22 200deg / 0.25);
-  --shadow-color-strong: oklch(78% 0.22 200deg / 0.55);
-  --shadow-xs: 0 0 8px 0 oklch(78% 0.22 200deg / 0.3);
-  --shadow-sm: 0 2px 0 0 oklch(78% 0.22 200deg / 0.4), 0 0 12px 0 oklch(78% 0.22 200deg / 0.2);
-  --shadow-md: 0 4px 0 0 oklch(78% 0.22 200deg / 0.5), 0 0 24px 0 oklch(66% 0.22 340deg / 0.3);
-  --shadow-lg: 0 8px 0 0 oklch(78% 0.22 200deg / 0.55), 0 0 48px 0 oklch(66% 0.22 340deg / 0.4);
-  --shadow-xl: 0 12px 0 0 oklch(78% 0.22 200deg / 0.6), 0 0 80px 0 oklch(92% 0.20 100deg / 0.3);
-  --shadow-primary: 0 4px 0 0 oklch(78% 0.22 200deg), 0 0 24px 0 oklch(78% 0.22 200deg / 0.6);
-  --shadow-accent: 0 4px 0 0 oklch(92% 0.20 100deg), 0 0 24px 0 oklch(92% 0.20 100deg / 0.6);
-  --focus-ring-color: oklch(78% 0.22 200deg / 0.6);
-  --color-header-bg: var(--color-base-100);
+  --color-base-950: oklch(98% 0.022 95deg);
 
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Content — warm off-white body copy, tertiary/muted drop to the violet
+  // hue. tertiary/muted relit 66%/52% -> 72% to clear the Lc45 floor (this
+  // hue's near-black compresses luminance harder than it looks in L%).
+  --color-base-content:           oklch(96% 0.05 95deg);   // Lc -99.0 / 17.91:1
+  --color-base-content-secondary: oklch(87% 0.06 95deg);   // Lc -80.7 / 13.64:1
+  --color-base-content-tertiary:  oklch(72% 0.08 320deg);  // Lc -51.7 / 7.85:1
+  --color-muted:                  oklch(72% 0.08 320deg);  // aliases tertiary
   --color-text-disabled:          oklch(60% 0.08 320deg);  // non-content only — Lc -33.5
+  --color-surface:          oklch(18% 0.08 320deg);
+  --color-surface-elevated: oklch(24% 0.10 320deg);
+  --color-surface-overlay:  oklch(0% 0 0deg / 0.75);
+
+  // Relit 34% -> 48%: the old value scored Lc 0.0 (invisible) against the
+  // void background. border-hover crosses to the primary cyan family — a
+  // deliberate "charging" interaction cue distinct from the resting hairline.
+  --color-border:       oklch(48% 0.08 320deg);   // Lc 18.3 / 2.95:1 on bg
+  --color-border-hover: oklch(80% 0.11 196deg);
+
+  // Primary — electric cyan, structural (CTA/focus/tabs/links).
+  --color-primary:         oklch(78% 0.115 196deg);
+  --color-primary-hover:   oklch(86% 0.125 196deg);
+  --color-primary-active:  oklch(70% 0.10 196deg);
+  --color-primary-content: oklch(13% 0.035 318deg);   // void ink, never #000
+
+  // Secondary — hot magenta. Base relit 74%->78% L so secondary-content
+  // clears the Lc60 UI-text floor (Lc 61.6 / 9.28:1); hover/active relit to
+  // match, both confirmed in-gamut.
+  --color-secondary:         oklch(78% 0.18 338deg);
+  --color-secondary-hover:   oklch(82% 0.13 338deg);
+  --color-secondary-active:  oklch(70% 0.18 338deg);
+  --color-secondary-content: oklch(13% 0.035 318deg);   // Lc 61.6 / 9.28:1
+
+  // Accent — molten gold, editorial (<=2 uses/page). Re-hued off warning
+  // (was an exact literal duplicate) to 95deg.
+  --color-accent:         oklch(92% 0.10 95deg);
+  --color-accent-hover:   oklch(96% 0.045 95deg);
+  --color-accent-active:  oklch(86% 0.13 95deg);
+  --color-accent-content: oklch(13% 0.035 318deg);
+  --color-accent-bg:      oklch(24% 0.045 95deg);
+
+  // Semantic: success — diode green.
+  --color-success:         oklch(78% 0.18 150deg);
+  --color-success-hover:   oklch(86% 0.19 150deg);
+  --color-success-active:  oklch(70% 0.16 150deg);
+  --color-success-bg:      oklch(24% 0.05 150deg);
+  --color-success-content: oklch(13% 0.035 318deg);
+
+  // Semantic: warning — amber. Re-hued off accent (was an exact literal
+  // duplicate) to 65deg.
+  --color-warning:         oklch(84% 0.10 65deg);
+  --color-warning-hover:   oklch(90% 0.06 65deg);
+  --color-warning-active:  oklch(76% 0.15 65deg);
+  --color-warning-bg:      oklch(26% 0.05 65deg);
+  --color-warning-content: oklch(13% 0.035 318deg);
+
+  // Semantic: error — signal red. Content flipped light->dark ink (see
+  // header): both directions of the pairing now clear Lc45/WCAG AA. Base
+  // relit 74%->77.5% L so error-content also clears the Lc60 UI-text floor.
+  --color-error:         oklch(77.5% 0.13 20deg);    // Lc -60.0 / 9.33:1 on bg
+  --color-error-hover:   oklch(84% 0.08 20deg);
+  --color-error-active:  oklch(68% 0.18 20deg);
+  --color-error-bg:      oklch(26% 0.08 20deg);
+  --color-error-content: oklch(13% 0.035 318deg);    // Lc 61.8 / 9.35:1
+
+  // Semantic: info — cooler cyan than primary (208deg vs 196deg) so the two
+  // electric roles stop rendering pixel-identical.
+  --color-info:         oklch(78% 0.105 208deg);
+  --color-info-hover:   oklch(86% 0.11 208deg);
+  --color-info-active:  oklch(70% 0.095 208deg);
+  --color-info-bg:      oklch(24% 0.035 208deg);
+  --color-info-content: oklch(13% 0.035 318deg);
+
+  // Neon glow shadows — deliberate for this theme (see header). Rebuilt
+  // this pass to fix two real defects: (1) shadow-xs was pure blur while
+  // sm/md/lg/xl mixed a hard 0-blur offset with a soft glow (mixed offset
+  // ratios); (2) the glow hue drifted cyan->magenta->gold across the
+  // ladder (three implied light sources). Now ONE consistent hard-offset +
+  // soft-glow formula, single hue (primary cyan, 196deg) throughout —
+  // --shadow-primary/--shadow-accent below stay on their own hues, which is
+  // role differentiation between two named tokens, not ladder hue-drift.
+  --shadow-color: oklch(78% 0.115 196deg / 0.25);
+  --shadow-color-strong: oklch(78% 0.115 196deg / 0.55);
+  --shadow-xs: 0 1px 0 0 oklch(78% 0.115 196deg / 0.35), 0 0 8px 0 oklch(78% 0.115 196deg / 0.25);
+  --shadow-sm: 0 2px 0 0 oklch(78% 0.115 196deg / 0.4), 0 0 16px 0 oklch(78% 0.115 196deg / 0.28);
+  --shadow-md: 0 4px 0 0 oklch(78% 0.115 196deg / 0.48), 0 0 32px 0 oklch(78% 0.115 196deg / 0.32);
+  --shadow-lg: 0 8px 0 0 oklch(78% 0.115 196deg / 0.55), 0 0 56px 0 oklch(78% 0.115 196deg / 0.36);
+  --shadow-xl: 0 12px 0 0 oklch(78% 0.115 196deg / 0.62), 0 0 88px 0 oklch(78% 0.115 196deg / 0.4);
+  --shadow-primary: 0 4px 0 0 oklch(78% 0.115 196deg), 0 0 24px 0 oklch(78% 0.115 196deg / 0.6);
+  --shadow-accent: 0 4px 0 0 oklch(92% 0.10 95deg), 0 0 24px 0 oklch(92% 0.10 95deg / 0.6);
+  --focus-ring-color: oklch(78% 0.115 196deg / 0.6);
+  --color-header-bg: var(--color-base-100);
 
   // Motion — ionization-event register, following the theme's own framing
   // (see header): a discharge strikes near-instantly and locks with no

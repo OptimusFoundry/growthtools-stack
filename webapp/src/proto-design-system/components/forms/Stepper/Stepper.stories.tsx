@@ -29,7 +29,11 @@ export const Default: Story = {
 		const Demo = () => {
 			const [value, setValue] = useState(0);
 			return (
-				<Stepper value={value} onChange={setValue} aria-label="Quantity" />
+				<Stepper
+					value={value}
+					onChange={setValue}
+					aria-label="Number of guests"
+				/>
 			);
 		};
 		return <Demo />;
@@ -39,14 +43,14 @@ export const Default: Story = {
 export const WithMinMax: Story = {
 	render: () => {
 		const Demo = () => {
-			const [value, setValue] = useState(1);
+			const [value, setValue] = useState(2);
 			return (
 				<Stepper
 					value={value}
 					onChange={setValue}
 					min={1}
-					max={10}
-					aria-label="Quantity (1–10)"
+					max={8}
+					aria-label="Party size (1–8)"
 				/>
 			);
 		};
@@ -57,7 +61,7 @@ export const WithMinMax: Story = {
 export const WithStep: Story = {
 	render: () => {
 		const Demo = () => {
-			const [value, setValue] = useState(0);
+			const [value, setValue] = useState(20);
 			return (
 				<Stepper
 					value={value}
@@ -65,7 +69,7 @@ export const WithStep: Story = {
 					step={5}
 					min={0}
 					max={100}
-					aria-label="Progress (step 5)"
+					aria-label="API rate limit (requests/min, step 5)"
 				/>
 			);
 		};
@@ -83,7 +87,7 @@ export const Disabled: Story = {
 			value={3}
 			onChange={noop}
 			disabled
-			aria-label="Disabled quantity"
+			aria-label="Seats (locked while invite is pending)"
 		/>
 	),
 };
@@ -95,13 +99,13 @@ export const Disabled: Story = {
 export const Small: Story = {
 	render: () => {
 		const Demo = () => {
-			const [value, setValue] = useState(0);
+			const [value, setValue] = useState(1);
 			return (
 				<Stepper
 					value={value}
 					onChange={setValue}
 					size="sm"
-					aria-label="Small stepper"
+					aria-label="Number of dependents"
 				/>
 			);
 		};
@@ -112,13 +116,13 @@ export const Small: Story = {
 export const Medium: Story = {
 	render: () => {
 		const Demo = () => {
-			const [value, setValue] = useState(0);
+			const [value, setValue] = useState(1);
 			return (
 				<Stepper
 					value={value}
 					onChange={setValue}
 					size="md"
-					aria-label="Medium stepper"
+					aria-label="Ticket quantity"
 				/>
 			);
 		};
@@ -129,13 +133,13 @@ export const Medium: Story = {
 export const Large: Story = {
 	render: () => {
 		const Demo = () => {
-			const [value, setValue] = useState(0);
+			const [value, setValue] = useState(2);
 			return (
 				<Stepper
 					value={value}
 					onChange={setValue}
 					size="lg"
-					aria-label="Large stepper"
+					aria-label="Nights booked"
 				/>
 			);
 		};
@@ -150,9 +154,9 @@ export const Large: Story = {
 export const Sizes: Story = {
 	render: () => {
 		const Demo = () => {
-			const [sm, setSm] = useState(0);
-			const [md, setMd] = useState(0);
-			const [lg, setLg] = useState(0);
+			const [sm, setSm] = useState(1);
+			const [md, setMd] = useState(2);
+			const [lg, setLg] = useState(3);
 			return (
 				<div
 					style={{
@@ -172,34 +176,16 @@ export const Sizes: Story = {
 							style={{
 								fontSize: "var(--font-size-sm)",
 								color: "var(--color-muted)",
-								width: "3rem",
+								width: "5rem",
 							}}
 						>
-							sm
-						</span>
-						<Stepper value={sm} onChange={setSm} size="sm" aria-label="Small" />
-					</div>
-					<div
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: "var(--space-4)",
-						}}
-					>
-						<span
-							style={{
-								fontSize: "var(--font-size-sm)",
-								color: "var(--color-muted)",
-								width: "3rem",
-							}}
-						>
-							md
+							Children
 						</span>
 						<Stepper
-							value={md}
-							onChange={setMd}
-							size="md"
-							aria-label="Medium"
+							value={sm}
+							onChange={setSm}
+							size="sm"
+							aria-label="Number of children"
 						/>
 					</div>
 					<div
@@ -213,12 +199,40 @@ export const Sizes: Story = {
 							style={{
 								fontSize: "var(--font-size-sm)",
 								color: "var(--color-muted)",
-								width: "3rem",
+								width: "5rem",
 							}}
 						>
-							lg
+							Adults
 						</span>
-						<Stepper value={lg} onChange={setLg} size="lg" aria-label="Large" />
+						<Stepper
+							value={md}
+							onChange={setMd}
+							size="md"
+							aria-label="Number of adults"
+						/>
+					</div>
+					<div
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: "var(--space-4)",
+						}}
+					>
+						<span
+							style={{
+								fontSize: "var(--font-size-sm)",
+								color: "var(--color-muted)",
+								width: "5rem",
+							}}
+						>
+							Rooms
+						</span>
+						<Stepper
+							value={lg}
+							onChange={setLg}
+							size="lg"
+							aria-label="Number of rooms"
+						/>
 					</div>
 				</div>
 			);
@@ -241,18 +255,18 @@ export const CartExample: Story = {
 						padding: "var(--space-4)",
 						border: "1px solid var(--color-border)",
 						borderRadius: "var(--radius-md)",
-						width: "260px",
+						width: "280px",
 					}}
 				>
 					<span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>
-						Launch T-Shirt
+						Pro plan seat
 					</span>
 					<Stepper
 						value={qty}
 						onChange={setQty}
 						min={1}
-						max={99}
-						aria-label="Item quantity"
+						max={50}
+						aria-label="Number of seats"
 					/>
 				</div>
 			);

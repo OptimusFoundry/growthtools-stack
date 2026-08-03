@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { HelpCircle, Info } from "lucide-react";
+import { Bold, Copy, HelpCircle, Info, Italic, Underline } from "lucide-react";
 import { Tooltip } from "./Tooltip";
 
 const meta: Meta<typeof Tooltip> = {
@@ -20,26 +20,29 @@ const meta: Meta<typeof Tooltip> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const iconButtonStyle: React.CSSProperties = {
+	display: "flex",
+	alignItems: "center",
+	justifyContent: "center",
+	width: "36px",
+	height: "36px",
+	border: "1px solid var(--color-border)",
+	borderRadius: "var(--radius-md)",
+	background: "var(--color-surface)",
+	cursor: "pointer",
+};
+
 // =============================================================================
 // POSITIONS
 // =============================================================================
 
 export const Top: Story = {
 	args: {
-		content: "Tooltip on top",
+		content: "Bold (Cmd+B)",
 		position: "top",
 		children: (
-			<button
-				type="button"
-				style={{
-					padding: "0.5rem 1rem",
-					border: "1px solid var(--color-border)",
-					borderRadius: "var(--radius-md)",
-					background: "var(--color-surface)",
-					cursor: "pointer",
-				}}
-			>
-				Hover me
+			<button type="button" style={iconButtonStyle} aria-label="Bold">
+				<Bold size={16} />
 			</button>
 		),
 	},
@@ -47,20 +50,11 @@ export const Top: Story = {
 
 export const Bottom: Story = {
 	args: {
-		content: "Tooltip on bottom",
+		content: "Italic (Cmd+I)",
 		position: "bottom",
 		children: (
-			<button
-				type="button"
-				style={{
-					padding: "0.5rem 1rem",
-					border: "1px solid var(--color-border)",
-					borderRadius: "var(--radius-md)",
-					background: "var(--color-surface)",
-					cursor: "pointer",
-				}}
-			>
-				Hover me
+			<button type="button" style={iconButtonStyle} aria-label="Italic">
+				<Italic size={16} />
 			</button>
 		),
 	},
@@ -68,20 +62,11 @@ export const Bottom: Story = {
 
 export const Left: Story = {
 	args: {
-		content: "Tooltip on left",
+		content: "Underline (Cmd+U)",
 		position: "left",
 		children: (
-			<button
-				type="button"
-				style={{
-					padding: "0.5rem 1rem",
-					border: "1px solid var(--color-border)",
-					borderRadius: "var(--radius-md)",
-					background: "var(--color-surface)",
-					cursor: "pointer",
-				}}
-			>
-				Hover me
+			<button type="button" style={iconButtonStyle} aria-label="Underline">
+				<Underline size={16} />
 			</button>
 		),
 	},
@@ -89,20 +74,11 @@ export const Left: Story = {
 
 export const Right: Story = {
 	args: {
-		content: "Tooltip on right",
+		content: "Copy to clipboard",
 		position: "right",
 		children: (
-			<button
-				type="button"
-				style={{
-					padding: "0.5rem 1rem",
-					border: "1px solid var(--color-border)",
-					borderRadius: "var(--radius-md)",
-					background: "var(--color-surface)",
-					cursor: "pointer",
-				}}
-			>
-				Hover me
+			<button type="button" style={iconButtonStyle} aria-label="Copy">
+				<Copy size={16} />
 			</button>
 		),
 	},
@@ -115,7 +91,7 @@ export const Right: Story = {
 export const LongContent: Story = {
 	args: {
 		content:
-			"This is a longer tooltip message that demonstrates how the tooltip handles multi-line content.",
+			"Monthly recurring revenue, net of refunds and failed payments, calculated as of the first day of the current billing cycle.",
 		children: (
 			<button
 				type="button"
@@ -127,7 +103,7 @@ export const LongContent: Story = {
 					cursor: "pointer",
 				}}
 			>
-				Hover for more info
+				MRR: $48,200
 			</button>
 		),
 	},
@@ -135,20 +111,14 @@ export const LongContent: Story = {
 
 export const NoDelay: Story = {
 	args: {
-		content: "Instant tooltip",
-		delay: 0,
+		content: "Copy invite link",
 		children: (
 			<button
 				type="button"
-				style={{
-					padding: "0.5rem 1rem",
-					border: "1px solid var(--color-border)",
-					borderRadius: "var(--radius-md)",
-					background: "var(--color-surface)",
-					cursor: "pointer",
-				}}
+				style={iconButtonStyle}
+				aria-label="Copy invite link"
 			>
-				No delay
+				<Copy size={16} />
 			</button>
 		),
 	},
@@ -158,63 +128,31 @@ export const NoDelay: Story = {
 // SHOWCASE
 // =============================================================================
 
-export const AllPositions: Story = {
+export const FormattingToolbar: Story = {
 	render: () => (
-		<div style={{ display: "flex", gap: "2rem", padding: "4rem" }}>
-			<Tooltip content="Top" position="top">
-				<button
-					type="button"
-					style={{
-						padding: "0.5rem 1rem",
-						border: "1px solid var(--color-border)",
-						borderRadius: "var(--radius-md)",
-						background: "var(--color-surface)",
-						cursor: "pointer",
-					}}
-				>
-					Top
+		<div
+			style={{
+				display: "flex",
+				gap: "0.25rem",
+				padding: "0.5rem",
+				border: "1px solid var(--color-border)",
+				borderRadius: "var(--radius-md)",
+				background: "var(--color-surface)",
+			}}
+		>
+			<Tooltip content="Bold (Cmd+B)" position="top">
+				<button type="button" style={iconButtonStyle} aria-label="Bold">
+					<Bold size={16} />
 				</button>
 			</Tooltip>
-			<Tooltip content="Bottom" position="bottom">
-				<button
-					type="button"
-					style={{
-						padding: "0.5rem 1rem",
-						border: "1px solid var(--color-border)",
-						borderRadius: "var(--radius-md)",
-						background: "var(--color-surface)",
-						cursor: "pointer",
-					}}
-				>
-					Bottom
+			<Tooltip content="Italic (Cmd+I)" position="top">
+				<button type="button" style={iconButtonStyle} aria-label="Italic">
+					<Italic size={16} />
 				</button>
 			</Tooltip>
-			<Tooltip content="Left" position="left">
-				<button
-					type="button"
-					style={{
-						padding: "0.5rem 1rem",
-						border: "1px solid var(--color-border)",
-						borderRadius: "var(--radius-md)",
-						background: "var(--color-surface)",
-						cursor: "pointer",
-					}}
-				>
-					Left
-				</button>
-			</Tooltip>
-			<Tooltip content="Right" position="right">
-				<button
-					type="button"
-					style={{
-						padding: "0.5rem 1rem",
-						border: "1px solid var(--color-border)",
-						borderRadius: "var(--radius-md)",
-						background: "var(--color-surface)",
-						cursor: "pointer",
-					}}
-				>
-					Right
+			<Tooltip content="Underline (Cmd+U)" position="top">
+				<button type="button" style={iconButtonStyle} aria-label="Underline">
+					<Underline size={16} />
 				</button>
 			</Tooltip>
 		</div>

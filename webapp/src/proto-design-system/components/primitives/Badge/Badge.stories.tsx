@@ -52,7 +52,7 @@ const meta: Meta<typeof Badge> = {
 		},
 	},
 	args: {
-		children: "Badge",
+		children: "Beta",
 	},
 };
 
@@ -65,7 +65,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		children: "Default",
+		children: "Beta",
 	},
 };
 
@@ -76,42 +76,42 @@ export const Default: Story = {
 export const Primary: Story = {
 	args: {
 		variant: "primary",
-		children: "Primary",
+		children: "Pro",
 	},
 };
 
 export const Secondary: Story = {
 	args: {
 		variant: "secondary",
-		children: "Secondary",
+		children: "Team",
 	},
 };
 
 export const Success: Story = {
 	args: {
 		variant: "success",
-		children: "Success",
+		children: "Active",
 	},
 };
 
 export const Warning: Story = {
 	args: {
 		variant: "warning",
-		children: "Warning",
+		children: "Trial ending",
 	},
 };
 
 export const ErrorBadge: Story = {
 	args: {
 		variant: "error",
-		children: "Error",
+		children: "Past due",
 	},
 };
 
 export const Outline: Story = {
 	args: {
 		variant: "outline",
-		children: "Outline",
+		children: "Enterprise",
 	},
 };
 
@@ -122,21 +122,21 @@ export const Outline: Story = {
 export const Small: Story = {
 	args: {
 		size: "sm",
-		children: "Small",
+		children: "New",
 	},
 };
 
 export const Medium: Story = {
 	args: {
 		size: "md",
-		children: "Medium",
+		children: "v2.4.0",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		children: "Large",
+		children: "Enterprise plan",
 	},
 };
 
@@ -147,7 +147,7 @@ export const Large: Story = {
 export const Rounded: Story = {
 	args: {
 		rounded: true,
-		children: "Pill Badge",
+		children: "3 pending",
 	},
 };
 
@@ -332,97 +332,92 @@ export const TagsWithIcons: Story = {
 };
 
 export const Showcase: Story = {
+	name: "Showcase: Team billing table",
 	render: () => (
-		<div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-			<div>
-				<p
-					style={{
-						marginBottom: "0.5rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					Variants
-				</p>
-				<div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-					<Badge variant="default">Default</Badge>
-					<Badge variant="primary">Primary</Badge>
-					<Badge variant="secondary">Secondary</Badge>
-					<Badge variant="success">Success</Badge>
-					<Badge variant="warning">Warning</Badge>
-					<Badge variant="error">Error</Badge>
-					<Badge variant="outline">Outline</Badge>
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.5rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					Status indicators
-				</p>
-				<div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-					<Badge variant="success" dot>
-						Online
-					</Badge>
-					<Badge variant="warning" dot>
-						Away
-					</Badge>
-					<Badge variant="error" dot>
-						Offline
-					</Badge>
-					<Badge variant="default" dot>
-						Unknown
-					</Badge>
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.5rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					Pill badges
-				</p>
-				<div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-					<Badge variant="primary" rounded>
-						New
-					</Badge>
-					<Badge variant="error" rounded>
-						5
-					</Badge>
-					<Badge variant="success" rounded>
-						99+
-					</Badge>
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.5rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					With icons
-				</p>
-				<div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-					<Badge variant="outline" leftIcon={<Star size="1em" />}>
-						Featured
-					</Badge>
-					<Badge variant="success" leftIcon={<Check size="1em" />}>
-						Verified
-					</Badge>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "0.75rem",
+				width: "420px",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					padding: "0.75rem",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-md)",
+				}}
+			>
+				<span>Acme Corp</span>
+				<div style={{ display: "flex", gap: "0.5rem" }}>
 					<Badge variant="primary" leftIcon={<Zap size="1em" />}>
 						Pro
+					</Badge>
+					<Badge variant="success" dot>
+						Active
+					</Badge>
+				</div>
+			</div>
+
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					padding: "0.75rem",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-md)",
+				}}
+			>
+				<span>Northwind Traders</span>
+				<div style={{ display: "flex", gap: "0.5rem" }}>
+					<Badge variant="outline">Enterprise</Badge>
+					<Badge variant="warning" dot>
+						Trial ending
+					</Badge>
+				</div>
+			</div>
+
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					padding: "0.75rem",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-md)",
+				}}
+			>
+				<span>Fabrikam Inc</span>
+				<div style={{ display: "flex", gap: "0.5rem" }}>
+					<Badge variant="secondary">Starter</Badge>
+					<Badge variant="error" dot>
+						Past due
+					</Badge>
+				</div>
+			</div>
+
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					padding: "0.75rem",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-md)",
+				}}
+			>
+				<span>Contoso Ltd</span>
+				<div style={{ display: "flex", gap: "0.5rem" }}>
+					<Badge variant="primary" leftIcon={<Check size="1em" />}>
+						Verified
+					</Badge>
+					<Badge variant="primary" rounded>
+						3 pending invites
 					</Badge>
 				</div>
 			</div>

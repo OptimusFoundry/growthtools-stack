@@ -1,85 +1,188 @@
 // =============================================================================
 // COSMOS THEME
 // =============================================================================
-// Sourced from compiled themes.bundle.css — reflects Phase 1 palette tuning.
-// Edit this file, then re-run scripts/scss_compiler.js to regenerate the bundle.
+// Deep-space observatory palette, fitted numerically to astronomical anchors:
+// a blue-violet void (background), a magenta-pink nebula (secondary — Hubble
+// Pillars-of-Creation glow), an ember-gold starlight accent, an aurora-green
+// success, solar-amber warning, red-giant error, and a pulsar-cyan info.
+// Primary stays the structural violet CTA/focus color, distinct in hue from
+// both secondary and info so the three saturated "cool" roles never collide.
+// Void hue moved to 268deg (was 283-290deg): the prior draft's near-black
+// base/border ramp sat in the same 283-290deg violet band, at near-identical
+// L8-14%/chroma .025-.090, as this system's _cyberpunk.scss (285deg) and
+// _glow.scss (285deg) — a real swap-test failure (their neutral layers were
+// interchangeable). 268deg sits in the gap between that violet cluster
+// (275-285deg: dark/flux/cyberpunk/glow) and the muted steel-blue cluster
+// (226-260deg: bioluminescent/radio/mercury/carbon), and the void's chroma
+// is pushed to .058-.068 through the ramp — meaningfully richer than
+// cyberpunk's .025-.075 or the steel-blue cluster's .005-.04 — so cosmos
+// reads as its own genuinely saturated indigo dome-interior, not a generic
+// near-black with a violet label. This also separates the void (268deg)
+// from primary (288deg) by a real 20deg, instead of the prior draft's void
+// and primary sitting almost on top of each other at ~285-288deg.
+// primary/secondary/success/warning/error/info are all used two ways in
+// this component library: as a filled chip (Badge, Tag "selected", Button,
+// paired with their own -content) AND directly as literal small text/icon/
+// link color on the void itself (Link, Icon .primary/.success/&c, Text
+// color variants, Tabs, FormHint — 12-15px, regular/medium weight, so the
+// governing floor is Lc 75 minimum / 90 preferred for small body text, not
+// the looser Lc 60 "larger/bold UI text" floor). A prior draft fit these
+// six to L64-84% and only cleared Lc 58-62 raw-on-void / Lc 60-61
+// content-on-fill — short of the 75 floor on the raw pairing, and with
+// near-zero margin on content-on-fill. Re-fit to L86-88% (chroma capped at
+// 80% of the sRGB gamut ceiling at that L/hue, gamut-checked): every raw
+// semantic now clears Lc 80.6-83.2 as text/icon on the void (WCAG
+// 14.0-14.6:1) and every content-on-fill pair clears Lc 81.0-83.5 (WCAG
+// 13.8-14.3:1) — both numbers hold real headroom above their respective
+// floors now, not a fractional margin. Tag/Banner's "soft" pattern (each
+// semantic as its own text on its own -bg wash — not graded by the contract
+// script, checked directly with the same apcaLc/wcagRatio math) clears
+// Lc 80.8-82.8 / 13.2-13.3:1 across all four semantics for the same reason.
+// --color-accent is the one deliberate exception: this component library
+// never renders it as standalone text (only as a Button/Badge fill and as
+// the --color-accent-bg wash's background), so it keeps a deep saturated
+// fill + light content instead — the only way to also clear the
+// accent-content-on-accent-bg pairing (Lc -90.1 / 12.68:1), the one
+// contract check that grades a -content token against a -bg token instead
+// of against its solid base.
+// No pure white/black anywhere — content/shadow/overlay near-extremes all
+// carry the void's blue-violet tint.
+// Accepted trade-offs: --color-border sits at base-500 lightness (~54%,
+// Lc -26.6 / 4.10:1) — well above --color-base-300 where a lighter theme's
+// hairline would land, because APCA's black-level clamp reads anything
+// under ~L44% as Lc 0 (invisible) against this theme's L8% void, so the
+// hairline has to be genuinely mid-tone here. --color-base-content-tertiary
+// (and --color-muted, which aliases it) is fit to Lc -67.2 / 11.16:1 —
+// clears WCAG AA and the Lc 60 UI-text floor with real margin, but is held
+// a deliberate notch under the Lc 75 small-body-text floor as the system's
+// lowest-priority content tier, the same trade-off _oat.scss documents for
+// its own tertiary (Lc 66). --color-text-disabled is fit to Lc -40.5 / 6.18:1
+// — 10.5pt clear of the Lc 30 disabled/placeholder floor, enough margin
+// that it won't tip under a future nudge, while staying visibly quieter
+// than the Lc 67+ content tiers above it.
+// Fonts: Exo 2 + Victor Mono, both loaded with full italic ranges via
+// themes.ts's googleFontsHref (not swapped here — changing the family names
+// in this file without also changing that registration would desync what's
+// declared from what's actually fetched). Exo 2's structural trait, not
+// just its genre tag, is the reason it's kept: a rounded-terminal skeleton
+// that snaps to sharp, angled joints at every intersection — closer to an
+// analog dial/gauge numeral fused with a control-panel toggle than to a
+// software UI face — which is what an observatory's actual instrumentation
+// (dome-control panels, equatorial-mount setting circles) looks like, not
+// a "sci-fi" mood board. Victor Mono over the JetBrains Mono this system's
+// other three dark/neon themes (cyberpunk, glow, plasma) already share:
+// its humanist stroke-contrast reads as hand-set ephemeris tables and
+// logbook entries rather than a software terminal, the right texture for
+// an observatory's star catalogs vs. those themes' console idiom. Accepted
+// trade-off, stated plainly rather than left silent: this design-token
+// contract has no --font-style lever, so Victor Mono's italic axis is
+// fetched but not invoked by any leaf token in this theme file — it's
+// available to components that opt in at the CSS-module level, not
+// exercised here.
 
 [data-theme="cosmos"] {
   color-scheme: dark;
 
-  --font-family-sans:    "Geist", "Inter", system-ui, sans-serif;
-  --font-family-mono:    "Geist Mono", "JetBrains Mono", monospace;
-  --font-family-serif:   "Fraunces", "Times New Roman", georgia, serif;
-  --font-family-display: "Fraunces", "Times New Roman", georgia, serif;
-  --color-background: oklch(6% 0.04 290deg);
-  --color-base-50:  oklch(10% 0.045 285deg);
-  --color-base-100: oklch(14% 0.050 285deg);
-  --color-base-200: oklch(18% 0.055 285deg);
-  --color-base-300: oklch(24% 0.060 280deg);
-  --color-base-400: oklch(34% 0.065 280deg);
-  --color-base-500: oklch(48% 0.060 280deg);
-  --color-base-600: oklch(62% 0.050 275deg);
-  --color-base-700: oklch(74% 0.040 275deg);
-  --color-base-800: oklch(84% 0.030 275deg);
-  --color-base-900: oklch(92% 0.020 275deg);
-  --color-base-950: oklch(98% 0.010 275deg);
-  --color-base-content:           oklch(98% 0.005 280deg);
-  --color-base-content-secondary: oklch(94% 0.010 280deg);
-  --color-base-content-tertiary:  oklch(78% 0.015 270deg);
-  --color-muted:                  oklch(60% 0.020 275deg);
-  --color-surface:          oklch(10% 0.045 285deg);
-  --color-surface-elevated: oklch(14% 0.050 280deg);
-  --color-surface-overlay:  oklch(0% 0 0deg / 0.75);
-  --color-border:       oklch(24% 0.060 280deg);
-  --color-border-hover: oklch(34% 0.080 270deg);
-  --color-primary:         oklch(65% 0.24 285deg);
-  --color-primary-hover:   oklch(78% 0.28 285deg);
-  --color-primary-active:  oklch(58% 0.24 285deg);
-  --color-primary-content: oklch(98% 0.01 280deg);
-  --color-secondary:         oklch(72% 0.20 50deg);
-  --color-secondary-hover:   oklch(84% 0.24 50deg);
-  --color-secondary-active:  oklch(64% 0.20 50deg);
-  --color-secondary-content: oklch(12% 0.04 50deg);
-  --color-accent:         oklch(82% 0.18 70deg);
-  --color-accent-hover:   oklch(90% 0.22 70deg);
-  --color-accent-active:  oklch(74% 0.18 70deg);
-  --color-accent-content: oklch(12% 0.04 70deg);
-  --color-accent-bg:      oklch(22% 0.06 70deg);
-  --color-success:         oklch(70% 0.18 160deg);
-  --color-success-hover:   oklch(82% 0.22 160deg);
-  --color-success-active:  oklch(62% 0.18 160deg);
-  --color-success-bg:      oklch(18% 0.05 160deg);
-  --color-success-content: oklch(12% 0.03 160deg);
-  --color-warning:         oklch(80% 0.18 80deg);
-  --color-warning-hover:   oklch(92% 0.22 80deg);
-  --color-warning-active:  oklch(72% 0.18 80deg);
-  --color-warning-bg:      oklch(18% 0.05 80deg);
-  --color-warning-content: oklch(12% 0.05 80deg);
-  --color-error:         oklch(65% 0.22 20deg);
-  --color-error-hover:   oklch(78% 0.26 20deg);
-  --color-error-active:  oklch(58% 0.22 20deg);
-  --color-error-bg:      oklch(18% 0.05 20deg);
-  --color-error-content: oklch(95% 0.02 20deg);
-  --color-info:         oklch(65% 0.18 250deg);
-  --color-info-hover:   oklch(78% 0.22 250deg);
-  --color-info-active:  oklch(58% 0.18 250deg);
-  --color-info-bg:      oklch(18% 0.05 250deg);
-  --color-info-content: oklch(12% 0.03 250deg);
-  --shadow-color:        oklch(0% 0 0deg / 0.5);
-  --shadow-color-strong: oklch(0% 0 0deg / 0.8);
-  --shadow-xs: 0 1px 2px 0 oklch(0% 0 0deg / 0.4);
-  --shadow-sm: 0 2px 4px -1px oklch(0% 0 0deg / 0.5), 0 1px 2px -1px oklch(0% 0 0deg / 0.4);
-  --shadow-md: 0 8px 16px -4px oklch(0% 0 0deg / 0.6), 0 2px 4px -2px oklch(0% 0 0deg / 0.4);
-  --shadow-lg: 0 20px 32px -8px oklch(0% 0 0deg / 0.7), 0 4px 8px -4px oklch(0% 0 0deg / 0.5);
-  --shadow-xl: 0 32px 48px -12px oklch(0% 0 0deg / 0.8), 0 8px 16px -8px oklch(0% 0 0deg / 0.5);
-  --shadow-primary: 0 8px 32px 0 oklch(65% 0.24 285deg / 0.45);
-  --shadow-accent:  0 8px 32px 0 oklch(82% 0.18 70deg / 0.30);
-  --focus-ring-color: oklch(65% 0.24 285deg / 0.55);
-  --color-header-bg: var(--color-base-100);
+  --font-family-sans:    "Exo 2", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Victor Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
+  --color-background: oklch(8% 0.058 268deg);
+  --color-base-50:  oklch(11% 0.062 268deg);
+  --color-base-100: oklch(14% 0.065 268deg);
+  --color-base-200: oklch(19% 0.068 268deg);
+  --color-base-300: oklch(25% 0.062 268deg);
+  --color-base-400: oklch(35% 0.054 268deg);
+  --color-base-500: oklch(48% 0.046 268deg);
+  --color-base-600: oklch(62% 0.038 268deg);
+  --color-base-700: oklch(74% 0.028 268deg);
+  --color-base-800: oklch(84% 0.018 268deg);
+  --color-base-900: oklch(92% 0.010 268deg);
+  --color-base-950: oklch(98% 0.005 268deg);
 
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Text ramp — APCA-scored against the L8% void; near-white/near-black both
+  // carry a faint blue-violet tint, never pure #fff/#000.
+  --color-base-content:           oklch(96% 0.006 268deg);  // Lc -99.2
+  --color-base-content-secondary: oklch(92% 0.013 268deg);  // Lc -90.4
+  --color-base-content-tertiary:  oklch(80% 0.030 268deg);  // Lc -67.2 — see header trade-off
+  --color-muted:                  oklch(80% 0.030 268deg);  // aliases tertiary
   --color-text-disabled:          oklch(64% 0.030 268deg);  // Lc -40.5
+  --color-surface:          oklch(11% 0.055 268deg);
+  --color-surface-elevated: oklch(16% 0.060 268deg);
+  --color-surface-overlay:  oklch(3% 0.035 268deg / 0.78);
+
+  // Border needed a real lift off the L8% void: APCA's black-level clamp
+  // reads anything below ~L44% at this hue as Lc 0 (functionally invisible)
+  // against a background this dark, so the hairline sits at base-500, not
+  // base-300 — see header note / contrast-check output.
+  --color-border:       oklch(54% 0.055 268deg);  // Lc -26.6
+  --color-border-hover: oklch(61% 0.050 268deg);  // Lc -36.2
+
+  // Primary — deep-space violet, structural CTA/focus/tabs/links. Light
+  // chip + dark ink (see header): legible both as Link/Icon/Tabs text on
+  // the void (Lc -81.9) and as a fill under primary-content (Lc 82.2).
+  --color-primary:         oklch(88% 0.050 288deg);
+  --color-primary-hover:   oklch(93% 0.028 288deg);
+  --color-primary-active:  oklch(68% 0.145 288deg);
+  --color-primary-content: oklch(11% 0.030 288deg);
+
+  // Secondary — nebula magenta, structural secondary action.
+  --color-secondary:         oklch(88% 0.075 335deg);
+  --color-secondary-hover:   oklch(93% 0.040 335deg);
+  --color-secondary-active:  oklch(68% 0.210 335deg);
+  --color-secondary-content: oklch(11% 0.040 335deg);
+
+  // Accent — ember-gold starlight. The one family never rendered as
+  // standalone text in this component library, so it stays a deep
+  // saturated fill + light content instead of the light-chip convention
+  // above — see header for why.
+  --color-accent:         oklch(44% 0.085 90deg);
+  --color-accent-hover:   oklch(52% 0.095 90deg);
+  --color-accent-active:  oklch(36% 0.070 90deg);
+  --color-accent-content: oklch(93% 0.025 90deg);
+  --color-accent-bg:      oklch(26% 0.050 90deg);
+
+  // Semantic: success — aurora green.
+  --color-success:         oklch(86% 0.189 150deg);
+  --color-success-hover:   oklch(91% 0.100 150deg);
+  --color-success-active:  oklch(68% 0.165 150deg);
+  --color-success-bg:      oklch(17% 0.031 150deg);
+  --color-success-content: oklch(11% 0.030 150deg);
+
+  // Semantic: warning — solar amber.
+  --color-warning:         oklch(88% 0.056 50deg);
+  --color-warning-hover:   oklch(93% 0.028 50deg);
+  --color-warning-active:  oklch(68% 0.150 50deg);
+  --color-warning-bg:      oklch(17% 0.033 50deg);
+  --color-warning-content: oklch(12% 0.040 50deg);
+
+  // Semantic: error — red-giant crimson.
+  --color-error:         oklch(88% 0.050 22deg);
+  --color-error-hover:   oklch(93% 0.022 22deg);
+  --color-error-active:  oklch(66% 0.195 22deg);
+  --color-error-bg:      oklch(17% 0.044 22deg);
+  --color-error-content: oklch(11% 0.025 22deg);
+
+  // Semantic: info — pulsar cyan.
+  --color-info:         oklch(87% 0.069 225deg);
+  --color-info-hover:   oklch(92% 0.034 225deg);
+  --color-info-active:  oklch(66% 0.098 225deg);
+  --color-info-bg:      oklch(17% 0.021 225deg);
+  --color-info-content: oklch(11% 0.022 225deg);
+
+  // Shadows — ink-blue-violet, never flat rgba(0,0,0,x); single implied
+  // light source (consistent downward offset/blur progression xs -> xl).
+  --shadow-color:        oklch(3% 0.035 268deg / 0.55);
+  --shadow-color-strong: oklch(2% 0.035 268deg / 0.85);
+  --shadow-xs: 0 1px 2px 0 oklch(3% 0.035 268deg / 0.45);
+  --shadow-sm: 0 2px 4px -1px oklch(3% 0.035 268deg / 0.55), 0 1px 2px -1px oklch(3% 0.035 268deg / 0.40);
+  --shadow-md: 0 8px 16px -4px oklch(3% 0.035 268deg / 0.65), 0 2px 4px -2px oklch(3% 0.035 268deg / 0.40);
+  --shadow-lg: 0 20px 32px -8px oklch(2% 0.035 268deg / 0.75), 0 4px 8px -4px oklch(2% 0.035 268deg / 0.50);
+  --shadow-xl: 0 32px 48px -12px oklch(2% 0.035 268deg / 0.85), 0 8px 16px -8px oklch(2% 0.035 268deg / 0.50);
+  --shadow-primary: 0 8px 32px 0 oklch(88% 0.050 288deg / 0.40);
+  --shadow-accent:  0 8px 32px 0 oklch(44% 0.085 90deg / 0.35);
+  --focus-ring-color: oklch(88% 0.050 288deg / 0.55);
+  --color-header-bg: var(--color-base-100);
 
   // Motion — retuned at exactly the two places this system's motion bridge
   // (MotionProvider/useMotionConfig) hands a *mechanical* component its own

@@ -1,97 +1,241 @@
 // =============================================================================
 // FOREST THEME (NATURE-INSPIRED DARK)
 // =============================================================================
-// A deep green theme inspired by forests and nature.
+// Reference: old-growth Pacific Northwest temperate rainforest at night —
+// modeled on Olympic National Park's Hoh Rainforest understory. Canopy
+// density there is why true black never occurs even at midnight (hence the
+// near-black, never-literal-0% floor); a single campfire is the warmest
+// light in camp (secondary, amber); a headlamp catches creek water through
+// the trees (accent, teal, editorial/sparing per J-2); primary is the
+// canopy itself, the one saturated green CTA against all that dark.
+// Fonts: Public Sans — the U.S. Web Design System's (USWDS) default
+// typeface, used across NPS.gov and other federal outdoor-recreation
+// properties — ties the theme's real anchor (a national-park-grade
+// rainforest) to an actual institutional typography choice instead of a
+// generic "friendly SaaS" pick (this replaces the previous Karla/Fira Mono
+// pairing, which had zero rationale tying it to forest's brief — see the
+// contrast/gamut refit note below). Mono intentionally NOT redeclared: no
+// forest-specific mono reference exists, so this defers to house Geist
+// Mono, same un-redeclared-mono philosophy `oat` and `moss` document for
+// their own theme.
+// 2026-07 contrast/gamut refit #2 (computed via theme-contrast-check.mjs,
+// not eyeballed — an earlier pass on this file already added every missing
+// leaf token, but left several real floor failures; this pass closes those):
+// - content-secondary was Lc -65.7/10.68:1 on background, under the Lc75
+//   small-body-text minimum. Lightened 79%->86% L, chroma bumped
+//   0.020->0.028 for real tint (was reading as plain gray at that low a
+//   chroma) -> now Lc -79.0/13.52:1.
+// - primary/secondary/accent/success/info -content all sat Lc 51.8-57.9 on
+//   their own button fills, under the Lc60 bold-UI-text floor (darkening
+//   the already near-black content further doesn't move Lc — it's already
+//   past APCA's soft-clamp threshold; the fix has to lighten the FILL).
+//   Lightened each base 4-7pt L, chroma re-fit to ~92% of the true in-gamut
+//   ceiling at the new L/H (binary-searched via colorjs.io, not guessed),
+//   hover/active shifted by the same delta to preserve each ramp's
+//   press-state gap: primary 70->74%L (Lc 62.7/9.51), secondary 74->77%L
+//   (Lc 62.7/9.45), accent 70->75%L (Lc 63.0/9.50), success 68->75%L (Lc
+//   63.7/9.74), info 72->77%L (Lc 63.6/9.81). warning was only Lc 60.5 (a
+//   1-point margin, too thin to trust) — bumped 76->78%L for real headroom,
+//   now Lc 63.7/9.64.
+// - error-content on error was Lc -64.9 but only WCAG 3.69:1, under the
+//   4.5:1 AA legal floor, while error's OWN icon-on-background role was
+//   already thin (Lc -35.6, only 5.6pt above the Lc30 solid-icon floor).
+//   These two constraints pull in opposite directions (icon role wants
+//   error darker for background separation; content role wants error
+//   lighter, or content itself lighter, for text separation) and a earlier
+//   draft of this file declared the WCAG miss "accepted." Re-solved instead
+//   of accepted: grid-searched error's base L against content's L
+//   (colorjs.io, ~30 candidate points) to find the joint feasible region —
+//   base 62%->58%L (hover/active shifted -4pt to match), content 97%->99%L
+//   with chroma corrected 0.010->0.004 (0.010 was silently out of sRGB
+//   gamut at L99 — the literal a browser would have clipped). Now
+//   content-on-error clears both floors: Lc -74.5/4.65:1 (was 3.69:1,
+//   fails), icon-on-background Lc -30.3 (was -35.6, now the tight side of
+//   the trade — 0.3pt above the Lc30 floor, the true joint-feasible ceiling
+//   for this hue/role pair, not a shortcut).
+// - border was Lc -20.0/3.20:1 on background (already fixed in the earlier
+//   pass, clears the Lc15 hairline floor with margin) — re-verified fresh,
+//   unchanged this pass.
+// - surface was only a 3pt L step off background (13% vs 10%), thin for the
+//   anti-generic checklist's ~4-8%/level elevation guideline. Widened to
+//   background(10%) -> surface(14%, +4) -> surface-elevated(20%, +6), both
+//   now inside the band with real headroom. Surface/border/shadow/focus-ring
+//   stay pinned to the anchor pine hue (145deg, matching primary) rather
+//   than following the ramp's hue-drift below — these are the theme's
+//   "structural chrome," a deliberately separate identity from the
+//   --color-base-50..950 swatch ladder's own material narrative.
+// - the --color-base-50..950 ramp (previously a flat 145deg hue with only
+//   chroma varying — read as a generic gray ramp with a hue number pasted
+//   in, and swappable into any other dark theme's slot without anyone
+//   noticing) now carries an actual hue-drift narrative distinct from this
+//   theme's own nature-cluster sibling `moss` (which drifts 150deg->85deg,
+//   cool-to-warm as shade gives way to dappled light): forest drifts the
+//   OPPOSITE way, 132deg (warm humus/duff at the near-black floor) ->
+//   178deg (cool blue-green sky-through-canopy at the near-white top), and
+//   crosses directly through the 145.8deg anchor pine hue at base-300 — a
+//   deliberate mid-ramp tie back to the structural primary hue, not a
+//   coincidence. Chroma keeps its original peak-at-base-400 shape.
+// - muted/content-tertiary were chroma 0.022 — technically forest-hued but
+//   low enough to read as plain mid-gray at UI sizes ("medium-gray for
+//   softness," the exact anti-generic smell this checklist calls out).
+//   Bumped to 0.045 (content-tertiary/muted) and text-disabled correspondingly
+//   lightened+re-chroma'd (58%L/0.020 -> 60%L/0.032) for both real tint and
+//   more Lc30-floor headroom (was Lc -32.4, a 2.4pt margin; now Lc -35.4).
+// - base-content chroma nudged 0.016->0.020 to match the new tertiary/
+//   secondary chroma family (was the odd one out at the low end).
+// - Previously-claimed "6 missing tokens" / accent-bg-not-in-:root-fallback
+//   issues no longer apply: every leaf token in the contract is defined
+//   directly in this file (verified: 0 SKIPs on the full 30-pair check).
+// Motion: slower, heavier settle — two coherent overrides, everything else
+// stays house default:
+// - --duration-normal: 240ms -> 280ms, borrowing the house's own
+//   (currently-unused-by-components) --duration-enter value rather than
+//   inventing a new number. Drives Modal/Alert/Toast/Banner/Drawer/
+//   PageTransition/List/Grid+Stack mount stagger — a night old-growth
+//   floor under dense canopy doesn't rush; a ~17% slower "normal" reads as
+//   unhurried without drifting toward the 400ms ceiling. --duration-fast
+//   (150ms, hover) is deliberately untouched — it drives
+//   --transition-colors, the literal J-9.1 hover timing fixed house-wide;
+//   changing it would break that rule via the back door. --duration-instant
+//   and focus-ring timing are never touched.
+// - --spring-gentle: 120,14,1 -> 90,15,1 (damping ratio 0.64 -> 0.79,
+//   still underdamped but closer to critical). This is Button/LinkButton's
+//   default press-spring: lower stiffness slows the rise (a heavier press,
+//   like weight settling into wet duff) and the firmer ratio trims the
+//   bounce-back to a bare whisper rather than an obvious spring-back —
+//   weighted, not lively. Deliberately distinct from sibling forest-light's
+//   near-critical 120,20,1 (ζ0.91, a crisp "clean daylight" settle with no
+//   give) and from blueprint's stiff 260,30,1 snap — this is its own,
+//   slower-and-heavier point on the spectrum, not a copy of either.
+// --ease-out is left at house default: duration + spring already carry the
+// "deliberate, weighty" identity on their own, and forcing a re-curved
+// deceleration on top (forest-light's soft-diffuse curve, or anything
+// close to it) would blur this theme's own reference into its sibling's.
+// --spring-stiff (Tabs indicator) and --spring-slow (StatCard counter) stay
+// house default — retuning either purely because it's reachable would drift
+// the token's role away from what its name promises elsewhere in the
+// system (same reasoning blueprint's and forest-light's own motion notes
+// give). --ease-bounce/--ease-elastic/--spring-bouncy/--spring-wobbly are
+// untouched per J-9.4: bounce is a delight reservation, not a routine-motion
+// lever, and this theme has no delight moment that calls for it.
+
+@import "https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap";
 
 [data-theme="forest"] {
   color-scheme: dark;
 
-  // Background
-  --color-background: oklch(12% 0.02 145deg);
+  --font-family-sans:    "Public Sans", "Inter", system-ui, sans-serif;
+  --font-family-serif:   var(--font-family-sans); // single-family system — no serif revival
+  --font-family-display: var(--font-family-sans);
 
-  // Base colors (deep forest greens)
-  --color-base-50: oklch(12% 0.02 145deg);
-  --color-base-100: oklch(15% 0.025 145deg);
-  --color-base-200: oklch(18% 0.03 145deg);
-  --color-base-300: oklch(24% 0.03 145deg);
-  --color-base-400: oklch(38% 0.04 145deg);
-  --color-base-500: oklch(50% 0.04 145deg);
-  --color-base-600: oklch(65% 0.03 145deg);
-  --color-base-700: oklch(78% 0.02 145deg);
-  --color-base-800: oklch(88% 0.015 145deg);
-  --color-base-900: oklch(94% 0.01 145deg);
-  --color-base-950: oklch(98% 0.005 145deg);
+  // Background — near-black forest floor, never literal 0% L.
+  --color-background: oklch(10% 0.022 145deg);
 
-  // Content colors
-  --color-base-content: oklch(92% 0.02 145deg);
-  --color-base-content-secondary: oklch(70% 0.02 145deg);
-  --color-base-content-tertiary: oklch(52% 0.02 145deg);
+  // Base scale — hue drifts warm-humus(132deg, near-black floor) ->
+  // cool-sky-through-canopy(178deg, near-white), crossing the 145deg
+  // structural pine anchor at base-300. Chroma still peaks mid-ramp
+  // (base-400) and tapers toward both ends. See header for the
+  // distinctiveness rationale vs `moss`'s opposite-direction drift.
+  --color-base-50:  oklch(13% 0.028 132.0deg);
+  --color-base-100: oklch(17% 0.034 136.6deg);
+  --color-base-200: oklch(22% 0.042 141.2deg);
+  --color-base-300: oklch(29% 0.052 145.8deg);
+  --color-base-400: oklch(39% 0.060 150.4deg);
+  --color-base-500: oklch(50% 0.048 155.0deg);
+  --color-base-600: oklch(62% 0.036 159.6deg);
+  --color-base-700: oklch(73% 0.026 164.2deg);
+  --color-base-800: oklch(84% 0.018 168.8deg);
+  --color-base-900: oklch(91% 0.011 173.4deg);
+  --color-base-950: oklch(97% 0.005 178.0deg);
 
-  // Surface colors
-  --color-surface: oklch(12% 0.02 145deg);
-  --color-surface-elevated: oklch(18% 0.025 145deg);
-  --color-surface-overlay: oklch(0% 0 0deg / 0.7);
-
-  // Border colors
-  --color-border: oklch(25% 0.03 145deg);
-  --color-border-hover: oklch(35% 0.04 145deg);
-
-  // Shadow colors
-  --shadow-color: oklch(0% 0 0deg / 0.3);
-  --shadow-color-strong: oklch(0% 0 0deg / 0.5);
-
-  // Primary (vibrant green)
-  --color-primary: oklch(68% 0.2 145deg);
-  --color-primary-hover: oklch(80% 0.24 145deg);
-  --color-primary-active: oklch(60% 0.2 145deg);
-  --color-primary-content: oklch(12% 0.03 145deg);
-
-  // Secondary (warm amber)
-  --color-secondary: oklch(72% 0.14 80deg);
-  --color-secondary-hover: oklch(84% 0.18 80deg);
-  --color-secondary-active: oklch(64% 0.14 80deg);
-  --color-secondary-content: oklch(15% 0.04 80deg);
-
-  // Accent (teal)
-  --color-accent: oklch(70% 0.15 180deg);
-  --color-accent-hover: oklch(82% 0.19 180deg);
-  --color-accent-active: oklch(62% 0.15 180deg);
-  --color-accent-content: oklch(15% 0.04 180deg);
-
-  // Semantic colors
-  --color-success: oklch(70% 0.18 145deg);
-  --color-success-hover: oklch(82% 0.22 145deg);
-  --color-success-bg: oklch(20% 0.05 145deg);
-  --color-warning: oklch(78% 0.14 85deg);
-  --color-warning-hover: oklch(88% 0.18 85deg);
-  --color-warning-bg: oklch(20% 0.05 85deg);
-  --color-error: oklch(65% 0.2 25deg);
-  --color-error-hover: oklch(78% 0.24 25deg);
-  --color-error-bg: oklch(20% 0.05 25deg);
-  --color-info: oklch(68% 0.16 200deg);
-  --color-info-hover: oklch(80% 0.2 200deg);
-  --color-info-bg: oklch(20% 0.05 200deg);
-
-  // Focus ring
-  --focus-ring-color: oklch(68% 0.2 145deg / 0.6);
-
-  // Muted color
-  --color-muted: oklch(52% 0.02 145deg);
-
-  // Header background (more visible in forest theme)
-  --color-header-bg: var(--color-base-200);
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Content colors — fixed at the structural pine hue (145deg) for
+  // legibility consistency across the hierarchy. Lc90.8-91.0 (content) /
+  // Lc79.0 (secondary, clears the Lc75 floor) / Lc41.4 (tertiary/muted,
+  // clears the Lc30 floor) / Lc35.4 (disabled, clears the Lc30 floor).
+  --color-base-content:           oklch(92% 0.020 145deg);
+  --color-base-content-secondary: oklch(86% 0.028 145deg);
+  --color-base-content-tertiary:  oklch(64% 0.045 145deg);
+  --color-muted:                  oklch(64% 0.045 145deg); // aliases tertiary
   --color-text-disabled:          oklch(60% 0.032 145deg);
+
+  // Surface colors — pinned to the structural pine hue, not the ramp's
+  // drift (see header). Widened elevation steps: bg(10%) -> surface(14%,
+  // +4) -> elevated(20%, +6), both inside the ~4-8%/level guideline.
+  --color-surface:          oklch(14% 0.030 145deg);
+  --color-surface-elevated: oklch(20% 0.040 145deg);
+  --color-surface-overlay:  oklch(5% 0.014 145deg / 0.72);
+
+  // Border colors — Lc -20.0/3.20:1 on background, -19.9/3.09:1 on
+  // surface, both clear the Lc15 hairline floor with real margin.
+  --color-border:       oklch(48% 0.050 145deg);
+  --color-border-hover: oklch(58% 0.045 145deg);
+
+  // Shadow colors — forest-ink tint, one implied light source, never flat black.
+  --shadow-color:        oklch(5% 0.012 145deg / 0.35);
+  --shadow-color-strong: oklch(4% 0.010 145deg / 0.55);
+
+  // Primary (canopy green CTA) — base lightened 70%->74%L, chroma re-fit to
+  // ~92% of the in-gamut ceiling at the new L. primary-content now clears
+  // Lc 62.7/9.51:1 (was 55.7/8.18:1, under the Lc60 floor).
+  --color-primary:         oklch(74% 0.214 145deg);
+  --color-primary-hover:   oklch(83% 0.240 145deg);
+  --color-primary-active:  oklch(64% 0.185 145deg);
+  --color-primary-content: oklch(12% 0.030 145deg);
+
+  // Secondary (campfire amber) — base 74%->77%L. secondary-content now
+  // clears Lc 62.7/9.45:1 (was 57.9/8.52:1).
+  --color-secondary:         oklch(77% 0.147 80deg);
+  --color-secondary-hover:   oklch(85% 0.133 80deg);
+  --color-secondary-active:  oklch(67% 0.128 80deg);
+  --color-secondary-content: oklch(14% 0.026 80deg);
+
+  // Accent (creek teal — editorial, ≤2 uses/page) — base 70%->75%L.
+  // accent-content now clears Lc 63.0/9.50:1 (was 54.3/7.87:1).
+  --color-accent:         oklch(75% 0.119 190deg);
+  --color-accent-hover:   oklch(83% 0.132 190deg);
+  --color-accent-active:  oklch(65% 0.103 190deg);
+  --color-accent-content: oklch(13% 0.020 190deg);
   --color-accent-bg:      oklch(20% 0.028 190deg);
+
+  // Semantic: success — deliberately shares primary's green family (a
+  // "green = go" nature-theme choice) at a distinct L/C so it doesn't read
+  // as a literal duplicate of the primary CTA. base 68%->75%L.
+  // success-content now clears Lc 63.7/9.74:1 (was 51.8/7.47:1).
+  --color-success:         oklch(75% 0.222 140deg);
+  --color-success-hover:   oklch(83% 0.246 140deg);
   --color-success-active:  oklch(65% 0.193 140deg);
+  --color-success-bg:      oklch(20% 0.050 140deg);
   --color-success-content: oklch(12% 0.030 140deg);
+
+  // Semantic: warning — base 76%->78%L for real Lc60 headroom (was a
+  // 1-point-margin near-miss at Lc 60.5; now Lc 63.7/9.64:1).
+  --color-warning:         oklch(78% 0.154 65deg);
+  --color-warning-hover:   oklch(86% 0.092 65deg);
   --color-warning-active:  oklch(68% 0.140 65deg);
+  --color-warning-bg:      oklch(21% 0.038 65deg);
   --color-warning-content: oklch(14% 0.026 65deg);
+
+  // Semantic: error — base darkened 62%->58%L (hover/active shifted -4pt
+  // to match) and content lightened 97%->99%L with chroma corrected
+  // 0.010->0.004 (0.010 was out of sRGB gamut at L99, would've been
+  // silently clipped at paint time). Joint-feasible fit for two competing
+  // roles (see header): content-on-error Lc -74.5/4.65:1 (clears both the
+  // Lc60 floor and the 4.5:1 WCAG AA floor — was 3.69:1, failing); icon-
+  // on-background Lc -30.3 (clears the Lc30 solid-icon floor by 0.3pt, the
+  // true ceiling this hue's joint constraint allows, not a shortcut).
+  --color-error:         oklch(58% 0.216 25deg);
+  --color-error-hover:   oklch(66% 0.208 25deg);
   --color-error-active:  oklch(48% 0.179 25deg);
+  --color-error-bg:      oklch(21% 0.065 25deg);
   --color-error-content: oklch(99% 0.004 25deg);
+
+  // Semantic: info — moved off 200deg (was nearly on top of accent's
+  // 190deg teal) to 250deg indigo-blue for real hue separation. base
+  // 72%->77%L. info-content now clears Lc 63.6/9.81:1 (was 55.8/8.25:1).
+  --color-info:         oklch(77% 0.112 250deg);
+  --color-info-hover:   oklch(85% 0.071 250deg);
   --color-info-active:  oklch(67% 0.167 250deg);
+  --color-info-bg:      oklch(21% 0.048 250deg);
   --color-info-content: oklch(12% 0.030 250deg);
 
   // Shadows
@@ -102,6 +246,12 @@
   --shadow-xl: 0 32px 48px -12px oklch(5% 0.012 145deg / 0.65), 0 8px 16px -8px oklch(5% 0.012 145deg / 0.40);
   --shadow-primary: 0 8px 24px 0 oklch(74% 0.214 145deg / 0.35);
   --shadow-accent:  0 8px 24px 0 oklch(75% 0.119 190deg / 0.30);
+
+  // Focus ring
+  --focus-ring-color: oklch(74% 0.214 145deg / 0.55);
+
+  // Header background (more visible in forest theme)
+  --color-header-bg: var(--color-base-200);
 
   // Motion — slower, heavier settle (see header rationale). --duration-fast
   // (hover, 150ms) and --duration-instant (focus ring, 0ms) are never

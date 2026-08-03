@@ -29,33 +29,33 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		label: "Description",
-		placeholder: "Enter a description...",
+		label: "Project description",
+		placeholder: "What is this project for?",
 	},
 };
 
 export const WithHelperText: Story = {
 	args: {
-		label: "Bio",
-		placeholder: "Tell us about yourself",
-		helperText: "Max 500 characters",
+		label: "Public bio",
+		placeholder: "Tell customers what your team does",
+		helperText: "Shown on your public profile — max 500 characters",
 	},
 };
 
 export const Required: Story = {
 	args: {
-		label: "Message",
-		placeholder: "Enter your message",
+		label: "Reason for cancellation",
+		placeholder: "Help us understand why you're leaving",
 		required: true,
 	},
 };
 
 export const WithError: Story = {
 	args: {
-		label: "Description",
-		placeholder: "Enter a description",
-		defaultValue: "Too short",
-		errorMessage: "Description must be at least 50 characters",
+		label: "Incident summary",
+		placeholder: "Describe what happened",
+		defaultValue: "Server down",
+		errorMessage: "Please provide at least 50 characters of detail",
 	},
 };
 
@@ -65,24 +65,24 @@ export const WithError: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small",
-		placeholder: "Small textarea",
+		label: "Commit message",
+		placeholder: "Fix login redirect bug",
 		size: "sm",
 	},
 };
 
 export const Medium: Story = {
 	args: {
-		label: "Medium",
-		placeholder: "Medium textarea",
+		label: "Pull request description",
+		placeholder: "Summarize the changes in this PR",
 		size: "md",
 	},
 };
 
 export const Large: Story = {
 	args: {
-		label: "Large",
-		placeholder: "Large textarea",
+		label: "Release notes",
+		placeholder: "List every change shipped in this version",
 		size: "lg",
 	},
 };
@@ -93,24 +93,24 @@ export const Large: Story = {
 
 export const NoResize: Story = {
 	args: {
-		label: "No resize",
-		placeholder: "Cannot be resized",
+		label: "Support ticket message",
+		placeholder: "Describe your issue",
 		resize: "none",
 	},
 };
 
 export const ResizeVertical: Story = {
 	args: {
-		label: "Vertical resize",
-		placeholder: "Can resize vertically",
+		label: "Meeting notes",
+		placeholder: "Jot down key takeaways",
 		resize: "vertical",
 	},
 };
 
 export const ResizeBoth: Story = {
 	args: {
-		label: "Both directions",
-		placeholder: "Can resize both ways",
+		label: "SQL query",
+		placeholder: "SELECT * FROM orders WHERE status = 'pending'",
 		resize: "both",
 	},
 };
@@ -121,16 +121,16 @@ export const ResizeBoth: Story = {
 
 export const Disabled: Story = {
 	args: {
-		label: "Disabled",
-		placeholder: "Cannot edit",
+		label: "Internal audit log (read-only)",
+		placeholder: "No entries yet",
 		disabled: true,
 	},
 };
 
 export const CustomRows: Story = {
 	args: {
-		label: "Large text area",
-		placeholder: "Enter detailed description...",
+		label: "Postmortem write-up",
+		placeholder: "Root cause, impact, and remediation steps...",
 		rows: 8,
 	},
 };
@@ -150,22 +150,26 @@ export const Showcase: Story = {
 			}}
 		>
 			<TextArea
-				label="Bio"
-				placeholder="Tell us about yourself"
-				helperText="Max 500 characters"
+				label="Company bio"
+				placeholder="Northwind Traders builds tools for..."
+				helperText="Shown on your public profile — max 500 characters"
 			/>
 			<TextArea
-				label="Feedback"
+				label="What could we do better?"
 				placeholder="Share your thoughts..."
 				required
 				rows={5}
 			/>
 			<TextArea
-				label="Error state"
-				defaultValue="Invalid"
-				errorMessage="Please provide more detail"
+				label="Cancellation reason"
+				defaultValue="Too expensive"
+				errorMessage="Please provide more detail so we can improve"
 			/>
-			<TextArea label="Disabled" placeholder="Cannot edit" disabled />
+			<TextArea
+				label="Audit log (read-only)"
+				placeholder="No entries yet"
+				disabled
+			/>
 		</div>
 	),
 	parameters: {

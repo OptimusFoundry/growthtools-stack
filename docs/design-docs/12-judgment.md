@@ -23,9 +23,9 @@ There are only five vertical gaps in a page. Memorize them. Never improvise a si
 ```
 .ds-eyebrow                    <- anchor
   margin-bottom: 4px            (J-1.1)
-.page-title                    <- Fraunces
+.page-title                    <- Geist, 700
   margin-bottom: 12px           (J-1.2)
-.page-sub                      <- serif, max 62ch
+.page-sub                      <- Geist body, max 62ch
   margin-bottom: 24px           (J-1.3)
 .page-actions (btn row)
   margin-bottom: 56px           (J-1.4 — bottom of header)
@@ -63,8 +63,8 @@ The four text tones are not interchangeable. Pick by **role**, not by preference
 
 **Accent budget:**
 
-- **J-2.10** `--accent` (amber) appears **at most twice per page**: one italic moment in the page-title, plus optionally one tier badge or one stat-card flourish. Never three. Never on a CTA button (use `.btn.primary`).
-- **J-2.11** `--primary` appears on: the single primary CTA, focus rings, active tabs, selected rows, link text. It is **structural**. Accent is **editorial**. Don't swap them.
+- **J-2.10** `--accent` (amber) appears **at most twice per page**: one accent-colored word or phrase in the page-title, plus optionally one tier badge or one stat-card flourish. Never three. Never on a CTA button (use `.btn.primary`).
+- **J-2.11** `--primary` appears on: the single primary CTA, focus rings, active tabs, selected rows, link text. It is **structural**. Accent is a **highlight**, not structural. Don't swap them.
 
 ---
 
@@ -76,13 +76,13 @@ The size scale is generous. The discipline is in **not using all of it**.
 
 **J-3.2 — A single page uses at most 4 type sizes.** Count them: page title, section head, card title, body. That's four. An eyebrow is a treatment, not a size. A button label is body. A caption is body size in mono. If you find yourself reaching for a fifth, you're over-designing.
 
-**J-3.3 — Stat values are always 56–64px Fraunces, `tnum` on, `ss01` on.** There is no "small stat." A KPI that only deserves 22px is not a KPI; it's a meta line. Demote it.
+**J-3.3 — Stat values are always 56–64px Geist 700, `tnum` on, `ss01` on.** There is no "small stat." A KPI that only deserves 22px is not a KPI; it's a meta line. Demote it.
 
-**J-3.4 — Card titles are 22px Fraunces, `--fg1`, `--fvs-tight`.** Not 18, not 28. The card is a container; 22px is the line at which Fraunces stops being display and starts being furniture.
+**J-3.4 — Card titles are 22px Geist 600, `--fg1`.** Not 18, not 28. The card is a container; 22px is the line at which the display weight stops feeling like a hero and starts being furniture.
 
 **J-3.5 — Eyebrows are 11px (sm) or 12px (default), mono, uppercase, tracking `--ls-widest` (0.18em).** No other tracking. No mixed case. If the eyebrow wraps, rewrite it — eyebrows never wrap.
 
-**J-3.6 — Body is 15px (`--fs-base`) for UI and 18px (`--fs-lg`) for editorial prose (`.ds-prose`).** Don't split the difference with 16px — that's the SaaS default we're deliberately off of.
+**J-3.6 — Body is 15px (`--fs-base`) for UI and 18px (`--fs-lg`) for long-form prose (`.ds-prose`).** Don't split the difference with 16px — that's the SaaS default we're deliberately off of.
 
 **J-3.7 — Line-height: headings 1.05 (`--lh-tight`), subledes 1.3, body 1.5, prose 1.7.** A 15px body at 1.7 feels over-airy; a 18px prose at 1.5 feels cramped. These are paired.
 
@@ -150,8 +150,6 @@ The kit supports two densities. Pick one per surface and don't mix.
 
 Scarcity is the moat. These are the things you get exactly one of per surface.
 
-**J-6.1 — One italic `<em>` moment per page-title.** Zero in section heads by default. Zero in body. If a section head gets an italic, the page-title loses its.
-
 **J-6.2 — One `--accent` use per page** (see J-2.10).
 
 **J-6.3 — One `.btn.primary` per visible region.** Not per page — per region (header, modal, card footer, toolbar). Competing primaries = no primary.
@@ -177,7 +175,7 @@ Scarcity is the moat. These are the things you get exactly one of per surface.
   <a class="btn ghost sm">View all →</a>
 </div>
 ```
-Align on `baseline`, not `center`. The "View all" sits on the title's baseline; this is part of the editorial look.
+Align on `baseline`, not `center`. The "View all" sits on the title's baseline; this is part of the house look.
 
 **J-7.3 — Page-header actions are right-aligned on wide, left-aligned on narrow (≤ 640px).** At no width do they center. Center-aligned page actions look like a landing page, not a product.
 
@@ -239,9 +237,9 @@ The kit has three surface tones. Use them additively — never more than two sta
 
 ## J-11. Content & copy — the voice that matches the look
 
-Type choices enforce voice. The voice is editorial-pragmatic, never bubbly.
+Type choices enforce voice. The voice is direct and pragmatic, never bubbly.
 
-**J-11.1 — Page-title is a sentence, not a label.** Not "Dashboard." — instead, "Good morning, Alex. Your queue looks *healthy.*" The italic is the punchline; the rest is the setup.
+**J-11.1 — Page-title is a sentence, not a label.** Not "Dashboard." — instead, "Good morning, Alex. Your queue looks healthy." The specific detail is the punchline; the rest is the setup.
 
 **J-11.2 — Sublede is 1–2 sentences, max 62ch wide.** It explains the page's state in specific numbers ("14 posts scheduled across 4 channels"), not its purpose ("Manage your posts here").
 
@@ -251,9 +249,9 @@ Type choices enforce voice. The voice is editorial-pragmatic, never bubbly.
 
 **J-11.5 — Timestamps are relative, then absolute below:** "Queued · Tomorrow at 09:00" not "April 24, 2026 at 9:00 AM UTC."
 
-**J-11.6 — Numbers use digits, not words, once they're ≥ 2.** "2 drafts", "5 scheduled", "twelve" only in editorial copy (page-title italic moments).
+**J-11.6 — Numbers use digits, not words, once they're ≥ 2.** "2 drafts", "5 scheduled", "twelve" only in headline copy.
 
-**J-11.7 — Numerals in editorial headlines may spell out:** "*eight* things to ship" is fine in a title. "8 things to ship" is fine in a sublede. Pick per line, not per document.
+**J-11.7 — Numerals in headlines may spell out:** "eight things to ship" is fine in a title. "8 things to ship" is fine in a sublede. Pick per line, not per document.
 
 **J-11.8 — No exclamation marks.** Anywhere. Not in toasts, not in empty states, not in errors.
 
@@ -263,13 +261,13 @@ Type choices enforce voice. The voice is editorial-pragmatic, never bubbly.
 
 ## J-12. Imagery — when the kit does pictures at all
 
-The product is editorial; imagery is scarce. When it appears, these rules hold.
+The product favors type and space over imagery; imagery is scarce. When it appears, these rules hold.
 
 **J-12.1 — Media is contained, never full-bleed in product pages.** Full-bleed is for marketing/sign-in only.
 
 **J-12.2 — Placeholder gradient for missing images:** `linear-gradient(135deg, oklch(22% 0.04 <hue>deg), oklch(38% 0.12 <hue>deg))`. Rotate the hue (265, 280, 55, 140, 20) across a set to create variety without art. This is the house placeholder — never gray boxes, never checkerboards.
 
-**J-12.3 — Avatars are initials in Fraunces by default.** Only use real photos when provided. A set of mixed-initial avatars in Fraunces looks more coherent than a mix of photos and defaults.
+**J-12.3 — Avatars are initials in Geist 600 by default.** Only use real photos when provided. A set of mixed-initial avatars in Geist looks more coherent than a mix of photos and defaults.
 
 **J-12.4 — Platform brand colors are exempt from the color rules.** `#E1306C` for IG, `#0A66C2` for LI, `#000` for X are allowed on platform chips only. Nowhere else on the page can use raw hex.
 
@@ -279,17 +277,15 @@ The product is editorial; imagery is scarce. When it appears, these rules hold.
 
 ## J-13. Anti-patterns (copy these into a reviewer's eye)
 
-- **AP-1** A page-title with two italic moments. Pick one.
 - **AP-2** A section head with a bottom border. The space does that.
-- **AP-3** A `.btn.primary` and a `.btn.accent` side by side. Accent isn't a button slot — it's an editorial color.
-- **AP-4** Stat values in Geist. Stat values are Fraunces, always.
+- **AP-3** A `.btn.primary` and a `.btn.accent` side by side. Accent isn't a button slot — it's a highlight color.
+- **AP-4** Stat values in a light-weight or non-tabular font. Stat values are Geist 700 with `tnum`, always.
 - **AP-5** Eyebrow below the title ("DASHBOARD · NOV 2025" under `<h1>`). Eyebrow is always above, 4px gap.
 - **AP-6** Centered body prose. Left-align.
 - **AP-7** Nested cards: card inside card inside card. Collapse one level to a section.
 - **AP-8** A gradient on a button or card. Gradients only appear in marketing heroes and in themed decorative surfaces (cosmos, cyberpunk).
 - **AP-9** Six type sizes on one page. You get four.
 - **AP-10** `color: #fff` or `color: #000` anywhere. Use tokens.
-- **AP-11** An italic phrase in sans. Italic is exclusively Fraunces editorial.
 - **AP-12** `--fg1` on a sentence of body text. `--fg1` is for headings and hero numerals; body is `--fg2`.
 - **AP-13** Two primaries, even if one is smaller. If you need two buttons, the second is `.secondary` or `.ghost`.
 - **AP-14** An eyebrow that wraps. Rewrite the eyebrow.
@@ -303,13 +299,12 @@ Before shipping any page, run this in order. Each step takes ~5 seconds.
 
 1. **Squint.** Does one thing dominate? If two things compete, one is the page-title; the other is wrong.
 2. **Scroll to top.** Is there an eyebrow? Is it above the title? 4px gap? Mono tracking?
-3. **Find the italic.** Exactly one `<em>` on the page, in the title, `--accent` color?
-4. **Count type sizes.** ≤ 4.
-5. **Count primaries.** ≤ 1 per visible region.
-6. **Check the stack.** Are section gaps 56px or 80px — never 40, never 48?
-7. **Scan for dividers.** Each one doing a real job? Kill the decorative ones.
-8. **Check the numbers.** Stats in Fraunces, `tnum` on, ≥ 56px?
-9. **Read the copy aloud.** Any exclamation marks? Any "submit" or "click here"? Any emoji?
-10. **Tab through.** Focus rings visible on every interactive element?
+3. **Count type sizes.** ≤ 4.
+4. **Count primaries.** ≤ 1 per visible region.
+5. **Check the stack.** Are section gaps 56px or 80px — never 40, never 48?
+6. **Scan for dividers.** Each one doing a real job? Kill the decorative ones.
+7. **Check the numbers.** Stats in Geist 700, `tnum` on, ≥ 56px?
+8. **Read the copy aloud.** Any exclamation marks? Any "submit" or "click here"? Any emoji?
+9. **Tab through.** Focus rings visible on every interactive element?
 
-If all ten pass, ship it. If any fails, fix before showing.
+If all nine pass, ship it. If any fails, fix before showing.

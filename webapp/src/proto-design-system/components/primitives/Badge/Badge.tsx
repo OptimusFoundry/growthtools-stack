@@ -32,7 +32,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 		const badgeClasses = cn(
 			styles.badge,
 			styles[variant],
-			styles[size],
+			styles[`size-${size}`],
 			rounded && styles.rounded,
 			className,
 		);

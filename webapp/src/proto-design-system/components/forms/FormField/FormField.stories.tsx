@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Checkbox } from "../Checkbox";
-import { Input } from "../Input";
-import { Select } from "../Select";
-import { TextArea } from "../TextArea";
+import { Checkbox } from "@/proto-design-system/components/forms/Checkbox/Checkbox";
+import { Input } from "@/proto-design-system/components/forms/Input/Input";
+import { Select } from "@/proto-design-system/components/forms/Select/Select";
+import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
 import { FormField } from "./FormField";
 
 const meta: Meta<typeof FormField> = {
@@ -36,32 +36,32 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		label: "Email",
-		children: <Input type="email" placeholder="you@example.com" />,
+		label: "Work email",
+		children: <Input type="email" placeholder="alex@northwind.dev" />,
 	},
 };
 
 export const WithHelperText: Story = {
 	args: {
-		label: "Password",
-		helperText: "Must be at least 8 characters",
-		children: <Input type="password" placeholder="Enter password" />,
+		label: "New password",
+		helperText: "At least 8 characters, with one number",
+		children: <Input type="password" placeholder="Enter a new password" />,
 	},
 };
 
 export const WithErrorMessage: Story = {
 	args: {
-		label: "Email",
-		errorMessage: "Please enter a valid email address",
-		children: <Input type="email" placeholder="you@example.com" isError />,
+		label: "Recovery email",
+		errorMessage: "That address is already linked to another account",
+		children: <Input type="email" placeholder="alex@northwind.dev" isError />,
 	},
 };
 
 export const Required: Story = {
 	args: {
-		label: "Full name",
+		label: "Legal name",
 		required: true,
-		children: <Input placeholder="John Doe" />,
+		children: <Input placeholder="Alexandra Chen" />,
 	},
 };
 
@@ -71,25 +71,25 @@ export const Required: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small field",
+		label: "Coupon code",
 		size: "sm",
-		children: <Input size="sm" placeholder="Small input" />,
+		children: <Input size="sm" placeholder="SAVE20" />,
 	},
 };
 
 export const Medium: Story = {
 	args: {
-		label: "Medium field",
+		label: "Project name",
 		size: "md",
-		children: <Input size="md" placeholder="Medium input" />,
+		children: <Input size="md" placeholder="Q3 Launch Plan" />,
 	},
 };
 
 export const Large: Story = {
 	args: {
-		label: "Large field",
+		label: "Organization name",
 		size: "lg",
-		children: <Input size="lg" placeholder="Large input" />,
+		children: <Input size="lg" placeholder="Northwind Traders Inc." />,
 	},
 };
 
@@ -99,16 +99,21 @@ export const Large: Story = {
 
 export const WithTextArea: Story = {
 	args: {
-		label: "Description",
-		helperText: "Enter a brief description",
-		children: <TextArea placeholder="Enter description..." rows={4} />,
+		label: "What broke?",
+		helperText: "Include steps to reproduce if you can",
+		children: (
+			<TextArea
+				placeholder="The export button spins forever on Safari..."
+				rows={4}
+			/>
+		),
 	},
 };
 
 export const WithSelect: Story = {
 	args: {
-		label: "Country",
-		helperText: "Select your country of residence",
+		label: "Billing country",
+		helperText: "Used to calculate applicable tax",
 		children: (
 			<Select
 				options={[
@@ -124,7 +129,9 @@ export const WithSelect: Story = {
 
 export const WithCheckbox: Story = {
 	args: {
-		children: <Checkbox label="I agree to the terms and conditions" />,
+		children: (
+			<Checkbox label="I agree to the Terms of Service and Privacy Policy" />
+		),
 	},
 };
 
@@ -132,31 +139,37 @@ export const WithCheckbox: Story = {
 // SHOWCASE
 // =============================================================================
 
-export const FormExample: Story = {
+export const Showcase: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-			<FormField label="Full name" required>
-				<Input placeholder="John Doe" />
+			<FormField label="Legal name" required>
+				<Input placeholder="Alexandra Chen" />
 			</FormField>
 			<FormField
-				label="Email"
+				label="Work email"
 				required
-				helperText="We'll never share your email"
+				helperText="We'll send your invoices here"
 			>
-				<Input type="email" placeholder="you@example.com" />
+				<Input type="email" placeholder="alex@northwind.dev" />
 			</FormField>
 			<FormField
 				label="Password"
 				required
-				helperText="Must be at least 8 characters"
+				errorMessage="Password must include at least one number"
 			>
-				<Input type="password" placeholder="Enter password" />
+				<Input type="password" placeholder="Enter a new password" isError />
 			</FormField>
-			<FormField label="Bio" helperText="Tell us about yourself">
-				<TextArea placeholder="Write something..." rows={3} />
+			<FormField
+				label="Company bio"
+				helperText="Shown on your public profile page"
+			>
+				<TextArea
+					placeholder="Northwind Traders builds tools for..."
+					rows={3}
+				/>
 			</FormField>
 			<FormField>
-				<Checkbox label="Subscribe to newsletter" />
+				<Checkbox label="Send me product updates and tips" />
 			</FormField>
 		</div>
 	),

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Bell, Gift, ShieldAlert, Zap } from "lucide-react";
 import { useEffect } from "react";
-import { Button } from "../../primitives/Button";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import { BannerCenterProvider, useBannerCenter } from "./BannerCenter";
 
 const meta: Meta = {
@@ -34,8 +34,8 @@ function BannerControls() {
 	const addInfoBanner = () => {
 		addBanner({
 			type: "info",
-			title: "New update available",
-			description: "Version 2.0 is now ready to install.",
+			title: "New version available",
+			description: "Version 4.2 is now ready to install.",
 			action: (
 				<Button size="sm" variant="ghost">
 					Update Now
@@ -48,7 +48,7 @@ function BannerControls() {
 		addBanner({
 			type: "success",
 			title: "Payment successful",
-			description: "Your transaction has been completed.",
+			description: "Your invoice #INV-2201 has been paid in full.",
 		});
 	};
 
@@ -56,7 +56,7 @@ function BannerControls() {
 		addBanner({
 			type: "warning",
 			title: "Storage almost full",
-			description: "You have used 90% of your storage quota.",
+			description: "You have used 90% of your 100 GB storage quota.",
 			action: (
 				<Button size="sm" variant="ghost">
 					Upgrade
@@ -69,15 +69,15 @@ function BannerControls() {
 		addBanner({
 			type: "error",
 			title: "Connection lost",
-			description: "Unable to connect to the server.",
+			description: "Unable to reach the server. Retrying in the background.",
 		});
 	};
 
 	const addFeatureBanner = () => {
 		addBanner({
 			type: "feature",
-			title: "Try our new feature",
-			description: "AI-powered suggestions are now available.",
+			title: "AI summaries are here",
+			description: "Get an instant recap of any thread from the menu.",
 			icon: <Zap />,
 			action: (
 				<Button size="sm" variant="ghost">
@@ -92,7 +92,7 @@ function BannerControls() {
 			type: "warning",
 			variant: "filled",
 			title: "Maintenance scheduled",
-			description: "System will be down for maintenance at 2:00 AM.",
+			description: "System will be down for maintenance at 2:00 AM PST.",
 			dismissible: false,
 		});
 	};
@@ -157,29 +157,29 @@ function VariantDemo() {
 			id: "filled-demo",
 			type: "info",
 			variant: "filled",
-			title: "Filled variant",
-			description: "This is a filled banner.",
+			title: "Scheduled maintenance tonight",
+			description: "Expect brief downtime between 11 PM and 12 AM PST.",
 		});
 		addBanner({
 			id: "light-demo",
 			type: "success",
 			variant: "light",
-			title: "Light variant",
-			description: "This is a light banner.",
+			title: "Backup complete",
+			description: "Your workspace was backed up successfully.",
 		});
 		addBanner({
 			id: "lighter-demo",
 			type: "warning",
 			variant: "lighter",
-			title: "Lighter variant",
-			description: "This is a lighter banner.",
+			title: "Two invites pending",
+			description: "Invitations to acme.com are awaiting acceptance.",
 		});
 		addBanner({
 			id: "stroke-demo",
 			type: "error",
 			variant: "stroke",
-			title: "Stroke variant",
-			description: "This is a stroke banner.",
+			title: "Webhook delivery failing",
+			description: "The last 4 delivery attempts to your endpoint failed.",
 		});
 	}, [addBanner]);
 
@@ -202,29 +202,27 @@ function NonDismissibleDemo() {
 	const { addBanner } = useBannerCenter();
 
 	useEffect(() => {
-		// Non-dismissible banner (will appear at bottom)
 		addBanner({
 			id: "maintenance",
 			type: "warning",
 			variant: "filled",
-			title: "System Maintenance",
+			title: "System maintenance tonight",
 			description: "Scheduled maintenance tonight at 11 PM EST.",
 			dismissible: false,
 		});
 
-		// Dismissible banners (will appear on top)
 		addBanner({
 			id: "notification-1",
 			type: "info",
 			title: "New message",
-			description: "You have 3 unread messages.",
+			description: "You have 3 unread messages from your team.",
 		});
 
 		addBanner({
 			id: "notification-2",
 			type: "success",
-			title: "Upload complete",
-			description: "Your file has been uploaded successfully.",
+			title: "Export complete",
+			description: "Your quarterly report has finished generating.",
 		});
 	}, [addBanner]);
 
@@ -253,32 +251,32 @@ function AllTypesDemo() {
 		addBanner({
 			id: "info",
 			type: "info",
-			title: "Information",
-			description: "Here is some helpful information.",
+			title: "New version available",
+			description: "Version 4.2 is ready to install.",
 		});
 		addBanner({
 			id: "success",
 			type: "success",
-			title: "Success",
-			description: "Operation completed successfully.",
+			title: "Domain verified",
+			description: "app.yourcompany.com is now connected.",
 		});
 		addBanner({
 			id: "warning",
 			type: "warning",
-			title: "Warning",
-			description: "Please review this warning.",
+			title: "Trial ends in 3 days",
+			description: "Add a payment method to keep your workspace active.",
 		});
 		addBanner({
 			id: "error",
 			type: "error",
-			title: "Error",
-			description: "Something went wrong.",
+			title: "Sync failed",
+			description: "We couldn't reach your Salesforce account.",
 		});
 		addBanner({
 			id: "feature",
 			type: "feature",
-			title: "New Feature",
-			description: "Check out our latest feature.",
+			title: "Custom roles now available",
+			description: "Define granular permissions for your team.",
 		});
 	}, [addBanner]);
 
@@ -305,7 +303,7 @@ function ActionsDemo() {
 			id: "action-banner",
 			type: "info",
 			title: "New version available",
-			description: "Click update to get the latest features.",
+			description: "Version 4.2 includes performance improvements.",
 			action: (
 				<Button size="sm" variant="ghost" onClick={() => alert("Updating...")}>
 					Update Now
@@ -318,8 +316,8 @@ function ActionsDemo() {
 			type: "feature",
 			variant: "filled",
 			icon: <Gift />,
-			title: "Limited time offer",
-			description: "Get 50% off on annual plans.",
+			title: "Annual billing discount",
+			description: "Switch to yearly billing and save 20%.",
 			action: (
 				<Button size="sm" variant="ghost">
 					Claim Offer
@@ -352,7 +350,7 @@ function CustomIconsDemo() {
 			type: "info",
 			icon: <Bell />,
 			title: "Notifications enabled",
-			description: "You will receive push notifications.",
+			description: "You'll receive a push notification for new mentions.",
 		});
 
 		addBanner({
@@ -360,7 +358,7 @@ function CustomIconsDemo() {
 			type: "warning",
 			icon: <ShieldAlert />,
 			title: "Security alert",
-			description: "Unusual login detected from new device.",
+			description: "Unusual login detected from a new device in Berlin.",
 		});
 	}, [addBanner]);
 
@@ -387,7 +385,8 @@ function MultipleNonDismissibleDemo() {
 			id: "system-critical",
 			type: "error",
 			variant: "filled",
-			title: "Critical Security Update Required",
+			title: "Critical security update required",
+			description: "Update your API keys before they're revoked on Friday.",
 			dismissible: false,
 		});
 
@@ -395,22 +394,22 @@ function MultipleNonDismissibleDemo() {
 			id: "system-maintenance",
 			type: "warning",
 			variant: "filled",
-			title: "Scheduled Maintenance Tonight",
+			title: "Scheduled maintenance tonight at 11 PM EST",
 			dismissible: false,
 		});
 
 		addBanner({
 			id: "notification",
 			type: "info",
-			title: "This is a dismissible notification",
+			title: "3 new comments on your last deploy",
 		});
 	}, [addBanner]);
 
 	return (
 		<div style={{ padding: "var(--space-6)" }}>
 			<p>
-				Multiple non-dismissible banners stack in the bottom row, dismissible
-				ones on top.
+				Non-dismissible system banners stack at the bottom row; dismissible
+				notifications stack above them.
 			</p>
 		</div>
 	);
@@ -418,4 +417,58 @@ function MultipleNonDismissibleDemo() {
 
 export const MultipleNonDismissible: Story = {
 	render: () => <MultipleNonDismissibleDemo />,
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+function DashboardSceneDemo() {
+	const { addBanner } = useBannerCenter();
+
+	useEffect(() => {
+		addBanner({
+			id: "scene-trial",
+			type: "warning",
+			variant: "filled",
+			title: "Trial ends in 3 days",
+			description: "Add a payment method to avoid losing access.",
+			action: (
+				<Button size="sm" variant="ghost">
+					Add payment method
+				</Button>
+			),
+			dismissible: false,
+		});
+
+		addBanner({
+			id: "scene-invite",
+			type: "info",
+			title: "Priya accepted your invite",
+			description: "She now has editor access to the Marketing workspace.",
+		});
+	}, [addBanner]);
+
+	return (
+		<div style={{ padding: "var(--space-6)" }}>
+			<h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600 }}>
+				Dashboard
+			</h3>
+			<p
+				style={{
+					marginTop: "var(--space-2)",
+					color: "var(--color-muted)",
+					fontSize: "0.9375rem",
+				}}
+			>
+				A pinned billing warning and a dismissible team update, exactly as
+				they'd appear above a real dashboard.
+			</p>
+		</div>
+	);
+}
+
+export const Showcase: Story = {
+	name: "Showcase — Dashboard Scene",
+	render: () => <DashboardSceneDemo />,
 };

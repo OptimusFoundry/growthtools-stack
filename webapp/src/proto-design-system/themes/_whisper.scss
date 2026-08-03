@@ -135,6 +135,12 @@
   --color-base-content-tertiary:  oklch(83.6% 0 0deg); // flattened rgba(0,0,0,0.40)
   --color-muted:                  oklch(83.6% 0 0deg); // aliases tertiary, house convention
   --color-text-disabled:          oklch(91.2% 0 0deg); // interpolated alpha 0.22, unmeasured — judgment call
+  // Alternate tried and rejected (chalk, since consolidated into this theme):
+  // darkening this whole tier — content 53.0/secondary 65.0/tertiary+muted
+  // 79.0/disabled 89.0 — while pushing background paler (99.6% vs this
+  // theme's 99.1%). Real WCAG-AA-passing option if a louder-but-still-quiet
+  // register is ever wanted; not adopted because it drops the "hushed"
+  // premise this theme's measured off the live product for.
 
   // Surfaces — a whisper lighter/flatter than background, same (now
   // achromatic) hue family; deltas compressed vs the prior revision since

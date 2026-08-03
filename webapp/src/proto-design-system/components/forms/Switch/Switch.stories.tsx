@@ -35,21 +35,21 @@ export const Default: Story = {
 
 export const WithDescription: Story = {
 	args: {
-		label: "Notifications",
-		description: "Receive push notifications on your device",
+		label: "Weekly digest email",
+		description: "A summary of activity across your workspace, sent Mondays",
 	},
 };
 
 export const Checked: Story = {
 	args: {
-		label: "Enabled",
+		label: "Two-factor authentication",
 		defaultChecked: true,
 	},
 };
 
 export const LabelLeft: Story = {
 	args: {
-		label: "Dark mode",
+		label: "Auto-renew subscription",
 		labelPosition: "left",
 	},
 };
@@ -60,21 +60,21 @@ export const LabelLeft: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Small switch",
+		label: "Compact list view",
 		size: "sm",
 	},
 };
 
 export const Medium: Story = {
 	args: {
-		label: "Medium switch",
+		label: "Show archived tickets",
 		size: "md",
 	},
 };
 
 export const Large: Story = {
 	args: {
-		label: "Large switch",
+		label: "Public workspace",
 		size: "lg",
 	},
 };
@@ -85,14 +85,14 @@ export const Large: Story = {
 
 export const Disabled: Story = {
 	args: {
-		label: "Disabled",
+		label: "SSO enforcement (upgrade to Enterprise)",
 		disabled: true,
 	},
 };
 
 export const DisabledChecked: Story = {
 	args: {
-		label: "Disabled on",
+		label: "Audit log retention (required on your plan)",
 		disabled: true,
 		defaultChecked: true,
 	},
@@ -100,7 +100,7 @@ export const DisabledChecked: Story = {
 
 export const NoLabel: Story = {
 	args: {
-		"aria-label": "Toggle feature",
+		"aria-label": "Mute channel notifications",
 	},
 };
 
@@ -114,10 +114,13 @@ export const Showcase: Story = {
 			<Switch label="Dark mode" defaultChecked />
 			<Switch
 				label="Email notifications"
-				description="Receive updates via email"
+				description="Get notified when a teammate mentions you"
 			/>
-			<Switch label="Marketing emails" description="Get promotional content" />
-			<Switch label="Disabled option" disabled />
+			<Switch
+				label="Product updates"
+				description="Occasional emails about new features"
+			/>
+			<Switch label="SSO enforcement (Enterprise only)" disabled />
 		</div>
 	),
 };
@@ -125,9 +128,9 @@ export const Showcase: Story = {
 export const Sizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-			<Switch label="Small" size="sm" />
-			<Switch label="Medium" size="md" defaultChecked />
-			<Switch label="Large" size="lg" />
+			<Switch label="Compact rows" size="sm" />
+			<Switch label="Beta features" size="md" defaultChecked />
+			<Switch label="Public profile" size="lg" />
 		</div>
 	),
 };
@@ -139,7 +142,7 @@ export const SettingsExample: Story = {
 				display: "flex",
 				flexDirection: "column",
 				gap: "1rem",
-				width: "300px",
+				width: "320px",
 			}}
 		>
 			<div
@@ -159,8 +162,8 @@ export const SettingsExample: Story = {
 					alignItems: "center",
 				}}
 			>
-				<span>Notifications</span>
-				<Switch aria-label="Notifications" />
+				<span>Desktop notifications</span>
+				<Switch aria-label="Desktop notifications" />
 			</div>
 			<div
 				style={{
@@ -169,8 +172,8 @@ export const SettingsExample: Story = {
 					alignItems: "center",
 				}}
 			>
-				<span>Auto-save</span>
-				<Switch aria-label="Auto-save" defaultChecked />
+				<span>Auto-save drafts</span>
+				<Switch aria-label="Auto-save drafts" defaultChecked />
 			</div>
 		</div>
 	),

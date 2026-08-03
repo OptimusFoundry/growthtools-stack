@@ -75,7 +75,7 @@ export const StepIndicator = forwardRef<HTMLDivElement, StepIndicatorProps>(
 				className={cn(
 					styles.stepIndicator,
 					styles[orientation],
-					styles[size],
+					styles[`size-${size}`],
 					className,
 				)}
 				role="navigation"

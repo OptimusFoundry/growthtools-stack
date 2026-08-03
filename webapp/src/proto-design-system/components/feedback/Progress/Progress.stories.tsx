@@ -40,13 +40,15 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	args: {
 		value: 60,
+		"aria-label": "Video export progress",
 	},
 };
 
 export const WithLabel: Story = {
 	args: {
-		value: 75,
+		value: 42,
 		showLabel: true,
+		"aria-label": "Data import progress",
 	},
 };
 
@@ -54,6 +56,8 @@ export const Complete: Story = {
 	args: {
 		value: 100,
 		showLabel: true,
+		variant: "success",
+		"aria-label": "Migration progress",
 	},
 };
 
@@ -61,6 +65,7 @@ export const Empty: Story = {
 	args: {
 		value: 0,
 		showLabel: true,
+		"aria-label": "Backup progress",
 	},
 };
 
@@ -72,6 +77,7 @@ export const Small: Story = {
 	args: {
 		value: 60,
 		size: "sm",
+		"aria-label": "Storage usage",
 	},
 };
 
@@ -79,6 +85,7 @@ export const Medium: Story = {
 	args: {
 		value: 60,
 		size: "md",
+		"aria-label": "Storage usage",
 	},
 };
 
@@ -86,6 +93,7 @@ export const Large: Story = {
 	args: {
 		value: 60,
 		size: "lg",
+		"aria-label": "Storage usage",
 	},
 };
 
@@ -98,22 +106,25 @@ export const Success: Story = {
 		value: 100,
 		variant: "success",
 		showLabel: true,
+		"aria-label": "Deploy complete",
 	},
 };
 
 export const Warning: Story = {
 	args: {
-		value: 80,
+		value: 82,
 		variant: "warning",
 		showLabel: true,
+		"aria-label": "Storage quota used",
 	},
 };
 
 export const ErrorVariant: Story = {
 	args: {
-		value: 25,
+		value: 34,
 		variant: "error",
 		showLabel: true,
+		"aria-label": "Sync failed at",
 	},
 };
 
@@ -125,6 +136,7 @@ export const Indeterminate: Story = {
 	args: {
 		value: 0,
 		indeterminate: true,
+		"aria-label": "Generating report",
 	},
 };
 
@@ -143,9 +155,9 @@ export const Sizes: Story = {
 						fontSize: "0.875rem",
 					}}
 				>
-					Small
+					Small — inline row indicator
 				</p>
-				<Progress value={60} size="sm" />
+				<Progress value={60} size="sm" aria-label="Row upload progress" />
 			</div>
 			<div>
 				<p
@@ -155,9 +167,9 @@ export const Sizes: Story = {
 						fontSize: "0.875rem",
 					}}
 				>
-					Medium
+					Medium — default card usage
 				</p>
-				<Progress value={60} size="md" />
+				<Progress value={60} size="md" aria-label="Card upload progress" />
 			</div>
 			<div>
 				<p
@@ -167,9 +179,9 @@ export const Sizes: Story = {
 						fontSize: "0.875rem",
 					}}
 				>
-					Large
+					Large — full-width onboarding step
 				</p>
-				<Progress value={60} size="lg" />
+				<Progress value={60} size="lg" aria-label="Onboarding progress" />
 			</div>
 		</div>
 	),
@@ -178,10 +190,30 @@ export const Sizes: Story = {
 export const Variants: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-			<Progress value={25} variant="default" showLabel />
-			<Progress value={50} variant="success" showLabel />
-			<Progress value={75} variant="warning" showLabel />
-			<Progress value={90} variant="error" showLabel />
+			<Progress
+				value={28}
+				variant="default"
+				showLabel
+				aria-label="Export progress"
+			/>
+			<Progress
+				value={100}
+				variant="success"
+				showLabel
+				aria-label="Backup complete"
+			/>
+			<Progress
+				value={91}
+				variant="warning"
+				showLabel
+				aria-label="Storage quota used"
+			/>
+			<Progress
+				value={12}
+				variant="error"
+				showLabel
+				aria-label="Sync stalled"
+			/>
 		</div>
 	),
 };
@@ -197,12 +229,16 @@ export const FileUpload: Story = {
 						marginBottom: "0.5rem",
 					}}
 				>
-					<span style={{ fontSize: "0.875rem" }}>document.pdf</span>
+					<span style={{ fontSize: "0.875rem" }}>Q3-financial-report.pdf</span>
 					<span style={{ fontSize: "0.875rem", color: "var(--color-muted)" }}>
 						2.4 MB
 					</span>
 				</div>
-				<Progress value={100} variant="success" />
+				<Progress
+					value={100}
+					variant="success"
+					aria-label="Q3-financial-report.pdf upload complete"
+				/>
 			</div>
 			<div>
 				<div
@@ -212,12 +248,16 @@ export const FileUpload: Story = {
 						marginBottom: "0.5rem",
 					}}
 				>
-					<span style={{ fontSize: "0.875rem" }}>image.png</span>
+					<span style={{ fontSize: "0.875rem" }}>team-offsite-photos.zip</span>
 					<span style={{ fontSize: "0.875rem", color: "var(--color-muted)" }}>
-						1.2 MB
+						118 MB
 					</span>
 				</div>
-				<Progress value={65} showLabel />
+				<Progress
+					value={65}
+					showLabel
+					aria-label="team-offsite-photos.zip upload progress"
+				/>
 			</div>
 			<div>
 				<div
@@ -227,13 +267,64 @@ export const FileUpload: Story = {
 						marginBottom: "0.5rem",
 					}}
 				>
-					<span style={{ fontSize: "0.875rem" }}>video.mp4</span>
+					<span style={{ fontSize: "0.875rem" }}>onboarding-demo.mp4</span>
 					<span style={{ fontSize: "0.875rem", color: "var(--color-muted)" }}>
 						48.5 MB
 					</span>
 				</div>
-				<Progress value={0} indeterminate />
+				<Progress
+					value={0}
+					indeterminate
+					aria-label="onboarding-demo.mp4 preparing upload"
+				/>
 			</div>
+		</div>
+	),
+};
+
+export const ImportCard: Story = {
+	name: "Showcase — CSV Import Card",
+	render: () => (
+		<div
+			style={{
+				border: "1px solid var(--color-border)",
+				borderRadius: "var(--radius-md)",
+				padding: "var(--space-5)",
+				display: "flex",
+				flexDirection: "column",
+				gap: "var(--space-3)",
+				background: "var(--color-surface)",
+			}}
+		>
+			<div>
+				<h3 style={{ margin: 0, fontSize: "0.9375rem", fontWeight: 600 }}>
+					Importing contacts.csv
+				</h3>
+				<p
+					style={{
+						margin: "4px 0 0",
+						fontSize: "0.8125rem",
+						color: "var(--color-muted)",
+					}}
+				>
+					2,340 of 4,000 rows processed
+				</p>
+			</div>
+			<Progress
+				value={58}
+				showLabel
+				variant="default"
+				aria-label="Contact import progress"
+			/>
+			<p
+				style={{
+					margin: 0,
+					fontSize: "0.75rem",
+					color: "var(--color-muted)",
+				}}
+			>
+				Do not close this tab until the import finishes.
+			</p>
 		</div>
 	),
 };

@@ -29,7 +29,7 @@ export const Default: Story = {
 		variant: "light",
 		title: "New version available",
 		description:
-			"A new version of this application is available. Refresh to update.",
+			"Version 4.2 is ready to install. Refresh the page to pick it up.",
 	},
 };
 
@@ -39,32 +39,32 @@ export const FilledVariants: Story = {
 			<Banner
 				type="info"
 				variant="filled"
-				title="Info banner"
-				description="This is an informational message"
+				title="Scheduled maintenance tonight"
+				description="Expect brief downtime between 11 PM and 12 AM PST."
 			/>
 			<Banner
 				type="success"
 				variant="filled"
-				title="Success!"
-				description="Your changes have been saved"
+				title="Payment confirmed"
+				description="Your invoice #INV-2201 has been paid in full."
 			/>
 			<Banner
 				type="warning"
 				variant="filled"
-				title="Warning"
-				description="This action cannot be undone"
+				title="Trial ends in 3 days"
+				description="Add a payment method to keep your workspace active."
 			/>
 			<Banner
 				type="error"
 				variant="filled"
-				title="Error"
-				description="Something went wrong"
+				title="Sync failed"
+				description="We couldn't reach your Salesforce account. Reconnect to resume syncing."
 			/>
 			<Banner
 				type="feature"
 				variant="filled"
-				title="New feature"
-				description="Check out our latest update"
+				title="AI summaries are here"
+				description="Get an instant recap of any thread from the conversation menu."
 			/>
 		</div>
 	),
@@ -76,32 +76,32 @@ export const LightVariants: Story = {
 			<Banner
 				type="info"
 				variant="light"
-				title="Info banner"
-				description="This is an informational message"
+				title="New version available"
+				description="Version 4.2 is ready to install."
 			/>
 			<Banner
 				type="success"
 				variant="light"
-				title="Success!"
-				description="Your changes have been saved"
+				title="Backup complete"
+				description="Your workspace was backed up successfully."
 			/>
 			<Banner
 				type="warning"
 				variant="light"
-				title="Warning"
-				description="This action cannot be undone"
+				title="Storage almost full"
+				description="You've used 90% of your 100 GB plan."
 			/>
 			<Banner
 				type="error"
 				variant="light"
-				title="Error"
-				description="Something went wrong"
+				title="API key expiring"
+				description="Your production key expires in 48 hours."
 			/>
 			<Banner
 				type="feature"
 				variant="light"
-				title="New feature"
-				description="Check out our latest update"
+				title="Try the new dashboard"
+				description="Switch to the redesigned analytics view."
 			/>
 		</div>
 	),
@@ -113,32 +113,32 @@ export const LighterVariants: Story = {
 			<Banner
 				type="info"
 				variant="lighter"
-				title="Info banner"
-				description="This is an informational message"
+				title="Reminder: quarterly review"
+				description="Your team's Q3 usage report is ready to view."
 			/>
 			<Banner
 				type="success"
 				variant="lighter"
-				title="Success!"
-				description="Your changes have been saved"
+				title="Domain verified"
+				description="app.yourcompany.com is now connected."
 			/>
 			<Banner
 				type="warning"
 				variant="lighter"
-				title="Warning"
-				description="This action cannot be undone"
+				title="Two team members pending"
+				description="Invitations to acme.com are awaiting acceptance."
 			/>
 			<Banner
 				type="error"
 				variant="lighter"
-				title="Error"
-				description="Something went wrong"
+				title="Webhook delivery failing"
+				description="The last 4 delivery attempts to your endpoint failed."
 			/>
 			<Banner
 				type="feature"
 				variant="lighter"
-				title="New feature"
-				description="Check out our latest update"
+				title="Custom roles now available"
+				description="Define granular permissions for your team."
 			/>
 		</div>
 	),
@@ -150,32 +150,32 @@ export const StrokeVariants: Story = {
 			<Banner
 				type="info"
 				variant="stroke"
-				title="Info banner"
-				description="This is an informational message"
+				title="We use cookies"
+				description="This site uses cookies to keep you signed in and remember preferences."
 			/>
 			<Banner
 				type="success"
 				variant="stroke"
-				title="Success!"
-				description="Your changes have been saved"
+				title="Export ready"
+				description="Your CSV export has finished generating."
 			/>
 			<Banner
 				type="warning"
 				variant="stroke"
-				title="Warning"
-				description="This action cannot be undone"
+				title="Unsaved changes"
+				description="You have edits that haven't been published yet."
 			/>
 			<Banner
 				type="error"
 				variant="stroke"
-				title="Error"
-				description="Something went wrong"
+				title="Billing issue detected"
+				description="Your last payment attempt was declined."
 			/>
 			<Banner
 				type="feature"
 				variant="stroke"
-				title="New feature"
-				description="Check out our latest update"
+				title="Keyboard shortcuts"
+				description="Press ? at any time to view available shortcuts."
 			/>
 		</div>
 	),
@@ -186,7 +186,7 @@ export const WithAction: Story = {
 		type: "feature",
 		variant: "filled",
 		title: "Upgrade to Pro",
-		description: "Get access to exclusive features",
+		description: "Unlock unlimited projects, SSO, and priority support.",
 		action: (
 			<button
 				type="button"
@@ -220,7 +220,7 @@ export const NonDismissible: Story = {
 		type: "warning",
 		variant: "light",
 		title: "Maintenance scheduled",
-		description: "The system will be unavailable on Sunday from 2-4 AM",
+		description: "The system will be unavailable on Sunday from 2-4 AM PST",
 		dismissible: false,
 	},
 };
@@ -250,4 +250,50 @@ export const CookieBanner: Story = {
 			</button>
 		),
 	},
+};
+
+export const AboveDashboard: Story = {
+	name: "Showcase — Banner Above Dashboard",
+	render: () => (
+		<div style={{ background: "var(--color-base-100)", minHeight: "320px" }}>
+			<Banner
+				type="warning"
+				variant="filled"
+				title="Trial ends in 3 days"
+				description="Add a payment method to avoid losing access to your workspace."
+				action={
+					<button
+						type="button"
+						style={{
+							background: "white",
+							color: "black",
+							border: "none",
+							padding: "4px 12px",
+							borderRadius: "4px",
+							cursor: "pointer",
+							fontSize: "14px",
+							fontWeight: 500,
+						}}
+					>
+						Add payment method
+					</button>
+				}
+			/>
+			<div style={{ padding: "var(--space-6)" }}>
+				<h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600 }}>
+					Dashboard
+				</h2>
+				<p
+					style={{
+						marginTop: "var(--space-2)",
+						color: "var(--color-muted)",
+						fontSize: "0.9375rem",
+					}}
+				>
+					Your product content renders below the banner, which stays pinned to
+					the top of the page.
+				</p>
+			</div>
+		</div>
+	),
 };

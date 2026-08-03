@@ -65,9 +65,9 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	render: (args) => (
 		<ButtonGroup {...args}>
-			<Button>Left</Button>
-			<Button>Center</Button>
-			<Button>Right</Button>
+			<Button variant="ghost">Cancel</Button>
+			<Button variant="outline">Save draft</Button>
+			<Button variant="primary">Publish</Button>
 		</ButtonGroup>
 	),
 };
@@ -79,9 +79,9 @@ export const Default: Story = {
 export const Attached: Story = {
 	render: () => (
 		<ButtonGroup isAttached>
-			<Button variant="outline">Left</Button>
-			<Button variant="outline">Center</Button>
-			<Button variant="outline">Right</Button>
+			<Button variant="outline">Day</Button>
+			<Button variant="outline">Week</Button>
+			<Button variant="outline">Month</Button>
 		</ButtonGroup>
 	),
 };
@@ -161,9 +161,9 @@ export const Pagination: Story = {
 export const Vertical: Story = {
 	render: () => (
 		<ButtonGroup orientation="vertical">
-			<Button>Top</Button>
-			<Button>Middle</Button>
-			<Button>Bottom</Button>
+			<Button>Export as CSV</Button>
+			<Button>Export as PDF</Button>
+			<Button>Export as JSON</Button>
 		</ButtonGroup>
 	),
 };
@@ -171,9 +171,9 @@ export const Vertical: Story = {
 export const VerticalAttached: Story = {
 	render: () => (
 		<ButtonGroup orientation="vertical" isAttached>
-			<Button variant="outline">Top</Button>
-			<Button variant="outline">Middle</Button>
-			<Button variant="outline">Bottom</Button>
+			<Button variant="outline">Free</Button>
+			<Button variant="outline">Pro</Button>
+			<Button variant="outline">Enterprise</Button>
 		</ButtonGroup>
 	),
 };
@@ -185,9 +185,9 @@ export const VerticalAttached: Story = {
 export const SpacingSmall: Story = {
 	render: () => (
 		<ButtonGroup spacing="sm">
-			<Button>One</Button>
-			<Button>Two</Button>
-			<Button>Three</Button>
+			<Button>Edit</Button>
+			<Button>Duplicate</Button>
+			<Button>Archive</Button>
 		</ButtonGroup>
 	),
 };
@@ -195,9 +195,9 @@ export const SpacingSmall: Story = {
 export const SpacingMedium: Story = {
 	render: () => (
 		<ButtonGroup spacing="md">
-			<Button>One</Button>
-			<Button>Two</Button>
-			<Button>Three</Button>
+			<Button>Edit</Button>
+			<Button>Duplicate</Button>
+			<Button>Archive</Button>
 		</ButtonGroup>
 	),
 };
@@ -205,9 +205,9 @@ export const SpacingMedium: Story = {
 export const SpacingLarge: Story = {
 	render: () => (
 		<ButtonGroup spacing="lg">
-			<Button>One</Button>
-			<Button>Two</Button>
-			<Button>Three</Button>
+			<Button>Edit</Button>
+			<Button>Duplicate</Button>
+			<Button>Archive</Button>
 		</ButtonGroup>
 	),
 };
@@ -266,11 +266,11 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					Spaced buttons
+					Modal footer actions
 				</p>
 				<ButtonGroup>
-					<Button>Cancel</Button>
-					<Button variant="primary">Save</Button>
+					<Button variant="ghost">Cancel</Button>
+					<Button variant="primary">Save changes</Button>
 				</ButtonGroup>
 			</div>
 
@@ -282,12 +282,12 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					Attached buttons
+					Date range switcher
 				</p>
 				<ButtonGroup isAttached>
-					<Button variant="outline">Left</Button>
-					<Button variant="outline">Center</Button>
-					<Button variant="outline">Right</Button>
+					<Button variant="outline">Day</Button>
+					<Button variant="outline">Week</Button>
+					<Button variant="outline">Month</Button>
 				</ButtonGroup>
 			</div>
 
@@ -322,17 +322,17 @@ export const Showcase: Story = {
 						color: "var(--color-muted)",
 					}}
 				>
-					Vertical group
+					Plan selector
 				</p>
 				<ButtonGroup orientation="vertical" isAttached>
 					<Button variant="outline" size="sm">
-						Option A
+						Free
 					</Button>
 					<Button variant="outline" size="sm">
-						Option B
+						Pro
 					</Button>
 					<Button variant="outline" size="sm">
-						Option C
+						Enterprise
 					</Button>
 				</ButtonGroup>
 			</div>

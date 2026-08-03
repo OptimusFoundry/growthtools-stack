@@ -75,9 +75,9 @@ export const Vertical: Story = {
 					gap: "1rem",
 				}}
 			>
-				<span>Left</span>
+				<span>Posted 2 hours ago</span>
 				<Story />
-				<span>Right</span>
+				<span>5 min read</span>
 			</div>
 		),
 	],
@@ -98,9 +98,9 @@ export const VerticalWithLabel: Story = {
 					gap: "1rem",
 				}}
 			>
-				<span>Left</span>
+				<span>Sign in with SSO</span>
 				<Story />
-				<span>Right</span>
+				<span>Sign in with a magic link</span>
 			</div>
 		),
 	],
@@ -138,14 +138,14 @@ export const Variants: Story = {
 export const InContent: Story = {
 	render: () => (
 		<div style={{ maxWidth: "400px" }}>
-			<h3 style={{ margin: "0 0 0.5rem" }}>Section One</h3>
+			<h3 style={{ margin: "0 0 0.5rem" }}>Billing details</h3>
 			<p style={{ margin: "0 0 1rem", color: "var(--color-muted)" }}>
-				This is some content for the first section.
+				Pro plan · $49/month, billed monthly to the card on file.
 			</p>
 			<Divider />
-			<h3 style={{ margin: "1rem 0 0.5rem" }}>Section Two</h3>
+			<h3 style={{ margin: "1rem 0 0.5rem" }}>Payment method</h3>
 			<p style={{ margin: 0, color: "var(--color-muted)" }}>
-				This is some content for the second section.
+				Visa ending in 4242, expires 08/28.
 			</p>
 		</div>
 	),

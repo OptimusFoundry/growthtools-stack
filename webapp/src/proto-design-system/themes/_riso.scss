@@ -3,15 +3,13 @@
 // =============================================================================
 // Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
 
-@import "https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap";
-
 [data-theme="riso"] {
   color-scheme: light;
 
-  --font-family-sans:    "Work Sans", system-ui, sans-serif;
-  --font-family-mono:    "Space Mono", "SF Mono", monospace;
-  --font-family-serif:   "Fraunces", georgia, serif;
-  --font-family-display: "Space Mono", "Work Sans", monospace;
+  --font-family-sans:    "Work Sans", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Space Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
   --color-background: oklch(95% 0.020 85deg);
   --color-base-50: oklch(97% 0.015 85deg);
   --color-base-100: oklch(93% 0.025 85deg);
@@ -27,7 +25,8 @@
   --color-base-content: oklch(28% 0.18 265deg);
   --color-base-content-secondary: oklch(38% 0.15 265deg);
   --color-base-content-tertiary: oklch(55% 0.10 265deg);
-  --color-muted: oklch(72% 0.06 265deg);
+  --color-muted: oklch(55% 0.10 265deg); // aliases tertiary — was a lighter, uncorrelated value that failed WCAG 3:1 on background
+  --color-text-disabled: oklch(68% 0.045 265deg); // non-content only
   --color-surface: oklch(97% 0.015 85deg);
   --color-surface-elevated: oklch(98% 0.012 85deg);
   --color-surface-overlay: oklch(0% 0 0deg / 0.5);
@@ -46,9 +45,9 @@
   --color-accent-active: oklch(72% 0.2 90deg);
   --color-accent-content: oklch(25% 0.12 85deg);
   --color-accent-bg: oklch(94% 0.05 90deg);
-  --color-success: oklch(65% 0.20 155deg);
-  --color-success-hover: oklch(73% 0.2 155deg);
-  --color-success-active: oklch(57% 0.2 155deg);
+  --color-success: oklch(42% 0.10 155deg);
+  --color-success-hover: oklch(37% 0.088 155deg);
+  --color-success-active: oklch(32% 0.078 155deg);
   --color-success-bg: oklch(93% 0.05 155deg);
   --color-success-content: oklch(97% 0.015 85deg);
   --color-warning: oklch(82% 0.18 90deg);
@@ -77,10 +76,6 @@
   --shadow-accent: 3px 3px 0 0 oklch(28% 0.18 265deg);
   --focus-ring-color: oklch(65% 0.25 350deg / 0.5);
   --color-header-bg: var(--color-base-100);
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
-  --color-text-disabled: oklch(68% 0.045 265deg); // non-content only
 
   // Motion: riso's whole visual language is a hard-edged, unblurred ink
   // stamp (see --shadow-* above — flat offset blocks, no blur, no soft

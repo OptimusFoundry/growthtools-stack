@@ -8,9 +8,7 @@
 // (a real, distinct monospace, not aliased to sans) — the pairing is the
 // "punchy soda-can label" register the color palette establishes: display-
 // weight grotesque for the brand voice, technical mono for numerals/eyebrows.
-// Note: upstream registers this pairing via themes.ts's googleFontsHref
-// mechanism — Growth Tools rejects that font-loading mechanism (see F1/C1),
-// so these font-family values are static fallbacks only, not centrally synced.
+// Registered in themes.ts's googleFontsHref for this exact pairing.
 // This pass fixes three real, checkable bugs — not a repaint:
 // 1. Ladder failures (webapp/scripts/theme-contrast-check.mjs + manual
 //    hover/active checks against the same apcaLc/wcagRatio implementation):

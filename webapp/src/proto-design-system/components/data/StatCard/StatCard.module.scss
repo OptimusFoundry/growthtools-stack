@@ -19,17 +19,17 @@
 
 .default {
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--border-width-sm) solid var(--color-border);
 }
 
 .outlined {
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: var(--border-width-sm) solid var(--color-border);
 }
 
 .filled {
   background-color: var(--color-base-100);
-  border: 1px solid transparent;
+  border: var(--border-width-sm) solid transparent;
 }
 
 // =============================================================================
@@ -91,7 +91,7 @@
   color: var(--color-base-content);
   font-family: var(--font-family-sans);
   font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
 }
 

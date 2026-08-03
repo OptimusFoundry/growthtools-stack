@@ -1,131 +1,218 @@
 // =============================================================================
-// PAPER THEME (LAYERED DEPTH)
+// PAPER THEME (LEDGER STOCK)
 // =============================================================================
-// Material design evolved. Stacked paper layers, subtle elevation.
-// Physical metaphor in digital space. Tactile, tangible, touchable.
+// Reference: a stationery-drawer ledger, not generic "Material Design paper" —
+// kraft-toned wove account-book stock, iron-gall fountain-pen ink for
+// structural elements (primary), a brass/kraft-envelope brown for the quiet
+// secondary action, and a rubber date-stamp crimson ink for editorial accent
+// (≤2 uses/page). Base ramp = paper (warm kraft, hue ~74→22 as it darkens
+// toward the ink-stained edge); content ramp = ink (blue-black, hue 258,
+// held constant) — the two chromatic families carry the paper/ink duality
+// the previous pass only asserted in prose. Be Vietnam Pro (humanist
+// geometric sans) + IBM Plex Mono (typed-ledger register) unchanged from the
+// prior font-repair pass — already a deliberate, non-cliché pairing, not
+// touched here. themes.ts's googleFontsHref (which still requested the
+// earlier Anonymous Pro pick) is updated in this pass to match.
+// Repair pass (this revision):
+// - Border was Lc 20.2 / 1.45:1 on background — clears the theme's own Lc15
+//   hairline floor but fails WCAG 1.4.11's 3:1 non-text floor for the
+//   Input/Select/Card/Modal/Dropdown/etc. boundaries that render it.
+//   Retuned to Lc 58.3 / 3.36:1 (color only — width stays the house 1px
+//   hairline, so the border's weight-role doesn't drift, only its legibility
+//   does). border-hover widened further to Lc 69.3 / 4.69:1.
+// - Background was a near-neutral oklch(96% 0.005 80deg) — chroma 0.005 reads
+//   as "safe off-white," not a committed paper tone (contrast oat's
+//   deliberately-tinted 0.022-chroma canvas). Repinned to a genuinely kraft
+//   cream, oklch(97% 0.018 74deg) → #fdf4e8, distinct in both chroma and hue
+//   from oat's ecru so the two don't converge.
+// - --color-surface-elevated was literal oklch(100% 0 0deg) — pure #fff with
+//   no justification, the one theme whose whole premise (physical paper)
+//   should have known better. De-pure'd to oklch(99.1% 0.005 74deg) — a
+//   near-white "top sheet," never literal white, same discipline claude/pixel
+//   already apply to this token.
+// - Primary/secondary/accent were a stock "confident blue / friendly coral /
+//   fresh mint" triad with zero derivation from paper or ink (own inline
+//   comments literally said so), and the accent hue (172°) sat 2° from
+//   lavender's unrelated 170° accent — a literal swap-test failure. Re-derived
+//   from the ledger reference: primary = iron-gall ink blue-black (H258, held
+//   well under its sRGB chroma ceiling — ink is desaturated by nature, this
+//   is a deliberate restraint, not a missed numeric-fit), secondary = kraft/
+//   brass brown (H55), accent = rubber date-stamp crimson (H340, ~85% of
+//   ceiling — reads as saturated stamp-pad ink, not a pastel). All three sit
+//   ≥30° from every semantic hue and from each other; nothing here is within
+//   swap-test distance of another theme's brand color.
+// - Error base darkened (L55→L48, chroma refit to its real ceiling) — Tag
+//   renders --color-error as text directly on --color-error-bg, which scored
+//   Lc 64.6 / 4.55:1 (barely over the 4.5:1 AA floor). Now Lc 72.3 / 6.19:1.
+// - Muted/tertiary retuned off the new ink hue (was Lc 75.6, 0.6 over the
+//   Lc75 small-body floor — the tightest possible non-failing margin). Now
+//   Lc 81.1 / 7.13:1 on the new background.
+// - Semantics (success/warning/error/info) keep their original functional
+//   hues — these are "carried, not brand" per the same discipline oat's own
+//   header states; only error's L/C and every -content pairing changed to
+//   verified-in-gamut values against the new tokens.
+// - The flat, non-negative-spread, additively-stacked shadow scale (a real
+//   Material-elevation callback, distinct from this codebase's more common
+//   negative-spread "soft shadow" recipe) is kept and now credited here
+//   instead of being an uncommented accident — it's the one place the
+//   "stacked paper layers" premise shows up in a value, not just prose.
+// Accepted trade-off, same discipline as light/oat: warning-content-on-
+// warning lands at Lc 63.4 (clears the Lc60 "larger/bold UI text" floor,
+// just under the Lc75 body-text preference) — a bright-amber background
+// can't hold much darker ink without desaturating the "warning yellow"
+// identity. Unchanged from the prior pass; still the correct call.
 
 [data-theme="paper"] {
   color-scheme: light;
 
-  // Background
-  --color-background: oklch(96% 0.005 80deg);
+  --font-family-sans:    "Be Vietnam Pro", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "IBM Plex Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
 
-  // Base colors (warm paper stack)
-  --color-base-50: oklch(96% 0.005 80deg);
-  --color-base-100: oklch(94% 0.008 75deg);
-  --color-base-200: oklch(91% 0.01 70deg);
-  --color-base-300: oklch(86% 0.012 65deg);
-  --color-base-400: oklch(70% 0.015 60deg);
-  --color-base-500: oklch(55% 0.015 55deg);
-  --color-base-600: oklch(42% 0.012 50deg);
-  --color-base-700: oklch(30% 0.01 45deg);
-  --color-base-800: oklch(22% 0.008 40deg);
-  --color-base-900: oklch(15% 0.006 35deg);
-  --color-base-950: oklch(10% 0.004 30deg);
+  // Background — kraft cream, chroma-committed (was 0.005, generic off-white)
+  --color-background: oklch(97% 0.018 74deg);
 
-  // Content colors (ink on paper)
-  --color-base-content: oklch(18% 0.008 50deg);
-  --color-base-content-secondary: oklch(40% 0.01 55deg);
-  --color-base-content-tertiary: oklch(55% 0.008 60deg);
+  // Base colors (paper family) — kraft hue rotates 74°→22° as it darkens
+  // toward the ink-stained edge of the ramp; chroma stays committed
+  // throughout instead of fading to gray.
+  --color-base-50: oklch(97% 0.018 74deg);
+  --color-base-100: oklch(94% 0.024 72deg);
+  --color-base-200: oklch(90% 0.028 69deg);
+  --color-base-300: oklch(84% 0.032 65deg);
+  --color-base-400: oklch(68% 0.034 58deg);
+  --color-base-500: oklch(53% 0.030 50deg);
+  --color-base-600: oklch(41% 0.026 44deg);
+  --color-base-700: oklch(30% 0.022 38deg);
+  --color-base-800: oklch(22% 0.018 32deg);
+  --color-base-900: oklch(15% 0.014 26deg);
+  --color-base-950: oklch(10% 0.010 22deg);
 
-  // Surface colors (paper layers)
-  --color-surface: oklch(99% 0.003 85deg);
-  --color-surface-elevated: oklch(100% 0 0deg);
-  --color-surface-overlay: oklch(18% 0.008 50deg / 0.4);
+  // Content colors (ink family) — blue-black, hue held at 258° instead of
+  // following the paper hue, so ink reads as its own material against the
+  // kraft base rather than a darker shade of the same paper.
+  --color-base-content: oklch(18% 0.030 258deg);            // Lc 99.4, 17.25:1
+  --color-base-content-secondary: oklch(38% 0.024 258deg);  // Lc 87.3, 9.17:1
+  --color-base-content-tertiary: oklch(44% 0.020 258deg);   // Lc 81.1, 7.13:1
+  --color-muted: oklch(44% 0.020 258deg);                   // aliases tertiary
+  --color-text-disabled: oklch(60% 0.018 258deg);           // non-content only — Lc 60.8, 3.61:1
 
-  // Border colors (paper edge shadows)
-  --color-border: oklch(90% 0.008 70deg);
-  --color-border-hover: oklch(82% 0.012 65deg);
+  // Surface colors (paper layers) — surfaces keep the background's chroma
+  // (oat's rule: never fade to pure white). surface-elevated is a whisper
+  // above white, not literal #fff.
+  --color-surface: oklch(98.3% 0.012 74deg);
+  --color-surface-elevated: oklch(99.1% 0.005 74deg);
+  --color-surface-overlay: oklch(14% 0.035 258deg / 0.45);
 
-  // Shadow colors (paper shadow)
-  --shadow-color: oklch(50% 0.015 55deg / 0.08);
-  --shadow-color-strong: oklch(40% 0.02 50deg / 0.15);
+  // Border colors — color retuned for WCAG 1.4.11 (was Lc 20.2 / 1.45:1,
+  // failing the 3:1 non-text floor these boundaries need); width stays the
+  // house 1px hairline, only legibility changed. Hover widens further for a
+  // real, visible state change.
+  --color-border: oklch(62% 0.030 68deg);
+  --color-border-hover: oklch(54% 0.032 64deg);
 
-  // Primary (confident blue)
-  --color-primary: oklch(52% 0.16 250deg);
-  --color-primary-hover: oklch(47% 0.18 250deg);
-  --color-primary-active: oklch(42% 0.16 250deg);
-  --color-primary-content: oklch(100% 0 0deg);
+  // Shadow colors (warm kraft-ink tint, one implied light source)
+  --shadow-color: oklch(42% 0.028 52deg / 0.10);
+  --shadow-color-strong: oklch(32% 0.032 48deg / 0.18);
 
-  // Secondary (warm coral)
-  --color-secondary: oklch(65% 0.14 35deg);
-  --color-secondary-hover: oklch(60% 0.16 35deg);
-  --color-secondary-active: oklch(55% 0.14 35deg);
-  --color-secondary-content: oklch(100% 0 0deg);
+  // Primary (iron-gall ink blue-black) — chroma held well under its sRGB
+  // ceiling (~0.15 at L40) by design: ink is naturally desaturated, so this
+  // is restraint, not a missed fit. Content is the same paper-cream used
+  // across every dark semantic base, never pure white.
+  --color-primary: oklch(40% 0.095 258deg);
+  --color-primary-hover: oklch(35% 0.085 258deg);
+  --color-primary-active: oklch(30% 0.075 258deg);
+  --color-primary-content: oklch(98.5% 0.010 74deg);
 
-  // Accent (fresh mint)
-  --color-accent: oklch(72% 0.12 165deg);
-  --color-accent-hover: oklch(67% 0.14 165deg);
-  --color-accent-active: oklch(62% 0.12 165deg);
-  --color-accent-content: oklch(18% 0.04 165deg);
+  // Secondary (kraft-envelope / brass brown) — a quiet functional brown,
+  // distinct from accent's saturated crimson and from the neutral base ramp.
+  --color-secondary: oklch(46% 0.104 55deg);
+  --color-secondary-hover: oklch(40% 0.091 55deg);
+  --color-secondary-active: oklch(34% 0.079 55deg);
+  --color-secondary-content: oklch(98.5% 0.010 74deg);
 
-  // Semantic colors
-  --color-success: oklch(58% 0.14 155deg);
-  --color-success-hover: oklch(53% 0.16 155deg);
+  // Accent (rubber date-stamp crimson ink, editorial ≤2 uses/page) — hue
+  // 340°, ~85% of its in-gamut ceiling at L44. Structured dark-base +
+  // light-content like primary/secondary (a mid-tone base couldn't clear the
+  // Lc60 content floor with dark ink text at this hue — verified, not
+  // assumed). 45° from error's H25 and 175° from success's H155, so neither
+  // reads as the same color in adjacent UI. Nowhere near lavender's H170
+  // mint/teal accent (was the direct swap-test failure being fixed).
+  --color-accent: oklch(44% 0.164 340deg);
+  --color-accent-hover: oklch(38% 0.143 340deg);
+  --color-accent-active: oklch(32% 0.122 340deg);
+  --color-accent-content: oklch(98.5% 0.010 74deg);
+  --color-accent-bg: oklch(94% 0.035 340deg);
+
+  // Semantic colors — functional hues carried, not brand (same discipline as
+  // oat); L/C and -content pairings re-verified in-gamut against the new
+  // tokens.
+  // Success
+  --color-success: oklch(48% 0.11 155deg);
+  --color-success-hover: oklch(43% 0.10 155deg);
+  --color-success-active: oklch(38% 0.088 155deg);
   --color-success-bg: oklch(95% 0.03 155deg);
-  --color-success-content: oklch(100% 0 0deg);
-  --color-warning: oklch(78% 0.12 80deg);
-  --color-warning-hover: oklch(73% 0.14 80deg);
-  --color-warning-bg: oklch(96% 0.04 80deg);
-  --color-warning-content: oklch(22% 0.04 80deg);
-  --color-error: oklch(55% 0.18 25deg);
-  --color-error-hover: oklch(50% 0.2 25deg);
-  --color-error-bg: oklch(95% 0.03 25deg);
-  --color-error-content: oklch(100% 0 0deg);
-  --color-info: oklch(52% 0.14 240deg);
-  --color-info-hover: oklch(47% 0.16 240deg);
-  --color-info-bg: oklch(95% 0.03 240deg);
-  --color-info-content: oklch(100% 0 0deg);
+  --color-success-content: oklch(98.5% 0.010 74deg);
+
+  // Warning — accepted trade-off: content lands at Lc 63.4 (clears Lc60,
+  // just under the Lc75 body-text preference); a bright amber can't hold
+  // much darker ink without desaturating the "warning yellow" identity.
+  --color-warning: oklch(78% 0.14 80deg);
+  --color-warning-hover: oklch(72% 0.13 80deg);
+  --color-warning-active: oklch(66% 0.115 80deg);
+  --color-warning-bg: oklch(96% 0.032 80deg);
+  --color-warning-content: oklch(20% 0.03 80deg);
+
+  // Error — darkened off L55→L48 and rechromed to its real ceiling; Tag
+  // renders --color-error as text directly on --color-error-bg (Lc 72.3 /
+  // 6.19:1 now, was Lc 64.6 / 4.55:1 — barely over the 4.5:1 AA floor).
+  --color-error: oklch(48% 0.19 25deg);
+  --color-error-hover: oklch(43% 0.155 25deg);
+  --color-error-active: oklch(38% 0.135 25deg);
+  --color-error-bg: oklch(95% 0.022 25deg);
+  --color-error-content: oklch(98.5% 0.010 74deg);
+
+  // Info
+  --color-info: oklch(48% 0.085 225deg);
+  --color-info-hover: oklch(43% 0.075 225deg);
+  --color-info-active: oklch(38% 0.065 225deg);
+  --color-info-bg: oklch(95% 0.028 225deg);
+  --color-info-content: oklch(98.5% 0.010 74deg);
 
   // Focus ring
-  --focus-ring-color: oklch(52% 0.16 250deg / 0.35);
-
-  // Muted
-  --color-muted: oklch(55% 0.008 60deg);
+  --focus-ring-color: oklch(40% 0.095 258deg / 0.38);
 
   // ==========================================================================
   // PAPER DESIGN TOKENS
   // ==========================================================================
 
-  // Layered paper shadows (multiple stacked layers)
+  // Layered paper shadows — flat, non-negative-spread, additively-stacked
+  // (classic Material elevation math, not this codebase's more common
+  // negative-spread "soft shadow" recipe). This is the one place the
+  // "stacked paper layers" premise actually lives in a value.
   --shadow-xs:
     0 1px 1px var(--shadow-color),
-    0 2px 2px oklch(50% 0.015 55deg / 0.04);
+    0 2px 2px oklch(42% 0.028 52deg / 0.05);
   --shadow-sm:
     0 1px 2px var(--shadow-color),
-    0 2px 4px oklch(50% 0.015 55deg / 0.05),
-    0 4px 6px oklch(50% 0.015 55deg / 0.03);
+    0 2px 4px oklch(42% 0.028 52deg / 0.06),
+    0 4px 6px oklch(42% 0.028 52deg / 0.04);
   --shadow-md:
     0 2px 4px var(--shadow-color),
-    0 4px 8px oklch(50% 0.015 55deg / 0.06),
-    0 8px 12px oklch(50% 0.015 55deg / 0.04);
+    0 4px 8px oklch(42% 0.028 52deg / 0.07),
+    0 8px 12px oklch(42% 0.028 52deg / 0.05);
   --shadow-lg:
     0 4px 6px var(--shadow-color),
-    0 8px 16px oklch(50% 0.015 55deg / 0.08),
-    0 16px 24px oklch(50% 0.015 55deg / 0.05);
+    0 8px 16px oklch(42% 0.028 52deg / 0.09),
+    0 16px 24px oklch(42% 0.028 52deg / 0.06);
   --shadow-xl:
     0 6px 10px var(--shadow-color-strong),
-    0 12px 24px oklch(50% 0.015 55deg / 0.1),
-    0 24px 36px oklch(50% 0.015 55deg / 0.06);
+    0 12px 24px oklch(32% 0.032 48deg / 0.12),
+    0 24px 36px oklch(32% 0.032 48deg / 0.07);
   --shadow-2xl:
     0 8px 14px var(--shadow-color-strong),
-    0 20px 36px oklch(50% 0.015 55deg / 0.12),
-    0 36px 50px oklch(50% 0.015 55deg / 0.08);
-
-  // Soft, friendly radius
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
-  --color-text-disabled: oklch(60% 0.018 258deg);           // non-content only — Lc 60.8, 3.61:1
-  --color-accent-bg: oklch(94% 0.035 340deg);
-  --color-success-active: oklch(38% 0.088 155deg);
-  --color-warning-active: oklch(66% 0.115 80deg);
-  --color-error-active: oklch(38% 0.135 25deg);
-  --color-info-active: oklch(38% 0.065 225deg);
+    0 20px 36px oklch(32% 0.032 48deg / 0.14),
+    0 36px 50px oklch(32% 0.032 48deg / 0.09);
   --shadow-primary: 0 8px 24px 0 oklch(40% 0.095 258deg / 0.30);
   --shadow-accent: 0 8px 24px 0 oklch(44% 0.164 340deg / 0.28);
 
@@ -181,4 +268,8 @@
 
   // Soft, friendly radius
   --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
 }

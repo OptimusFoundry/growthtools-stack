@@ -7,6 +7,7 @@ import {
 	Settings,
 	Star,
 	User,
+	Users,
 } from "lucide-react";
 import { useState } from "react";
 import { List, ListGroup, ListItem } from "./List";
@@ -39,9 +40,9 @@ type Story = StoryObj<typeof List>;
 export const Default: Story = {
 	render: (args) => (
 		<List {...args}>
-			<ListItem>First item</ListItem>
-			<ListItem>Second item</ListItem>
-			<ListItem>Third item</ListItem>
+			<ListItem>Invoices</ListItem>
+			<ListItem>Payment Methods</ListItem>
+			<ListItem>Billing History</ListItem>
 		</List>
 	),
 };
@@ -79,13 +80,13 @@ export const WithLeadingIcons: Story = {
 export const WithSecondaryText: Story = {
 	render: () => (
 		<List variant="divided">
-			<ListItem leading={<User />} secondary="john@example.com">
+			<ListItem leading={<User />} secondary="john@tickuptoks.com">
 				John Doe
 			</ListItem>
-			<ListItem leading={<User />} secondary="jane@example.com">
+			<ListItem leading={<User />} secondary="jane@tickuptoks.com">
 				Jane Smith
 			</ListItem>
-			<ListItem leading={<User />} secondary="bob@example.com">
+			<ListItem leading={<User />} secondary="bob@tickuptoks.com">
 				Bob Johnson
 			</ListItem>
 		</List>
@@ -166,10 +167,10 @@ export const WithGroups: Story = {
 export const Divided: Story = {
 	render: () => (
 		<List variant="divided">
-			<ListItem>First item</ListItem>
-			<ListItem>Second item</ListItem>
-			<ListItem>Third item</ListItem>
-			<ListItem>Fourth item</ListItem>
+			<ListItem>General</ListItem>
+			<ListItem>Notifications</ListItem>
+			<ListItem>Security</ListItem>
+			<ListItem>Integrations</ListItem>
 		</List>
 	),
 };
@@ -177,9 +178,9 @@ export const Divided: Story = {
 export const Bordered: Story = {
 	render: () => (
 		<List variant="bordered">
-			<ListItem>First item</ListItem>
-			<ListItem>Second item</ListItem>
-			<ListItem>Third item</ListItem>
+			<ListItem>Weekly digest email</ListItem>
+			<ListItem>Product updates</ListItem>
+			<ListItem>Security alerts</ListItem>
 		</List>
 	),
 };
@@ -190,22 +191,22 @@ export const Sizes: Story = {
 			<div>
 				<h3 style={{ marginBottom: "0.5rem" }}>Small</h3>
 				<List size="sm" variant="bordered">
-					<ListItem leading={<File />}>Small item 1</ListItem>
-					<ListItem leading={<File />}>Small item 2</ListItem>
+					<ListItem leading={<File />}>Q3-roadmap.pdf</ListItem>
+					<ListItem leading={<File />}>brand-guidelines.fig</ListItem>
 				</List>
 			</div>
 			<div>
 				<h3 style={{ marginBottom: "0.5rem" }}>Medium</h3>
 				<List size="md" variant="bordered">
-					<ListItem leading={<File />}>Medium item 1</ListItem>
-					<ListItem leading={<File />}>Medium item 2</ListItem>
+					<ListItem leading={<File />}>Q3-roadmap.pdf</ListItem>
+					<ListItem leading={<File />}>brand-guidelines.fig</ListItem>
 				</List>
 			</div>
 			<div>
 				<h3 style={{ marginBottom: "0.5rem" }}>Large</h3>
 				<List size="lg" variant="bordered">
-					<ListItem leading={<File />}>Large item 1</ListItem>
-					<ListItem leading={<File />}>Large item 2</ListItem>
+					<ListItem leading={<File />}>Q3-roadmap.pdf</ListItem>
+					<ListItem leading={<File />}>brand-guidelines.fig</ListItem>
 				</List>
 			</div>
 		</div>
@@ -278,5 +279,82 @@ export const ComplexItems: Story = {
 				Jane Smith
 			</ListItem>
 		</List>
+	),
+};
+
+export const Showcase: Story = {
+	render: () => (
+		<div style={{ maxWidth: "360px" }}>
+			<List variant="bordered">
+				<ListGroup label="Today">
+					<ListItem
+						leading={<Mail />}
+						secondary="Your invoice #4821 is ready to download"
+						trailing={
+							<span
+								style={{
+									fontSize: "var(--font-size-xs)",
+									color: "var(--color-muted)",
+								}}
+							>
+								9:14 AM
+							</span>
+						}
+					>
+						Invoice generated
+					</ListItem>
+					<ListItem
+						leading={<Users />}
+						secondary="Marcus Webb requested access to Design System"
+						trailing={
+							<span
+								style={{
+									fontSize: "var(--font-size-xs)",
+									color: "var(--color-muted)",
+								}}
+							>
+								7:02 AM
+							</span>
+						}
+					>
+						Access request
+					</ListItem>
+				</ListGroup>
+				<ListGroup label="Earlier">
+					<ListItem
+						leading={<Settings />}
+						secondary="API key 'Production' was rotated"
+						trailing={
+							<span
+								style={{
+									fontSize: "var(--font-size-xs)",
+									color: "var(--color-muted)",
+								}}
+							>
+								Yesterday
+							</span>
+						}
+					>
+						Security update
+					</ListItem>
+					<ListItem
+						leading={<Star />}
+						secondary="Your plan upgrade to Team is complete"
+						trailing={
+							<span
+								style={{
+									fontSize: "var(--font-size-xs)",
+									color: "var(--color-muted)",
+								}}
+							>
+								2 days ago
+							</span>
+						}
+					>
+						Plan upgraded
+					</ListItem>
+				</ListGroup>
+			</List>
+		</div>
 	),
 };

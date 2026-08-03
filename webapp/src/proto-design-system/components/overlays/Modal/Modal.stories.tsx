@@ -41,12 +41,14 @@ const ModalDemo = (props: Partial<React.ComponentProps<typeof Modal>>) => {
 			<Modal
 				isOpen={isOpen}
 				onClose={() => setIsOpen(false)}
-				title="Modal Title"
+				title="Update Profile"
 				{...props}
 			>
-				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This is the modal content. You can put any content here.
-				</p>
+				{props.children ?? (
+					<p style={{ margin: 0, color: "var(--color-muted)" }}>
+						Make changes to your profile information below.
+					</p>
+				)}
 			</Modal>
 		</>
 	);
@@ -63,8 +65,8 @@ export const Default: Story = {
 export const WithDescription: Story = {
 	render: () => (
 		<ModalDemo
-			title="Modal with Description"
-			description="This is a helpful description that provides more context about what this modal is for."
+			title="Invite Teammates"
+			description="Invite people to collaborate on this workspace. They'll receive an email with a link to join."
 		/>
 	),
 };
@@ -95,8 +97,8 @@ export const WithIcon: Story = {
 		<ModalDemo
 			icon={<Info />}
 			iconVariant="info"
-			title="Information"
-			description="This is an informational message for the user."
+			title="New feature available"
+			description="Bulk export is now available on your plan. Try it from the Reports tab."
 		/>
 	),
 };
@@ -106,8 +108,8 @@ export const SuccessIcon: Story = {
 		<ModalDemo
 			icon={<CheckCircle />}
 			iconVariant="success"
-			title="Success!"
-			description="Your changes have been saved successfully."
+			title="Payment successful"
+			description="Your subscription has been upgraded to the Team plan."
 			footer={<Button>Continue</Button>}
 		/>
 	),
@@ -118,12 +120,12 @@ export const WarningIcon: Story = {
 		<ModalDemo
 			icon={<AlertTriangle />}
 			iconVariant="warning"
-			title="Warning"
-			description="This action may have unintended consequences."
+			title="Downgrade plan?"
+			description="Downgrading will disable API access and remove two team members at the end of the billing period."
 			footer={
 				<>
 					<Button variant="outline">Cancel</Button>
-					<Button>Proceed Anyway</Button>
+					<Button>Downgrade Anyway</Button>
 				</>
 			}
 		/>
@@ -135,9 +137,9 @@ export const ErrorIcon: Story = {
 		<ModalDemo
 			icon={<XCircle />}
 			iconVariant="error"
-			title="Error"
-			description="Something went wrong. Please try again."
-			footer={<Button>Try Again</Button>}
+			title="Payment failed"
+			description="We couldn't charge your card ending in 4242. Update your payment method to keep your subscription active."
+			footer={<Button>Update Payment Method</Button>}
 		/>
 	),
 };
@@ -250,18 +252,18 @@ export const FormModal: Story = {
 			const [isOpen, setIsOpen] = useState(false);
 			return (
 				<>
-					<Button onClick={() => setIsOpen(true)}>Create New</Button>
+					<Button onClick={() => setIsOpen(true)}>New Project</Button>
 					<Modal
 						isOpen={isOpen}
 						onClose={() => setIsOpen(false)}
-						title="Create New Item"
-						description="Fill in the details below to create a new item."
+						title="Create Project"
+						description="Projects group related tasks, files, and team members."
 						footer={
 							<>
 								<Button variant="outline" onClick={() => setIsOpen(false)}>
 									Cancel
 								</Button>
-								<Button onClick={() => setIsOpen(false)}>Create</Button>
+								<Button onClick={() => setIsOpen(false)}>Create Project</Button>
 							</>
 						}
 					>
@@ -270,7 +272,7 @@ export const FormModal: Story = {
 						>
 							<div>
 								<label
-									htmlFor="name"
+									htmlFor="project-name"
 									style={{
 										display: "block",
 										marginBottom: "0.5rem",
@@ -278,12 +280,12 @@ export const FormModal: Story = {
 										fontWeight: 500,
 									}}
 								>
-									Name
+									Project name
 								</label>
 								<input
-									id="name"
+									id="project-name"
 									type="text"
-									placeholder="Enter name"
+									placeholder="Q3 Marketing Launch"
 									style={{
 										width: "100%",
 										padding: "0.5rem 0.75rem",
@@ -296,7 +298,7 @@ export const FormModal: Story = {
 							</div>
 							<div>
 								<label
-									htmlFor="description"
+									htmlFor="project-description"
 									style={{
 										display: "block",
 										marginBottom: "0.5rem",
@@ -307,9 +309,9 @@ export const FormModal: Story = {
 									Description
 								</label>
 								<textarea
-									id="description"
+									id="project-description"
 									rows={3}
-									placeholder="Enter description"
+									placeholder="What is this project about?"
 									style={{
 										width: "100%",
 										padding: "0.5rem 0.75rem",

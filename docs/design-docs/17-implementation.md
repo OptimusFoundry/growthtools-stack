@@ -140,22 +140,23 @@ Keeps stroke-width consistent across the app.
 **I-6.2 — Preload critical fonts:**
 
 ```html
-<link rel="preload" href="/fonts/Fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/Geist-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/GeistMono-var.woff2" as="font" type="font/woff2" crossorigin>
 ```
 
-Only preload fonts the first paint actually uses (Fraunces display + Geist regular typically).
+Only preload fonts the first paint actually uses (Geist Sans is used for both display and body, so it's the priority; preload Geist Mono only if eyebrows render above the fold).
 
 **I-6.3 — Variable font subsetting for weights we don't use:**
 
 ```css
 @font-face {
-  font-family: "Fraunces";
-  src: url("/fonts/Fraunces-var.woff2") format("woff2-variations");
-  font-weight: 300 700;           /* only the range we render */
+  font-family: "Geist";
+  src: url("/fonts/Geist-var.woff2") format("woff2-variations");
+  font-weight: 400 700;           /* only the range we render */
 }
 ```
 
-**I-6.4 — `font-variation-settings` is a perf warning.** Each unique `fvs` string is a new text run. Stick to the 3 named variables (`--fvs-display`, `--fvs-editorial`, `--fvs-tight`).
+**I-6.4 — Only load the weights the kit actually uses.** Geist has no variation axes beyond weight — there's no `opsz`/`SOFT`-style perf trap. Keep the subset to 400 (body), 600 (card/section titles), and 700 (display/hero) so the variable-font instance stays small.
 
 ---
 
@@ -288,14 +289,6 @@ function setTheme(t) {
 
 ```jsx
 <h1 className="page-title">{t('posts.title')}</h1>
-```
-
-**I-12.2 — Italic moments survive translation.** The italic `<em>` wraps a key word; the translation must preserve that marker. Use interpolation with components:
-
-```jsx
-{t('posts.title', {
-  em: (chunks) => <em>{chunks}</em>,
-})}
 ```
 
 **I-12.3 — Numbers & dates use `Intl.*`:**

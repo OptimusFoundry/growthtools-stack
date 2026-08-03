@@ -4,7 +4,7 @@ These are Growth-Tools-specific components — not generic primitives. Use them 
 
 ## Platform post card — `.pp-card`
 
-A single social post preview — channel chip, author line, editorial body, meta stats.
+A single social post preview — channel chip, author line, post body, meta stats.
 ```html
 <div class="pp-card">
   <div class="pp-hd">
@@ -39,7 +39,7 @@ Each is 32×32, rounded, brand-colored:
 | `.th`    | Threads    | black                                                    |
 | `.re`    | Reddit     | `#FF4500`                                                |
 
-Fill the chip with a 1–2 char glyph in Fraunces 13px (`in`, `IG`, `X`, `f`, `TT`, `YT`, `@`, `r`). These brand colors are the **one** case where hex literals are OK — they're external brands.
+Fill the chip with a 1–2 char glyph in Geist 600, 13px (`in`, `IG`, `X`, `f`, `TT`, `YT`, `@`, `r`). These brand colors are the **one** case where hex literals are OK — they're external brands.
 
 ### Status dots — `.pp-stat-dot`
 Inline 6px colored circle for quick status indication in meta rows:
@@ -51,7 +51,7 @@ Inline 6px colored circle for quick status indication in meta rows:
 ```
 
 ### Post body typography
-`.pp-body` is Fraunces editorial — `opsz 40, SOFT 30, wght 400`, 14px, line-height 1.5. Feels like someone *wrote* it, not typed it.
+`.pp-body` is Geist, regular weight (400), 14px, line-height 1.5. Reads like body copy someone wrote, not a metadata field.
 
 ## Tier badge — `.tier`
 
@@ -98,10 +98,10 @@ Inverted-ink card used to nudge toward a paid plan.
 ```html
 <div class="up-prompt">
   <div class="tier creator" style="position:absolute; top:20px; right:20px;">Creator</div>
-  <div style="font-family:var(--font-display); font-variation-settings:'opsz' 144,'SOFT' 30,'wght' 500; font-size:32px; letter-spacing:-0.03em; line-height:1.05; margin-bottom:12px;">
-    Unlock <em style="font-style:italic; font-variation-settings:'opsz' 144,'SOFT' 70,'wght' 400; color:var(--accent);">unlimited</em> AI drafts.
+  <div style="font-family:var(--font-display); font-weight:700; font-size:32px; letter-spacing:-0.03em; line-height:1.05; margin-bottom:12px;">
+    Unlock <span style="color:var(--accent);">unlimited</span> AI drafts.
   </div>
-  <p style="font-family:var(--font-serif); font-variation-settings:'opsz' 40,'SOFT' 30,'wght' 400; font-size:15px; line-height:1.5; opacity:0.85; margin:0 0 20px;">
+  <p style="font-family:var(--font-sans); font-size:15px; line-height:1.5; opacity:0.85; margin:0 0 20px;">
     You've used 14 of 15 monthly drafts. Creator plans get 500 per month, plus voice matching.
   </p>
   <button class="btn accent lg">Upgrade to Creator</button>
@@ -110,8 +110,8 @@ Inverted-ink card used to nudge toward a paid plan.
 
 **The recipe:**
 - Dark ink background, near-white text
-- One italic accent moment in the headline (use `--accent`)
-- Serif body at 0.85 opacity
+- One accent-colored word in the headline (use `--accent`) to draw the eye
+- Body copy at 0.85 opacity
 - `.btn.accent` CTA — amber on dark is the signature upgrade visual
 
 ## Gated feature row
@@ -140,7 +140,7 @@ Sign-in surface (large 28px radius, shadow-xl):
 <div style="width:440px; background:var(--bg-surface); border-radius:28px; padding:40px; box-shadow:var(--shadow-xl);">
   <div class="brand-mark" style="margin-bottom:24px;">G</div>
   <h1 class="ds-h1" style="font-size:36px; margin-bottom:8px;">
-    Welcome <em style="color:var(--accent); font-style:italic; font-variation-settings:'opsz' 144,'SOFT' 70,'wght' 400;">back.</em>
+    Welcome <span style="color:var(--accent);">back.</span>
   </h1>
   <p class="ds-prose" style="font-size:15px; margin-bottom:28px;">Sign in to Growth Tools.</p>
 
@@ -160,9 +160,9 @@ Sign-in surface (large 28px radius, shadow-xl):
 
 ## Do / Don't
 ✅ Use the platform hex colors in `.pp-ch` — these are external brands
-✅ Italic moment in upgrade prompts is almost mandatory
+✅ One accent-colored word in upgrade-prompt headlines to draw the eye
 ✅ `--accent` (amber) is the "upgrade/creator" color; don't use `--primary` there
 
-❌ Rendering post body in sans — must be Fraunces editorial
+❌ Post body in a light-weight or condensed font — keep it regular-weight Geist for legibility
 ❌ Emoji in `.pp-ch` (draw the glyph in 1–2 chars instead)
 ❌ Multiple upgrade prompts on one page

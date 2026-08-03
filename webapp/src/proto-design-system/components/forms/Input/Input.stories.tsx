@@ -53,7 +53,7 @@ const meta: Meta<typeof Input> = {
 		},
 	},
 	args: {
-		placeholder: "Enter text...",
+		placeholder: "Acme Rocket Co.",
 	},
 };
 
@@ -66,7 +66,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		placeholder: "Enter your name",
+		placeholder: "Organization name",
 	},
 };
 
@@ -77,21 +77,21 @@ export const Default: Story = {
 export const Small: Story = {
 	args: {
 		size: "sm",
-		placeholder: "Small input",
+		placeholder: "Coupon code",
 	},
 };
 
 export const Medium: Story = {
 	args: {
 		size: "md",
-		placeholder: "Medium input",
+		placeholder: "Project name",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		placeholder: "Large input",
+		placeholder: "Workspace name",
 	},
 };
 
@@ -102,7 +102,7 @@ export const Large: Story = {
 export const Filled: Story = {
 	args: {
 		variant: "filled",
-		placeholder: "Filled variant",
+		placeholder: "Repository name",
 	},
 };
 
@@ -113,16 +113,16 @@ export const Filled: Story = {
 export const WithError: Story = {
 	args: {
 		isError: true,
-		placeholder: "Invalid input",
-		defaultValue: "Invalid value",
+		placeholder: "Subdomain",
+		defaultValue: "my app",
 	},
 };
 
 export const Disabled: Story = {
 	args: {
 		disabled: true,
-		placeholder: "Disabled input",
-		defaultValue: "Cannot edit",
+		placeholder: "Account ID",
+		defaultValue: "acct_9F2KQ7XLM",
 	},
 };
 
@@ -133,14 +133,14 @@ export const Disabled: Story = {
 export const WithLeftIcon: Story = {
 	args: {
 		leftElement: <Search size="1em" />,
-		placeholder: "Search...",
+		placeholder: "Search transactions...",
 	},
 };
 
 export const WithRightIcon: Story = {
 	args: {
 		rightElement: <Mail size="1em" />,
-		placeholder: "Enter email",
+		placeholder: "you@company.com",
 		type: "email",
 	},
 };
@@ -149,7 +149,7 @@ export const WithBothIcons: Story = {
 	args: {
 		leftElement: <Search size="1em" />,
 		rightElement: <X size="1em" />,
-		placeholder: "Search with clear",
+		placeholder: "Filter by customer name",
 	},
 };
 
@@ -161,7 +161,7 @@ export const EmailInput: Story = {
 	args: {
 		type: "email",
 		leftElement: <Mail size="1em" />,
-		placeholder: "you@example.com",
+		placeholder: "billing@yourcompany.com",
 	},
 };
 
@@ -169,7 +169,7 @@ export const SearchInput: Story = {
 	args: {
 		type: "search",
 		leftElement: <Search size="1em" />,
-		placeholder: "Search...",
+		placeholder: "Search invoices, customers, or plans",
 	},
 };
 
@@ -179,11 +179,12 @@ export const PasswordInput: Story = {
 		return (
 			<Input
 				type={showPassword ? "text" : "password"}
-				placeholder="Enter password"
+				placeholder="Enter your current password"
 				rightElement={
 					<button
 						type="button"
 						onClick={() => setShowPassword(!showPassword)}
+						aria-label={showPassword ? "Hide password" : "Show password"}
 						style={{
 							background: "none",
 							border: "none",
@@ -208,7 +209,7 @@ export const PasswordInput: Story = {
 export const FullWidth: Story = {
 	args: {
 		isFullWidth: true,
-		placeholder: "Full width input",
+		placeholder: "Custom domain (e.g. app.yourcompany.com)",
 	},
 	decorators: [
 		(Story) => (
@@ -233,9 +234,9 @@ export const AllSizes: Story = {
 				width: 300,
 			}}
 		>
-			<Input size="sm" placeholder="Small input" />
-			<Input size="md" placeholder="Medium input" />
-			<Input size="lg" placeholder="Large input" />
+			<Input size="sm" placeholder="Coupon code" />
+			<Input size="md" placeholder="Project name" />
+			<Input size="lg" placeholder="Workspace name" />
 		</div>
 	),
 };
@@ -250,8 +251,8 @@ export const AllVariants: Story = {
 				width: 300,
 			}}
 		>
-			<Input variant="default" placeholder="Default variant" />
-			<Input variant="filled" placeholder="Filled variant" />
+			<Input variant="default" placeholder="Team name" />
+			<Input variant="filled" placeholder="Slack channel" />
 		</div>
 	),
 };
@@ -266,9 +267,9 @@ export const AllStates: Story = {
 				width: 300,
 			}}
 		>
-			<Input placeholder="Normal state" />
-			<Input isError placeholder="Error state" />
-			<Input disabled placeholder="Disabled state" />
+			<Input placeholder="Repository URL" />
+			<Input isError placeholder="Subdomain" defaultValue="my app" />
+			<Input disabled placeholder="Account ID" defaultValue="acct_9F2KQ7XLM" />
 		</div>
 	),
 };
@@ -294,9 +295,9 @@ export const Showcase: Story = {
 						width: 280,
 					}}
 				>
-					<Input size="sm" placeholder="Small" />
-					<Input size="md" placeholder="Medium" />
-					<Input size="lg" placeholder="Large" />
+					<Input size="sm" placeholder="Coupon code" />
+					<Input size="md" placeholder="Project name" />
+					<Input size="lg" placeholder="Workspace name" />
 				</div>
 			</div>
 
@@ -318,10 +319,13 @@ export const Showcase: Story = {
 						width: 280,
 					}}
 				>
-					<Input leftElement={<Search size="1em" />} placeholder="Search..." />
+					<Input
+						leftElement={<Search size="1em" />}
+						placeholder="Search customers..."
+					/>
 					<Input
 						leftElement={<Mail size="1em" />}
-						placeholder="Email"
+						placeholder="billing@yourcompany.com"
 						type="email"
 					/>
 				</div>
@@ -345,9 +349,13 @@ export const Showcase: Story = {
 						width: 280,
 					}}
 				>
-					<Input placeholder="Default" />
-					<Input isError placeholder="Error" defaultValue="Invalid" />
-					<Input disabled placeholder="Disabled" />
+					<Input placeholder="Repository URL" />
+					<Input isError placeholder="Subdomain" defaultValue="my app" />
+					<Input
+						disabled
+						placeholder="Account ID"
+						defaultValue="acct_9F2KQ7XLM"
+					/>
 				</div>
 			</div>
 		</div>

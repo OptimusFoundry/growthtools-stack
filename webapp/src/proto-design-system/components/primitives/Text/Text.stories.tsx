@@ -105,7 +105,7 @@ const meta: Meta<typeof Text> = {
 		},
 	},
 	args: {
-		children: "The quick brown fox jumps over the lazy dog.",
+		children: "Your subscription renews on August 14, 2026.",
 	},
 };
 
@@ -118,7 +118,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		children: "The quick brown fox jumps over the lazy dog.",
+		children: "Your subscription renews on August 14, 2026.",
 	},
 };
 
@@ -129,63 +129,63 @@ export const Default: Story = {
 export const ExtraSmall: Story = {
 	args: {
 		size: "xs",
-		children: "Extra small text (xs)",
+		children: "Last synced 2 minutes ago",
 	},
 };
 
 export const Small: Story = {
 	args: {
 		size: "sm",
-		children: "Small text (sm)",
+		children: "We'll email you a receipt after checkout.",
 	},
 };
 
 export const Medium: Story = {
 	args: {
 		size: "md",
-		children: "Medium text (md) - Default",
+		children: "Invite teammates to collaborate on this workspace.",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		children: "Large text (lg)",
+		children: "Set up billing to unlock unlimited projects.",
 	},
 };
 
 export const ExtraLarge: Story = {
 	args: {
 		size: "xl",
-		children: "Extra large text (xl)",
+		children: "Everything your team needs to ship faster.",
 	},
 };
 
 export const Size2XL: Story = {
 	args: {
 		size: "2xl",
-		children: "2XL text size",
+		children: "Simple pricing, no surprises.",
 	},
 };
 
 export const Size3XL: Story = {
 	args: {
 		size: "3xl",
-		children: "3XL text size",
+		children: "Built for growing teams.",
 	},
 };
 
 export const Size4XL: Story = {
 	args: {
 		size: "4xl",
-		children: "4XL text size",
+		children: "Ship your product faster.",
 	},
 };
 
 export const Size5XL: Story = {
 	args: {
 		size: "5xl",
-		children: "5XL text",
+		children: "Launchpad",
 	},
 };
 
@@ -196,28 +196,28 @@ export const Size5XL: Story = {
 export const WeightNormal: Story = {
 	args: {
 		weight: "normal",
-		children: "Normal weight text",
+		children: "Cancel anytime, no questions asked.",
 	},
 };
 
 export const WeightMedium: Story = {
 	args: {
 		weight: "medium",
-		children: "Medium weight text",
+		children: "Upgrade to Pro",
 	},
 };
 
 export const WeightSemibold: Story = {
 	args: {
 		weight: "semibold",
-		children: "Semibold weight text",
+		children: "Payment method updated",
 	},
 };
 
 export const WeightBold: Story = {
 	args: {
 		weight: "bold",
-		children: "Bold weight text",
+		children: "Action required: verify your email",
 	},
 };
 
@@ -228,42 +228,42 @@ export const WeightBold: Story = {
 export const ColorDefault: Story = {
 	args: {
 		color: "default",
-		children: "Default color text",
+		children: "Your API key was created successfully.",
 	},
 };
 
 export const ColorMuted: Story = {
 	args: {
 		color: "muted",
-		children: "Muted color text",
+		children: "Last updated by Priya Nair, 3 hours ago",
 	},
 };
 
 export const ColorPrimary: Story = {
 	args: {
 		color: "primary",
-		children: "Primary color text",
+		children: "View full billing history",
 	},
 };
 
 export const ColorSuccess: Story = {
 	args: {
 		color: "success",
-		children: "Success color text",
+		children: "Webhook delivered successfully",
 	},
 };
 
 export const ColorWarning: Story = {
 	args: {
 		color: "warning",
-		children: "Warning color text",
+		children: "Your trial ends in 3 days",
 	},
 };
 
 export const ColorError: Story = {
 	args: {
 		color: "error",
-		children: "Error color text",
+		children: "Payment failed — update your card to avoid service interruption",
 	},
 };
 
@@ -276,7 +276,7 @@ export const Heading1: Story = {
 		as: "h1",
 		size: "5xl",
 		weight: "bold",
-		children: "Heading 1",
+		children: "Billing & subscription",
 	},
 };
 
@@ -285,7 +285,7 @@ export const Heading2: Story = {
 		as: "h2",
 		size: "4xl",
 		weight: "bold",
-		children: "Heading 2",
+		children: "Team members",
 	},
 };
 
@@ -294,7 +294,7 @@ export const Heading3: Story = {
 		as: "h3",
 		size: "3xl",
 		weight: "semibold",
-		children: "Heading 3",
+		children: "API keys",
 	},
 };
 
@@ -303,7 +303,7 @@ export const Heading4: Story = {
 		as: "h4",
 		size: "2xl",
 		weight: "semibold",
-		children: "Heading 4",
+		children: "Danger zone",
 	},
 };
 
@@ -314,8 +314,7 @@ export const Heading4: Story = {
 export const Truncate: Story = {
 	args: {
 		truncate: true,
-		children:
-			"This is a very long text that will be truncated with an ellipsis when it exceeds the available width of its container.",
+		children: "Q3-2026-financial-summary-final-v2-reviewed-by-finance-team.pdf",
 	},
 	decorators: [
 		(Story) => (
@@ -330,7 +329,7 @@ export const LineClamp2: Story = {
 	args: {
 		lineClamp: 2,
 		children:
-			"This is a multi-line text that will be clamped to 2 lines. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+			"Launchpad gives your team everything it needs to ship a production SaaS on day one — authentication, billing, team accounts, API keys, webhooks, and a Kafka event backbone, all wired together out of the box.",
 	},
 	decorators: [
 		(Story) => (
@@ -345,7 +344,7 @@ export const LineClamp3: Story = {
 	args: {
 		lineClamp: 3,
 		children:
-			"This is a multi-line text that will be clamped to 3 lines. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+			"When you upgrade to the Growth plan, you get unlimited team members, priority support with a 4-hour response SLA, custom webhook retries, and access to our audit log export — everything you need as your usage scales past the Starter tier.",
 	},
 	decorators: [
 		(Story) => (
@@ -362,22 +361,23 @@ export const LineClamp3: Story = {
 
 export const Italic: Story = {
 	args: {
+		as: "em",
 		italic: true,
-		children: "This text is italic",
+		children: "Note: this action cannot be undone.",
 	},
 };
 
 export const Underline: Story = {
 	args: {
 		underline: true,
-		children: "This text is underlined",
+		children: "Terms of Service",
 	},
 };
 
 export const Strikethrough: Story = {
 	args: {
 		strikethrough: true,
-		children: "This text has strikethrough",
+		children: "$49/month",
 	},
 };
 
@@ -388,14 +388,16 @@ export const Strikethrough: Story = {
 export const Uppercase: Story = {
 	args: {
 		transform: "uppercase",
-		children: "uppercase text",
+		size: "xs",
+		weight: "medium",
+		children: "Current plan",
 	},
 };
 
 export const Capitalize: Story = {
 	args: {
 		transform: "capitalize",
-		children: "capitalized text example",
+		children: "workspace settings",
 	},
 };
 
@@ -464,37 +466,37 @@ export const TypographyScale: Story = {
 		>
 			<div>
 				<Text as="h1" size="4xl" weight="bold">
-					Page Title
+					Billing & subscription
 				</Text>
 				<Text color="muted" size="lg">
-					A brief description or subtitle for the page
+					Manage your plan, payment methods, and invoices
 				</Text>
 			</div>
 
 			<div>
 				<Text as="h2" size="2xl" weight="semibold">
-					Section Heading
+					Current plan
 				</Text>
 				<Text>
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-					eiusmod tempor incididunt ut labore et dolore magna aliqua.
+					You're on the Growth plan at $79/month, billed monthly. Your next
+					invoice is scheduled for August 14, 2026.
 				</Text>
 			</div>
 
 			<div>
 				<Text as="h3" size="xl" weight="semibold">
-					Subsection Heading
+					Payment method
 				</Text>
 				<Text size="sm" color="muted">
-					Helper text or additional context in a smaller, muted style.
+					Visa ending in 4242, expires 09/28
 				</Text>
 			</div>
 
 			<div>
 				<Text size="xs" color="muted" transform="uppercase" weight="medium">
-					Label Text
+					Billing email
 				</Text>
-				<Text>Regular body text that follows a label.</Text>
+				<Text>billing@acmecorp.com</Text>
 			</div>
 		</div>
 	),
@@ -506,28 +508,28 @@ export const TypographyScale: Story = {
 export const SemanticElements: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-			<Text as="p">Paragraph element (p)</Text>
-			<Text as="span">Span element (span)</Text>
+			<Text as="p">Paragraph: Your changes have been saved.</Text>
+			<Text as="span">Span: inline status indicator</Text>
 			<Text as="strong" weight="bold">
-				Strong element (strong)
+				Strong: Action required
 			</Text>
 			<Text as="em" italic>
-				Emphasis element (em)
+				Emphasis: this cannot be undone
 			</Text>
 			<Text as="small" size="sm">
-				Small element (small)
+				Small: Terms apply
 			</Text>
 			<Text as="del" strikethrough>
-				Deleted element (del)
+				Deleted: $49/month
 			</Text>
 			<Text
 				as="mark"
 				style={{ backgroundColor: "var(--color-warning)", padding: "0 4px" }}
 			>
-				Mark element (mark)
+				Mark: trial ends in 3 days
 			</Text>
 			<Text as="code" style={{ fontFamily: "var(--font-family-mono)" }}>
-				Code element (code)
+				Code: sk_live_51H8...
 			</Text>
 		</div>
 	),

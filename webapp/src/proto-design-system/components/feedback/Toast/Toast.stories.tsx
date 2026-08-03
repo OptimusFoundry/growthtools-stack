@@ -25,32 +25,32 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		title: "Notification",
-		children: "This is a default toast notification.",
+		title: "New comment",
+		children: "Priya mentioned you on the Q3 roadmap doc.",
 	},
 };
 
 export const Success: Story = {
 	args: {
 		variant: "success",
-		title: "Success",
-		children: "Your changes have been saved.",
+		title: "Changes saved",
+		children: "Your billing details have been updated.",
 	},
 };
 
 export const Warning: Story = {
 	args: {
 		variant: "warning",
-		title: "Warning",
-		children: "Your session is about to expire.",
+		title: "Session expiring",
+		children: "You'll be signed out in 5 minutes due to inactivity.",
 	},
 };
 
 export const ErrorVariant: Story = {
 	args: {
 		variant: "error",
-		title: "Error",
-		children: "Failed to save changes. Please try again.",
+		title: "Save failed",
+		children: "Could not update your workspace name. Please try again.",
 	},
 };
 
@@ -60,22 +60,22 @@ export const ErrorVariant: Story = {
 
 export const WithoutTitle: Story = {
 	args: {
-		children: "This is a toast without a title.",
+		children: "Preferences updated.",
 	},
 };
 
 export const NotClosable: Story = {
 	args: {
-		title: "Processing",
+		title: "Deploying to production",
 		closable: false,
-		children: "Please wait while we process your request...",
+		children: "Build #482 is being deployed. This usually takes 2 minutes.",
 	},
 };
 
 export const WithAction: Story = {
 	args: {
-		title: "File deleted",
-		children: "The file has been moved to trash.",
+		title: "Invoice deleted",
+		children: "Draft invoice #INV-1042 has been removed.",
 		action: (
 			<button
 				type="button"
@@ -101,17 +101,17 @@ export const WithAction: Story = {
 export const AllVariants: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-			<Toast variant="default" title="Info">
-				Default notification message.
+			<Toast variant="default" title="New comment">
+				Priya mentioned you on the Q3 roadmap doc.
 			</Toast>
-			<Toast variant="success" title="Success">
-				Operation completed successfully.
+			<Toast variant="success" title="Payment successful">
+				Your subscription has been renewed.
 			</Toast>
-			<Toast variant="warning" title="Warning">
-				Please review before continuing.
+			<Toast variant="warning" title="Approaching plan limit">
+				You've used 90% of your monthly API quota.
 			</Toast>
-			<Toast variant="error" title="Error">
-				Something went wrong.
+			<Toast variant="error" title="Export failed">
+				The report could not be generated. Please try again.
 			</Toast>
 		</div>
 	),
@@ -128,11 +128,11 @@ export const InContainer: Story = {
 			}}
 		>
 			<ToastContainer position="bottom-right">
-				<Toast variant="success" title="Saved">
-					Your document has been saved.
+				<Toast variant="success" title="Invite sent">
+					An invitation was sent to jordan@acme.com.
 				</Toast>
 				<Toast variant="default" title="New message">
-					You have a new message from John.
+					You have a new message from the support team.
 				</Toast>
 			</ToastContainer>
 		</div>
@@ -147,7 +147,7 @@ export const RealWorldExamples: Story = {
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 			<Toast
 				variant="success"
-				title="Email sent"
+				title="Payment successful"
 				action={
 					<button
 						type="button"
@@ -160,17 +160,49 @@ export const RealWorldExamples: Story = {
 							fontSize: "0.875rem",
 						}}
 					>
-						View
+						View receipt
 					</button>
 				}
 			>
-				Your email has been sent successfully.
+				Your payment of $49.00 for the Growth plan was processed.
 			</Toast>
 			<Toast variant="error" title="Connection lost">
-				Unable to connect to the server. Retrying...
+				Unable to reach the server. Retrying in the background...
 			</Toast>
 			<Toast variant="warning" title="Storage almost full">
-				You have used 90% of your storage quota.
+				You've used 90% of your 50 GB storage quota.
+			</Toast>
+		</div>
+	),
+};
+
+export const FormSubmitStack: Story = {
+	name: "Showcase — Toasts After Form Submit",
+	render: () => (
+		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+			<Toast variant="success" title="Profile updated">
+				Your display name and avatar have been saved.
+			</Toast>
+			<Toast
+				variant="warning"
+				title="Email not verified"
+				action={
+					<button
+						type="button"
+						style={{
+							background: "none",
+							border: "none",
+							color: "var(--color-primary)",
+							cursor: "pointer",
+							fontWeight: 600,
+							fontSize: "0.875rem",
+						}}
+					>
+						Resend
+					</button>
+				}
+			>
+				Verify your new email address to keep receiving billing alerts.
 			</Toast>
 		</div>
 	),

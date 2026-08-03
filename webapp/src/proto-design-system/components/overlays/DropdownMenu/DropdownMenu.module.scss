@@ -52,12 +52,12 @@
 
     .sublabel {
       color: var(--color-primary-content);
-      opacity: 0.8;
+      opacity: var(--opacity-loading);
     }
 
     .shortcut {
       color: var(--color-primary-content);
-      opacity: 0.8;
+      opacity: var(--opacity-loading);
     }
   }
 
@@ -76,27 +76,10 @@
 // SIZES
 // =============================================================================
 
-.sm .item {
+.size-sm .item {
   font-size: var(--font-size-xs);
   min-height: var(--space-5);
   padding: var(--space-1) var(--space-2);
-
-  .leftIcon svg,
-  .rightIcon svg {
-    height: var(--space-3-5);
-    width: var(--space-3-5);
-  }
-
-  .checkbox svg {
-    height: var(--space-3);
-    width: var(--space-3);
-  }
-}
-
-.md .item {
-  font-size: var(--font-size-sm);
-  min-height: var(--space-6);
-  padding: var(--space-1-5) var(--space-3);
 
   .leftIcon svg,
   .rightIcon svg {
@@ -105,12 +88,29 @@
   }
 
   .checkbox svg {
-    height: var(--space-3-5);
-    width: var(--space-3-5);
+    height: var(--space-3);
+    width: var(--space-3);
   }
 }
 
-.lg .item {
+.size-md .item {
+  font-size: var(--font-size-sm);
+  min-height: var(--space-6);
+  padding: var(--space-2) var(--space-3);
+
+  .leftIcon svg,
+  .rightIcon svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+
+  .checkbox svg {
+    height: var(--space-4);
+    width: var(--space-4);
+  }
+}
+
+.size-lg .item {
   font-size: var(--font-size-base);
   min-height: var(--space-7);
   padding: var(--space-2) var(--space-4);
@@ -165,7 +165,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-0-5);
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -175,14 +175,14 @@
 
 .sublabel {
   color: var(--color-base-content-secondary);
-  font-size: 0.85em;
+  font-size: var(--font-size-xs);
   line-height: var(--line-height-tight);
 }
 
 .shortcut {
   color: var(--color-base-content-tertiary);
   flex-shrink: 0;
-  font-size: 0.8em;
+  font-size: var(--font-size-xs);
   margin-left: auto;
 }
 

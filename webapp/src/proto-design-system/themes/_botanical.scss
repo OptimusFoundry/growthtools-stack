@@ -2,16 +2,27 @@
 // BOTANICAL THEME
 // =============================================================================
 // Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
-
-@import "https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap";
+// Motion: organic/unhurried — growth, not mechanism. The palette is soft
+// moss/terracotta with warm-tinted, gently-blurred shadows (no hard edges
+// anywhere in the color or shadow ladder), so entrances read as something
+// unfurling rather than snapping into place, and springs settle the way a
+// stem or leaf comes to rest — smoothly, without a rubbery bounce-back.
+// Five coherent overrides, everything else stays house default (see each
+// token below for why):
+// - --duration-fast (hover, 150ms) and --duration-instant (focus ring, 0ms)
+//   are untouched per the hard rule — hover feedback stays crisp and direct
+//   even as the theme's compositional reveals breathe a little longer.
 
 [data-theme="botanical"] {
   color-scheme: light;
 
-  --font-family-sans:    "Lora", georgia, serif;
-  --font-family-mono:    "DM Mono", "SF Mono", monospace;
-  --font-family-serif:   "Lora", georgia, serif;
-  --font-family-display: "DM Serif Display", "Fraunces", georgia, serif;
+  // 2026-07-16: replaced Lora (serif) with Jost — a geometric, Art-Deco-
+  // inflected sans with the same warm elegance the brief wants, without
+  // reintroducing a serif face. Mono unchanged.
+  --font-family-sans:    "Jost", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "DM Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
   --color-background: oklch(93% 0.028 85deg);
   --color-base-50: oklch(96% 0.020 85deg);
   --color-base-100: oklch(91% 0.030 85deg);
@@ -27,11 +38,12 @@
   --color-base-content: oklch(22% 0.05 145deg);
   --color-base-content-secondary: oklch(32% 0.05 145deg);
   --color-base-content-tertiary: oklch(48% 0.04 140deg);
-  --color-muted: oklch(62% 0.03 135deg);
+  --color-muted: oklch(55% 0.03 135deg);
+  --color-text-disabled: oklch(70% 0.025 130deg);
   --color-surface: oklch(96% 0.020 85deg);
   --color-surface-elevated: oklch(98% 0.015 85deg);
   --color-surface-overlay: oklch(0% 0 0deg / 0.5);
-  --color-border: oklch(84% 0.030 90deg);
+  --color-border: oklch(80% 0.030 90deg);
   --color-border-hover: oklch(48% 0.080 140deg);
   --color-primary: oklch(42% 0.10 145deg);
   --color-primary-hover: oklch(36% 0.12 145deg);
@@ -51,11 +63,11 @@
   --color-success-active: oklch(47% 0.14 145deg);
   --color-success-bg: oklch(90% 0.035 145deg);
   --color-success-content: oklch(96% 0.020 85deg);
-  --color-warning: oklch(70% 0.15 65deg);
-  --color-warning-hover: oklch(78% 0.15 65deg);
-  --color-warning-active: oklch(62% 0.15 65deg);
+  --color-warning: oklch(77% 0.15 65deg);
+  --color-warning-hover: oklch(68% 0.15 65deg);
+  --color-warning-active: oklch(60% 0.13 65deg);
   --color-warning-bg: oklch(93% 0.040 65deg);
-  --color-warning-content: oklch(24% 0.06 65deg);
+  --color-warning-content: oklch(16% 0.04 65deg);
   --color-error: oklch(50% 0.18 25deg);
   --color-error-hover: oklch(58% 0.18 25deg);
   --color-error-active: oklch(42% 0.18 25deg);
@@ -77,10 +89,6 @@
   --shadow-accent: 0 8px 24px 0 oklch(62% 0.12 15deg / 0.30);
   --focus-ring-color: oklch(42% 0.10 145deg / 0.3);
   --color-header-bg: var(--color-base-100);
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
-  --color-text-disabled: oklch(70% 0.025 130deg);
 
   // Motion (see header rationale). --ease-out and --spring-slow are left at
   // house defaults on purpose: house's ease-out-quad is already the soft

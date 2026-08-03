@@ -42,7 +42,7 @@ VITE_API_URL=http://localhost:3000
 
 ## Docs
 
-- **[UI kit design language](../docs/design-docs/)** — **read first for any new page or component.** Editorial serif-forward system (Fraunces + Geist). Start with `00-overview.md`, then numbered docs in order. `12-judgment.md`, `19-typography-decisions.md`, `20-spacing-decisions.md` are the prescriptive decision guides; `18-review.md` is the PR rubric.
+- **[UI kit design language](../docs/design-docs/)** — **read first for any new page or component.** Geist-only design system. Start with `00-overview.md`, then numbered docs in order. `12-judgment.md`, `19-typography-decisions.md`, `20-spacing-decisions.md` are the prescriptive decision guides; `18-review.md` is the PR rubric.
 - [Architecture & module patterns](docs/ARCHITECTURE.md) — feature structure, routes, hooks, API layer
 - [Component patterns](docs/COMPONENT-PATTERNS.md) — React 19 patterns, SCSS template, Storybook
 - [React 19 patterns](docs/REACT19-PATTERNS.md) — new APIs, deprecated patterns, testing

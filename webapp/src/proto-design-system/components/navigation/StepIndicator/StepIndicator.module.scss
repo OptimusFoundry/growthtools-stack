@@ -160,9 +160,9 @@
 
 .active {
   .indicator {
-    background-color: var(--color-info);
-    border-color: var(--color-info);
-    color: var(--color-info-content);
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
   }
 
   .label {
@@ -201,7 +201,7 @@
 .labelWrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--space-0-5);
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -219,7 +219,7 @@
 // SIZES
 // =============================================================================
 
-.sm {
+.size-sm {
   .indicator {
     font-size: var(--font-size-xs);
     height: var(--space-5);
@@ -232,7 +232,7 @@
   }
 
   .label {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
   }
 
   .description {
@@ -240,7 +240,7 @@
   }
 }
 
-.md {
+.size-md {
   .indicator {
     font-size: var(--font-size-sm);
     height: var(--space-6);
@@ -253,7 +253,7 @@
   }
 
   .label {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
   }
 
   .description {
@@ -261,7 +261,7 @@
   }
 }
 
-.lg {
+.size-lg {
   .indicator {
     font-size: var(--font-size-base);
     height: var(--space-7);
@@ -274,7 +274,7 @@
   }
 
   .label {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-base);
   }
 
   .description {

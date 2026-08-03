@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ComponentType, ReactNode } from "react";
 import { forwardRef } from "react";
 import { cn } from "../../../utils/cn";
 import styles from "./Link.module.scss";
@@ -19,6 +19,23 @@ export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
 	rightIcon?: ReactNode;
 	/** Link content */
 	children?: ReactNode;
+	/**
+	 * Optional router-aware link component (e.g. TanStack Router's `Link`).
+	 * When provided, renders this instead of a plain `<a>` and forwards
+	 * `to` / `className` / `target` / `rel` so client-side navigation works.
+	 */
+	LinkComponent?: ComponentType<{
+		to: string;
+		className?: string;
+		target?: string;
+		rel?: string;
+		children: ReactNode;
+	}>;
+	/**
+	 * Internal route path. Required when `LinkComponent` is provided;
+	 * otherwise `href` is used.
+	 */
+	to?: string;
 }
 
 /**
@@ -27,7 +44,7 @@ export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
  * @example
  * ```tsx
  * <Link href="/about">About us</Link>
- * <Link href="https://example.com" target="_blank" rightIcon={<ExternalLink size="1em" />}>
+ * <Link href="https://tickuptoks.com" target="_blank" rightIcon={<ExternalLink size="1em" />}>
  *   Visit website
  * </Link>
  * ```
@@ -45,6 +62,8 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 			href,
 			target,
 			rel,
+			LinkComponent,
+			to,
 			...props
 		},
 		ref,
@@ -52,7 +71,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 		const linkClasses = cn(
 			styles.link,
 			styles[variant],
-			styles[size],
+			styles[`size-${size}`],
 			underlineOnHover && styles.underlineOnHover,
 			className,
 		);
@@ -61,15 +80,8 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 		const safeRel =
 			target === "_blank" ? `${rel || ""} noopener noreferrer`.trim() : rel;
 
-		return (
-			<a
-				ref={ref}
-				href={href}
-				target={target}
-				rel={safeRel}
-				className={linkClasses}
-				{...props}
-			>
+		const content = (
+			<>
 				{leftIcon && (
 					<span className={styles.icon} aria-hidden="true">
 						{leftIcon}
@@ -81,6 +93,32 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 						{rightIcon}
 					</span>
 				)}
+			</>
+		);
+
+		if (LinkComponent && to) {
+			return (
+				<LinkComponent
+					to={to}
+					className={linkClasses}
+					target={target}
+					rel={safeRel}
+				>
+					{content}
+				</LinkComponent>
+			);
+		}
+
+		return (
+			<a
+				ref={ref}
+				href={href}
+				target={target}
+				rel={safeRel}
+				className={linkClasses}
+				{...props}
+			>
+				{content}
 			</a>
 		);
 	},

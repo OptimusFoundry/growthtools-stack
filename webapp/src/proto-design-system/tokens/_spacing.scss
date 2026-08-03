@@ -2,10 +2,10 @@
 // SPACING TOKENS
 // =============================================================================
 // Editorial-scale spacing — airier than a standard 8px grid at the
-// medium/large steps. Uses a hybrid 4 + 8 + editorial-bumped rhythm:
+// medium/large steps. Uses a 4px base + 8px rhythm:
 //   0 · 4 · 8 · 12 · 16 · 24 · 32 · 40 · 48 · 64 · 80 · 112 · 144 · 192
-// The small steps (0.5–2) stay on the 8px grid for dense UI.
 // The medium steps (5–8) are bumped for generous editorial breathing room.
+// Half-steps (0.5, 1.5, 2.5, 3.5) are retired — use the nearest whole step.
 
 :root {
 	// Base unit ---------------------------------------------------------------
@@ -14,13 +14,9 @@
 	// Core scale — editorial rhythm -------------------------------------------
 	--space-0:   0;
 	--space-px:  1px;
-	--space-0-5: 2px;
 	--space-1:   4px;
-	--space-1-5: 6px;
 	--space-2:   8px;
-	--space-2-5: 10px;
 	--space-3:   12px;
-	--space-3-5: 14px;
 	--space-4:   16px;
 	--space-5:   24px;    // bumped from 20 for editorial air
 	--space-6:   32px;    // bumped from 24
@@ -71,8 +67,8 @@
 	--gap-xl: var(--space-8);
 
 	// Page-level layout tokens (Phase 0.6) ----------------------------------------
-	// Stable canonical values for all PageShell instances. Gutter kept at 24px
-	// (var(--space-5)) to avoid any visual regression on existing pages.
+	// Stable canonical values for all PageShell instances. Per decision D,
+	// the gutter is kept at 24px (var(--space-5)) to avoid any visual regression.
 	--page-max-width:        var(--max-width-7xl);   // 1280px  (default variant)
 	--page-max-width-narrow: var(--max-width-5xl);   // 1024px  (narrow variant)
 	--page-gutter-x:         var(--space-5);          // 24px  — sides

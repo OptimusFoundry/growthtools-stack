@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ArrowRight, ExternalLink, FileText } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Download, FileText } from "lucide-react";
 import { LinkButton } from "./LinkButton";
 
 const meta: Meta<typeof LinkButton> = {
@@ -52,8 +52,8 @@ const meta: Meta<typeof LinkButton> = {
 		},
 	},
 	args: {
-		href: "#",
-		children: "Link Button",
+		href: "/pricing",
+		children: "View pricing",
 	},
 };
 
@@ -67,7 +67,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	args: {
 		variant: "default",
-		children: "Default Link",
+		href: "/dashboard",
+		children: "Go to dashboard",
 	},
 };
 
@@ -78,28 +79,32 @@ export const Default: Story = {
 export const Primary: Story = {
 	args: {
 		variant: "primary",
-		children: "Primary Link",
+		href: "/signup",
+		children: "Start free trial",
 	},
 };
 
 export const Secondary: Story = {
 	args: {
 		variant: "secondary",
-		children: "Secondary Link",
+		href: "/pricing",
+		children: "Compare plans",
 	},
 };
 
 export const Ghost: Story = {
 	args: {
 		variant: "ghost",
-		children: "Ghost Link",
+		href: "/docs",
+		children: "Read the docs",
 	},
 };
 
 export const Outline: Story = {
 	args: {
 		variant: "outline",
-		children: "Outline Link",
+		href: "/changelog",
+		children: "View changelog",
 	},
 };
 
@@ -109,24 +114,37 @@ export const Outline: Story = {
 
 export const WithLeftIcon: Story = {
 	args: {
+		href: "/docs/getting-started",
 		leftIcon: <FileText size="1em" />,
-		children: "Documentation",
+		children: "Getting started guide",
 	},
 };
 
 export const WithRightIcon: Story = {
 	args: {
+		variant: "primary",
+		href: "/signup",
 		rightIcon: <ArrowRight size="1em" />,
-		children: "Learn More",
+		children: "Create your account",
 	},
 };
 
 export const ExternalLinkExample: Story = {
 	args: {
-		href: "https://example.com",
+		variant: "outline",
+		href: "https://github.com/launchpad-hq/launchpad",
 		target: "_blank",
-		rightIcon: <ExternalLink size="1em" />,
-		children: "Visit Website",
+		rightIcon: <ArrowUpRight size="1em" />,
+		children: "Star on GitHub",
+	},
+};
+
+export const DownloadExample: Story = {
+	args: {
+		variant: "secondary",
+		href: "/invoices/inv_2026_0731.pdf",
+		leftIcon: <Download size="1em" />,
+		children: "Download invoice",
 	},
 };
 
@@ -137,14 +155,17 @@ export const ExternalLinkExample: Story = {
 export const Small: Story = {
 	args: {
 		size: "sm",
-		children: "Small Link",
+		href: "/settings/billing",
+		children: "Manage billing",
 	},
 };
 
 export const Large: Story = {
 	args: {
 		size: "lg",
-		children: "Large Link",
+		variant: "primary",
+		href: "/signup",
+		children: "Get started for free",
 	},
 };
 
@@ -162,46 +183,88 @@ export const AllVariants: Story = {
 				flexWrap: "wrap",
 			}}
 		>
-			<LinkButton variant="default" href="#">
-				Default
+			<LinkButton variant="default" href="/dashboard">
+				Dashboard
 			</LinkButton>
-			<LinkButton variant="primary" href="#">
-				Primary
+			<LinkButton variant="primary" href="/signup">
+				Sign up
 			</LinkButton>
-			<LinkButton variant="secondary" href="#">
-				Secondary
+			<LinkButton variant="secondary" href="/pricing">
+				Pricing
 			</LinkButton>
-			<LinkButton variant="ghost" href="#">
-				Ghost
+			<LinkButton variant="ghost" href="/docs">
+				Docs
 			</LinkButton>
-			<LinkButton variant="outline" href="#">
-				Outline
+			<LinkButton variant="outline" href="/changelog">
+				Changelog
 			</LinkButton>
 		</div>
 	),
 };
 
-export const NavigationExample: Story = {
+export const Showcase: Story = {
+	name: "Showcase: Pricing card footer",
 	render: () => (
-		<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-			<LinkButton variant="ghost" href="#" leftIcon={<FileText size="1em" />}>
-				Docs
-			</LinkButton>
-			<LinkButton
-				variant="primary"
-				href="#"
-				rightIcon={<ArrowRight size="1em" />}
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "2rem",
+				width: "320px",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "column",
+					gap: "0.75rem",
+					padding: "1.5rem",
+					border: "1px solid var(--color-border)",
+					borderRadius: "var(--radius-lg)",
+				}}
 			>
-				Get Started
-			</LinkButton>
-			<LinkButton
-				variant="outline"
-				href="https://github.com"
-				target="_blank"
-				rightIcon={<ExternalLink size="1em" />}
+				<p style={{ fontSize: "0.875rem", color: "var(--color-muted)" }}>
+					Growth plan — $79/month
+				</p>
+				<LinkButton
+					variant="primary"
+					href="/signup?plan=growth"
+					rightIcon={<ArrowRight size="1em" />}
+				>
+					Start 14-day trial
+				</LinkButton>
+				<LinkButton variant="ghost" size="sm" href="/pricing#growth">
+					See what's included
+				</LinkButton>
+			</div>
+
+			<div
+				style={{
+					display: "flex",
+					gap: "0.75rem",
+					alignItems: "center",
+					flexWrap: "wrap",
+				}}
 			>
-				GitHub
-			</LinkButton>
+				<LinkButton
+					variant="outline"
+					href="/docs/api-keys"
+					leftIcon={<FileText size="1em" />}
+				>
+					API reference
+				</LinkButton>
+				<LinkButton
+					variant="ghost"
+					href="https://status.launchpad.dev"
+					target="_blank"
+					rightIcon={<ArrowUpRight size="1em" />}
+				>
+					Status page
+				</LinkButton>
+			</div>
 		</div>
 	),
+	parameters: {
+		layout: "padded",
+	},
 };

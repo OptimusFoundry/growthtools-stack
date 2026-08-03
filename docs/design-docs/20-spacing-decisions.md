@@ -23,7 +23,7 @@ The spacing scale has 13 steps. **You use 6 of them every day.** The rest are ni
 | `--space-10` | 64 | Everyday | "Major section break" — page title↔first section, card↔card on hero |
 | `--space-12` | 80 | Common | "Page-level rhythm" — catalog sections, composed sections |
 | `--space-16` | 112 | Rare | "Hero breathing" — only on marketing / sign-in |
-| `--space-20` | 144 | Rare | Editorial hero |
+| `--space-20` | 144 | Rare | Large hero |
 | `--space-24` | 192 | Never in product | Cover pages only |
 
 **SP-1.1 — If your value isn't on this ladder, it's wrong.** No 18px, no 20px, no 36px, no 72px. The ladder exists so pages from different devs compose.
@@ -64,7 +64,7 @@ Is this a marketing hero / sign-in / cover page?
   → 80–144px  --space-12 / --space-16 / --space-20
 ```
 
-**SP-2.1 — Product pages stop at 64px between sections.** 80px+ between sections is for marketing pages, catalog/docs shells, and editorial layouts — not a dashboard.
+**SP-2.1 — Product pages stop at 64px between sections.** 80px+ between sections is for marketing pages and catalog/docs shells — not a dashboard.
 
 ---
 
@@ -245,14 +245,14 @@ The kit's grids use one of four gap values. Pick by the grid's role:
 | Divider-line grid (quick-grid, stat-grid, cal-grid) | **1px** + `background: --border` |
 | Dense tile grid (cards) | **16** |
 | Spaced card grid | **24** |
-| Editorial / hero grid | **32** |
+| Hero grid | **32** |
 | Spec grid (docs showcase) | **24** |
 
 **SP-6.1 — The 1px divider-line trick is the kit's signature** (J-8). Use `overflow: hidden` + outer `--r-xl` + `gap: 1px` + `background: var(--border)`. Don't `border: 1px solid` on children — it doubles up.
 
 **SP-6.2 — Grid children have no outer margin.** Gap handles it. A card with `margin: 16px` inside a grid with `gap: 16` = 32px runs. Pick one.
 
-**SP-6.3 — Column gap and row gap are the same** on product grids. Editorial layouts can differ (32 col / 40 row), but the default is symmetric.
+**SP-6.3 — Column gap and row gap are the same** on product grids. Marketing layouts can differ (32 col / 40 row), but the default is symmetric.
 
 **SP-6.4 — Responsive grids: don't shrink the gap below 12.** 12px between cards on mobile is the floor; 8px makes cards blur together.
 
@@ -269,7 +269,7 @@ The ladder by hierarchy depth. **Gap shrinks as you nest.**
 | 3 — inside a card, groups | form groups, panels | **20** |
 | 4 — inside a group, rows | list rows | **12–16** |
 | 5 — inside a row, elements | icon + label | **8** |
-| 6 — inline micro | `<em>` padding | **4** |
+| 6 — inline micro | icon padding, badge dot gap | **4** |
 
 **SP-7.1 — A single nested block should not reverse the trend.** If depth-3 is 20, depth-4 cannot be 24. Inner rhythm is always equal-or-tighter than outer.
 
@@ -352,7 +352,7 @@ Spacing and hit-target are coupled.
 
 | Content | Max width |
 |---|---|
-| Body prose (Fraunces serif) | **72ch** (~ 780) |
+| Body prose (Geist) | **72ch** (~ 780) |
 | Sublede / lede | **62ch** |
 | UI body paragraph inside a card | **60–68ch** |
 | Form input row | **420–480** |

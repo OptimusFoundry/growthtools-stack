@@ -35,20 +35,20 @@ type Story = StoryObj<typeof Tag>;
 
 export const Default: Story = {
 	args: {
-		children: "Tag Label",
+		children: "Bug",
 	},
 };
 
 export const Variants: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-			<Tag variant="default">Default</Tag>
-			<Tag variant="primary">Primary</Tag>
-			<Tag variant="secondary">Secondary</Tag>
-			<Tag variant="success">Success</Tag>
-			<Tag variant="warning">Warning</Tag>
-			<Tag variant="error">Error</Tag>
-			<Tag variant="info">Info</Tag>
+			<Tag variant="default">Backlog</Tag>
+			<Tag variant="primary">In progress</Tag>
+			<Tag variant="secondary">Design</Tag>
+			<Tag variant="success">Done</Tag>
+			<Tag variant="warning">Blocked</Tag>
+			<Tag variant="error">Bug</Tag>
+			<Tag variant="info">Needs review</Tag>
 		</div>
 	),
 };
@@ -66,10 +66,10 @@ export const Sizes: Story = {
 export const Removable: Story = {
 	render: function RemovableExample() {
 		const [tags, setTags] = useState([
-			"React",
-			"TypeScript",
-			"SCSS",
-			"Design System",
+			"api",
+			"authentication",
+			"regression",
+			"p1",
 		]);
 
 		return (
@@ -90,13 +90,13 @@ export const Removable: Story = {
 
 export const Selectable: Story = {
 	render: function SelectableExample() {
-		const [selected, setSelected] = useState<string[]>(["react"]);
+		const [selected, setSelected] = useState<string[]>(["bug"]);
 
 		const options = [
-			{ id: "react", label: "React" },
-			{ id: "vue", label: "Vue" },
-			{ id: "angular", label: "Angular" },
-			{ id: "svelte", label: "Svelte" },
+			{ id: "bug", label: "Bug" },
+			{ id: "feature", label: "Feature" },
+			{ id: "docs", label: "Docs" },
+			{ id: "chore", label: "Chore" },
 		];
 
 		const toggleSelection = (id: string) => {
@@ -125,12 +125,12 @@ export const Selectable: Story = {
 export const WithIcon: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-			<Tag leftIcon={<Hash />}>Category</Tag>
+			<Tag leftIcon={<Hash />}>billing</Tag>
 			<Tag leftIcon={<Star />} variant="warning">
 				Featured
 			</Tag>
 			<Tag leftIcon={<User />} variant="info">
-				Assigned
+				Assigned to Priya
 			</Tag>
 		</div>
 	),
@@ -139,14 +139,14 @@ export const WithIcon: Story = {
 export const WithAvatar: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-			<Tag avatar="https://i.pravatar.cc/40?img=1" removable>
-				John Doe
+			<Tag avatar="https://i.pravatar.cc/40?img=5" removable>
+				Priya Nair
 			</Tag>
-			<Tag avatar="https://i.pravatar.cc/40?img=2" removable>
-				Jane Smith
+			<Tag avatar="https://i.pravatar.cc/40?img=12" removable>
+				Marcus Webb
 			</Tag>
-			<Tag avatar="https://i.pravatar.cc/40?img=3" removable>
-				Bob Johnson
+			<Tag avatar="https://i.pravatar.cc/40?img=47" removable>
+				Elena Torres
 			</Tag>
 		</div>
 	),
@@ -155,12 +155,12 @@ export const WithAvatar: Story = {
 export const Disabled: Story = {
 	render: () => (
 		<div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-			<Tag disabled>Disabled</Tag>
+			<Tag disabled>Archived</Tag>
 			<Tag disabled removable>
-				Disabled Removable
+				Locked label
 			</Tag>
 			<Tag disabled selectable>
-				Disabled Selectable
+				Read-only filter
 			</Tag>
 		</div>
 	),
@@ -173,11 +173,121 @@ export const Combined: Story = {
 				Priority
 			</Tag>
 			<Tag variant="success" size="sm" removable>
-				Completed
+				Resolved
 			</Tag>
-			<Tag avatar="https://i.pravatar.cc/40?img=4" size="lg" removable>
-				Team Member
+			<Tag avatar="https://i.pravatar.cc/40?img=23" size="lg" removable>
+				Sam Okafor
 			</Tag>
 		</div>
 	),
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	name: "Showcase: Support ticket list",
+	render: function TicketListExample() {
+		const [filters, setFilters] = useState<string[]>(["open"]);
+
+		const statuses = [
+			{ id: "open", label: "Open" },
+			{ id: "pending", label: "Pending" },
+			{ id: "closed", label: "Closed" },
+		];
+
+		const toggleFilter = (id: string) => {
+			setFilters((prev) =>
+				prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+			);
+		};
+
+		return (
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "column",
+					gap: "1.25rem",
+					width: "420px",
+				}}
+			>
+				<div>
+					<p
+						style={{
+							marginBottom: "0.5rem",
+							fontSize: "0.875rem",
+							color: "var(--color-muted)",
+						}}
+					>
+						Filter by status
+					</p>
+					<div style={{ display: "flex", gap: "8px" }}>
+						{statuses.map((status) => (
+							<Tag
+								key={status.id}
+								selectable
+								selected={filters.includes(status.id)}
+								onSelectChange={() => toggleFilter(status.id)}
+							>
+								{status.label}
+							</Tag>
+						))}
+					</div>
+				</div>
+
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						gap: "0.75rem",
+					}}
+				>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+							padding: "0.75rem",
+							border: "1px solid var(--color-border)",
+							borderRadius: "var(--radius-md)",
+						}}
+					>
+						<span>Checkout fails on Safari 17</span>
+						<div style={{ display: "flex", gap: "6px" }}>
+							<Tag variant="error" size="sm" leftIcon={<Hash />}>
+								bug
+							</Tag>
+							<Tag avatar="https://i.pravatar.cc/40?img=5" size="sm">
+								Priya
+							</Tag>
+						</div>
+					</div>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+							padding: "0.75rem",
+							border: "1px solid var(--color-border)",
+							borderRadius: "var(--radius-md)",
+						}}
+					>
+						<span>Add CSV export to invoices</span>
+						<div style={{ display: "flex", gap: "6px" }}>
+							<Tag variant="info" size="sm" leftIcon={<Hash />}>
+								feature
+							</Tag>
+							<Tag avatar="https://i.pravatar.cc/40?img=12" size="sm">
+								Marcus
+							</Tag>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	},
+	parameters: {
+		layout: "padded",
+	},
 };

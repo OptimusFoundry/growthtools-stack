@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 
 export type PageTransitionType = "fade" | "slide" | "scale" | "slideUp";
@@ -11,7 +12,7 @@ export interface PageTransitionProps {
 	children: ReactNode;
 	/** Transition type */
 	type?: PageTransitionType;
-	/** Transition duration in seconds */
+	/** Transition duration in seconds. Defaults to the theme's normal duration token. */
 	duration?: number;
 	/** Additional className for the wrapper */
 	className?: string;
@@ -58,14 +59,16 @@ export function PageTransition({
 	pageKey,
 	children,
 	type = "fade",
-	duration = 0.2,
+	duration,
 	className,
 }: PageTransitionProps) {
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
+	const effectiveDuration = duration ?? motionTokens.duration.normal;
 
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration, ease: [0, 0, 0.2, 1] as const };
+		: { duration: effectiveDuration, ease: motionTokens.easeOut };
 
 	return (
 		<AnimatePresence mode="wait">

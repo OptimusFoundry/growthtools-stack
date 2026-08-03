@@ -126,6 +126,69 @@ export const WithError: Story = {
 	},
 };
 
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: function OnboardingShowcase() {
+		const [currentStep, setCurrentStep] = useState(1);
+		const onboardingSteps = [
+			{
+				id: "workspace",
+				label: "Create workspace",
+				description: "Name your workspace and pick a URL",
+			},
+			{
+				id: "invite",
+				label: "Invite your team",
+				description: "Add teammates by email",
+			},
+			{
+				id: "connect",
+				label: "Connect a data source",
+				description: "Link Stripe, Shopify, or a CSV import",
+			},
+			{
+				id: "launch",
+				label: "Launch dashboard",
+				description: "Review and go live",
+			},
+		];
+
+		return (
+			<div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+				<StepIndicator
+					steps={onboardingSteps}
+					currentStep={currentStep}
+					onStepClick={(index) => setCurrentStep(index)}
+					size="lg"
+				/>
+				<div style={{ display: "flex", gap: "8px" }}>
+					<button
+						type="button"
+						onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
+						disabled={currentStep === 0}
+					>
+						Back
+					</button>
+					<button
+						type="button"
+						onClick={() =>
+							setCurrentStep((prev) =>
+								Math.min(onboardingSteps.length - 1, prev + 1),
+							)
+						}
+						disabled={currentStep === onboardingSteps.length - 1}
+					>
+						Continue
+					</button>
+				</div>
+			</div>
+		);
+	},
+};
+
 export const Interactive: Story = {
 	render: function InteractiveExample() {
 		const [currentStep, setCurrentStep] = useState(0);

@@ -144,3 +144,38 @@ export const TeamSection: Story = {
 		/>
 	),
 };
+
+export const Showcase: Story = {
+	name: "Showcase — Settings page sections",
+	render: () => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "var(--space-10)",
+			}}
+		>
+			<SectionHeader
+				eyebrow="PROFILE"
+				title="Personal information"
+				description="This is how your name and photo appear across the workspace."
+				actions={<Button size="sm">Edit</Button>}
+			/>
+			<SectionHeader
+				eyebrow="NOTIFICATIONS"
+				title="Email preferences"
+				description="Choose which updates you want delivered to your inbox."
+			/>
+			<SectionHeader
+				eyebrow="DANGER ZONE"
+				title="Delete account"
+				description="Permanently remove your account and all associated data. This cannot be undone."
+				actions={
+					<Button size="sm" variant="outline">
+						Delete account
+					</Button>
+				}
+			/>
+		</div>
+	),
+};

@@ -38,9 +38,9 @@ export const Default: Story = {
 	args: {
 		children: (
 			<>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Card Title</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Storage usage</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This is some card content that describes the card.
+					You're using 18.4 GB of your 20 GB plan limit.
 				</p>
 			</>
 		),
@@ -52,9 +52,9 @@ export const Elevated: Story = {
 		variant: "elevated",
 		children: (
 			<>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Elevated Card</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Invoice INV-2024-0192</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This card has a shadow effect.
+					$249.00 charged to Visa ending in 4242 on Jul 1.
 				</p>
 			</>
 		),
@@ -66,9 +66,9 @@ export const Outlined: Story = {
 		variant: "outlined",
 		children: (
 			<>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Outlined Card</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Two-factor authentication</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This card has a border.
+					Add an extra layer of security to your account at sign-in.
 				</p>
 			</>
 		),
@@ -80,9 +80,9 @@ export const Filled: Story = {
 		variant: "filled",
 		children: (
 			<>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Filled Card</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Upgrade to Pro</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This card has a filled background.
+					Unlock unlimited campaigns and priority support for $29/mo.
 				</p>
 			</>
 		),
@@ -96,14 +96,24 @@ export const Filled: Story = {
 export const SmallPadding: Story = {
 	args: {
 		padding: "sm",
-		children: <p style={{ margin: 0 }}>Small padding</p>,
+		children: (
+			<p style={{ margin: 0 }}>API request limit reached — resets in 4h.</p>
+		),
 	},
 };
 
 export const LargePadding: Story = {
 	args: {
 		padding: "lg",
-		children: <p style={{ margin: 0 }}>Large padding</p>,
+		children: (
+			<>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Welcome to the team</h3>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Take a moment to set up your profile and explore the workspace before
+					your first sync.
+				</p>
+			</>
+		),
 	},
 };
 
@@ -114,11 +124,12 @@ export const LargePadding: Story = {
 export const Interactive: Story = {
 	args: {
 		interactive: true,
-		onClick: () => alert("Card clicked!"),
 		children: (
 			<>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Interactive Card</h3>
-				<p style={{ margin: 0, color: "var(--color-muted)" }}>Click me!</p>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Growth plan</h3>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Select this plan to continue checkout.
+				</p>
 			</>
 		),
 	},
@@ -133,12 +144,11 @@ export const WithHeaderAndFooter: Story = {
 		children: (
 			<>
 				<CardHeader>
-					<h3 style={{ margin: 0 }}>Card Header</h3>
+					<h3 style={{ margin: 0 }}>Maya Chen</h3>
 				</CardHeader>
 				<CardBody>
 					<p style={{ margin: 0, color: "var(--color-muted)" }}>
-						This is the main content area of the card. It can contain any
-						content you need.
+						Product Designer · Joined the workspace on Mar 12, 2024.
 					</p>
 				</CardBody>
 				<CardFooter>
@@ -153,7 +163,7 @@ export const WithHeaderAndFooter: Story = {
 							cursor: "pointer",
 						}}
 					>
-						Action
+						View profile
 					</button>
 				</CardFooter>
 			</>
@@ -169,17 +179,21 @@ export const Variants: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 			<Card variant="elevated">
-				<h4 style={{ margin: "0 0 0.5rem" }}>Elevated</h4>
-				<p style={{ margin: 0, color: "var(--color-muted)" }}>With shadow</p>
+				<h4 style={{ margin: "0 0 0.5rem" }}>Pro plan</h4>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					$29/mo · Unlimited campaigns
+				</p>
 			</Card>
 			<Card variant="outlined">
-				<h4 style={{ margin: "0 0 0.5rem" }}>Outlined</h4>
-				<p style={{ margin: 0, color: "var(--color-muted)" }}>With border</p>
+				<h4 style={{ margin: "0 0 0.5rem" }}>Starter plan</h4>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					$0/mo · Up to 2 campaigns
+				</p>
 			</Card>
 			<Card variant="filled">
-				<h4 style={{ margin: "0 0 0.5rem" }}>Filled</h4>
+				<h4 style={{ margin: "0 0 0.5rem" }}>Enterprise plan</h4>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					With background
+					Custom pricing · Dedicated support
 				</p>
 			</Card>
 		</div>
@@ -206,11 +220,11 @@ export const ProfileCard: Story = {
 						fontSize: "2rem",
 					}}
 				>
-					JD
+					MC
 				</div>
-				<h3 style={{ margin: "0 0 0.25rem" }}>John Doe</h3>
+				<h3 style={{ margin: "0 0 0.25rem" }}>Maya Chen</h3>
 				<p style={{ margin: "0 0 1rem", color: "var(--color-muted)" }}>
-					Software Engineer
+					Product Designer at Northwind
 				</p>
 				<button
 					type="button"
@@ -257,4 +271,46 @@ export const Spec: Story = {
 			</>
 		),
 	},
+};
+
+// =============================================================================
+// REAL-WORLD SHOWCASE — billing settings page card grid
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<div
+			style={{
+				display: "grid",
+				gridTemplateColumns: "repeat(2, 1fr)",
+				gap: "1rem",
+				width: "560px",
+			}}
+		>
+			<Card variant="elevated">
+				<h4 style={{ margin: "0 0 0.5rem" }}>Current plan</h4>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Growth · $79/mo · renews Aug 14
+				</p>
+			</Card>
+			<Card variant="outlined">
+				<h4 style={{ margin: "0 0 0.5rem" }}>Payment method</h4>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					Visa ending in 4242 · expires 09/27
+				</p>
+			</Card>
+			<Card variant="filled">
+				<h4 style={{ margin: "0 0 0.5rem" }}>Usage this month</h4>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					8,204 of 10,000 API calls used
+				</p>
+			</Card>
+			<Card variant="outlined" interactive>
+				<h4 style={{ margin: "0 0 0.5rem" }}>Next invoice</h4>
+				<p style={{ margin: 0, color: "var(--color-muted)" }}>
+					$79.00 due Aug 14 — view details
+				</p>
+			</Card>
+		</div>
+	),
 };

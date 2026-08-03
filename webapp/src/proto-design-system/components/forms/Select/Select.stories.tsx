@@ -45,7 +45,7 @@ export const Default: Story = {
 
 export const WithLabel: Story = {
 	args: {
-		label: "Country",
+		label: "Billing country",
 		options: countries,
 		placeholder: "Select a country",
 	},
@@ -53,16 +53,16 @@ export const WithLabel: Story = {
 
 export const WithHelperText: Story = {
 	args: {
-		label: "Country",
+		label: "Billing country",
 		options: countries,
 		placeholder: "Select a country",
-		helperText: "Choose your country of residence",
+		helperText: "Used to calculate applicable tax",
 	},
 };
 
 export const WithValue: Story = {
 	args: {
-		label: "Country",
+		label: "Billing country",
 		options: countries,
 		defaultValue: "uk",
 	},
@@ -74,7 +74,7 @@ export const WithValue: Story = {
 
 export const Small: Story = {
 	args: {
-		label: "Country",
+		label: "Currency",
 		options: countries,
 		placeholder: "Select a country",
 		size: "sm",
@@ -83,7 +83,7 @@ export const Small: Story = {
 
 export const Medium: Story = {
 	args: {
-		label: "Country",
+		label: "Shipping destination",
 		options: countries,
 		placeholder: "Select a country",
 		size: "md",
@@ -92,7 +92,7 @@ export const Medium: Story = {
 
 export const Large: Story = {
 	args: {
-		label: "Country",
+		label: "Data residency region",
 		options: countries,
 		placeholder: "Select a country",
 		size: "lg",
@@ -105,7 +105,7 @@ export const Large: Story = {
 
 export const Filled: Story = {
 	args: {
-		label: "Country",
+		label: "Billing country",
 		options: countries,
 		placeholder: "Select a country",
 		variant: "filled",
@@ -118,16 +118,16 @@ export const Filled: Story = {
 
 export const WithError: Story = {
 	args: {
-		label: "Country",
+		label: "Billing country",
 		options: countries,
 		placeholder: "Select a country",
-		errorMessage: "Please select a country",
+		errorMessage: "Please select a country to continue",
 	},
 };
 
 export const Disabled: Story = {
 	args: {
-		label: "Country",
+		label: "Plan region (set at signup)",
 		options: countries,
 		placeholder: "Select a country",
 		disabled: true,
@@ -136,7 +136,7 @@ export const Disabled: Story = {
 
 export const DisabledWithValue: Story = {
 	args: {
-		label: "Country",
+		label: "Account region (locked)",
 		options: countries,
 		defaultValue: "us",
 		disabled: true,
@@ -145,14 +145,14 @@ export const DisabledWithValue: Story = {
 
 export const DisabledOptions: Story = {
 	args: {
-		label: "Country",
+		label: "Deploy region",
 		options: [
-			{ value: "us", label: "United States" },
-			{ value: "uk", label: "United Kingdom", disabled: true },
-			{ value: "ca", label: "Canada" },
-			{ value: "au", label: "Australia", disabled: true },
+			{ value: "us", label: "US East (N. Virginia)" },
+			{ value: "uk", label: "EU West (London) — at capacity", disabled: true },
+			{ value: "ca", label: "Canada Central" },
+			{ value: "au", label: "Australia — coming soon", disabled: true },
 		],
-		placeholder: "Select a country",
+		placeholder: "Select a region",
 	},
 };
 
@@ -162,7 +162,7 @@ export const DisabledOptions: Story = {
 
 export const FullWidth: Story = {
 	args: {
-		label: "Country",
+		label: "Billing country",
 		options: countries,
 		placeholder: "Select a country",
 		fullWidth: true,
@@ -184,19 +184,19 @@ export const Sizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 			<Select
-				label="Small"
+				label="Currency"
 				options={countries}
 				placeholder="Select"
 				size="sm"
 			/>
 			<Select
-				label="Medium"
+				label="Shipping country"
 				options={countries}
 				placeholder="Select"
 				size="md"
 			/>
 			<Select
-				label="Large"
+				label="Data residency"
 				options={countries}
 				placeholder="Select"
 				size="lg"
@@ -224,7 +224,7 @@ export const Variants: Story = {
 	),
 };
 
-export const FormExample: Story = {
+export const Showcase: Story = {
 	render: () => (
 		<div
 			style={{
@@ -235,13 +235,13 @@ export const FormExample: Story = {
 			}}
 		>
 			<Select
-				label="Country"
+				label="Billing country"
 				options={countries}
 				placeholder="Select a country"
-				helperText="Your country of residence"
+				helperText="Used to calculate applicable tax"
 			/>
 			<Select
-				label="Preferred Language"
+				label="Preferred language"
 				options={[
 					{ value: "en", label: "English" },
 					{ value: "es", label: "Spanish" },
@@ -251,15 +251,21 @@ export const FormExample: Story = {
 				defaultValue="en"
 			/>
 			<Select
-				label="Time Zone"
+				label="Time zone"
 				options={[
 					{ value: "pst", label: "Pacific Time (PST)" },
 					{ value: "mst", label: "Mountain Time (MST)" },
 					{ value: "cst", label: "Central Time (CST)" },
 					{ value: "est", label: "Eastern Time (EST)" },
 				]}
-				placeholder="Select timezone"
-				errorMessage="Timezone is required"
+				placeholder="Select time zone"
+				errorMessage="Time zone is required to schedule reminders"
+			/>
+			<Select
+				label="Deploy region (locked to plan)"
+				options={countries}
+				defaultValue="us"
+				disabled
 			/>
 		</div>
 	),

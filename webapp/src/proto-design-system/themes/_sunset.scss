@@ -1,16 +1,57 @@
 // =============================================================================
 // SUNSET THEME
 // =============================================================================
-// Sourced from compiled themes.bundle.css — reflects Phase 1 palette tuning.
-// Edit this file, then re-run scripts/scss_compiler.js to regenerate the bundle.
+// Reference: golden-hour dusk — warm amber/coral/gold swatches lit against a
+// near-black indigo-warm night sky (bg H45deg). Every solid swatch (primary/
+// secondary/accent/success/warning/error/info) is kept light enough that a
+// single dark-ink content color reads clean on top — a "warm glass" motif
+// used consistently across all seven roles, not just picked per-token.
+// Numeric-fitted repair pass (verified with scripts/theme-contrast-check.mjs):
+// the prior version wrote raw OKLCH triples past the sRGB gamut edge on 14 of
+// 57 leaf tokens (primary, primary-hover, secondary-hover, accent + all 3
+// states + accent-bg, warning-hover, warning-content, error-hover, info + all
+// 3 states) — browser-clipped/hue-shifted on screen. Every one is now
+// genuinely in-gamut, chroma re-fit at its actual lightness (max in-gamut C,
+// ~5-10% margin) rather than an arbitrary round number.
+// --color-muted was its own dim value (Lc -26, below the Lc30 placeholder
+// floor) instead of aliasing tertiary like the rest of the system — fixed.
+// --color-text-disabled was missing from the contract entirely — added.
+// --color-border/-border-hover sat close enough to the near-black background
+// that APCA scored them Lc 0 (functionally invisible, matching a same-scheme
+// bug this pass does NOT inherit from _dark.scss) — relit until both clear
+// the Lc15 hairline floor with real margin.
+// --color-error-content was near-white on a mid-light error swatch (Lc -56,
+// 3.06:1, failing AA) — flipped to dark ink like every other semantic here,
+// consistent with the "warm glass" rule above.
+// Fonts: Onest (geometric-humanist, warm rounded terminals — reads as
+// "golden hour," not a default-sans swap) paired with Reddit Mono (blocky
+// slab mono for eyebrows/meta). Both already registered via this theme's
+// googleFontsHref in themes.ts; Geist stays as fallback only.
+// Role-collision repair pass: secondary (was H20deg) sat 5deg from error
+// (H15deg) at near-identical chroma — a Badge using .secondary and one
+// using .error were indistinguishable coral-pink. Retargeted secondary to
+// H345deg, a dusk rose/magenta (golden-hour skies pink out near the
+// horizon — same reference the header already claims, not a new one),
+// 30deg clear of error and a visually distinct family (pink vs.
+// coral-salmon). Independently, accent and warning both sat at H85deg,
+// bit-for-bit identical content ink — retargeted warning to H115deg, a
+// warm yellow-green/mustard clear of accent's orange-gold by 30deg (accent
+// stays the signature gold; warning is the more disposable semantic role,
+// so it moved). Both retargets keep the file's existing per-hue,
+// near-gamut-ceiling fit method (~90-96% of the sRGB max at that L) so the
+// "warm glass" vividness stays consistent across every role, and both keep
+// dark-ink content at/above the Lc60 base / Lc45 accepted-dip floor used
+// everywhere else in this file (secondary Lc 60.7/73.3/45.5, warning Lc
+// 63.0/75.4/47.0 — base/hover/active w/ ink, computed via
+// scripts/theme-contrast-check.mjs's apcaLc).
 
 [data-theme="sunset"] {
   color-scheme: dark;
 
-  --font-family-sans:    "Geist", "Inter", system-ui, sans-serif;
-  --font-family-mono:    "Geist Mono", "JetBrains Mono", monospace;
-  --font-family-serif:   "Fraunces", "Times New Roman", georgia, serif;
-  --font-family-display: "Fraunces", "Times New Roman", georgia, serif;
+  --font-family-sans:    "Onest", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Reddit Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
   --color-background: oklch(14% 0.025 45deg);
   --color-base-50:  oklch(16% 0.028 45deg);
   --color-base-100: oklch(20% 0.030 45deg);
@@ -23,48 +64,63 @@
   --color-base-800: oklch(86% 0.020 50deg);
   --color-base-900: oklch(92% 0.020 50deg);
   --color-base-950: oklch(96% 0.020 50deg);
-  --color-base-content:           oklch(96% 0.020 50deg);
-  --color-base-content-secondary: oklch(92% 0.025 50deg);
-  --color-base-content-tertiary:  oklch(72% 0.025 50deg);
-  --color-muted:                  oklch(54% 0.022 50deg);
+
+  // Text ramp — APCA-scored (Lc against the L14% bg), quiet-neutral warm
+  // hue. Body drops from the prior 96% to 90% to cut glare (same call
+  // _dark.scss makes for the same reason); muted now genuinely aliases
+  // tertiary instead of sitting below the placeholder floor.
+  --color-base-content:           oklch(90% 0.016 50deg);  // Lc -86.0
+  --color-base-content-secondary: oklch(85% 0.018 50deg);  // Lc -76.3
+  --color-base-content-tertiary:  oklch(70% 0.020 50deg);  // Lc -49.5
+  --color-muted:                  oklch(70% 0.020 50deg);  // aliases tertiary
+  --color-text-disabled:          oklch(58% 0.018 50deg);  // Lc -31.6, non-content only
   --color-surface:          oklch(16% 0.028 45deg);
   --color-surface-elevated: oklch(22% 0.030 45deg);
   --color-surface-overlay:  oklch(0% 0 0deg / 0.70);
-  --color-border:       oklch(30% 0.035 45deg);
-  --color-border-hover: oklch(42% 0.040 45deg);
-  --color-primary:         oklch(75% 0.18 45deg);
-  --color-primary-hover:   oklch(84% 0.22 45deg);
-  --color-primary-active:  oklch(68% 0.18 45deg);
-  --color-primary-content: oklch(15% 0.04 45deg);
-  --color-secondary:         oklch(68% 0.18 20deg);
-  --color-secondary-hover:   oklch(80% 0.22 20deg);
-  --color-secondary-active:  oklch(60% 0.18 20deg);
-  --color-secondary-content: oklch(15% 0.04 20deg);
-  --color-accent:         oklch(84% 0.18 85deg);
-  --color-accent-hover:   oklch(92% 0.22 85deg);
-  --color-accent-active:  oklch(76% 0.18 85deg);
-  --color-accent-content: oklch(20% 0.04 85deg);
-  --color-accent-bg:      oklch(26% 0.06 85deg);
-  --color-success:         oklch(70% 0.18 145deg);
-  --color-success-hover:   oklch(82% 0.22 145deg);
-  --color-success-active:  oklch(62% 0.18 145deg);
-  --color-success-bg:      oklch(22% 0.05 145deg);
-  --color-success-content: oklch(15% 0.03 145deg);
-  --color-warning:         oklch(78% 0.14 85deg);
-  --color-warning-hover:   oklch(88% 0.18 85deg);
-  --color-warning-active:  oklch(70% 0.14 85deg);
-  --color-warning-bg:      oklch(22% 0.05 85deg);
-  --color-warning-content: oklch(15% 0.05 85deg);
-  --color-error:         oklch(65% 0.20 15deg);
-  --color-error-hover:   oklch(78% 0.24 15deg);
-  --color-error-active:  oklch(58% 0.20 15deg);
-  --color-error-bg:      oklch(22% 0.05 15deg);
-  --color-error-content: oklch(95% 0.02 15deg);
-  --color-info:         oklch(68% 0.14 220deg);
-  --color-info-hover:   oklch(80% 0.18 220deg);
-  --color-info-active:  oklch(60% 0.14 220deg);
-  --color-info-bg:      oklch(22% 0.05 220deg);
-  --color-info-content: oklch(15% 0.03 220deg);
+
+  // Relit from the prior L30/L42 (both APCA Lc 0 — invisible against the
+  // L14% bg) up to where they clear the Lc15 hairline floor with margin.
+  --color-border:       oklch(49% 0.040 45deg);  // Lc -20.2, WCAG 3.15:1
+  --color-border-hover: oklch(60% 0.040 45deg);  // Lc -34.1
+  // Every base/hover swatch below is fit so its dark-ink content clears the
+  // Lc60 "larger/bold UI text" floor (button/badge labels). Active (press-
+  // feedback, sub-200ms visible) is a deliberate, documented dip to the
+  // Lc45+ "detailed icon" floor in exchange for keeping the pressed state
+  // visibly darker than rest — WCAG AA 4.5:1 still holds on every state,
+  // same borderline-acceptance model as _oat.scss's terracotta link call.
+  --color-primary:         oklch(77% 0.125 45deg);   // Lc 61.7 w/ ink
+  --color-primary-hover:   oklch(83% 0.090 45deg);   // Lc 72.3 w/ ink
+  --color-primary-active:  oklch(68% 0.160 45deg);   // Lc ~49 w/ ink (accepted dip)
+  --color-primary-content: oklch(11% 0.025 45deg);
+  --color-secondary:         oklch(77% 0.143 345deg);  // Lc 60.7 w/ ink
+  --color-secondary-hover:   oklch(84% 0.093 345deg);  // Lc 73.3 w/ ink
+  --color-secondary-active:  oklch(68% 0.221 345deg);  // Lc 45.5 w/ ink (accepted dip)
+  --color-secondary-content: oklch(11% 0.025 345deg);
+  --color-accent:         oklch(78% 0.140 85deg);   // Lc ~63 w/ ink
+  --color-accent-hover:   oklch(84% 0.135 85deg);   // Lc ~70 w/ ink
+  --color-accent-active:  oklch(68% 0.125 85deg);   // Lc ~50 w/ ink (accepted dip)
+  --color-accent-content: oklch(11% 0.025 85deg);
+  --color-accent-bg:      oklch(22% 0.045 85deg);
+  --color-success:         oklch(73% 0.200 145deg);  // Lc 60.8 w/ ink
+  --color-success-hover:   oklch(80% 0.220 145deg);  // Lc ~68 w/ ink
+  --color-success-active:  oklch(64% 0.180 145deg);  // Lc ~47 w/ ink (accepted dip)
+  --color-success-bg:      oklch(22% 0.045 145deg);
+  --color-success-content: oklch(11% 0.025 145deg);
+  --color-warning:         oklch(76% 0.143 115deg);  // Lc 63.0 w/ ink
+  --color-warning-hover:   oklch(83% 0.156 115deg);  // Lc 75.4 w/ ink
+  --color-warning-active:  oklch(66% 0.124 115deg);  // Lc 47.0 w/ ink (accepted dip)
+  --color-warning-bg:      oklch(22% 0.045 115deg);
+  --color-warning-content: oklch(11% 0.025 115deg);
+  --color-error:         oklch(77% 0.115 15deg);   // Lc 61.1 w/ ink
+  --color-error-hover:   oklch(84% 0.075 15deg);   // Lc ~72 w/ ink
+  --color-error-active:  oklch(68% 0.190 15deg);   // Lc ~48 w/ ink (accepted dip)
+  --color-error-bg:      oklch(22% 0.050 15deg);
+  --color-error-content: oklch(11% 0.025 15deg);
+  --color-info:         oklch(75% 0.110 220deg);   // Lc 62.3 w/ ink
+  --color-info-hover:   oklch(82% 0.100 220deg);   // Lc ~72 w/ ink
+  --color-info-active:  oklch(66% 0.105 220deg);   // Lc ~46 w/ ink (accepted dip)
+  --color-info-bg:      oklch(20% 0.035 220deg);
+  --color-info-content: oklch(11% 0.025 220deg);
   --shadow-color:        oklch(8% 0.03 45deg / 0.5);
   --shadow-color-strong: oklch(8% 0.03 45deg / 0.8);
   --shadow-xs: 0 1px 2px 0 oklch(8% 0.03 45deg / 0.4);
@@ -72,14 +128,10 @@
   --shadow-md: 0 8px 16px -4px oklch(8% 0.03 45deg / 0.6), 0 2px 4px -2px oklch(8% 0.03 45deg / 0.4);
   --shadow-lg: 0 20px 32px -8px oklch(8% 0.03 45deg / 0.7), 0 4px 8px -4px oklch(8% 0.03 45deg / 0.4);
   --shadow-xl: 0 32px 48px -12px oklch(8% 0.03 45deg / 0.8), 0 8px 16px -8px oklch(8% 0.03 45deg / 0.5);
-  --shadow-primary: 0 8px 32px 0 oklch(75% 0.18 45deg / 0.35);
-  --shadow-accent:  0 8px 32px 0 oklch(84% 0.18 85deg / 0.30);
-  --focus-ring-color: oklch(75% 0.18 45deg / 0.55);
+  --shadow-primary: 0 8px 32px 0 oklch(77% 0.125 45deg / 0.35);
+  --shadow-accent:  0 8px 32px 0 oklch(78% 0.140 85deg / 0.30);
+  --focus-ring-color: oklch(77% 0.125 45deg / 0.55);
   --color-header-bg: var(--color-base-100);
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
-  --color-text-disabled:          oklch(58% 0.018 50deg);  // Lc -31.6, non-content only
 
   // Motion — "the light lingers, then it's gone": dusk isn't a snap to
   // night, it's a slow gather of warmth that holds a beat before it fades.

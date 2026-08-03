@@ -1,6 +1,7 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { motion, useSpring, useTransform } from "motion/react";
 import { type ReactNode, useEffect } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./StatCard.module.scss";
@@ -46,12 +47,9 @@ function AnimatedValue({
 	formatValue?: (value: number) => string;
 }) {
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
-	const springValue = useSpring(0, {
-		stiffness: 100,
-		damping: 20,
-		mass: 1,
-	});
+	const springValue = useSpring(0, motionTokens.spring.slow);
 
 	const displayValue = useTransform(springValue, (latest) => {
 		const rounded = Math.round(latest);

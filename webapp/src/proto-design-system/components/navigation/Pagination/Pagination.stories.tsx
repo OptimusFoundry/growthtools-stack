@@ -99,3 +99,36 @@ export const Variants: Story = {
 		</div>
 	),
 };
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+function SearchResultsPagination() {
+	const resultsPerPage = 24;
+	const totalResults = 187;
+	const totalPages = Math.ceil(totalResults / resultsPerPage);
+	const [page, setPage] = useState(3);
+	const rangeStart = (page - 1) * resultsPerPage + 1;
+	const rangeEnd = Math.min(page * resultsPerPage, totalResults);
+
+	return (
+		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+			<p
+				style={{ color: "var(--color-muted)", fontSize: "var(--font-size-sm)" }}
+			>
+				Showing {rangeStart}–{rangeEnd} of {totalResults} invoices
+			</p>
+			<Pagination
+				page={page}
+				totalPages={totalPages}
+				onPageChange={setPage}
+				siblings={1}
+			/>
+		</div>
+	);
+}
+
+export const Showcase: Story = {
+	render: () => <SearchResultsPagination />,
+};

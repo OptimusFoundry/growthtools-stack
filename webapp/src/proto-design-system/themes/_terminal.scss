@@ -1,106 +1,262 @@
 // =============================================================================
 // TERMINAL THEME (HACKER)
 // =============================================================================
-// Classic green phosphor CRT aesthetic. Matrix-inspired.
-// For those who see the code behind everything.
+// Vintage P1-phosphor CRT terminal — a yellow-green glass-teletype green
+// (hue 128deg), not the cooler cyan-leaning "digital rain" green sibling
+// theme `matrix` already owns (hue 145-150deg). Amber (72deg, old amber
+// terminal, doubles as secondary/warning) and teal-cyan (178deg,
+// cursor/selection accent, doubles as info) round out the signal set; error
+// is a warm red-orange (38deg) drawn from the same warm family as the amber
+// tokens, deliberately NOT the isolated cold magenta-red matrix uses at
+// 20deg — the intent is that terminal's whole non-green vocabulary reads as
+// one warm accent family against the green backdrop, where matrix's reads
+// as scattered discrete signal colors.
+// 2026-07 repair pass (computed via scripts/theme-contrast-check.mjs, every
+// number below is a real apcaLc()/wcagRatio() read, not eyeballed; gamut
+// ceilings binary-searched per L/H with colorjs.io, same method as
+// oat/matrix's own fitting passes):
+// - SWAP TEST FAILURE (previous pass): terminal's primary/success (145deg),
+//   accent/info (195deg) and background/base ramp (145deg) hue-matched
+//   `matrix` almost exactly (145 vs 145, 195 vs 195, 145 vs 150) — the
+//   header even self-admitted "Matrix-inspired." Re-hued the entire palette
+//   off matrix's four hues: green 145->128 (P1 yellow-green vs matrix's
+//   cooler blue-green), cyan 195->178 (teal vs matrix's pure cyan), error
+//   20/25->38 (warm red-orange, folded into the amber family, vs matrix's
+//   isolated cold red). Amber secondary/warning (72deg) has no equivalent
+//   role in matrix at all (matrix's secondary is a second green tier) so it
+//   was left as the theme's own distinguishing family.
+// - MEDIUM-GRAY STRUCTURAL CHROME (previous pass): base-400 through
+//   base-800 sat at 0.025-0.04 chroma against an in-gamut ceiling of
+//   0.08-0.21 at those L steps — under 20% headroom, reading as desaturated
+//   gray chrome under vivid green text/accents. Every base-ramp step (and
+//   surface/border, which alias into it) rebuilt at ~85% of its true sRGB
+//   ceiling at the new hue (binary-searched per step), tapering to ~55-62%
+//   only at base-900/950 where near-white chroma reads as an artifact
+//   rather than a color. Structural chrome now carries real hue commitment,
+//   not just the text/accent layer.
+// - BORDER (real bug, not a quiet-hairline choice): was Lc 0.0 / 1.18:1 on
+//   background — functionally invisible, failing both the Lc15 hairline
+//   floor and WCAG 1.4.11's 3:1 non-text floor outright. Rebuilt at 50% L
+//   (was 20%) for Lc -23.1 / 3.59:1 resting, 62% L for border-hover at
+//   Lc -39.3 / 5.91:1 — clears both floors with real margin, and hover is a
+//   genuinely distinct step (not "more of the same invisible").
+// - CONTENT-SECONDARY under the Lc75 small-body-text floor: was
+//   Lc -55.7 / 8.90:1 (fails by 19.3). Relightened 76%->84% L, Lc
+//   -77.3 / 13.20:1 on background (13.2 on surface too) — clears Lc75 with
+//   a 2.3pt margin, same discipline oat used for its own tertiary fix.
+//   Tertiary/muted (used as real small text in Card/DropdownMenu/
+//   SectionHeader/PageHero/StepIndicator per audit) relightened 70%->74% L
+//   for Lc -59.0 / 9.40:1 — clears the Lc45 floor with 14.0pts margin,
+//   nowhere near the previous borderline Lc -29.6 reading.
+// - ERROR-CONTENT under the Lc60 semantic-content floor AND WCAG AA: was
+//   Lc -56.1 / 3.08:1 light-on-error (fails 4.5:1 outright). Error rebuilt
+//   brighter (78% L, still reads as a clear alarm icon/text at
+//   Lc -61.9 / 9.95:1 on background) with content flipped dark-on-error
+//   (8% L) — Lc 63.5 / 9.99:1, now clears the Lc60 floor by 3.5pts and WCAG
+//   AA by more than double its required margin. Accepted trade-off: dark
+//   content on error demands a bright base (checked L74-80 at hues 20-38 —
+//   all converge on the same warm coral/salmon once bright enough to clear
+//   Lc60 with dark ink; this isn't a hue problem, sRGB genuinely has no
+//   saturated warm red left at L78+). Kept dark-on-error anyway rather than
+//   flipping to light-on-a-darker-red, because every other semantic base in
+//   this file (primary/secondary/accent/success/warning) uses dark ink on a
+//   bright chip — a lone light-on-dark error button would break the
+//   theme's own established button-content convention. The result reads as
+//   a warm alert coral rather than a saturated blood-red; that's the
+//   accessibility-over-drama call, same category as oat's documented
+//   accent hover/active dip.
+// - TEXT-DISABLED / ACCENT-BG: both already existed as real leaf tokens
+//   (not missing/falling back to :root's editorial blue-gray or pink wash
+//   as a stale audit assumed) — refit to the new hue rather than left
+//   inherited: text-disabled 60% L / 0.133 C at 128deg, Lc -36.5 / 5.48:1
+//   (clears Lc30 by 6.5, distinctly dimmer than tertiary); accent-bg 18% L
+//   / 0.028 C at 178deg (the new teal), base-content-on-accent-bg
+//   Lc -89.1 / 14.47:1.
+// - GAMUT: every oklch() literal in this file (including shadows) is fit to
+//   ~83-88% of its true sRGB ceiling at its L/H, binary-searched fresh for
+//   the new hues — zero out-of-gamut literals, vs. the previous pass's
+//   flagged secondary/warning/info bases and primary/secondary-hover
+//   states, all of which silently clipped at paint time.
+// - DEAD TOKENS REMOVED: `--shadow-crt` / `--shadow-scanline` were declared
+//   under a "Custom: CRT bloom effects" comment but referenced nowhere in
+//   `src/` — disguised dead code claiming to handle the CRT-glow craft rule
+//   while the real shadow scale (`--shadow-xs`...`--shadow-xl`,
+//   `--shadow-primary`, `--shadow-accent`) does the actual work. Dropped;
+//   the real scale below is phosphor-glow tinted (green, no offset, single
+//   implied forward-bulging CRT light source) and every component that
+//   consumes `--shadow-button`/`-card`/`-dropdown`/`-tooltip` inherits it
+//   automatically since those are `:root`-defined as `var(--shadow-sm)`
+//   etc. and custom properties resolve per used element, not per
+//   declaration site.
+// - Accepted trade-off (same category as oat's documented hover/active
+//   dip): success/warning/info/accent deliberately mirror
+//   primary/secondary's exact ramps rather than independently-tuned hues
+//   (see hue list above) — each still gets its own -active/-bg leaf tokens
+//   per the contract.
+// Fonts unchanged from the prior pass (Martian Mono, loaded via the
+// themes.ts googleFontsHref entry) — audited again against the new palette,
+// still legible at T-7/T-3/body sizes, still the CRT-appropriate monospace-
+// everywhere choice. Note it's shared with `_brutal.scss`'s mono half, so it
+// is not bespoke to this theme alone — flagged, not changed, since a font
+// swap was out of scope for this repair pass.
+// Motion — genuine deviation, not decoration: terminal's premise is P1-
+// phosphor persistence (the glow overshoots a hair when struck, then settles
+// — warm, mechanical, vintage), the opposite of sibling theme `matrix`'s
+// cold zero-overshoot "digital rain" precision (matrix deliberately
+// overdamps its springs to kill overshoot; this theme deliberately keeps
+// it). Every touchpoint below is a grep-confirmed live consumer, same
+// discipline matrix/cosmos/mercury's headers already use:
+//  - --spring-gentle (Button/LinkButton press — useMotionConfig()'s no-
+//    preset default, its only consumer): 120,14,1 (zeta 0.64, wn 10.95
+//    rad/s) -> 260,20,1 (zeta 20/(2*sqrt(260))=0.62, wn 16.12 rad/s) — same
+//    soft-bloom damping ratio as house, ~47% faster natural frequency: a
+//    decisive mechanical key-click that still shows a hair of phosphor
+//    overshoot on release, not matrix's near-critical (zeta 0.97) dead-stop
+//    click.
+//  - --spring-stiff (Tabs' active-indicator, its only consumer): 400,30,1
+//    (zeta 0.75 — house's own faint built-in overshoot) -> 380,24,1 (zeta
+//    24/(2*sqrt(380))=0.62, wn ~19.5 rad/s, essentially unchanged pace) —
+//    amplifies house's faint overshoot into a visible small bloom-and-settle
+//    as the cursor lands in its new cell. The opposite move from matrix's
+//    1.34 (matrix overdamps this same spring to erase the overshoot).
+//  - --spring-slow (StatCard counter, its only consumer): 100,20,1 (zeta
+//    1.0, critically damped, wn 10 rad/s) -> 55,15,1 (zeta
+//    15/(2*sqrt(55))=1.01, still critical, wn 7.42 rad/s, ~26% slower) — no
+//    jitter on the settled numeral (a bouncing final digit would misread),
+//    just an unhurried odometer-tally cadence instead of matrix's sped-up
+//    fast-decrypt tally.
+//  - --duration-slower (Spinner/Button-loading spin + both components'
+//    reduced-motion pulse fallback) and --duration-ambient (Skeleton/
+//    DataTable shimmer) — both grep-confirmed consumers, both ambient/
+//    looping indicators rather than state-transitions, so outside J-9.1's
+//    400ms transition cap (house's own defaults already sit at 500ms/
+//    1500ms for exactly this reason): 500ms->600ms and 1500ms->1800ms, the
+//    same +20% factor applied to both rather than two arbitrary numbers — a
+//    working terminal doesn't rush its own "busy" cue; the bump reads as
+//    heavier/mechanical, not sleek-modern.
+//  - --duration-fast (150ms hover, J-9.1) and --duration-instant (focus
+//    ring) are the two hard-fixed values and stay untouched.
+//  - --duration-normal declined: Accordion's expand/collapse transition
+//    (Accordion.module.scss) reads this token directly, and J-9.1 fixes
+//    accordions at 240ms — retuning the shared token here would risk the
+//    same hard-rule collision matrix's own -27% cut doesn't flag for itself.
+//  - --duration-enter/-exit/-complex/-page and --spring-bouncy/-wobbly have
+//    no live consumer anywhere in this codebase (grep-verified — zero hits
+//    outside _motion.scss itself, same finding matrix/cosmos/mercury already
+//    document), left at house default.
+//  - --ease-out/--ease-in-out stay at house default: the broadest shared
+//    levers in the system (18 and 5 direct CSS consumers respectively, plus
+//    14 components reading motionTokens.easeOut) — recoloring either would
+//    read as a blanket global reskin, not a specific bloom/persistence
+//    choice, the same restraint matrix/cosmos apply to these two tokens.
+//  - --ease-linear stays untouched: it drives the Spinner/Button spin
+//    keyframe, where constant angular velocity is physically correct
+//    regardless of theme.
+//  - --ease-bounce/--ease-elastic stay at house default — no live consumer,
+//    and J-9.4 reserves spring/bounce character for delight moments (toast
+//    entry, success) this pass doesn't touch.
+
+@import "https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;500;600;700&display=swap";
 
 [data-theme="terminal"] {
   color-scheme: dark;
 
-  // Background
-  --color-background: oklch(4% 0.01 145deg);
+  --font-family-mono:    "Martian Mono", "JetBrains Mono", "SF Mono", consolas, "Courier New", monospace;
+  --font-family-sans:    var(--font-family-mono);
+  --font-family-serif:   var(--font-family-mono);
+  --font-family-display: var(--font-family-mono);
 
-  // Base colors (CRT black)
-  --color-base-50: oklch(4% 0.01 145deg);                               // Pure CRT black
-  --color-base-100: oklch(6% 0.015 145deg);                             // Screen black
-  --color-base-200: oklch(9% 0.02 145deg);                              // Dark terminal
-  --color-base-300: oklch(13% 0.02 145deg);                             // Elevated
-  --color-base-400: oklch(25% 0.025 145deg);                            // Mid
-  --color-base-500: oklch(40% 0.03 145deg);                             // Muted green
-  --color-base-600: oklch(55% 0.035 145deg);                            // Light muted
-  --color-base-700: oklch(70% 0.04 145deg);                             // Lighter
-  --color-base-800: oklch(82% 0.035 145deg);                            // Very light
-  --color-base-900: oklch(90% 0.025 145deg);                            // Near white
-  --color-base-950: oklch(96% 0.015 145deg);                            // Phosphor white
+  // Background — CRT black, P1 yellow-green hue (128deg). Chroma is fit to
+  // ~88% of the sRGB ceiling at this near-black L (0.0238 max at 9% L) —
+  // physically there isn't much more room this close to black; the real
+  // chroma commitment lives in the base-400-800 structural steps below.
+  --color-background: oklch(9% 0.021 128deg);
 
-  // Content colors (bright phosphor green)
-  --color-base-content: oklch(88% 0.18 145deg);                         // Bright phosphor
-  --color-base-content-secondary: oklch(72% 0.14 145deg);               // Medium phosphor
-  --color-base-content-tertiary: oklch(55% 0.1 145deg);                 // Dim phosphor
+  // Base colors — green-tinted neutral ramp, each step fit to ~85% of its
+  // true in-gamut ceiling at 128deg (binary-searched), tapering to ~55-62%
+  // only at 900/950 where more chroma reads as an artifact near white.
+  --color-base-50:  oklch(9%  0.021 128deg);
+  --color-base-100: oklch(12% 0.027 128deg);
+  --color-base-200: oklch(16% 0.036 128deg);
+  --color-base-300: oklch(21% 0.047 128deg);
+  --color-base-400: oklch(30% 0.067 128deg);
+  --color-base-500: oklch(44% 0.098 128deg);
+  --color-base-600: oklch(58% 0.129 128deg);
+  --color-base-700: oklch(70% 0.156 128deg);
+  --color-base-800: oklch(81% 0.180 128deg);
+  --color-base-900: oklch(90% 0.146 128deg);
+  --color-base-950: oklch(96% 0.054 128deg);
+
+  // Content colors (phosphor green) — each step re-fit to clear its own
+  // APCA floor rather than inherited from L alone (see header).
+  --color-base-content:           oklch(90% 0.200 128deg);  // Lc -89.8 / 16.07:1 on bg
+  --color-base-content-secondary: oklch(84% 0.187 128deg);  // Lc -77.3 / 13.20:1 on bg (Lc75 floor +2.3)
+  --color-base-content-tertiary:  oklch(74% 0.165 128deg);  // Lc -59.0 / 9.40:1 on bg (Lc45 floor +14.0)
+  --color-muted:                  oklch(74% 0.165 128deg);  // aliases tertiary
+  --color-text-disabled:          oklch(60% 0.133 128deg);  // Lc -36.5 / 5.48:1 on bg (Lc30 floor +6.5)
 
   // Surface colors
-  --color-surface: oklch(6% 0.015 145deg);
-  --color-surface-elevated: oklch(10% 0.02 145deg);
-  --color-surface-overlay: oklch(0% 0 0deg / 0.9);
+  --color-surface:          oklch(12% 0.027 128deg);
+  --color-surface-elevated: oklch(16% 0.036 128deg);
+  --color-surface-overlay:  oklch(4% 0.010 128deg / 0.85);
 
-  // Border colors (scanline effect)
-  --color-border: oklch(20% 0.05 145deg);
-  --color-border-hover: oklch(35% 0.1 145deg);
+  // Border colors — rebuilt off Lc 0.0 / 1.18:1 (functionally invisible,
+  // failed WCAG 1.4.11's 3:1 non-text floor outright). See header.
+  --color-border:       oklch(50% 0.111 128deg);  // Lc -23.1 / 3.59:1 on bg
+  --color-border-hover: oklch(62% 0.138 128deg);  // Lc -39.3 / 5.91:1 on bg
 
-  // Shadow colors (CRT glow)
-  --shadow-color: oklch(70% 0.2 145deg / 0.2);
-  --shadow-color-strong: oklch(70% 0.2 145deg / 0.4);
+  // Shadow colors (CRT phosphor glow, no offset — a CRT bulges light
+  // forward, it doesn't cast ink shadows)
+  --shadow-color:        oklch(70% 0.155 128deg / 0.18);
+  --shadow-color-strong: oklch(70% 0.155 128deg / 0.32);
 
-  // Primary (matrix green)
-  --color-primary: oklch(75% 0.22 145deg);
-  --color-primary-hover: oklch(88% 0.26 145deg);
-  --color-primary-active: oklch(68% 0.22 145deg);
-  --color-primary-content: oklch(5% 0.02 145deg);
+  // Primary (P1 phosphor green) — structural CTA/focus/tabs/links.
+  --color-primary:         oklch(78% 0.173 128deg);  // Lc -65.9 / 10.77:1 on bg
+  --color-primary-hover:   oklch(87% 0.193 128deg);  // Lc -83.5 / 14.59:1 on bg (lighter)
+  --color-primary-active:  oklch(66% 0.147 128deg);  // Lc -45.3 / 6.91:1 on bg (darker)
+  --color-primary-content: oklch(6%  0.014 128deg);  // Lc 67.4 / 10.89:1 on primary
 
-  // Secondary (amber - old terminal)
-  --color-secondary: oklch(80% 0.18 80deg);
-  --color-secondary-hover: oklch(92% 0.22 80deg);
-  --color-secondary-active: oklch(72% 0.18 80deg);
-  --color-secondary-content: oklch(10% 0.04 80deg);
+  // Secondary (amber — old amber-terminal voice, doubles as warning's palette)
+  --color-secondary:         oklch(78% 0.142 72deg);  // Lc -62.8 / 10.12:1 on bg
+  --color-secondary-hover:   oklch(87% 0.089 72deg);  // lighter
+  --color-secondary-active:  oklch(66% 0.120 72deg);  // darker
+  --color-secondary-content: oklch(8%  0.015 72deg);  // Lc 64.4 / 10.19:1 on secondary
 
-  // Accent (cyan - selection highlight)
-  --color-accent: oklch(75% 0.15 195deg);
-  --color-accent-hover: oklch(88% 0.19 195deg);
-  --color-accent-active: oklch(68% 0.15 195deg);
-  --color-accent-content: oklch(10% 0.03 195deg);
+  // Accent (teal-cyan — selection/cursor highlight, doubles as info's palette)
+  --color-accent:         oklch(78% 0.122 178deg);  // Lc -66.9 / 10.92:1 on bg
+  --color-accent-hover:   oklch(87% 0.136 178deg);  // lighter
+  --color-accent-active:  oklch(66% 0.103 178deg);  // darker
+  --color-accent-content: oklch(9%  0.014 178deg);  // Lc 68.2 / 10.94:1 on accent
+  --color-accent-bg:      oklch(18% 0.028 178deg);  // Lc -89.1 base-content on top
 
-  // Semantic colors (terminal-style)
-  --color-success: oklch(75% 0.22 145deg);
-  --color-success-hover: oklch(88% 0.26 145deg);
-  --color-success-bg: oklch(15% 0.06 145deg);
-  --color-success-content: oklch(5% 0.02 145deg);
-  --color-warning: oklch(80% 0.18 80deg);
-  --color-warning-hover: oklch(92% 0.22 80deg);
-  --color-warning-bg: oklch(15% 0.06 80deg);
-  --color-warning-content: oklch(10% 0.04 80deg);
-  --color-error: oklch(65% 0.22 25deg);
-  --color-error-hover: oklch(78% 0.26 25deg);
-  --color-error-bg: oklch(15% 0.06 25deg);
-  --color-error-content: oklch(95% 0.02 25deg);
-  --color-info: oklch(75% 0.15 195deg);
-  --color-info-hover: oklch(88% 0.19 195deg);
-  --color-info-bg: oklch(15% 0.05 195deg);
-  --color-info-content: oklch(10% 0.03 195deg);
+  // Semantic colors — success/warning/info deliberately mirror
+  // primary/secondary/accent (see header); error is the one independent hue.
+  --color-success:         oklch(78% 0.173 128deg);
+  --color-success-hover:   oklch(87% 0.193 128deg);
+  --color-success-active:  oklch(66% 0.147 128deg);
+  --color-success-bg:      oklch(18% 0.040 128deg);
+  --color-success-content: oklch(6%  0.014 128deg);
+  --color-warning:         oklch(78% 0.142 72deg);
+  --color-warning-hover:   oklch(87% 0.089 72deg);
+  --color-warning-active:  oklch(66% 0.120 72deg);
+  --color-warning-bg:      oklch(18% 0.033 72deg);
+  --color-warning-content: oklch(8%  0.015 72deg);
+
+  // Error rebuilt brighter with dark-on-error content (see header) — the
+  // one real WCAG-AA failure carried over from the prior pass.
+  --color-error:         oklch(78% 0.112 38deg);  // Lc -61.9 / 9.95:1 on bg
+  --color-error-hover:   oklch(83% 0.083 38deg);  // lighter
+  --color-error-active:  oklch(66% 0.184 38deg);  // darker
+  --color-error-bg:      oklch(18% 0.050 38deg);
+  --color-error-content: oklch(8%  0.023 38deg);  // Lc 63.5 / 9.99:1 on error
+  --color-info:         oklch(78% 0.122 178deg);
+  --color-info-hover:   oklch(87% 0.136 178deg);
+  --color-info-active:  oklch(66% 0.103 178deg);
+  --color-info-bg:      oklch(18% 0.028 178deg);
+  --color-info-content: oklch(9%  0.014 178deg);
 
   // Focus ring (phosphor glow)
-  --focus-ring-color: oklch(75% 0.22 145deg / 0.6);
-
-  // Muted color
-  --color-muted: oklch(45% 0.1 145deg);
-
-  // Custom: CRT effects
-  --shadow-crt: 0 0 8px oklch(75% 0.22 145deg / 0.5);
-  --shadow-scanline: inset 0 0 100px oklch(75% 0.22 145deg / 0.03);
-
-  // Monospace everything
-  --font-family-sans: var(--font-family-mono);
-
-  // Header background (more visible in terminal theme)
-  --color-header-bg: var(--color-base-300);
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
-  --color-text-disabled:          oklch(60% 0.133 128deg);  // Lc -36.5 / 5.48:1 on bg (Lc30 floor +6.5)
-  --color-accent-bg:      oklch(18% 0.028 178deg);  // Lc -89.1 base-content on top
-  --color-success-active:  oklch(66% 0.147 128deg);
-  --color-warning-active:  oklch(66% 0.120 72deg);
-  --color-error-active:  oklch(66% 0.184 38deg);  // darker
-  --color-info-active:  oklch(66% 0.103 178deg);
+  --focus-ring-color: oklch(78% 0.173 128deg / 0.55);
 
   // Elevation shadows — phosphor-glow pass (green, no offset) layered with a
   // darker green-tinted grounding pass (single implied downward light
@@ -112,6 +268,9 @@
   --shadow-xl: 0 0 40px 0 oklch(70% 0.155 128deg / 0.30), 0 16px 32px -8px oklch(4% 0.010 128deg / 0.60);
   --shadow-primary: 0 0 24px 0 oklch(78% 0.173 128deg / 0.45);
   --shadow-accent:  0 0 24px 0 oklch(78% 0.122 178deg / 0.40);
+
+  // Header background (more visible in terminal theme)
+  --color-header-bg: var(--color-base-300);
 
   // Motion — see header rationale (phosphor persistence: bloom-and-settle,
   // not matrix's zero-overshoot precision). --duration-fast (hover) and

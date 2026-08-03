@@ -12,7 +12,7 @@
 
   align-items: flex-start;
   background-color: var(--_alert-bg);
-  border: 1px solid var(--_alert-border);
+  border: var(--border-width-sm) solid var(--_alert-border);
   border-radius: var(--radius-lg);
   display: flex;
   gap: var(--space-3);

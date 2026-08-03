@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Badge } from "../../primitives/Badge";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
 import { Label } from "./Label";
 
 const meta: Meta<typeof Label> = {
@@ -22,39 +22,39 @@ type Story = StoryObj<typeof Label>;
 
 export const Default: Story = {
 	args: {
-		children: "Email address",
-		htmlFor: "email",
+		children: "Work email",
+		htmlFor: "work-email",
 	},
 };
 
 export const Required: Story = {
 	args: {
-		children: "Email address",
-		htmlFor: "email",
+		children: "Company legal name",
+		htmlFor: "company-name",
 		required: true,
 	},
 };
 
 export const WithSubText: Story = {
 	args: {
-		children: "Phone number",
+		children: "Backup phone number",
 		subText: "optional",
-		htmlFor: "phone",
+		htmlFor: "backup-phone",
 	},
 };
 
 export const WithBadge: Story = {
 	args: {
-		children: "Username",
-		htmlFor: "username",
+		children: "API key name",
+		htmlFor: "api-key-name",
 		badge: <Badge size="sm">New</Badge>,
 	},
 };
 
 export const WithAction: Story = {
 	args: {
-		children: "Password",
-		htmlFor: "password",
+		children: "Account password",
+		htmlFor: "account-password",
 		required: true,
 		action: (
 			<a
@@ -73,9 +73,9 @@ export const WithAction: Story = {
 
 export const FullFeatured: Story = {
 	args: {
-		children: "Display name",
-		subText: "optional",
-		htmlFor: "display-name",
+		children: "Webhook signing secret",
+		subText: "regenerate anytime",
+		htmlFor: "webhook-secret",
 		badge: (
 			<Badge size="sm" variant="primary">
 				Beta
@@ -90,7 +90,7 @@ export const FullFeatured: Story = {
 					textDecoration: "none",
 				}}
 			>
-				Learn more
+				View docs
 			</a>
 		),
 	},
@@ -105,16 +105,16 @@ export const Sizes: Story = {
 				gap: "var(--space-4)",
 			}}
 		>
-			<Label size="sm">Small label</Label>
-			<Label size="md">Medium label (default)</Label>
-			<Label size="lg">Large label</Label>
+			<Label size="sm">Coupon code</Label>
+			<Label size="md">Billing address</Label>
+			<Label size="lg">Organization name</Label>
 		</div>
 	),
 };
 
 export const Disabled: Story = {
 	args: {
-		children: "Disabled label",
+		children: "Custom domain (upgrade to Pro to enable)",
 		disabled: true,
 	},
 };

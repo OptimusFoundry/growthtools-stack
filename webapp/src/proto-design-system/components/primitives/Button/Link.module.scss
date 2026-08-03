@@ -13,8 +13,8 @@
   gap: var(--space-1);
   text-decoration: underline;
   text-decoration-color: currentcolor;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
+  text-decoration-thickness: var(--text-decoration-thickness);
+  text-underline-offset: var(--text-underline-offset);
 
   @include transition-colors;
 
@@ -79,18 +79,18 @@
 // SIZES
 // =============================================================================
 
-.sm {
+.size-sm {
   font-size: var(--font-size-sm);
-  gap: var(--space-0-5);
+  gap: var(--space-1);
 }
 
-.md {
+.size-md {
   font-size: var(--font-size-base);
 }
 
-.lg {
+.size-lg {
   font-size: var(--font-size-lg);
-  gap: var(--space-1-5);
+  gap: var(--space-2);
 }
 
 // =============================================================================

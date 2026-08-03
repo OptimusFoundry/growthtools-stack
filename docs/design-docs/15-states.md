@@ -229,7 +229,7 @@ Use for: table cells, list row titles where a chevron follows, avatar group labe
 
 Use for: card body previews, post content previews. Always 2 or 3 lines — never 4+.
 
-**S-5.2 — Page titles never truncate.** If the title is long, it wraps. Fraunces at 36–48px with `text-wrap: balance` handles long titles gracefully.
+**S-5.2 — Page titles never truncate.** If the title is long, it wraps. Geist at 36–48px with `text-wrap: balance` handles long titles gracefully.
 
 **S-5.3 — Card titles truncate at 2 lines max.** Beyond 2, the card has too much content.
 

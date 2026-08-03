@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type { ReactNode } from "react";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import { cn } from "../../../utils/cn";
-import { Spinner } from "../../primitives/Spinner";
 import styles from "./Table.module.scss";
 
 export type TableSize = "sm" | "md" | "lg";
@@ -40,7 +40,7 @@ export interface TableProps {
  *   <TableBody>
  *     <TableRow>
  *       <TableCell>John Doe</TableCell>
- *       <TableCell>john@example.com</TableCell>
+ *       <TableCell>john@tickuptoks.com</TableCell>
  *     </TableRow>
  *   </TableBody>
  * </Table>
@@ -237,16 +237,26 @@ export interface TableCellProps {
 	children?: ReactNode;
 	/** Text alignment */
 	align?: "left" | "center" | "right";
+	/** Whether the cell uses narrow horizontal padding — pair with TableHead narrow for checkbox/icon columns. */
+	narrow?: boolean;
 	className?: string;
 }
 
 export function TableCell({
 	children,
 	align = "left",
+	narrow = false,
 	className,
 }: TableCellProps) {
 	return (
-		<td className={cn(styles.cell, styles[`align-${align}`], className)}>
+		<td
+			className={cn(
+				styles.cell,
+				styles[`align-${align}`],
+				narrow && styles.cellNarrow,
+				className,
+			)}
+		>
 			{children}
 		</td>
 	);

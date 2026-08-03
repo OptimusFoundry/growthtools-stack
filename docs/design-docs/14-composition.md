@@ -99,7 +99,7 @@ A dashboard is text → numbers → tiles → list. An editor is form → form �
 
 **C-4.3 — If the page has only one section,** it's usually a settings form or a chat. Both archetypes tolerate mono-sectional layouts because their content *is* the rhythm (stacked fields, alternating message roles).
 
-**C-4.4 — A "filled" card is a section break.** When you drop a `.card.filled` or an editorial upgrade prompt, the section above and below it inherit its gap — treat it as a section, not as decoration.
+**C-4.4 — A "filled" card is a section break.** When you drop a `.card.filled` or an upgrade prompt, the section above and below it inherit its gap — treat it as a section, not as decoration.
 
 ---
 
@@ -111,7 +111,7 @@ Heading hierarchy must nest cleanly. A dev lint rule's worth of rules:
 
 **C-5.2 — `<h2>` is the section-head.** 2–5 per page typical.
 
-**C-5.3 — `<h3>` is the card title.** 22px Fraunces. 0–many per page.
+**C-5.3 — `<h3>` is the card title.** 22px Geist 600. 0–many per page.
 
 **C-5.4 — `<h4>` and deeper are rare.** Used inside complex cards (accordion heads, modal titles). `<h5>`/`<h6>` effectively don't exist in this kit.
 
@@ -217,7 +217,7 @@ The page has a density ceiling. Above it, the page feels cramped even if every i
 
 A user moves between Dashboard → Posts → Editor → Dashboard. The kit must feel like one product.
 
-**C-12.1 — The page-header shape is identical on every route.** Eyebrow, title (with italic), sublede, actions. Same spacing. Different content. This is the single most important consistency rule.
+**C-12.1 — The page-header shape is identical on every route.** Eyebrow, title, sublede, actions. Same spacing. Different content. This is the single most important consistency rule.
 
 **C-12.2 — The first section of every route starts at the same y-position** (topbar 72 + page top 80 + page-header ~180 + section gap 56 = ~388px from the viewport top at 1440×900). Users unconsciously rely on this anchor.
 

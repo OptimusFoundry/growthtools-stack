@@ -11,16 +11,35 @@ interface User {
 	lastLogin: string;
 }
 
-const sampleData: User[] = Array.from({ length: 50 }, (_, i) => ({
-	id: i + 1,
-	name: `User ${i + 1}`,
-	email: `user${i + 1}@tickuptoks.com`,
-	role: ["Admin", "Editor", "Viewer"][i % 3] as string,
-	status: i % 4 === 0 ? "inactive" : "active",
-	lastLogin: new Date(
-		Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-	).toLocaleDateString(),
-}));
+const NAMES = [
+	"Priya Patel",
+	"Marcus Chen",
+	"Sofia Ramirez",
+	"Liam O'Connor",
+	"Aisha Khan",
+	"Noah Williams",
+	"Elena Petrova",
+	"David Kim",
+	"Grace Okafor",
+	"Tom Nguyen",
+	"Isabella Rossi",
+	"James Anderson",
+];
+
+const sampleData: User[] = Array.from({ length: 50 }, (_, i) => {
+	const name = NAMES[i % NAMES.length];
+	const suffix = Math.floor(i / NAMES.length);
+	return {
+		id: i + 1,
+		name: suffix === 0 ? name : `${name} ${suffix + 1}`,
+		email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}${suffix === 0 ? "" : suffix + 1}@northwind.io`,
+		role: ["Admin", "Editor", "Viewer"][i % 3] as string,
+		status: i % 4 === 0 ? "inactive" : "active",
+		lastLogin: new Date(
+			Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+		).toLocaleDateString(),
+	};
+});
 
 const columns: DataGridColumn<User>[] = [
 	{ id: "name", header: "Name", cell: (row) => row.name, sortable: true },

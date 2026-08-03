@@ -30,7 +30,7 @@ const PEOPLE: Person[] = [
 	},
 	{
 		id: "3",
-		name: "carol@tickuptoks.com",
+		name: "Carol Nguyen",
 		email: "carol@tickuptoks.com",
 		role: "Viewer",
 		status: "pending",
@@ -141,4 +141,75 @@ export const Empty: Story = {
 			</span>
 		),
 	},
+};
+
+// ============================================================================
+// Showcase
+// ============================================================================
+
+export const Showcase: StoryObj<typeof DataTable<Person>> = {
+	render: () => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "var(--space-3)",
+				maxWidth: "640px",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "baseline",
+				}}
+			>
+				<h3 style={{ margin: 0 }}>Team members</h3>
+				<span
+					style={{
+						fontSize: "var(--font-size-sm)",
+						color: "var(--color-base-content-secondary)",
+					}}
+				>
+					{PEOPLE.length} members
+				</span>
+			</div>
+			<DataTable
+				columns={[
+					{
+						id: "name",
+						header: "Name",
+						cell: (row) => row.name,
+						width: "minmax(0, 2fr)",
+					},
+					{
+						id: "email",
+						header: "Email",
+						cell: (row) => row.email,
+						width: "minmax(0, 2fr)",
+					},
+					{
+						id: "role",
+						header: "Role",
+						cell: (row) => row.role,
+						width: "minmax(0, 1fr)",
+					},
+					{
+						id: "status",
+						header: "Status",
+						cell: (row) => (
+							<span style={{ color: STATUS_COLORS[row.status] }}>
+								{row.status}
+							</span>
+						),
+						width: "100px",
+					},
+				]}
+				data={PEOPLE}
+				getRowKey={(row) => row.id}
+				density="compact"
+				onRowClick={(row) => alert(`Open member: ${row.name}`)}
+			/>
+		</div>
+	),
 };

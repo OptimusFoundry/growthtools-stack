@@ -1,13 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
-	Code,
+	AlertTriangle,
+	Bug,
+	CreditCard,
 	Database,
 	Globe,
-	Layers,
+	Lightbulb,
 	Server,
-	Settings,
+	Shield,
 	Smartphone,
-	Zap,
+	Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { MultiSelect } from "./MultiSelect";
@@ -37,13 +39,17 @@ const meta: Meta<typeof MultiSelect> = {
 export default meta;
 type Story = StoryObj<typeof MultiSelect>;
 
-const frameworkItems = [
-	{ id: "react", label: "React", icon: <Code /> },
-	{ id: "vue", label: "Vue", icon: <Code /> },
-	{ id: "angular", label: "Angular", icon: <Code /> },
-	{ id: "svelte", label: "Svelte", icon: <Code /> },
-	{ id: "solid", label: "Solid", icon: <Code /> },
+const roleItems = [
+	{ id: "owner", label: "Owner" },
+	{ id: "admin", label: "Admin" },
+	{ id: "editor", label: "Editor" },
+	{ id: "viewer", label: "Viewer" },
+	{ id: "billing", label: "Billing only" },
 ];
+
+// =============================================================================
+// BASIC
+// =============================================================================
 
 export const Default: Story = {
 	render: (args) => {
@@ -51,24 +57,30 @@ export const Default: Story = {
 		return <MultiSelect {...args} value={value} onChange={setValue} />;
 	},
 	args: {
-		items: frameworkItems,
-		placeholder: "Select frameworks...",
+		items: roleItems,
+		placeholder: "Assign roles...",
 	},
 };
 
 export const WithPreselected: Story = {
 	render: () => {
-		const [value, setValue] = useState<Set<string>>(new Set(["react", "vue"]));
+		const [value, setValue] = useState<Set<string>>(
+			new Set(["admin", "editor"]),
+		);
 		return (
 			<MultiSelect
-				items={frameworkItems}
+				items={roleItems}
 				value={value}
 				onChange={setValue}
-				placeholder="Select frameworks..."
+				placeholder="Assign roles..."
 			/>
 		);
 	},
 };
+
+// =============================================================================
+// WITH DESCRIPTIONS
+// =============================================================================
 
 export const WithDescriptions: Story = {
 	render: () => {
@@ -76,28 +88,28 @@ export const WithDescriptions: Story = {
 
 		const items = [
 			{
-				id: "frontend",
-				label: "Frontend",
-				description: "User interface development",
-				icon: <Globe />,
+				id: "billing-updates",
+				label: "Billing updates",
+				description: "Invoices, failed payments, and plan changes",
+				icon: <CreditCard />,
 			},
 			{
-				id: "backend",
-				label: "Backend",
-				description: "Server-side logic and APIs",
-				icon: <Server />,
+				id: "security-alerts",
+				label: "Security alerts",
+				description: "New sign-ins and suspicious activity",
+				icon: <Shield />,
 			},
 			{
-				id: "database",
-				label: "Database",
-				description: "Data storage and management",
-				icon: <Database />,
+				id: "product-updates",
+				label: "Product updates",
+				description: "New features and changelog entries",
+				icon: <Sparkles />,
 			},
 			{
-				id: "mobile",
-				label: "Mobile",
-				description: "iOS and Android development",
-				icon: <Smartphone />,
+				id: "incident-reports",
+				label: "Incident reports",
+				description: "Downtime and degraded performance notices",
+				icon: <AlertTriangle />,
 			},
 		];
 
@@ -106,17 +118,21 @@ export const WithDescriptions: Story = {
 				items={items}
 				value={value}
 				onChange={setValue}
-				placeholder="Select specializations..."
+				placeholder="Select notification types..."
 			/>
 		);
 	},
 };
 
+// =============================================================================
+// SIZES & VARIANTS
+// =============================================================================
+
 export const Sizes: Story = {
 	render: () => {
-		const [sm, setSm] = useState<Set<string>>(new Set(["react"]));
-		const [md, setMd] = useState<Set<string>>(new Set(["react", "vue"]));
-		const [lg, setLg] = useState<Set<string>>(new Set(["react"]));
+		const [sm, setSm] = useState<Set<string>>(new Set(["owner"]));
+		const [md, setMd] = useState<Set<string>>(new Set(["admin", "editor"]));
+		const [lg, setLg] = useState<Set<string>>(new Set(["viewer"]));
 
 		return (
 			<div
@@ -128,25 +144,25 @@ export const Sizes: Story = {
 				}}
 			>
 				<MultiSelect
-					items={frameworkItems}
+					items={roleItems}
 					value={sm}
 					onChange={setSm}
 					size="sm"
-					placeholder="Small"
+					placeholder="Roles"
 				/>
 				<MultiSelect
-					items={frameworkItems}
+					items={roleItems}
 					value={md}
 					onChange={setMd}
 					size="md"
-					placeholder="Medium"
+					placeholder="Roles"
 				/>
 				<MultiSelect
-					items={frameworkItems}
+					items={roleItems}
 					value={lg}
 					onChange={setLg}
 					size="lg"
-					placeholder="Large"
+					placeholder="Roles"
 				/>
 			</div>
 		);
@@ -155,20 +171,20 @@ export const Sizes: Story = {
 
 export const Variants: Story = {
 	render: () => {
-		const [def, setDef] = useState<Set<string>>(new Set(["react"]));
-		const [outline, setOutline] = useState<Set<string>>(new Set(["vue"]));
+		const [def, setDef] = useState<Set<string>>(new Set(["admin"]));
+		const [outline, setOutline] = useState<Set<string>>(new Set(["editor"]));
 
 		return (
 			<div style={{ display: "flex", gap: "1rem" }}>
 				<MultiSelect
-					items={frameworkItems}
+					items={roleItems}
 					value={def}
 					onChange={setDef}
 					variant="default"
 					placeholder="Default"
 				/>
 				<MultiSelect
-					items={frameworkItems}
+					items={roleItems}
 					value={outline}
 					onChange={setOutline}
 					variant="outline"
@@ -179,15 +195,27 @@ export const Variants: Story = {
 	},
 };
 
+// =============================================================================
+// STATES
+// =============================================================================
+
 export const WithDisabledItems: Story = {
 	render: () => {
 		const [value, setValue] = useState<Set<string>>(new Set());
 
 		const items = [
-			{ id: "react", label: "React", icon: <Code /> },
-			{ id: "vue", label: "Vue", icon: <Code />, disabled: true },
-			{ id: "angular", label: "Angular", icon: <Code /> },
-			{ id: "svelte", label: "Svelte", icon: <Code />, disabled: true },
+			{ id: "owner", label: "Owner" },
+			{
+				id: "admin",
+				label: "Admin",
+				disabled: true,
+			},
+			{ id: "editor", label: "Editor" },
+			{
+				id: "billing",
+				label: "Billing only",
+				disabled: true,
+			},
 		];
 
 		return (
@@ -195,7 +223,7 @@ export const WithDisabledItems: Story = {
 				items={items}
 				value={value}
 				onChange={setValue}
-				placeholder="Select frameworks..."
+				placeholder="Assign roles (seat limit reached)..."
 			/>
 		);
 	},
@@ -206,11 +234,21 @@ export const WithDividers: Story = {
 		const [value, setValue] = useState<Set<string>>(new Set());
 
 		const items = [
-			{ id: "frontend", label: "Frontend", icon: <Globe /> },
-			{ id: "backend", label: "Backend", icon: <Server />, divider: true },
-			{ id: "devops", label: "DevOps", icon: <Settings /> },
-			{ id: "performance", label: "Performance", icon: <Zap />, divider: true },
-			{ id: "architecture", label: "Architecture", icon: <Layers /> },
+			{ id: "javascript", label: "JavaScript", icon: <Globe /> },
+			{
+				id: "python",
+				label: "Python",
+				icon: <Server />,
+				divider: true,
+			},
+			{ id: "postgres", label: "PostgreSQL", icon: <Database /> },
+			{
+				id: "ios",
+				label: "iOS",
+				icon: <Smartphone />,
+				divider: true,
+			},
+			{ id: "security", label: "Security", icon: <Shield /> },
 		];
 
 		return (
@@ -218,7 +256,7 @@ export const WithDividers: Story = {
 				items={items}
 				value={value}
 				onChange={setValue}
-				placeholder="Select skills..."
+				placeholder="Select repository tags..."
 			/>
 		);
 	},
@@ -231,10 +269,10 @@ export const FullWidth: Story = {
 		return (
 			<div style={{ width: "400px" }}>
 				<MultiSelect
-					items={frameworkItems}
+					items={roleItems}
 					value={value}
 					onChange={setValue}
-					placeholder="Select frameworks..."
+					placeholder="Assign roles..."
 					fullWidth
 				/>
 			</div>
@@ -246,9 +284,9 @@ export const Disabled: Story = {
 	render: () => {
 		return (
 			<MultiSelect
-				items={frameworkItems}
-				value={new Set(["react", "vue"])}
-				placeholder="Disabled multiselect"
+				items={roleItems}
+				value={new Set(["admin", "editor"])}
+				placeholder="Assign roles..."
 				disabled
 			/>
 		);
@@ -259,10 +297,33 @@ export const ManyItems: Story = {
 	render: () => {
 		const [value, setValue] = useState<Set<string>>(new Set());
 
-		const items = Array.from({ length: 20 }, (_, i) => ({
-			id: `item-${i + 1}`,
-			label: `Option ${i + 1}`,
-			description: `Description for option ${i + 1}`,
+		const countries = [
+			"United States",
+			"Canada",
+			"United Kingdom",
+			"Germany",
+			"France",
+			"Spain",
+			"Italy",
+			"Netherlands",
+			"Sweden",
+			"Norway",
+			"Denmark",
+			"Ireland",
+			"Australia",
+			"New Zealand",
+			"Japan",
+			"Singapore",
+			"India",
+			"Brazil",
+			"Mexico",
+			"South Africa",
+		];
+
+		const items = countries.map((country, i) => ({
+			id: `country-${i + 1}`,
+			label: country,
+			description: `Enable billing in ${country}`,
 		}));
 
 		return (
@@ -270,8 +331,82 @@ export const ManyItems: Story = {
 				items={items}
 				value={value}
 				onChange={setValue}
-				placeholder="Select options..."
+				placeholder="Select supported countries..."
 			/>
+		);
+	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => {
+		const [value, setValue] = useState<Set<string>>(
+			new Set(["billing-updates", "security-alerts"]),
+		);
+
+		const items = [
+			{
+				id: "billing-updates",
+				label: "Billing updates",
+				description: "Invoices, failed payments, and plan changes",
+				icon: <CreditCard />,
+			},
+			{
+				id: "security-alerts",
+				label: "Security alerts",
+				description: "New sign-ins and suspicious activity",
+				icon: <Shield />,
+			},
+			{
+				id: "product-updates",
+				label: "Product updates",
+				description: "New features and changelog entries",
+				icon: <Sparkles />,
+				divider: true,
+			},
+			{
+				id: "bug-reports",
+				label: "Bug status changes",
+				description: "Comments and resolutions on tickets you filed",
+				icon: <Bug />,
+			},
+			{
+				id: "feature-requests",
+				label: "Feature request votes",
+				description: "When a request you upvoted ships",
+				icon: <Lightbulb />,
+			},
+		];
+
+		return (
+			<div
+				style={{
+					width: "320px",
+					padding: "1.5rem",
+					border: "1px solid var(--color-border)",
+					borderRadius: "12px",
+					background: "var(--color-surface)",
+				}}
+			>
+				<div style={{ marginBottom: "1rem" }}>
+					<div style={{ fontSize: "15px", fontWeight: 600 }}>
+						Email notifications
+					</div>
+					<div style={{ fontSize: "13px", color: "var(--color-muted)" }}>
+						Choose what we email you about. You can change this any time.
+					</div>
+				</div>
+				<MultiSelect
+					items={items}
+					value={value}
+					onChange={setValue}
+					placeholder="Select notification types..."
+					fullWidth
+				/>
+			</div>
 		);
 	},
 };

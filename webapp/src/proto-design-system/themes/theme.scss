@@ -13,9 +13,6 @@
 @use "../tokens/z-index";
 
 // Import themes
-@use "editorial";
-@use "light";
-@use "oat";
 @use "ember";
 @use "mono";
 @use "dark";
@@ -23,30 +20,33 @@
 @use "cosmos";
 @use "cyberpunk";
 @use "sunset";
-@use "claude";
-@use "ocean";
 @use "glow";
-@use "fog";
-@use "porcelain";
-@use "aqua";
 @use "archive";
 @use "botanical";
 @use "carbon";
-@use "clinic";
 @use "concrete";
 @use "flux";
-@use "marble";
 @use "matrix";
 @use "mercury";
 @use "moss";
 @use "plasma";
-@use "punk";
 @use "radio";
 @use "riso";
 @use "vinyl";
 @use "zen";
+@use "bioluminescent";
+@use "blueprint";
+@use "candy";
+@use "forest";
+@use "forest-light";
+@use "lavender";
+@use "midnight";
+@use "monochrome";
+@use "neon";
+@use "paper";
+@use "pixel";
+@use "terminal";
 @use "whisper";
-@use "chalk";
 
 // Import base styles
 @use "../base/reset";

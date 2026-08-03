@@ -19,7 +19,7 @@
 
   // Colors
   background-color: var(--_btn-bg);
-  border: 1px solid var(--_btn-border);
+  border: var(--border-width-sm) solid var(--_btn-border);
 
   // Sizing
   border-radius: var(--_btn-radius);
@@ -46,7 +46,6 @@
 
   // Transitions
   @include transition-colors;
-  @include transition-transform;
 
   // Focus state
   @include focus-ring;
@@ -54,11 +53,6 @@
   // Hover state
   &:hover:not(:disabled) {
     --_btn-bg: var(--color-base-300);
-  }
-
-  // Active state
-  &:active:not(:disabled) {
-    transform: scale(0.98);
   }
 
   // Disabled state
@@ -171,22 +165,22 @@
 // SIZES
 // =============================================================================
 
-.sm {
+.size-sm {
   --_btn-padding-x: var(--space-3);
   --_btn-padding-y: var(--space-1);
   --_btn-font-size: var(--font-size-xs);
   --_btn-height: var(--space-6);
 
-  gap: var(--space-1-5);
+  gap: var(--space-2);
 }
 
-.lg {
+.size-lg {
   --_btn-padding-x: var(--space-5);
   --_btn-padding-y: var(--space-3);
   --_btn-font-size: var(--font-size-base);
   --_btn-height: var(--space-8);
 
-  gap: var(--space-2-5);
+  gap: var(--space-3);
 }
 
 // =============================================================================
@@ -217,8 +211,8 @@
 }
 
 .spinner {
-  animation: spin var(--duration-slower) linear infinite;
-  border: 2px solid transparent;
+  animation: spin var(--duration-slower) var(--ease-linear) infinite;
+  border: var(--border-width-md) solid transparent;
   border-radius: var(--radius-full);
   border-top-color: currentcolor;
   height: 1em;

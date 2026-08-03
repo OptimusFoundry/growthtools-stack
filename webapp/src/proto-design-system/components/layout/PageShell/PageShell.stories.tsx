@@ -65,13 +65,13 @@ export const SingleColumn: Story = {
 	render: () => (
 		<PageShell>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Section A — span 12" />
+				<Section label="Page header — span 12" />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Section B — span 12" />
+				<Section label="Campaign performance chart — span 12" />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Section C — span 12" />
+				<Section label="Recent signups table — span 12" />
 			</Grid.Item>
 		</PageShell>
 	),
@@ -93,16 +93,16 @@ export const TwoColumnHalf: Story = {
 	render: () => (
 		<PageShell>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Full-width header — span 12" height={80} />
+				<Section label="Analytics overview header — span 12" height={80} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 6 }}>
-				<Section label="Left column — span 12 → 6" height={200} />
+				<Section label="Conversion rate chart — span 12 → 6" height={200} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 6 }}>
-				<Section label="Right column — span 12 → 6" height={200} />
+				<Section label="Traffic sources chart — span 12 → 6" height={200} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Full-width footer — span 12" height={80} />
+				<Section label="Export controls footer — span 12" height={80} />
 			</Grid.Item>
 		</PageShell>
 	),
@@ -124,16 +124,16 @@ export const ThreeColumnThird: Story = {
 	render: () => (
 		<PageShell>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Page header — span 12" height={80} />
+				<Section label="Pricing page header — span 12" height={80} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 4 }}>
-				<Section label="Card 1 — span 12 → 4" height={160} />
+				<Section label="Starter plan — span 12 → 4" height={160} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 4 }}>
-				<Section label="Card 2 — span 12 → 4" height={160} />
+				<Section label="Growth plan — span 12 → 4" height={160} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 4 }}>
-				<Section label="Card 3 — span 12 → 4" height={160} />
+				<Section label="Scale plan — span 12 → 4" height={160} />
 			</Grid.Item>
 		</PageShell>
 	),
@@ -155,13 +155,16 @@ export const SidebarMain: Story = {
 	render: () => (
 		<PageShell>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Page header — span 12" height={80} />
+				<Section label="Workspace settings header — span 12" height={80} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, lg: 3 }} as="nav">
-				<Section label="Sidebar nav — span 12 → 3" height={400} />
+				<Section
+					label="Settings nav (Profile, Billing, Team) — span 12 → 3"
+					height={400}
+				/>
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, lg: 9 }} as="main">
-				<Section label="Main content — span 12 → 9" height={400} />
+				<Section label="Billing details form — span 12 → 9" height={400} />
 			</Grid.Item>
 		</PageShell>
 	),
@@ -183,10 +186,10 @@ export const NarrowVariant: Story = {
 	render: () => (
 		<PageShell variant="narrow">
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Narrow page header — span 12" height={80} />
+				<Section label="New project header — span 12" height={80} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Form content — max-width 1024px" height={300} />
+				<Section label="Project details form — max-width 1024px" height={300} />
 			</Grid.Item>
 		</PageShell>
 	),
@@ -208,13 +211,13 @@ export const Animated: Story = {
 	render: () => (
 		<PageShell animate>
 			<Grid.Item span={{ base: 12 }}>
-				<Section label="Section A — animates in" height={100} />
+				<Section label="Dashboard header — animates in" height={100} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 6 }}>
-				<Section label="Section B — staggered" height={150} />
+				<Section label="Revenue this month — staggered" height={150} />
 			</Grid.Item>
 			<Grid.Item span={{ base: 12, md: 6 }}>
-				<Section label="Section C — staggered" height={150} />
+				<Section label="Active subscriptions — staggered" height={150} />
 			</Grid.Item>
 		</PageShell>
 	),
@@ -223,6 +226,47 @@ export const Animated: Story = {
 			description: {
 				story:
 					"Sections animate in with stagger on mount. Refresh the page to see the animation.",
+			},
+		},
+	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const DashboardShowcase: Story = {
+	name: "Showcase — Analytics dashboard",
+	render: () => (
+		<PageShell>
+			<Grid.Item span={{ base: 12 }}>
+				<Section
+					label="Analytics · overview of your last 30 days"
+					height={72}
+				/>
+			</Grid.Item>
+			<Grid.Item span={{ base: 12, md: 4 }}>
+				<Section label="Total signups — 4,821 (+12%)" height={140} />
+			</Grid.Item>
+			<Grid.Item span={{ base: 12, md: 4 }}>
+				<Section label="Conversion rate — 6.4% (+0.8pt)" height={140} />
+			</Grid.Item>
+			<Grid.Item span={{ base: 12, md: 4 }}>
+				<Section label="Monthly recurring revenue — $18,240" height={140} />
+			</Grid.Item>
+			<Grid.Item span={{ base: 12, lg: 8 }}>
+				<Section label="Signups over time chart — span 12 → 8" height={280} />
+			</Grid.Item>
+			<Grid.Item span={{ base: 12, lg: 4 }}>
+				<Section label="Top referral sources — span 12 → 4" height={280} />
+			</Grid.Item>
+		</PageShell>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"A realistic analytics dashboard composed from PageShell's canonical grid: a header row, three KPI cards, then a chart + sidebar split.",
 			},
 		},
 	},

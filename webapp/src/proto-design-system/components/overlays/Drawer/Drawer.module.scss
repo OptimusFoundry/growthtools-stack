@@ -11,7 +11,7 @@
 
 .backdrop {
   appearance: none;
-  background: oklch(0% 0 0 / 0.5);
+  background: var(--color-surface-overlay);
   border: 0;
   cursor: pointer;
   inset: 0;
@@ -74,7 +74,7 @@
 
 .header {
   align-items: flex-start;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width-sm) solid var(--color-border);
   display: flex;
   flex-shrink: 0;
   gap: var(--space-4);
@@ -123,7 +123,7 @@
   @include focus-ring;
 
   &:hover {
-    background-color: var(--color-base-100);
+    background-color: var(--color-hover-overlay-strong);
     color: var(--color-base-content);
   }
 }
@@ -135,7 +135,7 @@
 }
 
 .footer {
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width-sm) solid var(--color-border);
   flex-shrink: 0;
   padding: var(--space-4) var(--space-6);
 }

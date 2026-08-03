@@ -1,19 +1,180 @@
 // =============================================================================
 // RADIO THEME
 // =============================================================================
-// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css).
+// Ported from SingaporeAtmosphere Design System v2 (colors_and_type.css):
+// analog broadcast-dial console — navy chassis, amber dial glow, gold caution
+// lamp, bright yellow tally light. Barlow Condensed (body/UI) + Oswald
+// (display) + JetBrains Mono (meta/eyebrows) kept from the source system —
+// a broadcast/dashboard signage pairing, not a house Geist swap.
+// 2026-07 contrast/gamut refit (computed via theme-contrast-check.mjs, not
+// eyeballed — see PR notes for full before/after table):
+// - Every saturated literal at hue 55/95/22/225deg was authored above the
+//   sRGB gamut ceiling at its lightness (~30 distinct OUT OF GAMUT hits) —
+//   every primary/accent/warning/error/info step, plus every shadow glow
+//   and the shadow-xs..xl ambient tint, is rebuilt at the same L/H with
+//   chroma fit under the true in-gamut max so nothing silently clips/
+//   hue-shifts at paint time.
+// - `--color-warning` was a literal duplicate of `--color-primary` (same
+//   L/C/H) — a CTA and a caution alert were pixel-identical. Warning gets
+//   its own hue (78deg "gold caution lamp", between primary's 55deg amber
+//   and accent's 95deg yellow tally light) so the three warm roles read as
+//   three different lamps, not one color wearing three names.
+// - `--color-accent-active` was lighter than both accent and accent-hover
+//   (86% -> hover 92% -> active 88%) — pressing read as "brighter," not
+//   "pressed." Active now steps darker than resting (78%), matching the
+//   press direction every other interactive role in this theme already uses.
+// - `--color-border-hover` was a literal copy of `--color-primary` (72%
+//   0.22 55deg) — any hovered card border flashed full CTA-orange, well
+//   past hairline weight. Rebuilt in the border's own cool hue (245deg)
+//   at a brighter step instead, so "hover" still reads as border, not button.
+// - `--color-base-content-tertiary` (Lc 36.5) and `--color-muted` (Lc 18.3)
+//   both failed the Lc45 headline/detailed-icon floor on the navy
+//   background; muted was nearly invisible. Both relightened; muted now
+//   aliases the fixed tertiary value (matching this system's own dark/oat
+//   convention of muted = tertiary, not a third independent color).
+// - `--color-text-disabled` was missing entirely (contract violation) —
+//   added, tuned to clear the Lc30 disabled floor while staying visibly
+//   dimmer than tertiary/muted.
+// - `--color-border` (Lc 12.2) was under the Lc15 hairline floor —
+//   functionally invisible on the navy chassis. Relightened one step;
+//   border-hover retuned above it once out of the primary-hue borrowing.
+// - `--color-error` base relightened 64%->70% L (chroma refit to match) —
+//   as an icon/text color directly on background it scored Lc 37.4, under
+//   the Lc45 detailed-icon floor; 70% clears it (Lc 46.2). error-content
+//   was also switched from light ivory to dark ink: the original light
+//   pairing (matching :root/dark/oat's convention) only cleared 2.88:1
+//   WCAG at the first-pass error L — under even the 3:1 UI floor — because
+//   this hue's gamut ceiling doesn't leave enough headroom for light text
+//   to separate cleanly at a lightness that also clears the icon-on-bg
+//   floor. Dark ink (matching how success/warning/info already behave in
+//   this theme) clears Lc49.3 / 6.88:1 at the same error L, and pulls in
+//   the same direction as the icon-on-bg fix instead of fighting it — a
+//   real, computed reason to break from the house default here, not a
+//   stylistic swap.
+// - `--color-text-disabled` and `--color-border` both needed a second pass
+//   after the first fit: disabled at 50% L only cleared Lc20.8 (floor 30);
+//   border at 48% L only cleared Lc18.7/16.9 bg/surface (floor 15, too
+//   tight a margin on surface). Both relightened further — see final values.
+// - success was already in-gamut and clearing every floor — left untouched.
+// 2026-07 refit #2 (re-audited fresh with theme-contrast-check.mjs — refit
+// #1's header claimed floors were cleared that, re-measured, were not):
+// - The five `-content on -base` button pairs (primary/warning/info/success/
+//   error) all sat UNDER the Lc60 larger/bold-UI-text floor after #1 (50.4 /
+//   57.7 / 53.4 / 58.4 / 49.3) — moving the dark-ink content tokens darker
+//   couldn't close the gap: APCA's black-clamp means near-black ink plateaus
+//   around Lc50-51 against these bases regardless of how much darker it
+//   gets (verified: content L4%->L22% moved Lc by <1pt). The base itself had
+//   to lighten. Each base was walked up in L (chroma refit down only where
+//   needed to stay in-gamut — success/warning already had enough gamut
+//   headroom to lighten at their original chroma) until its own `-content`
+//   pairing cleared Lc60 with 2.5+pt margin: primary 70%->78% L (chroma
+//   0.16->0.13, now Lc63.6), warning 74%->78% L (chroma unchanged 0.14, now
+//   Lc64.4), info 70%->76% L (chroma 0.12->0.12, now Lc63.4), success
+//   72%->75% L (chroma unchanged 0.18, now Lc63.5), error 70%->78% L (chroma
+//   0.18->0.12, now Lc62.7 — error's chroma had the least gamut headroom of
+//   the five, since C0.18 clips above ~71% L at this hue). Hover/active
+//   steps on all five were re-walked to keep the same lighten-on-hover/
+//   darken-on-press direction at the new base L, each re-verified in-gamut.
+// - `--color-base-content-secondary` cleared WCAG (10.97:1) but missed the
+//   Lc75 small-body-text floor by 1.6 (Lc73.4/74deg84%L). Lightened
+//   84%->87% L (same hue/chroma) — Lc79.3 on background, Lc77.5 on surface,
+//   both now clear 75 with margin instead of one pair falling just short.
+// - `--color-text-disabled` cleared the Lc30 floor by only 1pt (Lc31.0 at
+//   58% L) — too thin to survive any future micro-tune. Lightened to 61% L:
+//   Lc35.2, still clearly the least-prominent step below muted (Lc52.1).
+// - `--font-family-mono` swap: JetBrains Mono was a default-of-the-set pick
+//   (7 of 37 bespoke-font themes in this registry reach for it verbatim,
+//   with no radio-specific tie). Replaced with B612 Mono — designed for
+//   Airbus cockpit instrument displays, i.e. an actual dashboard/gauge
+//   readout face — a literal fit for a broadcast console's meta/eyebrow/
+//   frequency-readout text, and used by only one other theme in this
+//   registry (`midnight`). JetBrains Mono kept one step down the stack as a
+//   safe fallback.
+// - `--shadow-primary`/`--shadow-accent` glow terms (the backlit-dial-onto-
+//   metal-case halo) softened: blur 20px->12px, alpha 0.4->0.22. The
+//   physical logic (a real emissive dial casting warm light) is a specific,
+//   documented reason to use a colored glow here — but at the original
+//   20px/0.4 it read identically to the generic "neon-glow-on-dark-mode"
+//   default this system's own checklist flags, especially since it's the
+//   theme's most screenshot-visible shadow. Toning it down keeps the
+//   metaphor without the generic-premium-dark-mode tell; it's still the
+//   only theme in this registry pairing a colored glow to two specific
+//   button roles rather than applying it across every shadow level (unlike
+//   `matrix`/`archive`, which apply the glow shape to shadow-xs..xl).
+// - `--shadow-color`/`--shadow-color-strong` re-hued to the new primary L/C
+//   (78% 0.13 55deg) so the ambient tint tracks the refit dial-glow color
+//   instead of the pre-refit value.
+// Brief, stated plainly (the #1 header's "broadcast-dial console" line was
+// accurate but under-anchored): this is a tube-era tuner/mixing console —
+// amber dial glow behind frosted glass, a gold analog VU-meter needle at
+// rest, a bright yellow ON-AIR tally lamp, frequency digits in a condensed
+// dashboard face. Barlow Condensed's narrow forms read as tuning-dial
+// numerals (88.1 / 101.5 FM); Oswald is the console's stenciled panel
+// labeling; B612 Mono (see above) is the readout face.
+// Motion (2026-08 motion sweep) — analog-instrument weight: this theme's
+// physical vocabulary is a VU needle with real inertia, a tuning dial that
+// glides to a station, and a console toggle with resistance — never a flat
+// digital snap. Six coherent overrides (grep-confirmed against live
+// consumers), everything else stays house default:
+// - --spring-slow (StatCard's counter, its only consumer): 100,20,1 (zeta
+//   1.0, critically damped, zero overshoot) -> 130,14,1.2 (zeta 0.56). This
+//   is the one token that gets to be literal: a VU meter's whole design
+//   language is a needle that swings past its reading and settles back —
+//   the house default's clean, overshoot-free tally is the one thing a real
+//   VU needle never does.
+// - --spring-gentle (Button/LinkButton's whileHover/whileTap press spring,
+//   the "gentle" preset useMotionConfig defaults to): 120,14,1 (zeta 0.64)
+//   -> 220,32,1.3 (zeta 0.95, near-critical) — house's soft squish reads as
+//   a plastic UI spring; a console toggle has resistance and stops
+//   decisively, so this settles firmly with negligible rebound, plus mass
+//   1.3 for a touch more perceived heft on press.
+// - --spring-stiff (Tabs' active-indicator slide, its only consumer):
+//   400,30,1 (zeta 0.75) -> 260,28,1.3 (zeta 0.76 — same damping character,
+//   lower stiffness + added mass) — same lightly-underdamped feel, just
+//   slower to settle, so the indicator reads as a needle gliding to a new
+//   station instead of a digital tab snapping over.
+// - --ease-out (the broadest shared curve — every --duration-fast hover
+//   transition plus every --duration-normal-driven Accordion/Sidebar/
+//   DataGrid/Table/Toast/Alert/Banner entrance): house's snappy
+//   ease-out-quad (0.22, 1, 0.36, 1) -> ease-out-cubic (0.33, 1, 0.68, 1),
+//   a longer decelerating tail that reads as momentum bleeding off rather
+//   than a crisp digital stop. --duration-fast itself (150ms, J-9.1's hover
+//   rule) and --duration-instant (0ms, focus ring) are untouched — only the
+//   curve changes, never the hover clock.
+// - --duration-normal: 240ms -> 280ms (+17%, well clear of the 400ms
+//   ceiling) — panel-weight moments (Accordion expand, Sidebar collapse,
+//   Toast/Alert/Banner enter) get a touch more dwell to read as a physical
+//   console panel with resistance, not an instant digital toggle.
+// - --duration-ambient (Skeleton/DataTable's loading shimmer, its only
+//   consumer): 1500ms -> 1800ms — the shimmer sheen is the one token that
+//   maps directly onto this theme's central visual motif (a backlit dial
+//   glowing through frosted glass); slowed to read as a warm filament
+//   breathing rather than a fast mechanical scan.
+// - Declined: --ease-bounce/--ease-elastic/--spring-bouncy/--spring-wobbly
+//   have zero live consumers anywhere in the component tree (grep-confirmed
+//   — only Foundations.tsx's token-list showcase references their names);
+//   retuning tokens nothing renders would be speculative, not
+//   theme-motivated. Same for --duration-enter/-exit/-complex/-page (no
+//   live consumer). --ease-in-out (Progress indeterminate, Spinner/Skeleton
+//   pulse) and --duration-slower/-slowest stay house default — no
+//   radio-specific story beyond "generic ambient," unlike --duration-ambient
+//   above which ties directly to the dial-glow motif.
 
-@import "https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap";
+@import "https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=B612+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap";
 
 [data-theme="radio"] {
   color-scheme: dark;
 
   --font-family-sans:    "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
-  --font-family-mono:    "JetBrains Mono", "SF Mono", monospace;
+  --font-family-mono:    "B612 Mono", "JetBrains Mono", "SF Mono", monospace;
   --font-family-serif:   "Barlow Condensed", sans-serif;
   --font-family-display: "Oswald", "Barlow Condensed", sans-serif;
+
+  // Base scale — cool navy chassis (50-200) rising into a warm dial-glow
+  // ramp (300-950). The hue seam at 200/300 is deliberate: surfaces read as
+  // dark hardware, content/border-adjacent steps read as illuminated.
   --color-background: oklch(20% 0.04 245deg);
-  --color-base-50: oklch(26% 0.05 245deg);
+  --color-base-50:  oklch(26% 0.05 245deg);
   --color-base-100: oklch(30% 0.06 245deg);
   --color-base-200: oklch(36% 0.07 245deg);
   --color-base-300: oklch(42% 0.06 75deg);
@@ -24,65 +185,113 @@
   --color-base-800: oklch(88% 0.025 75deg);
   --color-base-900: oklch(94% 0.02 75deg);
   --color-base-950: oklch(98% 0.01 75deg);
-  --color-base-content: oklch(94% 0.02 75deg);
-  --color-base-content-secondary: oklch(82% 0.03 75deg);
-  --color-base-content-tertiary: oklch(62% 0.04 80deg);
-  --color-muted: oklch(48% 0.04 80deg);
-  --color-surface: oklch(26% 0.05 245deg);
-  --color-surface-elevated: oklch(32% 0.06 245deg);
-  --color-surface-overlay: oklch(0% 0 0deg / 0.75);
-  --color-border: oklch(42% 0.06 245deg);
-  --color-border-hover: oklch(70% 0.22 55deg);
-  --color-primary: oklch(72% 0.22 55deg);
-  --color-primary-hover: oklch(78% 0.23 55deg);
-  --color-primary-active: oklch(66% 0.22 55deg);
-  --color-primary-content: oklch(16% 0.04 55deg);
-  --color-secondary: oklch(94% 0.02 75deg);
-  --color-secondary-hover: oklch(86% 0.03 75deg);
-  --color-secondary-active: oklch(82% 0.03 75deg);
-  --color-secondary-content: oklch(20% 0.04 245deg);
-  --color-accent: oklch(86% 0.18 95deg);
-  --color-accent-hover: oklch(92% 0.20 95deg);
-  --color-accent-active: oklch(88% 0.2 95deg);
-  --color-accent-content: oklch(16% 0.04 95deg);
-  --color-accent-bg: oklch(24% 0.08 95deg);
-  --color-success: oklch(72% 0.18 145deg);
-  --color-success-hover: oklch(80% 0.18 145deg);
-  --color-success-active: oklch(64% 0.18 145deg);
-  --color-success-bg: oklch(26% 0.07 145deg);
-  --color-success-content: oklch(14% 0.04 145deg);
-  --color-warning: oklch(72% 0.22 55deg);
-  --color-warning-hover: oklch(80% 0.22 55deg);
-  --color-warning-active: oklch(64% 0.22 55deg);
-  --color-warning-bg: oklch(28% 0.08 55deg);
-  --color-warning-content: oklch(14% 0.04 55deg);
-  --color-error: oklch(64% 0.24 22deg);
-  --color-error-hover: oklch(72% 0.24 22deg);
-  --color-error-active: oklch(56% 0.24 22deg);
-  --color-error-bg: oklch(26% 0.09 22deg);
-  --color-error-content: oklch(98% 0.02 22deg);
-  --color-info: oklch(70% 0.14 225deg);
-  --color-info-hover: oklch(78% 0.14 225deg);
-  --color-info-active: oklch(62% 0.14 225deg);
-  --color-info-bg: oklch(28% 0.06 225deg);
-  --color-info-content: oklch(14% 0.04 225deg);
-  --shadow-color: oklch(72% 0.22 55deg / 0.25);
-  --shadow-color-strong: oklch(72% 0.22 55deg / 0.55);
-  --shadow-xs: 0 1px 0 0 oklch(10% 0.03 245deg / 0.6);
-  --shadow-sm: 0 2px 0 0 oklch(10% 0.03 245deg / 0.7), 0 1px 3px 0 oklch(0% 0 0 / 0.5);
-  --shadow-md: 0 4px 0 0 oklch(10% 0.03 245deg / 0.8), 0 6px 12px -2px oklch(0% 0 0 / 0.5);
-  --shadow-lg: 0 6px 0 0 oklch(10% 0.03 245deg / 0.85), 0 12px 24px -4px oklch(0% 0 0 / 0.6);
-  --shadow-xl: 0 10px 0 0 oklch(10% 0.03 245deg / 0.9), 0 20px 40px -8px oklch(0% 0 0 / 0.7);
-  --shadow-primary: 0 3px 0 0 oklch(10% 0.03 245deg / 0.85), 0 0 20px 0 oklch(72% 0.22 55deg / 0.4);
-  --shadow-accent: 0 3px 0 0 oklch(10% 0.03 245deg / 0.85), 0 0 20px 0 oklch(86% 0.18 95deg / 0.4);
-  --focus-ring-color: oklch(72% 0.22 55deg / 0.5);
-  --color-header-bg: var(--color-base-100);
 
+  // Content — relightened tertiary/muted (were Lc 36.5 / 18.3, both under
+  // the Lc45 floor); muted now aliases tertiary per house convention.
+  // Secondary relightened 84%->87% L (refit #2): was Lc73.4 on background,
+  // under the Lc75 small-body-text floor — now Lc79.3/77.5 (bg/surface).
+  --color-base-content:           oklch(94% 0.02 75deg);
+  --color-base-content-secondary: oklch(87% 0.03 75deg);
+  --color-base-content-tertiary:  oklch(72% 0.045 78deg);
+  --color-muted:                  oklch(72% 0.045 78deg);
 
-  // --- New tokens adopted from saas-template sync (additive only) ---
   // Relightened 58%->61% L (refit #2): was Lc31.0, only 1pt above the Lc30
   // disabled floor. Now Lc35.2, still clearly dimmer than muted (Lc52.1).
   --color-text-disabled:          oklch(61% 0.03 80deg);
+  --color-surface:          oklch(26% 0.05 245deg);
+  --color-surface-elevated: oklch(32% 0.06 245deg);
+  --color-surface-overlay:  oklch(0% 0 0deg / 0.75);
+
+  // Border relightened past the Lc15 hairline floor (was Lc 12.2).
+  // Border-hover moved off a literal primary-color copy into the border's
+  // own cool hue — a "more visible border," not a CTA flash.
+  --color-border:       oklch(52% 0.06 245deg);
+  --color-border-hover: oklch(62% 0.09 245deg);
+
+  // Primary — amber dial glow. Chroma fit under the sRGB ceiling at each L.
+  // Refit #2: base 70%->78% L (chroma 0.16->0.13) — at 70% the
+  // primary-content pairing plateaued at Lc50.4 (dark ink is black-clamped;
+  // no darker ink closes the gap), under the Lc60 UI-text floor. 78% clears
+  // it at Lc63.6. Hover/active re-walked to keep the same lighten/darken
+  // directions at the new base.
+  --color-primary:         oklch(78% 0.13 55deg);
+  --color-primary-hover:   oklch(84% 0.09 55deg);
+  --color-primary-active:  oklch(68% 0.14 55deg);
+  --color-primary-content: oklch(14% 0.032 55deg);
+
+  // Secondary — cream dial-plate ink, unchanged (already in-gamut, already
+  // clearing every floor).
+  --color-secondary:         oklch(94% 0.02 75deg);
+  --color-secondary-hover:   oklch(86% 0.03 75deg);
+  --color-secondary-active:  oklch(82% 0.03 75deg);
+  --color-secondary-content: oklch(20% 0.04 245deg);
+
+  // Accent — bright yellow tally light. Active now steps darker than
+  // resting (was lighter than both base and hover — a broken "press"
+  // direction); chroma fit under the sRGB ceiling at each L.
+  --color-accent:         oklch(86% 0.165 95deg);
+  --color-accent-hover:   oklch(91% 0.132 95deg);
+  --color-accent-active:  oklch(78% 0.148 95deg);
+  --color-accent-content: oklch(16% 0.03 95deg);
+  --color-accent-bg:      oklch(24% 0.045 95deg);
+
+  // Success — refit #2: base 72%->75% L (chroma unchanged 0.18 — already had
+  // gamut headroom to lighten). success-content-on-success was Lc58.4, 1.6pt
+  // under the Lc60 floor; now Lc63.5.
+  --color-success:         oklch(75% 0.18 145deg);
+  --color-success-hover:   oklch(83% 0.15 145deg);
+  --color-success-active:  oklch(67% 0.15 145deg);
+  --color-success-bg:      oklch(26% 0.07 145deg);
+  --color-success-content: oklch(14% 0.04 145deg);
+
+  // Warning — "gold caution lamp" hue (78deg), no longer a literal
+  // duplicate of primary. Refit #2: base 74%->78% L (chroma unchanged 0.14).
+  // warning-content-on-warning was Lc57.7, under the Lc60 floor; now Lc64.4.
+  --color-warning:         oklch(78% 0.14 78deg);
+  --color-warning-hover:   oklch(85% 0.10 78deg);
+  --color-warning-active:  oklch(68% 0.14 78deg);
+  --color-warning-bg:      oklch(26% 0.05 78deg);
+  --color-warning-content: oklch(14% 0.026 78deg);
+
+  // Error — refit #2: base 70%->78% L (chroma 0.18->0.12 — this hue clips
+  // above ~71% L at C0.18, the tightest gamut headroom of the five
+  // semantics). error-content-on-error was Lc49.3, well under the Lc60
+  // floor even after refit #1's relighten; now Lc62.7. Content stays dark
+  // ink (see refit #1 note above on why light content doesn't clear this
+  // hue's gamut ceiling).
+  --color-error:         oklch(78% 0.12 22deg);
+  --color-error-hover:   oklch(85% 0.08 22deg);
+  --color-error-active:  oklch(64% 0.18 22deg);
+  --color-error-bg:      oklch(26% 0.09 22deg);
+  --color-error-content: oklch(14% 0.03 22deg);
+
+  // Info — refit #2: base 70%->76% L (chroma unchanged 0.12). info-content-
+  // on-info was Lc53.4, under the Lc60 floor; now Lc63.4.
+  --color-info:         oklch(76% 0.12 225deg);
+  --color-info-hover:   oklch(84% 0.08 225deg);
+  --color-info-active:  oklch(68% 0.10 225deg);
+  --color-info-bg:      oklch(28% 0.048 225deg);
+  --color-info-content: oklch(14% 0.024 225deg);
+
+  // Shadows — one implied light source: a cool ambient occlusion tinted to
+  // the navy chassis (never flat black), plus a warm colored glow that
+  // matches whatever's emitting it (primary/accent) — the physical logic of
+  // a backlit dial casting a warm halo onto a cool metal case. Refit #2:
+  // shadow-color/-strong re-hued to the new primary L/C; the shadow-primary/
+  // -accent glow terms toned down (blur 20px->12px, alpha 0.4->0.22) so the
+  // dial-glow metaphor doesn't read as an unexamined neon-on-dark default —
+  // it's still scoped to just these two roles, not every shadow level.
+  --shadow-color:        oklch(78% 0.13 55deg / 0.25);
+  --shadow-color-strong: oklch(78% 0.13 55deg / 0.55);
+  --shadow-xs: 0 1px 0 0 oklch(10% 0.02 245deg / 0.6);
+  --shadow-sm: 0 2px 0 0 oklch(10% 0.02 245deg / 0.7), 0 1px 3px 0 oklch(10% 0.02 245deg / 0.5);
+  --shadow-md: 0 4px 0 0 oklch(10% 0.02 245deg / 0.8), 0 6px 12px -2px oklch(10% 0.02 245deg / 0.5);
+  --shadow-lg: 0 6px 0 0 oklch(10% 0.02 245deg / 0.85), 0 12px 24px -4px oklch(10% 0.02 245deg / 0.6);
+  --shadow-xl: 0 10px 0 0 oklch(10% 0.02 245deg / 0.9), 0 20px 40px -8px oklch(10% 0.02 245deg / 0.7);
+  --shadow-primary: 0 3px 0 0 oklch(10% 0.02 245deg / 0.85), 0 0 12px 0 oklch(78% 0.13 55deg / 0.22);
+  --shadow-accent: 0 3px 0 0 oklch(10% 0.02 245deg / 0.85), 0 0 12px 0 oklch(86% 0.165 95deg / 0.22);
+  --focus-ring-color: oklch(78% 0.13 55deg / 0.5);
+  --color-header-bg: var(--color-base-100);
 
   // Motion — analog-instrument weight (see header rationale). --duration-
   // fast (hover, 150ms, J-9.1) and --duration-instant (focus ring, 0ms) are

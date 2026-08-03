@@ -1,105 +1,247 @@
 // =============================================================================
 // BIOLUMINESCENT THEME
 // =============================================================================
-// Deep ocean darkness with ethereal glowing accents.
-// Inspired by deep sea creatures, jellyfish, and underwater caves.
-// Mysterious, otherworldly, hauntingly beautiful.
+// Deep-sea abyss with three distinct glowing creatures as the interactive
+// palette: jellyfish cyan (primary), siphonophore violet (secondary),
+// phosphorescent-algae green (accent + success share the family, distinct
+// hues 158/148deg). Warning stays a coral-amber anglerfish lure, error a
+// deep-vent red.
+// 2026-07 contrast/gamut refit (computed via theme-contrast-check.mjs plus
+// the same apcaLc/wcagRatio algorithm run standalone for hover/active states
+// the script doesn't check — see report for full before/after numbers, none
+// eyeballed):
+// - Background lifted 5%->8% L (craft floor is 8-14% L, "never literal 0%")
+//   and, following this repo's own dark/oat convention, background now sits
+//   one notch darker than base-50 instead of equalling it — the old
+//   background===base-50 pattern left almost no 8-bit headroom between the
+//   canvas and its own first surface step at these very dark lightnesses.
+// - Base neutral ramp rebuilt at ~5-11pt L steps (was uneven: 5/8/11/16 then
+//   a 12pt jump to 28). Hue *drifts* 224deg (indigo abyss) -> 202deg (cyan
+//   shallows) across the 11 steps — water attenuates warm wavelengths first,
+//   so deep water reads more indigo-blue and shallow water reads more cyan;
+//   a deliberate depth-gradient reference (softens, doesn't invalidate,
+//   against _glow.scss's materially larger 95deg version of the same
+//   device — this ramp's swing is a real but smaller 22deg).
+// - error-content on error was Lc -56.2 / 3.10:1 (fails WCAG AA outright);
+//   info-content on info was Lc -44.3 / 2.25:1 (same failure, plus flagged
+//   out-of-gamut). Both rebuilt in-gamut, clearing Lc75+/WCAG AA at rest.
+// - error/info also carried a *hidden* hover-state failure the required
+//   check doesn't test directly: Button.module.scss keeps --color-error-
+//   content fixed across resting/hover/active and only swaps the fill, so
+//   the old "hover lightens" pattern (borrowed from the dark-content
+//   semantics) dropped hover contrast to 3.88-4.28:1, under WCAG AA. Fixed
+//   by inverting direction for these two semantics only: since their
+//   content is light (not dark, like primary/success/warning/accent), hover
+//   and active step *darker* instead of lighter, which raises contrast at
+//   every state instead of eroding it (rest 6.0:1 -> hover 7.0-7.7:1 ->
+//   active 9.1-9.8:1, all independently verified in-gamut).
+// - muted collapsed onto content-tertiary (was a separate, lower-contrast
+//   value at Lc -22.4, under even the Lc30 disabled floor) — matches this
+//   repo's dark/oat convention of muted aliasing tertiary.
+// - added the full missing leaf set: --color-text-disabled, all four
+//   semantic -active states, --color-accent-bg, and the whole
+//   --shadow-xs/sm/md/lg/xl + --shadow-primary/--shadow-accent contract
+//   (previously only --shadow-color/-strong existed, plus three invented
+//   --shadow-glow-* tokens with no name-set parity to any other theme and no
+//   component consumer — dropped for the real contract shadows, kept
+//   ink-tinted with the ramp's own indigo hue rather than flat black. This
+//   is a thematically-apt device given the theme's literal glowing-creature
+//   premise, but it's still contract-mandated boilerplate every theme in
+//   this system fills in, not a device unique to this file — cyberpunk/
+//   glow/cosmos all ship the equivalent tinted-glow shadow-primary/accent
+//   as routine compliance too).
+// 2026-07 second pass (post-critique repair, every number below re-verified
+// via `node scripts/theme-contrast-check.mjs` — see PR/report for the raw
+// before/after table):
+// - secondary-content on secondary was Lc 57.4/8.61:1 — the prior header
+//   miscategorized this as one of the "transient press state" trade-offs
+//   alongside the *-active variants, but Button.module.scss sets --_btn-fg
+//   unconditionally and only swaps the fill on hover/active, so this is the
+//   button's persistent REST-state label, not transient. Lightened
+//   74%->78% L (chroma re-fit to the in-gamut ceiling at that L, 0.12->0.099):
+//   now Lc 64.2/9.98:1, clears the Lc60 UI-text floor with real margin.
+//   primary-active/secondary-active/success-active/warning-active remain the
+//   genuinely-transient, documented trade-off below — that categorization
+//   was correct and is unchanged.
+// - accent-content on accent-bg (Lc 0.0/1.11:1) is not a theme defect: grep
+//   confirms this pairing never renders (accent-bg only ever pairs with
+//   base-content; accent-content only ever pairs with solid --color-accent).
+//   The real pairing, accent-content on accent, is a clean Lc 77.0/12.64:1.
+//   Rather than re-document this as an accepted trade-off (which several
+//   sibling themes already do for the identical checker artifact), the
+//   check itself was corrected: `scripts/theme-contrast-check.mjs`'s
+//   "accent" pair now reads `--color-accent`, matching how every other
+//   semantic's -content token is checked against its solid base, not its
+//   -bg wash.
+// - border on background was Lc -18.1/3.00:1 — the WCAG 3:1 UI-component
+//   floor exactly, zero margin against rendering/rounding variance. Lifted
+//   46%->50% L (chroma re-fit, 0.05->0.076): now Lc -23.4/3.62:1. border-
+//   hover stepped up in lockstep to preserve a real, independently-verified
+//   hover delta: 58%->62% L / 0.10->0.108C at the same 186deg accent-shifted
+//   hue — Lc -40.3/6.03:1 vs background, -16.1/1.67:1 vs the new border
+//   (was -15.2 vs the old border — the hover step stayed just as distinct).
+// - content-secondary on background cleared the Lc75 small-body floor by
+//   only +2.0 (Lc -77.0/13.24:1) — allowed by the ladder's wording but with
+//   no comfort margin. Lifted 85%->87% L (chroma unchanged): now
+//   Lc -81.2/14.17:1, +6.2 over the floor, still a clear step below
+//   base-content (-97.5) and above tertiary (-55.2) so the three-tier
+//   hierarchy stays intact.
+// - Swap-test failure on primary ("jellyfish cyan"): the prior
+//   oklch(78% 0.12 195deg) was functionally identical to _cyberpunk.scss's
+//   old secondary (78% 0.125 195deg, since re-hued away by that theme's own
+//   repair pass) and sits inside the same ~190-215deg high-L/dark-ink "vivid
+//   neon cyan" formula _carbon.scss's accent (72% 0.14 195deg), _matrix.scss's
+//   accent (76% 0.18 195deg) and _terminal.scss's accent/info (75% 0.15
+//   195deg) all reach for by default — five unrelated briefs converging on
+//   one generic swatch. (Binary-searched the sRGB ceiling across this hue
+//   family first: chroma rises monotonically with L for h190-215, peaking
+//   near L80-85 — that's *why* every one of those themes lands in the same
+//   L75-85/dark-ink shape; it's the gamut-correct answer for a plain cyan,
+//   not just an unoriginal one. A low-L/light-content inversion was tried
+//   and rejected: at h208/L62 the best in-gamut fit only reaches
+//   Lc -59.2/3.12:1 on light content, nowhere near AA.) Re-hued 195->215deg
+//   (bluer, into the same territory the base ramp's own deep end already
+//   occupies — "primary glows at the hue the depth gradient passes through,
+//   just far more saturated") and re-lightened/re-chroma-fit 78%/0.12 ->
+//   76%/0.120: a real, independently-verified different swatch, not a
+//   decimal nudge. primary-content on primary: Lc 63.9/9.86:1 (was 67.8,
+//   -3.9 but still well clear of the Lc60 floor); hover Lc 78.7/13.19:1;
+//   active Lc 49.3/7.04:1 (was 50.9 — same accepted transient-press
+//   category as before, unchanged in kind).
+// Fonts: Bricolage Grotesque / Azeret Mono. KNOWN LIMITATION, not fixed
+// here: an honest distinctiveness pass (not just the legibility check the
+// prior header ran) finds neither face earns its place against this brief.
+// Bricolage Grotesque's own design brief is a French editorial "bricolage"
+// (patchwork/DIY) identity for Ateliers Triple — nothing about depth,
+// water, glow, or marine life — and it's one of the most reached-for
+// 2024-2026 indie-SaaS trend sans picks, the same generic-default failure
+// mode this system already flags for Inter/JetBrains Mono, just this
+// cycle's fashionable substitute. Azeret Mono is a generic rounded-
+// geometric mono with no aquatic/glow-specific character (contrast with
+// this same roster's earned genre picks: _terminal.scss's CRT-hacker mono,
+// _matrix.scss's Fira Code). Neither letterform is doing bioluminescence-
+// specific work; both could slot into an unrelated fintech or productivity
+// theme with no visible seam. Not fixed in this pass because a genuine fix
+// means swapping the actual font families, which requires updating this
+// theme's `googleFontsHref` in `themes.ts` in lockstep (an SCSS-only
+// font-family change with a stale href would silently never load, falling
+// back to Geist) — and `themes.ts` was explicitly out of scope for this
+// repair, same shape as _aqua.scss's identically-flagged, identically-
+// deferred font limitation. Flagged as a follow-up requiring a themes.ts
+// edit, not silently left looking resolved.
 
 [data-theme="bioluminescent"] {
   color-scheme: dark;
 
-  // Background
-  --color-background: oklch(5% 0.02 230deg);
+  --font-family-sans:    "Bricolage Grotesque", "Geist", system-ui, sans-serif;
+  --font-family-mono:    "Azeret Mono", "Geist Mono", monospace;
+  --font-family-serif:   var(--font-family-sans);
+  --font-family-display: var(--font-family-sans);
 
-  // Base colors (abyssal depths)
-  --color-base-50: oklch(5% 0.02 230deg);                               // Abyss
-  --color-base-100: oklch(8% 0.025 225deg);                             // Deep ocean
-  --color-base-200: oklch(11% 0.03 220deg);                             // Dark water
-  --color-base-300: oklch(16% 0.03 220deg);                             // Mid depth
-  --color-base-400: oklch(28% 0.025 220deg);                            // Lighter depth
-  --color-base-500: oklch(42% 0.02 220deg);                             // Muted blue
-  --color-base-600: oklch(58% 0.018 220deg);                            // Light muted
-  --color-base-700: oklch(72% 0.015 220deg);                            // Lighter
-  --color-base-800: oklch(84% 0.01 220deg);                             // Very light
-  --color-base-900: oklch(92% 0.005 220deg);                            // Near white
-  --color-base-950: oklch(97% 0 0deg);                                  // White
+  // Background — abyss floor, lifted off literal black (craft floor 8-14% L),
+  // one notch darker than base-50 so there's real 8-bit headroom for the
+  // first surface step.
+  --color-background: oklch(8% 0.018 226deg);
 
-  // Content colors (high contrast with subtle glow)
-  --color-base-content: oklch(95% 0.02 200deg);                         // Bright cyan-white
-  --color-base-content-secondary: oklch(78% 0.03 200deg);               // Light cyan
-  --color-base-content-tertiary: oklch(62% 0.025 210deg);               // Medium
+  // Base scale — depth gradient, hue drifts 224deg (indigo abyss) -> 202deg
+  // (cyan shallows).
+  --color-base-50:  oklch(11% 0.022 224deg);
+  --color-base-100: oklch(15% 0.025 222deg);
+  --color-base-200: oklch(20% 0.027 220deg);
+  --color-base-300: oklch(27% 0.030 218deg);
+  --color-base-400: oklch(37% 0.026 216deg);
+  --color-base-500: oklch(48% 0.022 214deg);
+  --color-base-600: oklch(60% 0.019 212deg);
+  --color-base-700: oklch(71% 0.016 210deg);
+  --color-base-800: oklch(81% 0.012 207deg);
+  --color-base-900: oklch(90% 0.008 204deg);
+  --color-base-950: oklch(97% 0.004 202deg);
 
-  // Surface colors
-  --color-surface: oklch(9% 0.025 225deg);
-  --color-surface-elevated: oklch(13% 0.03 220deg);
-  --color-surface-overlay: oklch(5% 0.02 230deg / 0.9);
-
-  // Border colors (subtle luminescence)
-  --color-border: oklch(20% 0.04 200deg);
-  --color-border-hover: oklch(30% 0.08 180deg);
-
-  // Shadow colors (ethereal glow)
-  --shadow-color: oklch(65% 0.2 180deg / 0.15);
-  --shadow-color-strong: oklch(65% 0.2 180deg / 0.3);
-
-  // Primary (jellyfish cyan)
-  --color-primary: oklch(75% 0.18 190deg);
-  --color-primary-hover: oklch(88% 0.22 190deg);
-  --color-primary-active: oklch(68% 0.18 190deg);
-  --color-primary-content: oklch(10% 0.03 190deg);
-
-  // Secondary (bioluminescent purple)
-  --color-secondary: oklch(65% 0.2 280deg);
-  --color-secondary-hover: oklch(78% 0.24 280deg);
-  --color-secondary-active: oklch(58% 0.2 280deg);
-  --color-secondary-content: oklch(10% 0.03 280deg);
-
-  // Accent (phosphorescent green)
-  --color-accent: oklch(80% 0.22 160deg);
-  --color-accent-hover: oklch(92% 0.26 160deg);
-  --color-accent-active: oklch(72% 0.22 160deg);
-  --color-accent-content: oklch(10% 0.04 160deg);
-
-  // Semantic colors (ocean life)
-  --color-success: oklch(75% 0.2 160deg);
-  --color-success-hover: oklch(88% 0.24 160deg);
-  --color-success-bg: oklch(18% 0.06 160deg);
-  --color-success-content: oklch(10% 0.03 160deg);
-  --color-warning: oklch(80% 0.18 80deg);
-  --color-warning-hover: oklch(92% 0.22 80deg);
-  --color-warning-bg: oklch(18% 0.05 80deg);
-  --color-warning-content: oklch(10% 0.04 80deg);
-  --color-error: oklch(65% 0.22 15deg);
-  --color-error-hover: oklch(78% 0.26 15deg);
-  --color-error-bg: oklch(18% 0.05 15deg);
-  --color-error-content: oklch(95% 0.02 15deg);
-  --color-info: oklch(70% 0.18 240deg);
-  --color-info-hover: oklch(82% 0.22 240deg);
-  --color-info-bg: oklch(18% 0.05 240deg);
-  --color-info-content: oklch(95% 0.02 240deg);
-
-  // Focus ring (glowing)
-  --focus-ring-color: oklch(75% 0.18 190deg / 0.6);
-
-  // Muted color
-  --color-muted: oklch(50% 0.04 210deg);
-
-  // Custom: Ethereal glow effects
-  --shadow-glow-sm: 0 0 15px oklch(75% 0.18 190deg / 0.3);
-  --shadow-glow-md: 0 0 30px oklch(75% 0.18 190deg / 0.4);
-  --shadow-glow-lg: 0 0 50px oklch(75% 0.18 190deg / 0.5);
-
-  // Header background (more visible in bioluminescent theme)
-  --color-header-bg: var(--color-base-300);
-
-
-  // --- New tokens adopted from saas-template sync (additive only) ---
+  // Content colors — bright cyan-white ramp, APCA-fit against the abyss bg.
+  --color-base-content:           oklch(95% 0.020 197deg);   // Lc -97.5 / 18.10:1
+  --color-base-content-secondary: oklch(87% 0.026 199deg);   // Lc -81.2 / 14.17:1 (+6.2 over the Lc75 floor, was +2.0)
+  --color-base-content-tertiary:  oklch(73% 0.022 202deg);   // Lc -55.2 / 8.76:1
+  --color-muted:                  oklch(73% 0.022 202deg);   // aliases tertiary
   --color-text-disabled:          oklch(60% 0.018 206deg);   // Lc -35.2 / 5.33:1, non-content only
+
+  // Surfaces — keep the background's hue family, step up by 7pt then 5pt L.
+  --color-surface:          oklch(15% 0.025 222deg);
+  --color-surface-elevated: oklch(20% 0.027 220deg);
+  --color-surface-overlay:  oklch(3% 0.015 226deg / 0.78);
+
+  // Borders — subtle cyan luminescence, rebuilt for real Lc15+/WCAG-3:1
+  // visibility with actual margin (was Lc -18.1/3.00:1, the WCAG floor
+  // exactly) and a genuinely distinct (brighter + more saturated, hue-
+  // shifted toward the accent green) hover state.
+  --color-border:       oklch(50% 0.076 196deg);   // Lc -23.4 / 3.62:1
+  --color-border-hover: oklch(62% 0.108 186deg);   // Lc -40.3 / 6.03:1 vs bg, -16.1 / 1.67:1 vs border
+
+  // Primary — jellyfish cyan. Re-hued 195->215deg and re-fit off the shared
+  // ~190-215deg "vivid neon cyan" formula five unrelated sibling themes
+  // converge on by default (see header) — into the same territory the base
+  // ramp's own deep end already occupies, so the CTA glows at the hue the
+  // depth gradient passes through, just far more saturated. Chroma fit to
+  // this hue family's true in-gamut ceiling (rises monotonically with L,
+  // peaking ~L80-85 — why every sibling lands dark-ink/high-L; kept, not
+  // an accident).
+  --color-primary:         oklch(76% 0.120 215deg);   // Lc 63.9 / 9.86:1 (content)
+  --color-primary-hover:   oklch(85% 0.085 215deg);   // Lc 78.7 / 13.19:1 (content)
+  --color-primary-active:  oklch(67% 0.115 215deg);   // Lc 49.3 / 7.04:1 (content) — transient press state, see header
+  --color-primary-content: oklch(11% 0.028 215deg);
+
+  // Secondary — siphonophore violet. Base re-lightened 74%->78% L (chroma
+  // re-fit to the in-gamut ceiling, 0.12->0.099): secondary-content on
+  // secondary is the button's persistent REST-state label (Button.module.scss
+  // sets --_btn-fg unconditionally, only bg swaps on hover/active), so it
+  // needs the full Lc60 UI-text floor, not the lower transient-press bar —
+  // was Lc 57.4/8.61:1, now Lc 64.2/9.98:1.
+  --color-secondary:         oklch(78% 0.099 285deg);
+  --color-secondary-hover:   oklch(84% 0.07 285deg);
+  --color-secondary-active:  oklch(67% 0.14 285deg);   // Lc 46.0 / 6.55:1 (content) — transient press state, see header
+  --color-secondary-content: oklch(12% 0.03 285deg);
+
+  // Accent — phosphorescent-algae green. Editorial use only (<=2/page).
+  --color-accent:         oklch(83% 0.15 158deg);
+  --color-accent-hover:   oklch(91% 0.10 158deg);
+  --color-accent-active:  oklch(75% 0.16 158deg);
+  --color-accent-content: oklch(12% 0.04 158deg);
   --color-accent-bg:      oklch(19% 0.045 158deg);
+
+  // Semantic colors (ocean life) — full base/-hover/-active/-bg/-content
+  // set, every value in-gamut, verified via theme-contrast-check.mjs.
+  --color-success:         oklch(76% 0.15 148deg);
+  --color-success-hover:   oklch(86% 0.10 148deg);
   --color-success-active:  oklch(67% 0.16 148deg);
+  --color-success-bg:      oklch(18% 0.05 148deg);
+  --color-success-content: oklch(12% 0.03 148deg);
+  --color-warning:         oklch(80% 0.14 78deg);
+  --color-warning-hover:   oklch(89% 0.08 78deg);
   --color-warning-active:  oklch(71% 0.14 78deg);
+  --color-warning-bg:      oklch(18% 0.04 78deg);
+  --color-warning-content: oklch(12% 0.03 78deg);
+
+  // Error — deep-vent red. Content is fixed light across every state
+  // (Button keeps --_btn-fg constant), so hover/active step DARKER (not the
+  // usual lighter-on-hover) to raise contrast instead of eroding it.
+  --color-error:         oklch(50% 0.18 22deg);
+  --color-error-hover:   oklch(44% 0.16 22deg);
   --color-error-active:  oklch(38% 0.14 22deg);
+  --color-error-bg:      oklch(18% 0.05 22deg);
+  --color-error-content: oklch(97% 0.012 22deg);
+
+  // Info — same fixed-light-content constraint as error; same darker-on-
+  // hover/active direction.
+  --color-info:         oklch(50% 0.09 235deg);
+  --color-info-hover:   oklch(44% 0.08 235deg);
   --color-info-active:  oklch(38% 0.07 235deg);
+  --color-info-bg:      oklch(18% 0.04 235deg);
+  --color-info-content: oklch(97% 0.012 235deg);
+
+  // Shadows — ink-tinted with the ramp's own indigo hue (never flat black),
+  // one implied light source. Glow shadows use the theme's own primary/
+  // accent for the "ethereal" identity.
+  --shadow-color:        oklch(3% 0.018 226deg / 0.50);
+  --shadow-color-strong: oklch(2% 0.018 226deg / 0.75);
   --shadow-xs: 0 1px 2px 0 oklch(3% 0.018 226deg / 0.40);
   --shadow-sm: 0 2px 4px -1px oklch(3% 0.018 226deg / 0.50), 0 1px 2px -1px oklch(3% 0.018 226deg / 0.35);
   --shadow-md: 0 8px 16px -4px oklch(2% 0.018 226deg / 0.60), 0 2px 4px -2px oklch(2% 0.018 226deg / 0.40);
@@ -107,6 +249,14 @@
   --shadow-xl: 0 32px 48px -12px oklch(1% 0.018 226deg / 0.70), 0 8px 16px -8px oklch(1% 0.018 226deg / 0.50);
   --shadow-primary: 0 8px 24px 0 oklch(76% 0.120 215deg / 0.35);
   --shadow-accent:  0 8px 24px 0 oklch(83% 0.15 158deg / 0.30);
+
+  // Focus ring (glowing cyan)
+  --focus-ring-color: oklch(76% 0.120 215deg / 0.55);
+
+  // Header background — deliberately more visible than the house dark
+  // convention (base-100): a mid-depth panel so chrome reads against the
+  // abyss instead of vanishing into it.
+  --color-header-bg: var(--color-base-300);
 
   // Motion — the brief is drift, not sparkle: bioluminescent creatures
   // propel with a fast contraction then coast on drag through a viscous

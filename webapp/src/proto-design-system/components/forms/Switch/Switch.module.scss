@@ -6,7 +6,7 @@
 .container {
   align-items: center;
   display: inline-flex;
-  gap: var(--space-2-5);
+  gap: var(--space-3);
 }
 
 .disabled {
@@ -56,7 +56,7 @@
   background-color: var(--color-base-300);
   border-radius: var(--radius-full);
   display: flex;
-  padding: var(--space-0-5);
+  padding: var(--space-1);
   pointer-events: none;
 
   @include transition-colors;
@@ -79,19 +79,20 @@
 // =============================================================================
 
 .size-sm {
-  --switch-travel: calc(var(--space-6) - var(--space-3) - var(--space-1));
+  // thumb = track height - 2x padding, matching md/lg (even 4px inset all round)
+  --switch-travel: calc(var(--space-6) - var(--space-2) - var(--space-2));
 
   height: var(--space-4);
   width: var(--space-6);
 
   .thumb {
-    height: var(--space-3);
-    width: var(--space-3);
+    height: var(--space-2);
+    width: var(--space-2);
   }
 }
 
 .size-md {
-  --switch-travel: calc(var(--space-8) - var(--space-4) - var(--space-1));
+  --switch-travel: calc(var(--space-8) - var(--space-4) - var(--space-2));
 
   height: var(--space-5);
   width: var(--space-8);
@@ -103,7 +104,7 @@
 }
 
 .size-lg {
-  --switch-travel: calc(var(--space-9) - var(--space-5) - var(--space-1));
+  --switch-travel: calc(var(--space-9) - var(--space-5) - var(--space-2));
 
   height: var(--space-6);
   width: var(--space-9);
@@ -121,7 +122,7 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-0-5);
+  gap: var(--space-1);
 }
 
 .label {
@@ -132,15 +133,15 @@
 }
 
 .label-sm {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
 }
 
 .label-md {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
 }
 
 .label-lg {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
 }
 
 .description {

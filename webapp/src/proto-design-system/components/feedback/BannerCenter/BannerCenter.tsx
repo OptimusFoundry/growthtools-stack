@@ -7,7 +7,11 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import { Banner, type BannerType, type BannerVariant } from "../Banner";
+import {
+	Banner,
+	type BannerType,
+	type BannerVariant,
+} from "@/proto-design-system/components/feedback/Banner/Banner";
 import styles from "./BannerCenter.module.scss";
 
 export interface BannerItem {

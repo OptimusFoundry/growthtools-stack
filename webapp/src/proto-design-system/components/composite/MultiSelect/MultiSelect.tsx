@@ -8,9 +8,18 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./MultiSelect.module.scss";
+
+// Hoisted to module scope so the object reference is stable across renders;
+// motion restarts an in-progress enter/exit transition if the menu's
+// `variants` object gets a brand new identity on every parent re-render.
+const menuVariants = {
+	hidden: { opacity: 0, scale: 0.95, y: -4 },
+	visible: { opacity: 1, scale: 1, y: 0 },
+};
 
 export type MultiSelectSize = "sm" | "md" | "lg";
 export type MultiSelectVariant = "default" | "outline";
@@ -90,16 +99,11 @@ export function MultiSelect({
 	const selectedItems = items.filter((item) => value.has(item.id));
 	const enabledItems = items.filter((item) => !item.disabled);
 	const prefersReducedMotion = useReducedMotion();
-
-	// Animation variants
-	const menuVariants = {
-		hidden: { opacity: 0, scale: 0.95, y: -4 },
-		visible: { opacity: 1, scale: 1, y: 0 },
-	};
+	const motionTokens = useMotionTokens();
 
 	const transition = prefersReducedMotion
 		? { duration: 0 }
-		: { duration: 0.15, ease: [0, 0, 0.2, 1] as const };
+		: { duration: motionTokens.duration.fast, ease: motionTokens.easeOut };
 
 	// Handle click outside
 	useEffect(() => {
@@ -301,8 +305,9 @@ export function MultiSelect({
 				className,
 			)}
 		>
-			<button
-				type="button"
+			<div
+				role="button"
+				tabIndex={disabled ? -1 : 0}
 				className={cn(
 					styles.trigger,
 					styles[variant],
@@ -311,7 +316,7 @@ export function MultiSelect({
 				)}
 				onClick={handleToggle}
 				onKeyDown={handleKeyDown}
-				disabled={disabled}
+				aria-disabled={disabled}
 				aria-haspopup="listbox"
 				aria-expanded={isOpen}
 			>
@@ -348,7 +353,7 @@ export function MultiSelect({
 						className={cn(styles.chevron, isOpen && styles.rotated)}
 					/>
 				</span>
-			</button>
+			</div>
 
 			<AnimatePresence>
 				{isOpen && (

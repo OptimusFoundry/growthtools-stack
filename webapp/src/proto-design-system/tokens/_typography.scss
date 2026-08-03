@@ -1,67 +1,85 @@
 // =============================================================================
 // TYPOGRAPHY TOKENS
 // =============================================================================
-// Editorial mixed-type system:
-//   • Fraunces (variable, opsz 9–144, wght 300–900, SOFT 0–100) — display + serif
-//   • Geist — UI + body sans
-//   • Geist Mono — data, eyebrows, code
-// Load fonts once per app. The import below is safe to duplicate across
-// stylesheets — browsers dedupe by URL.
-
-@import "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap";
+// Single-family sans system:
+//   • Geist — UI, body, headings, all titles
+//   • Geist Mono — eyebrows, counts, code, tabular data
+// Fraunces (the previous serif display family) was retired. The legacy
+// `--font-family-display` and `--font-family-serif` tokens are kept as
+// aliases for `--font-family-sans` so existing component styles keep
+// working without per-file edits. Any leftover `font-variation-settings`
+// referencing Fraunces axes (`opsz`, `SOFT`) become no-ops on Geist —
+// safe, just ignored.
+@import "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap";
 
 :root {
 	// Font families -----------------------------------------------------------
-	--font-family-sans:    "Geist", "Inter", "SF Pro Display", -apple-system, blinkmacsystemfont, "Segoe UI", roboto, sans-serif;
+	--font-family-sans:    "Geist", sans-serif;
 	--font-family-mono:    "Geist Mono", "JetBrains Mono", "SF Mono", "Fira Code", consolas, "Courier New", monospace;
-	--font-family-serif:   "Fraunces", "Times New Roman", georgia, serif;
-	--font-family-display: "Fraunces", "Times New Roman", georgia, serif;
+	--font-family-serif:   var(--font-family-sans); // legacy alias — single-family system
+	--font-family-display: var(--font-family-sans); // legacy alias — single-family system
 
-	// Fraunces variable-font settings ------------------------------------------
-	// Use via: font-variation-settings: var(--fvs-display);
-	--fvs-display:   "opsz" 144, "SOFT" 30, "wght" 500;  // large, slightly soft display
-	--fvs-editorial: "opsz" 60,  "SOFT" 40, "wght" 400;  // article-like body serif
-	--fvs-tight:     "opsz" 144, "SOFT" 0,  "wght" 600;  // sharp, small tracking
+	// Variable-font setting aliases (Fraunces-era, kept as no-ops) -------------
+	// Geist ignores opsz/SOFT axes — these resolve to defaults. Existing rules
+	// referencing var(--fvs-display) etc. continue to compile but have no
+	// visual effect.
+	--fvs-display:   "wght" 600;
+	--fvs-editorial: "wght" 400;
+	--fvs-tight:     "wght" 600;
 
-	// Font sizes — airier editorial scale --------------------------------------
-	--font-size-xxs:  0.625rem;   // 10px - micro labels, spec meta captions
+	// Font sizes — compact UI scale -------------------------------------------
+	// Display sizes pulled in dramatically from the previous editorial scale.
+	// Page titles are now 22px (was 36px); hero is 32px (was 64px). Body
+	// sizes unchanged.
+	// Refined scale — distinct, meaningful steps. UI range (xxs–md) stays
+	// compact; the heading range (lg–8xl) is spaced into a real ladder so
+	// titles read as a clear hierarchy rather than 15–22px mush.
+	--font-size-xxs:  0.6875rem;  // 11px - micro labels, spec meta captions
 	--font-size-xs:   0.75rem;    // 12px - eyebrows, metadata, captions
-	--font-size-sm:   0.8125rem;  // 13px - secondary labels
-	--font-size-base: 0.9375rem;  // 15px - body text (bumped from 14 for more air)
+	--font-size-sm:   0.8125rem;  // 13px - dense UI / secondary labels
+	--font-size-base: 0.9375rem;  // 15px - body text
 	--font-size-md:   1rem;       // 16px - emphasized body
 	--font-size-lg:   1.125rem;   // 18px - lede / subheads
-	--font-size-xl:   1.375rem;   // 22px - card titles
-	--font-size-2xl:  1.75rem;    // 28px - section headers
-	--font-size-3xl:  2.25rem;    // 36px - page titles
-	--font-size-4xl:  3rem;       // 48px - large headings
-	--font-size-5xl:  4rem;       // 64px - hero
-	--font-size-6xl:  5.5rem;     // 88px - editorial display
-	--font-size-7xl:  8rem;       // 128px - cover / cinematic
-	--font-size-8xl:  10rem;      // 160px - cover XL
+	--font-size-xl:   1.25rem;    // 20px - card titles
+	--font-size-2xl:  1.5rem;     // 24px - section headers
+	--font-size-3xl:  1.75rem;    // 28px - page titles
+	// Stat values range 28-32px (J-3.3, T-5.2); 3xl covers the 28px default but
+	// nothing landed on 32px for the hero variant until this token — it is not
+	// a ladder rung, it's the one sanctioned off-scale value for that one use.
+	--font-size-stat-hero: 2rem; // 32px - hero stat value only (T-5.2)
+	--font-size-4xl:  2.125rem;   // 34px - large headings
+	--font-size-5xl:  2.5rem;     // 40px - hero / stat value
+	--font-size-6xl:  3rem;       // 48px - display
+	--font-size-7xl:  3.75rem;    // 60px - cover
+	--font-size-8xl:  4.5rem;     // 72px - cover XL
 
 	// Font weights -------------------------------------------------------------
 	--font-weight-thin:       100;
 	--font-weight-extralight: 200;
 	--font-weight-light:      300;
-	--font-weight-normal:     400;
-	--font-weight-medium:     500;
-	--font-weight-semibold:   600;
-	--font-weight-bold:       700;
+
+	// Calm content, confident headings: body + labels stay light so dense UI
+	// (forms, tables, settings) reads clean. Semibold is a TRUE 600 — headings
+	// carry hierarchy without the 700 punch; bold (700) stays for rare emphasis.
+	--font-weight-normal:     400;   // body copy
+	--font-weight-medium:     500;   // labels, buttons, UI emphasis
+	--font-weight-semibold:   600;   // headings / titles
+	--font-weight-bold:       700;   // strong emphasis, stat values
 	--font-weight-extrabold:  800;
 	--font-weight-black:      900;
 
 	// Line heights -------------------------------------------------------------
 	--line-height-none:    1;
-	--line-height-tight:   1.05;
-	--line-height-snug:    1.2;
+	--line-height-tight:   1.15;
+	--line-height-snug:    1.25;
 	--line-height-normal:  1.5;
 	--line-height-relaxed: 1.7;
 	--line-height-loose:   2;
 
 	// Letter spacing -----------------------------------------------------------
-	--letter-spacing-tightest: -0.055em;
-	--letter-spacing-tighter:  -0.04em;
-	--letter-spacing-tight:    -0.025em;
+	--letter-spacing-tightest: -0.04em;
+	--letter-spacing-tighter:  -0.03em;
+	--letter-spacing-tight:    -0.015em;
 	--letter-spacing-normal:   -0.005em;
 	--letter-spacing-wide:      0.02em;
 	--letter-spacing-wider:     0.08em;

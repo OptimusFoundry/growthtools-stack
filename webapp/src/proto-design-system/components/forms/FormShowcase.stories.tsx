@@ -1,23 +1,29 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Eye, EyeOff, Link2, Mail } from "lucide-react";
 import { useState } from "react";
-import { Card, CardBody, CardFooter, CardHeader } from "../layout/Card";
-import { Divider } from "../layout/Divider";
-import { Grid } from "../layout/Grid";
-import { Stack } from "../layout/Stack";
-import { Avatar } from "../primitives/Avatar";
-import { Badge } from "../primitives/Badge";
-import { Button, Link } from "../primitives/Button";
-import { Text } from "../primitives/Text";
-import { Checkbox } from "./Checkbox";
-import { FormHint } from "./FormHint";
-import { Input } from "./Input";
-import { Label } from "./Label";
-import { Radio } from "./Radio";
-import { Select } from "./Select";
-import { Slider } from "./Slider";
-import { Switch } from "./Switch";
-import { TextArea } from "./TextArea";
+import { Checkbox } from "@/proto-design-system/components/forms/Checkbox/Checkbox";
+import { FormHint } from "@/proto-design-system/components/forms/FormHint/FormHint";
+import { Input } from "@/proto-design-system/components/forms/Input/Input";
+import { Label } from "@/proto-design-system/components/forms/Label/Label";
+import { Radio } from "@/proto-design-system/components/forms/Radio/Radio";
+import { Select } from "@/proto-design-system/components/forms/Select/Select";
+import { Slider } from "@/proto-design-system/components/forms/Slider/Slider";
+import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
+import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
+import {
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
+} from "@/proto-design-system/components/layout/Card/Card";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Grid } from "@/proto-design-system/components/layout/Grid/Grid";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Avatar } from "@/proto-design-system/components/primitives/Avatar/Avatar";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Link } from "@/proto-design-system/components/primitives/Button/Link";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 const meta: Meta = {
 	title: "Forms/Form Showcase",
@@ -67,7 +73,7 @@ export const AccountSettings: Story = {
 										<Input
 											id="email"
 											type="email"
-											placeholder="you@example.com"
+											placeholder="you@tickuptoks.com"
 											defaultValue="sarah@acme.com"
 										/>
 										<FormHint variant="success" showIcon>
@@ -500,7 +506,7 @@ export const SignupForm: Story = {
 					setEmailError(null);
 				} else if (!value.includes("@")) {
 					setEmailError("Please enter a valid email address");
-				} else if (value === "taken@example.com") {
+				} else if (value === "taken@tickuptoks.com") {
 					setEmailError("This email is already registered");
 				} else {
 					setEmailError(null);
@@ -639,7 +645,7 @@ export const ContactForm: Story = {
 								<Input
 									id="contact-email"
 									type="email"
-									placeholder="john@example.com"
+									placeholder="john@tickuptoks.com"
 								/>
 							</Stack>
 

@@ -48,7 +48,12 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
 
 		return (
 			<div
-				className={cn(styles.container, disabled && styles.disabled, className)}
+				className={cn(
+					styles.container,
+					description && styles.hasDescription,
+					disabled && styles.disabled,
+					className,
+				)}
 			>
 				<div className={styles.radioWrapper}>
 					<input

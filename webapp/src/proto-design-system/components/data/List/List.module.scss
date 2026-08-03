@@ -21,7 +21,7 @@
 
 .divided {
   .item {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-width-sm) solid var(--color-border);
 
     &:last-child {
       border-bottom: none;
@@ -30,12 +30,12 @@
 }
 
 .bordered {
-  border: 1px solid var(--color-border);
+  border: var(--border-width-sm) solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 
   .item {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-width-sm) solid var(--color-border);
 
     &:last-child {
       border-bottom: none;
@@ -66,10 +66,10 @@
 }
 
 .selected {
-  background-color: oklch(from var(--color-primary) l c h / 0.1);
+  background-color: var(--color-overlay-primary);
 
   &:hover:not(.disabled) {
-    background-color: oklch(from var(--color-primary) l c h / 0.15);
+    background-color: var(--color-overlay-primary-strong);
   }
 }
 
@@ -98,7 +98,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-0-5);
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -134,7 +134,7 @@
   font-family: var(--font-family-sans);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-widest);
   padding: var(--space-2) var(--space-3);
   text-transform: uppercase;
 }

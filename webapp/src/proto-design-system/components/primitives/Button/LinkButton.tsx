@@ -78,7 +78,7 @@ export const LinkButton = forwardRef<HTMLAnchorElement, LinkButtonProps>(
 		const linkClasses = cn(
 			styles.button,
 			styles[variant],
-			styles[size],
+			styles[`size-${size}`],
 			isFullWidth && styles.fullWidth,
 			isIconOnly && styles.iconOnly,
 			className,

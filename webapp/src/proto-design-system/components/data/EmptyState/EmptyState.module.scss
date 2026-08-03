@@ -9,6 +9,8 @@
   flex-direction: column;
   gap: var(--space-4);
   text-align: center;
+
+  @include animate(fade-in, $duration: var(--duration-fast));
 }
 
 // =============================================================================

@@ -4,7 +4,7 @@
 @use "../../../mixins" as *;
 
 .skeleton {
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer var(--duration-ambient) var(--ease-in-out) infinite;
   background: linear-gradient(
     90deg,
     var(--color-base-200) 0%,
@@ -15,7 +15,7 @@
   display: block;
 
   @include reduced-motion {
-    animation: pulse var(--duration-slower) ease-in-out infinite;
+    animation: pulse var(--duration-slower) var(--ease-in-out) infinite;
   }
 }
 
@@ -60,16 +60,6 @@
 
 .noAnimation {
   animation: none;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
 }
 
 @keyframes pulse {

@@ -14,7 +14,7 @@ Each recipe is labeled `R-N.M`. Cite in review ("use R-2.1 instead of that custo
 <header className="page-header">
   <span className="ds-eyebrow">LIBRARY · 07 ENTRIES</span>
   <h1 className="page-title">
-    Everything you've <em>written,</em> in one room.
+    Everything you've written, in one room.
   </h1>
   <p className="page-sub">
     Drafts, scheduled, and published — sorted the way your week actually works.
@@ -27,7 +27,7 @@ Each recipe is labeled `R-N.M`. Cite in review ("use R-2.1 instead of that custo
 </header>
 ```
 
-Stack: 4 / 12 / 24 / 56 (J-1). One italic (J-6.1). Eyebrow carries a data point (J-11.3). Two buttons max: primary + secondary.
+Stack: 4 / 12 / 24 / 56 (J-1). Eyebrow carries a data point (J-11.3). Two buttons max: primary + secondary.
 
 ### R-1.2 Data-heavy header (dashboard, analytics)
 
@@ -37,7 +37,7 @@ Drop the sublede; inline date + persona tags:
 <header className="page-header">
   <span className="ds-eyebrow">DASHBOARD · NOV 12 · WEEK 46</span>
   <h1 className="page-title">
-    Good morning, Alex — <em>eight</em> things to ship.
+    Good morning, Alex — eight things to ship.
   </h1>
   <div className="page-actions" style={{marginTop: 24}}>
     <span className="tier creator">Creator · Pro</span>
@@ -109,7 +109,7 @@ Hover: `translateY(-2px)` + shadow-lg, border fades out (J-10.5). Press: `scale(
 <div className="card filled" style={{padding: 32}}>
   <span className="ds-eyebrow">UPGRADE</span>
   <h3 className="ds-h3" style={{marginTop: 4}}>
-    Unlock the <em>team</em> plan.
+    Unlock the team plan.
   </h3>
   <p style={{marginTop: 12, color: 'var(--fg2)', maxWidth: '52ch'}}>
     Shared brand voice, approval flows, and seat-based billing.
@@ -118,9 +118,9 @@ Hover: `translateY(-2px)` + shadow-lg, border fades out (J-10.5). Press: `scale(
 </div>
 ```
 
-Filled cards are `--base-100` bg. Use for editorial upgrade moments. One per page (J-6.7).
+Filled cards are `--base-100` bg. Use for upgrade moments. One per page (J-6.7).
 
-### R-2.4 Stat card — the editorial KPI
+### R-2.4 Stat card — the KPI
 
 ```jsx
 <div className="sc">
@@ -136,7 +136,7 @@ Filled cards are `--base-100` bg. Use for editorial upgrade moments. One per pag
 </div>
 ```
 
-- `.sc-val` is Fraunces, `tnum` on, 56–64px (J-3.3)
+- `.sc-val` is Geist 700, `tnum` on, 56–64px (J-3.3)
 - Trend arrow: green ↑ / red ↓ / neutral —, never a plus/minus sign
 - Footer is `--fg3`, mono not required
 
@@ -434,7 +434,7 @@ Baseline-aligned (J-7.2). Right side is an action, a tab-pill, or a count — ne
   <div>
     <span className="ds-eyebrow">PERFORMANCE</span>
     <h2 className="ds-h2" style={{marginTop: 4}}>
-      Your numbers <em>this week.</em>
+      Your numbers this week.
     </h2>
   </div>
   <div className="tabs-pill">
@@ -445,7 +445,7 @@ Baseline-aligned (J-7.2). Right side is an action, a tab-pill, or a count — ne
 </div>
 ```
 
-Section heads may take an italic only if the page-title has none (J-6.1 trade-off).
+Keep section-head titles short — they compete with the page-title for attention, and the page-title should win.
 
 ### R-7.3 Card head
 
@@ -486,7 +486,7 @@ Rotate hue (265, 280, 55, 140, 20) across a set. Never gray boxes. Never checker
 </div>
 ```
 
-Initials in Fraunces (pre-styled on `.av`). `alt=""` on decorative avatars; real alt text on avatars that convey identity.
+Initials in Geist 600 (pre-styled on `.av`). `alt=""` on decorative avatars; real alt text on avatars that convey identity.
 
 ### R-8.3 Thumbnail grid (media library)
 
@@ -579,6 +579,6 @@ If you're about to invent something new, stop and check:
 1. **Can this be a `.card` with different content?** Usually yes.
 2. **Is this a list of similar things?** Use R-3.1 — the post-list is surprisingly flexible.
 3. **Is this a form field in disguise?** (picker, date range, tag input) → use R-4.1 with custom input type.
-4. **Is this one-off marketing/editorial?** You're allowed more freedom in hero/sign-in/empty surfaces than in product surfaces. See `14-composition.md`.
+4. **Is this one-off marketing content?** You're allowed more freedom in hero/sign-in/empty surfaces than in product surfaces. See `14-composition.md`.
 
 If none of those fit: write the component once, name it clearly, and add it as a new recipe. Don't invent inline in three pages.

@@ -33,7 +33,7 @@ Base container for grouped content.
 
 ## Stat card — `.sc`
 
-The editorial stat card — Growth Tools' signature for KPIs. Fraunces numerals at 56px.
+The stat card — Growth Tools' signature for KPIs. Geist 700 numerals at 56px.
 ```html
 <div class="sc">
   <div class="sc-hd">
@@ -57,7 +57,7 @@ The editorial stat card — Growth Tools' signature for KPIs. Fraunces numerals 
 ```
 
 **Rules:**
-- `.sc-val` MUST be Fraunces (it's pre-styled). Never put regular digits there.
+- `.sc-val` MUST use the pre-styled Geist 700 numeral treatment. Never put regular digits there.
 - Use `tnum` so numbers align.
 - Pair with `--fw-medium` eyebrow label (mono, uppercase, 11px, wide tracking).
 - In a 4-up grid, alternate one `.sc.filled` for visual rhythm.
@@ -156,13 +156,13 @@ Toggle `.open` on `.acc-item` via JS; chevron rotates, body reveals.
   <div class="av circle sm" style="background:var(--fg1); color:var(--bg);">+4</div>
 </div>
 ```
-Initials are auto-styled Fraunces — don't override the font.
+Initials are auto-styled Geist 600 — don't override the font.
 
 ## Do / Don't
 ✅ Use `.sc` for every KPI — never roll your own big number
 ✅ Alternate one filled stat card in a 4-up for rhythm
 ✅ Tables in `.tbl-wrap` so the border radius clips properly
 
-❌ Stat values in any non-Fraunces font
+❌ Stat values in a light-weight or non-Geist font
 ❌ More than 7 columns in a table at standard width — paginate or transpose
 ❌ Card within card within card — two levels of nesting max

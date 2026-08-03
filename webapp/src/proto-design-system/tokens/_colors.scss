@@ -96,8 +96,10 @@
 
 	// Focus ring ---------------------------------------------------------------
 	--focus-ring-color:  oklch(48% 0.20 275deg / 0.4);
-	--focus-ring-width:  3px;
+	--focus-ring-width:  2px; // WCAG 3.0 / 2.2 SC 2.4.13 floor
 	--focus-ring-offset: 2px;
+
+	// Error-state focus ring tint (same width as the default ring).
 	--focus-ring-error:  oklch(from var(--color-error) l c h / 0.2);
 
 	// Component-specific -------------------------------------------------------

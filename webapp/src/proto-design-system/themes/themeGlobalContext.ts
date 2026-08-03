@@ -15,7 +15,7 @@ export interface ThemeGlobalValue {
 }
 
 export const ThemeGlobalContext = createContext<ThemeGlobalValue>({
-	theme: "light",
+	theme: "paper",
 	setTheme: () => {
 		/* overridden by the provider in preview.ts's themeDecorator */
 	},

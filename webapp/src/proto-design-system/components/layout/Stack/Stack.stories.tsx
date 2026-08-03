@@ -39,7 +39,7 @@ const meta: Meta<typeof Stack> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Box = ({ children }: { children: React.ReactNode }) => (
+const Chip = ({ children }: { children: React.ReactNode }) => (
 	<div
 		style={{
 			background: "var(--color-primary)",
@@ -60,9 +60,9 @@ export const Default: Story = {
 	args: {
 		children: (
 			<>
-				<Box>Item 1</Box>
-				<Box>Item 2</Box>
-				<Box>Item 3</Box>
+				<Chip>API Keys</Chip>
+				<Chip>Webhooks</Chip>
+				<Chip>Team Members</Chip>
 			</>
 		),
 	},
@@ -73,9 +73,9 @@ export const Row: Story = {
 		direction: "row",
 		children: (
 			<>
-				<Box>Item 1</Box>
-				<Box>Item 2</Box>
-				<Box>Item 3</Box>
+				<Chip>Draft</Chip>
+				<Chip>In Review</Chip>
+				<Chip>Published</Chip>
 			</>
 		),
 	},
@@ -86,9 +86,9 @@ export const Column: Story = {
 		direction: "column",
 		children: (
 			<>
-				<Box>Item 1</Box>
-				<Box>Item 2</Box>
-				<Box>Item 3</Box>
+				<Chip>Personal info</Chip>
+				<Chip>Password &amp; security</Chip>
+				<Chip>Notification preferences</Chip>
 			</>
 		),
 	},
@@ -104,13 +104,13 @@ export const CenterAligned: Story = {
 		align: "center",
 		children: (
 			<>
-				<Box>Short</Box>
-				<Box>Medium Height</Box>
-				<Box>
-					Tall
+				<Chip>Active</Chip>
+				<Chip>Awaiting approval</Chip>
+				<Chip>
+					Blocked by
 					<br />
-					Item
-				</Box>
+					dependency
+				</Chip>
 			</>
 		),
 	},
@@ -122,8 +122,8 @@ export const SpaceBetween: Story = {
 		justify: "between",
 		children: (
 			<>
-				<Box>Left</Box>
-				<Box>Right</Box>
+				<Chip>Free plan</Chip>
+				<Chip>Upgrade</Chip>
 			</>
 		),
 	},
@@ -146,9 +146,9 @@ export const NoGap: Story = {
 		gap: "0",
 		children: (
 			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
+				<Chip>Mon</Chip>
+				<Chip>Tue</Chip>
+				<Chip>Wed</Chip>
 			</>
 		),
 	},
@@ -160,9 +160,9 @@ export const LargeGap: Story = {
 		gap: "xl",
 		children: (
 			<>
-				<Box>1</Box>
-				<Box>2</Box>
-				<Box>3</Box>
+				<Chip>Overview</Chip>
+				<Chip>Usage</Chip>
+				<Chip>Invoices</Chip>
 			</>
 		),
 	},
@@ -179,12 +179,12 @@ export const Wrapped: Story = {
 		gap: "md",
 		children: (
 			<>
-				<Box>Item 1</Box>
-				<Box>Item 2</Box>
-				<Box>Item 3</Box>
-				<Box>Item 4</Box>
-				<Box>Item 5</Box>
-				<Box>Item 6</Box>
+				<Chip>billing</Chip>
+				<Chip>auth</Chip>
+				<Chip>onboarding</Chip>
+				<Chip>webhooks</Chip>
+				<Chip>api-keys</Chip>
+				<Chip>notifications</Chip>
 			</>
 		),
 	},
@@ -206,9 +206,9 @@ export const Gaps: Story = {
 		<Stack gap="lg">
 			{(["xs", "sm", "md", "lg", "xl"] as const).map((gap) => (
 				<Stack key={gap} direction="row" gap={gap}>
-					<Box>Gap {gap}</Box>
-					<Box>Gap {gap}</Box>
-					<Box>Gap {gap}</Box>
+					<Chip>gap="{gap}"</Chip>
+					<Chip>gap="{gap}"</Chip>
+					<Chip>gap="{gap}"</Chip>
 				</Stack>
 			))}
 		</Stack>
@@ -223,11 +223,11 @@ export const NavbarExample: Story = {
 			align="center"
 			style={{ padding: "1rem" }}
 		>
-			<Box>Logo</Box>
+			<Chip>Acme Analytics</Chip>
 			<Stack direction="row" gap="md">
-				<Box>Home</Box>
-				<Box>About</Box>
-				<Box>Contact</Box>
+				<Chip>Dashboard</Chip>
+				<Chip>Reports</Chip>
+				<Chip>Settings</Chip>
 			</Stack>
 		</Stack>
 	),
@@ -255,9 +255,9 @@ export const Animated: Story = {
 					padding: "1.5rem",
 				}}
 			>
-				<h3 style={{ margin: "0 0 0.5rem" }}>First Section</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Connect your workspace</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This section animates in first.
+					Link Slack, Linear, or GitHub to start syncing activity.
 				</p>
 			</div>
 			<div
@@ -268,9 +268,9 @@ export const Animated: Story = {
 					padding: "1.5rem",
 				}}
 			>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Second Section</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Invite your team</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This section animates in second.
+					Add teammates by email — they'll get access once they accept.
 				</p>
 			</div>
 			<div
@@ -281,9 +281,9 @@ export const Animated: Story = {
 					padding: "1.5rem",
 				}}
 			>
-				<h3 style={{ margin: "0 0 0.5rem" }}>Third Section</h3>
+				<h3 style={{ margin: "0 0 0.5rem" }}>Set a billing contact</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					This section animates in third.
+					Invoices and renewal reminders go to this address.
 				</p>
 			</div>
 		</Stack>
@@ -309,9 +309,14 @@ export const AnimatedDashboard: Story = {
 					gap: "var(--space-4)",
 				}}
 			>
-				{["Revenue", "Users", "Orders", "Growth"].map((label) => (
+				{[
+					{ label: "Revenue", value: "$45,231" },
+					{ label: "Active Subscriptions", value: "2,350" },
+					{ label: "Open Support Tickets", value: "12" },
+					{ label: "Trial Conversions", value: "38%" },
+				].map((stat) => (
 					<div
-						key={label}
+						key={stat.label}
 						style={{
 							background: "var(--color-surface)",
 							border: "1px solid var(--color-border)",
@@ -326,7 +331,7 @@ export const AnimatedDashboard: Story = {
 								fontSize: "var(--font-size-sm)",
 							}}
 						>
-							{label}
+							{stat.label}
 						</p>
 						<p
 							style={{
@@ -335,7 +340,7 @@ export const AnimatedDashboard: Story = {
 								fontWeight: 700,
 							}}
 						>
-							$12,345
+							{stat.value}
 						</p>
 					</div>
 				))}
@@ -355,7 +360,7 @@ export const AnimatedDashboard: Story = {
 					color: "var(--color-muted)",
 				}}
 			>
-				Chart Placeholder
+				Monthly recurring revenue, last 12 months
 			</div>
 
 			{/* Table Section */}
@@ -367,9 +372,9 @@ export const AnimatedDashboard: Story = {
 					padding: "1.5rem",
 				}}
 			>
-				<h3 style={{ margin: "0 0 1rem" }}>Recent Activity</h3>
+				<h3 style={{ margin: "0 0 1rem" }}>Recent activity</h3>
 				<p style={{ margin: 0, color: "var(--color-muted)" }}>
-					Table content would go here...
+					Priya Patel upgraded to the Pro plan · 12 minutes ago
 				</p>
 			</div>
 		</Stack>

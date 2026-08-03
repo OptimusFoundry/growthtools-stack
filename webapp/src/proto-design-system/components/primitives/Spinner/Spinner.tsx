@@ -37,7 +37,7 @@ export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(
 	) => {
 		const spinnerClasses = cn(
 			styles.spinner,
-			styles[size],
+			styles[`size-${size}`],
 			styles[variant],
 			className,
 		);

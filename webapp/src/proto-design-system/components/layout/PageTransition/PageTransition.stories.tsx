@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { Button } from "../../primitives/Button";
-import { Card } from "../Card";
-import { Stack } from "../Stack";
+import { Card } from "@/proto-design-system/components/layout/Card/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import { PageTransition } from "./PageTransition";
 
 const meta: Meta<typeof PageTransition> = {
@@ -27,25 +27,25 @@ type Story = StoryObj<typeof PageTransition>;
 
 const pages = [
 	{
-		id: "home",
-		title: "Home",
-		content: "Welcome to the home page. This is where you start your journey.",
+		id: "overview",
+		title: "Overview",
+		content: "You're on the Pro plan with 3 of 10 team seats used.",
 	},
 	{
-		id: "about",
-		title: "About",
-		content: "Learn more about us and what we do. We build great things.",
+		id: "members",
+		title: "Members",
+		content: "8 active members, 1 pending invite awaiting acceptance.",
 	},
 	{
-		id: "contact",
-		title: "Contact",
-		content: "Get in touch with our team. We'd love to hear from you.",
+		id: "billing",
+		title: "Billing",
+		content: "Next invoice of $49.00 charges to your Visa on Sep 12, 2026.",
 	},
 ];
 
 export const Default: Story = {
 	render: (args) => {
-		const [activeTab, setActiveTab] = useState("home");
+		const [activeTab, setActiveTab] = useState("overview");
 		const currentPage = pages.find((p) => p.id === activeTab)!;
 
 		return (
@@ -87,7 +87,7 @@ export const Default: Story = {
 
 export const Fade: Story = {
 	render: () => {
-		const [activeTab, setActiveTab] = useState("home");
+		const [activeTab, setActiveTab] = useState("overview");
 		const currentPage = pages.find((p) => p.id === activeTab)!;
 
 		return (
@@ -121,7 +121,7 @@ export const Fade: Story = {
 
 export const Slide: Story = {
 	render: () => {
-		const [activeTab, setActiveTab] = useState("home");
+		const [activeTab, setActiveTab] = useState("overview");
 		const currentPage = pages.find((p) => p.id === activeTab)!;
 
 		return (
@@ -155,7 +155,7 @@ export const Slide: Story = {
 
 export const SlideUp: Story = {
 	render: () => {
-		const [activeTab, setActiveTab] = useState("home");
+		const [activeTab, setActiveTab] = useState("overview");
 		const currentPage = pages.find((p) => p.id === activeTab)!;
 
 		return (
@@ -189,7 +189,7 @@ export const SlideUp: Story = {
 
 export const Scale: Story = {
 	render: () => {
-		const [activeTab, setActiveTab] = useState("home");
+		const [activeTab, setActiveTab] = useState("overview");
 		const currentPage = pages.find((p) => p.id === activeTab)!;
 
 		return (
@@ -218,5 +218,51 @@ export const Scale: Story = {
 				</PageTransition>
 			</Stack>
 		);
+	},
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const SettingsTabsShowcase: Story = {
+	render: () => {
+		const [activeTab, setActiveTab] = useState("overview");
+		const currentPage = pages.find((p) => p.id === activeTab)!;
+
+		return (
+			<Stack gap="lg">
+				<Stack direction="row" gap="sm">
+					{pages.map((page) => (
+						<Button
+							key={page.id}
+							variant={activeTab === page.id ? "primary" : "outline"}
+							onClick={() => setActiveTab(page.id)}
+						>
+							{page.title}
+						</Button>
+					))}
+				</Stack>
+
+				<PageTransition pageKey={activeTab} type="slideUp" duration={0.25}>
+					<Card variant="outlined" padding="lg">
+						<Stack gap="md">
+							<h2 style={{ margin: 0 }}>{currentPage.title}</h2>
+							<p style={{ margin: 0, color: "var(--color-muted)" }}>
+								{currentPage.content}
+							</p>
+						</Stack>
+					</Card>
+				</PageTransition>
+			</Stack>
+		);
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"A team-settings tab switcher — each tab swaps its content pane with a slide-up transition, the pattern used for account/billing/members sub-navigation.",
+			},
+		},
 	},
 };

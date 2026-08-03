@@ -7,10 +7,22 @@ import {
 	XCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
+import { useMotionTokens } from "../../../context/MotionProvider";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { cn } from "../../../utils/cn";
 import styles from "./Banner.module.scss";
+
+// Animation variants - slide down with fade.
+// Hoisted to module scope so the object reference is stable across renders;
+// motion re-evaluates/restarts an in-progress transition if it receives a
+// brand new `variants`/`transition` object on every parent re-render.
+const BANNER_VARIANTS = {
+	hidden: { opacity: 0, y: -8 },
+	visible: { opacity: 1, y: 0 },
+} as const;
+
+const BANNER_TRANSITION_REDUCED = { duration: 0 } as const;
 
 export type BannerType = "info" | "success" | "warning" | "error" | "feature";
 export type BannerVariant = "filled" | "light" | "lighter" | "stroke";
@@ -72,17 +84,18 @@ export function Banner({
 	className,
 }: BannerProps) {
 	const prefersReducedMotion = useReducedMotion();
+	const motionTokens = useMotionTokens();
 
-	// Animation variants - slide down with fade
-	const bannerVariants = {
-		hidden: { opacity: 0, y: -8 },
-		visible: { opacity: 1, y: 0 },
-	};
-
-	const transition =
-		prefersReducedMotion || !animate
-			? { duration: 0 }
-			: { duration: 0.2, ease: [0, 0, 0.2, 1] as const };
+	const transition = useMemo(
+		() =>
+			prefersReducedMotion || !animate
+				? BANNER_TRANSITION_REDUCED
+				: {
+						duration: motionTokens.duration.normal,
+						ease: motionTokens.easeOut,
+					},
+		[prefersReducedMotion, animate, motionTokens],
+	);
 
 	const iconElement = icon || typeIcons[type];
 
@@ -90,7 +103,7 @@ export function Banner({
 		<motion.div
 			className={cn(styles.banner, styles[type], styles[variant], className)}
 			role="alert"
-			variants={bannerVariants}
+			variants={BANNER_VARIANTS}
 			initial={animate ? "hidden" : "visible"}
 			animate="visible"
 			exit="hidden"

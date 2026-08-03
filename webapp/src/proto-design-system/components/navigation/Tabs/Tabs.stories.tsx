@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Home, Settings, User } from "lucide-react";
+import { CreditCard, Key, Shield, Users, Webhook } from "lucide-react";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "./Tabs";
 
 const meta: Meta<typeof Tabs> = {
@@ -25,21 +25,21 @@ type Story = StoryObj<typeof Tabs>;
 
 export const Default: Story = {
 	render: (args) => (
-		<Tabs {...args} defaultTab="tab1">
-			<TabList aria-label="Sample tabs">
-				<Tab id="tab1">Account</Tab>
-				<Tab id="tab2">Security</Tab>
-				<Tab id="tab3">Notifications</Tab>
+		<Tabs {...args} defaultTab="account">
+			<TabList aria-label="Account settings">
+				<Tab id="account">Account</Tab>
+				<Tab id="security">Security</Tab>
+				<Tab id="billing">Billing</Tab>
 			</TabList>
 			<TabPanels>
-				<TabPanel id="tab1">
-					<p>Manage your account settings and preferences.</p>
+				<TabPanel id="account">
+					<p>Update your name, email address, and profile photo.</p>
 				</TabPanel>
-				<TabPanel id="tab2">
-					<p>Update your password and security options.</p>
+				<TabPanel id="security">
+					<p>Manage your password, two-factor authentication, and sessions.</p>
 				</TabPanel>
-				<TabPanel id="tab3">
-					<p>Configure your notification preferences.</p>
+				<TabPanel id="billing">
+					<p>View invoices and update your payment method.</p>
 				</TabPanel>
 			</TabPanels>
 		</Tabs>
@@ -48,18 +48,26 @@ export const Default: Story = {
 
 export const Line: Story = {
 	render: () => (
-		<Tabs variant="line" defaultTab="tab1">
-			<TabList aria-label="Line tabs">
-				<Tab id="tab1">Overview</Tab>
-				<Tab id="tab2">Analytics</Tab>
-				<Tab id="tab3">Reports</Tab>
-				<Tab id="tab4">Settings</Tab>
+		<Tabs variant="line" defaultTab="overview">
+			<TabList aria-label="Project navigation">
+				<Tab id="overview">Overview</Tab>
+				<Tab id="deployments">Deployments</Tab>
+				<Tab id="analytics">Analytics</Tab>
+				<Tab id="settings">Settings</Tab>
 			</TabList>
 			<TabPanels>
-				<TabPanel id="tab1">Overview content</TabPanel>
-				<TabPanel id="tab2">Analytics content</TabPanel>
-				<TabPanel id="tab3">Reports content</TabPanel>
-				<TabPanel id="tab4">Settings content</TabPanel>
+				<TabPanel id="overview">
+					Project health, recent commits, and activity.
+				</TabPanel>
+				<TabPanel id="deployments">
+					A log of every build and its status.
+				</TabPanel>
+				<TabPanel id="analytics">
+					Traffic, latency, and error rate over time.
+				</TabPanel>
+				<TabPanel id="settings">
+					Environment variables, domains, and teams.
+				</TabPanel>
 			</TabPanels>
 		</Tabs>
 	),
@@ -67,16 +75,18 @@ export const Line: Story = {
 
 export const Enclosed: Story = {
 	render: () => (
-		<Tabs variant="enclosed" defaultTab="tab1">
-			<TabList aria-label="Enclosed tabs">
-				<Tab id="tab1">Profile</Tab>
-				<Tab id="tab2">Billing</Tab>
-				<Tab id="tab3">Team</Tab>
+		<Tabs variant="enclosed" defaultTab="profile">
+			<TabList aria-label="Workspace settings">
+				<Tab id="profile">Profile</Tab>
+				<Tab id="billing">Billing</Tab>
+				<Tab id="team">Team</Tab>
 			</TabList>
 			<TabPanels>
-				<TabPanel id="tab1">Profile settings and information.</TabPanel>
-				<TabPanel id="tab2">Billing and subscription details.</TabPanel>
-				<TabPanel id="tab3">Team members and permissions.</TabPanel>
+				<TabPanel id="profile">
+					Your display name, avatar, and timezone.
+				</TabPanel>
+				<TabPanel id="billing">Plan, usage, and payment history.</TabPanel>
+				<TabPanel id="team">Invite teammates and manage roles.</TabPanel>
 			</TabPanels>
 		</Tabs>
 	),
@@ -84,18 +94,18 @@ export const Enclosed: Story = {
 
 export const Pill: Story = {
 	render: () => (
-		<Tabs variant="pill" defaultTab="tab1">
-			<TabList aria-label="Pill tabs">
-				<Tab id="tab1">All</Tab>
-				<Tab id="tab2">Active</Tab>
-				<Tab id="tab3">Completed</Tab>
-				<Tab id="tab4">Archived</Tab>
+		<Tabs variant="pill" defaultTab="all">
+			<TabList aria-label="Ticket filters">
+				<Tab id="all">All</Tab>
+				<Tab id="open">Open</Tab>
+				<Tab id="in-progress">In progress</Tab>
+				<Tab id="resolved">Resolved</Tab>
 			</TabList>
 			<TabPanels>
-				<TabPanel id="tab1">All items</TabPanel>
-				<TabPanel id="tab2">Active items</TabPanel>
-				<TabPanel id="tab3">Completed items</TabPanel>
-				<TabPanel id="tab4">Archived items</TabPanel>
+				<TabPanel id="all">Every ticket across all queues.</TabPanel>
+				<TabPanel id="open">Tickets waiting on a first response.</TabPanel>
+				<TabPanel id="in-progress">Tickets currently being worked.</TabPanel>
+				<TabPanel id="resolved">Tickets closed in the last 30 days.</TabPanel>
 			</TabPanels>
 		</Tabs>
 	),
@@ -103,22 +113,28 @@ export const Pill: Story = {
 
 export const WithIcons: Story = {
 	render: () => (
-		<Tabs variant="line" defaultTab="tab1">
-			<TabList aria-label="Tabs with icons">
-				<Tab id="tab1" icon={<Home />}>
-					Home
+		<Tabs variant="line" defaultTab="team">
+			<TabList aria-label="Settings sections">
+				<Tab id="team" icon={<Users />}>
+					Team
 				</Tab>
-				<Tab id="tab2" icon={<User />}>
-					Profile
+				<Tab id="api-keys" icon={<Key />}>
+					API Keys
 				</Tab>
-				<Tab id="tab3" icon={<Settings />}>
-					Settings
+				<Tab id="webhooks" icon={<Webhook />}>
+					Webhooks
+				</Tab>
+				<Tab id="security" icon={<Shield />}>
+					Security
 				</Tab>
 			</TabList>
 			<TabPanels>
-				<TabPanel id="tab1">Home dashboard content.</TabPanel>
-				<TabPanel id="tab2">User profile content.</TabPanel>
-				<TabPanel id="tab3">Settings content.</TabPanel>
+				<TabPanel id="team">Manage who has access to this workspace.</TabPanel>
+				<TabPanel id="api-keys">Generate and revoke API keys.</TabPanel>
+				<TabPanel id="webhooks">
+					Configure endpoints for outbound events.
+				</TabPanel>
+				<TabPanel id="security">SSO, session limits, and audit logs.</TabPanel>
 			</TabPanels>
 		</Tabs>
 	),
@@ -126,18 +142,22 @@ export const WithIcons: Story = {
 
 export const WithDisabled: Story = {
 	render: () => (
-		<Tabs variant="line" defaultTab="tab1">
-			<TabList aria-label="Tabs with disabled">
-				<Tab id="tab1">Available</Tab>
-				<Tab id="tab2" disabled>
-					Disabled
+		<Tabs variant="line" defaultTab="overview">
+			<TabList aria-label="Plan sections">
+				<Tab id="overview">Overview</Tab>
+				<Tab id="advanced-reports" disabled icon={<CreditCard />}>
+					Advanced Reports
 				</Tab>
-				<Tab id="tab3">Another</Tab>
+				<Tab id="usage">Usage</Tab>
 			</TabList>
 			<TabPanels>
-				<TabPanel id="tab1">This tab is available.</TabPanel>
-				<TabPanel id="tab2">This tab is disabled.</TabPanel>
-				<TabPanel id="tab3">Another available tab.</TabPanel>
+				<TabPanel id="overview">Your current plan and renewal date.</TabPanel>
+				<TabPanel id="advanced-reports">
+					Upgrade to Pro to unlock advanced reports.
+				</TabPanel>
+				<TabPanel id="usage">
+					Seats, storage, and API calls this month.
+				</TabPanel>
 			</TabPanels>
 		</Tabs>
 	),
@@ -146,38 +166,75 @@ export const WithDisabled: Story = {
 export const Sizes: Story = {
 	render: () => (
 		<div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-			<Tabs variant="line" size="sm" defaultTab="tab1">
-				<TabList aria-label="Small tabs">
-					<Tab id="tab1">Small</Tab>
-					<Tab id="tab2">Tabs</Tab>
+			<Tabs variant="line" size="sm" defaultTab="daily">
+				<TabList aria-label="Small report range">
+					<Tab id="daily">Daily</Tab>
+					<Tab id="weekly">Weekly</Tab>
 				</TabList>
 				<TabPanels>
-					<TabPanel id="tab1">Small size content</TabPanel>
-					<TabPanel id="tab2">Second tab content</TabPanel>
+					<TabPanel id="daily">Metrics for the last 24 hours.</TabPanel>
+					<TabPanel id="weekly">Metrics for the last 7 days.</TabPanel>
 				</TabPanels>
 			</Tabs>
 
-			<Tabs variant="line" size="md" defaultTab="tab1">
-				<TabList aria-label="Medium tabs">
-					<Tab id="tab1">Medium</Tab>
-					<Tab id="tab2">Tabs</Tab>
+			<Tabs variant="line" size="md" defaultTab="daily">
+				<TabList aria-label="Medium report range">
+					<Tab id="daily">Daily</Tab>
+					<Tab id="weekly">Weekly</Tab>
 				</TabList>
 				<TabPanels>
-					<TabPanel id="tab1">Medium size content</TabPanel>
-					<TabPanel id="tab2">Second tab content</TabPanel>
+					<TabPanel id="daily">Metrics for the last 24 hours.</TabPanel>
+					<TabPanel id="weekly">Metrics for the last 7 days.</TabPanel>
 				</TabPanels>
 			</Tabs>
 
-			<Tabs variant="line" size="lg" defaultTab="tab1">
-				<TabList aria-label="Large tabs">
-					<Tab id="tab1">Large</Tab>
-					<Tab id="tab2">Tabs</Tab>
+			<Tabs variant="line" size="lg" defaultTab="daily">
+				<TabList aria-label="Large report range">
+					<Tab id="daily">Daily</Tab>
+					<Tab id="weekly">Weekly</Tab>
 				</TabList>
 				<TabPanels>
-					<TabPanel id="tab1">Large size content</TabPanel>
-					<TabPanel id="tab2">Second tab content</TabPanel>
+					<TabPanel id="daily">Metrics for the last 24 hours.</TabPanel>
+					<TabPanel id="weekly">Metrics for the last 7 days.</TabPanel>
 				</TabPanels>
 			</Tabs>
 		</div>
+	),
+};
+
+// =============================================================================
+// SHOWCASE
+// =============================================================================
+
+export const Showcase: Story = {
+	render: () => (
+		<Tabs variant="enclosed" defaultTab="general">
+			<TabList aria-label="Workspace settings">
+				<Tab id="general">General</Tab>
+				<Tab id="members" icon={<Users />}>
+					Members
+				</Tab>
+				<Tab id="api-keys" icon={<Key />}>
+					API Keys
+				</Tab>
+				<Tab id="billing" icon={<CreditCard />}>
+					Billing
+				</Tab>
+			</TabList>
+			<TabPanels>
+				<TabPanel id="general">
+					<p>Workspace name, URL slug, and default timezone.</p>
+				</TabPanel>
+				<TabPanel id="members">
+					<p>7 members, 2 pending invitations. Owners can manage roles.</p>
+				</TabPanel>
+				<TabPanel id="api-keys">
+					<p>3 active keys. Rotate or revoke keys used by integrations.</p>
+				</TabPanel>
+				<TabPanel id="billing">
+					<p>Growth plan — renews October 12. Next invoice: $249.00.</p>
+				</TabPanel>
+			</TabPanels>
+		</Tabs>
 	),
 };

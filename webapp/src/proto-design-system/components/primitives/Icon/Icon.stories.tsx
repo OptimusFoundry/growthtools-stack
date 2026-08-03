@@ -241,88 +241,60 @@ export const CommonIcons: Story = {
 };
 
 export const Showcase: Story = {
+	name: "Showcase: Account menu",
 	render: () => (
-		<div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-			<div>
-				<p
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "0.25rem",
+				width: "220px",
+				border: "1px solid var(--color-border)",
+				borderRadius: "var(--radius-lg)",
+				padding: "0.5rem",
+			}}
+		>
+			{[
+				{ icon: User, label: "Your profile" },
+				{ icon: Settings, label: "Workspace settings" },
+				{ icon: Mail, label: "Notification preferences" },
+				{ icon: Search, label: "Search everything" },
+			].map((item) => (
+				<span
+					key={item.label}
 					style={{
-						marginBottom: "0.75rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
+						display: "inline-flex",
+						alignItems: "center",
+						gap: "0.625rem",
+						padding: "0.5rem 0.625rem",
 					}}
 				>
-					Sizes (xs, sm, md, lg, xl, 2xl)
-				</p>
-				<div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-					<Icon icon={Star} size="xs" />
-					<Icon icon={Star} size="sm" />
-					<Icon icon={Star} size="md" />
-					<Icon icon={Star} size="lg" />
-					<Icon icon={Star} size="xl" />
-					<Icon icon={Star} size="2xl" />
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.75rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					Colors
-				</p>
-				<div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-					<Icon icon={Heart} color="default" size="lg" />
-					<Icon icon={Heart} color="muted" size="lg" />
-					<Icon icon={Heart} color="primary" size="lg" />
-					<Icon icon={Heart} color="success" size="lg" />
-					<Icon icon={Heart} color="warning" size="lg" />
-					<Icon icon={Heart} color="error" size="lg" />
-				</div>
-			</div>
-
-			<div>
-				<p
-					style={{
-						marginBottom: "0.75rem",
-						fontSize: "0.875rem",
-						color: "var(--color-muted)",
-					}}
-				>
-					With text
-				</p>
-				<div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-					<span
-						style={{
-							display: "inline-flex",
-							alignItems: "center",
-							gap: "0.5rem",
-						}}
-					>
-						<Icon icon={Home} size="sm" /> Home
-					</span>
-					<span
-						style={{
-							display: "inline-flex",
-							alignItems: "center",
-							gap: "0.5rem",
-						}}
-					>
-						<Icon icon={Settings} size="sm" /> Settings
-					</span>
-					<span
-						style={{
-							display: "inline-flex",
-							alignItems: "center",
-							gap: "0.5rem",
-						}}
-					>
-						<Icon icon={User} size="sm" /> Profile
-					</span>
-				</div>
-			</div>
+					<Icon icon={item.icon} size="sm" color="muted" />
+					{item.label}
+				</span>
+			))}
+			<span
+				style={{
+					display: "inline-flex",
+					alignItems: "center",
+					gap: "0.625rem",
+					padding: "0.5rem 0.625rem",
+				}}
+			>
+				<Icon icon={Heart} size="sm" label="Starred items" color="error" />
+				Starred items
+			</span>
+			<span
+				style={{
+					display: "inline-flex",
+					alignItems: "center",
+					gap: "0.625rem",
+					padding: "0.5rem 0.625rem",
+				}}
+			>
+				<Icon icon={AlertCircle} size="sm" color="warning" />2 items need
+				attention
+			</span>
 		</div>
 	),
 	parameters: {
