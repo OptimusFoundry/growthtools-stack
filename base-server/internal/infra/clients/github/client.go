@@ -335,6 +335,7 @@ type RepoContentResponse struct {
 
 // PullRequestResponse is returned by POST /repos/{owner}/{repo}/pulls
 type PullRequestResponse struct {
+	Number  int    `json:"number"`
 	HTMLURL string `json:"html_url"`
 }
 
@@ -470,8 +471,8 @@ func (c *Client) CreateOrUpdateFileContents(ctx context.Context, token, owner, r
 	return nil
 }
 
-// CreatePullRequest opens a PR from headBranch into baseBranch, returning the PR's HTML URL
-func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, error) {
+// CreatePullRequest opens a PR from headBranch into baseBranch, returning the PR's HTML URL and number
+func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, int, error) {
 	payload := map[string]any{
 		"title": title,
 		"head":  headBranch,
@@ -480,13 +481,13 @@ func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, head
 	}
 	reqBody, err := json.Marshal(payload)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal pull request payload: %w", err)
+		return "", 0, fmt.Errorf("failed to marshal pull request payload: %w", err)
 	}
 
 	reqURL := fmt.Sprintf("%s/repos/%s/%s/pulls", c.apiBase, owner, repo)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, strings.NewReader(string(reqBody)))
 	if err != nil {
-		return "", fmt.Errorf("failed to create pull request request: %w", err)
+		return "", 0, fmt.Errorf("failed to create pull request request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
@@ -495,23 +496,50 @@ func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, head
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.logger.Error(ctx, "failed to create pull request", err)
-		return "", fmt.Errorf("failed to create pull request: %w", err)
+		return "", 0, fmt.Errorf("failed to create pull request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
 		respBody, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("github create pull request returned status %d: %s", resp.StatusCode, string(respBody))
+		return "", 0, fmt.Errorf("github create pull request returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read pull request response: %w", err)
+		return "", 0, fmt.Errorf("failed to read pull request response: %w", err)
 	}
 
 	var pr PullRequestResponse
 	if err := json.Unmarshal(respBody, &pr); err != nil {
-		return "", fmt.Errorf("failed to parse pull request response: %w", err)
+		return "", 0, fmt.Errorf("failed to parse pull request response: %w", err)
 	}
-	return pr.HTMLURL, nil
+	return pr.HTMLURL, pr.Number, nil
+}
+
+// MergePullRequest merges an open PR by number using GitHub's default merge
+// method. Returns an error on any non-2xx response (e.g. not mergeable,
+// required checks pending) — callers decide whether that's fatal; for
+// blog site-publish it is not, the PR is left open for manual merge.
+func (c *Client) MergePullRequest(ctx context.Context, token, owner, repo string, prNumber int) error {
+	reqURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%d/merge", c.apiBase, owner, repo, prNumber)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, reqURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create merge pull request request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		c.logger.Error(ctx, "failed to merge pull request", err)
+		return fmt.Errorf("failed to merge pull request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("github merge pull request returned status %d: %s", resp.StatusCode, string(respBody))
+	}
+	return nil
 }

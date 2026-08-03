@@ -74,11 +74,19 @@ func (p *GitHubProcessor) PublishBlogToSite(ctx context.Context, accountID uuid.
 		return "", ErrSitePublishFailed
 	}
 
-	prURL, err := p.githubClient.CreatePullRequest(ctx, token, target.RepoOwner, target.RepoName, branchName, target.BaseBranch,
+	prURL, prNumber, err := p.githubClient.CreatePullRequest(ctx, token, target.RepoOwner, target.RepoName, branchName, target.BaseBranch,
 		fmt.Sprintf("Publish: %s", post.Title), "Automated PR publishing a blog post to the site.")
 	if err != nil {
 		p.logger.Error(ctx, "failed to create pull request for site publish", err)
 		return "", ErrSitePublishFailed
+	}
+
+	// Best-effort auto-merge: the PR already exists and is reported as a
+	// success either way — a merge failure (conflicts, required checks,
+	// branch protection) just leaves it open for a manual merge rather than
+	// failing the whole publish.
+	if err := p.githubClient.MergePullRequest(ctx, token, target.RepoOwner, target.RepoName, prNumber); err != nil {
+		p.logger.Error(ctx, "failed to auto-merge pull request for site publish", err)
 	}
 
 	return prURL, nil

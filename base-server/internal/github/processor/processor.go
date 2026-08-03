@@ -93,7 +93,8 @@ type GitHubClient interface {
 	GetCommitDiff(ctx context.Context, token, owner, name, sha string) (string, error)
 	CreateBranch(ctx context.Context, token, owner, repo, baseBranch, newBranch string) error
 	CreateOrUpdateFileContents(ctx context.Context, token, owner, repo, filePath, branch string, content []byte, commitMessage string) error
-	CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, error)
+	CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, int, error)
+	MergePullRequest(ctx context.Context, token, owner, repo string, prNumber int) error
 }
 
 // StorybookClient fetches a Storybook deployment's story index so pushed

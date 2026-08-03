@@ -567,12 +567,13 @@ func (mr *MockGitHubClientMockRecorder) CreateOrUpdateFileContents(ctx, token, o
 }
 
 // CreatePullRequest mocks base method.
-func (m *MockGitHubClient) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, error) {
+func (m *MockGitHubClient) CreatePullRequest(ctx context.Context, token, owner, repo, headBranch, baseBranch, title, body string) (string, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePullRequest", ctx, token, owner, repo, headBranch, baseBranch, title, body)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // CreatePullRequest indicates an expected call of CreatePullRequest.
@@ -683,6 +684,20 @@ func (m *MockGitHubClient) ListUserRepos(ctx context.Context, token string, page
 func (mr *MockGitHubClientMockRecorder) ListUserRepos(ctx, token, page any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRepos", reflect.TypeOf((*MockGitHubClient)(nil).ListUserRepos), ctx, token, page)
+}
+
+// MergePullRequest mocks base method.
+func (m *MockGitHubClient) MergePullRequest(ctx context.Context, token, owner, repo string, prNumber int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MergePullRequest", ctx, token, owner, repo, prNumber)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MergePullRequest indicates an expected call of MergePullRequest.
+func (mr *MockGitHubClientMockRecorder) MergePullRequest(ctx, token, owner, repo, prNumber any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergePullRequest", reflect.TypeOf((*MockGitHubClient)(nil).MergePullRequest), ctx, token, owner, repo, prNumber)
 }
 
 // MockStorybookClient is a mock of StorybookClient interface.

@@ -162,12 +162,12 @@ func TestGitHubProcessor_PublishBlogToSite(t *testing.T) {
 				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", gomock.Any(), gomock.Any()).
-					Return("", errors.New("pr create failed"))
+					Return("", 0, errors.New("pr create failed"))
 			},
 			wantErr: ErrSitePublishFailed,
 		},
 		{
-			name: "happy path – full publish succeeds",
+			name: "happy path – full publish succeeds and auto-merges",
 			post: post,
 			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
 				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
@@ -190,10 +190,36 @@ func TestGitHubProcessor_PublishBlogToSite(t *testing.T) {
 						return nil
 					})
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
-					DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, error) {
+					DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
 						assert.Equal(t, branchName, headBranch, "PR head branch must match created branch")
-						return "https://github.com/acme/site/pull/42", nil
+						return "https://github.com/acme/site/pull/42", 42, nil
 					})
+				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(nil)
+			},
+			assert: func(t *testing.T, gotURL string, gotErr error) {
+				require.NoError(t, gotErr)
+				assert.Equal(t, "https://github.com/acme/site/pull/42", gotURL)
+			},
+		},
+		{
+			name: "auto-merge fails – publish still succeeds, PR URL still returned",
+			post: post,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
+					Return("https://github.com/acme/site/pull/42", 42, nil)
+				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(errors.New("merge conflict"))
 			},
 			assert: func(t *testing.T, gotURL string, gotErr error) {
 				require.NoError(t, gotErr)
@@ -284,10 +310,12 @@ func TestGitHubProcessor_PublishBlogToSite_BranchNameShape(t *testing.T) {
 					return nil
 				})
 			mockClient.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
-				DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, error) {
+				DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
 					seenBranches = append(seenBranches, headBranch)
-					return "https://github.com/acme/site/pull/1", nil
+					return "https://github.com/acme/site/pull/1", 1, nil
 				})
+			mockClient.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 1).
+				Return(nil)
 
 			proc := NewWithOAuth(mockStore, mockClient, NewMockEventPublisher(ctrl), testWebhookSecret, "client-id", "http://localhost", logger)
 			prURL, err := proc.PublishBlogToSite(context.Background(), accountID, post)
