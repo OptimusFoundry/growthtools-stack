@@ -279,7 +279,7 @@ Backlog → Spec'd → Planned → In progress → Shipped. Tickets live in the 
 |------|---------|-----|------|--------|
 | EP-001 | Storybook Capture → Social Post | docs/prds/2026-08-02-storybook-social-autopost.md | docs/plans/2026-08-02-storybook-social-autopost.md | Shipped |
 | EP-002 | Publish Blog Posts to shubhanshu.dev | docs/prds/2026-08-02-blog-site-publish.md | docs/plans/2026-08-02-blog-site-publish.md | Shipped (279c698, 083a133) |
-| EP-003 | Blog SEO Metadata Wiring | docs/prds/2026-08-02-blog-seo-metadata.md | — | Spec'd |
+| EP-003 | Blog SEO Metadata Wiring | docs/prds/2026-08-02-blog-seo-metadata.md | docs/plans/2026-08-02-blog-seo-metadata.md | Shipped (d9a106e, 862a4ce) |
 
 ---
 
