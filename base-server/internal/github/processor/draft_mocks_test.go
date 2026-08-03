@@ -74,6 +74,21 @@ func (mr *MockDraftStoreMockRecorder) GetGitHubCommitForDraft(ctx, commitID any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubCommitForDraft", reflect.TypeOf((*MockDraftStore)(nil).GetGitHubCommitForDraft), ctx, commitID)
 }
 
+// GetShowcaseJobForDraft mocks base method.
+func (m *MockDraftStore) GetShowcaseJobForDraft(ctx context.Context, jobID uuid.UUID) (store.ShowcaseJobForDraft, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetShowcaseJobForDraft", ctx, jobID)
+	ret0, _ := ret[0].(store.ShowcaseJobForDraft)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetShowcaseJobForDraft indicates an expected call of GetShowcaseJobForDraft.
+func (mr *MockDraftStoreMockRecorder) GetShowcaseJobForDraft(ctx, jobID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShowcaseJobForDraft", reflect.TypeOf((*MockDraftStore)(nil).GetShowcaseJobForDraft), ctx, jobID)
+}
+
 // ListPlatformConnectionsByAccount mocks base method.
 func (m *MockDraftStore) ListPlatformConnectionsByAccount(ctx context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error) {
 	m.ctrl.T.Helper()
@@ -101,6 +116,34 @@ func (m *MockDraftStore) UpdateGitHubCommitPostID(ctx context.Context, commitID,
 func (mr *MockDraftStoreMockRecorder) UpdateGitHubCommitPostID(ctx, commitID, postID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitHubCommitPostID", reflect.TypeOf((*MockDraftStore)(nil).UpdateGitHubCommitPostID), ctx, commitID, postID)
+}
+
+// UpdateShowcaseJobFailed mocks base method.
+func (m *MockDraftStore) UpdateShowcaseJobFailed(ctx context.Context, jobID uuid.UUID, errMsg string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateShowcaseJobFailed", ctx, jobID, errMsg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateShowcaseJobFailed indicates an expected call of UpdateShowcaseJobFailed.
+func (mr *MockDraftStoreMockRecorder) UpdateShowcaseJobFailed(ctx, jobID, errMsg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateShowcaseJobFailed", reflect.TypeOf((*MockDraftStore)(nil).UpdateShowcaseJobFailed), ctx, jobID, errMsg)
+}
+
+// UpdateShowcaseJobPostID mocks base method.
+func (m *MockDraftStore) UpdateShowcaseJobPostID(ctx context.Context, jobID, postID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateShowcaseJobPostID", ctx, jobID, postID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateShowcaseJobPostID indicates an expected call of UpdateShowcaseJobPostID.
+func (mr *MockDraftStoreMockRecorder) UpdateShowcaseJobPostID(ctx, jobID, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateShowcaseJobPostID", reflect.TypeOf((*MockDraftStore)(nil).UpdateShowcaseJobPostID), ctx, jobID, postID)
 }
 
 // MockPostsDrafter is a mock of PostsDrafter interface.

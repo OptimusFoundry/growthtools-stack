@@ -40,6 +40,11 @@ func buildWorkers(cfg *config.Config, logger *observability.Logger, deps *Depend
 	// from the commit + capture artifacts, persists it through SaveDraft.
 	draftGeneratorWorker := workers.NewDraftGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &p.draftGen, logger)
 
+	// Showcase draft generator: consumes showcase.draft.generate, builds an
+	// AI draft from the brief + capture artifacts, persists it through
+	// SaveDraft.
+	showcaseDraftGeneratorWorker := workers.NewShowcaseDraftGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &p.draftGen, logger)
+
 	// Blog generator: consumes github.blog.generate, calls Gemini with the
 	// full diff + capture screenshots, persists a blog_posts draft.
 	blogGeneratorWorker := workers.NewBlogGeneratorWorker(cfg.Kafka.Brokers, cfg.Kafka.ConsumerGroup, &p.blogGen, logger)
@@ -56,5 +61,6 @@ func buildWorkers(cfg *config.Config, logger *observability.Logger, deps *Depend
 	deps.WorkerManager.Register(captureResultWorker)
 	deps.WorkerManager.Register(retryWorker)
 	deps.WorkerManager.Register(draftGeneratorWorker)
+	deps.WorkerManager.Register(showcaseDraftGeneratorWorker)
 	deps.WorkerManager.Register(blogGeneratorWorker)
 }

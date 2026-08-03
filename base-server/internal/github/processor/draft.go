@@ -47,6 +47,9 @@ type DraftStore interface {
 	ListPlatformConnectionsByAccount(ctx context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error)
 	CreateMedia(ctx context.Context, params store.CreateMediaParams) (store.Media, error)
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
+	GetShowcaseJobForDraft(ctx context.Context, jobID uuid.UUID) (store.ShowcaseJobForDraft, error)
+	UpdateShowcaseJobPostID(ctx context.Context, jobID, postID uuid.UUID) error
+	UpdateShowcaseJobFailed(ctx context.Context, jobID uuid.UUID, errMsg string) error
 }
 
 // PostsDrafter lets us persist a draft without depending on the whole posts

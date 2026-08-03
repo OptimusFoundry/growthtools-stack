@@ -3,10 +3,12 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"base-server/internal/infra/clients/kafka"
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +27,12 @@ const TopicDraftGenerate = "github.draft.generate"
 // long-form blog-post draft from the commit + captured artefacts.
 const TopicBlogGenerate = "github.blog.generate"
 
+// TopicShowcaseDraftGenerate is published after a capture result is routed
+// to a showcase_jobs row (rather than a github_commits row).
+// ShowcaseDraftGeneratorWorker consumes it and produces a draft post from
+// the brief + captured artefacts.
+const TopicShowcaseDraftGenerate = "showcase.draft.generate"
+
 // DraftGenerateEvent is the github.draft.generate message body.
 type DraftGenerateEvent struct {
 	CommitID uuid.UUID `json:"commit_id"`
@@ -33,6 +41,11 @@ type DraftGenerateEvent struct {
 // BlogGenerateEvent is the github.blog.generate message body.
 type BlogGenerateEvent struct {
 	CommitID uuid.UUID `json:"commit_id"`
+}
+
+// ShowcaseDraftGenerateEvent is the showcase.draft.generate message body.
+type ShowcaseDraftGenerateEvent struct {
+	JobID uuid.UUID `json:"job_id"`
 }
 
 // CaptureUpload mirrors the capture-worker's upload entry in its result
@@ -56,6 +69,8 @@ type CaptureResultMessage struct {
 // CaptureResultStore is the slice of the store the worker needs.
 type CaptureResultStore interface {
 	UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
+	UpdateShowcaseJobCapture(ctx context.Context, jobID uuid.UUID, captureOutput json.RawMessage) error
+	UpdateShowcaseJobFailed(ctx context.Context, jobID uuid.UUID, errMsg string) error
 }
 
 // DraftEventPublisher is the Kafka producer dependency used to fan out a
@@ -135,26 +150,75 @@ func (w *CaptureResultWorker) handle(ctx context.Context, key, value []byte) err
 		return fmt.Errorf("failed to marshal capture_output: %w", err)
 	}
 
-	if err := w.store.UpdateGitHubCommitCapture(ctx, msg.CommitID, raw); err != nil {
+	branch, err := w.persistCapture(ctx, msg, raw)
+	if err != nil {
 		w.logger.Error(ctx, "failed to persist capture result", err)
 		return err
 	}
 
-	// Fan out to both the draft and the blog generator on success only —
-	// failed captures don't produce usable artefacts. The two publishes are
-	// independent: a failure on one is logged but does not prevent the other.
-	if msg.Success && w.publisher != nil {
-		draftEvent := DraftGenerateEvent{CommitID: msg.CommitID}
-		if err := w.publisher.Publish(ctx, TopicDraftGenerate, msg.CommitID.String(), draftEvent); err != nil {
-			w.logger.Error(ctx, "failed to publish draft.generate event", err)
+	switch branch {
+	case "":
+		// Matched neither table — already logged in persistCapture. Drop the
+		// message; there's nothing to route it to.
+		return nil
+	case "showcase":
+		if !msg.Success {
+			if err := w.store.UpdateShowcaseJobFailed(ctx, msg.CommitID, msg.Error); err != nil {
+				w.logger.Error(ctx, "failed to mark showcase job failed", err)
+				return err
+			}
+			return nil
 		}
+		if w.publisher != nil {
+			event := ShowcaseDraftGenerateEvent{JobID: msg.CommitID}
+			if err := w.publisher.Publish(ctx, TopicShowcaseDraftGenerate, msg.CommitID.String(), event); err != nil {
+				w.logger.Error(ctx, "failed to publish showcase.draft.generate event", err)
+			}
+		}
+		return nil
+	default: // "github"
+		// Fan out to both the draft and the blog generator on success only —
+		// failed captures don't produce usable artefacts. The two publishes are
+		// independent: a failure on one is logged but does not prevent the other.
+		if msg.Success && w.publisher != nil {
+			draftEvent := DraftGenerateEvent{CommitID: msg.CommitID}
+			if err := w.publisher.Publish(ctx, TopicDraftGenerate, msg.CommitID.String(), draftEvent); err != nil {
+				w.logger.Error(ctx, "failed to publish draft.generate event", err)
+			}
 
-		blogEvent := BlogGenerateEvent{CommitID: msg.CommitID}
-		if err := w.publisher.Publish(ctx, TopicBlogGenerate, msg.CommitID.String(), blogEvent); err != nil {
-			w.logger.Error(ctx, "failed to publish blog.generate event", err)
+			blogEvent := BlogGenerateEvent{CommitID: msg.CommitID}
+			if err := w.publisher.Publish(ctx, TopicBlogGenerate, msg.CommitID.String(), blogEvent); err != nil {
+				w.logger.Error(ctx, "failed to publish blog.generate event", err)
+			}
 		}
+		return nil
 	}
-	return nil
+}
+
+// persistCapture writes the capture result onto the row it belongs to. It
+// tries github_commits first (the common case), and falls back to
+// showcase_jobs when the commit_id doesn't match a github_commits row. It
+// returns which branch the write landed on ("github"/"showcase"), or ""
+// when neither table has a matching row (message dropped).
+func (w *CaptureResultWorker) persistCapture(ctx context.Context, msg CaptureResultMessage, raw json.RawMessage) (string, error) {
+	err := w.store.UpdateGitHubCommitCapture(ctx, msg.CommitID, raw)
+	if err == nil {
+		return "github", nil
+	}
+	if !errors.Is(err, store.ErrNotFound) {
+		return "", err
+	}
+
+	err = w.store.UpdateShowcaseJobCapture(ctx, msg.CommitID, raw)
+	if err == nil {
+		return "showcase", nil
+	}
+	if !errors.Is(err, store.ErrNotFound) {
+		return "", err
+	}
+
+	w.logger.Warn(ctx, "capture result matched neither github_commits nor showcase_jobs")
+	return "", nil
 }
 
 // Start runs the consumer loop until ctx is cancelled.

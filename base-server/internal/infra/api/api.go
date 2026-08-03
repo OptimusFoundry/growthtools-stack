@@ -16,6 +16,7 @@ import (
 	platformsHandler "base-server/internal/platform/handler"
 	postsHandler "base-server/internal/posts/handler"
 	settingsHandler "base-server/internal/settings/handler"
+	showcaseHandler "base-server/internal/showcase/handler"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,6 +35,7 @@ type API struct {
 	blogHandler      blogHandler.Handler
 	analyticsHandler analyticsHandler.Handler
 	settingsHandler  settingsHandler.Handler
+	showcaseHandler  showcaseHandler.Handler
 }
 
 func New(
@@ -50,6 +52,7 @@ func New(
 	blogHandler blogHandler.Handler,
 	analyticsHandler analyticsHandler.Handler,
 	settingsHandler settingsHandler.Handler,
+	showcaseHandler showcaseHandler.Handler,
 ) API {
 	return API{
 		router:           router,
@@ -65,6 +68,7 @@ func New(
 		blogHandler:      blogHandler,
 		analyticsHandler: analyticsHandler,
 		settingsHandler:  settingsHandler,
+		showcaseHandler:  showcaseHandler,
 	}
 }
 
@@ -186,6 +190,9 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.GET("/github/commits", a.githubHandler.HandleListCommits)
 		protectedGroup.GET("/github/commits/:id", a.githubHandler.HandleGetCommit)
 		protectedGroup.POST("/github/commits/:id/retry-capture", a.githubHandler.HandleRetryCapture)
+
+		// Showcase — brief-to-component capture requests
+		protectedGroup.POST("/showcase-posts", a.showcaseHandler.HandleCreate)
 
 	}
 

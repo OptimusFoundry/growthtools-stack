@@ -4,6 +4,7 @@ import (
 	adminProcessor "base-server/internal/admin/processor"
 	aiblog "base-server/internal/ai/blog"
 	commitclassifier "base-server/internal/ai/commitclassifier"
+	componentmatcher "base-server/internal/ai/componentmatcher"
 	mediadescriber "base-server/internal/ai/mediadescriber"
 	mediaplanner "base-server/internal/ai/mediaplanner"
 	posttitler "base-server/internal/ai/posttitler"
@@ -29,6 +30,7 @@ import (
 	platformsProcessor "base-server/internal/platform/processor"
 	postsProcessor "base-server/internal/posts/processor"
 	settingsProcessor "base-server/internal/settings/processor"
+	showcaseProcessor "base-server/internal/showcase/processor"
 )
 
 // procs holds all processor and service instances constructed during initialization.
@@ -48,6 +50,7 @@ type procs struct {
 	settings    settingsProcessor.SettingsProcessor
 	draftGen    githubProcessor.DraftGenerator
 	blogGen     githubProcessor.BlogDraftGenerator
+	showcase    showcaseProcessor.ShowcaseProcessor
 
 	// AI packages (no store, no HTTP — pure AI libraries)
 	aiDescriber  *mediadescriber.Describer
@@ -198,6 +201,10 @@ func buildProcessors(cfg *config.Config, logger *observability.Logger, s *store.
 	// and persists a draft blog_posts row. cl.ghClient implements
 	// GetCommitDiff; cl.gemini implements aiclient.Client.
 	p.blogGen = githubProcessor.NewBlogDraftGenerator(s, cl.gemini, cl.s3Fetch, cl.ghClient, logger)
+
+	// Showcase — resolves a natural-language brief to a single Storybook
+	// component and enqueues a capture request for it.
+	p.showcase = showcaseProcessor.New(s, cl.storybookClient, componentmatcher.New(cl.gemini, logger), cl.kafka, logger)
 
 	return p, nil
 }

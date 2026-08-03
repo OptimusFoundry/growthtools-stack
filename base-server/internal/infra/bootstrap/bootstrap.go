@@ -23,6 +23,7 @@ import (
 	platformsHandler "base-server/internal/platform/handler"
 	postsHandler "base-server/internal/posts/handler"
 	settingsHandler "base-server/internal/settings/handler"
+	showcaseHandler "base-server/internal/showcase/handler"
 
 	"base-server/internal/workers"
 )
@@ -49,6 +50,7 @@ type Dependencies struct {
 	BlogHandler      blogHandler.Handler
 	AnalyticsHandler analyticsHandler.Handler
 	SettingsHandler  settingsHandler.Handler
+	ShowcaseHandler  showcaseHandler.Handler
 }
 
 // Initialize sets up all application dependencies

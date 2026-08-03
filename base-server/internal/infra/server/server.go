@@ -73,6 +73,7 @@ func (s *Server) Setup() {
 		s.deps.BlogHandler,
 		s.deps.AnalyticsHandler,
 		s.deps.SettingsHandler,
+		s.deps.ShowcaseHandler,
 	)
 	api.RegisterRoutes()
 

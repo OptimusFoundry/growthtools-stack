@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"base-server/internal/infra/observability"
+	"base-server/internal/infra/store"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -15,12 +16,37 @@ import (
 
 // mockCaptureStore is a minimal hand-rolled stub for CaptureResultStore.
 type mockCaptureStore struct {
-	updateFn func(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
+	updateFn                func(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error
+	updateShowcaseCaptureFn func(ctx context.Context, jobID uuid.UUID, captureOutput json.RawMessage) error
+	updateShowcaseFailedFn  func(ctx context.Context, jobID uuid.UUID, errMsg string) error
+
+	showcaseFailedCalledWith struct {
+		jobID  uuid.UUID
+		errMsg string
+	}
+	showcaseFailedCalled int
 }
 
 func (m *mockCaptureStore) UpdateGitHubCommitCapture(ctx context.Context, commitID uuid.UUID, captureOutput json.RawMessage) error {
 	if m.updateFn != nil {
 		return m.updateFn(ctx, commitID, captureOutput)
+	}
+	return nil
+}
+
+func (m *mockCaptureStore) UpdateShowcaseJobCapture(ctx context.Context, jobID uuid.UUID, captureOutput json.RawMessage) error {
+	if m.updateShowcaseCaptureFn != nil {
+		return m.updateShowcaseCaptureFn(ctx, jobID, captureOutput)
+	}
+	return nil
+}
+
+func (m *mockCaptureStore) UpdateShowcaseJobFailed(ctx context.Context, jobID uuid.UUID, errMsg string) error {
+	m.showcaseFailedCalled++
+	m.showcaseFailedCalledWith.jobID = jobID
+	m.showcaseFailedCalledWith.errMsg = errMsg
+	if m.updateShowcaseFailedFn != nil {
+		return m.updateShowcaseFailedFn(ctx, jobID, errMsg)
 	}
 	return nil
 }
@@ -219,6 +245,156 @@ func TestCaptureResultWorker_Handle(t *testing.T) {
 
 			if tt.assertPublish != nil && pub != nil {
 				tt.assertPublish(t, pub)
+			}
+		})
+	}
+}
+
+func TestCaptureResultWorker_Handle_ShowcaseRouting(t *testing.T) {
+	t.Parallel()
+	logger := observability.NewLogger()
+
+	jobID := uuid.New()
+
+	successMsg := func() []byte {
+		b, _ := json.Marshal(CaptureResultMessage{
+			CommitID:   jobID,
+			SHA:        "abc123",
+			Success:    true,
+			StepCount:  1,
+			CaptureDir: "captures/showcase",
+		})
+		return b
+	}
+
+	failMsg := func() []byte {
+		b, _ := json.Marshal(CaptureResultMessage{
+			CommitID: jobID,
+			SHA:      "abc123",
+			Success:  false,
+			Error:    "screenshot step failed",
+		})
+		return b
+	}
+
+	notFoundErr := store.ErrNotFound
+
+	tests := []struct {
+		name          string
+		value         []byte
+		store         *mockCaptureStore
+		publisher     *mockDraftPublisher
+		wantErr       bool
+		assertOutcome func(t *testing.T, s *mockCaptureStore, pub *mockDraftPublisher)
+	}{
+		{
+			name:  "falls through to showcase store on ErrNotFound from github store, success case",
+			value: successMsg(),
+			store: &mockCaptureStore{
+				updateFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return notFoundErr
+				},
+				updateShowcaseCaptureFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return nil
+				},
+			},
+			publisher: &mockDraftPublisher{
+				publishFn: func(_ context.Context, topic, key string, payload any) error {
+					assert.Equal(t, TopicShowcaseDraftGenerate, topic)
+					assert.Equal(t, jobID.String(), key)
+					evt, ok := payload.(ShowcaseDraftGenerateEvent)
+					require.True(t, ok)
+					assert.Equal(t, jobID, evt.JobID)
+					return nil
+				},
+			},
+			assertOutcome: func(t *testing.T, s *mockCaptureStore, pub *mockDraftPublisher) {
+				t.Helper()
+				assert.Equal(t, 1, pub.publishCalled)
+				assert.Equal(t, 0, s.showcaseFailedCalled)
+			},
+		},
+		{
+			name:  "falls through to showcase store on ErrNotFound, failure case calls UpdateShowcaseJobFailed and does not publish",
+			value: failMsg(),
+			store: &mockCaptureStore{
+				updateFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return notFoundErr
+				},
+				updateShowcaseCaptureFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return nil
+				},
+			},
+			publisher: &mockDraftPublisher{},
+			assertOutcome: func(t *testing.T, s *mockCaptureStore, pub *mockDraftPublisher) {
+				t.Helper()
+				assert.Equal(t, 0, pub.publishCalled)
+				require.Equal(t, 1, s.showcaseFailedCalled)
+				assert.Equal(t, jobID, s.showcaseFailedCalledWith.jobID)
+				assert.Equal(t, "screenshot step failed", s.showcaseFailedCalledWith.errMsg)
+			},
+		},
+		{
+			name:  "drops the message when both github and showcase stores return ErrNotFound",
+			value: successMsg(),
+			store: &mockCaptureStore{
+				updateFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return notFoundErr
+				},
+				updateShowcaseCaptureFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return notFoundErr
+				},
+			},
+			publisher: &mockDraftPublisher{},
+			wantErr:   false,
+			assertOutcome: func(t *testing.T, s *mockCaptureStore, pub *mockDraftPublisher) {
+				t.Helper()
+				assert.Equal(t, 0, pub.publishCalled)
+				assert.Equal(t, 0, s.showcaseFailedCalled)
+			},
+		},
+		{
+			name:  "github branch unchanged: success still publishes both DraftGenerateEvent and BlogGenerateEvent",
+			value: successMsg(),
+			store: &mockCaptureStore{
+				updateFn: func(_ context.Context, _ uuid.UUID, _ json.RawMessage) error {
+					return nil
+				},
+			},
+			publisher: &mockDraftPublisher{
+				publishFn: func(_ context.Context, topic, key string, payload any) error {
+					assert.Contains(t, []string{TopicDraftGenerate, TopicBlogGenerate}, topic)
+					assert.Equal(t, jobID.String(), key)
+					return nil
+				},
+			},
+			assertOutcome: func(t *testing.T, s *mockCaptureStore, pub *mockDraftPublisher) {
+				t.Helper()
+				assert.Equal(t, 2, pub.publishCalled)
+				assert.Equal(t, 0, s.showcaseFailedCalled)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			w := &CaptureResultWorker{
+				store:     tt.store,
+				publisher: tt.publisher,
+				logger:    logger,
+			}
+
+			err := w.handle(context.Background(), nil, tt.value)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tt.assertOutcome != nil {
+				tt.assertOutcome(t, tt.store, tt.publisher)
 			}
 		})
 	}

@@ -18,6 +18,7 @@ import (
 	platformsHandler "base-server/internal/platform/handler"
 	postsHandler "base-server/internal/posts/handler"
 	settingsHandler "base-server/internal/settings/handler"
+	showcaseHandler "base-server/internal/showcase/handler"
 )
 
 // buildHandlers wires processors into handler structs and populates the
@@ -34,6 +35,7 @@ func buildHandlers(cfg *config.Config, logger *observability.Logger, deps *Depen
 	deps.BlogHandler = blogHandler.New(&p.blog, logger)
 	deps.AnalyticsHandler = analyticsHandler.New(&p.analytics, logger)
 	deps.SettingsHandler = settingsHandler.New(&p.settings, logger)
+	deps.ShowcaseHandler = showcaseHandler.New(&p.showcase, logger)
 
 	// Admin module — only fully wired when ADMIN_EMAILS is set.
 	// The handler exists regardless; middleware will 403 everyone when the
