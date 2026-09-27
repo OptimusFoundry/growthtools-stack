@@ -12,12 +12,14 @@ interface PostDetailsResponse {
 	post: ApiPost;
 	platform_posts: ApiPlatformPost[];
 	media: ApiMediaItem[] | null;
+	capture_media?: ApiMediaItem[] | null;
 }
 
 export const useGetPostDetails = (postId: string) => {
 	const [post, setPost] = useState<Post | null>(null);
 	const [platformPosts, setPlatformPosts] = useState<PlatformPost[]>([]);
 	const [media, setMedia] = useState<MediaItem[]>([]);
+	const [captureMedia, setCaptureMedia] = useState<MediaItem[]>([]);
 	const [loading, setLoading] = useState(Boolean(postId));
 	const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +36,7 @@ export const useGetPostDetails = (postId: string) => {
 			setPost(toPost(response.post));
 			setPlatformPosts((response.platform_posts ?? []).map(toPlatformPost));
 			setMedia(toMediaItems(response.media ?? []));
+			setCaptureMedia(toMediaItems(response.capture_media ?? []));
 		} catch (err: unknown) {
 			setError(getErrorMessage(err));
 		} finally {
@@ -45,5 +48,13 @@ export const useGetPostDetails = (postId: string) => {
 		fetchDetails();
 	}, [fetchDetails]);
 
-	return { post, platformPosts, media, loading, error, refetch: fetchDetails };
+	return {
+		post,
+		platformPosts,
+		media,
+		captureMedia,
+		loading,
+		error,
+		refetch: fetchDetails,
+	};
 };

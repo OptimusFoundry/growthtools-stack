@@ -122,6 +122,24 @@ export const postsEndpoints = {
 		{ message: "Media unlinked from post" },
 		{ successStatus: 200 },
 	),
+	regenerate: setupEndpoint(
+		"POST",
+		"*/api/protected/posts/:id/regenerate",
+		posts[1],
+		{
+			successStatus: 200,
+			overrides: {
+				400: {
+					error: "Selected media is not one of this post's captures",
+					code: "MEDIA_NOT_IN_CAPTURE",
+				},
+				409: {
+					error: "Only draft posts can be regenerated",
+					code: "POST_NOT_DRAFT",
+				},
+			},
+		},
+	),
 	details: setupEndpoint("GET", "*/api/protected/posts/:id/details", {
 		post: posts[0],
 		platform_posts: [],
