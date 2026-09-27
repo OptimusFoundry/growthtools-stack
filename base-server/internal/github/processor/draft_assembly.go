@@ -30,19 +30,12 @@ func assemblePlatformDrafts(
 		// Type switch on socialposts.PlatformResult sum type
 		switch r := result.(type) {
 		case socialposts.SinglePost:
-			// Single post: wrap in a single ThreadSegment with no media
-			segments := []interface{}{
-				map[string]interface{}{"content": r.Content},
-			}
-			raw, err := json.Marshal(segments)
-			if err != nil {
-				continue
-			}
-			rawMsg := json.RawMessage(raw)
+			// Single post: content only. Any thread_segments would make the
+			// publish adapters post a thread and attach media per segment
+			// imageIndex, dropping the post's images.
 			drafts = append(drafts, postsProc.PlatformDraftContent{
-				Platform:       platform,
-				Content:        &r.Content,
-				ThreadSegments: &rawMsg,
+				Platform: platform,
+				Content:  &r.Content,
 			})
 
 		case socialposts.Thread:
@@ -53,8 +46,8 @@ func assemblePlatformDrafts(
 				case socialposts.MediaSegment:
 					// MediaSegment: include ImageIndex (1-based)
 					obj := map[string]interface{}{
-						"content":    s.Content,
-						"imageIndex": s.ImageIndex,
+						"content":     s.Content,
+						"image_index": s.ImageIndex,
 					}
 					segments = append(segments, obj)
 				case socialposts.TextSegment:

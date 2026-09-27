@@ -74,13 +74,14 @@ func buildPostSpec(
 	if pp.Content != nil && *pp.Content != "" {
 		spec.Content = *pp.Content
 	}
-	if pp.ThreadSegments != nil && len(*pp.ThreadSegments) > 0 {
-		var segs []adapters.ThreadSegment
-		if err := json.Unmarshal(*pp.ThreadSegments, &segs); err != nil {
-			return spec, fmt.Errorf("unmarshal thread_segments: %w", err)
-		}
-		spec.Segments = segs
+	segs, err := publishableSegments(pp.ThreadSegments)
+	if err != nil {
+		return spec, err
 	}
+	if single := singleSegmentContent(pp.ThreadSegments); single != "" && spec.Content == "" {
+		spec.Content = single
+	}
+	spec.Segments = segs
 
 	if len(post.MediaIDs) > 0 {
 		items, err := s.GetMediaByIDs(ctx, []uuid.UUID(post.MediaIDs))
@@ -94,6 +95,55 @@ func buildPostSpec(
 		}
 	}
 	return spec, nil
+}
+
+// publishableSegments decodes a platform post's thread_segments into the
+// segments an adapter should publish as a thread. A one-item "thread" with
+// no image reference is really a single post: AI drafts were saved in that
+// shape until 2026-09-27, and adapters treat any segments as a thread that
+// attaches media only via imageIndex, which silently dropped every image.
+// Returns nil (publish as a single post) in that case and when empty.
+func publishableSegments(raw *json.RawMessage) ([]adapters.ThreadSegment, error) {
+	if raw == nil || len(*raw) == 0 {
+		return nil, nil
+	}
+	// AI drafts also wrote the image key as camelCase "imageIndex" until
+	// 2026-09-27 while everything else reads "image_index"; accept both so
+	// drafts saved before the fix still attach their images.
+	var stored []struct {
+		Content          string `json:"content"`
+		ImageIndex       *int   `json:"image_index"`
+		LegacyImageIndex *int   `json:"imageIndex"`
+	}
+	if err := json.Unmarshal(*raw, &stored); err != nil {
+		return nil, fmt.Errorf("unmarshal thread_segments: %w", err)
+	}
+	segs := make([]adapters.ThreadSegment, 0, len(stored))
+	for _, st := range stored {
+		idx := st.ImageIndex
+		if idx == nil {
+			idx = st.LegacyImageIndex
+		}
+		segs = append(segs, adapters.ThreadSegment{Content: st.Content, ImageIndex: idx})
+	}
+	if len(segs) == 0 || (len(segs) == 1 && segs[0].ImageIndex == nil) {
+		return nil, nil
+	}
+	return segs, nil
+}
+
+// singleSegmentContent returns the text of a one-item thread, so a post
+// normalised to single by publishableSegments still has copy when the
+// platform post's content column is empty.
+func singleSegmentContent(raw *json.RawMessage) string {
+	if raw == nil {
+		return ""
+	}
+	var segs []adapters.ThreadSegment
+	if json.Unmarshal(*raw, &segs) != nil || len(segs) != 1 {
+		return ""
+	}
+	return segs[0].Content
 }
 
 // lookupConnection resolves the platform connection for a given

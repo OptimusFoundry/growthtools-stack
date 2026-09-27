@@ -2,7 +2,6 @@ package workers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -174,8 +173,7 @@ func (w *RetryWorker) retryPlatformPost(ctx context.Context, pp store.PlatformPo
 
 	// Check if this is a threaded post with segments
 	if pp.ThreadSegments != nil {
-		var segments []adapters.ThreadSegment
-		if err := json.Unmarshal(*pp.ThreadSegments, &segments); err == nil && len(segments) > 0 {
+		if segments, err := publishableSegments(pp.ThreadSegments); err == nil && len(segments) > 0 {
 			result, err := adapter.PublishThread(ctx, segments, mediaURLs, conn)
 			if err != nil {
 				errMsg := err.Error()
