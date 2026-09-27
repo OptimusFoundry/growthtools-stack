@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,17 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
-
-type fakeRegenerator struct {
-	gotMedia []uuid.UUID
-	err      error
-}
-
-func (f *fakeRegenerator) RegenerateDraftWithMedia(_ context.Context, _, postID uuid.UUID, mediaIDs []uuid.UUID) (store.Post, error) {
-	f.gotMedia = mediaIDs
-	return store.Post{ID: postID}, f.err
-}
 
 func TestHandler_HandleRegenerateDraft(t *testing.T) {
 	t.Parallel()
@@ -35,27 +25,40 @@ func TestHandler_HandleRegenerateDraft(t *testing.T) {
 	mediaID := uuid.New()
 
 	tests := []struct {
-		name       string
-		postParam  string
-		body       string
-		regenErr   error
+		name      string
+		postParam string
+		body      string
+		regenErr  error
+		// callsRegen is false when the handler must reject the request
+		// before reaching the regenerator.
+		callsRegen bool
 		wantStatus int
 	}{
-		{"happy path", postID.String(), `{"media_ids":["` + mediaID.String() + `"]}`, nil, http.StatusOK},
-		{"bad post id", "nope", `{"media_ids":[]}`, nil, http.StatusBadRequest},
-		{"bad body", postID.String(), `{"media_ids":"x"}`, nil, http.StatusBadRequest},
-		{"no media", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateNoMedia, http.StatusBadRequest},
-		{"not in pool", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateMediaNotInPool, http.StatusBadRequest},
-		{"not draft", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateNotDraft, http.StatusConflict},
-		{"not a commit post", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateUnsupported, http.StatusConflict},
-		{"post missing", postID.String(), `{"media_ids":[]}`, processor.ErrRegeneratePostNotFound, http.StatusNotFound},
-		{"generation failed", postID.String(), `{"media_ids":[]}`, processor.ErrDraftGenerationFailed, http.StatusInternalServerError},
+		{"happy path", postID.String(), `{"media_ids":["` + mediaID.String() + `"]}`, nil, true, http.StatusOK},
+		{"bad post id", "nope", `{"media_ids":[]}`, nil, false, http.StatusBadRequest},
+		{"bad body", postID.String(), `{"media_ids":"x"}`, nil, false, http.StatusBadRequest},
+		{"no media", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateNoMedia, true, http.StatusBadRequest},
+		{"not in pool", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateMediaNotInPool, true, http.StatusBadRequest},
+		{"not draft", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateNotDraft, true, http.StatusConflict},
+		{"not a commit post", postID.String(), `{"media_ids":[]}`, processor.ErrRegenerateUnsupported, true, http.StatusConflict},
+		{"post missing", postID.String(), `{"media_ids":[]}`, processor.ErrRegeneratePostNotFound, true, http.StatusNotFound},
+		{"generation failed", postID.String(), `{"media_ids":[]}`, processor.ErrDraftGenerationFailed, true, http.StatusInternalServerError},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			regen := &fakeRegenerator{err: tt.regenErr}
+			ctrl := gomock.NewController(t)
+			regen := NewMockDraftRegenerator(ctrl)
+			if tt.callsRegen {
+				wantMedia := []uuid.UUID{}
+				if tt.name == "happy path" {
+					wantMedia = []uuid.UUID{mediaID}
+				}
+				regen.EXPECT().
+					RegenerateDraftWithMedia(gomock.Any(), accountID, postID, wantMedia).
+					Return(store.Post{ID: postID}, tt.regenErr)
+			}
 			h := New(nil, "", observability.NewLogger()).WithDraftRegenerator(regen)
 
 			w := httptest.NewRecorder()
@@ -68,9 +71,6 @@ func TestHandler_HandleRegenerateDraft(t *testing.T) {
 			h.HandleRegenerateDraft(c)
 
 			assert.Equal(t, tt.wantStatus, w.Code, w.Body.String())
-			if tt.name == "happy path" {
-				assert.Equal(t, []uuid.UUID{mediaID}, regen.gotMedia)
-			}
 		})
 	}
 }
