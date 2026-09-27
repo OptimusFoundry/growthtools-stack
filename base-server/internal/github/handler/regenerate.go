@@ -1,5 +1,7 @@
 package handler
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source=regenerate.go -destination=regenerate_mocks_test.go -package=handler
+
 import (
 	"context"
 	"errors"
