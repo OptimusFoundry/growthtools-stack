@@ -32,6 +32,9 @@ type blueskyHandle struct {
 type blueskyHandleItem struct {
 	Blob    map[string]any `json:"blob,omitempty"`
 	IsVideo bool           `json:"is_video"`
+	// Width/Height feed the embed's aspectRatio; zero when unknown.
+	Width  int `json:"width,omitempty"`
+	Height int `json:"height,omitempty"`
 }
 
 // StartPublish implements AsyncPlatformAdapter.
@@ -51,10 +54,14 @@ func (a *BlueskyAdapter) StartPublish(ctx context.Context, spec PostSpec, conn s
 		if err != nil {
 			return nil, false, fmt.Errorf("bluesky adapter: upload blob: %w", err)
 		}
-		handle.Items = append(handle.Items, blueskyHandleItem{
+		item := blueskyHandleItem{
 			Blob:    blob,
 			IsVideo: strings.HasPrefix(contentType, "video/"),
-		})
+		}
+		if !item.IsVideo {
+			item.Width, item.Height = imageDimensions(mediaBytes)
+		}
+		handle.Items = append(handle.Items, item)
 	}
 
 	raw, err := json.Marshal(handle)
@@ -184,7 +191,7 @@ func buildBlueskyEmbed(items []blueskyHandleItem, indexes []int) map[string]any 
 			}
 			continue
 		}
-		images = append(images, map[string]any{"alt": "", "image": item.Blob})
+		images = append(images, blueskyImageEntry(item.Blob, item.Width, item.Height))
 	}
 	if videoBlob != nil {
 		return map[string]any{"$type": "app.bsky.embed.video", "video": videoBlob, "alt": ""}
