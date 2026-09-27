@@ -303,22 +303,29 @@ var errAppURLNotFound = errors.New("no app URL found on an \"App\" line in READM
 
 func appURLFromReadme(readme string) (string, error) {
 	for _, line := range strings.Split(readme, "\n") {
-		if !strings.Contains(strings.ToLower(line), "app") {
+		lowerLine := strings.ToLower(line)
+		// Storybook lines are read by storybookURLFromReadme; skip them here
+		// because hosts like ui.protoapp.xyz contain "app" too.
+		if !strings.Contains(lowerLine, "app") || strings.Contains(lowerLine, "storybook") {
 			continue
 		}
 		for _, candidate := range readmeURLRE.FindAllString(line, -1) {
 			candidate = strings.TrimRight(candidate, ".,;:)")
-			lower := strings.ToLower(candidate)
-			if strings.Contains(lower, "github.com") || strings.Contains(lower, "githubusercontent.com") {
-				continue
-			}
-			if strings.Contains(lower, "shields.io") || strings.Contains(lower, "badge") {
+			if isNonTargetURL(candidate) {
 				continue
 			}
 			return candidate, nil
 		}
 	}
 	return "", errAppURLNotFound
+}
+
+// isNonTargetURL reports whether a README URL is a repo link or badge rather
+// than a deployment the capture worker should visit.
+func isNonTargetURL(u string) bool {
+	lower := strings.ToLower(u)
+	return strings.Contains(lower, "github.com") || strings.Contains(lower, "githubusercontent.com") ||
+		strings.Contains(lower, "shields.io") || strings.Contains(lower, "badge")
 }
 
 // frontendPathPrefixes lists the monorepo paths whose changes can surface
@@ -390,6 +397,10 @@ func (p *GitHubProcessor) enqueueCaptureRequests(ctx context.Context, repo store
 	if appURLErr != nil {
 		p.logger.Error(ctx, fmt.Sprintf("no app URL found in README for %s/%s; skipping capture enqueue", repo.Owner, repo.Name), appURLErr)
 		return
+	}
+	repo = withStorybookDefaults(repo, readme)
+	if repo.StorybookURL == nil {
+		p.logger.Info(ctx, fmt.Sprintf("no Storybook URL for %s/%s (github_repos.storybook_url is NULL and README has no Storybook line); component commits will use app capture", repo.Owner, repo.Name))
 	}
 
 	const maxDiffChars = 40_000

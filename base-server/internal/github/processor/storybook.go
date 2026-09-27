@@ -120,3 +120,46 @@ func changedFilePaths(diff string) []string {
 	}
 	return paths
 }
+
+// DefaultComponentGlobs is used when a repo's component_globs column is NULL.
+// Matches the V0053 seed so repos connected after that migration behave the
+// same as the ones it backfilled.
+var DefaultComponentGlobs = []string{"webapp/src/proto-design-system/components/**/*.tsx"}
+
+// storybookURLFromReadme extracts the Storybook deployment URL advertised in
+// a README, using the same convention as appURLFromReadme: the first
+// non-badge URL on a line that mentions "Storybook" (case-insensitive).
+// Returns "" when no such line exists.
+func storybookURLFromReadme(readme string) string {
+	for _, line := range strings.Split(readme, "\n") {
+		if !strings.Contains(strings.ToLower(line), "storybook") {
+			continue
+		}
+		for _, candidate := range readmeURLRE.FindAllString(line, -1) {
+			candidate = strings.TrimRight(candidate, ".,;:)")
+			if isNonTargetURL(candidate) {
+				continue
+			}
+			return candidate
+		}
+	}
+	return ""
+}
+
+// withStorybookDefaults returns a copy of repo with Storybook config filled
+// in where the DB columns are NULL: storybook_url from the README's
+// "Storybook" line, component_globs from DefaultComponentGlobs. DB values
+// always win. Nothing on the connect path writes these columns, so without
+// this fallback every repo connected after the V0053 seed silently loses
+// Storybook capture.
+func withStorybookDefaults(repo store.GitHubRepo, readme string) store.GitHubRepo {
+	if repo.StorybookURL == nil || *repo.StorybookURL == "" {
+		if u := storybookURLFromReadme(readme); u != "" {
+			repo.StorybookURL = &u
+		}
+	}
+	if len(repo.ComponentGlobs) == 0 {
+		repo.ComponentGlobs = store.StringArray(append([]string(nil), DefaultComponentGlobs...))
+	}
+	return repo
+}

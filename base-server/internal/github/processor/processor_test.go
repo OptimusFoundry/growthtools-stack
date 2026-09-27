@@ -1346,6 +1346,50 @@ func TestGitHubProcessor_EnqueueCaptureRequests(t *testing.T) {
 			},
 		},
 		{
+			// Repo connected after the V0053 seed: storybook_url and
+			// component_globs are NULL in the DB, but the README advertises a
+			// Storybook deployment. The README URL and default globs must be
+			// used so the request still carries story fields.
+			name: "storybook NULL in DB, README Storybook line – CaptureRequest carries story fields",
+			commits: func(repo store.GitHubRepo) []store.GitHubCommit {
+				return []store.GitHubCommit{makeCommit("sbrd001", "feat(badge): add pulse ring")}
+			},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient, p *MockEventPublisher, connID uuid.UUID, repo store.GitHubRepo) {
+				s.EXPECT().GetGitHubConnectionByID(gomock.Any(), connID).
+					Return(store.GitHubConnection{ID: connID, AccessToken: "tok"}, nil)
+				c.EXPECT().GetRepoReadme(gomock.Any(), "tok", "alice", "myrepo").
+					Return("- **Storybook**: https://ui.protoapp.xyz\n- **App**: https://myapp.example.com", nil)
+				c.EXPECT().GetCommitDiff(gomock.Any(), "tok", "alice", "myrepo", "sbrd001").
+					Return("diff --git a/webapp/src/proto-design-system/components/primitives/Badge/Badge.tsx "+
+						"b/webapp/src/proto-design-system/components/primitives/Badge/Badge.tsx\n+pulse", nil)
+				p.EXPECT().Publish(gomock.Any(), TopicCaptureRequests, gomock.Any(), gomock.AssignableToTypeOf(CaptureRequest{})).
+					DoAndReturn(func(_ context.Context, _ string, _ string, payload any) error {
+						req := payload.(CaptureRequest)
+						if req.AppURL != "https://myapp.example.com" {
+							t.Errorf("unexpected AppURL: %q", req.AppURL)
+						}
+						if len(req.StoryIDs) != 1 || req.StoryIDs[0] != "primitives-badge--default" {
+							t.Errorf("unexpected StoryIDs: %v", req.StoryIDs)
+						}
+						if req.StorybookURL != "https://ui.protoapp.xyz" {
+							t.Errorf("unexpected StorybookURL: %q", req.StorybookURL)
+						}
+						return nil
+					})
+			},
+			storybookMocks: func(sc *MockStorybookClient) {
+				sc.EXPECT().FetchIndex(gomock.Any(), "https://ui.protoapp.xyz").Return(storybookclient.Index{
+					Entries: map[string]storybookclient.IndexEntry{
+						"primitives-badge--default": {
+							ID:         "primitives-badge--default",
+							ImportPath: "./src/proto-design-system/components/primitives/Badge/Badge.stories.tsx",
+							Type:       "story",
+						},
+					},
+				}, nil)
+			},
+		},
+		{
 			// AC7 regression guard: repos without Storybook configured (the
 			// default makeRepo fixture, unchanged) must publish a
 			// CaptureRequest with empty StoryIDs/StorybookURL/StoryComponents.
