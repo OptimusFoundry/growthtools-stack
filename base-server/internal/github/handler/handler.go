@@ -35,9 +35,10 @@ type GitHubProcessor interface {
 }
 
 type Handler struct {
-	processor  GitHubProcessor
-	webAppHost string
-	logger     *observability.Logger
+	processor   GitHubProcessor
+	regenerator DraftRegenerator
+	webAppHost  string
+	logger      *observability.Logger
 }
 
 func New(proc GitHubProcessor, webAppHost string, logger *observability.Logger) Handler {

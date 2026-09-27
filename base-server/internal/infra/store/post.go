@@ -13,24 +13,28 @@ import (
 
 // Post represents a content item
 type Post struct {
-	ID            uuid.UUID   `db:"id" json:"id"`
-	AccountID     uuid.UUID   `db:"account_id" json:"account_id"`
-	Title         *string     `db:"title" json:"title,omitempty"`
-	Content       string      `db:"content" json:"content"`
-	ContentType   string      `db:"content_type" json:"content_type"`
-	Status        string      `db:"status" json:"status"`
-	ScheduledAt   *time.Time  `db:"scheduled_at" json:"scheduled_at,omitempty"`
-	PublishedAt   *time.Time  `db:"published_at" json:"published_at,omitempty"`
-	MediaIDs      UUIDArray   `db:"media_ids" json:"media_ids"`
-	Tags          StringArray `db:"tags" json:"tags"`
-	AIGenerated   bool        `db:"ai_generated" json:"ai_generated"`
-	BaseContent   *string     `db:"base_content" json:"base_content,omitempty"`
-	Source        string      `db:"source" json:"source"`
-	GitHubEventID *uuid.UUID  `db:"github_event_id" json:"github_event_id,omitempty"`
-	Platforms     StringArray `db:"platforms" json:"platforms"`
-	CreatedAt     time.Time   `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time   `db:"updated_at" json:"updated_at"`
-	DeletedAt     *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
+	ID          uuid.UUID  `db:"id" json:"id"`
+	AccountID   uuid.UUID  `db:"account_id" json:"account_id"`
+	Title       *string    `db:"title" json:"title,omitempty"`
+	Content     string     `db:"content" json:"content"`
+	ContentType string     `db:"content_type" json:"content_type"`
+	Status      string     `db:"status" json:"status"`
+	ScheduledAt *time.Time `db:"scheduled_at" json:"scheduled_at,omitempty"`
+	PublishedAt *time.Time `db:"published_at" json:"published_at,omitempty"`
+	MediaIDs    UUIDArray  `db:"media_ids" json:"media_ids"`
+	// CaptureMediaIDs is every capture artifact available to a
+	// commit-generated draft. Only selected by GetPostByID; other queries
+	// leave it empty.
+	CaptureMediaIDs UUIDArray   `db:"capture_media_ids" json:"capture_media_ids,omitempty"`
+	Tags            StringArray `db:"tags" json:"tags"`
+	AIGenerated     bool        `db:"ai_generated" json:"ai_generated"`
+	BaseContent     *string     `db:"base_content" json:"base_content,omitempty"`
+	Source          string      `db:"source" json:"source"`
+	GitHubEventID   *uuid.UUID  `db:"github_event_id" json:"github_event_id,omitempty"`
+	Platforms       StringArray `db:"platforms" json:"platforms"`
+	CreatedAt       time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time   `db:"updated_at" json:"updated_at"`
+	DeletedAt       *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
 }
 
 // PostListItem is a slimmed-down projection of Post used by ListPosts.
@@ -105,7 +109,7 @@ func (s *Store) CreatePost(ctx context.Context, params CreatePostParams) (Post, 
 }
 
 const sqlGetPostByID = `
-SELECT p.id, p.account_id, p.title, p.content, p.content_type, p.status, p.scheduled_at, p.published_at, p.media_ids, p.tags, p.ai_generated, p.base_content, p.source, p.github_event_id,
+SELECT p.id, p.account_id, p.title, p.content, p.content_type, p.status, p.scheduled_at, p.published_at, p.media_ids, p.capture_media_ids, p.tags, p.ai_generated, p.base_content, p.source, p.github_event_id,
        COALESCE((SELECT array_agg(DISTINCT pp.platform) FROM platform_posts pp WHERE pp.post_id = p.id), '{}') AS platforms,
        p.created_at, p.updated_at, p.deleted_at
 FROM posts p
@@ -167,6 +171,29 @@ func (s *Store) CountPostsByAccount(ctx context.Context, accountID uuid.UUID) (i
 		return 0, fmt.Errorf("failed to count posts: %w", err)
 	}
 	return count, nil
+}
+
+const sqlSetPostCaptureMediaIDs = `
+UPDATE posts
+SET capture_media_ids = $2, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+// SetPostCaptureMediaIDs records the full pool of capture media for a
+// commit-generated draft.
+func (s *Store) SetPostCaptureMediaIDs(ctx context.Context, postID uuid.UUID, ids UUIDArray) error {
+	res, err := s.db.ExecContext(ctx, sqlSetPostCaptureMediaIDs, postID, ids)
+	if err != nil {
+		return fmt.Errorf("failed to set post capture_media_ids: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // UpdatePostParams represents parameters for updating a post

@@ -1,0 +1,80 @@
+.picker {
+  border-top: var(--border-width-sm) solid var(--color-border);
+  padding-top: var(--space-5);
+}
+
+// Stacked at every width: the compose column is narrow, and a side-by-side
+// button truncates its "Regenerate with N selected" label.
+.header {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tile {
+  border: var(--border-width-sm) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+
+  &[data-selected] {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.tileInner {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumb {
+  aspect-ratio: 4 / 3;
+  background-color: var(--color-base-200);
+  display: block;
+  position: relative;
+}
+
+.media {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.check {
+  left: var(--space-2);
+  position: absolute;
+  top: var(--space-2);
+}
+
+.videoBadge {
+  bottom: var(--space-2);
+  color: var(--color-base-content);
+  position: absolute;
+  right: var(--space-2);
+}
+
+.caption {
+  font-size: var(--font-size-xs);
+  overflow: hidden;
+  padding: var(--space-1) var(--space-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

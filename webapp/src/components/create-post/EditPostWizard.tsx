@@ -16,7 +16,7 @@ interface EditPostWizardProps {
  * for editing an existing post.
  */
 export function EditPostWizard({ editPostId }: EditPostWizardProps) {
-	const { post, platformPosts, media, loading, error } =
+	const { post, platformPosts, media, captureMedia, loading, error, refetch } =
 		useGetPostDetails(editPostId);
 
 	if (loading) return <Spinner />;
@@ -47,6 +47,8 @@ export function EditPostWizard({ editPostId }: EditPostWizardProps) {
 			readOnly={hasBeenPublished}
 			platformPosts={hasBeenPublished ? platformPosts : undefined}
 			postStatus={post.status}
+			captureMedia={captureMedia}
+			onRegenerated={refetch}
 		/>
 	);
 }

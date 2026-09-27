@@ -118,6 +118,9 @@ type PostWithPlatformPosts struct {
 	Post          store.Post           `json:"post"`
 	PlatformPosts []store.PlatformPost `json:"platform_posts"`
 	Media         []store.Media        `json:"media"`
+	// CaptureMedia is the pool of capture artifacts a commit-generated draft
+	// can pick from (empty for other posts), in capture order.
+	CaptureMedia []store.Media `json:"capture_media"`
 }
 
 // StatusBreakdown holds a count per post status. All six keys are always
@@ -418,10 +421,31 @@ func (p *PostProcessor) GetPostWithPlatformPosts(ctx context.Context, accountID,
 		}
 	}
 
+	captureMedia := make([]store.Media, 0, len(post.CaptureMediaIDs))
+	if len(post.CaptureMediaIDs) > 0 {
+		fetched, err := p.store.GetMediaByIDs(ctx, []uuid.UUID(post.CaptureMediaIDs))
+		if err != nil {
+			p.logger.Error(ctx, "failed to get capture media for post", err)
+			// Non-fatal: the editor just won't offer the capture pool
+		} else {
+			byID := make(map[uuid.UUID]store.Media, len(fetched))
+			for i := range fetched {
+				p.presignMediaURL(ctx, &fetched[i])
+				byID[fetched[i].ID] = fetched[i]
+			}
+			for _, id := range post.CaptureMediaIDs {
+				if m, ok := byID[id]; ok {
+					captureMedia = append(captureMedia, m)
+				}
+			}
+		}
+	}
+
 	return PostWithPlatformPosts{
 		Post:          post,
 		PlatformPosts: platformPosts,
 		Media:         media,
+		CaptureMedia:  captureMedia,
 	}, nil
 }
 

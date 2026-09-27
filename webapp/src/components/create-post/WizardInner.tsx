@@ -8,6 +8,7 @@ import { Topbar } from "@/components/Layout/Topbar";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishPost } from "@/hooks/usePublishPost";
+import { useRegenerateDraft } from "@/hooks/useRegenerateDraft";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
 import { useSchedulePost } from "@/hooks/useSchedulePost";
 import { useSSEContentGenerate } from "@/hooks/useSSEContentGenerate";
@@ -22,8 +23,10 @@ import { Drawer } from "@/proto-design-system/components/overlays/Drawer";
 import { Modal } from "@/proto-design-system/components/overlays/Modal";
 import { Button } from "@/proto-design-system/components/primitives/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text";
+import type { MediaItem } from "@/types/media";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import styles from "./CreatePostWizard.module.scss";
+import { CaptureMediaPicker } from "./compose/CaptureMediaPicker";
 import { ComposeStep } from "./compose/ComposeStep";
 import { PostPublishStatus } from "./PostPublishStatus";
 import { PreviewStep } from "./PreviewStep";
@@ -380,6 +383,10 @@ export interface WizardInnerProps {
 	readOnly?: boolean;
 	platformPosts?: PlatformPost[];
 	postStatus?: string;
+	/** Every capture artifact of a commit-generated draft (empty otherwise). */
+	captureMedia?: MediaItem[];
+	/** Called after the server regenerated the draft, so the caller can reload it. */
+	onRegenerated?: () => void;
 }
 
 export function WizardInner({
@@ -389,6 +396,8 @@ export function WizardInner({
 	readOnly = false,
 	platformPosts,
 	postStatus,
+	captureMedia = [],
+	onRegenerated,
 }: WizardInnerProps = {}) {
 	const isEditMode = Boolean(editPostId);
 	const navigate = useNavigate();
@@ -404,6 +413,12 @@ export function WizardInner({
 	const { schedulePost } = useSchedulePost();
 	const { unlinkMedia } = useUnlinkMedia();
 	const { addBanner } = useBannerCenter();
+	const { regenerateDraft, loading: regenerating } = useRegenerateDraft();
+	// Media already attached server-side when the editor opened. Unticking one
+	// of these must unlink it; anything ticked since is local until saved.
+	const [persistedMediaIds] = useState(
+		() => new Set((initialOverrides?.uploadedMedia ?? []).map((m) => m.id)),
+	);
 
 	const managedMedia = useManagedMediaUpload({
 		onUploaded: wizard.addUploadedMedia,
@@ -439,6 +454,42 @@ export function WizardInner({
 		addBanner,
 		navigate,
 	});
+
+	const captureIds = new Set(captureMedia.map((m) => m.id));
+	const selectedCaptureIds = state.uploadedMedia
+		.map((m) => m.id)
+		.filter((id) => captureIds.has(id));
+
+	const handleToggleCapture = (item: MediaItem, selected: boolean) => {
+		if (selected) {
+			if (!state.uploadedMedia.some((m) => m.id === item.id)) {
+				wizard.addUploadedMedia(item);
+			}
+			return;
+		}
+		if (persistedMediaIds.has(item.id)) {
+			void actions.handleRemoveUploadedMedia(item.id);
+		} else {
+			wizard.removeUploadedMedia(item.id);
+		}
+	};
+
+	const handleRegenerate = async () => {
+		if (!editPostId || selectedCaptureIds.length === 0) return;
+		try {
+			await regenerateDraft(editPostId, selectedCaptureIds);
+			addBanner({
+				type: "success",
+				title: "Post regenerated with your selected media",
+				dismissible: true,
+			});
+			onRegenerated?.();
+		} catch (err) {
+			wizard.setError(
+				err instanceof Error ? err.message : "Failed to regenerate post",
+			);
+		}
+	};
 
 	const scheduleDrawer = useScheduleDrawer(
 		state.scheduledAt,
@@ -680,6 +731,16 @@ export function WizardInner({
 							onFilesChange={managedMedia.onFilesChange}
 							onGenerate={actions.handleGenerate}
 						/>
+						{editPostId && captureMedia.length > 0 && !readOnly && (
+							<CaptureMediaPicker
+								captureMedia={captureMedia}
+								selectedIds={selectedCaptureIds}
+								onToggle={handleToggleCapture}
+								onRegenerate={handleRegenerate}
+								regenerating={regenerating}
+								disabled={state.generating}
+							/>
+						)}
 						{platformPosts && platformPosts.length > 0 && (
 							<PostPublishStatus
 								platformPosts={platformPosts}
