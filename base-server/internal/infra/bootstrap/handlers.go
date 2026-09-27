@@ -31,7 +31,7 @@ func buildHandlers(cfg *config.Config, logger *observability.Logger, deps *Depen
 	deps.PlatformsHandler = platformsHandler.New(&p.platforms, logger, cfg.Services.WebAppURI)
 	deps.PostsHandler = postsHandler.New(&p.posts, logger)
 	deps.MediaHandler = mediaHandler.New(&p.media, logger)
-	deps.GitHubHandler = githubHandler.New(&p.github, cfg.Services.WebAppURI, logger)
+	deps.GitHubHandler = githubHandler.New(&p.github, cfg.Services.WebAppURI, logger).WithDraftRegenerator(&p.draftGen)
 	deps.BlogHandler = blogHandler.New(&p.blog, logger)
 	deps.AnalyticsHandler = analyticsHandler.New(&p.analytics, logger)
 	deps.SettingsHandler = settingsHandler.New(&p.settings, logger)

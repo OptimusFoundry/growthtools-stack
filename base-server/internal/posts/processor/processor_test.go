@@ -642,6 +642,30 @@ func TestPostProcessor_GetPostWithPlatformPosts(t *testing.T) {
 		assert.Len(t, result.PlatformPosts, 1)
 	})
 
+	t.Run("returns capture media pool in capture order", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		mockStore := NewMockPostStore(ctrl)
+		first, second := uuid.New(), uuid.New()
+		mockStore.EXPECT().GetPostByID(gomock.Any(), accountID, postID).Return(
+			store.Post{ID: postID, CaptureMediaIDs: store.UUIDArray{first, second}}, nil,
+		)
+		mockStore.EXPECT().GetPlatformPostsByPostID(gomock.Any(), postID).Return(nil, nil)
+		// Store hands rows back in a different order than the pool.
+		mockStore.EXPECT().GetMediaByIDs(gomock.Any(), []uuid.UUID{first, second}).Return(
+			[]store.Media{{ID: second}, {ID: first}}, nil,
+		)
+		proc := New(mockStore, NewMockEventPublisher(ctrl), logger)
+
+		result, err := proc.GetPostWithPlatformPosts(context.Background(), accountID, postID)
+
+		require.NoError(t, err)
+		require.Len(t, result.CaptureMedia, 2)
+		assert.Equal(t, first, result.CaptureMedia[0].ID)
+		assert.Equal(t, second, result.CaptureMedia[1].ID)
+		assert.Empty(t, result.Media)
+	})
+
 	t.Run("post not found", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)

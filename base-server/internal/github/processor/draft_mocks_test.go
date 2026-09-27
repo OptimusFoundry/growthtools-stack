@@ -74,6 +74,66 @@ func (mr *MockDraftStoreMockRecorder) GetGitHubCommitForDraft(ctx, commitID any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubCommitForDraft", reflect.TypeOf((*MockDraftStore)(nil).GetGitHubCommitForDraft), ctx, commitID)
 }
 
+// GetGitHubCommitForDraftByPostID mocks base method.
+func (m *MockDraftStore) GetGitHubCommitForDraftByPostID(ctx context.Context, accountID, postID uuid.UUID) (store.GitHubCommitForDraft, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitHubCommitForDraftByPostID", ctx, accountID, postID)
+	ret0, _ := ret[0].(store.GitHubCommitForDraft)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGitHubCommitForDraftByPostID indicates an expected call of GetGitHubCommitForDraftByPostID.
+func (mr *MockDraftStoreMockRecorder) GetGitHubCommitForDraftByPostID(ctx, accountID, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitHubCommitForDraftByPostID", reflect.TypeOf((*MockDraftStore)(nil).GetGitHubCommitForDraftByPostID), ctx, accountID, postID)
+}
+
+// GetMediaByIDs mocks base method.
+func (m *MockDraftStore) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMediaByIDs", ctx, ids)
+	ret0, _ := ret[0].([]store.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMediaByIDs indicates an expected call of GetMediaByIDs.
+func (mr *MockDraftStoreMockRecorder) GetMediaByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMediaByIDs", reflect.TypeOf((*MockDraftStore)(nil).GetMediaByIDs), ctx, ids)
+}
+
+// GetPlatformPostsByPostID mocks base method.
+func (m *MockDraftStore) GetPlatformPostsByPostID(ctx context.Context, postID uuid.UUID) ([]store.PlatformPost, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPlatformPostsByPostID", ctx, postID)
+	ret0, _ := ret[0].([]store.PlatformPost)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPlatformPostsByPostID indicates an expected call of GetPlatformPostsByPostID.
+func (mr *MockDraftStoreMockRecorder) GetPlatformPostsByPostID(ctx, postID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatformPostsByPostID", reflect.TypeOf((*MockDraftStore)(nil).GetPlatformPostsByPostID), ctx, postID)
+}
+
+// GetPostByID mocks base method.
+func (m *MockDraftStore) GetPostByID(ctx context.Context, accountID, id uuid.UUID) (store.Post, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPostByID", ctx, accountID, id)
+	ret0, _ := ret[0].(store.Post)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPostByID indicates an expected call of GetPostByID.
+func (mr *MockDraftStoreMockRecorder) GetPostByID(ctx, accountID, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostByID", reflect.TypeOf((*MockDraftStore)(nil).GetPostByID), ctx, accountID, id)
+}
+
 // GetShowcaseJobForDraft mocks base method.
 func (m *MockDraftStore) GetShowcaseJobForDraft(ctx context.Context, jobID uuid.UUID) (store.ShowcaseJobForDraft, error) {
 	m.ctrl.T.Helper()
@@ -102,6 +162,20 @@ func (m *MockDraftStore) ListPlatformConnectionsByAccount(ctx context.Context, a
 func (mr *MockDraftStoreMockRecorder) ListPlatformConnectionsByAccount(ctx, accountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPlatformConnectionsByAccount", reflect.TypeOf((*MockDraftStore)(nil).ListPlatformConnectionsByAccount), ctx, accountID)
+}
+
+// SetPostCaptureMediaIDs mocks base method.
+func (m *MockDraftStore) SetPostCaptureMediaIDs(ctx context.Context, postID uuid.UUID, ids store.UUIDArray) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPostCaptureMediaIDs", ctx, postID, ids)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPostCaptureMediaIDs indicates an expected call of SetPostCaptureMediaIDs.
+func (mr *MockDraftStoreMockRecorder) SetPostCaptureMediaIDs(ctx, postID, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPostCaptureMediaIDs", reflect.TypeOf((*MockDraftStore)(nil).SetPostCaptureMediaIDs), ctx, postID, ids)
 }
 
 // UpdateGitHubCommitPostID mocks base method.
@@ -183,6 +257,21 @@ func (m *MockPostsDrafter) SaveDraft(ctx context.Context, params processor.SaveD
 func (mr *MockPostsDrafterMockRecorder) SaveDraft(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveDraft", reflect.TypeOf((*MockPostsDrafter)(nil).SaveDraft), ctx, params)
+}
+
+// UpdateDraft mocks base method.
+func (m *MockPostsDrafter) UpdateDraft(ctx context.Context, params processor.UpdateDraftParams) (store.Post, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDraft", ctx, params)
+	ret0, _ := ret[0].(store.Post)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateDraft indicates an expected call of UpdateDraft.
+func (mr *MockPostsDrafterMockRecorder) UpdateDraft(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDraft", reflect.TypeOf((*MockPostsDrafter)(nil).UpdateDraft), ctx, params)
 }
 
 // MockS3HeadClient is a mock of S3HeadClient interface.

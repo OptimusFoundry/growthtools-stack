@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"path"
 
@@ -47,6 +46,11 @@ type DraftStore interface {
 	ListPlatformConnectionsByAccount(ctx context.Context, accountID uuid.UUID) ([]store.PlatformConnection, error)
 	CreateMedia(ctx context.Context, params store.CreateMediaParams) (store.Media, error)
 	UpdateGitHubCommitPostID(ctx context.Context, commitID, postID uuid.UUID) error
+	SetPostCaptureMediaIDs(ctx context.Context, postID uuid.UUID, ids store.UUIDArray) error
+	GetPostByID(ctx context.Context, accountID, id uuid.UUID) (store.Post, error)
+	GetGitHubCommitForDraftByPostID(ctx context.Context, accountID, postID uuid.UUID) (store.GitHubCommitForDraft, error)
+	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]store.Media, error)
+	GetPlatformPostsByPostID(ctx context.Context, postID uuid.UUID) ([]store.PlatformPost, error)
 	GetShowcaseJobForDraft(ctx context.Context, jobID uuid.UUID) (store.ShowcaseJobForDraft, error)
 	UpdateShowcaseJobPostID(ctx context.Context, jobID, postID uuid.UUID) error
 	UpdateShowcaseJobFailed(ctx context.Context, jobID uuid.UUID, errMsg string) error
@@ -56,6 +60,7 @@ type DraftStore interface {
 // processor.
 type PostsDrafter interface {
 	SaveDraft(ctx context.Context, params postsProc.SaveDraftParams) (store.Post, error)
+	UpdateDraft(ctx context.Context, params postsProc.UpdateDraftParams) (store.Post, error)
 }
 
 // S3HeadClient returns size + content-type for an S3 key so we can store
@@ -266,58 +271,33 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 		}
 	}
 
-	// Step 7: materialize media and build media IDs
-	mediaIDs := make([]uuid.UUID, 0, len(selectedDescriptions))
-	for _, desc := range selectedDescriptions {
-		var key string
-		nextIdx := 1
-		if videoKey != "" && nextIdx == desc.Index {
-			key = videoKey
-		} else {
-			imgIdx := desc.Index - 1
-			if videoKey != "" {
-				imgIdx--
-			}
-			if imgIdx >= 0 && imgIdx < len(imageKeys) {
-				key = imageKeys[imgIdx]
-			}
-		}
-		if key == "" {
-			continue
-		}
+	// Step 7: materialize every capture artifact as a media row, in
+	// describer-index order (video first, then images). All of them go into
+	// the post's capture_media_ids pool so the editor can offer them; only
+	// the planner's picks become media_ids (what publishes).
+	orderedKeys := make([]string, 0, len(imageKeys)+1)
+	if videoKey != "" {
+		orderedKeys = append(orderedKeys, videoKey)
+	}
+	orderedKeys = append(orderedKeys, imageKeys...)
 
-		var size int64
-		var contentType string
-		if g.s3Head != nil {
-			s, ct, err := g.s3Head.HeadObject(ctx, key)
-			if err != nil {
-				g.logger.Error(ctx, "failed to head s3 object for media ingest", err)
-			} else {
-				size = s
-				contentType = ct
-			}
-		}
-		if extType := contentTypeFor(key); extType != "application/octet-stream" {
-			contentType = extType
-		}
-		if contentType == "" {
-			contentType = "application/octet-stream"
-		}
-
-		media, err := g.store.CreateMedia(ctx, store.CreateMediaParams{
-			AccountID:   commit.AccountID,
-			Filename:    lastPathComponent(key),
-			ContentType: contentType,
-			S3Key:       key,
-			S3URL:       fmt.Sprintf("s3://%s/%s", g.s3Bucket, key),
-			SizeBytes:   size,
-			Source:      mediaSource,
-		})
+	captureMediaIDs := make([]uuid.UUID, 0, len(orderedKeys))
+	for _, key := range orderedKeys {
+		media, err := g.createCaptureMedia(ctx, commit.AccountID, key)
 		if err != nil {
 			g.logger.Error(ctx, "failed to create media row for capture artifact", err)
 			return ErrDraftGenerationFailed
 		}
-		mediaIDs = append(mediaIDs, media.ID)
+		captureMediaIDs = append(captureMediaIDs, media.ID)
+	}
+
+	mediaIDs := make([]uuid.UUID, 0, len(selectedDescriptions))
+	for _, desc := range selectedDescriptions {
+		// Description indexes are 1-based positions in orderedKeys.
+		if desc.Index < 1 || desc.Index > len(captureMediaIDs) {
+			continue
+		}
+		mediaIDs = append(mediaIDs, captureMediaIDs[desc.Index-1])
 	}
 
 	// Step 8: call socialposts.Generator
@@ -359,6 +339,12 @@ func (g *DraftGenerator) GenerateDraftFromCommit(ctx context.Context, commitID u
 	if err != nil {
 		g.logger.Error(ctx, "failed to save draft from commit", err)
 		return ErrDraftGenerationFailed
+	}
+
+	if err := g.store.SetPostCaptureMediaIDs(ctx, post.ID, store.UUIDArray(captureMediaIDs)); err != nil {
+		// Non-fatal: the draft is usable, the editor just won't offer the
+		// unselected captures.
+		g.logger.Error(ctx, "failed to record capture media pool on draft", err)
 	}
 
 	if err := g.store.UpdateGitHubCommitPostID(ctx, commit.ID, post.ID); err != nil {

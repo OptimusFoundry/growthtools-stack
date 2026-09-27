@@ -306,6 +306,32 @@ func (s *Store) GetGitHubCommitForDraft(ctx context.Context, commitID uuid.UUID)
 	return row, nil
 }
 
+const sqlGetGitHubCommitForDraftByPostID = `
+SELECT gc.id, gc.sha, gc.message, gc.branch, gc.post_id, gc.capture_output,
+       a.id AS account_id,
+       gr.owner AS repo_owner, gr.name AS repo_name
+FROM github_commits gc
+JOIN github_repos gr ON gr.id = gc.repo_id AND gr.deleted_at IS NULL
+JOIN github_connections c ON c.id = gr.connection_id AND c.deleted_at IS NULL
+JOIN accounts a ON a.owner_user_id = c.user_id AND a.deleted_at IS NULL
+WHERE gc.post_id = $1 AND a.id = $2
+LIMIT 1
+`
+
+// GetGitHubCommitForDraftByPostID finds the commit a draft was generated
+// from, scoped to the owning account. Used to regenerate that draft.
+func (s *Store) GetGitHubCommitForDraftByPostID(ctx context.Context, accountID, postID uuid.UUID) (GitHubCommitForDraft, error) {
+	var row GitHubCommitForDraft
+	err := s.db.GetContext(ctx, &row, sqlGetGitHubCommitForDraftByPostID, postID, accountID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GitHubCommitForDraft{}, ErrNotFound
+		}
+		return GitHubCommitForDraft{}, fmt.Errorf("failed to get github commit for post: %w", err)
+	}
+	return row, nil
+}
+
 // GitHubCommitForBlog is the commit + owning account + repo context + OAuth
 // token a background worker needs to generate a blog post. Includes the
 // connection's access token because the blog generator re-fetches the full

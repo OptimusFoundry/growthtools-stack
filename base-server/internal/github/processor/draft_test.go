@@ -194,9 +194,12 @@ func TestDraftGenerator_GenerateDraftFromCommit(t *testing.T) {
 				}, nil)
 				f.EXPECT().GetFile(gomock.Any(), storybookKey).
 					Return(io.NopCloser(strings.NewReader("fake-png-bytes")), "image/png", nil)
-				// The stubbed planner keeps no media (keep_indexes=[]), so the
-				// pipeline never reaches CreateMedia/HeadObject for this key.
+				// Every capture becomes a media row for the post's pool, even
+				// though the stubbed planner keeps none of them.
+				h.EXPECT().HeadObject(gomock.Any(), storybookKey).Return(int64(14), "image/png", nil)
+				s.EXPECT().CreateMedia(gomock.Any(), gomock.Any()).Return(store.Media{ID: uuid.New()}, nil)
 				p.EXPECT().SaveDraft(gomock.Any(), gomock.Any()).Return(store.Post{ID: uuid.New()}, nil)
+				s.EXPECT().SetPostCaptureMediaIDs(gomock.Any(), gomock.Any(), gomock.Len(1)).Return(nil)
 				s.EXPECT().UpdateGitHubCommitPostID(gomock.Any(), commitID, gomock.Any()).Return(nil)
 			},
 			aiClient: &componentPromptCapturingAIClient{},

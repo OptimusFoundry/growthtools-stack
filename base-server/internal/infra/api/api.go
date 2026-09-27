@@ -190,6 +190,7 @@ func (a *API) RegisterRoutes() {
 		protectedGroup.GET("/github/commits", a.githubHandler.HandleListCommits)
 		protectedGroup.GET("/github/commits/:id", a.githubHandler.HandleGetCommit)
 		protectedGroup.POST("/github/commits/:id/retry-capture", a.githubHandler.HandleRetryCapture)
+		protectedGroup.POST("/posts/:id/regenerate", a.githubHandler.HandleRegenerateDraft)
 
 		// Showcase — brief-to-component capture requests
 		protectedGroup.POST("/showcase-posts", a.showcaseHandler.HandleCreate)
