@@ -279,3 +279,94 @@ func TestGitHubProcessor_ResolveStoryIDs_ClientNeverWired(t *testing.T) {
 	assert.Nil(t, storyIDs)
 	assert.Nil(t, storyComponents)
 }
+
+func TestStorybookURLFromReadme(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		readme string
+		want   string
+	}{
+		{
+			name:   "bold markdown bullet",
+			readme: "# Repo\n\n- **App**: https://app.example.com\n- **Storybook**: https://ui.protoapp.xyz\n",
+			want:   "https://ui.protoapp.xyz",
+		},
+		{
+			name:   "case-insensitive label, trailing punctuation trimmed",
+			readme: "Our storybook lives at https://sb.example.com/.",
+			want:   "https://sb.example.com/",
+		},
+		{
+			name:   "skips badge URLs on the storybook line",
+			readme: "[![Storybook](https://img.shields.io/badge/storybook-ff4785)](https://sb.example.com)",
+			want:   "https://sb.example.com",
+		},
+		{
+			name:   "no storybook line",
+			readme: "- **App**: https://app.example.com\n",
+			want:   "",
+		},
+		{
+			name:   "empty readme",
+			readme: "",
+			want:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, storybookURLFromReadme(tt.readme))
+		})
+	}
+}
+
+func TestAppURLFromReadme_IgnoresStorybookLine(t *testing.T) {
+	t.Parallel()
+
+	// ui.protoapp.xyz contains "app", so a Storybook line listed before the
+	// App line must not be mistaken for the live app URL.
+	readme := "- **Storybook**: https://ui.protoapp.xyz\n- **App**: https://app.example.com\n"
+
+	got, err := appURLFromReadme(readme)
+	require.NoError(t, err)
+	assert.Equal(t, "https://app.example.com", got)
+}
+
+func TestWithStorybookDefaults(t *testing.T) {
+	t.Parallel()
+
+	const readme = "- **Storybook**: https://ui.protoapp.xyz\n"
+
+	t.Run("fills NULL url from README and NULL globs from default", func(t *testing.T) {
+		t.Parallel()
+		got := withStorybookDefaults(store.GitHubRepo{Owner: "o", Name: "n"}, readme)
+		require.NotNil(t, got.StorybookURL)
+		assert.Equal(t, "https://ui.protoapp.xyz", *got.StorybookURL)
+		assert.Equal(t, store.StringArray(DefaultComponentGlobs), got.ComponentGlobs)
+	})
+
+	t.Run("DB values win over README and default", func(t *testing.T) {
+		t.Parallel()
+		repo := makeStorybookRepo("https://db.example.com", "custom/**/*.tsx")
+		got := withStorybookDefaults(repo, readme)
+		assert.Equal(t, "https://db.example.com", *got.StorybookURL)
+		assert.Equal(t, store.StringArray{"custom/**/*.tsx"}, got.ComponentGlobs)
+	})
+
+	t.Run("no README storybook line leaves url unset", func(t *testing.T) {
+		t.Parallel()
+		got := withStorybookDefaults(store.GitHubRepo{}, "- **App**: https://app.example.com\n")
+		assert.Nil(t, got.StorybookURL)
+	})
+
+	t.Run("does not mutate the caller's repo", func(t *testing.T) {
+		t.Parallel()
+		repo := store.GitHubRepo{}
+		_ = withStorybookDefaults(repo, readme)
+		assert.Nil(t, repo.StorybookURL)
+		assert.Empty(t, repo.ComponentGlobs)
+	})
+}
