@@ -60,10 +60,8 @@ func (a *BlueskyAdapter) Publish(ctx context.Context, content string, mediaURLs 
 			}
 			continue
 		}
-		images = append(images, map[string]any{
-			"alt":   "",
-			"image": blob,
-		})
+		w, h := imageDimensions(mediaBytes)
+		images = append(images, blueskyImageEntry(blob, w, h))
 	}
 
 	// Build record
@@ -138,10 +136,8 @@ func (a *BlueskyAdapter) PublishThread(ctx context.Context, segments []ThreadSeg
 			if strings.HasPrefix(contentType, "video/") {
 				videoBlob = blob
 			} else {
-				images = append(images, map[string]any{
-					"alt":   "",
-					"image": blob,
-				})
+				w, h := imageDimensions(mediaBytes)
+				images = append(images, blueskyImageEntry(blob, w, h))
 			}
 		}
 
