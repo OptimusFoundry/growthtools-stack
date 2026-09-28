@@ -178,9 +178,8 @@ func (g *BlogDraftGenerator) GenerateBlogFromCommit(ctx context.Context, commitI
 		return ErrBlogGenerationFailed
 	}
 
-	var blogResp blogJSONResponse
-	cleaned := extractJSONObject(rawOutput)
-	if parseErr := json.Unmarshal([]byte(cleaned), &blogResp); parseErr != nil {
+	blogResp, parseErr := parseBlogJSON(rawOutput)
+	if parseErr != nil {
 		snippet := rawSnippet(rawOutput, 400)
 		g.logger.Error(ctx, "failed to parse blog JSON response",
 			fmt.Errorf("parse: %w, raw length=%d, snippet=%s", parseErr, len(rawOutput), snippet))
@@ -281,6 +280,65 @@ func buildBlogUserMessage(c store.GitHubCommitForBlog, diff string) string {
 	b.WriteString(c.Message)
 	b.WriteString("\n\nFull diff:\n")
 	b.WriteString(diff)
+	return b.String()
+}
+
+// parseBlogJSON decodes the model's blog response. Gemini occasionally puts
+// raw tabs/newlines inside string literals (typically in code blocks), which
+// is invalid JSON; on a parse failure the response is retried once with those
+// control characters escaped.
+func parseBlogJSON(raw string) (blogJSONResponse, error) {
+	var resp blogJSONResponse
+	cleaned := extractJSONObject(raw)
+	err := json.Unmarshal([]byte(cleaned), &resp)
+	if err == nil {
+		return resp, nil
+	}
+	resp = blogJSONResponse{}
+	if repairErr := json.Unmarshal([]byte(escapeControlCharsInStrings(cleaned)), &resp); repairErr != nil {
+		return blogJSONResponse{}, err
+	}
+	return resp, nil
+}
+
+// escapeControlCharsInStrings escapes raw control characters (< 0x20) that
+// appear inside JSON string literals, leaving structural whitespace between
+// tokens untouched.
+func escapeControlCharsInStrings(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	inString, escaped := false, false
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !inString {
+			if c == '"' {
+				inString = true
+			}
+			b.WriteByte(c)
+			continue
+		}
+		switch {
+		case escaped:
+			escaped = false
+			b.WriteByte(c)
+		case c == '\\':
+			escaped = true
+			b.WriteByte(c)
+		case c == '"':
+			inString = false
+			b.WriteByte(c)
+		case c == '\n':
+			b.WriteString(`\n`)
+		case c == '\r':
+			b.WriteString(`\r`)
+		case c == '\t':
+			b.WriteString(`\t`)
+		case c < 0x20:
+			fmt.Fprintf(&b, `\u%04x`, c)
+		default:
+			b.WriteByte(c)
+		}
+	}
 	return b.String()
 }
 
