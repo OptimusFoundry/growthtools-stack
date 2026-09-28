@@ -27,9 +27,17 @@ func (p *GitHubProcessor) resolveStoryIDs(ctx context.Context, repo store.GitHub
 
 	changed := changedFilePaths(diff)
 	matched := make([]string, 0, len(changed))
+	seenSource := make(map[string]struct{}, len(changed))
 	for _, path := range changed {
-		if matchesComponentGlob(path, repo.ComponentGlobs) {
-			matched = append(matched, path)
+		// Sidecar files (styles, types) count as a change to their
+		// component, so restyles still resolve to its stories.
+		source := componentSourcePath(path)
+		if _, dup := seenSource[source]; dup {
+			continue
+		}
+		if matchesComponentGlob(source, repo.ComponentGlobs) {
+			seenSource[source] = struct{}{}
+			matched = append(matched, source)
 		}
 	}
 	if len(matched) == 0 {
@@ -74,6 +82,22 @@ func (p *GitHubProcessor) resolveStoryIDs(ctx context.Context, repo store.GitHub
 	}
 	sort.Strings(storyIDs)
 	return storyIDs, components, nil
+}
+
+// componentSidecarSuffixes are files that belong to the component whose
+// basename they share: Badge.module.scss / Badge.scss / Badge.types.ts all
+// belong to Badge.tsx.
+var componentSidecarSuffixes = []string{".module.scss", ".scss", ".types.ts"}
+
+// componentSourcePath maps a changed sidecar file to its component's .tsx
+// path; any other path is returned unchanged.
+func componentSourcePath(path string) string {
+	for _, suffix := range componentSidecarSuffixes {
+		if strings.HasSuffix(path, suffix) {
+			return strings.TrimSuffix(path, suffix) + ".tsx"
+		}
+	}
+	return path
 }
 
 // matchesComponentGlob reports whether a changed file path is a component
