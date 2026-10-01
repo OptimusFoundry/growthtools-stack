@@ -183,6 +183,27 @@ func TestGitHubProcessor_ResolveStoryIDs(t *testing.T) {
 			wantComponents: map[string]string{"primitives-button--default": "Button"},
 		},
 		{
+			// Restyles only touch the stylesheet; they must still resolve to
+			// the component's stories (previously skipped: *.tsx glob only).
+			name: "style-only change resolves to the component's stories",
+			repo: makeStorybookRepo(storybookURL, componentGlob),
+			diff: "diff --git a/webapp/src/proto-design-system/components/primitives/Button/Button.module.scss " +
+				"b/webapp/src/proto-design-system/components/primitives/Button/Button.module.scss\n+.x{}\n",
+			setup: func(sc *MockStorybookClient) {
+				sc.EXPECT().FetchIndex(gomock.Any(), storybookURL).Return(storybookclient.Index{
+					Entries: map[string]storybookclient.IndexEntry{
+						"primitives-button--default": {
+							ID:         "primitives-button--default",
+							ImportPath: "./src/proto-design-system/components/primitives/Button/Button.stories.tsx",
+							Type:       "story",
+						},
+					},
+				}, nil)
+			},
+			wantStoryIDs:   []string{"primitives-button--default"},
+			wantComponents: map[string]string{"primitives-button--default": "Button"},
+		},
+		{
 			name: "docs-type entry with matching import path is excluded",
 			repo: makeStorybookRepo(storybookURL, componentGlob),
 			diff: buttonDiff,
@@ -369,4 +390,26 @@ func TestWithStorybookDefaults(t *testing.T) {
 		assert.Nil(t, repo.StorybookURL)
 		assert.Empty(t, repo.ComponentGlobs)
 	})
+}
+
+func TestComponentSourcePath(t *testing.T) {
+	t.Parallel()
+
+	base := "webapp/src/proto-design-system/components/primitives/Badge/"
+	tests := []struct {
+		in, want string
+	}{
+		{base + "Badge.tsx", base + "Badge.tsx"},
+		{base + "Badge.module.scss", base + "Badge.tsx"},
+		{base + "Badge.scss", base + "Badge.tsx"},
+		{base + "Badge.types.ts", base + "Badge.tsx"},
+		{base + "Badge.stories.tsx", base + "Badge.stories.tsx"},
+		{"base-server/main.go", "base-server/main.go"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, componentSourcePath(tt.in))
+		})
+	}
 }
