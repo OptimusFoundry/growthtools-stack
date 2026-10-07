@@ -161,6 +161,8 @@ func TestGitHubProcessor_PublishBlogToSite(t *testing.T) {
 					Return(nil)
 				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", gomock.Any(), gomock.Any()).
 					Return("", 0, errors.New("pr create failed"))
 			},
@@ -189,11 +191,15 @@ func TestGitHubProcessor_PublishBlogToSite(t *testing.T) {
 						assert.Contains(t, commitMessage, post.Title, "commit message must contain post title")
 						return nil
 					})
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
 					DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
 						assert.Equal(t, branchName, headBranch, "PR head branch must match created branch")
 						return "https://github.com/acme/site/pull/42", 42, nil
 					})
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(errors.New("auto-merge not allowed"))
 				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 42).
 					Return(nil)
 			},
@@ -216,10 +222,93 @@ func TestGitHubProcessor_PublishBlogToSite(t *testing.T) {
 					Return(nil)
 				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
 					Return("https://github.com/acme/site/pull/42", 42, nil)
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(errors.New("auto-merge not allowed"))
 				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 42).
 					Return(errors.New("merge conflict"))
+			},
+			assert: func(t *testing.T, gotURL string, gotErr error) {
+				require.NoError(t, gotErr)
+				assert.Equal(t, "https://github.com/acme/site/pull/42", gotURL)
+			},
+		},
+		{
+			name: "auto-merge enabled – PR merges itself after checks, no direct merge",
+			post: post,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
+					Return("https://github.com/acme/site/pull/42", 42, nil)
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(nil)
+				// No MergePullRequest: the strict controller fails if it's called.
+			},
+			assert: func(t *testing.T, gotURL string, gotErr error) {
+				require.NoError(t, gotErr)
+				assert.Equal(t, "https://github.com/acme/site/pull/42", gotURL)
+			},
+		},
+		{
+			name: "diagram post publishes .mdx and removes a stale .md",
+			post: store.BlogPost{ID: post.ID, Title: post.Title, Slug: post.Slug, Content: "intro\n\n<Diagram nodes={[]} />\n"},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
+					Return("https://github.com/acme/site/pull/42", 42, nil)
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(nil)
+			},
+			assert: func(t *testing.T, gotURL string, gotErr error) {
+				require.NoError(t, gotErr)
+				assert.Equal(t, "https://github.com/acme/site/pull/42", gotURL)
+			},
+		},
+		{
+			name: "stale-file cleanup fails – publish still succeeds",
+			post: post,
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				c.EXPECT().CreateOrUpdateFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(errors.New("github 500"))
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
+					Return("https://github.com/acme/site/pull/42", 42, nil)
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(nil)
 			},
 			assert: func(t *testing.T, gotURL string, gotErr error) {
 				require.NoError(t, gotErr)
@@ -309,11 +398,15 @@ func TestGitHubProcessor_PublishBlogToSite_BranchNameShape(t *testing.T) {
 					seenBranches = append(seenBranches, branch)
 					return nil
 				})
+			mockClient.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+				Return(nil)
 			mockClient.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Publish: My Great Post", gomock.Any()).
 				DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
 					seenBranches = append(seenBranches, headBranch)
 					return "https://github.com/acme/site/pull/1", 1, nil
 				})
+			mockClient.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 1).
+				Return(errors.New("auto-merge not allowed"))
 			mockClient.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 1).
 				Return(nil)
 
@@ -512,6 +605,23 @@ func TestBuildBlogMarkdown(t *testing.T) {
 				assert.NotContains(t, got, "ogImage:")
 			},
 		},
+		{
+			name: "leading H1 is dropped – the site renders the title itself",
+			post: store.BlogPost{Title: "Hello", Content: "\n# Hello\n\nFirst paragraph.\n\n## Section\n"},
+			assert: func(t *testing.T, got string) {
+				body := got[strings.Index(got, "---\n\n")+5:]
+				assert.NotContains(t, body, "# Hello")
+				assert.True(t, strings.HasPrefix(body, "First paragraph."), "body must start at the first paragraph, got %q", body)
+				assert.Contains(t, body, "## Section")
+			},
+		},
+		{
+			name: "H1 later in the body is kept",
+			post: store.BlogPost{Title: "Hello", Content: "Intro.\n\n# Not a title\n"},
+			assert: func(t *testing.T, got string) {
+				assert.Contains(t, got, "Intro.\n\n# Not a title")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -674,6 +784,8 @@ func TestGitHubProcessor_DeleteBlogFromSite(t *testing.T) {
 					Return(nil)
 				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
 					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
 					Return("", 0, errors.New("pr create failed"))
 			},
@@ -693,8 +805,12 @@ func TestGitHubProcessor_DeleteBlogFromSite(t *testing.T) {
 					Return(nil)
 				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
 					Return(nil)
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
 					Return("https://github.com/acme/site/pull/99", 99, nil)
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 99).
+					Return(errors.New("auto-merge not allowed"))
 				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 99).
 					Return(errors.New("merge conflict"))
 			},
@@ -723,12 +839,40 @@ func TestGitHubProcessor_DeleteBlogFromSite(t *testing.T) {
 						assert.Contains(t, commitMessage, postWithPR.Title, "commit message must contain post title")
 						return nil
 					})
+				c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+					Return(nil)
 				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
 					DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
 						assert.Equal(t, branchName, headBranch, "PR head branch must match created branch")
 						return "https://github.com/acme/site/pull/42", 42, nil
 					})
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(errors.New("auto-merge not allowed"))
 				c.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 42).
+					Return(nil)
+			},
+		},
+		{
+			name: "diagram post – deletes .mdx first, then any stale .md",
+			post: store.BlogPost{ID: postWithPR.ID, Title: postWithPR.Title, Slug: postWithPR.Slug, Content: "<Diagram nodes={[]} />", SitePRURL: &prURL},
+			mocks: func(s *MockGitHubStore, c *MockGitHubClient) {
+				s.EXPECT().GetSitePublishTargetByAccount(gomock.Any(), accountID).
+					Return(target, nil)
+				s.EXPECT().GetAccountByID(gomock.Any(), accountID).
+					Return(account, nil)
+				s.EXPECT().GetGitHubConnectionByUserID(gomock.Any(), ownerUserID).
+					Return(conn, nil)
+				c.EXPECT().CreateBranch(gomock.Any(), "gh-token", "acme", "site", "main", gomock.Any()).
+					Return(nil)
+				gomock.InOrder(
+					c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+						Return(nil),
+					c.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.md", gomock.Any(), gomock.Any()).
+						Return(nil),
+				)
+				c.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", gomock.Any()).
+					Return("https://github.com/acme/site/pull/42", 42, nil)
+				c.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 42).
 					Return(nil)
 			},
 		},
@@ -812,11 +956,15 @@ func TestGitHubProcessor_DeleteBlogFromSite_BranchNameShape(t *testing.T) {
 					seenBranches = append(seenBranches, branch)
 					return nil
 				})
+			mockClient.EXPECT().DeleteFileContents(gomock.Any(), "gh-token", "acme", "site", "src/content/blog/my-great-post.mdx", gomock.Any(), gomock.Any()).
+				Return(nil)
 			mockClient.EXPECT().CreatePullRequest(gomock.Any(), "gh-token", "acme", "site", gomock.Any(), "main", "Remove: My Great Post", "Automated PR removing a blog post from the site.").
 				DoAndReturn(func(_ context.Context, _, _, _, headBranch, _, _, _ string) (string, int, error) {
 					seenBranches = append(seenBranches, headBranch)
 					return "https://github.com/acme/site/pull/1", 1, nil
 				})
+			mockClient.EXPECT().EnableAutoMerge(gomock.Any(), "gh-token", "acme", "site", 1).
+				Return(errors.New("auto-merge not allowed"))
 			mockClient.EXPECT().MergePullRequest(gomock.Any(), "gh-token", "acme", "site", 1).
 				Return(nil)
 
@@ -841,4 +989,22 @@ func mustParseTime(t *testing.T, s string) time.Time {
 	parsed, err := time.Parse("2006-01-02", s)
 	require.NoError(t, err)
 	return parsed
+}
+
+func TestBlogFileExt(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		content string
+		want    string
+	}{
+		{name: "plain markdown is .md", content: "# Title\n\nbody with <b>html</b>", want: ".md"},
+		{name: "a Diagram component makes it .mdx", content: "intro\n\n<Diagram nodes={[]} />", want: ".mdx"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, blogFileExt(tt.content))
+		})
+	}
 }

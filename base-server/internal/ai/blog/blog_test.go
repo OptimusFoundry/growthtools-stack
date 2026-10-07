@@ -454,3 +454,34 @@ func TestBuildUserMessage_MediaWithoutDescription(t *testing.T) {
 		t.Error("expected no alt attribute for empty description")
 	}
 }
+
+func TestBuildSystemPrompt_TeachesDiagrams(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		voice *VoiceContext
+	}{
+		{name: "without voice profile", voice: nil},
+		{name: "with voice profile", voice: &VoiceContext{Tone: "direct"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := buildSystemPrompt(tt.voice)
+			if !strings.Contains(got, DiagramGuide) {
+				t.Error("expected the system prompt to include DiagramGuide")
+			}
+		})
+	}
+}
+
+func TestDiagramGuide_UsesSingleQuotedProps(t *testing.T) {
+	t.Parallel()
+	// Generated content travels inside a JSON string; double quotes in the
+	// example would teach the model output that needs escaping.
+	example := DiagramGuide[strings.Index(DiagramGuide, "<Diagram"):]
+	if strings.Contains(example, `"`) {
+		t.Errorf("diagram example must not contain double quotes, got: %s", example)
+	}
+}

@@ -82,6 +82,31 @@ func (BlogErrorEvent) isBlogEvent() {}
 
 const generateMaxTokens = 8192
 
+// DiagramGuide teaches the model the site's <Diagram> component. A post that
+// uses one is published as MDX, where the component renders as an SVG
+// box-and-arrow figure. Props use single-quoted strings because the content
+// travels inside a JSON string, where double quotes need escaping.
+const DiagramGuide = `## Diagrams (optional)
+When an architecture, data flow or sequence is easier to see than to read, add at most two diagrams on their own lines. Skip them for posts that don't need one. Syntax (copy the shape exactly; use single quotes for every string):
+
+<Diagram
+  caption='One sentence saying what the diagram shows.'
+  nodes={[
+    { id: 'api', label: 'Product API', sub: 'Go', col: 0, row: 0 },
+    { id: 'queue', label: 'Kafka', sub: 'event backbone', col: 1, row: 0, accent: true },
+    { id: 'db', label: 'Postgres', col: 0, row: 1, span: 2 },
+  ]}
+  edges={[
+    { from: 'api', to: 'queue', label: 'emit' },
+    { from: 'api', to: 'db' },
+  ]}
+  groups={[{ label: 'shared platform', nodes: ['queue', 'db'] }]}
+/>
+
+Rules: nodes sit on a grid (col/row from 0, at most 4 columns); span widens a node across columns; accent highlights the key node; labels stay under 24 characters and sub-labels under 32. Edges and groups are optional. In a post with a diagram, never write a bare { or } or < in prose — put code in backticks.
+
+`
+
 // buildSystemPrompt assembles the blog-generation system prompt, injecting
 // the account's voice profile (tone/style/examples/etc.) when present so
 // generated posts match how the user actually writes rather than a fixed
@@ -97,6 +122,8 @@ func buildSystemPrompt(voice *VoiceContext) string {
 		sb.Write(b)
 		sb.WriteString("\n\n")
 	}
+
+	sb.WriteString(DiagramGuide)
 
 	sb.WriteString("If the user provides attached images, embed EVERY image inline in the \"content\" markdown using the exact syntax `![alt](url)` on its own line, placed at a natural spot in the narrative where it reinforces the surrounding prose. Write descriptive alt text. Do not skip images and do not invent URLs — use only the URLs the user provided.\n\n")
 

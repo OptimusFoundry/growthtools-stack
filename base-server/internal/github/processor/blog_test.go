@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	aiblog "base-server/internal/ai/blog"
 	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -358,4 +359,9 @@ func TestBlogJSONResponse_Parse(t *testing.T) {
 		err := json.Unmarshal([]byte(raw), &resp)
 		require.Error(t, err)
 	})
+}
+
+func TestBlogSystemPrompt_TeachesDiagrams(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, blogSystemPrompt, aiblog.DiagramGuide)
 }
