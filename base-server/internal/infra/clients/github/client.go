@@ -588,6 +588,74 @@ func (c *Client) CreatePullRequest(ctx context.Context, token, owner, repo, head
 	return pr.HTMLURL, pr.Number, nil
 }
 
+// EnableAutoMerge turns on GitHub's "merge when ready" for a PR, so it merges
+// itself once the base branch's required checks pass. Auto-merge is a GraphQL
+// mutation keyed by the PR's node id. Errors when the repo doesn't allow
+// auto-merge or the PR has nothing to wait for ("clean status"); callers fall
+// back to MergePullRequest.
+func (c *Client) EnableAutoMerge(ctx context.Context, token, owner, repo string, prNumber int) error {
+	prURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%d", c.apiBase, owner, repo, prNumber)
+	prReq, err := http.NewRequestWithContext(ctx, http.MethodGet, prURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create get pull request request: %w", err)
+	}
+	prReq.Header.Set("Authorization", "Bearer "+token)
+	prReq.Header.Set("Accept", "application/vnd.github+json")
+
+	prResp, err := c.httpClient.Do(prReq)
+	if err != nil {
+		return fmt.Errorf("failed to get pull request: %w", err)
+	}
+	defer prResp.Body.Close()
+	if prResp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(prResp.Body)
+		return fmt.Errorf("github get pull request returned status %d: %s", prResp.StatusCode, string(respBody))
+	}
+	var pr struct {
+		NodeID string `json:"node_id"`
+	}
+	if err := json.NewDecoder(prResp.Body).Decode(&pr); err != nil {
+		return fmt.Errorf("failed to parse pull request response: %w", err)
+	}
+
+	payload, err := json.Marshal(map[string]any{
+		"query":     `mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: MERGE}) { pullRequest { number } } }`,
+		"variables": map[string]string{"id": pr.NodeID},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal auto-merge payload: %w", err)
+	}
+	gqlReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBase+"/graphql", strings.NewReader(string(payload)))
+	if err != nil {
+		return fmt.Errorf("failed to create auto-merge request: %w", err)
+	}
+	gqlReq.Header.Set("Authorization", "Bearer "+token)
+	gqlReq.Header.Set("Content-Type", "application/json")
+
+	gqlResp, err := c.httpClient.Do(gqlReq)
+	if err != nil {
+		return fmt.Errorf("failed to enable auto-merge: %w", err)
+	}
+	defer gqlResp.Body.Close()
+	respBody, _ := io.ReadAll(gqlResp.Body)
+	if gqlResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("github graphql returned status %d: %s", gqlResp.StatusCode, string(respBody))
+	}
+	// GraphQL reports failures in a 200 body.
+	var result struct {
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return fmt.Errorf("failed to parse auto-merge response: %w", err)
+	}
+	if len(result.Errors) > 0 {
+		return fmt.Errorf("enable auto-merge failed: %s", result.Errors[0].Message)
+	}
+	return nil
+}
+
 // MergePullRequest merges an open PR by number using GitHub's default merge
 // method. Returns an error on any non-2xx response (e.g. not mergeable,
 // required checks pending) — callers decide whether that's fatal; for

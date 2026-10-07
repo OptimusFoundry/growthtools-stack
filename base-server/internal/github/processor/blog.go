@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	aiblog "base-server/internal/ai/blog"
 	"base-server/internal/infra/clients/aiclient"
 	"base-server/internal/infra/observability"
 	"base-server/internal/infra/store"
@@ -28,7 +29,7 @@ const (
 
 Length: aim for a ~3 minute read (roughly 600–750 words). Do not exceed 800 words. Be concise — cut anything that doesn't sharpen the narrative.
 
-Respond with a single JSON object and nothing else. The object must have these fields:
+` + aiblog.DiagramGuide + `Respond with a single JSON object and nothing else. The object must have these fields:
 - "title": string — blog post title
 - "content": string — full blog post in Markdown, starting with a # heading, using H2 sections, 600–750 words
 - "excerpt": string — one-sentence summary (max 200 chars)

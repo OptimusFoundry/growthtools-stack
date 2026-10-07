@@ -625,6 +625,20 @@ func (mr *MockGitHubClientMockRecorder) DeleteWebhook(ctx, token, owner, name, h
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWebhook", reflect.TypeOf((*MockGitHubClient)(nil).DeleteWebhook), ctx, token, owner, name, hookID)
 }
 
+// EnableAutoMerge mocks base method.
+func (m *MockGitHubClient) EnableAutoMerge(ctx context.Context, token, owner, repo string, prNumber int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableAutoMerge", ctx, token, owner, repo, prNumber)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableAutoMerge indicates an expected call of EnableAutoMerge.
+func (mr *MockGitHubClientMockRecorder) EnableAutoMerge(ctx, token, owner, repo, prNumber any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAutoMerge", reflect.TypeOf((*MockGitHubClient)(nil).EnableAutoMerge), ctx, token, owner, repo, prNumber)
+}
+
 // ExchangeOAuthCode mocks base method.
 func (m *MockGitHubClient) ExchangeOAuthCode(ctx context.Context, code string) (github.OAuthTokenResponse, error) {
 	m.ctrl.T.Helper()

@@ -67,11 +67,20 @@ func (p *GitHubProcessor) PublishBlogToSite(ctx context.Context, accountID uuid.
 		return "", ErrSitePublishFailed
 	}
 
-	filePath := path.Join(target.ContentPath, post.Slug+".md")
+	ext := blogFileExt(post.Content)
+	filePath := path.Join(target.ContentPath, post.Slug+ext)
 	commitMessage := fmt.Sprintf("blog: publish %q", post.Title)
 	if err := p.githubClient.CreateOrUpdateFileContents(ctx, token, target.RepoOwner, target.RepoName, filePath, branchName, markdown, commitMessage); err != nil {
 		p.logger.Error(ctx, "failed to write blog file for site publish", err)
 		return "", ErrSitePublishFailed
+	}
+
+	// A post that gained or lost a diagram since its last publish would leave
+	// <slug>.md and <slug>.mdx side by side — two entries with one id, which
+	// fails the site build. DeleteFileContents is a no-op when absent.
+	stalePath := path.Join(target.ContentPath, post.Slug+otherBlogFileExt(ext))
+	if err := p.githubClient.DeleteFileContents(ctx, token, target.RepoOwner, target.RepoName, stalePath, branchName, fmt.Sprintf("blog: remove stale %s", path.Base(stalePath))); err != nil {
+		p.logger.Error(ctx, "failed to remove stale blog file for site publish", err)
 	}
 
 	prURL, prNumber, err := p.githubClient.CreatePullRequest(ctx, token, target.RepoOwner, target.RepoName, branchName, target.BaseBranch,
@@ -81,13 +90,10 @@ func (p *GitHubProcessor) PublishBlogToSite(ctx context.Context, accountID uuid.
 		return "", ErrSitePublishFailed
 	}
 
-	// Best-effort auto-merge: the PR already exists and is reported as a
-	// success either way — a merge failure (conflicts, required checks,
-	// branch protection) just leaves it open for a manual merge rather than
-	// failing the whole publish.
-	if err := p.githubClient.MergePullRequest(ctx, token, target.RepoOwner, target.RepoName, prNumber); err != nil {
-		p.logger.Error(ctx, "failed to auto-merge pull request for site publish", err)
-	}
+	// Best-effort merge: the PR already exists and is reported as a success
+	// either way — a merge failure just leaves it open for a manual merge
+	// rather than failing the whole publish.
+	p.mergeWhenReady(ctx, token, target.RepoOwner, target.RepoName, prNumber)
 
 	return prURL, nil
 }
@@ -122,7 +128,8 @@ func (p *GitHubProcessor) DeleteBlogFromSite(ctx context.Context, accountID uuid
 		return ErrGitHubNotConnected
 	}
 
-	filePath := path.Join(target.ContentPath, post.Slug+".md")
+	ext := blogFileExt(post.Content)
+	filePath := path.Join(target.ContentPath, post.Slug+ext)
 
 	suffix, err := randomHexSuffix(8)
 	if err != nil {
@@ -143,6 +150,12 @@ func (p *GitHubProcessor) DeleteBlogFromSite(ctx context.Context, accountID uuid
 		p.logger.Error(ctx, "failed to delete blog file for site delete", err)
 		return ErrSiteDeleteFailed
 	}
+	// The post may have been published under the other extension before its
+	// content changed; remove that too (no-op when absent).
+	otherPath := path.Join(target.ContentPath, post.Slug+otherBlogFileExt(ext))
+	if err := p.githubClient.DeleteFileContents(ctx, token, target.RepoOwner, target.RepoName, otherPath, branchName, commitMessage); err != nil {
+		p.logger.Error(ctx, "failed to delete other-extension blog file for site delete", err)
+	}
 
 	_, prNumber, err := p.githubClient.CreatePullRequest(ctx, token, target.RepoOwner, target.RepoName, branchName, target.BaseBranch,
 		fmt.Sprintf("Remove: %s", post.Title), "Automated PR removing a blog post from the site.")
@@ -151,10 +164,8 @@ func (p *GitHubProcessor) DeleteBlogFromSite(ctx context.Context, accountID uuid
 		return ErrSiteDeleteFailed
 	}
 
-	// Best-effort auto-merge: see PublishBlogToSite for rationale.
-	if err := p.githubClient.MergePullRequest(ctx, token, target.RepoOwner, target.RepoName, prNumber); err != nil {
-		p.logger.Error(ctx, "failed to auto-merge pull request for site delete", err)
-	}
+	// Best-effort merge: see PublishBlogToSite for rationale.
+	p.mergeWhenReady(ctx, token, target.RepoOwner, target.RepoName, prNumber)
 
 	return nil
 }
@@ -183,7 +194,7 @@ func buildBlogMarkdown(post store.BlogPost, media []store.Media, publicURLBase s
 		tags = append(tags, fmt.Sprintf("%q", strings.Trim(strings.TrimSpace(kw), `"`)))
 	}
 
-	content := post.Content
+	content := stripLeadingH1(post.Content)
 	for _, m := range media {
 		publicURL := fmt.Sprintf("%s/public/media/file/%s", publicURLBase, m.S3Key)
 		content = strings.ReplaceAll(content, m.S3URL, publicURL)
@@ -217,6 +228,48 @@ func buildBlogMarkdown(post store.BlogPost, media []store.Media, publicURLBase s
 	b.WriteString(content)
 
 	return []byte(b.String())
+}
+
+// mergeWhenReady asks GitHub to merge the PR once the site repo's required
+// checks (its build) pass, so a post that would break the build never reaches
+// main. Repos without auto-merge or required checks reject that; then merge
+// directly, as before. Either failure leaves the PR open for a manual merge.
+func (p *GitHubProcessor) mergeWhenReady(ctx context.Context, token, owner, repo string, prNumber int) {
+	if err := p.githubClient.EnableAutoMerge(ctx, token, owner, repo, prNumber); err == nil {
+		return
+	}
+	if err := p.githubClient.MergePullRequest(ctx, token, owner, repo, prNumber); err != nil {
+		p.logger.Error(ctx, "failed to merge site pull request", err)
+	}
+}
+
+// blogFileExt picks the file type for a post: MDX when it uses a <Diagram>
+// component, plain markdown otherwise. Plain posts stay .md because MDX
+// parses `{`, `}` and `<` in prose as code and would fail the site build.
+func blogFileExt(content string) string {
+	if strings.Contains(content, "<Diagram") {
+		return ".mdx"
+	}
+	return ".md"
+}
+
+func otherBlogFileExt(ext string) string {
+	if ext == ".mdx" {
+		return ".md"
+	}
+	return ".mdx"
+}
+
+// stripLeadingH1 drops a "# Title" line at the very start of the body. The
+// generator opens posts with one, but the site renders the frontmatter title
+// as the page's h1, so keeping it would give every post two.
+func stripLeadingH1(content string) string {
+	trimmed := strings.TrimLeft(content, " \t\r\n")
+	if !strings.HasPrefix(trimmed, "# ") {
+		return content
+	}
+	_, rest, _ := strings.Cut(trimmed, "\n")
+	return strings.TrimLeft(rest, "\r\n")
 }
 
 // computeReadingTime estimates reading time at 200 words per minute,
