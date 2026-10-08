@@ -1,37 +1,24 @@
 .container {
-	padding-top: 0;
+	padding-top: var(--q-space-block);
 }
 
 .loadingState {
-	min-height: 200px;
+	min-height: var(--q-space-20);
 }
 
-.planIcon {
-	color: var(--color-primary);
-}
-
-.secondaryIcon {
-	color: var(--color-base-content-secondary);
-	flex-shrink: 0;
-}
-
-// Quick Actions
 .quickAction {
-	display: flex;
-	align-items: center;
-	gap: var(--space-3);
-	padding: var(--space-2) 0;
+	padding: var(--q-space-stack) 0;
 }
 
 .quickActionIcon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 40px;
-	height: 40px;
-	border-radius: var(--radius-md);
-	background: var(--color-base-200);
-	color: var(--color-base-content-secondary);
+	width: var(--q-space-5);
+	height: var(--q-space-5);
+	border-radius: var(--q-radius-xs);
+	background: var(--q-bg-subtle);
+	color: var(--q-fg-muted);
 	flex-shrink: 0;
 }
 
@@ -42,10 +29,4 @@
 
 .quickActionButton {
 	flex-shrink: 0;
-}
-
-.footerActions {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
 }

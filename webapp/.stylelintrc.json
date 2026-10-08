@@ -45,7 +45,7 @@
 					"/^[0-9.]+em$/",
 					"/^var\\(--/"
 				],
-				"message": "Use design tokens from @/design-tokens/ instead of hardcoded values. See docs/design-tokens.md"
+				"message": "Use quiet --q-* tokens instead of hardcoded values. See node_modules/@optimusfoundry/quiet/DESIGN.md (token tiers), node_modules/@optimusfoundry/quiet/docs/guidelines/spacing.md (job-token gaps), node_modules/@optimusfoundry/quiet/docs/guidelines/typography.md (type roles) and webapp/docs/TEMPLATE-PATTERNS.md (template-only rules)."
 			}
 		],
 		"scss/dollar-variable-pattern": [
@@ -103,7 +103,6 @@
 		"node_modules/**",
 		"dist/**",
 		"build/**",
-		"storybook-static/**",
-		"src/design-tokens/**"
+		"storybook-static/**"
 	]
 }

@@ -1,9 +1,9 @@
+import { Badge } from "@optimusfoundry/quiet";
 import { Crown, type LucideIcon, User, Users } from "lucide-react";
 import { type HTMLAttributes, memo } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { useTier } from "@/contexts/tier";
-import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
 import type { TierName } from "@/types/tier";
-import styles from "./component.module.scss";
 
 // ============================================================================
 // Types
@@ -28,6 +28,13 @@ const TIER_ICONS: Record<TierName, LucideIcon> = {
 	team: Users,
 };
 
+// Badge has no tinted variants, so tiers differ by weight rather than hue.
+const TIER_VARIANTS: Record<TierName, "secondary" | "outline" | "primary"> = {
+	free: "secondary",
+	pro: "outline",
+	team: "primary",
+};
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -49,7 +56,7 @@ const TIER_ICONS: Record<TierName, LucideIcon> = {
 export const TierBadge = memo(function TierBadge({
 	tier: tierOverride,
 	size = "medium",
-	className: customClassName,
+	className,
 	...props
 }: TierBadgeProps) {
 	const { tier } = useTier();
@@ -61,19 +68,15 @@ export const TierBadge = memo(function TierBadge({
 
 	const icon = TIER_ICONS[displayTier] ?? TIER_ICONS.free;
 
-	const classNames = [
-		styles.root,
-		styles[`tier_${displayTier}`],
-		styles[`size_${size}`],
-		customClassName,
-	]
-		.filter(Boolean)
-		.join(" ");
-
 	return (
-		<span className={classNames} {...props}>
-			<Icon icon={icon} size="sm" className={styles.icon} />
-			<span className={styles.label}>{displayName}</span>
+		<span className={className} {...props}>
+			<Badge
+				variant={TIER_VARIANTS[displayTier] ?? TIER_VARIANTS.free}
+				size={size === "small" ? "sm" : "md"}
+				leftIcon={<AppIcon icon={icon} size="sm" />}
+			>
+				{displayName}
+			</Badge>
 		</span>
 	);
 });

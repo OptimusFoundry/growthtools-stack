@@ -1,0 +1,14 @@
+// Transitional (CH-001): Proto's tokens, themes and base styles, with quiet's
+// foundry themes mapped onto the Proto palettes the product screens were built on.
+@use "@/proto-design-system/themes/theme";
+
+// Proto's theme rules are real selectors, not placeholders; extending them is the mapping.
+/* stylelint-disable scss/at-extend-no-missing-placeholder */
+[data-theme="foundry"] {
+	@extend [data-theme="paper"];
+}
+
+[data-theme="foundry-dark"] {
+	@extend [data-theme="carbon"];
+}
+/* stylelint-enable scss/at-extend-no-missing-placeholder */

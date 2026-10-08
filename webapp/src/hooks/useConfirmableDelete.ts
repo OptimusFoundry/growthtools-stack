@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { useNotify } from "@/hooks/useNotify";
 
 export interface ConfirmableDeleteCopy {
 	/** Resource noun, e.g. "post", "blog post". Used in banner titles. */
@@ -42,7 +42,7 @@ export function useConfirmableDelete<TResult = unknown>({
 	getWarning,
 	copy,
 }: UseConfirmableDeleteOptions<TResult>): ConfirmableDeleteFlow {
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 	const [targetId, setTargetId] = useState<string | null>(null);
 
 	const request = useCallback((id: string) => setTargetId(id), []);
@@ -55,29 +55,26 @@ export function useConfirmableDelete<TResult = unknown>({
 			setTargetId(null);
 			const warning = getWarning?.(result);
 			if (warning) {
-				addBanner({
-					type: "warning",
+				notify({
+					status: "warning",
 					title: `${capitalize(copy.resource)} deleted, but site removal failed`,
 					description: warning,
-					dismissible: true,
 				});
 			} else {
-				addBanner({
-					type: "success",
+				notify({
+					status: "success",
 					title: `${capitalize(copy.resource)} deleted`,
-					dismissible: true,
 				});
 			}
 			onSuccess?.(result);
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: `Couldn't delete ${copy.resource}`,
 				description: "Please try again.",
-				dismissible: true,
 			});
 		}
-	}, [targetId, mutate, onSuccess, getWarning, addBanner, copy.resource]);
+	}, [targetId, mutate, onSuccess, getWarning, notify, copy.resource]);
 
 	// Resolved here, not inside confirm(), because the modal already shows
 	// this copy before the user clicks confirm.

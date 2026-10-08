@@ -12,10 +12,12 @@
 		"lint:scss:fix": "stylelint \"src/**/*.scss\" --fix",
 		"format": "biome format --write .",
 		"preview": "vite preview",
-		"storybook": "storybook dev -p 6006"
+		"storybook": "storybook dev -p 6006",
+		"build-storybook": "storybook build"
 	},
 	"dependencies": {
 		"@optimusfoundry/proto-design-system": "git+https://github.com/OptimusFoundry/proto-design-system.git#v1.1.0",
+		"@optimusfoundry/quiet": "git+https://github.com/OptimusFoundry/quiet.git#v0.3.0",
 		"@stripe/react-stripe-js": "^6.8.0",
 		"@stripe/stripe-js": "^9.12.0",
 		"@tanstack/react-router": "^1.170.18",

@@ -1,54 +1,6 @@
-// =============================================================================
-// EMAIL LOGIN FORM
-// =============================================================================
-
-.email-login-form {
+.form {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-5);
+	gap: var(--q-space-field);
 	width: 100%;
-}
-
-.form-item {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-2);
-
-	label {
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-medium);
-		color: var(--color-base-content);
-		letter-spacing: var(--letter-spacing-normal);
-	}
-}
-
-.error {
-	font-size: var(--font-size-xs);
-	color: var(--color-error);
-	line-height: var(--line-height-snug);
-}
-
-.actions {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-3);
-	margin-top: var(--space-2);
-}
-
-.hint {
-	font-size: var(--font-size-xs);
-	color: var(--color-base-content-secondary);
-	text-align: center;
-	margin-top: var(--space-1);
-
-	a {
-		color: var(--color-primary);
-		text-decoration: underline;
-		text-decoration-thickness: 1px;
-		text-underline-offset: 2px;
-
-		&:hover {
-			color: var(--color-primary-hover);
-		}
-	}
 }

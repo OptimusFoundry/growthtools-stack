@@ -1,9 +1,8 @@
+import { Alert, Spinner } from "@optimusfoundry/quiet";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import CustomCheckout from "@/components/billing/checkout/CustomCheckout";
 import { ErrorState } from "@/components/error/error";
 import { useCreateCheckoutSession } from "@/hooks/useCreateCheckoutSession";
-import { Banner } from "@/proto-design-system/components/feedback/Banner/Banner";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 
 export const Route = createFileRoute("/billing/pay")({
 	component: RouteComponent,
@@ -28,12 +27,9 @@ function PaymentPage(props: Props) {
 
 	if (!clientSecret) {
 		return (
-			<Banner
-				type="error"
-				variant="filled"
-				title="Error"
-				description="Unable to initiate payment process"
-			/>
+			<Alert variant="error" title="Error">
+				Unable to initiate payment process
+			</Alert>
 		);
 	}
 

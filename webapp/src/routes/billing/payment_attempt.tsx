@@ -1,8 +1,8 @@
+import { Alert, Spinner, Stack, Text } from "@optimusfoundry/quiet";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ErrorState } from "@/components/error/error";
 import { useGetCheckoutSession } from "@/hooks/useGetCheckoutSession";
-import { Banner } from "@/proto-design-system/components/feedback/Banner/Banner";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import styles from "./payment_attempt.module.scss";
 
 interface Props {
 	sessionId: string;
@@ -29,15 +29,16 @@ function Page(props: Props) {
 
 	if (data.status === "complete") {
 		return (
-			<div>
-				<Banner
-					type={"success"}
-					variant={"filled"}
-					title={"Joined!"}
-					description={
-						"We appreciate your business! A confirmation email will be sent to your email. "
-					}
-				/>
+			<div className={styles.column}>
+				<Stack gap="sm">
+					<Text as="h1" size="xl" weight="semibold">
+						Joined!
+					</Text>
+					<Alert variant="success">
+						We appreciate your business! A confirmation email will be sent to
+						your email.
+					</Alert>
+				</Stack>
 			</div>
 		);
 	}

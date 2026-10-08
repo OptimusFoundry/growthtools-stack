@@ -1,13 +1,7 @@
 "use client";
 
+import { Button, Card, Stack, Text } from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
-import {
-	Card,
-	CardBody,
-} from "@/proto-design-system/components/layout/Card/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { Price } from "@/types/billing";
 import { formatPrice } from "@/utils/formatPrice";
 
@@ -25,22 +19,24 @@ export default function PlanToPay(props: Price) {
 
 	return (
 		<Card>
-			<CardBody>
-				<Stack gap="md" align="center">
-					<Text as="h3" size="lg" weight="semibold" transform="capitalize">
-						{props.description}
+			<Stack gap="sm" align="center">
+				<Text as="h3" size="lg" weight="semibold" transform="capitalize">
+					{props.description}
+				</Text>
+				<Text size="2xl" weight="bold">
+					{priceDisplay}
+					<Text as="span" size="sm" color="muted">
+						{intervalDisplay}
 					</Text>
-					<Text size="2xl" weight="bold">
-						{priceDisplay}
-						<Text as="span" size="sm" color="secondary">
-							{intervalDisplay}
-						</Text>
-					</Text>
-					<Button onClick={() => handlePay(props.priceId)} isFullWidth>
-						Select Plan
-					</Button>
-				</Stack>
-			</CardBody>
+				</Text>
+				<Button
+					variant="primary"
+					onClick={() => handlePay(props.priceId)}
+					fullWidth
+				>
+					Select Plan
+				</Button>
+			</Stack>
 		</Card>
 	);
 }

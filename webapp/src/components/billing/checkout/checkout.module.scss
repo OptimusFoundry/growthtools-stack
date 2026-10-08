@@ -1,23 +1,4 @@
-// =============================================================================
-// CHECKOUT STYLES
-// =============================================================================
-
-.checkout-wrapper {
-  width: 100%;
-  max-width: 800px;
-}
-
-.checkout-container {
-  margin: 0 auto;
-  padding: var(--space-5);
-  border-radius: var(--radius-md);
-  background: var(--color-white);
-
-  h2 {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: var(--space-5);
-    text-align: center;
-    color: var(--color-base-content);
-  }
+.wrapper {
+	width: 100%;
+	max-width: var(--q-w-form);
 }

@@ -1,12 +1,11 @@
 "use client";
+import { SidebarProvider, ThemeProvider } from "@optimusfoundry/quiet";
 import React from "react";
+import { AppRoot } from "@/contexts/AppRoot";
 import { useAuth } from "@/contexts/auth";
 import { PersonaProvider } from "@/contexts/persona";
-import { SidebarProvider } from "@/contexts/sidebar";
 import { TierProvider } from "@/contexts/tier";
 import { BannerCenterProvider } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
-import { SidebarProvider as ProtoSidebarProvider } from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
-import { ThemeProvider } from "@/proto-design-system/context/ThemeProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
 	const { user } = useAuth();
@@ -14,17 +13,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
 	// Default to 'admin' persona for development
 	const persona = user?.persona ?? "admin";
 
+	// BannerCenterProvider stays until the product screens that call useBannerCenter move to useNotify (CH-001).
 	return (
-		<ThemeProvider>
-			<BannerCenterProvider>
-				<TierProvider>
-					<PersonaProvider persona={persona}>
-						<SidebarProvider>
-							<ProtoSidebarProvider responsive>{children}</ProtoSidebarProvider>
-						</SidebarProvider>
-					</PersonaProvider>
-				</TierProvider>
-			</BannerCenterProvider>
+		<ThemeProvider defaultValue="foundry">
+			<AppRoot>
+				<BannerCenterProvider>
+					<TierProvider>
+						<PersonaProvider persona={persona}>
+							<SidebarProvider breakpoint={720}>{children}</SidebarProvider>
+						</PersonaProvider>
+					</TierProvider>
+				</BannerCenterProvider>
+			</AppRoot>
 		</ThemeProvider>
 	);
 }

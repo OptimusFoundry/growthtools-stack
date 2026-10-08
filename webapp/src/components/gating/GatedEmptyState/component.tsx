@@ -1,9 +1,13 @@
+import {
+	Alert,
+	ArrowLink,
+	Button,
+	EmptyState,
+	Stack,
+} from "@optimusfoundry/quiet";
 import { memo, type ReactNode } from "react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { Banner } from "@/proto-design-system/components/feedback/Banner/Banner";
-import { LinkButton } from "@/proto-design-system/components/primitives/Button/LinkButton";
-import styles from "./component.module.scss";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 
 // ============================================================================
 // Types
@@ -88,26 +92,25 @@ export const GatedEmptyState = memo(function GatedEmptyState({
 	const fullDescription = `${description} This feature is available on the ${requiredTierDisplayName} plan.`;
 
 	return (
-		<div className={`${styles.root} ${className ?? ""}`}>
-			<Banner
-				type="feature"
-				variant="lighter"
+		<Stack gap="xl" className={className}>
+			<Alert
+				variant="info"
 				title={resolvedBannerTitle}
-				description={resolvedBannerDescription}
-				action={<a href="/billing/plans">Upgrade</a>}
-				dismissible={false}
-			/>
+				action={<ArrowLink href="/billing/plans">Upgrade</ArrowLink>}
+			>
+				{resolvedBannerDescription}
+			</Alert>
 			<EmptyState
 				icon={icon}
-				title={title}
+				title={trimTrailingPeriod(title)}
 				description={fullDescription}
-				action={
-					<LinkButton variant="primary" href="/billing/plans">
+				actions={
+					<Button variant="primary" href="/billing/plans">
 						Upgrade to {requiredTierDisplayName}
-					</LinkButton>
+					</Button>
 				}
 			/>
-		</div>
+		</Stack>
 	);
 });
 

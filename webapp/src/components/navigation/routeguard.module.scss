@@ -4,32 +4,27 @@
 	align-items: center;
 	justify-content: center;
 	min-height: 100vh;
-	padding: var(--space-5);
+	padding: var(--q-space-3);
 }
 
 .accessDeniedContent {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: var(--space-3);
+	gap: var(--q-space-1-5);
 	text-align: center;
-	max-width: 400px;
-
-	i {
-		font-size: var(--font-size-4xl);
-		color: var(--color-error);
-	}
+	max-width: var(--q-w-detail-panel);
 
 	h2 {
-		font-size: var(--font-size-xl);
-		font-weight: var(--font-weight-semibold);
-		color: var(--color-base-content);
+		font-size: var(--q-text-xl);
+		font-weight: var(--q-weight-semibold);
+		color: var(--q-fg);
 		margin: 0;
 	}
 
 	p {
-		font-size: var(--font-size-base);
-		color: var(--color-base-content-secondary);
+		font-size: var(--q-text-md);
+		color: var(--q-fg-body);
 		margin: 0;
 	}
 }

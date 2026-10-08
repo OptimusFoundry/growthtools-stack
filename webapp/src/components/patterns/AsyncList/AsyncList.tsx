@@ -1,6 +1,6 @@
+import { Spinner } from "@optimusfoundry/quiet";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import styles from "./AsyncList.module.scss";
 
 export interface AsyncListProps<T> {

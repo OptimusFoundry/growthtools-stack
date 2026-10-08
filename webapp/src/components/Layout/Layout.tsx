@@ -1,4 +1,5 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Sidebar, Text, useTheme } from "@optimusfoundry/quiet";
+import { useLocation } from "@tanstack/react-router";
 import {
 	BarChart,
 	Calendar,
@@ -7,117 +8,124 @@ import {
 	GitCommit,
 	HelpCircle,
 	Image,
+	type LucideIcon,
 	MessageSquare,
+	Moon,
 	Newspaper,
 	PenSquare,
 	Settings,
+	Sun,
+	Zap,
 } from "lucide-react";
-import React, { memo } from "react";
+import { memo, type ReactNode, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner/ImpersonationBanner";
 import UserName from "@/components/user/Username";
 import { usePersona } from "@/contexts/persona";
-import {
-	Sidebar,
-	SidebarDivider,
-	SidebarHeader,
-	SidebarItem,
-	SidebarLogo,
-	SidebarSection,
-	SidebarToggle,
-} from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
 import styles from "./layout.module.scss";
-import { ThemeSwitcher } from "./ThemeSwitcher";
+import { TopbarSlotContext } from "./TopbarSlot";
 
 interface LayoutProps {
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
-// Map icon names to Lucide icons
-const iconMap: Record<string, React.ReactNode> = {
-	"bar-chart-line": <BarChart size={18} />,
-	"calendar-line": <Calendar size={18} />,
-	"edit-line": <PenSquare size={18} />,
-	"chat-line": <MessageSquare size={18} />,
-	"image-line": <Image size={18} />,
-	"article-line": <Newspaper size={18} />,
-	"film-line": <Film size={18} />,
-	"settings-line": <Settings size={18} />,
-	"bank-card-line": <CreditCard size={18} />,
-	"git-commit-line": <GitCommit size={18} />,
+const iconMap: Record<string, LucideIcon> = {
+	"bar-chart-line": BarChart,
+	"calendar-line": Calendar,
+	"edit-line": PenSquare,
+	"chat-line": MessageSquare,
+	"image-line": Image,
+	"article-line": Newspaper,
+	"film-line": Film,
+	"settings-line": Settings,
+	"bank-card-line": CreditCard,
+	"git-commit-line": GitCommit,
 };
 
-const getIcon = (iconClass?: string) => {
-	if (!iconClass) return null;
-	return iconMap[iconClass] || null;
+const getIcon = (iconClass?: string): LucideIcon | undefined => {
+	if (!iconClass) return undefined;
+	return iconMap[iconClass];
 };
+
+const renderIcon = (icon: LucideIcon | undefined): ReactNode =>
+	icon ? <AppIcon icon={icon} size="lg" /> : undefined;
 
 const AppSidebar = memo(function AppSidebar() {
 	const { getNavigationGroups } = usePersona();
 	const navigationGroups = getNavigationGroups();
+	const { theme, setTheme } = useTheme();
+	const isDark = theme === "foundry-dark";
 	const location = useLocation();
 
+	const groups = [
+		...navigationGroups.map((group) => ({
+			label: group.label,
+			items: group.items.map((item) => ({
+				label: item.label,
+				value: item.href,
+				href: item.href,
+				icon: renderIcon(getIcon(item.iconClass)),
+			})),
+		})),
+		{
+			label: "Settings",
+			items: [
+				{
+					label: "Settings",
+					value: "/account",
+					href: "/account",
+					icon: renderIcon(Settings),
+				},
+				{
+					label: "Help",
+					value: "/help",
+					href: "/help",
+					icon: renderIcon(HelpCircle),
+				},
+				{
+					label: isDark ? "Light Mode" : "Dark Mode",
+					icon: renderIcon(isDark ? Sun : Moon),
+					onClick: () => setTheme(isDark ? "foundry" : "foundry-dark"),
+				},
+			],
+		},
+	];
+
 	return (
-		<Sidebar>
-			<SidebarHeader>
-				<SidebarLogo>Growth Tools</SidebarLogo>
-				<SidebarToggle />
-			</SidebarHeader>
-
-			{navigationGroups.map((group) => (
-				<SidebarSection key={group.label} title={group.label}>
-					{group.items.map((item) => (
-						<SidebarItem
-							key={item.href}
-							icon={getIcon(item.iconClass)}
-							href={item.href}
-							active={location.pathname === item.href}
-							LinkComponent={Link}
-						>
-							{item.label}
-						</SidebarItem>
-					))}
-				</SidebarSection>
-			))}
-
-			<SidebarDivider />
-
-			<SidebarSection title="Settings">
-				<SidebarItem
-					icon={<Settings size={18} />}
-					href="/account"
-					active={location.pathname === "/account"}
-					LinkComponent={Link}
-				>
-					Settings
-				</SidebarItem>
-				<SidebarItem
-					icon={<HelpCircle size={18} />}
-					href="/help"
-					active={location.pathname === "/help"}
-					LinkComponent={Link}
-				>
-					Help
-				</SidebarItem>
-			</SidebarSection>
-
-			<ThemeSwitcher />
-
-			<div className={styles.userFooter}>
-				<UserName />
-			</div>
-		</Sidebar>
+		<Sidebar
+			label="Main"
+			mobile="drawer"
+			collapsible
+			value={location.pathname}
+			header={
+				<span className={styles.brand}>
+					<span className={styles.brandMark}>
+						<AppIcon icon={Zap} size="md" />
+					</span>
+					<Text as="span" weight="semibold" color="heading">
+						Growth Tools
+					</Text>
+				</span>
+			}
+			footer={<UserName />}
+			groups={groups}
+		/>
 	);
 });
 
 export const Layout = memo(function Layout({ children }: LayoutProps) {
+	const [topbarSlot, setTopbarSlot] = useState<HTMLElement | null>(null);
+
 	return (
-		<div className={styles.container}>
-			<AppSidebar />
-			<div className={styles.content}>
-				{/* ImpersonationBanner renders only when is_impersonated=true; no-op otherwise */}
-				<ImpersonationBanner />
-				<main className={styles.main}>{children}</main>
+		<TopbarSlotContext value={topbarSlot}>
+			<div className={styles.container}>
+				<AppSidebar />
+				<div className={styles.content}>
+					<ImpersonationBanner />
+					<div className={styles.topbarSlot} ref={setTopbarSlot} />
+					<main className={styles.main}>{children}</main>
+				</div>
 			</div>
-		</div>
+		</TopbarSlotContext>
 	);
 });

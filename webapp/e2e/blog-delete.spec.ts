@@ -24,6 +24,7 @@ import {
 	fullBlogPost,
 	publishedBlogWithPr,
 } from "./handlers/blog.handlers";
+import { toastLocator } from "./helpers/toast";
 import { blogPosts } from "./mocks/data";
 
 const DELETE_BUTTON_NAME = /delete blog post/i;
@@ -31,7 +32,7 @@ const DIALOG_NAME = /delete blog post/i;
 const LIVE_COPY = /live on shubhanshu\.dev/i;
 const DEFAULT_COPY = /cannot be undone/i;
 const SITE_ERROR_BANNER = /site removal failed/i;
-const DISMISS_BUTTON_NAME = /dismiss banner/i;
+const DISMISS_BUTTON_NAME = /dismiss notification/i;
 
 async function openListDeleteDialog(
 	page: import("@playwright/test").Page,
@@ -179,7 +180,7 @@ test.describe("Blog Delete", () => {
 			await dialog.getByRole("button", { name: /^delete$/i }).click();
 			await page.waitForLoadState("networkidle");
 
-			const banner = page.getByRole("alert");
+			const banner = toastLocator(page, "status");
 			await expect(banner).toBeVisible();
 			await expect(banner).toContainText(/deleted/i);
 			await expect(banner).not.toContainText(SITE_ERROR_BANNER);
@@ -198,7 +199,7 @@ test.describe("Blog Delete", () => {
 			await page.waitForLoadState("networkidle");
 
 			await expect(page).toHaveURL(/\/blog$/);
-			const banner = page.getByRole("alert");
+			const banner = toastLocator(page, "status");
 			await expect(banner).toBeVisible();
 			await expect(banner).toContainText(/deleted/i);
 			await expect(banner).not.toContainText(SITE_ERROR_BANNER);
@@ -219,7 +220,7 @@ test.describe("Blog Delete", () => {
 			await dialog.getByRole("button", { name: /^delete$/i }).click();
 			await page.waitForLoadState("networkidle");
 
-			const banner = page.getByRole("alert");
+			const banner = toastLocator(page, "status");
 			await expect(banner).toBeVisible();
 			await expect(banner).toContainText(SITE_ERROR_BANNER);
 			await expect(banner).toContainText(/GitHub delete failed: rate limited/i);
@@ -240,7 +241,7 @@ test.describe("Blog Delete", () => {
 			await page.waitForLoadState("networkidle");
 
 			await expect(page).toHaveURL(/\/blog$/);
-			const banner = page.getByRole("alert");
+			const banner = toastLocator(page, "status");
 			await expect(banner).toBeVisible();
 			await expect(banner).toContainText(SITE_ERROR_BANNER);
 			await expect(banner).toContainText(/GitHub delete failed: rate limited/i);
