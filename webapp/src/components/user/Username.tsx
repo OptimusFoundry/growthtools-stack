@@ -2,10 +2,10 @@
 
 import { useContext } from "react";
 import { AuthContext } from "@/contexts/auth";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { useSidebarContext } from "@/proto-design-system/components/navigation/Sidebar";
-import { Avatar } from "@/proto-design-system/components/primitives/Avatar";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { useSidebarContext } from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
+import { Avatar } from "@/proto-design-system/components/primitives/Avatar/Avatar";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 export default function UserName() {
 	const auth = useContext(AuthContext);

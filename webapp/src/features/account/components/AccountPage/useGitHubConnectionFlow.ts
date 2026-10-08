@@ -10,7 +10,7 @@ import {
 	useGitHubConnection,
 } from "@/hooks/useGitHubConnection";
 import { useInitGitHubOAuth } from "@/hooks/useInitGitHubOAuth";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
 
 // ============================================================================
 // Types

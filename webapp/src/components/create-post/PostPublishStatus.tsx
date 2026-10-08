@@ -5,9 +5,9 @@ import {
 	Loader,
 	RefreshCw,
 } from "lucide-react";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";

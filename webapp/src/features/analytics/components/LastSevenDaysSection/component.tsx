@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useAnalyticsComparison } from "@/hooks/useAnalyticsComparison";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton/Skeleton";
 import { Sparkline } from "../Sparkline/component";
 import styles from "./component.module.scss";
 

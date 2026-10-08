@@ -1,6 +1,6 @@
-import { TextArea } from "@/proto-design-system/components/forms/TextArea";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 interface YourMessageSectionProps {
 	blurb: string;

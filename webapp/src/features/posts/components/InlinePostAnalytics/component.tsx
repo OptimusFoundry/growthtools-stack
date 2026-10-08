@@ -1,12 +1,12 @@
 import { BarChart2, RefreshCw } from "lucide-react";
 import { PlatformPostAnalyticsCard } from "@/features/posts/components/PlatformPostAnalyticsCard/component";
 import { usePostAnalytics } from "@/hooks/usePostAnalytics";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Card } from "@/proto-design-system/components/layout/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Card } from "@/proto-design-system/components/layout/Card/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton/Skeleton";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 interface InlinePostAnalyticsProps {
 	postId: string;

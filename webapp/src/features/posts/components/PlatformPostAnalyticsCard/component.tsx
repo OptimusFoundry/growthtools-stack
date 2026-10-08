@@ -1,9 +1,9 @@
 import { ExternalLink } from "lucide-react";
 import { EngagementTimelineChart } from "@/features/analytics/components/EngagementTimelineChart/component";
-import { Card } from "@/proto-design-system/components/layout/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Tooltip } from "@/proto-design-system/components/overlays/Tooltip";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
+import { Card } from "@/proto-design-system/components/layout/Card/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Tooltip } from "@/proto-design-system/components/overlays/Tooltip/Tooltip";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
 import type { PlatformPostAnalytics } from "@/types/analytics";
 import type { PlatformType } from "@/types/platform";
 import { PLATFORM_DISPLAY_NAMES } from "@/types/platform";

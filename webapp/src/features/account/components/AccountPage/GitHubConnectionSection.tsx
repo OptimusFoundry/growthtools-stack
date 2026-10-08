@@ -5,11 +5,11 @@
 
 import { GitBranch as Github } from "lucide-react";
 import { memo } from "react";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import styles from "./GitHubConnectionSection.module.scss";
 import { GitHubRepoSelector } from "./GitHubRepoSelector";
 import { useGitHubConnectionFlow } from "./useGitHubConnectionFlow";

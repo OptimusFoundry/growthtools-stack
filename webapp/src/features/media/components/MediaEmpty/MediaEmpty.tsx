@@ -1,6 +1,6 @@
 import { ImageIcon, Upload } from "lucide-react";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 
 export function MediaEmpty({ onUpload }: { onUpload: () => void }) {
 	return (

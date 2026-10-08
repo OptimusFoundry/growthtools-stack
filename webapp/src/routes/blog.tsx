@@ -13,8 +13,8 @@ import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useFilterCounts } from "@/hooks/useFilterCounts";
-import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs/FilterTabs";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import type { BlogStatus, DeleteBlogResult } from "@/types/blog";
 
 export const Route = createFileRoute("/blog")({

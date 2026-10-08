@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import {
 	Breadcrumb,
 	type BreadcrumbItem,
-} from "@/proto-design-system/components/navigation/Breadcrumb";
-import { SidebarMobileTrigger } from "@/proto-design-system/components/navigation/Sidebar";
+} from "@/proto-design-system/components/navigation/Breadcrumb/Breadcrumb";
+import { SidebarMobileTrigger } from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
 import styles from "./topbar.module.scss";
 
 interface TopbarProps {

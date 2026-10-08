@@ -1,10 +1,10 @@
 import type {
 	ExistingFile,
 	UploadedFile,
-} from "@/proto-design-system/components/composite/FileUpload";
-import { FileUpload } from "@/proto-design-system/components/composite/FileUpload";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+} from "@/proto-design-system/components/composite/FileUpload/FileUpload";
+import { FileUpload } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 interface MediaUploadSectionProps {
 	pendingFiles: UploadedFile[];

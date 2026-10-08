@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { useConnectPlatform } from "@/hooks/useConnectPlatform";
 import { useConnectWithToken } from "@/hooks/useConnectWithToken";
 import { useDisconnectPlatform } from "@/hooks/useDisconnectPlatform";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 
 // ============================================================================

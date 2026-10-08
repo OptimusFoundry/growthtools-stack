@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
 import styles from "./MobileActionBar.module.scss";
 
 export interface MobileActionBarProps {

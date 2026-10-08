@@ -9,11 +9,11 @@ import { ArtifactGrid } from "@/components/github/ArtifactGrid";
 import { CaptureMetaCard } from "@/components/github/CaptureMetaCard";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useGitHubCommit } from "@/hooks/useGitHubCommit";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import styles from "./github-details.module.scss";
 
 export const Route = createFileRoute("/github_/$id")({

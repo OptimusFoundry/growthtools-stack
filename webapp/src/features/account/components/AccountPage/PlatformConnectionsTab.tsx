@@ -11,23 +11,23 @@ import { useConnectPlatform } from "@/hooks/useConnectPlatform";
 import { useConnectWithToken } from "@/hooks/useConnectWithToken";
 import { useDisconnectPlatform } from "@/hooks/useDisconnectPlatform";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
 import {
 	Card,
 	CardBody,
 	CardHeader,
-} from "@/proto-design-system/components/layout/Card";
-import { Container } from "@/proto-design-system/components/layout/Container";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
+} from "@/proto-design-system/components/layout/Card/Card";
+import { Container } from "@/proto-design-system/components/layout/Container/Container";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
 import type { BadgeVariant } from "@/proto-design-system/components/primitives/Badge/Badge.types";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Tag } from "@/proto-design-system/components/primitives/Tag";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Tag } from "@/proto-design-system/components/primitives/Tag/Tag";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import {
 	PLATFORM_DISPLAY_NAMES,
 	type PlatformConnection,

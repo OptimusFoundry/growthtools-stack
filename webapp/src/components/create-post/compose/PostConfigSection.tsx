@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
-import { Stepper } from "@/proto-design-system/components/forms/Stepper";
-import { Switch } from "@/proto-design-system/components/forms/Switch";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Stepper } from "@/proto-design-system/components/forms/Stepper/Stepper";
+import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import { PLATFORM_SUPPORTS_THREADS, type PlatformType } from "@/types/platform";
 import type { WizardContentType } from "../useCreatePostWizard";
 import styles from "./PostConfigSection.module.scss";

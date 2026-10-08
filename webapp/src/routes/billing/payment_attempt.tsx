@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ErrorState } from "@/components/error/error";
 import { useGetCheckoutSession } from "@/hooks/useGetCheckoutSession";
-import { Banner } from "@/proto-design-system/components/feedback/Banner";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Banner } from "@/proto-design-system/components/feedback/Banner/Banner";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 
 interface Props {
 	sessionId: string;

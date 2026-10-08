@@ -1,7 +1,7 @@
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
-import { Switch } from "@/proto-design-system/components/forms/Switch";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 
 interface PlatformSelectionSectionProps {

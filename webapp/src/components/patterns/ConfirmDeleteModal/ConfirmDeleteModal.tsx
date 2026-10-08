@@ -1,8 +1,8 @@
 import type { ConfirmableDeleteFlow } from "@/hooks/useConfirmableDelete";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 /**
  * Presentation half of useConfirmableDelete. Accepts the flow object directly

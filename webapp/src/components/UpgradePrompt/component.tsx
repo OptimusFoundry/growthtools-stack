@@ -3,8 +3,8 @@ import { Lock } from "lucide-react";
 import { type HTMLAttributes, memo } from "react";
 import { FEATURE_DISPLAY_CONFIGS } from "@/config/tiers";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Icon } from "@/proto-design-system/components/primitives/Icon";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
 import styles from "./component.module.scss";
 
 // ============================================================================

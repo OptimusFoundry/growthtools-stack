@@ -24,7 +24,7 @@ import {
 	SidebarLogo,
 	SidebarSection,
 	SidebarToggle,
-} from "@/proto-design-system/components/navigation/Sidebar";
+} from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
 import styles from "./layout.module.scss";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 

@@ -6,16 +6,16 @@
 import { Check } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useVoiceProfile } from "@/hooks/useVoiceProfile";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { FormField } from "@/proto-design-system/components/forms/FormField";
-import { TextArea } from "@/proto-design-system/components/forms/TextArea";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { FormField } from "@/proto-design-system/components/forms/FormField/FormField";
+import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
+import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown/Dropdown";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import {
 	STYLE_OPTIONS,
 	TONE_OPTIONS,

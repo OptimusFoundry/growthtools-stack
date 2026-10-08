@@ -1,4 +1,4 @@
-@use "../../proto-design-system/mixins" as *;
+@use "@/proto-design-system/mixins" as *;
 
 // MobileActionBar — fixed bottom action bar, mobile only.
 // Hidden on desktop. Rendered in the DOM always to avoid JS media query.

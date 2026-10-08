@@ -1,7 +1,7 @@
 import { Crown, type LucideIcon, User, Users } from "lucide-react";
 import { type HTMLAttributes, memo } from "react";
 import { useTier } from "@/contexts/tier";
-import { Icon } from "@/proto-design-system/components/primitives/Icon";
+import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
 import type { TierName } from "@/types/tier";
 import styles from "./component.module.scss";
 

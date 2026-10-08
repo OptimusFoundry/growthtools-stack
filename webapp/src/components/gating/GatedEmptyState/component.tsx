@@ -1,8 +1,8 @@
 import { memo, type ReactNode } from "react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Banner } from "@/proto-design-system/components/feedback/Banner";
-import { LinkButton } from "@/proto-design-system/components/primitives/Button";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Banner } from "@/proto-design-system/components/feedback/Banner/Banner";
+import { LinkButton } from "@/proto-design-system/components/primitives/Button/LinkButton";
 import styles from "./component.module.scss";
 
 // ============================================================================

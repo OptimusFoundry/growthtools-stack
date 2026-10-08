@@ -1,7 +1,7 @@
-import { TextArea } from "@/proto-design-system/components/forms/TextArea";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import { SHOWCASE_POST_COPY } from "./copy";
 import type { CreateShowcasePostFlow } from "./useCreateShowcasePostFlow";
 
