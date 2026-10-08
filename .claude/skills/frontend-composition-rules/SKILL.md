@@ -251,7 +251,7 @@ What moved where:
 - `timeAgo`, `truncate` → `src/utils/format.ts`
 - `POST_STATUS_META` → `src/types/post.ts`
 - `useConfirmableDelete`, `useFilterCounts` → `src/hooks/`
-- `ResourceListPage`, `AsyncList`, `ConfirmDeleteModal`, `StatusBadge` → `src/proto-design-system/patterns/` (new) or `src/components/patterns/`
+- `ResourceListPage`, `AsyncList`, `ConfirmDeleteModal`, `StatusBadge` → `src/components/patterns/` (Proto is a frozen package and takes no new components)
 - `PostRow`, `PostsHero`, `PostsEmptyState`, `POSTS_COPY` → `src/features/posts/components/`
 - `blog.tsx` now consumes the exact same primitives with blog-specific slots → ~80 lines
 

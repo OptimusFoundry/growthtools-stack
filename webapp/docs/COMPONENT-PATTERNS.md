@@ -6,7 +6,7 @@ Patterns for building new components in the proto-design-system or as feature-le
 
 ## File Structure
 
-Design system primitives live in `src/proto-design-system/components/{category}/{ComponentName}/`:
+Design system primitives live in the `@optimusfoundry/proto-design-system` package under `src/components/{category}/{ComponentName}/` (imported as `@/proto-design-system/components/...`):
 
 ```
 ComponentName/
@@ -311,7 +311,7 @@ const items = createItems<Item>([...]);
 
 ## Component Import Paths
 
-All components are in `src/proto-design-system/components/`. Import directly from source — no barrel exports.
+All components are in the `@optimusfoundry/proto-design-system` package (`@/proto-design-system/components/...`). Import directly from source — no barrel exports.
 
 ```tsx
 // Primitives
