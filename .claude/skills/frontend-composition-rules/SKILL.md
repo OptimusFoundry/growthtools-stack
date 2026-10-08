@@ -23,8 +23,9 @@ Apply this skill whenever you are:
   - `timeAgo` / `truncate` / `formatStatus` redefined inline (grep: 4 copies of `timeAgo` exist today)
   - Hardcoded strings like `"Couldn't delete post"`, `"Please try again."`, `"Are you sure..."` inline in JSX
   - `STATUS_CLASS` / `STATUS_LABELS` record maps redeclared per page
-  - A `useState<string | null>(null)` used as "which row is the delete target" plus a `<Modal>` block at the bottom
-  - `useCallback` wrapping a handler that does `try { mutate(); banner.success; refetch() } catch { banner.error }` — this is a hook
+  - A `useState<string | null>(null)` used as "which row is the delete target" plus a `Dialog` block at the bottom
+  - `useCallback` wrapping a handler that does `try { mutate(); notify success; refetch() } catch { notify error }` — this is a hook
+  - `useBannerCenter` / `addBanner` calls — legacy Proto feedback; replace with `useNotify`
   - Index-of-string-key lookups with ternaries to compute counts (see `FILTER_KEYS.map(... f.id === "" ? all : f.id === "draft" ? ...)`)
 - Writing a feature where two sibling routes share structure (posts + blog, drafts + scheduled, etc.)
 
@@ -41,8 +42,8 @@ Skip when: the page is genuinely one-of-a-kind (e.g. OAuth callback, billing che
 | `STATUS_CLASS` / `STATUS_LABELS` maps | same shape, different enum |
 | `FILTER_KEYS.map(...)` count-computation ternary | 4-level nested `?:` in both |
 | Loading/empty/empty-filtered/list ternary | 4-branch ternary in both |
-| `deleteTargetId` + `<Modal>` + confirm handler | identical wiring, different resource noun |
-| Banner success/error on delete | identical copy with s/post/blog post/ |
+| `deleteTargetId` + `Dialog` + confirm handler | identical wiring, different resource noun |
+| Toast success/error on delete | identical copy with s/post/blog post/ |
 | `<Topbar actions={<Link><Button>+New</Button></Link>} />` | identical shape |
 | Page hero `<header>` with eyebrow + title + sub | identical structure, different copy |
 | `motion.div` list wrapper with same transition | identical |
@@ -66,13 +67,13 @@ const STATUS_LABELS: Record<PostStatus, string> = { draft: "Draft", ... };
 
 Instead, co-locate with the type in `src/types/post.ts`:
 ```ts
-export const POST_STATUS_META: Record<PostStatus, { label: string; tone: BadgeTone }> = {
-  draft: { label: "Draft", tone: "neutral" },
-  scheduled: { label: "Scheduled", tone: "info" },
+export const POST_STATUS_META: Record<PostStatus, { label: string; variant: BadgeProps["variant"] }> = {
+  draft: { label: "Draft", variant: "default" },
+  scheduled: { label: "Scheduled", variant: "secondary" },
   ...
 };
 ```
-Then consume with `<StatusBadge meta={POST_STATUS_META[post.status]} />`. The badge component owns the CSS-class mapping; the page owns nothing.
+quiet `Badge` variants: default, primary, secondary, outline, success, warning, error. Then consume with `<StatusBadge meta={POST_STATUS_META[post.status]} />`. The badge component owns the CSS-class mapping; the page owns nothing.
 
 ### 3. Compose a `<ResourceListPage>` via slots (composition, not config-explosion)
 
@@ -89,7 +90,7 @@ Composition in React = **accept children/elements as props**, not a mega-config.
 />
 ```
 
-The shell owns: the flex scaffold, the `motion.div` animation, the loading spinner, the "empty vs empty-filtered vs list" branching, the `<Stack>` rhythm. The route owns: *what* resource, *what* copy, *what* row looks like. This is composition because the route hands concrete elements (`<FilterTabs>`, `<PostRow>`) to the shell — the shell doesn't know about posts or blogs.
+The shell owns: the flex scaffold, the `motion.div` animation, the loading skeleton, the "empty vs empty-filtered vs list" branching, the `<Stack>` rhythm. The route owns: *what* resource, *what* copy, *what* row looks like. This is composition because the route hands concrete elements (`<FilterTabs>`, `<PostRow>`) to the shell — the shell doesn't know about posts or blogs.
 
 ### 4. Replace nested ternaries with a declarative `<AsyncList>` primitive
 
@@ -105,6 +106,7 @@ Encapsulate it:
 ```tsx
 <AsyncList
   loading={loading}
+  loadingFallback={<Skeleton/>}
   items={items}
   empty={<EmptyState .../>}
   emptyFiltered={<EmptyState .../>}
@@ -121,14 +123,14 @@ This is the **render-prop pattern**. The state-machine lives in `AsyncList`. No 
 Today every CRUD page has:
 ```tsx
 const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-const { addBanner } = useBannerCenter();
+const { notify } = useNotify();
 const handleDeleteConfirm = useCallback(async () => {
   if (!deleteTargetId) return;
   try { await deleteX(deleteTargetId); setDeleteTargetId(null);
-        addBanner({ type: "success", title: "X deleted", dismissible: true }); refetch();
-  } catch { addBanner({ type: "error", title: "Couldn't delete X", ... }); }
+        notify({ status: "success", title: "X deleted" }); refetch();
+  } catch { notify({ status: "error", title: "Couldn't delete X", ... }); }
 }, [...]);
-// ...then a 25-line <Modal> at the bottom...
+// ...then a hand-wired Dialog at the bottom...
 ```
 
 Extract to `useConfirmableDelete`:
@@ -136,12 +138,12 @@ Extract to `useConfirmableDelete`:
 const deleteFlow = useConfirmableDelete({
   mutate: deletePost,
   onSuccess: refetch,
-  copy: { resource: "post", confirmBody: "This action cannot be undone." },
+  copy: { successTitle: "Post deleted", errorTitle: "Couldn't delete post", errorBody: "Please try again." },
 });
-// deleteFlow = { request(id), targetId, isOpen, isLoading, confirm(), cancel() }
+// deleteFlow = { target, request(item), cancel, confirm, isLoading, isOpen }
 ```
 
-Page now renders `<ConfirmDeleteModal {...deleteFlow} />` — one line. The hook owns state, error handling, banners. (This is the contemporary equivalent of a "withDeleteConfirmation" HOC — custom hooks are strictly better because they compose, type, and test cleanly.)
+Page now renders `<ConfirmDeleteModal {...deleteFlow} />` — one line. The hook owns state, error handling, toasts. (This is the contemporary equivalent of a "withDeleteConfirmation" HOC — custom hooks are strictly better because they compose, type, and test cleanly.)
 
 ### 6. Compound components for cases where parts must share state
 
@@ -189,7 +191,7 @@ function PostsPage() {
   const { posts, loading, refetch } = useGetPosts(filters);
   const { deletePost, loading: deleting } = useDeletePost();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const { addBanner } = useBannerCenter();
+  const { notify } = useNotify();
 
   const handleDeleteConfirm = useCallback(async () => { /* 20 lines */ }, [...]);
 
@@ -197,7 +199,7 @@ function PostsPage() {
 
   return (
     <>
-      <Topbar title="Posts" actions={<Link to="/posts/new"><Button variant="primary"><Plus/> Create Post</Button></Link>} />
+      <Topbar title="Posts" actions={<Button variant="primary" href="/posts/new" leftIcon={<AppIcon icon={Plus} />}>Create Post</Button>} />
       <Stack gap="lg" ...>
         <header>{/* hero */}</header>
         <FilterTabs .../>
@@ -207,7 +209,7 @@ function PostsPage() {
             : posts.length === 0 ? <EmptyState .../>
             : <motion.div>{posts.map((post, index) => { /* 60 lines of row */ })}</motion.div>}
         </div>
-        <Modal isOpen={deleteTargetId !== null} .../* 25 lines */ />
+        <Dialog open={deleteTargetId !== null} .../* 25 lines */ />
       </Stack>
     </>
   );
@@ -251,7 +253,7 @@ What moved where:
 - `timeAgo`, `truncate` → `src/utils/format.ts`
 - `POST_STATUS_META` → `src/types/post.ts`
 - `useConfirmableDelete`, `useFilterCounts` → `src/hooks/`
-- `ResourceListPage`, `AsyncList`, `ConfirmDeleteModal`, `StatusBadge` → `src/components/patterns/` (Proto is a frozen package and takes no new components)
+- `ResourceListPage`, `AsyncList`, `ConfirmDeleteModal`, `StatusBadge` → `webapp/src/components/patterns/` (quiet owns primitives; a missing one is built here on quiet tokens and flagged for quiet)
 - `PostRow`, `PostsHero`, `PostsEmptyState`, `POSTS_COPY` → `src/features/posts/components/`
 - `blog.tsx` now consumes the exact same primitives with blog-specific slots → ~80 lines
 
@@ -261,7 +263,7 @@ New resource cost: write `FooRow`, `FooHero`, `FooEmptyState`, `FOO_COPY`, `FOO_
 
 ```
 1. Does a sibling route/feature already do something similar (CRUD list, detail+edit, resource form)?
-   → Yes: find the shared shell in proto-design-system/patterns or components/patterns.
+   → Yes: find it in `webapp/src/components/patterns`.
           If it doesn't exist yet, extract one NOW from the sibling before copying.
    → No:  build inline, but write the route thinking "what would I factor if a second instance appeared?"
 
@@ -271,7 +273,7 @@ New resource cost: write `FooRow`, `FooHero`, `FooEmptyState`, `FOO_COPY`, `FOO_
 3. Am I about to write `const STATUS_* = { ... }` or a `timeAgo`/`truncate` helper?
    → Check utils/ and types/ first. Co-locate with type, not with page.
 
-4. Am I wiring useState + Modal + try/catch + addBanner + refetch?
+4. Am I wiring Dialog + try/catch + notify + refetch?
    → That's a hook. Extract useConfirmable<Verb> or useMutationWithFeedback.
 
 5. Any user-facing string I'm typing inline?
@@ -287,7 +289,7 @@ New resource cost: write `FooRow`, `FooHero`, `FooEmptyState`, `FOO_COPY`, `FOO_
 | `function timeAgo` declared in a route | Import from `utils/format` |
 | `STATUS_LABELS` / `STATUS_CLASS` maps in a route | Co-locate with type as `*_META` |
 | `useState<string \| null>(null)` named `deleteTargetId` | Use `useConfirmableDelete` |
-| `addBanner({ type: "success", ... })` + `addBanner({ type: "error", ... })` around a mutation | Use `useMutationWithFeedback` wrapper |
+| `notify({ status: "success", ... })` + `notify({ status: "error", ... })` around a mutation | Use `useMutationWithFeedback` wrapper |
 | Two route files with diff < 30% of lines | Extract shared shell before merging the second |
 | Hardcoded string referring to resource noun (`"post"`, `"blog"`) inside a generic component | Pass via `copy` / `labels` prop |
 | `FILTER_KEYS.map(f => f.id === "x" ? ... : f.id === "y" ? ...)` | `useFilterCounts` / `countBy` lookup |
@@ -299,7 +301,7 @@ New resource cost: write `FooRow`, `FooHero`, `FooEmptyState`, `FOO_COPY`, `FOO_
 - **Config-blob shells.** A `<ResourceListPage config={...}>` with 40 config keys is worse than duplication. Prefer slot/children props: the shell receives React elements, not primitive config for everything.
 - **Extracting too aggressively into generic components.** `<ResourceListPage>` is useful; `<GenericThingWithStuff>` is not. Name by shape (list page, detail page, form page), not by abstraction.
 - **Forgetting Playwright.** Every route change still needs a spec per `frontend-e2e-rules` skill — extracting to primitives does not exempt you.
-- **Skipping design-token rules.** Extracted primitives still obey `webapp/docs/DESIGN-GUIDELINES.md` — no hardcoded colors/spaces in the new shells either.
+- **Skipping design-token rules.** Extracted primitives still obey `frontend-design-rules` and `frontend-style-rules` — `--q-*` tokens only.
 
 ## Implementation Order When Refactoring an Existing Page
 
@@ -315,6 +317,8 @@ Each step is independently mergeable and keeps Playwright green.
 ## Related Skills & Docs
 
 - `frontend-e2e-rules` — every UI change still ships a spec
+- `quiet-app` — the screen-layout procedure (read order, laying out a screen, finish checks)
+- `webapp/docs/TEMPLATE-PATTERNS.md` — the template's page patterns (`AsyncList`, gating, `useNotify`)
 - `webapp/docs/PATTERNS.md` — page rhythm (shell, heading, section, empty state)
 - `webapp/docs/PAGE-TEMPLATES.md` — the templates this skill wants to *replace* with composable primitives
 - `webapp/docs/COMPONENT-PATTERNS.md` — React 19 patterns (ref as prop, `<Context>` directly, `useActionState`)

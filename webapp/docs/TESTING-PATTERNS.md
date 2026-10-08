@@ -196,7 +196,7 @@ test.describe('Items feature', () => {
 
 ### Status-code coverage — table-driven (REQUIRED)
 
-Every API call a page/component makes must be covered with a table-driven test iterating over every status code the endpoint can return. The source of truth is the backend handler's `handleError` mapping plus success codes. Invoke the `playwright-coverage-check` skill for the full rule set.
+Every API call a page/component makes must be covered with a table-driven test iterating over every status code the endpoint can return. The source of truth is the backend handler's `handleError` mapping plus success codes. Invoke the `frontend-e2e-rules` skill for the full rule set.
 
 ```typescript
 // e2e/items.spec.ts

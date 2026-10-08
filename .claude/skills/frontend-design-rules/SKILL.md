@@ -1,59 +1,60 @@
 ---
 name: frontend-design-rules
-description: Use when building, styling, theming, or reviewing any webapp UI — page, component, SCSS module, or design review. The universal design core — vertical rhythm, spacing ladder, type and weight ladders, colour roles, density, scarcity budget.
+description: Use when building, styling, theming, or reviewing any webapp UI — page, component, SCSS module, or design review. The universal quiet design core — density, job-token gaps, the eight type roles, ink/grey/molten colour roles, one lead per page, component-first.
 ---
 
 # Frontend Design Rules (webapp)
 
-Seventeen rules, one line each. Follow a rule's pointer when you need the worked example, not
-before — the tables and CSS stay in the docs.
+The webapp is built on quiet (`@optimusfoundry/quiet`): its components and `--q-*` tokens are the
+whole vocabulary. One line per rule; open a pointer for the table, not before. The procedure (read
+order, laying out a screen, finish checks) is `quiet-app`; these are the citable rules and
+template deltas. `quiet:<path>` is a file in `webapp/node_modules/@optimusfoundry/quiet/`. Props
+come from the installed `.d.ts`.
 
-- **J-1** Five vertical gaps — 4/12/24/56/80px (`--space-1/3/5/10/12`); never a sixth.
-  → `docs/design-docs/12-judgment.md#j-1-vertical-rhythm--the-exact-gaps-between-specific-pairs`
-- **J-2** `fg1` display, `fg2` body, `fg3` muted, `fg4` subtle; headings ≥22px `fg1`, smaller `fg2`
-  never `fg1`; ≤2 colours per paragraph.
-  → `docs/design-docs/12-judgment.md#j-2-color-roles--which---fg-goes-where`
-- **J-3** ≤4 type sizes per page (title, section head, card title, body); product page titles cap at
-  22–24px.
-  → `docs/design-docs/12-judgment.md#j-3-type-sizing--which-size-goes-where-and-what-can-share-a-page`
-- **J-5** Breathable (24px card padding) or compact (16px) — never mixed on one surface; a tight row
-  loses a column, not padding.
-  → `docs/design-docs/12-judgment.md#j-5-density--cards-rows-and-breathable-vs-compact`
-- **J-6** One `--accent` and one `.btn.xl` per page, one `.btn.primary` per visible region, one
-  eyebrow per section.
-  → `docs/design-docs/12-judgment.md#j-6-the-one-of-rules`
-- **T-1** Two type roles — `--font-family-sans` / `--font-family-mono`; mono is a structural override
-  (eyebrows, counts, timestamps, code, kbd), never buttons, body, headings, or in-text numbers.
-  Never hardcode a family name.
-  → `docs/design-docs/19-typography-decisions.md#t-1-the-two-family-rule`
-- **T-4** Italic emphasis is retired — shift colour or weight; `<em>` italic for real semantics only.
-  → `docs/design-docs/19-typography-decisions.md#t-4-the-italic-moment--retired`
-- **T-5** Stats are sans, never mono — 28px default, 32px hero, `tnum` always on.
-  → `docs/design-docs/19-typography-decisions.md#t-5-stat-numerals`
-- **T-6** Body 15px in UI, 16px in prose; prose max-width 68ch.
-  → `docs/design-docs/19-typography-decisions.md#t-6-long-form-prose-geist-serif-flavored`
-- **T-11** 400 body, 500 buttons/labels/nav/page titles, 600 card/modal titles, 700 almost never.
-  → `docs/design-docs/19-typography-decisions.md#t-11-weight-ladder`
-- **SP-1** Off-ladder values (18/20/36/72px) are always wrong; prefer one rung over two; never
+- **J-1** Every gap is a job token — inline, stack, field, card-pad, card-gap, block, section,
+  page-x (`--q-space-*`, `--q-grid-gutter`); never a raw step, a margin on a quiet component, or
+  marketing gaps.
+  → `quiet:docs/guidelines/spacing.md#job-tokens`
+- **J-2** Text by role — `--q-fg` headings and values, `--q-fg-body` paragraphs, `--q-fg-muted`
+  secondary, `--q-fg-subtle` decoration only (fails AA); never a colour for emphasis.
+  → `quiet:docs/guidelines/foundations.md#the-ladder`
+- **J-3** Eight type roles, each set by a component prop (`PageHero`, `SectionHeader`, `Text`,
+  `StatCard`), never a hand-set `font-size`; level follows the outline, size follows the role;
+  emphasis is the `accent` italic, never bold body.
+  → `quiet:docs/guidelines/typography.md#roles-app`
+- **J-5** Products render `density="app"` (`compact` for dense admin), one density per surface; no
+  marketing gaps or sizes in the app.
+  → `quiet:docs/guidelines/foundations.md#density`
+- **J-6** One primary `Button` (ink) per view and one eyebrow per header; molten `--q-accent` stays
+  punctuation — the title period, one status mark.
+  → `quiet:docs/guidelines/foundations.md#the-molten-rule`
+- **T-1** Two families, `--q-font-sans` / `--q-font-mono`; mono for labels, IDs, timestamps, code,
+  never sentences. A screen never names a family.
+  → `quiet:docs/guidelines/typography.md#measure-numbers-wrapping`
+- **T-5** Metrics are `StatCard`; numbers compared in columns are tabular and right-aligned
+  (`Table` `columns[].align`).
+- **T-6** Body 15, small 13; measure ≤ `--q-w-form` (640), reading column ≤ `--q-w-content` (1040).
+- **T-11** Weights 400 body, 500 buttons, 600 section and card titles, 700 page title and metric —
+  set by the component, never bold body as a heading.
+  → `quiet:docs/guidelines/typography.md#the-scale`
+- **SP-1** Screens use job tokens only; sub-8 steps and 20 live inside components; never
   `calc()`-divide a token.
-  → `docs/design-docs/20-spacing-decisions.md#sp-1-the-scale-you-actually-use`
-- **SP-5** Page canonicals via `<PageShell>` — 24px sides, 56px top, 80px bottom, 56px section gap,
-  1280px max-width.
-  → `docs/design-docs/20-spacing-decisions.md#sp-5-page-level-spacing--the-canonical-numbers`
-- **SP-7** Gaps shrink as you nest (56/24/20/12–16/8/4); never reverse it — needing 20 inside 16
-  means the outer gap is wrong.
-  → `docs/design-docs/20-spacing-decisions.md#sp-7-stack-gap-ladder-vertical-rhythm-inside-a-single-column`
+  → `quiet:docs/guidelines/spacing.md#the-scale`
+- **SP-5** The shell owns page canonicals: Layout's `<main>` pads `--q-space-section` top and
+  bottom and `--q-space-page-x` on the sides, max `--q-w-max` (1280). A route inside sets none
+  and takes no `PageShell`; only public pages outside the shell use `PageShell narrow as="main"`.
+  → `quiet:docs/guidelines/layouts.md#app-shell`
+- **SP-7** Gaps step up with structure — inline < stack < field < block < section; never a bigger
+  gap inside a smaller one.
+  → `quiet:docs/guidelines/spacing.md#what-goes-between-what`
 - **FC-1** No barrel exports — no `index.ts`; import from source.
-  → `docs/design-docs/17-implementation.md#i-3-file-organization`
 - **FC-2** No `any`; TS strict.
-  → `docs/design-docs/17-implementation.md#i-17-implementation-checklist`
 - **FC-3** SCSS Modules; no inline styles.
-  → `webapp/docs/DESIGN-GUIDELINES.md#use-scss-modules-not-style-props`
-- **FC-4** Tokens only; no hex or px.
-  → `webapp/docs/DESIGN-GUIDELINES.md#use-design-tokens-never-hardcode`
+- **FC-4** Tokens only; no hex or px (`--q-*`).
+  → `quiet:docs/guidelines/foundations.md`
+- **FC-5** Template helpers, not raw parts: icons through `AppIcon`, toasts through `useNotify`,
+  in-app links through `linkComponent` (`RouterLink`). A missing primitive is built in
+  `webapp/src/components` on `--q-*` tokens and flagged for quiet.
+  → `quiet:docs/guidelines/components.md#never-reinvent`
 
-Full condensed ruleset per topic: `docs/design-docs/quickref/{12,19,20}-*.md` (index:
-`docs/design-docs/QUICKREF.md`).
-
-Cite the rule ID when you flag a violation — `J-1: six distinct gaps on one page` is reviewable;
-"spacing feels off" is not.
+Cite the rule ID when you flag a violation — `J-1: a raw 20px gap`.

@@ -105,9 +105,9 @@ These agents read a doc then execute a scoped task, each touching isolated files
 | `backend-integration-test-writer` | `docs/TESTING.md` | Write real-HTTP integration tests |
 | `backend-kafka-integration` | `docs/KAFKA_SETUP.md`, `docs/ARCHITECTURE.md` | Add Kafka producer + consumer/worker |
 | `backend-test-scaffold` | `docs/TESTING.md` | Determine and generate tests at all levels |
-| `frontend-style-checker` | `docs/design-docs/quickref/` subset | Validate SCSS against design tokens |
+| `frontend-style-checker` | quiet token docs (`quiet:DESIGN.md`, `dist/quiet.css`) + `webapp/docs/` supplement | Validate SCSS against quiet's `--q-*` tokens |
 | `frontend-test-fixer` | `webapp/docs/REACT19-PATTERNS.md`, `webapp/docs/TESTING-PATTERNS.md` | Fix failing frontend tests |
-| `frontend-theme-designer` | `tokens/_colors.scss`, one reference theme file, `12-judgment.md` | Create or refine a `themes/_<name>.scss` OKLCH theme — contrast-verified (APCA + WCAG), checked against an anti-generic checklist. One instance per theme file, safe to batch. For a sweep across many themes, stage the dispatch deliberately instead of one flat parallel batch (no cross-exposure between sibling revisions, independent critique lenses) — see the agent's own "Scaling to many themes" |
+| `frontend-theme-designer` | `quiet:DESIGN.md#product-themes`, the template's [migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md) §3.2 | Create or refine a quiet product theme — a `[data-theme]` light and dark pair in `@layer q.themes`, registered with `defineThemes` — contrast computed (APCA + WCAG AA), checked against an anti-generic checklist. growth-tools ships quiet's built-in `foundry` / `foundry-dark` (no product theme) as of 2026-10-08. One instance per theme pair, safe to batch. For a sweep across many themes, stage the dispatch deliberately instead of one flat parallel batch (no cross-exposure between sibling revisions, independent critique lenses) — see the agent's own "Scaling to many themes" |
 | `prod-db-query` | — | Run read-only SQL against prod RDS via SSM port-forward (dispatched by prod-debug) |
 | `prod-logs` | — | Filter CloudWatch log events from `api-logs` (dispatched by prod-debug) |
 | `pre-commit` | — | Run CI checks, auto-fix build/lint issues |
@@ -125,17 +125,17 @@ These agents coordinate other agents or need broad codebase understanding, so pa
 |-------|------|
 | `feature-manager` | Engineering manager: PRD → tech spec (`plan-writer` + `plan-critic`) → build (`backend-supervisor` then `frontend-supervisor`). Owns one feature end-to-end |
 | `backend-supervisor` | Execute a backend plan end-to-end, tests-first: scaffold stubs → failing tests from contracts → implement to green (haiku tier + escalation) → gates → pre-commit → commit |
-| `frontend-supervisor` | Execute a frontend plan end-to-end, tests-first: MSW handlers + red specs from contracts → implement to green → gates/browser-verify → pre-commit → commit |
+| `frontend-supervisor` | Execute a frontend plan end-to-end, tests-first: MSW handlers + specs from contracts → implement against them → build + lint + lint:scss once → commit (Playwright is the user's manual step); for a UI change the measured check is the `quiet-app` skill's "Before you finish": `npx quiet-audit <url> --width 1280,390 --theme foundry,foundry-dark` per migrated route |
 | `plan-writer` | Orchestrate a **code-free** tech plan from a PRD path: decide the shared contract, fan out `plan-researcher` ×3, synthesize + flip the epic to Planned (opus for large features) |
 | `code-reviewer` | Full-stack code review across Go backend and React frontend |
 | `backend-code-reviewer` | Go backend pattern validation |
-| `frontend-code-reviewer` | React/TypeScript/design-system pattern validation |
+| `frontend-code-reviewer` | React 19 / TypeScript review of components on quiet (rule skills + `quiet:docs/guidelines/checklist.md`; the `quiet-app` skill for layout findings) |
 | `backend-debug-helper` | Trace execution paths, identify root causes |
 | `prod-debug` | Investigate production errors and anomalous DB values (SSM + CloudWatch) |
 | `backend-go-specialist` | Idiomatic Go guidance, architectural patterns |
 | `pr-prep` | Full pre-PR checklist across backend + frontend |
-| `frontend-page-builder` | Scaffold new routes, pages, tabs, and forms |
-| `frontend-component-builder` | Build React 19 design system components |
+| `frontend-page-builder` | Scaffold new routes, pages, tabs, and forms on quiet (preloads the `quiet-app` skill + quiet guidelines) |
+| `frontend-component-builder` | Build React 19 components on quiet (preloads the `quiet-app` skill + quiet guidelines) |
 | `frontend-e2e-test-writer` | Write exhaustive Playwright E2E tests |
 | `plan-critic` | Adversarially review a tech plan before build → GO/NEEDS-WORK (2 grouped checkers; 1 revision round max — residual findings ride as known-risks) |
 | `test-auditor` | Audit test quality + coverage (`audit-checker`s over batches of ~3 test files) |
@@ -281,24 +281,7 @@ Backend worker agents read from `base-server/docs/`:
 | `HANDLERS.md` | Request/response structs, handler/processor templates, routing |
 | `KAFKA_SETUP.md` | Producer, consumer/worker, bootstrap integration |
 
-Frontend agents read from `docs/design-docs/` (authoritative UI kit — read first for any UI change) and `webapp/docs/`:
-
-**`docs/design-docs/QUICKREF.md` — read this first, instead of the individual numbered docs below.** It's an index into `docs/design-docs/quickref/*.md` — a condensed, rules-only digest of all 22 numbered docs plus `webapp/docs/DESIGN-GUIDELINES.md`, split one small file per topic (1-4KB each) so an agent reads only what its task needs, not the whole corpus. Builder/checker/reviewer agents (`frontend-component-builder`, `frontend-page-builder`, `frontend-style-checker`, `frontend-code-reviewer`, `frontend-supervisor`, `pre-commit`) each have their own subset of `quickref/*.md` files named in their prompt — see each agent's file for the exact list. This exists because the source docs were being independently re-read in full by every dispatched agent, uncached across the fan-out. Fall back to a specific numbered source doc (cited inline via its rule IDs, e.g. `J-3.3`, `T-5.2`, `SP-9.1`) only when you need the full rationale or worked examples behind a rule. If you edit a source `design-docs/NN-*.md` file, update the matching `quickref/NN-*.md` file in the same change — condensed docs drift from source silently otherwise.
-
-**`docs/design-docs/` (numbered source docs — read in order, for deep-dives only):**
-
-| Doc | Contents |
-|-----|----------|
-| `00-overview.md` | Kit philosophy, 5 non-negotiable rules, HTML skeleton, reading order |
-| `01-typography.md` → `09-data-display.md` | Primitive catalogs: type, color, layout, buttons, forms, feedback, nav, overlays, data |
-| `10-feature-kit.md`, `11-page-composition.md` | Product-specific composites; how to assemble a page |
-| `12-judgment.md` | **Prescriptive decisions: pair-spacing, color roles, one-of rules, anti-patterns, 60-sec review** |
-| `13-recipes.md`, `14-composition.md`, `15-states.md` | Cookbook, macro rhythm + archetypes, state inventory |
-| `16-accessibility.md`, `17-implementation.md` | WCAG AA baseline; CSS scoping, React patterns, theming |
-| `18-review.md` | 100-pt PR rubric — the template to paste into PR descriptions |
-| `19-typography-decisions.md` | **Font/size/color/weight decision flowchart + role table** |
-| `20-spacing-decisions.md` | **Spacing-token decision flowchart + rhythm pairs + stack ladder** |
-| `21-page-layout-decisions.md` | PageShell/Grid.Item conventions, tab-shell rule, hairline stat grids |
+Frontend agents read quiet's docs in `webapp/node_modules/@optimusfoundry/quiet/` (README, DESIGN.md, docs/guidelines/), the repo copy of quiet's `quiet-app` skill (`.claude/skills/quiet-app/`) and the template supplement in `webapp/docs/`. quiet's docs are cited as `quiet:<package-root path>#<anchor>` (e.g. `quiet:docs/guidelines/spacing.md#job-tokens`) and exist only after `npm install` in `webapp/`. growth-tools' product screens still import Proto (`@optimusfoundry/proto-design-system`, frozen) until CH-001 (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) rewrites them; new UI is built on quiet.
 
 **`webapp/docs/`:**
 
@@ -307,17 +290,16 @@ Frontend agents read from `docs/design-docs/` (authoritative UI kit — read fir
 | `ARCHITECTURE.md` | Feature module structure, routes, hooks, API layer, contexts |
 | `COMPONENT-PATTERNS.md` | React 19 patterns, SCSS template, Storybook template |
 | `REACT19-PATTERNS.md` | New APIs, deprecated patterns, testing patterns |
-| `DESIGN-GUIDELINES.md` | Component reference (50+ components), design token tables — condensed into `QUICKREF.md` |
 | `PATTERNS.md` | Page composition: shell, heading, section, empty state rhythm |
 | `PAGE-TEMPLATES.md` | Copy-paste scaffolds for 4 page shapes |
+| `TEMPLATE-PATTERNS.md` | Template-only patterns quiet doesn't cover: app shell, AsyncList, gating, useNotify, AppIcon, RouterLink |
 | `TESTING-PATTERNS.md` | Vitest, RTL, Playwright, MSW patterns |
 
 iOS agents (see [iOS Roster](#ios-roster-native-track) above) read from `ios/docs/engineering/` (how
 it's **built**) and, for "how it **looks**", root `CLAUDE.md`'s "five non-negotiable rules" plus the
 named fidelity target in `v2/mockups/`. There is no separate numbered design-docs corpus for iOS — the
 old J-rule-numbered one (Tokyo/v1) was retired once the Swift app finished migrating to v2 content; see
-root `CLAUDE.md`'s "Design-system layout". (The web `docs/design-docs/` above is the frontend/webapp's
-own, unrelated corpus.)
+root `CLAUDE.md`'s "Design-system layout".
 
 | Doc | Contents |
 |-----|----------|

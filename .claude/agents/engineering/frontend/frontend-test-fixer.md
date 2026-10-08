@@ -1,8 +1,9 @@
 ---
 name: frontend-test-fixer
-description: Fixes failing frontend tests. Use PROACTIVELY when tests fail or after code changes. Diagnoses root causes, migrates deprecated React 19 patterns, fixes async issues.
+description: Fixes failing Playwright specs the user reported (the user runs Playwright manually). Diagnoses root causes, migrates deprecated React 19 patterns, fixes async issues. Runs only the failing spec, never the whole suite.
 tools: Read, Write, Edit, Glob, Grep, Bash, LSP, Skill
 model: sonnet
+color: cyan
 ---
 
 ## Tool Loading
@@ -22,9 +23,13 @@ You diagnose test failures and fix root causes — not symptoms. You never delet
 
 ### Step 1: Identify Failures
 
+Start from the failure output the user gave you. If you need it again, run only the failing spec:
+
 ```bash
-cd webapp && npm run test 2>&1 | head -100
+cd webapp && npx playwright test e2e/<failing>.spec.ts
 ```
+
+Playwright is the only test runner (there is no `npm run test`); the user runs the full suite, you do not.
 
 ### Step 2: Read the Failing Test
 
@@ -50,8 +55,7 @@ The stack trace gives you a line number in the spec file — spec files in this 
 ### Step 5: Verify
 
 ```bash
-cd webapp && npm run test -- --testPathPattern="<fixed-test>"
-cd webapp && npm run test  # Full suite
+cd webapp && npx playwright test e2e/<fixed>.spec.ts   # the fixed spec only
 ```
 
 ## Common Fixes
@@ -61,9 +65,10 @@ cd webapp && npm run test  # Full suite
 | `Context.Provider is not valid` | Replace `<Ctx.Provider value={...}>` with `<Ctx value={...}>` |
 | `useFormState is not a function` | Replace with `useActionState` from `react` |
 | Async assertion fails immediately | Use `await screen.findByText(...)` or `await waitFor(...)` |
-| Snapshot mismatch after refactor | Run `npm run test -- -u` to update |
 | `forwardRef` deprecation warning | Move `ref` to regular prop |
 | TypeScript error in test | Check `ArrayBuffer` type or add explicit type argument |
+| `locator("output")` finds nothing | toasts are `getByRole("status")` (info, success, warning) or `getByRole("alert")` (error) |
+| Outside-the-dialog query fails while a dialog is open | scope to `getByRole("dialog", { name })`; the page behind a quiet Dialog is `inert` |
 
 ## Rules
 

@@ -8,20 +8,20 @@ Reference for feature module structure, routing, data fetching, API layer, and f
 
 ```
 src/
-├── proto-design-system/  # Design system (50+ components) — do not modify
-│   ├── components/       # UI primitives by category
-│   ├── tokens/           # Design tokens (spacing, colors, etc.)
-│   ├── hooks/            # Design system hooks
-│   └── themes/           # Theme definitions
 ├── features/             # Feature modules (see below)
 ├── routes/               # TanStack Router file-based routes (thin wrappers)
-├── components/           # Shared app-level components (Layout, gating, etc.)
+├── components/           # Shared app-level components (Layout, gating, AppIcon, patterns)
 ├── hooks/                # Shared hooks (used by 2+ features)
 ├── api/                  # fetcher, publicFetcher, transforms, types
 ├── contexts/             # React contexts + providers
-├── config/               # App config (navigation, etc.)
+├── config/               # App config (navigation, tiers)
+├── styles/               # Shared SCSS (_breakpoints.scss)
+├── lib/                  # Non-React helpers (cache, sentry, migrateTheme)
+├── utils/                # Pure helpers (format, timeAgo, trimTrailingPeriod)
 └── types/                # Shared TypeScript types
 ```
+
+The UI kit is the `@optimusfoundry/quiet` package, not a folder in `src/`. Its docs ship in `node_modules/@optimusfoundry/quiet/` (`README.md`, `DESIGN.md`, `docs/guidelines/*.md`). Template-only patterns are in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).
 
 ---
 
@@ -58,11 +58,8 @@ import { memo, useState, useCallback } from "react";
 // 2. Third-party imports
 import { SomeIcon } from "lucide-react";
 
-// 3. Proto design system imports
-import { Card } from "@/proto-design-system/components/layout/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+// 3. quiet (single entry point)
+import { Button, Card, Stack, Text } from "@optimusfoundry/quiet";
 
 // 4. App imports (hooks, contexts, types, utils)
 import { useAuth } from "@/contexts/auth";
@@ -111,7 +108,7 @@ export const ComponentName = memo(function ComponentName({
   ...props
 }: ComponentNameProps) {
   return (
-    <Stack gap="lg" className={styles.root} {...props}>
+    <Stack gap="md" className={styles.root} {...props}>
       ...
     </Stack>
   );
@@ -149,9 +146,9 @@ function RouteComponent() {
 ```tsx
 // src/hooks/use{Action}.ts
 import { useCallback, useEffect, useState } from "react";
-import { type ApiError, fetcher } from "@/api";
+import { type ApiError, fetcher } from "@/api/client";
 import type { SomeType } from "@/types/someType";
-import { toApiError } from "@/utils";
+import { toApiError } from "@/utils/errorHandler";
 
 export const useSomething = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -197,7 +194,6 @@ Hook placement:
 ```
 src/api/
 ├── client.ts       # fetcher() and publicFetcher() — cookie-based auth
-├── index.ts        # Barrel export for api layer (only exception to no-barrel rule)
 ├── transforms/     # API → UI type converters (snake_case → camelCase)
 └── types/          # API response types (snake_case, matching backend)
 ```
@@ -218,8 +214,10 @@ src/api/
 | AuthProvider | `contexts/auth.tsx` | User auth state, login/logout |
 | PersonaProvider | `contexts/persona.tsx` | Role-based nav filtering |
 | TierProvider | `contexts/tier.tsx` | Subscription tier, feature gating |
-| SidebarProvider | `contexts/sidebar.tsx` | Sidebar open/collapsed state |
 | Providers | `contexts/providers.tsx` | Wraps all providers together |
+| AppRoot | `contexts/AppRoot.tsx` | Root wiring (quiet `linkComponent`, the one `Toaster`); also used by Storybook |
+
+Sidebar state comes from quiet's `SidebarProvider` (mobile drawer breakpoint set once, see TEMPLATE-PATTERNS).
 
 ---
 
@@ -251,72 +249,67 @@ The Layout component reads this config via PersonaProvider and renders the sideb
 ## Styling Pattern
 
 - **Always** use CSS Modules: `component.module.scss`
-- **Always** use design tokens: `var(--space-4)`, `var(--color-surface)`, etc.
+- **Always** use quiet tokens: `var(--q-space-2)`, `var(--q-bg)`, etc. Tiers and names are in `node_modules/@optimusfoundry/quiet/DESIGN.md`.
 - **Never** hardcode colors, spacing, or font sizes
 - **Never** use inline styles for layout
+- **Never** write `display: grid` (stylelint bans it); use quiet `Grid` with `Col span`
 
 ```scss
 // component.module.scss
+@use "@/styles/breakpoints" as *;
+
 .root {
-  padding: var(--space-6);
+  padding-inline: var(--q-space-page-x);
 }
 
 .card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  padding: var(--space-4);
+  background: var(--q-bg);
+  border-radius: var(--q-radius-sm);
+  border: 1px solid var(--q-border);
+  padding: var(--q-space-2);
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--q-space-2);
 }
 
-// Responsive layout with tokens
-.layout {
-  display: grid;
-  grid-template-columns: var(--space-64) 1fr;  // 256px sidebar + flexible
-  gap: var(--space-6);
-  padding: var(--space-page);
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+// Responsive rules use the shared mixins
+.aside {
+  @include breakpoint-down(md) {
+    display: none;
   }
 }
 ```
+
+Multi-column layouts compose in JSX:
+
+```tsx
+<Grid columns={12}>
+  <Col span={8}>...</Col>
+  <Col span={4}>...</Col>
+</Grid>
+```
+
+Layouts, grid and spacing rules: `node_modules/@optimusfoundry/quiet/docs/guidelines/` (`layouts.md`, `grid.md`, `spacing.md`).
 
 ---
 
 ## Loading / Error / Empty State Pattern
 
+Lists render these states through `AsyncList` (`@/components/patterns/AsyncList/AsyncList`), never hand-rolled branches in a route; see [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md). Non-list views early-return one state per branch:
+
 ```tsx
-// Loading
-if (loading) {
-  return <Spinner size="lg" label="Loading..." />;
-}
+if (loading) return <Spinner />;
 
-// Error
-if (error) {
-  return <ErrorState message={`Something went wrong: ${error.error}`} />;
-}
-
-// Empty
-if (!data || data.length === 0) {
-  return (
-    <EmptyState
-      icon={<SomeIcon size={48} />}
-      title="No items found"
-      description="Description of what to do"
-      action={<Button>Create New</Button>}
-    />
-  );
-}
+if (error) return <Alert variant="error" title="Something went wrong" />;
 
 return <DataDisplay data={data} />;
 ```
+
+Check `Spinner`, `Alert` and `EmptyState` props in `node_modules/@optimusfoundry/quiet/dist/components/<group>/<Name>.d.ts`.
 
 ---
 
@@ -387,7 +380,7 @@ function UserSettingsPage() {
     <Card>
       <TextField label="Name" value={formData.name}
         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-        errorMessage={errors.name} />
+        error={errors.name} />
       <Button onClick={handleSubmit}>Save</Button>
     </Card>
   );
@@ -402,59 +395,63 @@ Do **not** create `index.ts` files to re-export modules — it slows builds, con
 
 ```typescript
 // ✅ Import directly from source
-import { Button } from '@/proto-design-system/components/primitives/Button';
 import { useAuth } from '@/hooks/useAuth';
 
 // ❌ Never from barrel
-import { Button } from '@/proto-design-system/components/primitives';
 import { useAuth } from '@/hooks';
 ```
 
-Exception: `src/api/index.ts` is intentional.
+No exceptions — import directly from source (e.g. `@/api/client`, `@/api/types/common`). `@optimusfoundry/quiet` is a package with a single entry point, not a barrel of ours; import it as is and never from `dist/` paths.
 
 ---
 
 ## Feature Gating
 
-Two `FeatureGate` variants exist in `src/components/gating/`. Choose based on whether you want to show-disabled or completely hide inaccessible features.
+Access comes from `useFeatureAccess(feature)` (tier from `TierProvider`). Two `FeatureGate` components exist at different paths; pick by whether the feature should show disabled or hide.
 
-### FeatureGate — disabled state with lock badge
+### FeatureGate (gating) — disabled with lock badge
 
 ```tsx
 import { FeatureGate } from "@/components/gating/FeatureGate/component";
 
-// Content appears disabled with a lock badge overlay when feature is unavailable.
-// Lock badge navigates to billing on click.
+// Children render locked; a badge with the required tier links to /billing/plans.
 <FeatureGate feature="webhooks_zapier">
   <WebhooksManager />
 </FeatureGate>
 ```
 
-**Use when:** You want users to see what they're missing (discoverable) but can't access it yet.
+**Use when:** users should see what they're missing and the upgrade path.
 
-### FeatureGateHidden — completely hidden
+### FeatureGate (root) — hide, or swap in a fallback
 
 ```tsx
-import { FeatureGateHidden } from "@/components/gating/FeatureGateHidden/component";
+import { FeatureGate, FeatureGateDisabled } from "@/components/FeatureGate/component";
 
-// Simple hide — nothing shown
-<FeatureGateHidden feature="email_blasts">
+// No access: renders nothing
+<FeatureGate feature="email_blasts">
   <EmailBlastEditor />
-</FeatureGateHidden>
+</FeatureGate>
 
-// With fallback upgrade prompt
-<FeatureGateHidden
+// No access: renders the fallback
+<FeatureGate
   feature="webhooks_zapier"
-  fallback={<UpgradePrompt feature="webhooks_zapier" />}
+  fallback={<Alert variant="info" title="Upgrade to use webhooks" />}
 >
   <WebhooksManager />
-</FeatureGateHidden>
+</FeatureGate>
+
+// No access: children stay visible, marked aria-disabled, with a hover title
+<FeatureGateDisabled feature="tracking_pixels" disabledMessage="Upgrade to Team">
+  <TrackingPixelSection />
+</FeatureGateDisabled>
 ```
 
-**Use when:** The feature doesn't exist in lower tiers (not just restricted), or you want a clean UI without disabled sections.
+**Use when:** the feature is tier-exclusive, or you want a clean UI without disabled sections.
 
-| Variant | Behavior | Use Case |
-|---------|----------|----------|
-| `FeatureGate` | Disabled with lock badge | Show restricted features with upgrade path |
-| `FeatureGateHidden` | Completely hidden | Hide tier-exclusive features |
-| `FeatureGateDisabled` (exported from both) | Disabled with hover tooltip | Form sections that require upgrade |
+| Component | Import | Behavior | Use case |
+|-----------|--------|----------|----------|
+| `FeatureGate` | `@/components/gating/FeatureGate/component` | Disabled with lock badge | Show restricted features with upgrade path |
+| `FeatureGate` | `@/components/FeatureGate/component` | Hidden, or `fallback` when no access | Hide tier-exclusive features |
+| `FeatureGateDisabled` | `@/components/FeatureGate/component` | `aria-disabled` with hover title | Form sections that require upgrade |
+
+Other gating pieces (`GatedEmptyState`, `LimitUpgradeModal`, `useLimitGate`) live under `@/components/gating/`; see [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).

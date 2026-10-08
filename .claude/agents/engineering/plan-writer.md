@@ -176,7 +176,7 @@ ErrConnectionNotFound→404. **Processor interface:** the four store signatures 
 `webapp/src/routes/connections.tsx`   **Depends-on:** B2
 **TS interface:** PlatformConnection { id, platform, connectedAt } (matches endpoint response).
 **Hook signature:** `usePlatformConnections(): { connections, isLoading, error, refetch }`.
-**Components (import paths):** Stack, Text, Button, EmptyState from `@/proto-design-system/*`.
+**Components (import paths):** Stack, Text, Button, EmptyState from `@optimusfoundry/quiet`.
 **Page template:** list template. **E2E:** endpoint table + interaction table + states
 (loading, empty, populated, 401, 500, 409).
 **Selector contract (specs are written against these BEFORE the UI exists; builders must use them

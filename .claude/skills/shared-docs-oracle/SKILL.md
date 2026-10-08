@@ -1,6 +1,6 @@
 ---
 name: shared-docs-oracle
-description: Look up the authoritative source behind a house rule, in either doc tree. Use when you hold a qualified rule ID (`<skill-name>:<RULE-ID>`, e.g. `backend-store-rules:S-3`, `frontend-page-rules:S-3`) and need the reasoning, the exception, the exact constant or the worked example the one-line rule had to drop — or when you have a conventions question ("what weight for a card title?", "does a list endpoint return `[]` or `null`?") and need the answer from `docs/design-docs/` or `base-server/docs/` rather than from memory. Answers from source, reconciled against the condensed tier, and names any text it supersedes. Read-only — it returns an answer, never an edit.
+description: Look up the authoritative source behind a house rule, in either doc tree. Use when you hold a qualified rule ID (`<skill-name>:<RULE-ID>`, e.g. `backend-store-rules:S-3`, `frontend-page-rules:S-3`) and need the reasoning, the exception, the exact constant or the worked example the one-line rule had to drop — or when you have a conventions question ("what weight for a card title?", "does a list endpoint return `[]` or `null`?") and need the answer from `webapp/docs/`, quiet's docs (`webapp/node_modules/@optimusfoundry/quiet/`) or `base-server/docs/` rather than from memory. Answers from source, reconciled against the one-line rule, and names any text it supersedes. Read-only — it returns an answer, never an edit.
 context: fork
 agent: code-explorer
 ---
@@ -31,7 +31,7 @@ that the ID is unqualified, list *every* skill declaring it, and stop:
 ```
 S-3 is unqualified. Declared by:
   backend-store-rules:S-3  — nil slices: `make([]T, 0)`, never `var xs []T`
-  frontend-page-rules:S-3  — the three empty states
+  frontend-page-rules:S-3  — two empties: nothing yet vs filtered
 Re-ask with one of those.
 ```
 
@@ -40,7 +40,7 @@ this is worth a round trip: a silent pick is **indistinguishable from a correct 
 gets a confident, correctly-formatted rule with nothing marking it as one of two candidates, so a
 wrong-stack rule reviews exactly like a right one. Prefixes genuinely collide — `A-*` is Architecture
 on the backend and Accessibility on the frontend; `S-*` is Store and States; `J-*` is split across
-three frontend skills, so a prefix does not imply an owner even within one stack.
+two frontend skills, so a prefix does not imply an owner even within one stack.
 
 **Neither input is a rejection too.** Invoked with no qualified ID and no question, reply that you
 received no input, name the two accepted forms, and stop. Do not improvise a question, do not
@@ -50,17 +50,27 @@ indistinguishable from a lookup they requested.
 
 ## The corpus
 
-**Frontend — three tiers.**
+**Frontend — two tiers plus an external reference.** The webapp runs on the quiet design system;
+quiet's own docs are the design-system source, and the repo keeps only what quiet does not cover.
 
-| Tier | Location | Size | Role |
-|---|---|---|---|
-| Rules | `.claude/skills/frontend-*-rules/SKILL.md` | ~3-4 KB each | the one-line rule + its `→` pointer |
-| Digest | `docs/design-docs/quickref/` — 23 files, 78,766 B | 1-4 KB each | condensed, rules-only, **already Fraunces-corrected** |
-| Source | `docs/design-docs/` — 22 numbered files, 222,663 B | up to 20 KB | rationale, worked examples, exact constants |
+| Tier | Location | Role |
+|---|---|---|
+| Rules | `.claude/skills/frontend-*-rules/SKILL.md`, plus the `quiet-app` skill in `.claude/skills/quiet-app/` (quiet's own, copied unchanged) | the one-line rule + its `→` pointer or `quiet:` citation |
+| Template supplement | `webapp/docs/*.md` (committed) | template-only patterns: `AsyncList`, gating, `useNotify`, routes, the layout supplement in `TEMPLATE-PATTERNS.md` |
+| quiet's docs | `webapp/node_modules/@optimusfoundry/quiet/`: `README.md`, `DESIGN.md`, `docs/guidelines/*.md`, `skills/quiet-app/SKILL.md` | components, tokens, type, spacing, layouts, accessibility baseline; present only after `npm install` |
 
-`docs/design-docs/QUICKREF.md` is the index into the digest tier. Its Files table maps each topic to
-its owning skill and marks `lazy` topics (no skill owns them). **Read QUICKREF.md first** — its
-"Ground truth" paragraph is the reconciliation statement you arbitrate with.
+**Two citation forms.** A `→ path#anchor` pointer targets a committed repo file only
+(`webapp/docs/<FILE>.md#anchor` or a `.claude/skills/...` file). quiet's docs are cited as prose,
+`quiet:<package-root-relative path>#<anchor>`, with the full path and never after a `→`:
+`quiet:docs/guidelines/spacing.md#job-tokens`, `quiet:DESIGN.md#<anchor>`. Resolve a `quiet:` path
+in this order:
+
+1. `webapp/node_modules/@optimusfoundry/quiet/<path>` (after `npm install` in `webapp/`).
+2. The sibling checkout `~/Workspaces/quiet/<path>`, when present. Say you used it: its working tree
+   can be ahead of the pinned version.
+
+If neither exists, say **"quiet docs not installed (run `npm install` in `webapp/`)"** and answer
+from the template supplement only. Never answer a quiet question from memory.
 
 **Backend — two tiers. There is no digest.**
 
@@ -84,13 +94,11 @@ perform. Silence there reads as "checked and agreed", which would be a fabricati
    canonical shape is `- **<ID>** <text> → \`<doc>#<anchor>\``. **The pointer often wraps onto the
    following continuation line** (indented `  → \`…\``) — read the bullet *and* the line after it, or
    you will conclude a rule has no pointer when it does.
-2. **Follow the pointer** to `<doc>#<anchor>` and read **that section**, not the whole file.
-   `12-judgment.md` alone is 20,833 B; anchor-scoped reading is what keeps this bounded.
-3. **Frontend only — cross-check the digest.** Open the matching `docs/design-docs/quickref/NN-*.md`
-   for the same `NN`. Apply the authority table below to any disagreement.
-   **Backend — skip this step and say you skipped it**; there is nothing to cross-check against.
-4. **Answer from source**, corrected where the authority table says the source is stale, naming every
-   disagreement you found.
+2. **Follow the pointer or citation** to `<doc>#<anchor>` (a `quiet:` citation by the resolution
+   order above) and read **that section**, not the whole file; anchor-scoped reading is what keeps
+   this bounded.
+3. **Answer from source**, applying the authority table below, and name every disagreement you
+   found between the one-line rule and the doc.
 
 If the pointer is missing, broken, or aims somewhere the rule doesn't describe: say so explicitly,
 then fall back to searching the tree for the rule's subject. A stale pointer is itself a finding
@@ -103,31 +111,11 @@ forwarding one.
 
 | Question is about | Winner | Over |
 |---|---|---|
-| **Type** — font family, size, weight, letter-spacing, line-height, the retired serif | `01-typography.md` and `19-typography-decisions.md` | **every** other numbered doc, without exception |
-| **Type**, where digest and source disagree | `docs/design-docs/quickref/NN-*.md` | the numbered source doc |
-| Everything else | the numbered source doc | the digest (the digest is a condensation and drops exceptions) |
+| **The design system** — components, tokens, type, spacing, layouts, the accessibility baseline | quiet's docs (`README.md`, `DESIGN.md`, `docs/guidelines/*.md`, the `quiet-app` skill) | the one-line rule, and any `webapp/docs/` text that restates them |
+| **Template-only patterns** — `AsyncList`, gating, `useNotify`, routes, the layout supplement in `TEMPLATE-PATTERNS.md` | `webapp/docs/` | the one-line rule |
 
-**Six source docs still carry live, retired Fraunces-serif prescriptions.** They were re-scoped and
-re-verified 2026-07-25 and are named in `00-overview.md`'s migration note:
-
-- `02-colors.md`
-- `10-feature-kit.md`
-- `11-page-composition.md`
-- `14-composition.md`
-- `15-states.md`
-- `20-spacing-decisions.md`
-
-Older docs may additionally show 36-88px display sizes and the retired warm-white / indigo / amber
-editorial palette. The ground truth is a **two-role** system — `--font-family-sans` and
-`--font-family-mono`, house default Geist + Geist Mono, with an individual theme free to rebind both
-roles to its own researched pairing. `--font-family-display` and `--font-family-serif` still resolve,
-as no-op aliases of `--font-family-sans`, so legacy components don't break — a doc citing them is
-describing an alias, not a live serif.
-
-`QUICKREF.md` states the digest **already applies that correction everywhere**. So on type, where the
-digest and one of those six disagree, the digest is right and the source is stale. Report the
-resolution *and* the superseded text — a caller who later reads the source doc directly must
-recognise what they are looking at.
+Where a skill one-liner disagrees with either, the doc wins and the answer names the stale rule as a
+finding (in **Supersedes.**), so the caller can get the rule fixed.
 
 ## Answer format
 
@@ -138,10 +126,10 @@ recognise what they are looking at.
 
 **From.** `<file>` § <heading>   (rule line: `<skill>/SKILL.md:<lineno>`)
 
-**Supersedes.** `<file>` § <heading> still says "<the stale text>" — retired, see
-`00-overview.md` migration note.        ← omit this block entirely when nothing is superseded
+**Supersedes.** `<file or rule>` still says "<the stale text>" — the doc above wins; report it
+as a finding.        ← omit this block entirely when nothing is superseded
 
-**Tree.** frontend, three-tier, reconciled against `quickref/NN-*.md`
+**Tree.** frontend, rules + template supplement + quiet docs
           — or — backend, two-tier, no digest tier exists for this tree
 ```
 
@@ -158,8 +146,8 @@ your caller is mid-task and did not ask for a tour of the corpus.
   propagates into plans and tickets and is then near-impossible to trace back.
 - **When a question resolves to no rule, say so.** Do not improvise one from adjacent prose, and do
   not upgrade a suggestion into a rule. Name the nearest sections you did find and let the caller
-  judge: *"No rule covers this. The closest material is `13-recipes.md` § Card rows and
-  `12-judgment.md` § J-3 pair spacing, neither of which prescribes X."* An honest miss is useful; an
+  judge: *"No rule covers this. The closest material is `quiet:docs/guidelines/spacing.md#job-tokens` and
+  `webapp/docs/A11Y-PATTERNS.md`, neither of which prescribes X."* An honest miss is useful; an
   invented rule is worse than silence, because it will be followed.
 - **Never guess across a collision.** Covered above, and it is the failure mode this skill's
   addressing form exists to prevent.

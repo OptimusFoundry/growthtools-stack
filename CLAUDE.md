@@ -7,7 +7,7 @@ AI-powered social media management platform.
 ```
 growth-tools/
 ├── base-server/    # Go backend (API, auth, billing, store)
-├── webapp/         # React frontend (Vite, TanStack Router, Proto Design System)
+├── webapp/         # React frontend (Vite, TanStack Router, quiet design system)
 ├── docs/           # Product docs (PRD, tracker, platform API specs)
 └── .claude/        # Agent configs, settings, and dispatch guide
 ```
@@ -16,8 +16,8 @@ growth-tools/
 
 - **Go backend conventions:** [base-server/CLAUDE.md](base-server/CLAUDE.md)
 - **React frontend conventions:** [webapp/CLAUDE.md](webapp/CLAUDE.md)
-- **UI kit design language (authoritative for any frontend change):** [docs/design-docs/](docs/design-docs/) — editorial serif-forward design system (Fraunces + Geist). Read `00-overview.md` first, then the numbered docs in order. `12-judgment.md`, `19-typography-decisions.md`, and `20-spacing-decisions.md` are the prescriptive decision guides.
-- **Component reference & design tokens:** [webapp/docs/DESIGN-GUIDELINES.md](webapp/docs/DESIGN-GUIDELINES.md)
+- **UI design language & component reference (authoritative for any frontend change):** quiet (`@optimusfoundry/quiet`) ships its own docs at `webapp/node_modules/@optimusfoundry/quiet/README.md`, `DESIGN.md` and `docs/guidelines/` (present after `npm install` in `webapp/`); the `quiet-app` skill is the procedure for laying out a screen. The app ships quiet's built-in `foundry` / `foundry-dark` themes with a light/dark toggle — no theme picker, no product theme. Template-only patterns (app shell, `AsyncList`, gating, `useNotify`, `AppIcon`, `RouterLink`) are in [webapp/docs/TEMPLATE-PATTERNS.md](webapp/docs/TEMPLATE-PATTERNS.md).
+- **Proto → quiet migration (in progress):** the app shell, providers and shared template components are on quiet; the product screens (`components/create-post`, `features/{account,posts,blog,media,analytics,admin}`, their routes) still import Proto (`@optimusfoundry/proto-design-system`, frozen) until CH-001 — [brief](docs/briefs/2026-10-08-quiet-product-rewrite.md) — rewrites them and removes Proto. Build anything new on quiet. The guide is the template's [migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md) §4.
 - **Commit message convention:** [COMMITS.md](COMMITS.md) — Conventional Commits, enforced by the `.githooks/commit-msg` hook. Run `./.githooks/install.sh` once per clone to activate.
 
 ## Plugins & Skills
@@ -27,6 +27,7 @@ growth-tools/
 - **Superpowers skills** — invoke with the `Skill` tool. Check available skills before starting any task; there is likely a skill that applies. Key skills: `superpowers:writing-plans`, `superpowers:using-git-worktrees`, `superpowers:finishing-a-development-branch`.
 - **Backend subagent coordination** — for Go backend work, dispatch the `backend-supervisor` agent. It orchestrates backend-* workers in parallel batches by phase (code agents first, then test agents — safe because they write to isolated files), runs the build/vet/test gate + pre-commit, and commits.
 - **Frontend composition patterns** — for any webapp page/feature work (CRUD lists, forms, detail views, routes), invoke `frontend-composition-rules` **before coding**. Enforces slot-based shells, custom-hook extraction (`useConfirmableDelete`), config-driven status maps, and bans nested render ternaries + hardcoded inline strings. Pair with `frontend-e2e-rules`.
+- **quiet UI** — for laying out or reshaping any screen, load the `quiet-app` skill first (quiet's setup, layout procedure, and the `npx quiet-audit` check before finishing); `.claude/rules/webapp-skills.md` maps each kind of webapp change to its rule skill.
 - **Language Server (LSP)** — use the `LSP` tool for precise Go and TypeScript navigation: go-to-definition, find-references, type information. Prefer this over grep when exploring types or tracing call chains. **LSP is a deferred tool** — load it once per session with `ToolSearch(query: "select:LSP", max_results: 1)` before first use. Pass the same instruction to any subagent you dispatch that will navigate code.
 - **Browser automation** — `mcp__claude-in-chrome__*` tools available for testing frontend features in a real browser. Use for verifying UI changes end-to-end.
 - **Playwright MCP** — `mcp__plugin_playwright_*` tools for browser automation and E2E verification.
@@ -87,7 +88,7 @@ Sonnet — run individually (judgment required):
 | `frontend-page-builder` | Scaffold routes, pages, tabs, and forms |
 | `frontend-component-builder` | Build React 19 design system components |
 | `frontend-code-editor` | Targeted edits to existing frontend code |
-| `frontend-theme-designer` | Research/apply per-theme font pairings |
+| `frontend-theme-designer` | Create or refine a quiet product theme (none today — the app ships `foundry` / `foundry-dark`) |
 | `frontend-e2e-test-writer` | Write exhaustive Playwright E2E tests |
 
 Haiku — batch freely:
@@ -132,14 +133,14 @@ Haiku — batch freely:
 ### Frontend (`webapp/`)
 
 - **Stack:** React 19, Vite 7, TypeScript 5.9 (strict), TanStack Router
-- **Design System:** Proto, 50+ components from the `@optimusfoundry/proto-design-system` package (source-shipped, pinned git tag in `webapp/package.json`); imported as `@/proto-design-system/...`
-- **Styling:** SCSS Modules with design tokens (never hardcode values)
+- **Design System:** quiet (`@optimusfoundry/quiet`, repo `OptimusFoundry/quiet`), imported from `@optimusfoundry/quiet` with no deep imports. Proto (`@/proto-design-system/...`) stays installed only for the product screens CH-001 hasn't rewritten yet
+- **Styling:** SCSS Modules on quiet `--q-*` tokens (never hardcode values)
 - **Linting:** Biome (code) + Stylelint (SCSS)
 - **Build:** `cd webapp && npm run build`
 - **Lint:** `cd webapp && npm run lint && npm run lint:scss`
 
 ### Key Conventions
 
-- **Frontend:** Use existing design system components, design tokens, SCSS modules, no barrel exports, no `any`, no inline styles
+- **Frontend:** Use quiet components and `--q-*` tokens, SCSS modules, no barrel exports, no `any`, no inline styles
 - **Backend:** Use `apierrors` for all HTTP errors, context propagation everywhere, soft deletes with `deleted_at`, UUID primary keys, parameterized SQL
 - **Both:** Constructor-based DI, structured logging, no secrets in code
