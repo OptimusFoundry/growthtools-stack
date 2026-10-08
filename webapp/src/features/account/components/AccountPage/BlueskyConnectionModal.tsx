@@ -5,10 +5,10 @@
 
 import { memo, useCallback, useState } from "react";
 import { useConnectBluesky } from "@/hooks/useConnectBluesky";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 
 // ============================================================================
 // Component

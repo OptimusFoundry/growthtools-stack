@@ -1,11 +1,14 @@
 "use client";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import {
+	Card,
+	CardBody,
+} from "@/proto-design-system/components/layout/Card/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import { formatPrice } from "@/utils/formatPrice";
 
 interface PlanCardProps {

@@ -7,11 +7,11 @@ import {
 	useGitHubCommits,
 } from "@/hooks/useGitHubCommits";
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Pagination } from "@/proto-design-system/components/navigation/Pagination";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Pagination } from "@/proto-design-system/components/navigation/Pagination/Pagination";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import { timeAgo, truncate } from "@/utils/format";
 import styles from "./github.module.scss";
 import pageStyles from "./page.module.scss";

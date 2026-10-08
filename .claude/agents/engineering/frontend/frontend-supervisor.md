@@ -41,7 +41,7 @@ Plans are **contract-level**: tickets give names, types, signatures, endpoint ta
 | Fetch hook | `webapp/src/hooks/useGetSignupsOverTime.ts` |
 | MSW handler set | `webapp/e2e/handlers/analytics.handlers.ts` |
 | Playwright spec | `webapp/e2e/analytics.spec.ts` |
-| Design tokens | `webapp/src/proto-design-system/tokens/_colors.scss` |
+| Design tokens | `webapp/node_modules/@optimusfoundry/proto-design-system/src/tokens/_colors.scss` |
 
 (LSP is a deferred tool — load it once with `ToolSearch(query: "select:LSP", max_results: 1)`.)
 
@@ -137,7 +137,7 @@ webapp/src/features/{feature}/components/{Name}/component.tsx  + component.modul
 webapp/src/features/{feature}/lib/{helper}.ts                 ← pure helpers / formatters
 webapp/src/hooks/use{Verb}{Noun}.ts                           ← fetch + state hooks
 webapp/src/types/api.types.ts                                 ← shared API response types
-webapp/src/proto-design-system/                               ← design system primitives + tokens
+@/proto-design-system/… → node_modules/@optimusfoundry/proto-design-system/src/  ← Proto (frozen package; read-only here)
 webapp/e2e/handlers/{domain}.handlers.ts                      ← MSW per-endpoint handlers
 webapp/e2e/{feature}.spec.ts                                  ← Playwright E2E specs
 ```

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
 
 export interface ConfirmableDeleteCopy {
 	/** Resource noun, e.g. "post", "blog post". Used in banner titles. */

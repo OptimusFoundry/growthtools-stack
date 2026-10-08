@@ -17,7 +17,7 @@ npm run storybook    # Storybook (port 6006)
 - **React 19**, Vite 7, TypeScript 5.9 (strict)
 - **TanStack Router** — file-based routing in `src/routes/`
 - **SCSS Modules** — scoped styles with design tokens
-- **Proto Design System** — 50+ components in `src/proto-design-system/`
+- **Proto Design System** — 50+ components from the `@optimusfoundry/proto-design-system` package, imported as `@/proto-design-system/<path>/<File>` (the alias resolves into `node_modules`)
 - **Biome** (code) + **Stylelint** (SCSS)
 - **Vitest** + **Playwright** for testing
 

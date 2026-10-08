@@ -1,10 +1,10 @@
 import { Film, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Checkbox } from "@/proto-design-system/components/forms/Checkbox";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { Checkbox } from "@/proto-design-system/components/forms/Checkbox/Checkbox";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { MediaItem } from "@/types/media";
 import { isVideoType } from "@/types/media";
 import styles from "./CaptureMediaPicker.module.scss";

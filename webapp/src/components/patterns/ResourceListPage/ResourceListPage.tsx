@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { AsyncList } from "@/components/patterns/AsyncList/AsyncList";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
 import styles from "./ResourceListPage.module.scss";
 
 export interface ResourceListPageProps<T> {

@@ -1,11 +1,11 @@
 import { Download, FileText, Film, Image as ImageIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 import type { GitHubCaptureUploaded } from "@/hooks/useGitHubCommits";
-import { Card } from "@/proto-design-system/components/layout/Card";
-import { Grid } from "@/proto-design-system/components/layout/Grid";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Card } from "@/proto-design-system/components/layout/Card/Card";
+import { Grid } from "@/proto-design-system/components/layout/Grid/Grid";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import styles from "./artifacts.module.scss";
 
 // ============================================================================

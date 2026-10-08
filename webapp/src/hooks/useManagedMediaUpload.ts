@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload";
+import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
 import type { MediaItem } from "@/types/media";
 import { useUploadMedia } from "./useUploadMedia";
 

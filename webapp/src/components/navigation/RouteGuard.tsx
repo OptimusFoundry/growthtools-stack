@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import React from "react";
 import { usePersona } from "@/contexts/persona";
-import { Icon } from "@/proto-design-system/components/primitives/Icon";
+import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
 import styles from "./routeguard.module.scss";
 
 interface RouteGuardProps {

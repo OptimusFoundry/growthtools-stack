@@ -10,16 +10,16 @@ import { useCallback, useMemo, useState } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useGetCalendarMonth } from "@/hooks/useGetCalendarMonth";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
 import {
 	Tab,
 	TabList,
 	Tabs,
 } from "@/proto-design-system/components/navigation/Tabs/Tabs";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import {
 	ALL_PLATFORMS,
 	type CalendarDay,

@@ -1,10 +1,13 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import {
+	Card,
+	CardBody,
+} from "@/proto-design-system/components/layout/Card/Card";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { Price } from "@/types/billing";
 import { formatPrice } from "@/utils/formatPrice";
 

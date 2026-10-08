@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { FileText, Plus, SearchX } from "lucide-react";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 
 export function PostsEmpty() {
 	return (

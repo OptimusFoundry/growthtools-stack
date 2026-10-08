@@ -7,7 +7,7 @@ import { MediaEmpty } from "@/features/media/components/MediaEmpty/MediaEmpty";
 import { MediaHero } from "@/features/media/components/MediaHero/MediaHero";
 import { useMedia } from "@/hooks/useMedia";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import styles from "./media.module.scss";
 
 export const Route = createFileRoute("/media")({

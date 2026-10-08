@@ -23,6 +23,9 @@
 
 		/* Path mapping */
 		"paths": {
+			"@/proto-design-system/*": [
+				"./node_modules/@optimusfoundry/proto-design-system/src/*"
+			],
 			"@/*": ["./src/*"]
 		}
 	},

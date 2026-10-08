@@ -11,11 +11,11 @@ import { ErrorState } from "@/components/error/error";
 import { useCreateCustomerPortal } from "@/hooks/useCreateCustomerPortal";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import type { Price, Subscription } from "@/types/billing";
 import styles from "./component.module.scss";
 

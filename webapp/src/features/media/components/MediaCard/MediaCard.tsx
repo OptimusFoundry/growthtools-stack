@@ -1,7 +1,7 @@
 import { FileIcon, Trash2 } from "lucide-react";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import styles from "@/routes/media.module.scss";
 import {
 	formatFileSize,

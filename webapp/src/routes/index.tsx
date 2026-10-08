@@ -3,8 +3,8 @@ import { BarChart, Calendar, Image, Newspaper, PenSquare } from "lucide-react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useAuth } from "@/contexts/auth";
 import { LastSevenDaysSection } from "@/features/analytics/components/LastSevenDaysSection/component";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import cardStyles from "./dashboard.module.scss";
 import styles from "./page.module.scss";
 

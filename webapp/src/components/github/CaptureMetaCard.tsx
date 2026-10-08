@@ -1,9 +1,9 @@
 import { ExternalLink, GitBranch as Github } from "lucide-react";
 import { memo } from "react";
 import type { GitHubCommit } from "@/hooks/useGitHubCommits";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import styles from "./capture-meta.module.scss";
 
 interface CaptureMetaCardProps {

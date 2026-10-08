@@ -8,14 +8,14 @@ import { CreditCard, GitBranch, Mic, Share2 } from "lucide-react";
 import { memo, useCallback } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { PageTransition } from "@/proto-design-system/components/layout/PageTransition/PageTransition";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
 import {
 	Tab,
 	TabList,
 	TabPanel,
 	TabPanels,
 	Tabs,
-} from "@/proto-design-system/components/navigation/Tabs";
+} from "@/proto-design-system/components/navigation/Tabs/Tabs";
 import { BillingTab } from "./BillingTab";
 import styles from "./component.module.scss";
 import { PlatformConnectionsTab } from "./PlatformConnectionsTab";

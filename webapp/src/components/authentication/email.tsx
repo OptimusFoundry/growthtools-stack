@@ -1,8 +1,8 @@
 import React, { useEffect, useReducer } from "react";
 import { useSubmitLogin } from "@/hooks/useSubmitLogin";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
-import { Input } from "@/proto-design-system/components/forms/Input";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { Input } from "@/proto-design-system/components/forms/Input/Input";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import styles from "./email.module.scss";
 
 type EmailFormErrors = {

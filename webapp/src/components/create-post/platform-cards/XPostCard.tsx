@@ -1,4 +1,4 @@
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
 import type { MediaItem } from "@/types/media";
 import styles from "../PlatformPostCard.module.scss";
 import { EditableContent } from "./EditableContent";

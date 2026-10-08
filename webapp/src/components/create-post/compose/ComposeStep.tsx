@@ -1,11 +1,11 @@
 import type {
 	ExistingFile,
 	UploadedFile,
-} from "@/proto-design-system/components/composite/FileUpload";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+} from "@/proto-design-system/components/composite/FileUpload/FileUpload";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { PlatformType } from "@/types/platform";
 import styles from "../CreatePostWizard.module.scss";
 import type { WizardContentType } from "../useCreatePostWizard";

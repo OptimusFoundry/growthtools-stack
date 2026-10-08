@@ -18,20 +18,20 @@ import { ErrorState } from "@/components/error/error";
 import { useCreateCustomerPortal } from "@/hooks/useCreateCustomerPortal";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
 import {
 	Card,
 	CardBody,
 	CardFooter,
 	CardHeader,
-} from "@/proto-design-system/components/layout/Card";
-import { Container } from "@/proto-design-system/components/layout/Container";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Grid } from "@/proto-design-system/components/layout/Grid";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+} from "@/proto-design-system/components/layout/Card/Card";
+import { Container } from "@/proto-design-system/components/layout/Container/Container";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Grid } from "@/proto-design-system/components/layout/Grid/Grid";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { Price, Subscription } from "@/types/billing";
 import { formatPrice } from "@/utils/formatPrice";
 import styles from "./BillingTab.module.scss";

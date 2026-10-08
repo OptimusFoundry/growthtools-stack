@@ -1,5 +1,5 @@
 import type { Decorator } from "@storybook/react-vite";
-import { Watermark } from "../showcase/Watermark";
+import { Watermark } from "@/proto-design-system/showcase/Watermark";
 import styles from "./showcaseDecorator.module.scss";
 
 /**

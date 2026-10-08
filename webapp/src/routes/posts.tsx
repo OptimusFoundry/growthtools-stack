@@ -16,9 +16,9 @@ import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useFilterCounts } from "@/hooks/useFilterCounts";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs/FilterTabs";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import type { PostStatus } from "@/types/post";
 
 export const Route = createFileRoute("/posts")({

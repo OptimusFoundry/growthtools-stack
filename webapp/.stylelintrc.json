@@ -104,9 +104,6 @@
 		"dist/**",
 		"build/**",
 		"storybook-static/**",
-		"src/design-tokens/**",
-		"src/proto-design-system/base/**",
-		"src/proto-design-system/mixins/**",
-		"src/proto-design-system/UIShell/Column/grid-example.module.scss"
+		"src/design-tokens/**"
 	]
 }

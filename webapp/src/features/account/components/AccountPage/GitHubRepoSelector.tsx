@@ -7,15 +7,18 @@ import { GitBranch } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useConnectGitHubRepo } from "@/hooks/useConnectGitHubRepo";
 import { useGitHubRepos } from "@/hooks/useGitHubRepos";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
-import { Switch } from "@/proto-design-system/components/forms/Switch";
-import { Card, CardBody } from "@/proto-design-system/components/layout/Card";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
+import {
+	Card,
+	CardBody,
+} from "@/proto-design-system/components/layout/Card/Card";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
+import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import styles from "./GitHubConnectionSection.module.scss";
 
 // ============================================================================

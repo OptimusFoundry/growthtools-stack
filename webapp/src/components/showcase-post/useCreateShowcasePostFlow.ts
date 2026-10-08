@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useCreateShowcasePost } from "@/hooks/useCreateShowcasePost";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { SHOWCASE_POST_COPY } from "./copy";
 

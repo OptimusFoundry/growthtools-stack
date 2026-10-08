@@ -1,6 +1,6 @@
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";

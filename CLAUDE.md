@@ -132,7 +132,7 @@ Haiku — batch freely:
 ### Frontend (`webapp/`)
 
 - **Stack:** React 19, Vite 7, TypeScript 5.9 (strict), TanStack Router
-- **Design System:** 50+ components in `webapp/src/proto-design-system/`
+- **Design System:** Proto, 50+ components from the `@optimusfoundry/proto-design-system` package (source-shipped, pinned git tag in `webapp/package.json`); imported as `@/proto-design-system/...`
 - **Styling:** SCSS Modules with design tokens (never hardcode values)
 - **Linting:** Biome (code) + Stylelint (SCSS)
 - **Build:** `cd webapp && npm run build`

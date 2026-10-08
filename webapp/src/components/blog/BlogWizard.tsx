@@ -16,13 +16,13 @@ import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
-import type { ExistingFile } from "@/proto-design-system/components/composite/FileUpload";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter";
-import { TextArea } from "@/proto-design-system/components/forms/TextArea";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack";
+import type { ExistingFile } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
+import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
+import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
+import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
 import {
 	Tab,
 	TabList,
@@ -30,9 +30,9 @@ import {
 	TabPanels,
 	Tabs,
 } from "@/proto-design-system/components/navigation/Tabs/Tabs";
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
+import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type {
 	BlogPost,
 	BlogPublishResult,

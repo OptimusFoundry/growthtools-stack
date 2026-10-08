@@ -1,6 +1,6 @@
 import type { FC } from "react";
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Button } from "@/proto-design-system/components/primitives/Button";
+import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
+import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import { Link } from "@/proto-design-system/components/primitives/Button/Link";
 import type { BlogPost } from "@/types/blog";
 import styles from "./blog-site-publish-status.module.scss";
