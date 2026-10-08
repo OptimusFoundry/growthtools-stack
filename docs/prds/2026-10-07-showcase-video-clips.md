@@ -37,12 +37,13 @@ Account owner (the builder) with the saas-template repo connected via the GitHub
 
 ## Non-goals
 
-- **No auto-building components.** Choosing what to build from saved X likes, and writing the
-  component + stories, is a separate future epic (the "weekly picker"). This epic starts at a
-  merged commit that already contains a Showcase story.
-- **No auto-fix loop in growth-tools.** When review fails, growth-tools flags it; fixing the story
-  and re-recording happens in the component repo (by a developer or Claude Code), and the next
-  commit re-triggers capture.
+- **No component or UI creation in growth-tools — that is owned locally.** Picking what to build
+  (from saved X likes), writing the component and its Showcase story, and polishing the clip until
+  it passes review all happen locally with Claude Code in the component repo (saas-template). This
+  epic starts at a merged commit that already contains a Showcase story.
+- **No auto-fix loop in growth-tools.** When review fails, growth-tools flags it on the draft; the
+  fix happens locally in the component repo, and the next commit re-triggers capture. The same
+  checks (AC4) are run locally before merge, so most clips arrive already passing.
 - **No auto-publish.** Clips land on drafts in the existing review queue, like every other
   github-sourced draft.
 - **No audio, voiceover, music, or in-app video editing/trimming.**
@@ -135,7 +136,8 @@ Account owner (the builder) with the saas-template repo connected via the GitHub
 - **Draft generation** (existing Claude flow) for the caption.
 - **ffmpeg** in the capture-worker image (H.264 encode).
 - **Prototype to port:** [`docs/prds/reference/2026-10-07-showcase-record-prototype.mjs`](reference/2026-10-07-showcase-record-prototype.mjs) — the recorder that produced the approved clips.
-- Component repo convention: Showcase stories with `parameters.recording` in saas-template.
+- Component repo convention: Showcase stories with `parameters.recording` in saas-template,
+  authored locally.
 
 ## Open questions & assumptions
 
@@ -149,6 +151,7 @@ Account owner (the builder) with the saas-template repo connected via the GitHub
   within credits; if volume grows, revisit (e.g. a per-render Fargate task).
 - **Determinism.** A theme switch on load can remount a story, shifting where a cycling demo starts
   (seen in testing). Assumed acceptable; stories needing an exact start can reset on mount.
-- **Future epics (not this one):** weekly picker that builds components from saved X likes;
-  ingesting X likes into growth-tools; AI-answer visibility monitor (prototype in
-  `seo-agent/geo/`).
+- **Ownership split.** growth-tools owns content generation: recording, review, captions, drafts,
+  publishing. Local work owns creation: X-likes analysis, picking techniques, building components
+  and stories, and fixing clips that fail review. Marketing automation (e.g. the AI-answer
+  visibility monitor prototyped in `seo-agent/geo/`) is a candidate for a later growth-tools epic.
