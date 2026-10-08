@@ -1,5 +1,5 @@
 import "../src/index.css";
-import { showcaseDecorator } from "../src/proto-design-system/storybook/showcaseDecorator";
+import { showcaseDecorator } from "./showcaseDecorator";
 
 const preview = {
 	parameters: {
