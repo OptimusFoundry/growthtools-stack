@@ -1,0 +1,45 @@
+// Tier 2 — typography. Values from the Optimus Foundry reference (tokens/typography.css and the
+// sizes its components actually use). Components never use a size outside these scales; a size
+// unique to one component lives in tokens/_components.scss.
+:root {
+  --q-font-sans: "Inter Tight", "Helvetica Neue", helvetica, arial, sans-serif;
+  --q-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", menlo, monospace;
+
+  --q-weight-regular: 400;
+  --q-weight-medium: 500;
+  --q-weight-semibold: 600;
+  --q-weight-bold: 700;
+
+  // Size scale (px). Mono labels sit at 3xs–xs; sans body at sm–xl; headings 2xl up.
+  --q-text-3xs: 10px;
+  --q-text-2xs: 11px;
+  --q-text-xs: 12px;
+  --q-text-sm: 13px;
+  --q-text-md: 15px;
+  --q-text-lg: 17px;
+  --q-text-xl: 19px;
+  --q-text-2xl: 24px;
+  --q-text-3xl: 30px;
+  --q-text-4xl: 40px;
+  --q-text-5xl: 52px;
+  --q-text-6xl: 68px;
+  --q-text-display: clamp(56px, 9vw, 128px);
+
+  --q-leading-display: 0.92;
+  --q-leading-none: 1;
+  --q-leading-heading: 1.05;
+  --q-leading-tight: 1.1;
+  --q-leading-snug: 1.15;
+  --q-leading-ui: 1.4;
+  --q-leading-compact: 1.45;
+  --q-leading-body: 1.55;
+
+  --q-tracking-mono: 0.08em;
+  --q-tracking-wide: 0.04em;
+  --q-tracking-none: 0;
+  --q-tracking-tight: -0.01em;
+  --q-tracking-h4: -0.02em;
+  --q-tracking-h3: -0.025em;
+  --q-tracking-h2: -0.04em;
+  --q-tracking-display: -0.045em;
+}

@@ -1,0 +1,126 @@
+// DecayingBadge — a status pill that fades toward grey as its fact ages, then strikes through.
+// BEM: .q-decaying-badge, __dot, __label, __age; --{sm|md|lg}, --action.
+// --_fresh (1 → 0) comes in from the component; [data-stale], [data-checking] are states.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-decaying-badge-gap: var(--q-space-0-75);
+    --q-decaying-badge-radius: var(--q-radius-pill);
+    --q-decaying-badge-weight: var(--q-weight-semibold);
+    --q-decaying-badge-bg: var(--q-bg);
+    --q-decaying-badge-fg: var(--q-fg);
+    --q-decaying-badge-fg-stale: var(--q-fg-muted);
+    --q-decaying-badge-border: var(--q-fg);
+    --q-decaying-badge-border-stale: var(--q-border);
+    --q-decaying-badge-dot: var(--q-fg);
+    --q-decaying-badge-dot-stale: var(--q-border-strong);
+    --q-decaying-badge-dot-size: var(--q-space-0-75);
+    --q-decaying-badge-age-fg: var(--q-fg-muted);
+    --q-decaying-badge-border-hover: var(--q-fg);
+    --q-decaying-badge-dur: var(--q-dur-expand);
+
+    --q-decaying-badge-sm-height: var(--q-space-2-5);
+    --q-decaying-badge-sm-px: var(--q-space-1);
+    --q-decaying-badge-sm-font-size: var(--q-text-2xs);
+    --q-decaying-badge-md-height: var(--q-space-3);
+    --q-decaying-badge-md-px: var(--q-space-1-25);
+    --q-decaying-badge-md-font-size: var(--q-text-xs);
+    --q-decaying-badge-lg-height: calc(var(--q-space-3) + var(--q-space-0-5));
+    --q-decaying-badge-lg-px: var(--q-space-1-5);
+    --q-decaying-badge-lg-font-size: var(--q-text-sm);
+  }
+}
+
+@keyframes q-decaying-badge-checking {
+  50% { opacity: 0.25; }
+}
+
+@layer q.components {
+  .q-decaying-badge {
+    --_fresh: 1;
+    --_mix: calc(var(--_fresh) * 100%);
+    --_fg: color-mix(in oklch, var(--q-decaying-badge-fg) var(--_mix), var(--q-decaying-badge-fg-stale));
+    --_border: color-mix(in oklch, var(--q-decaying-badge-border) var(--_mix), var(--q-decaying-badge-border-stale));
+    --_dot: color-mix(in oklch, var(--q-decaying-badge-dot) var(--_mix), var(--q-decaying-badge-dot-stale));
+    --_height: var(--q-decaying-badge-md-height);
+    --_px: var(--q-decaying-badge-md-px);
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-decaying-badge-gap);
+    box-sizing: border-box;
+    height: var(--_height);
+    margin: 0;
+    padding: 0 var(--_px);
+    border: var(--q-hairline) solid var(--_border);
+    border-radius: var(--q-decaying-badge-radius);
+    background: var(--q-decaying-badge-bg);
+    color: var(--_fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-decaying-badge-md-font-size);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-decaying-badge-weight);
+    line-height: var(--q-leading-none);
+    white-space: nowrap;
+    transition:
+      color var(--q-decaying-badge-dur) var(--q-ease-soft),
+      border-color var(--q-decaying-badge-dur) var(--q-ease-soft);
+
+    @each $size in sm, md, lg {
+      &--#{$size} {
+        --_height: var(--q-decaying-badge-#{$size}-height);
+        --_px: var(--q-decaying-badge-#{$size}-px);
+        font-size: var(--q-decaying-badge-#{$size}-font-size);
+      }
+    }
+
+    &--action {
+      cursor: pointer;
+    }
+
+    &--action:is(:hover, :focus-visible) {
+      border-color: var(--q-decaying-badge-border-hover);
+    }
+
+    &[data-stale] {
+      --_fg: var(--q-decaying-badge-fg-stale);
+      --_border: var(--q-decaying-badge-border-stale);
+    }
+
+    &:disabled {
+      cursor: progress;
+    }
+  }
+
+  .q-decaying-badge__dot {
+    flex: none;
+    width: var(--q-decaying-badge-dot-size);
+    height: var(--q-decaying-badge-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--_dot);
+
+    .q-decaying-badge[data-stale] & {
+      border: var(--q-hairline) solid var(--q-decaying-badge-dot-stale);
+      box-sizing: border-box;
+      background: transparent;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .q-decaying-badge[data-checking] & {
+        animation: q-decaying-badge-checking var(--q-dur-pulse) var(--q-ease-soft) infinite;
+      }
+    }
+  }
+
+  .q-decaying-badge__label {
+    .q-decaying-badge[data-stale] & {
+      text-decoration: line-through;
+    }
+  }
+
+  .q-decaying-badge__age {
+    color: var(--q-decaying-badge-age-fg);
+    font-family: var(--q-font-mono);
+    font-weight: var(--q-weight-regular);
+  }
+}

@@ -1,0 +1,129 @@
+// Checkbox — ink square with a check / dash. BEM: .q-checkbox, __box, __mark, __text, __description,
+// __error; --{size}, --labelled, --disabled. Checked/mixed and invalid read from ARIA.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-checkbox-gap: var(--q-space-1-5);
+    --q-checkbox-fg: var(--q-fg);
+    --q-checkbox-disabled-opacity: 0.4;
+    --q-checkbox-sm-size: 14px;
+    --q-checkbox-md-size: 16px;
+    --q-checkbox-lg-size: 20px;
+    --q-checkbox-sm-font-size: var(--q-text-sm);
+    --q-checkbox-md-font-size: var(--q-text-md);
+    --q-checkbox-lg-font-size: var(--q-text-lg);
+    --q-checkbox-sm-mark-size: 9.8px; // 70% of the box
+    --q-checkbox-md-mark-size: 11.2px;
+    --q-checkbox-lg-mark-size: 14px;
+    --q-checkbox-box-offset: var(--q-space-0-25); // optical alignment with the first text line
+    --q-checkbox-lg-box-offset: 3px;
+    --q-checkbox-box-radius: var(--q-radius-xs);
+    --q-checkbox-box-border: var(--q-fg);
+    --q-checkbox-box-border-invalid: var(--q-accent);
+    --q-checkbox-box-bg: var(--q-bg);
+    --q-checkbox-box-bg-checked: var(--q-fg);
+    --q-checkbox-mark-fg: var(--q-bg);
+    --q-checkbox-mark-scale-off: 0.6;
+    --q-checkbox-text-gap: var(--q-space-0-25);
+    --q-checkbox-text-leading: var(--q-leading-ui);
+    --q-checkbox-description-font-size: var(--q-text-sm);
+    --q-checkbox-description-fg: var(--q-fg-muted);
+    --q-checkbox-error-font-family: var(--q-font-mono);
+    --q-checkbox-error-font-size: var(--q-text-2xs);
+    --q-checkbox-error-fg: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-checkbox {
+    --_size: var(--q-checkbox-md-size);
+    --_mark-size: var(--q-checkbox-md-mark-size);
+    --_offset: var(--q-checkbox-box-offset);
+
+    display: inline-flex;
+    align-items: flex-start;
+    gap: var(--q-checkbox-gap);
+    font-size: var(--q-checkbox-md-font-size);
+    color: var(--q-checkbox-fg);
+    cursor: pointer;
+
+    &--sm {
+      --_size: var(--q-checkbox-sm-size);
+      --_mark-size: var(--q-checkbox-sm-mark-size);
+      font-size: var(--q-checkbox-sm-font-size);
+    }
+
+    &--lg {
+      --_size: var(--q-checkbox-lg-size);
+      --_mark-size: var(--q-checkbox-lg-mark-size);
+      --_offset: var(--q-checkbox-lg-box-offset);
+      font-size: var(--q-checkbox-lg-font-size);
+    }
+
+    &--disabled {
+      opacity: var(--q-checkbox-disabled-opacity);
+      cursor: not-allowed;
+    }
+  }
+
+  .q-checkbox__box {
+    display: grid;
+    flex: none;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--_size);
+    height: var(--_size);
+    border: var(--q-hairline) solid var(--q-checkbox-box-border);
+    border-radius: var(--q-checkbox-box-radius);
+    background: var(--q-checkbox-box-bg);
+    font-size: var(--_mark-size);
+    line-height: 1;
+    color: var(--q-checkbox-mark-fg);
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-checkbox--labelled > & {
+      margin-top: var(--_offset);
+    }
+
+    &[aria-invalid="true"] {
+      border-color: var(--q-checkbox-box-border-invalid);
+    }
+
+    &:is([aria-checked="true"], [aria-checked="mixed"]) {
+      background: var(--q-checkbox-box-bg-checked);
+    }
+  }
+
+  .q-checkbox__mark {
+    opacity: 0;
+    transform: scale(var(--q-checkbox-mark-scale-off));
+    transition:
+      opacity var(--q-dur-hover) var(--q-ease-soft),
+      transform var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-checkbox__box:is([aria-checked="true"], [aria-checked="mixed"]) > & {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .q-checkbox__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-checkbox-text-gap);
+    line-height: var(--q-checkbox-text-leading);
+  }
+
+  .q-checkbox__description {
+    font-size: var(--q-checkbox-description-font-size);
+    color: var(--q-checkbox-description-fg);
+  }
+
+  .q-checkbox__error {
+    font-family: var(--q-checkbox-error-font-family);
+    font-size: var(--q-checkbox-error-font-size);
+    color: var(--q-checkbox-error-fg);
+  }
+}

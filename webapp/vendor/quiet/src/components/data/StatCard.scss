@@ -1,0 +1,150 @@
+// StatCard — KPI tile: label, big number, delta row. BEM: .q-stat-card (--outlined, --filled,
+// --plain, --interactive), __head, __label, __icon, __value, __meta, __delta, __glyph (--down),
+// __period.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-stat-card-gap: var(--q-space-2);
+    --q-stat-card-padding: var(--q-space-3);
+    --q-stat-card-radius: var(--q-radius-lg);
+    --q-stat-card-outlined-bg: var(--q-bg);
+    --q-stat-card-outlined-border: var(--q-border);
+    --q-stat-card-filled-bg: var(--q-bg-subtle);
+    --q-stat-card-filled-border: var(--q-bg-subtle);
+    --q-stat-card-border-hover: var(--q-border-strong);
+    --q-stat-card-plain-border-top: var(--q-fg);
+    --q-stat-card-head-gap: var(--q-space-2);
+    --q-stat-card-label-font-size: var(--q-text-2xs);
+    --q-stat-card-label-tracking: var(--q-tracking-mono);
+    --q-stat-card-label-color: var(--q-fg-muted);
+    --q-stat-card-icon-size: var(--q-control-sm);
+    --q-stat-card-icon-radius: var(--q-radius-pill);
+    --q-stat-card-icon-border: var(--q-border);
+    --q-stat-card-icon-color: var(--q-fg);
+    --q-stat-card-icon-font-size: var(--q-text-md);
+    --q-stat-card-value-font-size: var(--q-text-4xl);
+    --q-stat-card-value-weight: var(--q-weight-bold);
+    --q-stat-card-value-tracking: var(--q-tracking-h2);
+    --q-stat-card-value-leading: var(--q-leading-none);
+    --q-stat-card-value-color: var(--q-fg);
+    --q-stat-card-meta-gap: var(--q-space-1-5);
+    --q-stat-card-meta-font-size: var(--q-text-2xs);
+    --q-stat-card-meta-tracking: var(--q-tracking-wide);
+    --q-stat-card-meta-color: var(--q-fg-muted);
+    --q-stat-card-delta-gap: var(--q-space-0-5);
+    --q-stat-card-delta-color: var(--q-fg);
+    --q-stat-card-delta-down-color: var(--q-accent);
+    --q-stat-card-period-tracking: var(--q-tracking-mono);
+  }
+}
+
+@layer q.components {
+  .q-stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-stat-card-gap);
+    box-sizing: border-box;
+    padding: var(--q-stat-card-padding);
+    border: var(--q-hairline) solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: default;
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &--outlined {
+      border-color: var(--q-stat-card-outlined-border);
+      border-radius: var(--q-stat-card-radius);
+      background: var(--q-stat-card-outlined-bg);
+    }
+
+    &--filled {
+      border-color: var(--q-stat-card-filled-border);
+      border-radius: var(--q-stat-card-radius);
+      background: var(--q-stat-card-filled-bg);
+    }
+
+    &--plain {
+      padding: var(--q-stat-card-padding) 0 0;
+      border-top-color: var(--q-stat-card-plain-border-top);
+    }
+
+    &--interactive {
+      cursor: pointer;
+    }
+
+    &--interactive:is(:hover, :focus-visible):is(.q-stat-card--outlined, .q-stat-card--filled) {
+      border-color: var(--q-stat-card-border-hover);
+    }
+  }
+
+  .q-stat-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--q-stat-card-head-gap);
+  }
+
+  .q-stat-card__label {
+    color: var(--q-stat-card-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-stat-card-label-font-size);
+    letter-spacing: var(--q-stat-card-label-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-stat-card__icon {
+    display: grid;
+    place-items: center;
+    width: var(--q-stat-card-icon-size);
+    height: var(--q-stat-card-icon-size);
+    border: var(--q-hairline) solid var(--q-stat-card-icon-border);
+    border-radius: var(--q-stat-card-icon-radius);
+    color: var(--q-stat-card-icon-color);
+    font-size: var(--q-stat-card-icon-font-size);
+  }
+
+  .q-stat-card__value {
+    min-width: 0;
+    color: var(--q-stat-card-value-color);
+    font-size: var(--q-stat-card-value-font-size);
+    font-weight: var(--q-stat-card-value-weight);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-stat-card-value-tracking);
+    line-height: var(--q-stat-card-value-leading);
+    overflow-wrap: anywhere;
+  }
+
+  .q-stat-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--q-stat-card-meta-gap);
+    color: var(--q-stat-card-meta-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-stat-card-meta-font-size);
+    letter-spacing: var(--q-stat-card-meta-tracking);
+  }
+
+  .q-stat-card__delta {
+    display: inline-flex;
+    gap: var(--q-stat-card-delta-gap);
+    color: var(--q-stat-card-delta-color);
+  }
+
+  .q-stat-card__glyph {
+    color: var(--q-stat-card-delta-color);
+
+    &--down {
+      color: var(--q-stat-card-delta-down-color);
+    }
+  }
+
+  .q-stat-card__period {
+    letter-spacing: var(--q-stat-card-period-tracking);
+    text-transform: uppercase;
+  }
+}

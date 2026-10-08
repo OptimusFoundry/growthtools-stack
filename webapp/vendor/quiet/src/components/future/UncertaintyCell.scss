@@ -1,0 +1,99 @@
+// UncertaintyCell — a table number that carries its error. BEM: .q-uncertainty-cell
+// (--uncertain, --measured), __track, __band, __point, __value, __range.
+// Set inline: --_lo, --_hi, --_v (0–1) — the range and the value on the column's shared scale.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-uncertainty-cell-min-height: var(--q-space-3);
+    --q-uncertainty-cell-gap: var(--q-space-0-5);
+    --q-uncertainty-cell-measured-weight: var(--q-weight-semibold);
+    --q-uncertainty-cell-uncertain-weight: var(--q-weight-regular);
+    --q-uncertainty-cell-value-fg: var(--q-fg);
+    --q-uncertainty-cell-range-fg: var(--q-fg-muted);
+    --q-uncertainty-cell-range-font-size: var(--q-text-2xs);
+    --q-uncertainty-cell-track-gap: var(--q-space-1-5);
+    --q-uncertainty-cell-track-width: var(--q-space-12);
+    --q-uncertainty-cell-track-height: var(--q-space-1);
+    --q-uncertainty-cell-track-line: var(--q-border);
+    --q-uncertainty-cell-point-height: var(--q-space-1-5);
+    --q-uncertainty-cell-band-bg: var(--q-border);
+    --q-uncertainty-cell-band-border: var(--q-border-strong);
+    --q-uncertainty-cell-band-radius: var(--q-radius-2xs);
+    --q-uncertainty-cell-point-bg: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-uncertainty-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--q-uncertainty-cell-track-gap);
+    min-height: var(--q-uncertainty-cell-min-height);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &--measured {
+      font-weight: var(--q-uncertainty-cell-measured-weight);
+    }
+
+    &--uncertain {
+      font-weight: var(--q-uncertainty-cell-uncertain-weight);
+    }
+  }
+
+  // The column's scale as a hairline; the likely range shaded on it; the value as an ink tick.
+  .q-uncertainty-cell__track {
+    position: relative;
+    flex: none;
+    width: var(--q-uncertainty-cell-track-width);
+    height: var(--q-uncertainty-cell-point-height);
+    margin-right: auto;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: var(--q-hairline);
+      background: var(--q-uncertainty-cell-track-line);
+    }
+  }
+
+  .q-uncertainty-cell__band {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_lo) * 100%);
+    width: calc((var(--_hi) - var(--_lo)) * 100%);
+    min-width: var(--q-space-0-25);
+    height: var(--q-uncertainty-cell-track-height);
+    box-sizing: border-box;
+    border: var(--q-hairline) solid var(--q-uncertainty-cell-band-border);
+    border-radius: var(--q-uncertainty-cell-band-radius);
+    background: var(--q-uncertainty-cell-band-bg);
+    transform: translateY(-50%);
+  }
+
+  .q-uncertainty-cell__point {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--_v) * 100%);
+    width: var(--q-hairline);
+    background: var(--q-uncertainty-cell-point-bg);
+  }
+
+  .q-uncertainty-cell__value {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--q-uncertainty-cell-gap);
+    color: var(--q-uncertainty-cell-value-fg);
+  }
+
+  .q-uncertainty-cell__range {
+    font-size: var(--q-uncertainty-cell-range-font-size);
+    color: var(--q-uncertainty-cell-range-fg);
+  }
+}

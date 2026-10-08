@@ -1,0 +1,96 @@
+// FilterTabs — pill radio group for filtering. BEM: .q-filter-tabs, __tab (--sm), __icon, __count.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-filter-tabs-gap: var(--q-space-1);
+    --q-filter-tabs-tab-gap: var(--q-space-1);
+    --q-filter-tabs-tab-radius: var(--q-radius-pill);
+    --q-filter-tabs-tab-weight: var(--q-weight-medium);
+    --q-filter-tabs-tab-disabled-opacity: 0.4;
+    --q-filter-tabs-tab-md-height: var(--q-field-sm);
+    --q-filter-tabs-tab-md-px: var(--q-space-2);
+    --q-filter-tabs-tab-md-font-size: var(--q-text-md);
+    --q-filter-tabs-tab-sm-height: 28px; // smaller than --q-control-sm; unique to these pills
+    --q-filter-tabs-tab-sm-px: var(--q-space-1-5);
+    --q-filter-tabs-tab-sm-font-size: var(--q-text-sm);
+    --q-filter-tabs-tab-fg: var(--q-fg);
+    --q-filter-tabs-tab-border: var(--q-border);
+    --q-filter-tabs-tab-border-hover: var(--q-fg);
+    --q-filter-tabs-tab-selected-bg: var(--q-fg);
+    --q-filter-tabs-tab-selected-fg: var(--q-bg);
+    --q-filter-tabs-tab-selected-border: var(--q-fg);
+    --q-filter-tabs-count-md-font-size: var(--q-text-2xs);
+    --q-filter-tabs-count-sm-font-size: var(--q-text-3xs);
+    --q-filter-tabs-count-color: var(--q-fg-muted);
+    --q-filter-tabs-count-selected-color: var(--q-fg-subtle);
+  }
+}
+
+@layer q.components {
+  .q-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-filter-tabs-gap);
+  }
+
+  .q-filter-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-filter-tabs-tab-gap);
+    height: var(--q-filter-tabs-tab-md-height);
+    padding: 0 var(--q-filter-tabs-tab-md-px);
+    border: var(--q-hairline) solid var(--q-filter-tabs-tab-border);
+    border-radius: var(--q-filter-tabs-tab-radius);
+    background: transparent;
+    color: var(--q-filter-tabs-tab-fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-filter-tabs-tab-md-font-size);
+    font-weight: var(--q-filter-tabs-tab-weight);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background var(--q-dur-enter) var(--q-ease-soft),
+      color var(--q-dur-enter) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &--sm {
+      height: var(--q-filter-tabs-tab-sm-height);
+      padding: 0 var(--q-filter-tabs-tab-sm-px);
+      font-size: var(--q-filter-tabs-tab-sm-font-size);
+    }
+
+    &:is(:hover, :focus-visible):not(:disabled) {
+      border-color: var(--q-filter-tabs-tab-border-hover);
+    }
+
+    &[aria-checked="true"] {
+      border-color: var(--q-filter-tabs-tab-selected-border);
+      background: var(--q-filter-tabs-tab-selected-bg);
+      color: var(--q-filter-tabs-tab-selected-fg);
+    }
+
+    &:disabled {
+      opacity: var(--q-filter-tabs-tab-disabled-opacity);
+      cursor: not-allowed;
+    }
+  }
+
+  .q-filter-tabs__icon {
+    display: inline-flex;
+  }
+
+  .q-filter-tabs__count {
+    color: var(--q-filter-tabs-count-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-filter-tabs-count-md-font-size);
+    transition: color var(--q-dur-enter) var(--q-ease-soft);
+
+    .q-filter-tabs__tab--sm & {
+      font-size: var(--q-filter-tabs-count-sm-font-size);
+    }
+
+    [aria-checked="true"] > & {
+      color: var(--q-filter-tabs-count-selected-color);
+    }
+  }
+}

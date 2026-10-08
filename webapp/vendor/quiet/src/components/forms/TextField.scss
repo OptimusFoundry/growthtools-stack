@@ -1,0 +1,111 @@
+// TextField — label, field chrome with optional icons, hint. BEM: .q-text-field, __field, __icon,
+// __input; --{size}, --filled, --invalid, --disabled. Focus reads :focus-within on the field.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-text-field-gap: var(--q-space-1);
+    --q-text-field-disabled-opacity: 0.4;
+    --q-text-field-sm-height: var(--q-field-sm);
+    --q-text-field-sm-px: var(--q-space-1-5);
+    --q-text-field-sm-font-size: var(--q-text-md);
+    --q-text-field-md-height: var(--q-field-md);
+    --q-text-field-md-px: var(--q-space-2);
+    --q-text-field-md-font-size: var(--q-text-lg);
+    --q-text-field-lg-height: var(--q-field-lg);
+    --q-text-field-lg-px: var(--q-space-2-5);
+    --q-text-field-lg-font-size: var(--q-text-xl);
+    --q-text-field-field-gap: var(--q-space-1-5);
+    --q-text-field-radius: var(--q-radius-md);
+    --q-text-field-bg: var(--q-bg);
+    --q-text-field-border: var(--q-border);
+    --q-text-field-border-focus: var(--q-fg);
+    --q-text-field-border-invalid: var(--q-accent);
+    --q-text-field-ring-focus: var(--q-ring-soft);
+    --q-text-field-filled-bg: var(--q-bg-subtle);
+    --q-text-field-icon-fg: var(--q-fg-muted);
+    --q-text-field-font-family: var(--q-font-sans);
+    --q-text-field-fg: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-text-field {
+    --_height: var(--q-text-field-md-height);
+    --_px: var(--q-text-field-md-px);
+    --_font-size: var(--q-text-field-md-font-size);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-text-field-gap);
+
+    &--sm {
+      --_height: var(--q-text-field-sm-height);
+      --_px: var(--q-text-field-sm-px);
+      --_font-size: var(--q-text-field-sm-font-size);
+    }
+
+    &--lg {
+      --_height: var(--q-text-field-lg-height);
+      --_px: var(--q-text-field-lg-px);
+      --_font-size: var(--q-text-field-lg-font-size);
+    }
+
+    &--disabled {
+      opacity: var(--q-text-field-disabled-opacity);
+    }
+  }
+
+  .q-text-field__field {
+    display: flex;
+    align-items: center;
+    gap: var(--q-text-field-field-gap);
+    box-sizing: border-box;
+    height: var(--_height);
+    padding: 0 var(--_px);
+    border: var(--q-hairline) solid var(--q-text-field-border);
+    border-radius: var(--q-text-field-radius);
+    background: var(--q-text-field-bg);
+    transition:
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      background var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-text-field--filled > & {
+      border-color: var(--q-text-field-filled-bg);
+      background: var(--q-text-field-filled-bg);
+    }
+
+    .q-text-field > &:focus-within {
+      border-color: var(--q-text-field-border-focus);
+      background: var(--q-text-field-bg);
+      box-shadow: var(--q-text-field-ring-focus);
+    }
+
+    .q-text-field--invalid > &,
+    .q-text-field--invalid > &:focus-within {
+      border-color: var(--q-text-field-border-invalid);
+    }
+  }
+
+  .q-text-field__icon {
+    display: inline-flex;
+    flex: none;
+    color: var(--q-text-field-icon-fg);
+  }
+
+  .q-text-field__input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-family: var(--q-text-field-font-family);
+    font-size: var(--_font-size);
+    color: var(--q-text-field-fg);
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+}

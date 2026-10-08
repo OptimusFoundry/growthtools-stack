@@ -1,0 +1,154 @@
+// Banner — full-width notice strip. BEM: .q-banner, __inner, __glyph, __text, __title, __body,
+// __dismiss, __collapse; --{paper|ink|outline} (any other variant: plain ground), --{info|success|warning|error}.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-banner-bg: var(--q-bg);
+    --q-banner-fg: var(--q-fg);
+    --q-banner-border: var(--q-border);
+    --q-banner-max-width: var(--q-w-max);
+    --q-banner-py: var(--q-space-1-5);
+    --q-banner-px: var(--q-gutter);
+    --q-banner-gap: var(--q-space-2);
+    --q-banner-text-min-width: 200px; // wraps the action below the text on narrow strips
+    --q-banner-font-size: var(--q-text-md);
+    --q-banner-leading: var(--q-leading-compact);
+    --q-banner-title-weight: var(--q-weight-semibold);
+    --q-banner-body-fg: var(--q-fg-body);
+    --q-banner-glyph-size: var(--q-space-2-5);
+    --q-banner-glyph-font-size: var(--q-text-2xs);
+    --q-banner-glyph-weight: var(--q-weight-semibold);
+    --q-banner-ring: var(--q-fg);
+    --q-banner-info-ring: var(--q-status-info-fg);
+    --q-banner-info-glyph: var(--q-status-info-fg);
+    --q-banner-success-ring: var(--q-status-success-fg);
+    --q-banner-success-glyph: var(--q-status-success-fg);
+    --q-banner-warning-ring: var(--q-status-warning-fg);
+    --q-banner-warning-glyph: var(--q-status-warning-fg);
+    --q-banner-error-ring: var(--q-status-error-fg);
+    --q-banner-error-glyph: var(--q-status-error-fg);
+    --q-banner-dismiss-fg: var(--q-fg-muted);
+    --q-banner-dismiss-size: 18px; // the × glyph; between --q-text-lg and --q-text-xl
+
+    --q-banner-paper-bg: var(--q-bg-subtle);
+    --q-banner-ink-bg: var(--q-fg);
+    --q-banner-ink-fg: var(--q-bg);
+    --q-banner-ink-border: var(--q-fg);
+    --q-banner-ink-ring: var(--q-border-on-inverse-strong);
+    --q-banner-ink-body-fg: var(--q-fg-on-inverse-muted);
+    --q-banner-ink-dismiss-fg: var(--q-bg);
+    --q-banner-outline-border: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-banner {
+    --_fg: var(--q-banner-fg);
+    --_ring: var(--q-banner-ring);
+    --_glyph: var(--_fg);
+
+    box-sizing: border-box;
+    width: 100%;
+    border-top: none;
+    border-bottom: var(--q-hairline) solid var(--q-banner-border);
+    background: var(--q-banner-bg);
+    color: var(--_fg);
+
+    &--paper {
+      background: var(--q-banner-paper-bg);
+    }
+
+    &--ink {
+      --_fg: var(--q-banner-ink-fg);
+      --_ring: var(--q-banner-ink-ring);
+      border-bottom-color: var(--q-banner-ink-border);
+      background: var(--q-banner-ink-bg);
+    }
+
+    &--outline {
+      border-top: var(--q-hairline) solid var(--q-banner-outline-border);
+      border-bottom-color: var(--q-banner-outline-border);
+    }
+
+    @each $status in info, success, warning, error {
+      &--#{$status} {
+        --_ring: var(--q-banner-#{$status}-ring);
+        --_glyph: var(--q-banner-#{$status}-glyph);
+      }
+    }
+
+    // On the inverse strip the calm statuses keep its on-inverse colours; only hot ones show.
+    &--ink:is(.q-banner--info, .q-banner--success) {
+      --_ring: var(--q-banner-ink-ring);
+      --_glyph: var(--_fg);
+    }
+  }
+
+  .q-banner__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-banner-gap);
+    box-sizing: border-box;
+    max-width: var(--q-banner-max-width);
+    margin: 0 auto;
+    padding: var(--q-banner-py) var(--q-banner-px);
+  }
+
+  .q-banner__glyph {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--q-banner-glyph-size);
+    height: var(--q-banner-glyph-size);
+    border: var(--q-hairline) solid var(--_ring);
+    border-radius: var(--q-radius-pill);
+    color: var(--_glyph);
+    font-size: var(--q-banner-glyph-font-size);
+    font-weight: var(--q-banner-glyph-weight);
+    line-height: var(--q-leading-none);
+  }
+
+  .q-banner__text {
+    flex: 1;
+    min-width: var(--q-banner-text-min-width);
+    font-size: var(--q-banner-font-size);
+    line-height: var(--q-banner-leading);
+  }
+
+  .q-banner__title {
+    font-weight: var(--q-banner-title-weight);
+  }
+
+  .q-banner__body {
+    color: var(--q-banner-body-fg);
+
+    .q-banner--ink & {
+      color: var(--q-banner-ink-body-fg);
+    }
+  }
+
+  .q-banner__dismiss {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--q-banner-dismiss-fg);
+    font-size: var(--q-banner-dismiss-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+
+    .q-banner--ink & {
+      color: var(--q-banner-ink-dismiss-fg);
+    }
+  }
+
+  // Dismiss: the .q-collapse wrapper folds the height; this fades the strip with it.
+  .q-banner__collapse {
+    opacity: 0;
+    transition: opacity var(--q-dur-expand) var(--q-ease-soft);
+
+    &[data-open="true"] {
+      opacity: 1;
+    }
+  }
+}

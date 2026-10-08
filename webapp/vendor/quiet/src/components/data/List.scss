@@ -1,0 +1,240 @@
+// List — rows of primary/secondary text with leading and trailing slots; optional groups.
+// BEM: .q-list (--sm/--md/--lg, --grouped, --bordered), __group, __label, __row, __item
+// (--divided, --interactive, --disabled, --animated), __leading, __text, __primary, __secondary,
+// __trailing (--text), __arrow.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-list-group-gap: var(--q-space-3);
+    --q-list-border: var(--q-border);
+    --q-list-radius: var(--q-radius-lg);
+    --q-list-label-font-size: var(--q-text-2xs);
+    --q-list-label-tracking: var(--q-tracking-mono);
+    --q-list-label-color: var(--q-fg-muted);
+    --q-list-label-border: var(--q-fg);
+    --q-list-label-padding-bottom: var(--q-space-1);
+    --q-list-label-bordered-padding-top: var(--q-space-1-5);
+    --q-list-label-bordered-px: var(--q-space-2);
+
+    --q-list-sm-py: var(--q-space-1);
+    --q-list-sm-px: var(--q-space-1-5);
+    --q-list-sm-primary-font-size: var(--q-text-sm);
+    --q-list-sm-secondary-font-size: var(--q-text-xs);
+    --q-list-md-py: var(--q-space-1-75);
+    --q-list-md-px: var(--q-space-2);
+    --q-list-md-primary-font-size: var(--q-text-md);
+    --q-list-md-secondary-font-size: var(--q-text-sm);
+    --q-list-lg-py: var(--q-space-2-5);
+    --q-list-lg-px: var(--q-space-2-5);
+    --q-list-lg-primary-font-size: var(--q-text-lg);
+    --q-list-lg-secondary-font-size: var(--q-text-md);
+
+    --q-list-item-gap: var(--q-space-2);
+    --q-list-item-divider: var(--q-border);
+    --q-list-item-bg-hover: var(--q-bg-subtle);
+    --q-list-item-bg-selected: var(--q-bg-subtle);
+    --q-list-item-radius: var(--q-radius-sm);
+    --q-list-item-bleed: var(--q-space-1); // interactive rows bleed past the text edge
+    --q-list-item-disabled-opacity: 0.4;
+    --q-list-text-gap: var(--q-space-0-25);
+    --q-list-primary-leading: var(--q-leading-ui);
+    --q-list-primary-color: var(--q-fg);
+    --q-list-secondary-leading: var(--q-leading-compact);
+    --q-list-secondary-color: var(--q-fg-muted);
+    --q-list-slot-color: var(--q-fg-muted);
+    --q-list-trailing-gap: var(--q-space-1);
+    --q-list-trailing-font-size: var(--q-text-2xs);
+    --q-list-trailing-tracking: var(--q-tracking-mono);
+    --q-list-arrow-color: var(--q-fg-muted);
+    --q-list-arrow-color-hover: var(--q-accent);
+    --q-list-arrow-nudge: var(--q-space-0-5);
+    --q-list-rise-distance: var(--q-space-1);
+    --q-list-rise-duration: 0.4s; // reference entrance; between --q-dur-expand and the loops
+    --q-list-rise-ease: var(--q-ease-forge);
+    --q-list-rise-stagger: 60ms;
+  }
+}
+
+@layer q.components {
+  .q-list {
+    --_py: var(--q-list-md-py);
+    --_px: var(--q-list-md-px);
+    --_primary-size: var(--q-list-md-primary-font-size);
+    --_secondary-size: var(--q-list-md-secondary-font-size);
+
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+
+    &--sm {
+      --_py: var(--q-list-sm-py);
+      --_px: var(--q-list-sm-px);
+      --_primary-size: var(--q-list-sm-primary-font-size);
+      --_secondary-size: var(--q-list-sm-secondary-font-size);
+    }
+
+    &--lg {
+      --_py: var(--q-list-lg-py);
+      --_px: var(--q-list-lg-px);
+      --_primary-size: var(--q-list-lg-primary-font-size);
+      --_secondary-size: var(--q-list-lg-secondary-font-size);
+    }
+
+    &--grouped {
+      gap: var(--q-list-group-gap);
+    }
+
+    &--bordered {
+      overflow: hidden;
+      border: var(--q-hairline) solid var(--q-list-border);
+      border-radius: var(--q-list-radius);
+    }
+  }
+
+  .q-list__group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .q-list__label {
+    padding: 0 0 var(--q-list-label-padding-bottom);
+    border-bottom: var(--q-hairline) solid var(--q-list-label-border);
+    color: var(--q-list-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-list-label-font-size);
+    letter-spacing: var(--q-list-label-tracking);
+    text-transform: uppercase;
+
+    .q-list--bordered & {
+      padding: var(--q-list-label-bordered-padding-top) var(--q-list-label-bordered-px) var(--q-list-label-padding-bottom);
+    }
+  }
+
+  .q-list__row {
+    display: contents;
+  }
+
+  .q-list__item {
+    display: flex;
+    align-items: center;
+    gap: var(--q-list-item-gap);
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--_py) 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: default;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-list--bordered & {
+      padding: var(--_py) var(--_px);
+    }
+
+    &--divided {
+      border-top: var(--q-hairline) solid var(--q-list-item-divider);
+    }
+
+    &--disabled {
+      opacity: var(--q-list-item-disabled-opacity);
+      cursor: not-allowed;
+    }
+
+    &--interactive {
+      cursor: pointer;
+    }
+
+    .q-list:not(.q-list--bordered) &--interactive {
+      width: calc(100% + var(--q-list-item-bleed) * 2);
+      margin: 0 calc(var(--q-list-item-bleed) * -1);
+      padding-right: var(--q-list-item-bleed);
+      padding-left: var(--q-list-item-bleed);
+      border-radius: var(--q-list-item-radius);
+    }
+
+    &[aria-current="true"] {
+      background: var(--q-list-item-bg-selected);
+    }
+
+    &--interactive:is(:hover, :focus-visible) {
+      background: var(--q-list-item-bg-hover);
+
+      .q-list__arrow {
+        color: var(--q-list-arrow-color-hover);
+        transform: translateX(var(--q-list-arrow-nudge));
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes q-list-rise {
+      from {
+        opacity: 0;
+        transform: translateY(var(--q-list-rise-distance));
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .q-list__item--animated {
+      animation: q-list-rise var(--q-list-rise-duration) var(--q-list-rise-ease) both;
+      animation-delay: calc(var(--_i, 0) * var(--q-list-rise-stagger));
+    }
+  }
+
+  .q-list__leading {
+    display: inline-flex;
+    flex: none;
+    color: var(--q-list-slot-color);
+  }
+
+  .q-list__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-list-text-gap);
+    min-width: 0;
+  }
+
+  .q-list__primary {
+    color: var(--q-list-primary-color);
+    font-size: var(--_primary-size);
+    line-height: var(--q-list-primary-leading);
+  }
+
+  .q-list__secondary {
+    color: var(--q-list-secondary-color);
+    font-size: var(--_secondary-size);
+    line-height: var(--q-list-secondary-leading);
+  }
+
+  .q-list__trailing {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: var(--q-list-trailing-gap);
+    color: var(--q-list-slot-color);
+
+    &--text {
+      font-family: var(--q-font-mono);
+      font-size: var(--q-list-trailing-font-size);
+      letter-spacing: var(--q-list-trailing-tracking);
+      text-transform: uppercase;
+    }
+  }
+
+  .q-list__arrow {
+    color: var(--q-list-arrow-color);
+    transform: none;
+    transition:
+      color var(--q-dur-hover) var(--q-ease-soft),
+      transform var(--q-dur-hover) var(--q-ease-soft);
+  }
+}

@@ -1,0 +1,73 @@
+// ProcessStep — numbered step under a rule that heats up. BEM: .q-process-step, __bar, __numeral,
+// __title, __body; --hot.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-process-step-gap: var(--q-space-2);
+    --q-process-step-bar-height: var(--q-space-0-25);
+    --q-process-step-bar-bg: var(--q-border);
+    --q-process-step-bar-bg-hot: var(--q-accent);
+    --q-process-step-heat-duration: 1s; // the slow heat pass; no tier-2 duration this long
+    --q-process-step-heat-ease: var(--q-ease-linear);
+    --q-process-step-numeral-font-size: var(--q-text-xs);
+    --q-process-step-numeral-tracking: var(--q-tracking-mono);
+    --q-process-step-numeral-color: var(--q-fg-muted);
+    --q-process-step-numeral-color-hot: var(--q-accent);
+    --q-process-step-title-font-size: var(--q-text-2xl);
+    --q-process-step-title-weight: var(--q-weight-semibold);
+    --q-process-step-title-tracking: var(--q-tracking-h4);
+    --q-process-step-title-leading: var(--q-leading-snug);
+    --q-process-step-title-color: var(--q-fg);
+    --q-process-step-body-font-size: var(--q-text-md);
+    --q-process-step-body-leading: var(--q-leading-body);
+    --q-process-step-body-color: var(--q-fg-body);
+  }
+}
+
+@layer q.components {
+  .q-process-step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-process-step-gap);
+  }
+
+  .q-process-step__bar {
+    height: var(--q-process-step-bar-height);
+    background: var(--q-process-step-bar-bg);
+    transition: background var(--q-process-step-heat-duration) var(--q-process-step-heat-ease);
+  }
+
+  .q-process-step__numeral {
+    color: var(--q-process-step-numeral-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-process-step-numeral-font-size);
+    letter-spacing: var(--q-process-step-numeral-tracking);
+    transition: color var(--q-process-step-heat-duration) var(--q-process-step-heat-ease);
+  }
+
+  .q-process-step--hot {
+    .q-process-step__bar {
+      background: var(--q-process-step-bar-bg-hot);
+    }
+
+    .q-process-step__numeral {
+      color: var(--q-process-step-numeral-color-hot);
+    }
+  }
+
+  .q-process-step__title {
+    margin: 0;
+    color: var(--q-process-step-title-color);
+    font-size: var(--q-process-step-title-font-size);
+    font-weight: var(--q-process-step-title-weight);
+    letter-spacing: var(--q-process-step-title-tracking);
+    line-height: var(--q-process-step-title-leading);
+  }
+
+  .q-process-step__body {
+    color: var(--q-process-step-body-color);
+    font-size: var(--q-process-step-body-font-size);
+    line-height: var(--q-process-step-body-leading);
+    text-wrap: pretty;
+  }
+}

@@ -1,0 +1,323 @@
+// Table — sortable, selectable, expandable data table. BEM: .q-table (--sm/--md/--lg, --bordered),
+// __table, __caption, __head, __sort, __row (--clickable, --stripe), __cell (--first, --control),
+// __check, __expand, __detail, __skeleton-cell, __skeleton (--first), __empty,
+// __foot (--control, --nowrap, --numeric).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-table-border: var(--q-border);
+    --q-table-radius: var(--q-radius-lg);
+    --q-table-leading: var(--q-leading-compact);
+    --q-table-sm-py: var(--q-space-1);
+    --q-table-sm-px: var(--q-space-1-5);
+    --q-table-sm-font-size: var(--q-text-sm);
+    --q-table-sm-head-font-size: var(--q-text-3xs);
+    --q-table-md-py: var(--q-space-1-75);
+    --q-table-md-px: var(--q-space-2);
+    --q-table-md-font-size: var(--q-text-md);
+    --q-table-md-head-font-size: var(--q-text-2xs);
+    --q-table-lg-py: var(--q-space-2-5);
+    --q-table-lg-px: var(--q-space-2-5);
+    --q-table-lg-font-size: var(--q-text-md);
+    --q-table-lg-head-font-size: var(--q-text-2xs);
+
+    --q-table-caption-padding-bottom: var(--q-space-1-5);
+    --q-table-label-font-size: var(--q-text-2xs);
+    --q-table-label-tracking: var(--q-tracking-mono);
+    --q-table-label-color: var(--q-fg-muted);
+    --q-table-head-weight: var(--q-weight-regular);
+    --q-table-head-border: var(--q-fg);
+    --q-table-sort-gap: var(--q-space-0-75);
+    --q-table-sort-color-active: var(--q-fg);
+
+    --q-table-row-bg-hover: var(--q-bg-subtle);
+    --q-table-row-bg-selected: var(--q-bg-subtle);
+    --q-table-row-bg-stripe: var(--q-bg-subtle);
+    --q-table-cell-color: var(--q-fg-body);
+    --q-table-cell-first-color: var(--q-fg);
+    --q-table-control-width: var(--q-space-2);
+
+    --q-table-check-size: var(--q-space-2);
+    --q-table-check-radius: var(--q-radius-2xs);
+    --q-table-check-border: var(--q-fg);
+    --q-table-check-bg: var(--q-bg);
+    --q-table-check-bg-checked: var(--q-fg);
+    --q-table-check-fg: var(--q-bg);
+    --q-table-check-font-size: var(--q-text-2xs);
+
+    --q-table-expand-font-size: var(--q-text-md);
+    --q-table-expand-color: var(--q-fg);
+    --q-table-detail-padding-top: var(--q-space-2);
+    --q-table-detail-padding-bottom: var(--q-space-3);
+    --q-table-detail-bg: var(--q-bg-subtle);
+    --q-table-detail-font-size: var(--q-text-md);
+    --q-table-detail-color: var(--q-fg-body);
+
+    --q-table-skeleton-height: var(--q-space-1-5);
+    --q-table-skeleton-bg: var(--q-bg-subtle);
+    --q-table-skeleton-duration: var(--q-dur-pulse);
+    --q-table-skeleton-ease: ease-in-out; // reference pulse curve; no tier-2 symmetric ease
+    --q-table-skeleton-dim: 0.45;
+
+    --q-table-foot-border: var(--q-fg);
+    --q-table-foot-color: var(--q-fg);
+    --q-table-foot-weight: var(--q-weight-medium);
+
+    --q-table-empty-padding-y: var(--q-space-6);
+    --q-table-empty-padding-x: var(--q-space-2);
+    --q-table-empty-font-size: var(--q-text-md);
+    --q-table-empty-color: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-table {
+    --_py: var(--q-table-md-py);
+    --_px: var(--q-table-md-px);
+    --_font-size: var(--q-table-md-font-size);
+    --_head-font-size: var(--q-table-md-head-font-size);
+    // Per-column width/alignment arrive as --_width/--_align on the cell; reset here so nothing
+    // inherits them from an outer component.
+    --_width: auto;
+    --_align: left;
+
+    overflow-x: auto;
+
+    &--sm {
+      --_py: var(--q-table-sm-py);
+      --_px: var(--q-table-sm-px);
+      --_font-size: var(--q-table-sm-font-size);
+      --_head-font-size: var(--q-table-sm-head-font-size);
+    }
+
+    &--lg {
+      --_py: var(--q-table-lg-py);
+      --_px: var(--q-table-lg-px);
+      --_font-size: var(--q-table-lg-font-size);
+      --_head-font-size: var(--q-table-lg-head-font-size);
+    }
+
+    &--bordered {
+      border: var(--q-hairline) solid var(--q-table-border);
+      border-radius: var(--q-table-radius);
+    }
+  }
+
+  .q-table__table {
+    width: 100%;
+    min-width: var(--_min-width, auto);
+    border-collapse: collapse;
+    font-size: var(--_font-size);
+    line-height: var(--q-table-leading);
+  }
+
+  .q-table__caption {
+    padding: 0 0 var(--q-table-caption-padding-bottom);
+    color: var(--q-table-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-table-label-font-size);
+    letter-spacing: var(--q-table-label-tracking);
+    text-align: left;
+    text-transform: uppercase;
+    caption-side: top;
+  }
+
+  .q-table__head,
+  .q-table__cell,
+  .q-table__foot {
+    width: var(--_width);
+    padding: var(--_py) var(--_px);
+
+    .q-table--bordered & {
+      border-left: var(--q-hairline) solid var(--q-table-border);
+    }
+
+    .q-table--bordered &:first-child {
+      border-left: 0;
+    }
+  }
+
+  // Control headers keep the user-agent's centred th alignment, as in the reference.
+  .q-table__head:not(.q-table__head--control),
+  .q-table__cell,
+  .q-table__foot {
+    text-align: var(--_align);
+  }
+
+  .q-table__head {
+    border-bottom: var(--q-hairline) solid var(--q-table-head-border);
+    color: var(--q-table-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--_head-font-size);
+    font-weight: var(--q-table-head-weight);
+    letter-spacing: var(--q-table-label-tracking);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .q-table__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-table-sort-gap);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+
+    [aria-sort] > & {
+      color: var(--q-table-sort-color-active);
+    }
+  }
+
+  .q-table__row {
+    background: transparent;
+    cursor: default;
+    transition: background var(--q-dur-enter) var(--q-ease-soft);
+
+    &--stripe {
+      background: var(--q-table-row-bg-stripe);
+    }
+
+    &--clickable {
+      cursor: pointer;
+    }
+
+    &--clickable:hover,
+    &--clickable:focus-visible {
+      background: var(--q-table-row-bg-hover);
+    }
+
+    &[aria-selected="true"] {
+      background: var(--q-table-row-bg-selected);
+    }
+  }
+
+  .q-table__cell {
+    border-top: var(--q-hairline) solid var(--q-table-border);
+    color: var(--q-table-cell-color);
+
+    &--first {
+      color: var(--q-table-cell-first-color);
+    }
+
+    &--nowrap {
+      white-space: nowrap;
+    }
+
+    &--numeric {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .q-table__foot {
+    border-top: var(--q-hairline) solid var(--q-table-foot-border);
+    color: var(--q-table-foot-color);
+    font-weight: var(--q-table-foot-weight);
+
+    &--nowrap {
+      white-space: nowrap;
+    }
+
+    &--numeric {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .q-table__head--control,
+  .q-table__cell--control,
+  .q-table__foot--control {
+    width: var(--q-table-control-width);
+  }
+
+  .q-table__check {
+    display: inline-grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--q-table-check-size);
+    height: var(--q-table-check-size);
+    border: var(--q-hairline) solid var(--q-table-check-border);
+    border-radius: var(--q-table-check-radius);
+    background: var(--q-table-check-bg);
+    color: var(--q-table-check-fg);
+    font-size: var(--q-table-check-font-size);
+    line-height: var(--q-leading-none);
+    vertical-align: middle;
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is([aria-checked="true"], [aria-checked="mixed"]) {
+      background: var(--q-table-check-bg-checked);
+    }
+  }
+
+  .q-table__expand {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--q-table-expand-color);
+    font-size: var(--q-table-expand-font-size);
+    transform: none;
+    cursor: pointer;
+    transition: transform var(--q-dur-expand) var(--q-ease-soft);
+
+    &[aria-expanded="true"] {
+      transform: rotate(45deg);
+    }
+  }
+
+  .q-table__detail {
+    padding: var(--q-table-detail-padding-top) var(--_px) var(--q-table-detail-padding-bottom);
+    border-top: var(--q-hairline) solid var(--q-table-border);
+    background: var(--q-table-detail-bg);
+    color: var(--q-table-detail-color);
+    font-size: var(--q-table-detail-font-size);
+  }
+
+  .q-table__skeleton-cell {
+    padding: var(--_py) var(--_px);
+    border-top: var(--q-hairline) solid var(--q-table-border);
+
+    tr:first-child > & {
+      border-top: 0;
+    }
+  }
+
+  .q-table__skeleton {
+    display: block;
+    width: 50%;
+    height: var(--q-table-skeleton-height);
+    background: var(--q-table-skeleton-bg);
+
+    &--first {
+      width: 70%;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes q-table-pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: var(--q-table-skeleton-dim);
+      }
+    }
+
+    .q-table__skeleton {
+      animation: q-table-pulse var(--q-table-skeleton-duration) var(--q-table-skeleton-ease) infinite;
+    }
+  }
+
+  .q-table__empty {
+    padding: var(--q-table-empty-padding-y) var(--q-table-empty-padding-x);
+    color: var(--q-table-empty-color);
+    font-size: var(--q-table-empty-font-size);
+    text-align: center;
+  }
+}

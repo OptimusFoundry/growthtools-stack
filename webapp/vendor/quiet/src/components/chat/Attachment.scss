@@ -1,0 +1,217 @@
+// Attachment — a file in a conversation. BEM: .q-attachment, __main, __thumb, __tile, __text, __name,
+// __meta, __dot, __progress, __remove; --chip, --card, --image, --uploading, --error.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-attachment-bg: var(--q-bg);
+    --q-attachment-border: var(--q-border);
+    --q-attachment-border-hover: var(--q-border-strong);
+    --q-attachment-radius: var(--q-radius-md);
+    --q-attachment-gap: var(--q-space-1-25);
+    --q-attachment-pad: var(--q-space-0-75);
+    --q-attachment-chip-width: calc(var(--q-space-20) + var(--q-space-6));
+    --q-attachment-card-width: calc(var(--q-space-20) + var(--q-space-10));
+    --q-attachment-tile-size: var(--q-space-5);
+    --q-attachment-tile-bg: var(--q-bg-subtle);
+    --q-attachment-tile-fg: var(--q-fg-muted);
+    --q-attachment-tile-radius: var(--q-radius-sm);
+    --q-attachment-tile-font: var(--q-font-mono);
+    --q-attachment-tile-size-text: var(--q-text-3xs);
+    --q-attachment-name-fg: var(--q-fg);
+    --q-attachment-name-size: var(--q-text-sm);
+    --q-attachment-name-weight: var(--q-weight-medium);
+    --q-attachment-meta-fg: var(--q-fg-muted);
+    --q-attachment-meta-size: var(--q-text-2xs);
+    --q-attachment-meta-font: var(--q-font-mono);
+    --q-attachment-error-dot: var(--q-accent);
+    --q-attachment-dot-size: var(--q-space-0-75);
+    --q-attachment-progress-height: var(--q-space-0-25);
+    --q-attachment-progress-fill: var(--q-fg);
+    --q-attachment-progress-track: var(--q-border);
+    --q-attachment-image-max-height: var(--q-space-20);
+    --q-attachment-remove-size: var(--q-space-2-5);
+    --q-attachment-remove-bg: var(--q-bg-inverse);
+    --q-attachment-remove-fg: var(--q-fg-on-inverse);
+    --q-attachment-remove-size-text: var(--q-text-sm);
+  }
+}
+
+@layer q.components {
+  .q-attachment {
+    position: relative;
+    display: inline-flex;
+    box-sizing: border-box;
+    max-width: 100%;
+    border: var(--q-hairline) solid var(--q-attachment-border);
+    border-radius: var(--q-attachment-radius);
+    background: var(--q-attachment-bg);
+    font-family: var(--q-font-sans);
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &--chip {
+      width: var(--q-attachment-chip-width);
+    }
+
+    &--card {
+      width: var(--q-attachment-card-width);
+    }
+  }
+
+  .q-attachment__main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--q-attachment-gap);
+    box-sizing: border-box;
+    min-width: 0;
+    padding: var(--q-attachment-pad);
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  // Openable cards: the whole card is the target; the edge firms up on hover and keyboard focus.
+  :is(a, button).q-attachment__main {
+    cursor: pointer;
+  }
+
+  .q-attachment:has(:is(a, button).q-attachment__main:is(:hover, :focus-visible)) {
+    border-color: var(--q-attachment-border-hover);
+  }
+
+  .q-attachment__tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--q-attachment-tile-size);
+    height: var(--q-attachment-tile-size);
+    border-radius: var(--q-attachment-tile-radius);
+    background: var(--q-attachment-tile-bg);
+    color: var(--q-attachment-tile-fg);
+    font-family: var(--q-attachment-tile-font);
+    font-size: var(--q-attachment-tile-size-text);
+    letter-spacing: var(--q-tracking-mono);
+  }
+
+  .q-attachment__thumb {
+    flex: none;
+    width: var(--q-attachment-tile-size);
+    height: var(--q-attachment-tile-size);
+    border-radius: var(--q-attachment-tile-radius);
+    background: var(--q-attachment-tile-bg);
+    object-fit: cover;
+  }
+
+  .q-attachment__text {
+    display: grid;
+    gap: var(--q-space-0-25);
+    min-width: 0;
+  }
+
+  .q-attachment__name {
+    overflow: hidden;
+    color: var(--q-attachment-name-fg);
+    font-size: var(--q-attachment-name-size);
+    font-weight: var(--q-attachment-name-weight);
+    line-height: var(--q-leading-ui);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .q-attachment__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-5);
+    overflow: hidden;
+    color: var(--q-attachment-meta-fg);
+    font-family: var(--q-attachment-meta-font);
+    font-size: var(--q-attachment-meta-size);
+    letter-spacing: var(--q-tracking-mono);
+    line-height: var(--q-leading-ui);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+  }
+
+  .q-attachment__dot {
+    flex: none;
+    width: var(--q-attachment-dot-size);
+    height: var(--q-attachment-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-attachment-error-dot);
+  }
+
+  // A card holding an image shows it large, name and size underneath.
+  .q-attachment--card.q-attachment--image .q-attachment__main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .q-attachment--card.q-attachment--image .q-attachment__thumb {
+    width: 100%;
+    height: auto;
+    max-height: var(--q-attachment-image-max-height);
+  }
+
+  .q-attachment__progress {
+    position: absolute;
+    right: var(--q-attachment-pad);
+    bottom: 0;
+    left: var(--q-attachment-pad);
+    height: var(--q-attachment-progress-height);
+    overflow: hidden;
+    background: var(--q-attachment-progress-track);
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      background: var(--q-attachment-progress-fill);
+      transform: scaleX(var(--_progress, 0));
+      transform-origin: left;
+      transition: transform var(--q-dur-expand) var(--q-ease-soft);
+      content: "";
+    }
+
+    &[data-indeterminate]::after {
+      width: 30%;
+      animation: q-attachment-pass var(--q-dur-pulse) var(--q-ease-forge) infinite;
+      transform: none;
+    }
+  }
+
+  // Remove: a small ink disc on the chip's corner, always visible (touch has no hover).
+  .q-attachment__remove {
+    position: absolute;
+    top: calc(var(--q-attachment-remove-size) / -3);
+    right: calc(var(--q-attachment-remove-size) / -3);
+    display: grid;
+    place-items: center;
+    width: var(--q-attachment-remove-size);
+    height: var(--q-attachment-remove-size);
+    padding: 0;
+    border: 0;
+    border-radius: var(--q-radius-pill);
+    background: var(--q-attachment-remove-bg);
+    color: var(--q-attachment-remove-fg);
+    font-size: var(--q-attachment-remove-size-text);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+  }
+}
+
+@keyframes q-attachment-pass {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(340%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-attachment__progress[data-indeterminate]::after {
+    width: 100%;
+    opacity: 0.4;
+    animation: none;
+  }
+}

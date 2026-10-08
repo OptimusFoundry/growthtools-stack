@@ -1,0 +1,19 @@
+// Tier 2 — elevation and stacking. Shadow colours come from the theme (--q-shadow-color).
+// Shadows re-resolve per [data-theme] (they read the theme's --q-shadow-rgb).
+:root,
+[data-theme] {
+  --q-shadow-none: none;
+  --q-shadow-1: 0 1px 2px rgb(var(--q-shadow-rgb) / 5%), 0 1px 3px rgb(var(--q-shadow-rgb) / 4%);
+  --q-shadow-2: 0 2px 6px rgb(var(--q-shadow-rgb) / 4%), 0 12px 32px rgb(var(--q-shadow-rgb) / 8%);
+  --q-shadow-3: 0 4px 12px rgb(var(--q-shadow-rgb) / 5%), 0 24px 64px rgb(var(--q-shadow-rgb) / 14%);
+
+  --q-z-base: 0;
+  --q-z-raised: 10;
+  --q-z-dropdown: 40;
+  --q-z-sticky: 50;
+  --q-z-popover: 60;
+  --q-z-overlay: 100;
+  --q-z-palette: 110;
+  --q-z-toast: 200;
+  --q-z-debug: 9999;
+}

@@ -1,0 +1,73 @@
+// CodeBlock — code inside a reply. BEM: .q-code-block, __header, __language, __copy, __pre, __code;
+// --wrap. Height caps at --_max-height (the `maxHeight` prop) and scrolls.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-code-block-bg: var(--q-bg-subtle);
+    --q-code-block-border: var(--q-border);
+    --q-code-block-radius: var(--q-radius-md);
+    --q-code-block-fg: var(--q-fg);
+    --q-code-block-font: var(--q-font-mono);
+    --q-code-block-size: var(--q-text-xs);
+    --q-code-block-leading: var(--q-leading-body);
+    --q-code-block-px: var(--q-space-2);
+    --q-code-block-py: var(--q-space-1-5);
+    --q-code-block-header-px: var(--q-space-1-5);
+    --q-code-block-label-fg: var(--q-fg-muted);
+    --q-code-block-label-size: var(--q-text-2xs);
+    --q-code-block-focus-ring: inset var(--q-ring-soft);
+  }
+}
+
+@layer q.components {
+  .q-code-block {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    border: var(--q-hairline) solid var(--q-code-block-border);
+    border-radius: var(--q-code-block-radius);
+    background: var(--q-code-block-bg);
+  }
+
+  .q-code-block__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-1);
+    padding: var(--q-space-0-5) var(--q-space-0-5) 0 var(--q-code-block-header-px);
+  }
+
+  .q-code-block__language {
+    color: var(--q-code-block-label-fg);
+    font-family: var(--q-code-block-font);
+    font-size: var(--q-code-block-label-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-code-block__pre {
+    max-height: var(--_max-height, none);
+    margin: 0;
+    padding: var(--q-space-0-5) var(--q-code-block-px) var(--q-code-block-py);
+    overflow: auto;
+    color: var(--q-code-block-fg);
+    font-family: var(--q-code-block-font);
+    font-size: var(--q-code-block-size);
+    line-height: var(--q-code-block-leading);
+    tab-size: 2;
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: var(--q-code-block-focus-ring);
+    }
+  }
+
+  .q-code-block--wrap .q-code-block__pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .q-code-block__code {
+    font: inherit;
+  }
+}

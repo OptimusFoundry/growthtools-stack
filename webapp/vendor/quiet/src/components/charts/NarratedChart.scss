@@ -1,0 +1,74 @@
+// NarratedChart — a LineChart plus its reading: numbered sentences that mark the chart.
+// BEM: .q-narrated-chart, __beats, __item, __beat[aria-pressed], __index, __text.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-narrated-chart-gap: var(--q-space-3);
+    --q-narrated-chart-beat-gap: var(--q-space-1-5);
+    --q-narrated-chart-beat-py: var(--q-space-1);
+    --q-narrated-chart-beat-fg: var(--q-fg-muted);
+    --q-narrated-chart-beat-fg-active: var(--q-fg);
+    --q-narrated-chart-beat-font-size: var(--q-text-md);
+    --q-narrated-chart-beat-weight-active: var(--q-weight-semibold);
+    --q-narrated-chart-index-fg: var(--q-fg-muted);
+    --q-narrated-chart-index-fg-active: var(--q-accent);
+    --q-narrated-chart-rule: var(--q-border);
+    --q-narrated-chart-rule-active: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-narrated-chart {
+    display: grid;
+    gap: var(--q-narrated-chart-gap);
+    min-width: 0;
+  }
+
+  .q-narrated-chart__beats {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-narrated-chart__beat {
+    display: flex;
+    align-items: baseline;
+    gap: var(--q-narrated-chart-beat-gap);
+    width: 100%;
+    padding: var(--q-narrated-chart-beat-py) 0;
+    border: 0;
+    border-top: var(--q-hairline) solid var(--q-narrated-chart-rule);
+    background: transparent;
+    color: var(--q-narrated-chart-beat-fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-narrated-chart-beat-font-size);
+    line-height: var(--q-leading-snug);
+    text-align: left;
+    cursor: pointer;
+    transition: color var(--q-dur-hover) var(--q-ease-soft), border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--q-narrated-chart-beat-fg-active);
+    }
+
+    &[aria-pressed="true"] {
+      border-top-color: var(--q-narrated-chart-rule-active);
+      color: var(--q-narrated-chart-beat-fg-active);
+      font-weight: var(--q-narrated-chart-beat-weight-active);
+    }
+  }
+
+  .q-narrated-chart__index {
+    flex: none;
+    color: var(--q-narrated-chart-index-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-text-3xs);
+    font-weight: var(--q-weight-regular);
+    letter-spacing: var(--q-tracking-mono);
+
+    .q-narrated-chart__beat[aria-pressed="true"] & {
+      color: var(--q-narrated-chart-index-fg-active);
+    }
+  }
+}

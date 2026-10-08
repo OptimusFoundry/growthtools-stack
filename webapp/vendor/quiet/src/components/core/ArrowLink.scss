@@ -1,0 +1,37 @@
+// ArrowLink — sans link with a trailing arrow and a hairline underline. BEM: .q-arrow-link.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-arrow-link-gap: var(--q-space-0-75);
+    --q-arrow-link-pad-bottom: var(--q-space-0-25);
+    --q-arrow-link-font-size: var(--q-text-md);
+    --q-arrow-link-weight: var(--q-weight-semibold);
+    --q-arrow-link-fg: var(--q-fg);
+    --q-arrow-link-fg-hover: var(--q-accent);
+    --q-arrow-link-border: var(--q-border);
+    --q-arrow-link-border-hover: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-arrow-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--q-arrow-link-gap);
+    padding-bottom: var(--q-arrow-link-pad-bottom);
+    border-bottom: var(--q-hairline) solid var(--q-arrow-link-border);
+    color: var(--q-arrow-link-fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-arrow-link-font-size);
+    font-weight: var(--q-arrow-link-weight);
+    text-decoration: none;
+    transition:
+      color var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      border-bottom-color: var(--q-arrow-link-border-hover);
+      color: var(--q-arrow-link-fg-hover);
+    }
+  }
+}

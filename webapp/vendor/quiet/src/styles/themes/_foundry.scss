@@ -1,0 +1,17 @@
+// Theme: foundry — the Optimus Foundry "Soft" reference, exactly. The default.
+// Tier 1 palette: themes are the only place raw colour values live.
+:root,
+[data-theme="foundry"] {
+  --q-gray-0: #fff;
+  --q-gray-50: #f6f6f7;
+  --q-gray-100: #eaeaed;
+  --q-gray-200: #d3d3d9;
+  --q-gray-400: #95959c;
+  --q-gray-500: #6e6e75;
+  --q-gray-800: #36363c;
+  --q-gray-900: #1b1b1f;
+  --q-molten-500: #e0531a;
+  --q-shadow-rgb: 27 27 31;
+
+  color-scheme: light;
+}

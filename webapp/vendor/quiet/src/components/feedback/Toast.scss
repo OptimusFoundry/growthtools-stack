@@ -1,0 +1,138 @@
+// Toast — transient notification card. BEM: .q-toast, __mark, __dot, __glyph, __content, __title,
+// __description, __meta, __action, __close; --{default|neutral|success|warning|error}.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-toast-gap: var(--q-space-2);
+    --q-toast-py: var(--q-space-2);
+    --q-toast-px: var(--q-space-3);
+    --q-toast-bg: var(--q-bg);
+    --q-toast-border: var(--q-border);
+    --q-toast-error-border: var(--q-status-error-border);
+    --q-toast-radius: var(--q-radius-lg);
+    --q-toast-shadow: var(--q-shadow-2);
+    --q-toast-min-width: 280px;
+    --q-toast-max-width: 420px;
+    --q-toast-mark-width: var(--q-space-1-5);
+    --q-toast-mark-height: var(--q-space-2-5);
+    --q-toast-dot-size: var(--q-space-1);
+    --q-toast-dot: var(--q-accent);
+    --q-toast-neutral-dot: var(--q-fg);
+    --q-toast-warning-ring: var(--q-status-warning-fg);
+    --q-toast-glyph-size: var(--q-text-sm);
+    --q-toast-success-glyph: var(--q-status-success-fg);
+    --q-toast-error-glyph: var(--q-status-error-fg);
+    --q-toast-error-glyph-weight: var(--q-weight-bold);
+    --q-toast-content-gap: var(--q-space-0-5);
+    --q-toast-title-fg: var(--q-fg);
+    --q-toast-title-size: var(--q-text-md);
+    --q-toast-title-weight: var(--q-weight-semibold);
+    --q-toast-title-leading: 1.35; // tighter than --q-leading-ui so the title hugs its meta line
+    --q-toast-description-fg: var(--q-fg-body);
+    --q-toast-description-size: var(--q-text-md);
+    --q-toast-description-leading: 1.5; // between --q-leading-compact and --q-leading-body
+    --q-toast-meta-fg: var(--q-fg-muted);
+    --q-toast-action-mt: var(--q-space-1);
+    --q-toast-close-fg: var(--q-fg-muted);
+    --q-toast-close-size: 16px; // the × glyph; between --q-text-md and --q-text-lg
+  }
+}
+
+@layer q.components {
+  .q-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--q-toast-gap);
+    box-sizing: border-box;
+    min-width: var(--q-toast-min-width);
+    max-width: var(--q-toast-max-width);
+    padding: var(--q-toast-py) var(--q-toast-px);
+    border: var(--q-hairline) solid var(--q-toast-border);
+    border-radius: var(--q-toast-radius);
+    background: var(--q-toast-bg);
+    box-shadow: var(--q-toast-shadow);
+
+    &--error {
+      border-color: var(--q-toast-error-border);
+    }
+  }
+
+  .q-toast__mark {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--q-toast-mark-width);
+    height: var(--q-toast-mark-height);
+  }
+
+  .q-toast__dot {
+    width: var(--q-toast-dot-size);
+    height: var(--q-toast-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-toast-dot);
+
+    .q-toast--neutral & {
+      background: var(--q-toast-neutral-dot);
+    }
+
+    .q-toast--warning & {
+      box-sizing: border-box;
+      border: var(--q-hairline) solid var(--q-toast-warning-ring);
+      background: none;
+    }
+  }
+
+  .q-toast__glyph {
+    color: var(--q-toast-success-glyph);
+    font-size: var(--q-toast-glyph-size);
+    line-height: var(--q-leading-none);
+
+    .q-toast--error & {
+      color: var(--q-toast-error-glyph);
+      font-weight: var(--q-toast-error-glyph-weight);
+    }
+  }
+
+  .q-toast__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-toast-content-gap);
+    min-width: 0;
+  }
+
+  .q-toast__title {
+    color: var(--q-toast-title-fg);
+    font-size: var(--q-toast-title-size);
+    font-weight: var(--q-toast-title-weight);
+    line-height: var(--q-toast-title-leading);
+  }
+
+  .q-toast__description {
+    color: var(--q-toast-description-fg);
+    font-size: var(--q-toast-description-size);
+    line-height: var(--q-toast-description-leading);
+  }
+
+  .q-toast__meta {
+    color: var(--q-toast-meta-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-text-2xs);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-toast__action {
+    margin-top: var(--q-toast-action-mt);
+  }
+
+  .q-toast__close {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--q-toast-close-fg);
+    font-size: var(--q-toast-close-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+  }
+}

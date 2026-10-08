@@ -1,0 +1,82 @@
+// BorderProgress — the wrapped container's edge draws clockwise as progress.
+// BEM: .q-border-progress, __edge, __stroke; --indeterminate; [data-state="idle|running|done"].
+// --_progress (0 → 1) comes in from the component. Match --q-border-progress-radius to the child.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-border-progress-radius: var(--q-radius-lg); // Card's radius
+    --q-border-progress-stroke: var(--q-fg);
+    --q-border-progress-stroke-done: var(--q-fg); // ink, like Progress success; molten stays punctuation
+    --q-border-progress-stroke-width: 1.5px;
+    --q-border-progress-dur: 0.4s; // same glide as Progress
+    --q-border-progress-done-dur: var(--q-dur-expand);
+    --q-border-progress-indeterminate-length: 0.18; // fraction of the perimeter
+    --q-border-progress-indeterminate-dur: 2.4s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer q.tokens {
+    :root,
+    [data-theme] {
+      --q-border-progress-dur: 0s;
+    }
+  }
+}
+
+@keyframes q-border-progress-travel {
+  to { stroke-dashoffset: -1; }
+}
+
+@layer q.components {
+  .q-border-progress {
+    --_progress: 0;
+    --_inset: calc(var(--q-border-progress-stroke-width) / 2);
+
+    position: relative;
+    display: grid;
+    border-radius: var(--q-border-progress-radius);
+  }
+
+  .q-border-progress__edge {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .q-border-progress__stroke {
+    x: var(--_inset);
+    y: var(--_inset);
+    width: calc(100% - var(--q-border-progress-stroke-width));
+    height: calc(100% - var(--q-border-progress-stroke-width));
+    rx: calc(var(--q-border-progress-radius) - var(--_inset));
+    fill: none;
+    stroke: var(--q-border-progress-stroke);
+    stroke-dasharray: var(--_progress) 1;
+    stroke-linecap: round;
+    stroke-width: var(--q-border-progress-stroke-width);
+    transition:
+      stroke-dasharray var(--q-border-progress-dur) var(--q-ease-soft),
+      stroke var(--q-border-progress-done-dur) var(--q-ease-soft);
+
+    .q-border-progress[data-state="idle"] & {
+      stroke: transparent;
+    }
+
+    .q-border-progress[data-state="done"] & {
+      stroke: var(--q-border-progress-stroke-done);
+    }
+
+    .q-border-progress--indeterminate & {
+      stroke-dasharray: var(--q-border-progress-indeterminate-length) 1;
+      transition: none;
+
+      @media (prefers-reduced-motion: no-preference) {
+        animation: q-border-progress-travel var(--q-border-progress-indeterminate-dur) linear infinite;
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+// Tier 2 — radii, scaled to the surface. Never 0 on a container.
+:root {
+  --q-radius-none: 0;
+  --q-radius-2xs: 4px;  // tiny marks inside controls
+  --q-radius-xs: 6px;   // checkboxes, tiny chips
+  --q-radius-sm: 10px;  // tooltips, menu and nav items, segments
+  --q-radius-md: 14px;  // inputs, selects, alerts, square avatars
+  --q-radius-lg: 20px;  // cards, tables, popovers, toasts
+  --q-radius-xl: 28px;  // dialogs, drawers, command palette
+  --q-radius-pill: 999px;
+}

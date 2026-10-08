@@ -1,0 +1,65 @@
+// Stack — flex row/column on the 8px grid. BEM: .q-stack, __item (animated child);
+// --{direction}, --gap-{size}, --wrap. Arbitrary gap/align/justify arrive as --_gap/--_align/--_justify.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-stack-gap-xs: var(--q-space-1);
+    --q-stack-gap-sm: var(--q-space-2);
+    --q-stack-gap-md: var(--q-space-3);
+    --q-stack-gap-lg: var(--q-space-4);
+    --q-stack-gap-xl: var(--q-space-6);
+    --q-stack-gap-2xl: var(--q-space-8);
+    --q-stack-rise-distance: var(--q-space-1);
+    --q-stack-rise-dur: 0.4s;
+    --q-stack-rise-stagger: 60ms;
+  }
+}
+
+@layer q.components {
+  .q-stack {
+    // Defaults for the locals, so a nested stack never inherits its parent's.
+    --_gap: 0;
+    --_align: normal;
+    --_justify: normal;
+
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: var(--_align);
+    justify-content: var(--_justify);
+    gap: var(--_gap);
+    min-width: 0;
+
+    &--row { flex-direction: row; }
+    &--column { flex-direction: column; }
+    &--row-reverse { flex-direction: row-reverse; }
+    &--column-reverse { flex-direction: column-reverse; }
+    &--wrap { flex-wrap: wrap; }
+
+    &--gap-none { --_gap: 0; }
+    &--gap-xs { --_gap: var(--q-stack-gap-xs); }
+    &--gap-sm { --_gap: var(--q-stack-gap-sm); }
+    &--gap-md { --_gap: var(--q-stack-gap-md); }
+    &--gap-lg { --_gap: var(--q-stack-gap-lg); }
+    &--gap-xl { --_gap: var(--q-stack-gap-xl); }
+    &--gap-2xl { --_gap: var(--q-stack-gap-2xl); }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .q-stack__item {
+      animation: q-stack-rise var(--q-stack-rise-dur) var(--q-ease-forge) both;
+      animation-delay: calc(var(--_i) * var(--q-stack-rise-stagger));
+    }
+  }
+
+  @keyframes q-stack-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--q-stack-rise-distance));
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

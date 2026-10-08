@@ -1,0 +1,30 @@
+// Tier 2 — sizes: controls, fields, rows, fixed layout widths, icons.
+:root {
+  --q-control-sm: 32px;
+  --q-control-md: 40px;
+  --q-control-lg: 52px;
+  --q-field-sm: 36px;
+  --q-field-md: 48px;
+  --q-field-lg: 56px;
+  --q-row-compact: 32px;
+  --q-row: 48px;
+
+  --q-icon-xs: 10px;
+  --q-icon-sm: 12px;
+  --q-icon-md: 15px;
+  --q-icon-lg: 19px;
+  --q-icon-xl: 24px;
+  --q-icon-2xl: 32px;
+
+  --q-w-sidebar: 240px;
+  --q-w-sidebar-collapsed: 64px;
+  --q-w-settings-nav: 200px;
+  --q-w-list-pane: 360px;
+  --q-w-detail-panel: 400px;
+  --q-w-form: 640px;
+  --q-w-content: 1040px;
+  --q-w-max: 1280px;
+  --q-h-topbar: 64px;
+  --q-gutter: 32px;
+  --q-hairline: 1px;
+}

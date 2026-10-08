@@ -1,0 +1,160 @@
+// Receipt — a slip of what an agent did: who, why, one line per effect, each undoable.
+// BEM: .q-receipt, __header, __title, __time, __ref, __reason, __lines, __line, __effect, __verb,
+// __mark, __undo, __footer. States: __line[data-undone].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-receipt-width: 360px;
+    --q-receipt-gap: var(--q-space-1-5);
+    --q-receipt-padding: var(--q-space-2);
+    --q-receipt-padding-bottom: var(--q-space-3); // room above the torn edge
+    --q-receipt-bg: var(--q-bg-subtle);
+    --q-receipt-radius: var(--q-radius-sm);
+    --q-receipt-tear: var(--q-space-0-75); // depth of the perforated bottom edge
+    --q-receipt-title-size: var(--q-text-sm);
+    --q-receipt-title-weight: var(--q-weight-semibold);
+    --q-receipt-title-fg: var(--q-fg);
+    --q-receipt-mono-font: var(--q-font-mono);
+    --q-receipt-mono-size: var(--q-text-3xs);
+    --q-receipt-mono-fg: var(--q-fg-muted);
+    --q-receipt-reason-size: var(--q-text-xs);
+    --q-receipt-reason-fg: var(--q-fg-body);
+    --q-receipt-line-size: var(--q-text-sm);
+    --q-receipt-line-fg: var(--q-fg);
+    --q-receipt-line-gap: var(--q-space-0-75);
+    --q-receipt-verb-fg: var(--q-fg-muted);
+    --q-receipt-undone-fg: var(--q-fg-muted);
+    --q-receipt-undo-fg: var(--q-fg);
+    --q-receipt-undo-underline: var(--q-accent);
+    --q-receipt-rule: var(--q-border);
+  }
+}
+
+@layer q.components {
+  .q-receipt {
+    display: grid;
+    gap: var(--q-receipt-gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--q-receipt-width);
+    padding: var(--q-receipt-padding) var(--q-receipt-padding) var(--q-receipt-padding-bottom);
+    border-radius: var(--q-receipt-radius) var(--q-receipt-radius) 0 0;
+    background: var(--q-receipt-bg);
+    font-family: var(--q-font-sans);
+
+    // The slip is torn off along a perforation: a row of small triangles cut from its bottom edge.
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--q-receipt-tear)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--q-receipt-tear) * 2) var(--q-receipt-tear) repeat-x;
+  }
+
+  .q-receipt__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--q-space-1);
+  }
+
+  .q-receipt__title {
+    margin: 0;
+    font-size: var(--q-receipt-title-size);
+    font-weight: var(--q-receipt-title-weight);
+    line-height: var(--q-leading-snug);
+    color: var(--q-receipt-title-fg);
+  }
+
+  .q-receipt__time {
+    font-weight: var(--q-weight-regular);
+    color: var(--q-receipt-verb-fg);
+  }
+
+  .q-receipt__ref,
+  .q-receipt__mark,
+  .q-receipt__footer {
+    font-family: var(--q-receipt-mono-font);
+    font-size: var(--q-receipt-mono-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-receipt-mono-fg);
+  }
+
+  .q-receipt__reason {
+    margin: 0;
+    font-size: var(--q-receipt-reason-size);
+    line-height: var(--q-leading-body);
+    color: var(--q-receipt-reason-fg);
+  }
+
+  .q-receipt__lines {
+    display: grid;
+    gap: var(--q-receipt-line-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-receipt__line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--q-space-1-5);
+    font-size: var(--q-receipt-line-size);
+    line-height: var(--q-leading-snug);
+    color: var(--q-receipt-line-fg);
+  }
+
+  .q-receipt__effect {
+    min-width: 0;
+    border-radius: var(--q-radius-2xs);
+    transition: color var(--q-dur-expand) var(--q-ease-soft);
+
+    .q-receipt__line[data-undone] & {
+      color: var(--q-receipt-undone-fg);
+      text-decoration: line-through;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--q-focus-ring-color);
+      outline-offset: 2px;
+    }
+  }
+
+  .q-receipt__verb {
+    color: var(--q-receipt-verb-fg);
+  }
+
+  .q-receipt__undo {
+    flex: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--q-receipt-undo-fg);
+    font-family: var(--q-receipt-mono-font);
+    font-size: var(--q-receipt-mono-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: var(--q-hairline);
+    text-underline-offset: 0.3em; // clears the caps
+    cursor: pointer;
+    transition: text-decoration-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      text-decoration-color: var(--q-receipt-undo-underline);
+    }
+  }
+
+  .q-receipt__footer {
+    padding-top: var(--q-space-1);
+    border-top: var(--q-hairline) dashed var(--q-receipt-rule);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-receipt__effect,
+    .q-receipt__undo {
+      transition: none;
+    }
+  }
+}

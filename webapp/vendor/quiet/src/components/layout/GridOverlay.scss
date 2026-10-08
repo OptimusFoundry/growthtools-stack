@@ -1,0 +1,55 @@
+// GridOverlay — dev overlay: column grid + 8px rhythm lines, toggled with Ctrl/⌘+G. BEM:
+// .q-grid-overlay, __columns, __column; --rhythm. Props arrive as --_cols/--_max/--_gutter/--_pad/--_offset.
+// Debug tints derive from the theme's accent and foreground, so they follow light and dark.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-grid-overlay-max: var(--q-w-max);
+    --q-grid-overlay-gutter: var(--q-grid-gutter);
+    --q-grid-overlay-padding: var(--q-space-page-x);
+    --q-grid-overlay-rhythm-step: var(--q-space-1);
+    --q-grid-overlay-rhythm-line: color-mix(in srgb, var(--q-fg) 5%, transparent);
+    --q-grid-overlay-column-bg: color-mix(in srgb, var(--q-accent) 6%, transparent);
+    --q-grid-overlay-column-border: color-mix(in srgb, var(--q-accent) 25%, transparent);
+  }
+}
+
+@layer q.components {
+  .q-grid-overlay {
+    --_cols: 12;
+    --_offset: 0;
+    --_max: var(--q-grid-overlay-max);
+    --_gutter: var(--q-grid-overlay-gutter);
+    --_pad: var(--q-grid-overlay-padding);
+
+    position: fixed;
+    inset: 0 0 0 var(--_offset);
+    z-index: var(--q-z-debug);
+    pointer-events: none;
+
+    &--rhythm {
+      background-image: repeating-linear-gradient(
+        to bottom,
+        var(--q-grid-overlay-rhythm-line) 0 var(--q-hairline),
+        transparent var(--q-hairline) var(--q-grid-overlay-rhythm-step)
+      );
+    }
+  }
+
+  .q-grid-overlay__columns {
+    display: grid;
+    grid-template-columns: repeat(var(--_cols), minmax(0, 1fr));
+    column-gap: var(--_gutter);
+    box-sizing: border-box;
+    max-width: var(--_max);
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 var(--_pad);
+  }
+
+  .q-grid-overlay__column {
+    border-right: var(--q-hairline) solid var(--q-grid-overlay-column-border);
+    border-left: var(--q-hairline) solid var(--q-grid-overlay-column-border);
+    background: var(--q-grid-overlay-column-bg);
+  }
+}

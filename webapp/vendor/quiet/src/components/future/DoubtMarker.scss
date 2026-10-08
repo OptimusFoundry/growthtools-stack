@@ -1,0 +1,167 @@
+// DoubtMarker — an inline mark on a claim the system isn't sure of; hover/focus explains why.
+// BEM: .q-doubt-marker, __claim, __tag, __bubble, __status, __was, __reason, __hint;
+// --doubt, --checking, --confirmed, --revised. Bubble state: [data-state="open|closed"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-doubt-marker-underline: var(--q-accent);
+    --q-doubt-marker-underline-checking: var(--q-fg-muted);
+    --q-doubt-marker-underline-revised: var(--q-fg);
+    --q-doubt-marker-underline-thickness: var(--q-hairline);
+    --q-doubt-marker-underline-offset: 0.25em; // sits below descenders at any body size
+    --q-doubt-marker-bg-hover: var(--q-bg-subtle);
+    --q-doubt-marker-radius: var(--q-radius-2xs);
+    --q-doubt-marker-tag-font: var(--q-font-mono);
+    --q-doubt-marker-tag-size: var(--q-text-3xs);
+    --q-doubt-marker-tag-fg: var(--q-fg-muted);
+    --q-doubt-marker-bubble-bg: var(--q-bg);
+    --q-doubt-marker-bubble-border: var(--q-border);
+    --q-doubt-marker-bubble-shadow: var(--q-shadow-2);
+    --q-doubt-marker-bubble-radius: var(--q-radius-md);
+    --q-doubt-marker-bubble-padding: var(--q-space-1-5);
+    --q-doubt-marker-bubble-width: 280px;
+    --q-doubt-marker-bubble-offset: var(--q-space-1);
+    --q-doubt-marker-bubble-z: var(--q-z-popover);
+    --q-doubt-marker-status-font: var(--q-font-mono);
+    --q-doubt-marker-status-size: var(--q-text-3xs);
+    --q-doubt-marker-status-fg: var(--q-fg);
+    --q-doubt-marker-reason-size: var(--q-text-sm);
+    --q-doubt-marker-reason-fg: var(--q-fg-body);
+    --q-doubt-marker-was-fg: var(--q-fg-muted);
+    --q-doubt-marker-hint-fg: var(--q-fg-muted);
+  }
+}
+
+@keyframes q-doubt-marker-checking {
+  50% { text-decoration-color: transparent; }
+}
+
+@layer q.components {
+  .q-doubt-marker {
+    --_underline: var(--q-doubt-marker-underline);
+    --_style: dotted;
+
+    position: relative;
+
+    &--checking {
+      --_underline: var(--q-doubt-marker-underline-checking);
+    }
+
+    &--confirmed {
+      --_underline: transparent;
+    }
+
+    &--revised {
+      --_underline: var(--q-doubt-marker-underline-revised);
+      --_style: solid;
+    }
+  }
+
+  .q-doubt-marker__claim {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--q-doubt-marker-radius);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: inherit;
+    text-decoration: underline var(--_style) var(--_underline) var(--q-doubt-marker-underline-thickness);
+    text-underline-offset: var(--q-doubt-marker-underline-offset);
+    transition:
+      background-color var(--q-dur-hover) var(--q-ease-soft),
+      text-decoration-color var(--q-dur-expand) var(--q-ease-soft);
+    box-decoration-break: clone;
+
+    &:is(button) {
+      cursor: pointer;
+    }
+
+    &:is(:hover, :focus-visible) {
+      background: var(--q-doubt-marker-bg-hover);
+    }
+
+    .q-doubt-marker--checking > & {
+      animation: q-doubt-marker-checking var(--q-dur-pulse) var(--q-ease-soft) infinite;
+    }
+  }
+
+  .q-doubt-marker__tag {
+    margin-left: var(--q-space-0-75);
+    font-family: var(--q-doubt-marker-tag-font);
+    font-size: var(--q-doubt-marker-tag-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: var(--q-doubt-marker-tag-fg);
+  }
+
+  .q-doubt-marker__bubble {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: var(--q-doubt-marker-bubble-z);
+    display: none; // closed bubbles take no layout, so they can't widen the page
+    gap: var(--q-space-0-75);
+    box-sizing: border-box;
+    width: var(--q-doubt-marker-bubble-width);
+    max-width: calc(100vw - 2 * var(--q-space-2));
+    margin-top: var(--q-doubt-marker-bubble-offset);
+    padding: var(--q-doubt-marker-bubble-padding);
+    border: var(--q-hairline) solid var(--q-doubt-marker-bubble-border);
+    border-radius: var(--q-doubt-marker-bubble-radius);
+    background: var(--q-doubt-marker-bubble-bg);
+    box-shadow: var(--q-doubt-marker-bubble-shadow);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-doubt-marker-reason-size);
+    font-weight: var(--q-weight-regular);
+    line-height: var(--q-leading-body);
+    letter-spacing: var(--q-tracking-none);
+    text-align: left;
+    white-space: normal;
+    transform: translateX(var(--_shift, 0));
+    transition:
+      opacity var(--q-dur-hover) var(--q-ease-soft),
+      display var(--q-dur-hover) allow-discrete;
+
+    &[data-state="open"] {
+      display: grid;
+      opacity: 1;
+
+      @starting-style {
+        opacity: 0;
+      }
+    }
+  }
+
+  .q-doubt-marker__status,
+  .q-doubt-marker__hint {
+    font-family: var(--q-doubt-marker-status-font);
+    font-size: var(--q-doubt-marker-status-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-doubt-marker-status-fg);
+  }
+
+  .q-doubt-marker__hint {
+    color: var(--q-doubt-marker-hint-fg);
+  }
+
+  .q-doubt-marker__was {
+    color: var(--q-doubt-marker-was-fg);
+    text-decoration: line-through;
+  }
+
+  .q-doubt-marker__reason {
+    color: var(--q-doubt-marker-reason-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-doubt-marker__claim,
+    .q-doubt-marker__bubble {
+      transition: none;
+      animation: none;
+    }
+  }
+}

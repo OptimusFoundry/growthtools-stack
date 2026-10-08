@@ -1,0 +1,64 @@
+// PageTransition — the entering view animates in; the leaving one uses .q-anim-fade (closing).
+// BEM: .q-page-transition; --{fade|slide|slide-up|scale}. A custom duration arrives as --_dur.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-page-transition-dur: 400ms; // longer than --q-dur-expand: a whole view settling in
+    --q-page-transition-distance: var(--q-space-2);
+    --q-page-transition-scale: 0.98;
+  }
+}
+
+@layer q.components {
+  .q-page-transition {
+    --_dur: var(--q-page-transition-dur);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .q-page-transition--fade { animation: q-page-transition-fade var(--_dur) var(--q-ease-forge) both; }
+    .q-page-transition--slide { animation: q-page-transition-slide var(--_dur) var(--q-ease-forge) both; }
+    .q-page-transition--slide-up { animation: q-page-transition-slide-up var(--_dur) var(--q-ease-forge) both; }
+    .q-page-transition--scale { animation: q-page-transition-scale var(--_dur) var(--q-ease-forge) both; }
+  }
+
+  @keyframes q-page-transition-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes q-page-transition-slide {
+    from {
+      opacity: 0;
+      transform: translateX(var(--q-page-transition-distance));
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes q-page-transition-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(var(--q-page-transition-distance));
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes q-page-transition-scale {
+    from {
+      opacity: 0;
+      transform: scale(var(--q-page-transition-scale));
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

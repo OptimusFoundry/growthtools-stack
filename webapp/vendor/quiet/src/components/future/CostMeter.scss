@@ -1,0 +1,113 @@
+// CostMeter — live agent spend split by kind of work, each against its own cap.
+// BEM: .q-cost-meter, __header, __total-wrap, __label, __total, __budget(--warn), __items,
+// __item(--warn), __row, __name, __value.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-cost-meter-gap: var(--q-space-2);
+    --q-cost-meter-label-font: var(--q-font-mono);
+    --q-cost-meter-label-size: var(--q-text-2xs);
+    --q-cost-meter-label-fg: var(--q-fg-muted);
+    --q-cost-meter-total-size: var(--q-text-3xl);
+    --q-cost-meter-total-weight: var(--q-weight-semibold);
+    --q-cost-meter-total-tracking: var(--q-tracking-h2);
+    --q-cost-meter-total-fg: var(--q-fg);
+    --q-cost-meter-item-gap: var(--q-space-0-75);
+    --q-cost-meter-name-size: var(--q-text-sm);
+    --q-cost-meter-value-size: var(--q-text-xs);
+    --q-cost-meter-value-fg: var(--q-fg-muted);
+    --q-cost-meter-warn-fg: var(--q-fg);
+    --q-cost-meter-warn-mark: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-cost-meter {
+    display: grid;
+    gap: var(--q-cost-meter-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-cost-meter__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--q-space-1-5);
+  }
+
+  .q-cost-meter__total-wrap {
+    display: grid;
+    gap: var(--q-space-0-25);
+  }
+
+  .q-cost-meter__label,
+  .q-cost-meter__budget {
+    font-family: var(--q-cost-meter-label-font);
+    font-size: var(--q-cost-meter-label-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-cost-meter-label-fg);
+  }
+
+  .q-cost-meter__budget--warn {
+    color: var(--q-cost-meter-warn-fg);
+  }
+
+  .q-cost-meter__total {
+    font-size: var(--q-cost-meter-total-size);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-cost-meter-total-weight);
+    letter-spacing: var(--q-cost-meter-total-tracking);
+    line-height: var(--q-leading-none);
+    color: var(--q-cost-meter-total-fg);
+  }
+
+  .q-cost-meter__items {
+    display: grid;
+    gap: var(--q-space-1-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-cost-meter__item {
+    display: grid;
+    gap: var(--q-cost-meter-item-gap);
+  }
+
+  .q-cost-meter__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--q-space-1);
+  }
+
+  .q-cost-meter__name {
+    font-size: var(--q-cost-meter-name-size);
+    color: var(--q-fg);
+  }
+
+  .q-cost-meter__value {
+    font-size: var(--q-cost-meter-value-size);
+    font-variant-numeric: tabular-nums;
+    color: var(--q-cost-meter-value-fg);
+  }
+
+  // Near the cap: the figure goes to ink and a molten dot marks it (the bar itself is molten heat).
+  .q-cost-meter__item--warn .q-cost-meter__value {
+    color: var(--q-cost-meter-warn-fg);
+
+    &::before {
+      display: inline-block;
+      width: var(--q-space-0-75);
+      height: var(--q-space-0-75);
+      margin-right: var(--q-space-0-75);
+      border-radius: var(--q-radius-pill);
+      background: var(--q-cost-meter-warn-mark);
+      content: "";
+      vertical-align: middle;
+    }
+  }
+}

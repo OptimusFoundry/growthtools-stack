@@ -1,0 +1,246 @@
+// Tabs — mono caps tabs. BEM: .q-tabs (tablist), __tab, __icon, __count, __indicator;
+// --{variant} (line, enclosed, pill), --{size}, --full. Selected tab: [aria-selected="true"].
+// While the sliding indicator moves (FLIP between two selections) the tablist carries
+// [data-sliding]; the indicator's geometry comes in as --_left/--_top/--_width/--_height.
+// .q-tab-panel is the tabpanel Tabs renders when given `panels` (or TabPanel on its own).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-tabs-font: var(--q-font-mono);
+    --q-tabs-tracking: var(--q-tracking-mono);
+    --q-tabs-tab-gap: var(--q-space-1);
+    --q-tabs-disabled-opacity: 0.4;
+    --q-tabs-count-fg: var(--q-fg-subtle);
+    --q-tabs-indicator-dur: var(--q-dur-expand);
+
+    --q-tabs-sm-font-size: var(--q-text-3xs);
+    --q-tabs-sm-icon-size: var(--q-text-sm);
+    --q-tabs-sm-height: 28px; // segment height inside the 4px enclosed/pill track
+    --q-tabs-sm-px: var(--q-space-1-5);
+    --q-tabs-md-font-size: var(--q-text-2xs);
+    --q-tabs-md-icon-size: 14px; // label size + 3px; no text step at 14
+    --q-tabs-md-height: var(--q-field-sm);
+    --q-tabs-md-px: var(--q-space-2);
+    --q-tabs-lg-font-size: var(--q-text-xs);
+    --q-tabs-lg-icon-size: var(--q-text-md);
+    --q-tabs-lg-height: 44px; // segment height inside the 4px enclosed/pill track
+    --q-tabs-lg-px: var(--q-space-2-5);
+
+    --q-tabs-line-gap: var(--q-space-4);
+    --q-tabs-line-border: var(--q-border);
+    --q-tabs-line-tab-pb: var(--q-space-1-5);
+    --q-tabs-line-fg: var(--q-fg-muted);
+    --q-tabs-line-fg-hover: var(--q-fg);
+    --q-tabs-line-fg-selected: var(--q-fg);
+    --q-tabs-line-indicator: var(--q-border-emphasis);
+
+    --q-tabs-track-gap: var(--q-space-0-5);
+    --q-tabs-track-pad: var(--q-space-0-5);
+    --q-tabs-enclosed-bg: var(--q-bg-subtle);
+    --q-tabs-enclosed-radius: var(--q-radius-md);
+    --q-tabs-enclosed-tab-radius: var(--q-radius-sm);
+    --q-tabs-enclosed-fg: var(--q-fg-muted);
+    --q-tabs-enclosed-fg-selected: var(--q-fg);
+    --q-tabs-enclosed-bg-selected: var(--q-bg);
+    --q-tabs-enclosed-shadow-selected: var(--q-shadow-1);
+
+    --q-tabs-pill-border: var(--q-border);
+    --q-tabs-pill-radius: var(--q-radius-pill);
+    --q-tabs-pill-fg: var(--q-fg);
+    --q-tabs-pill-bg-hover: var(--q-bg-subtle);
+    --q-tabs-pill-fg-selected: var(--q-fg-on-inverse);
+    --q-tabs-pill-bg-selected: var(--q-bg-inverse);
+
+    --q-tab-panel-pt: var(--q-space-3);
+  }
+}
+
+@layer q.components {
+  .q-tabs {
+    --_font-size: var(--q-tabs-md-font-size);
+    --_icon-size: var(--q-tabs-md-icon-size);
+    --_height: var(--q-tabs-md-height);
+    --_px: var(--q-tabs-md-px);
+
+    &--sm {
+      --_font-size: var(--q-tabs-sm-font-size);
+      --_icon-size: var(--q-tabs-sm-icon-size);
+      --_height: var(--q-tabs-sm-height);
+      --_px: var(--q-tabs-sm-px);
+    }
+
+    &--lg {
+      --_font-size: var(--q-tabs-lg-font-size);
+      --_icon-size: var(--q-tabs-lg-icon-size);
+      --_height: var(--q-tabs-lg-height);
+      --_px: var(--q-tabs-lg-px);
+    }
+
+    &--line {
+      display: flex;
+      gap: var(--q-tabs-line-gap);
+      border-bottom: var(--q-hairline) solid var(--q-tabs-line-border);
+    }
+
+    &--enclosed {
+      display: inline-flex;
+      gap: var(--q-tabs-track-gap);
+      padding: var(--q-tabs-track-pad);
+      border-radius: var(--q-tabs-enclosed-radius);
+      background: var(--q-tabs-enclosed-bg);
+    }
+
+    &--pill {
+      display: inline-flex;
+      gap: var(--q-tabs-track-gap);
+      padding: var(--q-tabs-track-pad);
+      border: var(--q-hairline) solid var(--q-tabs-pill-border);
+      border-radius: var(--q-tabs-pill-radius);
+    }
+
+    &--enclosed.q-tabs--full,
+    &--pill.q-tabs--full {
+      display: flex;
+    }
+
+    &[data-sliding] {
+      position: relative;
+    }
+  }
+
+  .q-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-tabs-tab-gap);
+    border: 0;
+    background: none;
+    font-family: var(--q-tabs-font);
+    font-size: var(--_font-size);
+    letter-spacing: var(--q-tabs-tracking);
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: var(--q-tabs-disabled-opacity);
+    }
+
+    .q-tabs[data-sliding] & {
+      position: relative;
+    }
+  }
+
+  // Line: underline under the selected tab.
+  .q-tabs--line .q-tabs__tab {
+    margin-bottom: calc(var(--q-hairline) * -1);
+    padding: 0 0 var(--q-tabs-line-tab-pb);
+    border-bottom: var(--q-hairline) solid transparent;
+    color: var(--q-tabs-line-fg);
+
+    &:is(:hover, :focus-visible):not(:disabled) {
+      color: var(--q-tabs-line-fg-hover);
+    }
+
+    &[aria-selected="true"] {
+      color: var(--q-tabs-line-fg-selected);
+    }
+  }
+
+  .q-tabs--line:not([data-sliding]) .q-tabs__tab[aria-selected="true"] {
+    border-bottom-color: var(--q-tabs-line-indicator);
+  }
+
+  // Enclosed: raised segment on the selected tab.
+  .q-tabs--enclosed .q-tabs__tab {
+    height: var(--_height);
+    padding: 0 var(--_px);
+    border-radius: var(--q-tabs-enclosed-tab-radius);
+    background: transparent;
+    box-shadow: none;
+    color: var(--q-tabs-enclosed-fg);
+
+    &[aria-selected="true"] {
+      color: var(--q-tabs-enclosed-fg-selected);
+    }
+  }
+
+  .q-tabs--enclosed:not([data-sliding]) .q-tabs__tab[aria-selected="true"] {
+    background: var(--q-tabs-enclosed-bg-selected);
+    box-shadow: var(--q-tabs-enclosed-shadow-selected);
+  }
+
+  // The selected tab's underline / segment never fades itself in: the slide brings it, then it
+  // is simply there. So while sliding (and on the selected tab) only the colour transitions.
+  .q-tabs--line,
+  .q-tabs--enclosed {
+    &[data-sliding] .q-tabs__tab,
+    .q-tabs__tab[aria-selected="true"] {
+      transition: color var(--q-dur-hover) var(--q-ease-soft);
+    }
+  }
+
+  // Pill: ink-filled selected tab.
+  .q-tabs--pill .q-tabs__tab {
+    height: var(--_height);
+    padding: 0 var(--_px);
+    border-radius: var(--q-tabs-pill-radius);
+    background: transparent;
+    color: var(--q-tabs-pill-fg);
+
+    &:is(:hover, :focus-visible):not(:disabled, [aria-selected="true"]) {
+      background: var(--q-tabs-pill-bg-hover);
+    }
+
+    &[aria-selected="true"] {
+      background: var(--q-tabs-pill-bg-selected);
+      color: var(--q-tabs-pill-fg-selected);
+    }
+  }
+
+  .q-tabs__icon {
+    display: inline-flex;
+    font-size: var(--_icon-size);
+    text-transform: none;
+  }
+
+  .q-tabs__count {
+    color: var(--q-tabs-count-fg);
+  }
+
+  .q-tabs__indicator {
+    position: absolute;
+    left: var(--_left);
+    width: var(--_width);
+    transition: none;
+
+    &[data-go] {
+      transition:
+        left var(--q-tabs-indicator-dur) var(--q-ease-soft),
+        top var(--q-tabs-indicator-dur) var(--q-ease-soft),
+        width var(--q-tabs-indicator-dur) var(--q-ease-soft);
+    }
+
+    .q-tabs--line & {
+      bottom: calc(var(--q-hairline) * -1);
+      height: var(--q-hairline);
+      background: var(--q-tabs-line-indicator);
+    }
+
+    .q-tabs--enclosed & {
+      top: var(--_top);
+      height: var(--_height);
+      border-radius: var(--q-tabs-enclosed-tab-radius);
+      background: var(--q-tabs-enclosed-bg-selected);
+      box-shadow: var(--q-tabs-enclosed-shadow-selected);
+    }
+  }
+
+  .q-tab-panel {
+    padding-top: var(--q-tab-panel-pt);
+  }
+}

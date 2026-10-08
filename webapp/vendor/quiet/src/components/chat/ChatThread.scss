@@ -1,0 +1,90 @@
+// ChatThread — the scrolling conversation. BEM: .q-chat-thread, __scroller, __content, __empty,
+// __jump, __divider, __divider-label. Give it a height (or let a flex/grid parent size it).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-chat-thread-gap: var(--q-space-3);
+    --q-chat-thread-px: var(--q-space-3);
+    --q-chat-thread-py: var(--q-space-3);
+    --q-chat-thread-measure: calc(var(--q-w-form) + var(--q-space-10));
+    --q-chat-thread-jump-offset: var(--q-space-2);
+    --q-chat-thread-divider-line: var(--q-border);
+    --q-chat-thread-divider-fg: var(--q-fg-muted);
+    --q-chat-thread-divider-font: var(--q-font-mono);
+    --q-chat-thread-divider-size: var(--q-text-2xs);
+    --q-chat-thread-focus-ring: inset var(--q-ring-soft);
+  }
+}
+
+@layer q.components {
+  .q-chat-thread {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .q-chat-thread__scroller {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border-radius: inherit;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+
+    // The log is focusable for keyboard scrolling; a soft inset ring instead of the control ring.
+    &:focus-visible {
+      outline: 0;
+      box-shadow: var(--q-chat-thread-focus-ring);
+    }
+  }
+
+  .q-chat-thread__content {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    gap: var(--q-chat-thread-gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--q-chat-thread-measure);
+    margin: 0 auto;
+    padding: var(--q-chat-thread-py) var(--q-chat-thread-px);
+  }
+
+  .q-chat-thread__empty {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    width: 100%;
+  }
+
+  .q-chat-thread__jump {
+    position: absolute;
+    bottom: var(--q-chat-thread-jump-offset);
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .q-chat-thread__divider {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1-5);
+
+    &::before,
+    &::after {
+      flex: 1;
+      height: var(--q-hairline);
+      background: var(--q-chat-thread-divider-line);
+      content: "";
+    }
+  }
+
+  .q-chat-thread__divider-label {
+    color: var(--q-chat-thread-divider-fg);
+    font-family: var(--q-chat-thread-divider-font);
+    font-size: var(--q-chat-thread-divider-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+}

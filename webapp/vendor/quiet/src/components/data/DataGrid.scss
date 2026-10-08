@@ -1,0 +1,85 @@
+// DataGrid — Table with a title bar, row filter, selection count, empty state and pagination.
+// BEM: .q-data-grid, __toolbar, __title, __search, __label (--strong), __empty, __footer.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-data-grid-gap: var(--q-space-2);
+    --q-data-grid-toolbar-gap: var(--q-space-2);
+    --q-data-grid-title-font-size: var(--q-text-xl);
+    --q-data-grid-title-weight: var(--q-weight-semibold);
+    --q-data-grid-title-tracking: -0.015em; // between --q-tracking-tight and -h4; reference value
+    --q-data-grid-title-color: var(--q-fg);
+    --q-data-grid-search-height: var(--q-field-sm);
+    --q-data-grid-search-min-width: 220px;
+    --q-data-grid-search-px: var(--q-space-1-5);
+    --q-data-grid-search-border: var(--q-border);
+    --q-data-grid-search-radius: var(--q-radius-pill);
+    --q-data-grid-search-font-size: var(--q-text-md);
+    --q-data-grid-search-color: var(--q-fg);
+    --q-data-grid-label-font-size: var(--q-text-2xs);
+    --q-data-grid-label-tracking: var(--q-tracking-mono);
+    --q-data-grid-label-color: var(--q-fg-muted);
+    --q-data-grid-label-strong-color: var(--q-fg);
+    --q-data-grid-empty-border: var(--q-fg);
+    --q-data-grid-footer-gap: var(--q-space-2);
+  }
+}
+
+@layer q.components {
+  .q-data-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-data-grid-gap);
+  }
+
+  .q-data-grid__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-data-grid-toolbar-gap);
+  }
+
+  .q-data-grid__title {
+    margin-right: auto;
+    color: var(--q-data-grid-title-color);
+    font-size: var(--q-data-grid-title-font-size);
+    font-weight: var(--q-data-grid-title-weight);
+    letter-spacing: var(--q-data-grid-title-tracking);
+  }
+
+  .q-data-grid__search {
+    height: var(--q-data-grid-search-height);
+    min-width: var(--q-data-grid-search-min-width);
+    padding: 0 var(--q-data-grid-search-px);
+    border: var(--q-hairline) solid var(--q-data-grid-search-border);
+    border-radius: var(--q-data-grid-search-radius);
+    outline: none;
+    color: var(--q-data-grid-search-color);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-data-grid-search-font-size);
+  }
+
+  .q-data-grid__label {
+    color: var(--q-data-grid-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-data-grid-label-font-size);
+    letter-spacing: var(--q-data-grid-label-tracking);
+    text-transform: uppercase;
+
+    &--strong {
+      color: var(--q-data-grid-label-strong-color);
+    }
+  }
+
+  .q-data-grid__empty {
+    border-top: var(--q-hairline) solid var(--q-data-grid-empty-border);
+  }
+
+  .q-data-grid__footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--q-data-grid-footer-gap);
+  }
+}

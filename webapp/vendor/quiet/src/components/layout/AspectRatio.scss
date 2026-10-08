@@ -1,0 +1,65 @@
+// AspectRatio — fixed-ratio frame; an empty one is a labelled placeholder. BEM: .q-aspect-ratio,
+// __media (img/video children cover it), __label; --{square|video|portrait|wide|photo}, --empty.
+// A raw ratio arrives as --_ratio.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-aspect-ratio-radius: var(--q-radius-lg);
+    --q-aspect-ratio-empty-bg: var(--q-bg-subtle);
+    --q-aspect-ratio-empty-border: var(--q-fg-subtle);
+    --q-aspect-ratio-label-fg: var(--q-fg-muted);
+    --q-aspect-ratio-label-font-size: var(--q-text-2xs);
+    --q-aspect-ratio-label-tracking: var(--q-tracking-mono);
+  }
+}
+
+@layer q.components {
+  .q-aspect-ratio {
+    --_ratio: 16 / 9;
+
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: var(--_ratio);
+    overflow: hidden;
+    border: none;
+    border-radius: var(--q-aspect-ratio-radius);
+    background: transparent;
+
+    &--square { --_ratio: 1; }
+    &--video { --_ratio: 16 / 9; }
+    &--portrait { --_ratio: 3 / 4; }
+    &--wide { --_ratio: 21 / 9; }
+    &--photo { --_ratio: 4 / 3; }
+
+    &--empty {
+      border: var(--q-hairline) dashed var(--q-aspect-ratio-empty-border);
+      background: var(--q-aspect-ratio-empty-bg);
+    }
+  }
+
+  .q-aspect-ratio__media {
+    display: grid;
+    position: absolute;
+    inset: 0;
+
+    > :is(img, video) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .q-aspect-ratio__label {
+    display: grid;
+    position: absolute;
+    inset: 0;
+    place-items: center;
+    color: var(--q-aspect-ratio-label-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-aspect-ratio-label-font-size);
+    letter-spacing: var(--q-aspect-ratio-label-tracking);
+    text-transform: uppercase;
+  }
+}

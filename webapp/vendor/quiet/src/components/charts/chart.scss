@@ -1,0 +1,206 @@
+// Chart — shared frame for quiet's charts: series palette, grid, axes, legend, tooltip, draw-in.
+// BEM: .q-chart, __plot, __svg, __grid, __axis-label(--end), __baseline, __legend, __legend-item,
+// __swatch(--line), __tooltip, __tooltip-title, __tooltip-row, __tooltip-value, __empty.
+// Charts are the one place molten carries data: series 1 is the accent, comparisons are ink then
+// greys (series 4–5 also dash, so identity never rests on grey lightness alone). Text never wears
+// a series colour — values and labels stay ink/muted; the swatch beside them carries identity.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-chart-series-1: var(--q-accent);
+    --q-chart-series-2: var(--q-fg);
+    --q-chart-series-3: var(--q-fg-muted);
+    --q-chart-series-4: var(--q-fg-subtle);
+    --q-chart-series-5: var(--q-border-strong);
+
+    --q-chart-line-width: 2px;
+    --q-chart-area-opacity: 0.12;
+    --q-chart-grid: var(--q-border);
+    --q-chart-baseline: var(--q-border-strong);
+    --q-chart-gap: var(--q-bg); // 2px surface gap between fills, ring around markers
+    --q-chart-axis-fg: var(--q-fg-muted);
+    --q-chart-axis-font-family: var(--q-font-mono);
+    --q-chart-axis-font-size: var(--q-text-3xs);
+    --q-chart-axis-tracking: var(--q-tracking-mono);
+    --q-chart-crosshair: var(--q-fg-muted);
+    --q-chart-reference: var(--q-fg-muted);
+    --q-chart-highlight-bg: var(--q-bg-subtle);
+
+    --q-chart-legend-gap: var(--q-space-2);
+    --q-chart-legend-fg: var(--q-fg-body);
+    --q-chart-legend-font-size: var(--q-text-xs);
+    --q-chart-swatch-size: var(--q-space-1);
+
+    --q-chart-tooltip-bg: var(--q-bg);
+    --q-chart-tooltip-fg: var(--q-fg);
+    --q-chart-tooltip-border: var(--q-border);
+    --q-chart-tooltip-radius: var(--q-radius-sm);
+    --q-chart-tooltip-shadow: var(--q-shadow-2);
+    --q-chart-tooltip-px: var(--q-space-1-5);
+    --q-chart-tooltip-py: var(--q-space-1);
+    --q-chart-tooltip-gap: var(--q-space-0-5);
+    --q-chart-tooltip-font-size: var(--q-text-xs);
+    --q-chart-tooltip-title-fg: var(--q-fg-muted);
+
+    --q-chart-draw-duration: 0.9s;
+    --q-chart-draw-ease: var(--q-ease-soft);
+  }
+}
+
+@layer q.components {
+  .q-chart {
+    position: relative;
+    margin: 0; // <figure> default margin
+    display: grid;
+    gap: var(--q-space-1-5);
+    min-width: 0;
+    color: var(--q-fg);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-chart__plot {
+    position: relative;
+    min-width: 0;
+    border-radius: var(--q-radius-xs);
+
+    &:focus-visible {
+      outline-offset: var(--q-space-0-5);
+    }
+  }
+
+  .q-chart__svg {
+    display: block;
+    overflow: visible;
+  }
+
+  .q-chart__grid {
+    stroke: var(--q-chart-grid);
+    stroke-width: var(--q-hairline);
+    shape-rendering: crispedges;
+  }
+
+  .q-chart__baseline {
+    stroke: var(--q-chart-baseline);
+    stroke-width: var(--q-hairline);
+    shape-rendering: crispedges;
+  }
+
+  .q-chart__axis-label {
+    fill: var(--q-chart-axis-fg);
+    font-family: var(--q-chart-axis-font-family);
+    font-size: var(--q-chart-axis-font-size);
+    letter-spacing: var(--q-chart-axis-tracking);
+    font-variant-numeric: tabular-nums;
+
+    &--end {
+      text-anchor: end;
+    }
+
+    &--middle {
+      text-anchor: middle;
+    }
+  }
+
+  .q-chart__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-space-0-5) var(--q-chart-legend-gap);
+    margin: 0;
+    padding: 0;
+    color: var(--q-chart-legend-fg);
+    font-size: var(--q-chart-legend-font-size);
+    list-style: none;
+  }
+
+  .q-chart__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+  }
+
+  .q-chart__swatch {
+    flex: none;
+    width: var(--q-chart-swatch-size);
+    height: var(--q-chart-swatch-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--_color);
+
+    // A line series shows a short stroke (dashed when the series dashes) instead of a dot.
+    &--line {
+      width: calc(var(--q-chart-swatch-size) * 2);
+      height: 0;
+      border-top: var(--q-chart-line-width) var(--_style, solid) var(--_color);
+      border-radius: 0;
+      background: transparent;
+    }
+  }
+
+  .q-chart__tooltip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: var(--q-z-popover);
+    display: grid;
+    gap: var(--q-chart-tooltip-gap);
+    min-width: max-content;
+    padding: var(--q-chart-tooltip-py) var(--q-chart-tooltip-px);
+    border: var(--q-hairline) solid var(--q-chart-tooltip-border);
+    border-radius: var(--q-chart-tooltip-radius);
+    background: var(--q-chart-tooltip-bg);
+    box-shadow: var(--q-chart-tooltip-shadow);
+    color: var(--q-chart-tooltip-fg);
+    font-size: var(--q-chart-tooltip-font-size);
+    pointer-events: none;
+    transform: translate(var(--_tx, 0), var(--_ty, 0));
+  }
+
+  .q-chart__tooltip-title {
+    color: var(--q-chart-tooltip-title-fg);
+    font-family: var(--q-chart-axis-font-family);
+    font-size: var(--q-chart-axis-font-size);
+    letter-spacing: var(--q-chart-axis-tracking);
+  }
+
+  .q-chart__tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+  }
+
+  .q-chart__tooltip-value {
+    margin-left: auto;
+    padding-left: var(--q-space-2);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-weight-semibold);
+  }
+
+  // Soft draw-in on mount only (strokes use pathLength=1), never looping; skipped for reduced motion.
+  @media (prefers-reduced-motion: no-preference) {
+    .q-chart__draw {
+      animation: q-chart-draw var(--q-chart-draw-duration) var(--q-chart-draw-ease) both;
+    }
+
+    .q-chart__fade {
+      animation: q-chart-fade var(--q-chart-draw-duration) var(--q-chart-draw-ease) both;
+    }
+  }
+}
+
+@keyframes q-chart-draw {
+  // dasharray lives in the keyframes so it wins over the line's own (dash-free) stroke-dasharray.
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes q-chart-fade {
+  from {
+    opacity: 0;
+  }
+}

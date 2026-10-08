@@ -1,0 +1,13 @@
+// Col — a grid child spanning --_span columns (set per breakpoint by Col). BEM: .q-col;
+// --start (pinned to --_start, lg only), --row-span (--_row-span rows).
+@layer q.components {
+  .q-col {
+    --_span: 12;
+
+    grid-column: span var(--_span);
+    min-width: 0;
+
+    &--start { grid-column: var(--_start) / span var(--_span); }
+    &--row-span { grid-row: span var(--_row-span); }
+  }
+}

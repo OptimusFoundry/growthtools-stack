@@ -1,0 +1,125 @@
+// The Optimus Foundry reference names, mapped onto quiet's tokens. Lets code written in Claude
+// Design (the catalog page, ui_kits, pasted components) run unchanged on any quiet theme.
+// quiet's own components never use these — only --q-*.
+// Declared only inside quiet-owned subtrees: names like --space-* and --radius-* are common to
+// other design systems, and declaring them at :root would re-space their screens.
+[data-quiet],
+[data-quiet] [data-theme] {
+  --paper: var(--q-bg);
+  --paper-2: var(--q-bg-subtle);
+  --rule-soft: var(--q-border);
+  --rule-strong: var(--q-border-strong);
+  --muted-2: var(--q-fg-subtle);
+  --muted: var(--q-fg-muted);
+  --ink-2: var(--q-fg-body);
+  --ink: var(--q-fg);
+  --molten: var(--q-accent);
+  --surface-page: var(--q-bg);
+  --surface-alt: var(--q-bg-subtle);
+  --surface-inverse: var(--q-bg-inverse);
+  --text-heading: var(--q-fg);
+  --text-body: var(--q-fg-body);
+  --text-meta: var(--q-fg-muted);
+  --text-quiet: var(--q-fg-subtle);
+  --text-on-inverse: var(--q-fg-on-inverse);
+  --border-hairline: var(--q-border);
+  --border-strong: var(--q-border-emphasis);
+  --accent: var(--q-accent);
+  --overlay-scrim: var(--q-scrim);
+  --glow-molten: var(--q-glow);
+
+  --font-sans: var(--q-font-sans);
+  --font-mono: var(--q-font-mono);
+  --weight-regular: var(--q-weight-regular);
+  --weight-medium: var(--q-weight-medium);
+  --weight-semibold: var(--q-weight-semibold);
+  --weight-bold: var(--q-weight-bold);
+  --type-display-size: var(--q-text-display);
+  --type-display-leading: var(--q-leading-display);
+  --type-display-tracking: -0.035em;
+  --type-h2-size: var(--q-text-6xl);
+  --type-h2-size-md: var(--q-text-5xl);
+  --type-h2-size-sm: var(--q-text-4xl);
+  --type-h2-leading: 1;
+  --type-h2-tracking: -0.032em;
+  --type-h3-size: var(--q-text-3xl);
+  --type-h3-leading: var(--q-leading-tight);
+  --type-h3-tracking: var(--q-tracking-h3);
+  --type-h4-size: var(--q-text-2xl);
+  --type-h4-leading: var(--q-leading-snug);
+  --type-h4-tracking: var(--q-tracking-h4);
+  --type-body-lg: var(--q-text-xl);
+  --type-body: var(--q-text-lg);
+  --type-body-sm: var(--q-text-md);
+  --type-body-leading: var(--q-leading-body);
+  --type-mono-lg: var(--q-text-xs);
+  --type-mono: var(--q-text-2xs);
+  --type-mono-sm: var(--q-text-3xs);
+  --type-mono-tracking: var(--q-tracking-mono);
+  --wordmark-tracking: -0.02em;
+
+  --space-1: var(--q-space-1);
+  --space-2: var(--q-space-2);
+  --space-3: var(--q-space-3);
+  --space-4: var(--q-space-4);
+  --space-5: var(--q-space-5);
+  --space-6: var(--q-space-6);
+  --space-8: var(--q-space-8);
+  --space-10: var(--q-space-10);
+  --space-12: var(--q-space-12);
+  --space-16: var(--q-space-16);
+  --space-20: var(--q-space-20);
+  --radius-xs: var(--q-radius-xs);
+  --radius-sm: var(--q-radius-sm);
+  --radius-md: var(--q-radius-md);
+  --radius-lg: var(--q-radius-lg);
+  --radius-xl: var(--q-radius-xl);
+  --radius-pill: var(--q-radius-pill);
+  --radius-square: 0;
+  --hairline: var(--q-hairline);
+  --shadow-none: none;
+  --shadow-1: var(--q-shadow-1);
+  --shadow-2: var(--q-shadow-2);
+  --shadow-3: var(--q-shadow-3);
+  --ring-focus: var(--q-ring-soft);
+  --container-max: var(--q-w-max);
+  --gutter: var(--q-gutter);
+
+  --ease-linear: var(--q-ease-linear);
+  --ease-soft: var(--q-ease-soft);
+  --ease-forge: var(--q-ease-forge);
+  --dur-hover: var(--q-dur-hover);
+  --dur-forge-loop: var(--q-dur-forge-loop);
+  --dur-heat-pass: var(--q-dur-heat-pass);
+  --angle-cut: var(--q-angle-cut);
+
+  --grid-columns: 12;
+  --grid-max: var(--q-w-max);
+  --w-sidebar: var(--q-w-sidebar);
+  --w-sidebar-collapsed: var(--q-w-sidebar-collapsed);
+  --w-list-pane: var(--q-w-list-pane);
+  --w-detail-panel: var(--q-w-detail-panel);
+  --w-settings-nav: var(--q-w-settings-nav);
+  --w-content: var(--q-w-content);
+  --w-form: var(--q-w-form);
+  --h-topbar: var(--q-h-topbar);
+  --control-sm: var(--q-control-sm);
+  --control-md: var(--q-control-md);
+  --control-lg: 48px;
+  --field-sm: var(--q-field-sm);
+  --field-md: var(--q-field-md);
+  --field-lg: var(--q-field-lg);
+  --row-compact: var(--q-row-compact);
+  --row: var(--q-row);
+  --rhythm: 4px;
+  --space-inline: var(--q-space-inline);
+  --space-stack: var(--q-space-stack);
+  --space-field: var(--q-space-field);
+  --space-card-pad: var(--q-space-card-pad);
+  --space-card-gap: var(--q-space-card-gap);
+  --space-block: var(--q-space-block);
+  --space-section: var(--q-space-section);
+  --space-page-x: var(--q-space-page-x);
+  --grid-gutter: var(--q-grid-gutter);
+  --font-body: var(--q-font-body);
+}

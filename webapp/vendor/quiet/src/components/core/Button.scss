@@ -1,0 +1,172 @@
+// Button — pill action. BEM: .q-button, __icon, __arrow; --{variant}, --{size}, --full, --icon-only.
+// Tier-3 tokens (override hooks) first, then the block.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-button-gap: var(--q-space-1);
+    --q-button-radius: var(--q-radius-pill);
+    --q-button-weight: var(--q-weight-semibold);
+    --q-button-tracking: var(--q-tracking-tight);
+    --q-button-disabled-opacity: 0.4;
+    --q-button-arrow-nudge: var(--q-space-0-5);
+
+    --q-button-sm-height: var(--q-control-sm);
+    --q-button-sm-px: var(--q-space-2);
+    --q-button-sm-font-size: var(--q-text-sm);
+    --q-button-md-height: var(--q-control-md);
+    --q-button-md-px: var(--q-space-3);
+    --q-button-md-font-size: var(--q-text-md);
+    --q-button-lg-height: var(--q-control-lg);
+    --q-button-lg-px: var(--q-space-4);
+    --q-button-lg-font-size: var(--q-text-lg);
+
+    --q-button-primary-bg: var(--q-bg-inverse);
+    --q-button-primary-bg-hover: var(--q-bg-inverse-hover);
+    --q-button-primary-fg: var(--q-fg-on-inverse);
+    --q-button-primary-border: var(--q-bg-inverse);
+    --q-button-secondary-fg: var(--q-fg);
+    --q-button-secondary-border: var(--q-border-emphasis);
+    --q-button-secondary-bg-hover: var(--q-bg-subtle);
+    --q-button-outline-fg: var(--q-fg);
+    --q-button-outline-border: var(--q-border);
+    --q-button-outline-border-hover: var(--q-border-emphasis);
+    --q-button-outline-bg-hover: var(--q-bg-subtle);
+    --q-button-ghost-fg: var(--q-fg);
+    --q-button-ghost-fg-hover: var(--q-accent);
+    --q-button-ghost-icon-bg-hover: var(--q-bg-subtle);
+    --q-button-destructive-fg: var(--q-fg);
+    --q-button-destructive-border: var(--q-border-emphasis);
+    --q-button-destructive-hover: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-button {
+    --_height: var(--q-button-md-height);
+    --_px: var(--q-button-md-px);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--q-button-gap);
+    box-sizing: border-box;
+    height: var(--_height);
+    padding: 0 var(--_px);
+    border: var(--q-hairline) solid transparent;
+    border-radius: var(--q-button-radius);
+    background: transparent;
+    font-family: var(--q-font-sans);
+    font-size: var(--q-button-md-font-size);
+    font-weight: var(--q-button-weight);
+    letter-spacing: var(--q-button-tracking);
+    line-height: var(--q-leading-none);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      color var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    // Hover affordances also show for keyboard focus; never on a disabled or loading button.
+    &:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"]) {
+      --_active: 1;
+    }
+
+    &:disabled,
+    &[aria-disabled="true"] {
+      cursor: not-allowed;
+    }
+
+    &:disabled {
+      opacity: var(--q-button-disabled-opacity);
+    }
+
+    // Sizes
+    &--sm {
+      --_height: var(--q-button-sm-height);
+      --_px: var(--q-button-sm-px);
+      font-size: var(--q-button-sm-font-size);
+    }
+
+    &--lg {
+      --_height: var(--q-button-lg-height);
+      --_px: var(--q-button-lg-px);
+      font-size: var(--q-button-lg-font-size);
+    }
+
+    &--full {
+      display: flex;
+      width: 100%;
+    }
+
+    &--icon-only {
+      width: var(--_height);
+      padding: 0;
+    }
+
+    // Variants
+    &--primary {
+      border-color: var(--q-button-primary-border);
+      background: var(--q-button-primary-bg);
+      color: var(--q-button-primary-fg);
+    }
+
+    &--secondary {
+      border-color: var(--q-button-secondary-border);
+      color: var(--q-button-secondary-fg);
+    }
+
+    &--outline {
+      border-color: var(--q-button-outline-border);
+      color: var(--q-button-outline-fg);
+    }
+
+    &--ghost {
+      padding: 0;
+      color: var(--q-button-ghost-fg);
+    }
+
+    &--destructive {
+      border-color: var(--q-button-destructive-border);
+      color: var(--q-button-destructive-fg);
+    }
+
+    &:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"]) {
+      &.q-button--primary {
+        background: var(--q-button-primary-bg-hover);
+      }
+
+      &.q-button--secondary {
+        background: var(--q-button-secondary-bg-hover);
+      }
+
+      &.q-button--outline {
+        border-color: var(--q-button-outline-border-hover);
+        background: var(--q-button-outline-bg-hover);
+      }
+
+      &.q-button--ghost {
+        color: var(--q-button-ghost-fg-hover);
+      }
+
+      &.q-button--ghost.q-button--icon-only {
+        background: var(--q-button-ghost-icon-bg-hover);
+      }
+
+      &.q-button--destructive {
+        border-color: var(--q-button-destructive-hover);
+        color: var(--q-button-destructive-hover);
+      }
+
+      .q-button__arrow {
+        transform: translateX(var(--q-button-arrow-nudge));
+      }
+    }
+  }
+
+  .q-button__arrow {
+    display: inline-block;
+    transition: transform var(--q-dur-hover) var(--q-ease-soft);
+  }
+}

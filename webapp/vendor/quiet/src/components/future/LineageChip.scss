@@ -1,0 +1,191 @@
+// LineageChip — a freshness chip on a number that unfolds into the value's lineage.
+// BEM: .q-lineage-chip, __trigger, __dot, __chevron, __panel, __chain, __step, __arrow, __node,
+// __node-dot, __node-label, __node-detail; --sm, --md. States: [data-stale], [aria-expanded].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-lineage-chip-gap: var(--q-space-0-75);
+    --q-lineage-chip-radius: var(--q-radius-pill);
+    --q-lineage-chip-bg: var(--q-bg);
+    --q-lineage-chip-bg-hover: var(--q-bg-subtle);
+    --q-lineage-chip-fg: var(--q-fg);
+    --q-lineage-chip-border: var(--q-border);
+    --q-lineage-chip-border-hover: var(--q-fg);
+    --q-lineage-chip-weight: var(--q-weight-medium);
+    --q-lineage-chip-dot-size: var(--q-space-0-75);
+    --q-lineage-chip-dot: var(--q-fg);
+    --q-lineage-chip-dot-stale: var(--q-accent);
+    --q-lineage-chip-chevron-fg: var(--q-fg-muted);
+
+    --q-lineage-chip-sm-height: var(--q-space-2-5);
+    --q-lineage-chip-sm-px: var(--q-space-1);
+    --q-lineage-chip-sm-font-size: var(--q-text-2xs);
+    --q-lineage-chip-md-height: var(--q-space-3);
+    --q-lineage-chip-md-px: var(--q-space-1-25);
+    --q-lineage-chip-md-font-size: var(--q-text-xs);
+
+    --q-lineage-chip-panel-gap: var(--q-space-1);
+    --q-lineage-chip-step-gap: var(--q-space-0-75);
+    --q-lineage-chip-arrow-fg: var(--q-fg-muted);
+    --q-lineage-chip-node-height: var(--q-space-3);
+    --q-lineage-chip-node-px: var(--q-space-1);
+    --q-lineage-chip-node-radius: var(--q-radius-pill);
+    --q-lineage-chip-node-bg: var(--q-bg-subtle);
+    --q-lineage-chip-node-font: var(--q-font-mono);
+    --q-lineage-chip-node-size: var(--q-text-3xs);
+    --q-lineage-chip-node-fg: var(--q-fg);
+    --q-lineage-chip-node-detail-fg: var(--q-fg-muted);
+    --q-lineage-chip-node-border-stale: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-lineage-chip {
+    --_height: var(--q-lineage-chip-md-height);
+    --_px: var(--q-lineage-chip-md-px);
+    --_font-size: var(--q-lineage-chip-md-font-size);
+
+    display: inline-grid;
+    justify-items: start;
+    vertical-align: middle;
+
+    @each $size in sm, md {
+      &--#{$size} {
+        --_height: var(--q-lineage-chip-#{$size}-height);
+        --_px: var(--q-lineage-chip-#{$size}-px);
+        --_font-size: var(--q-lineage-chip-#{$size}-font-size);
+      }
+    }
+  }
+
+  .q-lineage-chip__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-lineage-chip-gap);
+    box-sizing: border-box;
+    height: var(--_height);
+    margin: 0;
+    padding: 0 var(--_px);
+    border: var(--q-hairline) solid var(--q-lineage-chip-border);
+    border-radius: var(--q-lineage-chip-radius);
+    background: var(--q-lineage-chip-bg);
+    color: var(--q-lineage-chip-fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--_font-size);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-lineage-chip-weight);
+    line-height: var(--q-leading-none);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      background-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      border-color: var(--q-lineage-chip-border-hover);
+      background: var(--q-lineage-chip-bg-hover);
+    }
+  }
+
+  .q-lineage-chip__dot {
+    flex: none;
+    width: var(--q-lineage-chip-dot-size);
+    height: var(--q-lineage-chip-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-lineage-chip-dot);
+
+    .q-lineage-chip[data-stale] & {
+      background: var(--q-lineage-chip-dot-stale);
+    }
+  }
+
+  // A small caret drawn from two borders, so it needs no icon font.
+  .q-lineage-chip__chevron {
+    width: var(--q-space-0-5);
+    height: var(--q-space-0-5);
+    margin-left: var(--q-space-0-25);
+    border-right: var(--q-hairline) solid var(--q-lineage-chip-chevron-fg);
+    border-bottom: var(--q-hairline) solid var(--q-lineage-chip-chevron-fg);
+    transform: translateY(-25%) rotate(45deg);
+    transition: transform var(--q-dur-expand) var(--q-ease-soft);
+
+    .q-lineage-chip__trigger[aria-expanded="true"] & {
+      transform: translateY(25%) rotate(-135deg);
+    }
+  }
+
+  .q-lineage-chip__panel {
+    justify-self: stretch;
+
+    // Closed: hidden from everyone once the collapse has finished (visibility waits for it).
+    &[data-open="false"] > .q-collapse-inner {
+      visibility: hidden;
+      transition: visibility 0s var(--q-dur-expand);
+    }
+  }
+
+  .q-lineage-chip__chain {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-lineage-chip-step-gap);
+    margin: 0;
+    padding: var(--q-lineage-chip-panel-gap) 0 0;
+    list-style: none;
+  }
+
+  .q-lineage-chip__step {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-lineage-chip-step-gap);
+  }
+
+  .q-lineage-chip__arrow {
+    font-size: var(--q-text-xs);
+    color: var(--q-lineage-chip-arrow-fg);
+  }
+
+  .q-lineage-chip__node {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-5);
+    box-sizing: border-box;
+    height: var(--q-lineage-chip-node-height);
+    padding: 0 var(--q-lineage-chip-node-px);
+    border: var(--q-hairline) solid transparent;
+    border-radius: var(--q-lineage-chip-node-radius);
+    background: var(--q-lineage-chip-node-bg);
+    font-family: var(--q-lineage-chip-node-font);
+    font-size: var(--q-lineage-chip-node-size);
+    letter-spacing: var(--q-tracking-mono);
+    line-height: var(--q-leading-none);
+    color: var(--q-lineage-chip-node-fg);
+    white-space: nowrap;
+
+    .q-lineage-chip__step[data-stale] & {
+      border-color: var(--q-lineage-chip-node-border-stale);
+    }
+  }
+
+  .q-lineage-chip__node-dot {
+    width: var(--q-space-0-5);
+    height: var(--q-space-0-5);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-lineage-chip-dot);
+
+    .q-lineage-chip__step[data-stale] & {
+      background: var(--q-lineage-chip-dot-stale);
+    }
+  }
+
+  .q-lineage-chip__node-detail {
+    color: var(--q-lineage-chip-node-detail-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-lineage-chip__trigger,
+    .q-lineage-chip__chevron {
+      transition: none;
+    }
+  }
+}

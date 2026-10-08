@@ -1,0 +1,121 @@
+// ScopeGrant — an agent's permissions as plain-word switches, one duration, and a "can't" footer.
+// BEM: .q-scope-grant, __header, __who, __agent, __heading, __title, __caption, __scopes,
+// __scope, __switch, __footer, __summary, __cant, __actions. A granted scope row reads data-on.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-scope-grant-gap: var(--q-space-2);
+    --q-scope-grant-title-size: var(--q-text-md);
+    --q-scope-grant-title-weight: var(--q-weight-semibold);
+    --q-scope-grant-caption-font: var(--q-font-mono);
+    --q-scope-grant-caption-size: var(--q-text-3xs);
+    --q-scope-grant-caption-fg: var(--q-fg-muted);
+    --q-scope-grant-scope-height: var(--q-row);
+    --q-scope-grant-scope-px: var(--q-space-1-5);
+    --q-scope-grant-scope-radius: var(--q-radius-md);
+    --q-scope-grant-scope-bg-on: var(--q-bg-subtle);
+    --q-scope-grant-scope-fg: var(--q-fg-muted);
+    --q-scope-grant-scope-fg-on: var(--q-fg);
+    --q-scope-grant-summary-size: var(--q-text-sm);
+    --q-scope-grant-summary-fg: var(--q-fg-muted);
+    --q-scope-grant-cant-fg: var(--q-fg);
+    --q-scope-grant-border: var(--q-border);
+  }
+}
+
+@layer q.components {
+  .q-scope-grant {
+    display: grid;
+    gap: var(--q-scope-grant-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-scope-grant__header,
+  .q-scope-grant__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-1-5);
+  }
+
+  .q-scope-grant__who {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1-25);
+  }
+
+  .q-scope-grant__agent {
+    display: inline-flex;
+  }
+
+  .q-scope-grant__heading {
+    display: grid;
+    gap: var(--q-space-0-25);
+  }
+
+  .q-scope-grant__title {
+    margin: 0;
+    font-size: var(--q-scope-grant-title-size);
+    font-weight: var(--q-scope-grant-title-weight);
+    line-height: var(--q-leading-snug);
+    color: var(--q-fg);
+  }
+
+  .q-scope-grant__caption {
+    font-family: var(--q-scope-grant-caption-font);
+    font-size: var(--q-scope-grant-caption-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-scope-grant-caption-fg);
+  }
+
+  .q-scope-grant__scopes {
+    display: grid;
+    gap: var(--q-space-0-25);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-scope-grant__scope {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: var(--q-scope-grant-scope-height);
+    padding: var(--q-space-0-75) var(--q-scope-grant-scope-px);
+    border-radius: var(--q-scope-grant-scope-radius);
+    color: var(--q-scope-grant-scope-fg);
+    transition: background-color var(--q-dur-hover) var(--q-ease-soft), color var(--q-dur-hover) var(--q-ease-soft);
+
+    &[data-on] {
+      background: var(--q-scope-grant-scope-bg-on);
+      color: var(--q-scope-grant-scope-fg-on);
+    }
+  }
+
+  .q-scope-grant__switch {
+    flex: 1;
+    gap: var(--q-space-2);
+  }
+
+  .q-scope-grant__footer {
+    padding-top: var(--q-space-1-5);
+    border-top: var(--q-hairline) solid var(--q-scope-grant-border);
+  }
+
+  .q-scope-grant__summary {
+    margin: 0;
+    font-size: var(--q-scope-grant-summary-size);
+    color: var(--q-scope-grant-summary-fg);
+  }
+
+  .q-scope-grant__cant {
+    color: var(--q-scope-grant-cant-fg);
+  }
+
+  .q-scope-grant__actions {
+    display: flex;
+    gap: var(--q-space-1);
+  }
+}

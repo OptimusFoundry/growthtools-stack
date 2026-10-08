@@ -1,0 +1,258 @@
+// Dropdown — select-like combobox with a listbox popover. BEM: .q-dropdown, __label, __trigger
+// (--placeholder), __icon, __value, __chevron, __list(--end), __divider, __option, __option-icon,
+// __option-text, __option-description, __check, __hint(--error); --{size}, --filled, --full,
+// --invalid, --disabled. Open reads aria-expanded; the active option reads data-active.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-dropdown-gap: var(--q-space-1);
+    --q-dropdown-min-width: 220px;
+    --q-dropdown-disabled-opacity: 0.4;
+    --q-dropdown-label-font-family: var(--q-font-mono);
+    --q-dropdown-label-font-size: var(--q-text-2xs);
+    --q-dropdown-label-tracking: var(--q-tracking-mono);
+    --q-dropdown-label-fg: var(--q-fg-muted);
+    --q-dropdown-sm-height: var(--q-field-sm);
+    --q-dropdown-sm-px: var(--q-space-1-5);
+    --q-dropdown-sm-font-size: var(--q-text-md);
+    --q-dropdown-md-height: var(--q-field-md);
+    --q-dropdown-md-px: var(--q-space-2);
+    --q-dropdown-md-font-size: var(--q-text-lg);
+    --q-dropdown-lg-height: var(--q-field-lg);
+    --q-dropdown-lg-px: var(--q-space-2-5);
+    --q-dropdown-lg-font-size: var(--q-text-xl);
+    --q-dropdown-trigger-gap: var(--q-space-1-5);
+    --q-dropdown-trigger-font-family: var(--q-font-sans);
+    --q-dropdown-trigger-fg: var(--q-fg);
+    --q-dropdown-trigger-fg-placeholder: var(--q-fg-subtle);
+    --q-dropdown-trigger-bg: var(--q-bg);
+    --q-dropdown-trigger-radius: var(--q-radius-md);
+    --q-dropdown-trigger-border: var(--q-border);
+    --q-dropdown-trigger-border-open: var(--q-fg);
+    --q-dropdown-trigger-border-invalid: var(--q-accent);
+    --q-dropdown-trigger-ring-open: var(--q-ring-soft);
+    --q-dropdown-filled-bg: var(--q-bg-subtle);
+    --q-dropdown-icon-fg: var(--q-fg-muted);
+    --q-dropdown-list-offset: var(--q-space-0-5);
+    --q-dropdown-list-max-height: 300px;
+    --q-dropdown-list-pad: var(--q-space-0-75);
+    --q-dropdown-list-bg: var(--q-bg);
+    --q-dropdown-list-border: var(--q-border);
+    --q-dropdown-list-radius: var(--q-radius-lg);
+    --q-dropdown-list-shadow: var(--q-shadow-2);
+    --q-dropdown-list-z: var(--q-z-dropdown);
+    --q-dropdown-divider-gap: var(--q-space-0-5);
+    --q-dropdown-option-gap: var(--q-space-1-5);
+    --q-dropdown-option-py: var(--q-space-1-25);
+    --q-dropdown-option-px: var(--q-space-1-5);
+    --q-dropdown-option-radius: var(--q-radius-sm);
+    --q-dropdown-option-font-size: var(--q-text-md);
+    --q-dropdown-option-fg: var(--q-fg);
+    --q-dropdown-option-bg-active: var(--q-bg-subtle);
+    --q-dropdown-option-icon-offset: var(--q-space-0-25);
+    --q-dropdown-option-text-gap: var(--q-space-0-25);
+    --q-dropdown-option-description-font-size: var(--q-text-sm);
+    --q-dropdown-option-description-fg: var(--q-fg-muted);
+    --q-dropdown-check-width: var(--q-space-1-5);
+    --q-dropdown-hint-font-family: var(--q-font-mono);
+    --q-dropdown-hint-font-size: var(--q-text-2xs);
+    --q-dropdown-hint-tracking: var(--q-tracking-wide);
+    --q-dropdown-hint-fg: var(--q-fg-muted);
+    --q-dropdown-hint-error-fg: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-dropdown {
+    --_height: var(--q-dropdown-md-height);
+    --_px: var(--q-dropdown-md-px);
+    --_font-size: var(--q-dropdown-md-font-size);
+
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    gap: var(--q-dropdown-gap);
+    min-width: var(--q-dropdown-min-width);
+
+    &--full {
+      display: flex;
+    }
+
+    &--disabled {
+      opacity: var(--q-dropdown-disabled-opacity);
+    }
+
+    &--sm {
+      --_height: var(--q-dropdown-sm-height);
+      --_px: var(--q-dropdown-sm-px);
+      --_font-size: var(--q-dropdown-sm-font-size);
+    }
+
+    &--lg {
+      --_height: var(--q-dropdown-lg-height);
+      --_px: var(--q-dropdown-lg-px);
+      --_font-size: var(--q-dropdown-lg-font-size);
+    }
+  }
+
+  .q-dropdown__label {
+    font-family: var(--q-dropdown-label-font-family);
+    font-size: var(--q-dropdown-label-font-size);
+    letter-spacing: var(--q-dropdown-label-tracking);
+    text-transform: uppercase;
+    color: var(--q-dropdown-label-fg);
+  }
+
+  .q-dropdown__trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--q-dropdown-trigger-gap);
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--_height);
+    padding: 0 var(--_px);
+    border: var(--q-hairline) solid var(--q-dropdown-trigger-border);
+    border-radius: var(--q-dropdown-trigger-radius);
+    outline: none;
+    background: var(--q-dropdown-trigger-bg);
+    font-family: var(--q-dropdown-trigger-font-family);
+    font-size: var(--_font-size);
+    color: var(--q-dropdown-trigger-fg);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &--placeholder {
+      color: var(--q-dropdown-trigger-fg-placeholder);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+
+    .q-dropdown--filled > & {
+      border-color: var(--q-dropdown-filled-bg);
+      background: var(--q-dropdown-filled-bg);
+    }
+
+    &[aria-expanded="true"],
+    .q-dropdown--filled > &[aria-expanded="true"] {
+      border-color: var(--q-dropdown-trigger-border-open);
+      background: var(--q-dropdown-trigger-bg);
+      box-shadow: var(--q-dropdown-trigger-ring-open);
+    }
+
+    .q-dropdown--invalid > &,
+    .q-dropdown--invalid > &[aria-expanded="true"] {
+      border-color: var(--q-dropdown-trigger-border-invalid);
+    }
+  }
+
+  .q-dropdown__icon {
+    display: inline-flex;
+    color: var(--q-dropdown-icon-fg);
+  }
+
+  .q-dropdown__value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .q-dropdown__chevron {
+    color: var(--q-dropdown-icon-fg);
+    transition: transform var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-dropdown__trigger[aria-expanded="true"] > & {
+      transform: rotate(180deg);
+    }
+  }
+
+  .q-dropdown__list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: var(--q-dropdown-list-z);
+    box-sizing: border-box;
+    min-width: 100%;
+    max-height: var(--q-dropdown-list-max-height);
+    margin-top: var(--q-dropdown-list-offset);
+    padding: var(--q-dropdown-list-pad);
+    overflow-y: auto;
+    border: var(--q-hairline) solid var(--q-dropdown-list-border);
+    border-radius: var(--q-dropdown-list-radius);
+    background: var(--q-dropdown-list-bg);
+    box-shadow: var(--q-dropdown-list-shadow);
+
+    &--end {
+      right: 0;
+      left: auto;
+    }
+
+    &:not([data-state="open"]) {
+      pointer-events: none;
+    }
+  }
+
+  .q-dropdown__divider {
+    margin: var(--q-dropdown-divider-gap) 0;
+    border-top: var(--q-hairline) solid var(--q-dropdown-list-border);
+  }
+
+  .q-dropdown__option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--q-dropdown-option-gap);
+    padding: var(--q-dropdown-option-py) var(--q-dropdown-option-px);
+    border-radius: var(--q-dropdown-option-radius);
+    font-size: var(--q-dropdown-option-font-size);
+    color: var(--q-dropdown-option-fg);
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &[data-active]:not([aria-disabled="true"]) {
+      background: var(--q-dropdown-option-bg-active);
+    }
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-dropdown-disabled-opacity);
+      cursor: not-allowed;
+    }
+  }
+
+  .q-dropdown__option-icon {
+    display: inline-flex;
+    padding-top: var(--q-dropdown-option-icon-offset);
+    color: var(--q-dropdown-icon-fg);
+  }
+
+  .q-dropdown__option-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-dropdown-option-text-gap);
+  }
+
+  .q-dropdown__option-description {
+    font-size: var(--q-dropdown-option-description-font-size);
+    color: var(--q-dropdown-option-description-fg);
+  }
+
+  .q-dropdown__check {
+    width: var(--q-dropdown-check-width);
+    color: var(--q-dropdown-option-fg);
+  }
+
+  .q-dropdown__hint {
+    font-family: var(--q-dropdown-hint-font-family);
+    font-size: var(--q-dropdown-hint-font-size);
+    letter-spacing: var(--q-dropdown-hint-tracking);
+    color: var(--q-dropdown-hint-fg);
+
+    &--error {
+      color: var(--q-dropdown-hint-error-fg);
+    }
+  }
+}

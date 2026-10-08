@@ -1,0 +1,82 @@
+// Spinner — hairline ring, linear 0.9s; the ring stays still under reduced motion.
+// BEM: .q-spinner, __ring, __label; --{size} (--_size), --thick, --{tone}, --custom-tone (--_tone).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-spinner-gap: var(--q-space-1-5);
+    --q-spinner-xs-size: var(--q-space-1-5);
+    --q-spinner-sm-size: var(--q-space-2);
+    --q-spinner-md-size: var(--q-space-3);
+    --q-spinner-lg-size: var(--q-space-4);
+    --q-spinner-xl-size: var(--q-space-6);
+    --q-spinner-ring-width: var(--q-hairline);
+    --q-spinner-ring-width-thick: calc(var(--q-hairline) * 2);
+    --q-spinner-track: var(--q-border);
+    --q-spinner-paper-track: var(--q-track-on-inverse);
+    --q-spinner-default-fg: var(--q-fg);
+    --q-spinner-muted-fg: var(--q-fg-muted);
+    --q-spinner-paper-fg: var(--q-bg);
+    --q-spinner-molten-fg: var(--q-accent);
+    --q-spinner-label-font-size: var(--q-text-2xs);
+    --q-spinner-label-tracking: var(--q-tracking-mono);
+    --q-spinner-label-fg: var(--q-fg-muted);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes of-spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+@layer q.components {
+  .q-spinner {
+    --_size: var(--q-spinner-md-size);
+    --_ring-width: var(--q-spinner-ring-width);
+    --_track: var(--q-spinner-track);
+    --_tone: var(--q-spinner-default-fg);
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-spinner-gap);
+
+    @each $size in xs, sm, md, lg, xl {
+      &--#{$size} {
+        --_size: var(--q-spinner-#{$size}-size);
+      }
+    }
+
+    &--thick {
+      --_ring-width: var(--q-spinner-ring-width-thick);
+    }
+
+    @each $tone in default, muted, paper, molten {
+      &--#{$tone} {
+        --_tone: var(--q-spinner-#{$tone}-fg);
+      }
+    }
+
+    &--paper {
+      --_track: var(--q-spinner-paper-track);
+    }
+  }
+
+  .q-spinner__ring {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--_size);
+    height: var(--_size);
+    border: var(--_ring-width) solid var(--_track);
+    border-top-color: var(--_tone);
+    border-radius: var(--q-radius-pill);
+    animation: of-spin var(--q-dur-spin) var(--q-ease-linear) infinite;
+  }
+
+  .q-spinner__label {
+    color: var(--q-spinner-label-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-spinner-label-font-size);
+    letter-spacing: var(--q-spinner-label-tracking);
+    text-transform: uppercase;
+  }
+}

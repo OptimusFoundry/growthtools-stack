@@ -1,0 +1,143 @@
+// Approval — before → after, blast radius, undo window, hold to commit.
+// BEM: .q-approval, __header, __title, __description, __changes, __change, __change-label,
+// __transition, __arrow, __change-meta, __footer, __consequences, __consequence, __glyph, __actions.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-approval-gap: var(--q-space-3);
+    --q-approval-padding: var(--q-space-4);
+    --q-approval-bg: var(--q-bg);
+    --q-approval-border: var(--q-border);
+    --q-approval-radius: var(--q-radius-lg);
+    --q-approval-title-size: var(--q-text-lg);
+    --q-approval-title-weight: var(--q-weight-semibold);
+    --q-approval-title-tracking: var(--q-tracking-h4);
+    --q-approval-title-fg: var(--q-fg);
+    --q-approval-description-size: var(--q-text-sm);
+    --q-approval-description-fg: var(--q-fg-body);
+    --q-approval-changes-bg: var(--q-bg-subtle);
+    --q-approval-changes-radius: var(--q-radius-md);
+    --q-approval-change-height: var(--q-row-compact);
+    --q-approval-change-size: var(--q-text-sm);
+    --q-approval-change-border: var(--q-border);
+    --q-approval-arrow-fg: var(--q-fg-muted);
+    --q-approval-meta-font: var(--q-font-mono);
+    --q-approval-meta-size: var(--q-text-2xs);
+    --q-approval-meta-fg: var(--q-fg-muted);
+    --q-approval-consequence-size: var(--q-text-xs);
+    --q-approval-consequence-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-approval {
+    display: grid;
+    gap: var(--q-approval-gap);
+    padding: var(--q-approval-padding);
+    border: var(--q-hairline) solid var(--q-approval-border);
+    border-radius: var(--q-approval-radius);
+    background: var(--q-approval-bg);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-approval__header {
+    display: grid;
+    gap: var(--q-space-0-75);
+  }
+
+  .q-approval__title {
+    margin: 0;
+    font-size: var(--q-approval-title-size);
+    font-weight: var(--q-approval-title-weight);
+    letter-spacing: var(--q-approval-title-tracking);
+    line-height: var(--q-leading-snug);
+    color: var(--q-approval-title-fg);
+  }
+
+  .q-approval__description {
+    margin: 0;
+    font-size: var(--q-approval-description-size);
+    line-height: var(--q-leading-body);
+    color: var(--q-approval-description-fg);
+  }
+
+  .q-approval__changes {
+    display: grid;
+    margin: 0;
+    padding: 0 var(--q-space-1-5);
+    border-radius: var(--q-approval-changes-radius);
+    background: var(--q-approval-changes-bg);
+    list-style: none;
+  }
+
+  .q-approval__change {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--q-space-2);
+    min-height: var(--q-approval-change-height);
+    font-size: var(--q-approval-change-size);
+    color: var(--q-fg);
+
+    & + & {
+      border-top: var(--q-hairline) solid var(--q-approval-change-border);
+    }
+  }
+
+  .q-approval__change-label {
+    overflow: hidden;
+    font-weight: var(--q-weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .q-approval__transition {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+  }
+
+  .q-approval__arrow {
+    color: var(--q-approval-arrow-fg);
+  }
+
+  .q-approval__change-meta {
+    min-width: var(--q-space-10);
+    font-family: var(--q-approval-meta-font);
+    font-size: var(--q-approval-meta-size);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--q-approval-meta-fg);
+  }
+
+  .q-approval__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-2);
+  }
+
+  .q-approval__consequences {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-approval__consequence {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+    font-size: var(--q-approval-consequence-size);
+    color: var(--q-approval-consequence-fg);
+  }
+
+  .q-approval__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1);
+  }
+}

@@ -1,0 +1,183 @@
+// ConsensusSlider — quiet's Slider with everyone else's positions as markers above the track and
+// a band over the spread. BEM: .q-consensus-slider, __header, __spread, __track, __others,
+// __other, __agent, __other-value, __stem, __rail, __band, __thumb, __footer, __you, __mean.
+// Set inline: --_t (0–1) your value, --_lo/--_hi (0–1) the spread, --_at (0–1) each marker.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-consensus-slider-gap: var(--q-space-1-5);
+    --q-consensus-slider-rail: var(--q-space-0-25);
+    --q-consensus-slider-band: var(--q-space-0-75);
+    --q-consensus-slider-thumb: var(--q-space-2);
+    --q-consensus-slider-markers: var(--q-space-6); // room above the rail for the markers
+    --q-consensus-slider-rail-bg: var(--q-border);
+    --q-consensus-slider-band-bg: var(--q-bg-subtle);
+    --q-consensus-slider-band-border: var(--q-border-strong);
+    --q-consensus-slider-thumb-bg: var(--q-fg);
+    --q-consensus-slider-thumb-ring: 0 0 0 3px var(--q-bg), 0 0 0 4px var(--q-fg);
+    --q-consensus-slider-stem-bg: var(--q-border-strong);
+    --q-consensus-slider-other-gap: var(--q-space-0-25);
+    --q-consensus-slider-agent-size: var(--q-space-3);
+    --q-consensus-slider-agent-radius: var(--q-radius-xs);
+    --q-consensus-slider-agent-border: var(--q-border);
+    --q-consensus-slider-agent-fg: var(--q-accent);
+    --q-consensus-slider-agent-font-size: var(--q-text-2xs);
+    --q-consensus-slider-mono-font-family: var(--q-font-mono);
+    --q-consensus-slider-mono-font-size: var(--q-text-2xs);
+    --q-consensus-slider-mono-fg: var(--q-fg-muted);
+    --q-consensus-slider-you-font-size: var(--q-text-sm);
+    --q-consensus-slider-you-weight: var(--q-weight-semibold);
+    --q-consensus-slider-disabled-opacity: 0.4;
+  }
+}
+
+@layer q.components {
+  .q-consensus-slider {
+    --_k: var(--q-consensus-slider-thumb);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-consensus-slider-gap);
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-consensus-slider-disabled-opacity);
+    }
+  }
+
+  .q-consensus-slider__header,
+  .q-consensus-slider__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-consensus-slider-gap);
+  }
+
+  .q-consensus-slider__header,
+  .q-consensus-slider__other-value {
+    font-family: var(--q-consensus-slider-mono-font-family);
+    font-size: var(--q-consensus-slider-mono-font-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-consensus-slider-mono-fg);
+  }
+
+  .q-consensus-slider__spread {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .q-consensus-slider__track {
+    --_glide: 0s;
+
+    position: relative;
+    height: calc(var(--q-consensus-slider-markers) + var(--_k));
+    cursor: pointer;
+    touch-action: none;
+
+    &[data-glide] {
+      --_glide: var(--q-dur-expand);
+    }
+
+    .q-consensus-slider[aria-disabled="true"] > & {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-consensus-slider__others {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-consensus-slider__other {
+    position: absolute;
+    top: 0;
+    left: calc(var(--_at) * 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--q-consensus-slider-other-gap);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .q-consensus-slider__other-value {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .q-consensus-slider__agent {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--q-consensus-slider-agent-size);
+    height: var(--q-consensus-slider-agent-size);
+    border: var(--q-hairline) solid var(--q-consensus-slider-agent-border);
+    border-radius: var(--q-consensus-slider-agent-radius);
+    color: var(--q-consensus-slider-agent-fg);
+    font-size: var(--q-consensus-slider-agent-font-size);
+    line-height: var(--q-leading-none);
+  }
+
+  .q-consensus-slider__stem {
+    width: var(--q-hairline);
+    height: var(--q-space-1);
+    background: var(--q-consensus-slider-stem-bg);
+  }
+
+  .q-consensus-slider__rail,
+  .q-consensus-slider__band {
+    position: absolute;
+    top: calc(var(--q-consensus-slider-markers) + var(--_k) / 2);
+    border-radius: var(--q-radius-pill);
+    transform: translateY(-50%);
+  }
+
+  .q-consensus-slider__rail {
+    right: 0;
+    left: 0;
+    height: var(--q-consensus-slider-rail);
+    background: var(--q-consensus-slider-rail-bg);
+  }
+
+  .q-consensus-slider__band {
+    left: calc(var(--_lo) * 100%);
+    box-sizing: border-box;
+    width: calc((var(--_hi) - var(--_lo)) * 100%);
+    min-width: var(--q-consensus-slider-band);
+    height: var(--q-consensus-slider-band);
+    border: var(--q-hairline) solid var(--q-consensus-slider-band-border);
+    background: var(--q-consensus-slider-band-bg);
+    transition:
+      left var(--_glide) var(--q-ease-soft),
+      width var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-consensus-slider__thumb {
+    position: absolute;
+    top: var(--q-consensus-slider-markers);
+    left: calc(var(--_t) * 100% - var(--_k) / 2);
+    width: var(--_k);
+    height: var(--_k);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-consensus-slider-thumb-bg);
+    outline: none;
+    transition: left var(--_glide) var(--q-ease-soft);
+
+    &:focus {
+      box-shadow: var(--q-consensus-slider-thumb-ring);
+    }
+  }
+
+  .q-consensus-slider__you {
+    font-size: var(--q-consensus-slider-you-font-size);
+    font-variant-numeric: tabular-nums;
+
+    strong {
+      font-weight: var(--q-consensus-slider-you-weight);
+    }
+  }
+
+  .q-consensus-slider__mean {
+    color: var(--q-consensus-slider-mono-fg);
+  }
+}

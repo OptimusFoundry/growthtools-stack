@@ -1,0 +1,129 @@
+// Popover — anchored non-modal panel. BEM: .q-popover (anchor), __trigger, __panel (--closable), __title, __close.
+// The panel takes [data-placement="top|bottom|left|right"] and [data-align="start|center|end"];
+// the `width` prop arrives as --_width.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-popover-z: var(--q-z-popover);
+    --q-popover-offset: var(--q-space-1);
+    --q-popover-width: 280px;
+    --q-popover-padding: var(--q-space-2-5);
+    --q-popover-gap: var(--q-space-1-5);
+    --q-popover-bg: var(--q-bg);
+    --q-popover-border: var(--q-border);
+    --q-popover-radius: var(--q-radius-lg);
+    --q-popover-shadow: var(--q-shadow-2);
+    --q-popover-fg: var(--q-fg-body);
+    --q-popover-font-size: var(--q-text-md);
+    --q-popover-leading: var(--q-leading-body);
+    --q-popover-title-fg: var(--q-fg);
+    --q-popover-title-size: var(--q-text-md);
+    --q-popover-title-weight: var(--q-weight-semibold);
+    --q-popover-close-fg: var(--q-fg-muted);
+    --q-popover-close-fg-hover: var(--q-fg);
+    --q-popover-close-size: 16px; // the × glyph, as on Toast
+    --q-popover-close-inset: var(--q-space-1);
+    --q-popover-close-padding: var(--q-space-0-5);
+    --q-popover-close-dur: var(--q-dur-hover);
+  }
+}
+
+@layer q.components {
+  .q-popover {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .q-popover__trigger {
+    display: inline-flex;
+  }
+
+  .q-popover__panel {
+    position: absolute;
+    z-index: var(--q-popover-z);
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-popover-gap);
+    box-sizing: border-box;
+    width: var(--_width, var(--q-popover-width));
+    padding: var(--q-popover-padding);
+    border: var(--q-hairline) solid var(--q-popover-border);
+    border-radius: var(--q-popover-radius);
+    background: var(--q-popover-bg);
+    box-shadow: var(--q-popover-shadow);
+    color: var(--q-popover-fg);
+    font-size: var(--q-popover-font-size);
+    line-height: var(--q-popover-leading);
+    text-align: left;
+
+    // Placement: which side of the trigger.
+    &[data-placement="bottom"] {
+      top: 100%;
+      margin-top: var(--q-popover-offset);
+    }
+
+    &[data-placement="top"] {
+      bottom: 100%;
+      margin-bottom: var(--q-popover-offset);
+    }
+
+    &[data-placement="right"] {
+      left: 100%;
+      margin-left: var(--q-popover-offset);
+    }
+
+    &[data-placement="left"] {
+      right: 100%;
+      margin-right: var(--q-popover-offset);
+    }
+
+    // Alignment along that side (anything but start/end centres).
+    &:is([data-placement="top"], [data-placement="bottom"]) {
+      &[data-align="start"] { left: 0; }
+      &[data-align="end"] { right: 0; }
+
+      &:not([data-align="start"], [data-align="end"]) {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+
+    &:not([data-placement="top"], [data-placement="bottom"]) {
+      &[data-align="start"] { top: 0; }
+      &[data-align="end"] { bottom: 0; }
+
+      &:not([data-align="start"], [data-align="end"]) {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+  }
+
+  .q-popover__title {
+    color: var(--q-popover-title-fg);
+    font-size: var(--q-popover-title-size);
+    font-weight: var(--q-popover-title-weight);
+  }
+
+  .q-popover__panel--closable {
+    padding-right: calc(var(--q-popover-padding) + var(--q-popover-close-size));
+  }
+
+  .q-popover__close {
+    position: absolute;
+    top: var(--q-popover-close-inset);
+    right: var(--q-popover-close-inset);
+    padding: var(--q-popover-close-padding);
+    border: 0;
+    background: none;
+    color: var(--q-popover-close-fg);
+    font-size: var(--q-popover-close-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+    transition: color var(--q-popover-close-dur) var(--q-ease-linear);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--q-popover-close-fg-hover);
+    }
+  }
+}

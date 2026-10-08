@@ -1,0 +1,53 @@
+// BarChart — bars by category, grouped or stacked, vertical or horizontal.
+// BEM: .q-bar-chart, __title, __bar[data-active], __hit, __fill, __value.
+// Shared frame (grid, axes, legend, tooltip) lives in chart.scss as .q-chart__*.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-bar-chart-title-fg: var(--q-fg);
+    --q-bar-chart-title-font-size: var(--q-text-sm);
+    --q-bar-chart-title-weight: var(--q-weight-semibold);
+    --q-bar-chart-dim-opacity: 0.45;
+    --q-bar-chart-value-fg: var(--q-fg);
+    --q-bar-chart-value-font-size: var(--q-text-2xs);
+  }
+}
+
+@layer q.components {
+  .q-bar-chart__title {
+    color: var(--q-bar-chart-title-fg);
+    font-size: var(--q-bar-chart-title-font-size);
+    font-weight: var(--q-bar-chart-title-weight);
+  }
+
+  .q-bar-chart__bar {
+    outline: none;
+
+    // Focus ring drawn on the mark itself (an SVG <g> has no box for outline in every browser).
+    &:focus-visible .q-bar-chart__fill {
+      stroke: var(--q-focus-ring-color);
+      stroke-width: var(--q-chart-line-width);
+    }
+  }
+
+  // While one bar is active, the others step back so the readout has one subject.
+  svg:has(.q-bar-chart__bar[data-active]) .q-bar-chart__bar:not([data-active]) .q-bar-chart__fill {
+    opacity: var(--q-bar-chart-dim-opacity);
+  }
+
+  .q-bar-chart__hit {
+    fill: transparent;
+  }
+
+  .q-bar-chart__fill {
+    fill: var(--_color);
+    transition: opacity var(--q-dur-hover) var(--q-ease-soft);
+  }
+
+  .q-bar-chart__value {
+    fill: var(--q-bar-chart-value-fg);
+    font-family: var(--q-chart-axis-font-family);
+    font-size: var(--q-bar-chart-value-font-size);
+    font-variant-numeric: tabular-nums;
+  }
+}

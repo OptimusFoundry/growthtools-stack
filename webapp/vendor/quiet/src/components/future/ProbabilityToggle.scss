@@ -1,0 +1,138 @@
+// ProbabilityToggle — an ink-outlined pill (Switch's track, stretched) whose thumb rests anywhere
+// from off to always; the position reads back as a policy. BEM: .q-probability-toggle, __track,
+// __fill, __tick, __thumb, __text, __heading, __label, __level, __description.
+// --_t (0–1, set inline) is the position; --_at (0–1) places each quarter tick.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-probability-toggle-gap: var(--q-space-2);
+    --q-probability-toggle-width: calc(var(--q-space-16) + var(--q-space-3));
+    --q-probability-toggle-height: var(--q-space-3);
+    --q-probability-toggle-inset: var(--q-space-0-5);
+    --q-probability-toggle-thumb: var(--q-space-2);
+    --q-probability-toggle-border: var(--q-fg);
+    --q-probability-toggle-bg: var(--q-bg);
+    --q-probability-toggle-fill-bg: var(--q-bg-subtle);
+    --q-probability-toggle-tick: var(--q-border-strong);
+    --q-probability-toggle-tick-height: var(--q-space-0-75);
+    --q-probability-toggle-thumb-bg: var(--q-fg);
+    --q-probability-toggle-thumb-ring: 0 0 0 3px var(--q-bg), 0 0 0 4px var(--q-fg);
+    --q-probability-toggle-disabled-opacity: 0.4;
+    --q-probability-toggle-text-gap: var(--q-space-0-25);
+    --q-probability-toggle-heading-gap: var(--q-space-1);
+    --q-probability-toggle-label-font-size: var(--q-text-md);
+    --q-probability-toggle-label-weight: var(--q-weight-semibold);
+    --q-probability-toggle-level-font-family: var(--q-font-mono);
+    --q-probability-toggle-level-font-size: var(--q-text-2xs);
+    --q-probability-toggle-level-fg: var(--q-fg);
+    --q-probability-toggle-description-font-size: var(--q-text-sm);
+    --q-probability-toggle-description-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-probability-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--q-probability-toggle-gap);
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-probability-toggle-disabled-opacity);
+    }
+  }
+
+  .q-probability-toggle__track {
+    --_glide: 0s;
+    --_k: var(--q-probability-toggle-thumb);
+    --_in: var(--q-probability-toggle-inset);
+
+    position: relative;
+    flex: none;
+    box-sizing: border-box;
+    width: var(--q-probability-toggle-width);
+    height: var(--q-probability-toggle-height);
+    overflow: hidden;
+    border: var(--q-hairline) solid var(--q-probability-toggle-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-probability-toggle-bg);
+    cursor: ew-resize;
+    touch-action: none;
+
+    &[data-glide] {
+      --_glide: var(--q-dur-hover);
+    }
+
+    .q-probability-toggle[aria-disabled="true"] > & {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-probability-toggle__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--_in) + var(--_k) + (100% - var(--_k) - var(--_in) * 2) * var(--_t));
+    background: var(--q-probability-toggle-fill-bg);
+    transition: width var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-probability-toggle__tick {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_in) + var(--_k) / 2 + (100% - var(--_k) - var(--_in) * 2) * var(--_at));
+    width: var(--q-hairline);
+    height: var(--q-probability-toggle-tick-height);
+    background: var(--q-probability-toggle-tick);
+    transform: translate(-50%, -50%);
+  }
+
+  .q-probability-toggle__thumb {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_in) + (100% - var(--_k) - var(--_in) * 2) * var(--_t));
+    width: var(--_k);
+    height: var(--_k);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-probability-toggle-thumb-bg);
+    outline: none;
+    transform: translateY(-50%);
+    transition: left var(--_glide) var(--q-ease-soft);
+
+    &:focus {
+      box-shadow: var(--q-probability-toggle-thumb-ring);
+    }
+  }
+
+  .q-probability-toggle__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-probability-toggle-text-gap);
+    min-width: 0;
+    line-height: var(--q-leading-ui);
+  }
+
+  .q-probability-toggle__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--q-probability-toggle-heading-gap);
+  }
+
+  .q-probability-toggle__label {
+    font-size: var(--q-probability-toggle-label-font-size);
+    font-weight: var(--q-probability-toggle-label-weight);
+  }
+
+  .q-probability-toggle__level {
+    font-family: var(--q-probability-toggle-level-font-family);
+    font-size: var(--q-probability-toggle-level-font-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-probability-toggle-level-fg);
+  }
+
+  .q-probability-toggle__description {
+    font-size: var(--q-probability-toggle-description-font-size);
+    color: var(--q-probability-toggle-description-fg);
+  }
+}

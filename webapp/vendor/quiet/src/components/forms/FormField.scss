@@ -1,0 +1,15 @@
+// FormField — label + control + hint stack. BEM: .q-form-field.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-form-field-gap: var(--q-space-1);
+  }
+}
+
+@layer q.components {
+  .q-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-form-field-gap);
+  }
+}

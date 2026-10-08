@@ -1,0 +1,42 @@
+// Container — centred max-width wrapper with the page gutter. BEM: .q-container; --{sm|md|lg|xl|full},
+// --flush (no gutter), --start (not centred). A raw size arrives as --_max.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-container-sm: var(--q-w-form);
+    --q-container-md: 880px; // between form and content widths; no tier-2 width
+    --q-container-lg: var(--q-w-content);
+    --q-container-xl: var(--q-w-max);
+    --q-container-px: var(--q-gutter);
+  }
+}
+
+@layer q.components {
+  .q-container {
+    --_max: var(--q-container-xl);
+
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--_max);
+    margin-right: auto;
+    margin-left: auto;
+    padding-right: var(--q-container-px);
+    padding-left: var(--q-container-px);
+
+    &--sm { --_max: var(--q-container-sm); }
+    &--md { --_max: var(--q-container-md); }
+    &--lg { --_max: var(--q-container-lg); }
+    &--xl { --_max: var(--q-container-xl); }
+    &--full { --_max: none; }
+
+    &--flush {
+      padding-right: 0;
+      padding-left: 0;
+    }
+
+    &--start {
+      margin-right: 0;
+      margin-left: 0;
+    }
+  }
+}

@@ -1,0 +1,182 @@
+// Checkpoints — a scrubbable timeline of snapshots; agents square, people round.
+// BEM: .q-checkpoints, __track, __rail, __fill, __list, __point(--agent, --person), __mark, __time,
+// __detail, __summary, __label, __meta, __now, __now-dot. States: [aria-selected], [data-past].
+// --_n (count) and --_progress (0 → 1, selected / last) come in from the component.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-checkpoints-gap: var(--q-space-2);
+    --q-checkpoints-mark-size: var(--q-space-1-5);
+    --q-checkpoints-mark-radius-agent: var(--q-radius-2xs);
+    --q-checkpoints-mark-bg: var(--q-bg);
+    --q-checkpoints-mark-border: var(--q-border-strong);
+    --q-checkpoints-mark-past: var(--q-fg);
+    --q-checkpoints-mark-selected: var(--q-fg);
+    --q-checkpoints-mark-ring: var(--q-fg);
+    --q-checkpoints-rail: var(--q-border);
+    --q-checkpoints-fill: var(--q-fg);
+    --q-checkpoints-time-font: var(--q-font-mono);
+    --q-checkpoints-time-size: var(--q-text-3xs);
+    --q-checkpoints-time-fg: var(--q-fg-muted);
+    --q-checkpoints-time-fg-selected: var(--q-fg);
+    --q-checkpoints-detail-bg: var(--q-bg-subtle);
+    --q-checkpoints-detail-radius: var(--q-radius-md);
+    --q-checkpoints-detail-padding: var(--q-space-2);
+    --q-checkpoints-label-size: var(--q-text-sm);
+    --q-checkpoints-label-weight: var(--q-weight-semibold);
+    --q-checkpoints-meta-size: var(--q-text-xs);
+    --q-checkpoints-meta-fg: var(--q-fg-muted);
+    --q-checkpoints-now-dot: var(--q-accent);
+    --q-checkpoints-dur: var(--q-dur-expand);
+  }
+}
+
+@layer q.components {
+  .q-checkpoints {
+    --_n: 1;
+    --_progress: 1;
+    --_inset: calc(50% / var(--_n));
+
+    display: grid;
+    gap: var(--q-checkpoints-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-checkpoints__track {
+    position: relative;
+  }
+
+  .q-checkpoints__rail,
+  .q-checkpoints__fill {
+    position: absolute;
+    top: calc(var(--q-checkpoints-mark-size) / 2 + var(--q-space-0-5));
+    left: var(--_inset);
+    height: var(--q-hairline);
+    transform: translateY(-50%);
+  }
+
+  .q-checkpoints__rail {
+    right: var(--_inset);
+    background: var(--q-checkpoints-rail);
+  }
+
+  .q-checkpoints__fill {
+    width: calc((100% - 2 * var(--_inset)) * var(--_progress));
+    background: var(--q-checkpoints-fill);
+    transition: width var(--q-checkpoints-dur) var(--q-ease-soft);
+  }
+
+  .q-checkpoints__list {
+    position: relative;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+  }
+
+  .q-checkpoints__point {
+    display: grid;
+    justify-items: center;
+    gap: var(--q-space-0-75);
+    padding: var(--q-space-0-5) 0;
+    border-radius: var(--q-radius-sm);
+    cursor: pointer;
+  }
+
+  .q-checkpoints__mark {
+    box-sizing: border-box;
+    width: var(--q-checkpoints-mark-size);
+    height: var(--q-checkpoints-mark-size);
+    border: var(--q-hairline) solid var(--q-checkpoints-mark-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-checkpoints-mark-bg);
+    transition:
+      background-color var(--q-checkpoints-dur) var(--q-ease-soft),
+      border-color var(--q-checkpoints-dur) var(--q-ease-soft),
+      box-shadow var(--q-checkpoints-dur) var(--q-ease-soft);
+
+    .q-checkpoints__point--agent > & {
+      border-radius: var(--q-checkpoints-mark-radius-agent);
+    }
+
+    .q-checkpoints__point[data-past] > & {
+      border-color: var(--q-checkpoints-mark-past);
+      background: var(--q-checkpoints-mark-past);
+    }
+
+    .q-checkpoints__point[aria-selected="true"] > & {
+      border-color: var(--q-checkpoints-mark-selected);
+      background: var(--q-checkpoints-mark-selected);
+      box-shadow:
+        0 0 0 var(--q-space-0-25) var(--q-checkpoints-mark-bg),
+        0 0 0 calc(var(--q-space-0-25) + var(--q-hairline)) var(--q-checkpoints-mark-ring);
+    }
+
+    .q-checkpoints__point:is(:hover, :focus-visible):not([aria-selected="true"]) > & {
+      border-color: var(--q-checkpoints-mark-selected);
+    }
+  }
+
+  .q-checkpoints__time {
+    font-family: var(--q-checkpoints-time-font);
+    font-size: var(--q-checkpoints-time-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-tracking-mono);
+    color: var(--q-checkpoints-time-fg);
+
+    .q-checkpoints__point[aria-selected="true"] > & {
+      color: var(--q-checkpoints-time-fg-selected);
+    }
+  }
+
+  .q-checkpoints__detail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-1-5);
+    padding: var(--q-checkpoints-detail-padding);
+    border-radius: var(--q-checkpoints-detail-radius);
+    background: var(--q-checkpoints-detail-bg);
+  }
+
+  .q-checkpoints__summary {
+    display: grid;
+    gap: var(--q-space-0-5);
+  }
+
+  .q-checkpoints__label {
+    font-size: var(--q-checkpoints-label-size);
+    font-weight: var(--q-checkpoints-label-weight);
+    color: var(--q-fg);
+  }
+
+  .q-checkpoints__meta {
+    font-size: var(--q-checkpoints-meta-size);
+    color: var(--q-checkpoints-meta-fg);
+  }
+
+  .q-checkpoints__now {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+    font-family: var(--q-checkpoints-time-font);
+    font-size: var(--q-checkpoints-time-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-fg);
+  }
+
+  .q-checkpoints__now-dot {
+    width: var(--q-space-0-75);
+    height: var(--q-space-0-75);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-checkpoints-now-dot);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-checkpoints__fill,
+    .q-checkpoints__mark {
+      transition: none;
+    }
+  }
+}

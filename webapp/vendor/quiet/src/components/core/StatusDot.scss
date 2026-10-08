@@ -1,0 +1,44 @@
+// StatusDot — mono caps status with a leading dot. BEM: .q-status-dot, __dot; --live, --prototype.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-status-dot-gap: var(--q-space-1);
+    --q-status-dot-font-size: var(--q-text-2xs);
+    --q-status-dot-tracking: var(--q-tracking-mono);
+    --q-status-dot-fg: var(--q-fg);
+    --q-status-dot-size: var(--q-space-1);
+    --q-status-dot-color: var(--q-fg);
+    --q-status-dot-live-color: var(--q-accent);
+    --q-status-dot-prototype-border: var(--q-fg-subtle);
+  }
+}
+
+@layer q.components {
+  .q-status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-status-dot-gap);
+    color: var(--q-status-dot-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-status-dot-font-size);
+    letter-spacing: var(--q-status-dot-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-status-dot__dot {
+    box-sizing: border-box;
+    width: var(--q-status-dot-size);
+    height: var(--q-status-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-status-dot-color);
+
+    .q-status-dot--live > & {
+      background: var(--q-status-dot-live-color);
+    }
+
+    .q-status-dot--prototype > & {
+      border: var(--q-hairline) solid var(--q-status-dot-prototype-border);
+      background: transparent;
+    }
+  }
+}

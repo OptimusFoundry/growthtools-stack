@@ -1,0 +1,162 @@
+// ChatComposer — the message box. BEM: .q-chat-composer, __files, __file, __input, __toolbar,
+// __attach, __plus, __picker, __slot, __spacer, __hint, __send, __stop, __drop; --dragging, --disabled.
+// Max text height comes from --_rows (maxRows) × the line height.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-chat-composer-bg: var(--q-bg);
+    --q-chat-composer-border: var(--q-border-strong);
+    --q-chat-composer-border-focus: var(--q-fg);
+    --q-chat-composer-ring-focus: var(--q-ring-soft);
+    --q-chat-composer-shadow: var(--q-shadow-1);
+    --q-chat-composer-radius: var(--q-radius-lg);
+    --q-chat-composer-pad: var(--q-space-1-5);
+    --q-chat-composer-gap: var(--q-space-1);
+    --q-chat-composer-input-px: var(--q-space-0-5);
+    --q-chat-composer-input-fg: var(--q-fg);
+    --q-chat-composer-input-size: var(--q-text-md);
+    --q-chat-composer-input-leading: var(--q-leading-body);
+    --q-chat-composer-placeholder-fg: var(--q-fg-muted);
+    --q-chat-composer-files-gap: var(--q-space-1-25);
+    --q-chat-composer-hint-fg: var(--q-fg-muted);
+    --q-chat-composer-hint-font: var(--q-font-mono);
+    --q-chat-composer-hint-size: var(--q-text-2xs);
+    --q-chat-composer-plus-size: var(--q-text-xl);
+    --q-chat-composer-stop-size: var(--q-space-1);
+    --q-chat-composer-stop-bg: var(--q-fg);
+    --q-chat-composer-drop-bg: color-mix(in srgb, var(--q-bg) 92%, transparent);
+    --q-chat-composer-drop-border: var(--q-fg);
+    --q-chat-composer-drop-fg: var(--q-fg);
+    --q-chat-composer-drop-font: var(--q-font-mono);
+    --q-chat-composer-drop-size: var(--q-text-2xs);
+  }
+}
+
+@layer q.components {
+  .q-chat-composer {
+    position: relative;
+    display: grid;
+    gap: var(--q-chat-composer-gap);
+    box-sizing: border-box;
+    padding: var(--q-chat-composer-pad);
+    border: var(--q-hairline) solid var(--q-chat-composer-border);
+    border-radius: var(--q-chat-composer-radius);
+    background: var(--q-chat-composer-bg);
+    box-shadow: var(--q-chat-composer-shadow);
+    font-family: var(--q-font-sans);
+    transition:
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      box-shadow var(--q-dur-hover) var(--q-ease-soft);
+
+    // The box takes the focus treatment, not the bare textarea inside it.
+    &:has(.q-chat-composer__input:focus-visible) {
+      border-color: var(--q-chat-composer-border-focus);
+      box-shadow: var(--q-chat-composer-shadow), var(--q-chat-composer-ring-focus);
+    }
+
+    &--dragging {
+      border-color: var(--q-chat-composer-border-focus);
+    }
+
+    &--disabled {
+      opacity: 0.6;
+    }
+  }
+
+  .q-chat-composer__files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-chat-composer-files-gap);
+    margin: 0;
+    padding: var(--q-space-0-5) var(--q-space-0-5) 0;
+    list-style: none;
+  }
+
+  .q-chat-composer__file {
+    display: flex;
+  }
+
+  .q-chat-composer__input {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: calc(var(--_rows) * 1lh);
+    padding: var(--q-space-0-5) var(--q-chat-composer-input-px);
+    overflow-y: auto;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--q-chat-composer-input-fg);
+    font-family: inherit;
+    font-size: var(--q-chat-composer-input-size);
+    line-height: var(--q-chat-composer-input-leading);
+    resize: none;
+
+    &::placeholder {
+      color: var(--q-chat-composer-placeholder-fg);
+    }
+
+    // Focus is shown on the whole box (above); the global ring would double it.
+    &:focus-visible {
+      outline: 0;
+      box-shadow: none;
+    }
+  }
+
+  .q-chat-composer__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--q-chat-composer-gap);
+  }
+
+  .q-chat-composer__plus {
+    font-size: var(--q-chat-composer-plus-size);
+    font-weight: var(--q-weight-regular);
+    line-height: var(--q-leading-none);
+  }
+
+  .q-chat-composer__picker {
+    display: none;
+  }
+
+  .q-chat-composer__slot {
+    display: flex;
+    align-items: center;
+    gap: var(--q-chat-composer-gap);
+  }
+
+  .q-chat-composer__spacer {
+    flex: 1;
+  }
+
+  .q-chat-composer__hint {
+    color: var(--q-chat-composer-hint-fg);
+    font-family: var(--q-chat-composer-hint-font);
+    font-size: var(--q-chat-composer-hint-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-chat-composer__stop {
+    display: block;
+    width: var(--q-chat-composer-stop-size);
+    height: var(--q-chat-composer-stop-size);
+    border-radius: var(--q-radius-2xs);
+    background: var(--q-chat-composer-stop-bg);
+  }
+
+  .q-chat-composer__drop {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: var(--q-hairline) dashed var(--q-chat-composer-drop-border);
+    border-radius: inherit;
+    background: var(--q-chat-composer-drop-bg);
+    color: var(--q-chat-composer-drop-fg);
+    font-family: var(--q-chat-composer-drop-font);
+    font-size: var(--q-chat-composer-drop-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+}

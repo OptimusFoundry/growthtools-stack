@@ -1,0 +1,77 @@
+// PromptSuggestions — starters for an empty thread. BEM: .q-prompt-suggestions, __item, __label,
+// __description; --wrap (pills), --grid (two-up cards with a description line).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-prompt-suggestions-gap: var(--q-space-1);
+    --q-prompt-suggestions-item-bg: var(--q-bg);
+    --q-prompt-suggestions-item-bg-hover: var(--q-bg-subtle);
+    --q-prompt-suggestions-item-border: var(--q-border-strong);
+    --q-prompt-suggestions-item-border-hover: var(--q-fg);
+    --q-prompt-suggestions-item-fg: var(--q-fg);
+    --q-prompt-suggestions-item-size: var(--q-text-sm);
+    --q-prompt-suggestions-item-height: var(--q-control-sm);
+    --q-prompt-suggestions-item-px: var(--q-space-1-5);
+    --q-prompt-suggestions-card-radius: var(--q-radius-md);
+    --q-prompt-suggestions-card-pad: var(--q-space-1-5);
+    --q-prompt-suggestions-description-fg: var(--q-fg-muted);
+    --q-prompt-suggestions-description-size: var(--q-text-xs);
+  }
+}
+
+@layer q.components {
+  .q-prompt-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-prompt-suggestions-gap);
+
+    &--grid {
+      display: grid;
+      width: 100%;
+      grid-template-columns: repeat(auto-fit, minmax(calc(var(--q-space-20) + var(--q-space-8)), 1fr));
+    }
+  }
+
+  .q-prompt-suggestions__item {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--q-space-0-25);
+    box-sizing: border-box;
+    min-height: var(--q-prompt-suggestions-item-height);
+    padding: 0 var(--q-prompt-suggestions-item-px);
+    border: var(--q-hairline) solid var(--q-prompt-suggestions-item-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-prompt-suggestions-item-bg);
+    color: var(--q-prompt-suggestions-item-fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-prompt-suggestions-item-size);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      border-color: var(--q-prompt-suggestions-item-border-hover);
+      background: var(--q-prompt-suggestions-item-bg-hover);
+    }
+  }
+
+  .q-prompt-suggestions--grid .q-prompt-suggestions__item {
+    align-items: flex-start;
+    padding: var(--q-prompt-suggestions-card-pad);
+    border-radius: var(--q-prompt-suggestions-card-radius);
+  }
+
+  .q-prompt-suggestions__label {
+    font-weight: var(--q-weight-medium);
+    line-height: var(--q-leading-ui);
+  }
+
+  .q-prompt-suggestions__description {
+    color: var(--q-prompt-suggestions-description-fg);
+    font-size: var(--q-prompt-suggestions-description-size);
+    line-height: var(--q-leading-ui);
+  }
+}

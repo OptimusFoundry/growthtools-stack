@@ -1,0 +1,77 @@
+// Toaster — fixed, portalled stack of Toasts. BEM: .q-toaster (region), __list, __item;
+// --{top|bottom}-{left|center|right}. Only the toasts take pointer events, so the empty region
+// never blocks the page under it.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-toaster-z: var(--q-z-toast);
+    --q-toaster-inset: var(--q-space-3);
+    --q-toaster-gap: var(--q-space-1);
+  }
+}
+
+@layer q.components {
+  .q-toaster {
+    position: fixed;
+    z-index: var(--q-toaster-z);
+    max-width: calc(100vw - 2 * var(--q-toaster-inset));
+    background: none;
+    pointer-events: none;
+
+    &--top-left,
+    &--top-center,
+    &--top-right {
+      top: var(--q-toaster-inset);
+    }
+
+    &--bottom-left,
+    &--bottom-center,
+    &--bottom-right {
+      bottom: var(--q-toaster-inset);
+    }
+
+    &--top-left,
+    &--bottom-left {
+      left: var(--q-toaster-inset);
+    }
+
+    &--top-right,
+    &--bottom-right {
+      right: var(--q-toaster-inset);
+    }
+
+    &--top-center,
+    &--bottom-center {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
+  .q-toaster__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-toaster-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    .q-toaster--top-left &,
+    .q-toaster--bottom-left & {
+      align-items: flex-start;
+    }
+
+    .q-toaster--top-center &,
+    .q-toaster--bottom-center & {
+      align-items: center;
+    }
+
+    .q-toaster--top-right &,
+    .q-toaster--bottom-right & {
+      align-items: flex-end;
+    }
+  }
+
+  .q-toaster__item {
+    pointer-events: auto;
+  }
+}

@@ -1,0 +1,73 @@
+// PageHero — page-top title block. BEM: .q-page-hero, __description, __actions; --lg, --md, --ruled.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-page-hero-lg-gap: var(--q-space-3);
+    --q-page-hero-lg-pt: var(--q-space-12);
+    --q-page-hero-lg-pb: var(--q-space-8);
+    --q-page-hero-lg-description-font-size: var(--q-text-xl);
+    --q-page-hero-md-gap: var(--q-space-2);
+    --q-page-hero-md-pt: var(--q-space-6);
+    --q-page-hero-md-pb: var(--q-space-4);
+    --q-page-hero-md-description-font-size: var(--q-text-lg);
+    --q-page-hero-md-title-size: var(--q-text-4xl);
+    --q-page-hero-md-title-weight: var(--q-weight-bold);
+    --q-page-hero-md-title-tracking: var(--q-tracking-h2);
+    --q-page-hero-md-title-leading: var(--q-leading-none);
+    --q-page-hero-rule: var(--q-border);
+    --q-page-hero-description-fg: var(--q-fg-body);
+    --q-page-hero-description-max: var(--q-w-form);
+    --q-page-hero-description-leading: var(--q-leading-body);
+    --q-page-hero-actions-gap: var(--q-space-2);
+    --q-page-hero-actions-mt: var(--q-space-1);
+  }
+}
+
+@layer q.components {
+  .q-page-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-page-hero-lg-gap);
+    padding: var(--q-page-hero-lg-pt) 0 var(--q-page-hero-lg-pb);
+    border-bottom: none;
+
+    &--md {
+      gap: var(--q-page-hero-md-gap);
+      padding: var(--q-page-hero-md-pt) 0 var(--q-page-hero-md-pb);
+    }
+
+    &--ruled {
+      border-bottom: var(--q-hairline) solid var(--q-page-hero-rule);
+    }
+  }
+
+  .q-page-hero__description {
+    max-width: var(--q-page-hero-description-max);
+    margin: 0;
+    color: var(--q-page-hero-description-fg);
+    font-size: var(--q-page-hero-lg-description-font-size);
+    line-height: var(--q-page-hero-description-leading);
+    text-wrap: pretty;
+
+    .q-page-hero--md > & {
+      font-size: var(--q-page-hero-md-description-font-size);
+    }
+  }
+
+  .q-page-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-page-hero-actions-gap);
+    margin-top: var(--q-page-hero-actions-mt);
+  }
+
+  // A md title borrows the h3 element but sets its own type scale; the block selector outranks
+  // Headline's size modifier inside the same layer.
+  .q-page-hero .q-page-hero__title--md {
+    font-size: var(--q-page-hero-md-title-size);
+    font-weight: var(--q-page-hero-md-title-weight);
+    letter-spacing: var(--q-page-hero-md-title-tracking);
+    line-height: var(--q-page-hero-md-title-leading);
+  }
+}

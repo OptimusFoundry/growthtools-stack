@@ -1,0 +1,129 @@
+// StreamingTable — a live Table that holds new rows while you read. BEM: .q-streaming-table
+// ([data-paused]), __bar, __state, __dot, __toggle, __waiting, __arrow, __scroll.
+// Set inline: --_max-height on __scroll. Live is a solid ink dot, paused a hollow one; the
+// "N new" bar carries a molten arrow — punctuation, never a fill.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-streaming-table-gap: var(--q-space-1);
+    --q-streaming-table-bar-font-family: var(--q-font-mono);
+    --q-streaming-table-bar-font-size: var(--q-text-2xs);
+    --q-streaming-table-bar-fg: var(--q-fg-muted);
+    --q-streaming-table-state-fg: var(--q-fg);
+    --q-streaming-table-dot-size: var(--q-space-0-75);
+    --q-streaming-table-dot-bg: var(--q-fg);
+    --q-streaming-table-dot-border: var(--q-fg);
+    --q-streaming-table-toggle-height: var(--q-control-sm);
+    --q-streaming-table-toggle-px: var(--q-space-1-5);
+    --q-streaming-table-toggle-border: var(--q-border);
+    --q-streaming-table-toggle-border-on: var(--q-fg);
+    --q-streaming-table-toggle-bg-hover: var(--q-bg-subtle);
+    --q-streaming-table-toggle-fg: var(--q-fg);
+    --q-streaming-table-waiting-height: var(--q-control-sm);
+    --q-streaming-table-waiting-border: var(--q-border);
+    --q-streaming-table-waiting-bg: var(--q-bg);
+    --q-streaming-table-waiting-bg-hover: var(--q-bg-subtle);
+    --q-streaming-table-waiting-fg: var(--q-fg);
+    --q-streaming-table-waiting-radius: var(--q-radius-md);
+    --q-streaming-table-arrow-fg: var(--q-accent);
+    --q-streaming-table-fresh-bg: var(--q-bg-subtle);
+  }
+}
+
+@layer q.components {
+  .q-streaming-table {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-streaming-table-gap);
+  }
+
+  .q-streaming-table__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-streaming-table-gap);
+    font-family: var(--q-streaming-table-bar-font-family);
+    font-size: var(--q-streaming-table-bar-font-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-streaming-table-bar-fg);
+  }
+
+  .q-streaming-table__state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+    color: var(--q-streaming-table-state-fg);
+  }
+
+  .q-streaming-table__dot {
+    box-sizing: border-box;
+    width: var(--q-streaming-table-dot-size);
+    height: var(--q-streaming-table-dot-size);
+    border: var(--q-hairline) solid var(--q-streaming-table-dot-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-streaming-table-dot-bg);
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-streaming-table[data-paused] & {
+      background: transparent;
+    }
+  }
+
+  .q-streaming-table__toggle,
+  .q-streaming-table__waiting {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--q-space-0-75);
+    border: var(--q-hairline) solid;
+    font: inherit;
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+  }
+
+  .q-streaming-table__toggle {
+    height: var(--q-streaming-table-toggle-height);
+    padding: 0 var(--q-streaming-table-toggle-px);
+    border-color: var(--q-streaming-table-toggle-border);
+    border-radius: var(--q-radius-pill);
+    background: transparent;
+    color: var(--q-streaming-table-toggle-fg);
+
+    &:is(:hover, :focus-visible) {
+      background: var(--q-streaming-table-toggle-bg-hover);
+    }
+
+    &[aria-pressed="true"] {
+      border-color: var(--q-streaming-table-toggle-border-on);
+    }
+  }
+
+  .q-streaming-table__waiting {
+    width: 100%;
+    height: var(--q-streaming-table-waiting-height);
+    border-color: var(--q-streaming-table-waiting-border);
+    border-radius: var(--q-streaming-table-waiting-radius);
+    background: var(--q-streaming-table-waiting-bg);
+    color: var(--q-streaming-table-waiting-fg);
+    font-family: var(--q-streaming-table-bar-font-family);
+    font-size: var(--q-streaming-table-bar-font-size);
+
+    &:is(:hover, :focus-visible) {
+      background: var(--q-streaming-table-waiting-bg-hover);
+    }
+  }
+
+  .q-streaming-table__arrow {
+    color: var(--q-streaming-table-arrow-fg);
+  }
+
+  .q-streaming-table__scroll {
+    max-height: var(--_max-height, none);
+    overflow-y: auto;
+  }
+}

@@ -1,0 +1,140 @@
+// Radio — ink ring with a dot. BEM: .q-radio, __label, __options(--row), __option(--disabled),
+// __control, __dot, __text, __description, __error; --{size}. Checked/invalid read from ARIA.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-radio-gap: var(--q-space-1-5);
+    --q-radio-label-font-family: var(--q-font-mono);
+    --q-radio-label-font-size: var(--q-text-2xs);
+    --q-radio-label-tracking: var(--q-tracking-mono);
+    --q-radio-label-fg: var(--q-fg-muted);
+    --q-radio-options-gap: var(--q-space-1-5);
+    --q-radio-options-row-gap: var(--q-space-3);
+    --q-radio-option-gap: var(--q-space-1-5);
+    --q-radio-option-leading: var(--q-leading-ui);
+    --q-radio-option-fg: var(--q-fg);
+    --q-radio-disabled-opacity: 0.4;
+    --q-radio-sm-size: 14px;
+    --q-radio-md-size: 16px;
+    --q-radio-lg-size: 20px;
+    --q-radio-sm-font-size: var(--q-text-sm);
+    --q-radio-md-font-size: var(--q-text-md);
+    --q-radio-lg-font-size: var(--q-text-lg);
+    --q-radio-control-offset: var(--q-space-0-25);
+    --q-radio-control-border: var(--q-fg);
+    --q-radio-control-border-invalid: var(--q-accent);
+    --q-radio-dot-bg: var(--q-fg);
+    --q-radio-dot-scale-off: 0.4;
+    --q-radio-text-gap: var(--q-space-0-25);
+    --q-radio-description-font-size: var(--q-text-sm);
+    --q-radio-description-fg: var(--q-fg-muted);
+    --q-radio-error-font-family: var(--q-font-mono);
+    --q-radio-error-font-size: var(--q-text-2xs);
+    --q-radio-error-fg: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-radio {
+    --_size: var(--q-radio-md-size);
+    --_font-size: var(--q-radio-md-font-size);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-radio-gap);
+
+    &--sm {
+      --_size: var(--q-radio-sm-size);
+      --_font-size: var(--q-radio-sm-font-size);
+    }
+
+    &--lg {
+      --_size: var(--q-radio-lg-size);
+      --_font-size: var(--q-radio-lg-font-size);
+    }
+  }
+
+  .q-radio__label {
+    font-family: var(--q-radio-label-font-family);
+    font-size: var(--q-radio-label-font-size);
+    letter-spacing: var(--q-radio-label-tracking);
+    text-transform: uppercase;
+    color: var(--q-radio-label-fg);
+  }
+
+  .q-radio__options {
+    display: flex;
+    flex-flow: var(--_direction, column) wrap;
+    gap: var(--q-radio-options-gap);
+
+    &--row {
+      flex-direction: row;
+      gap: var(--q-radio-options-row-gap);
+    }
+  }
+
+  .q-radio__option {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: var(--q-radio-option-gap);
+    font-size: var(--_font-size);
+    line-height: var(--q-radio-option-leading);
+    color: var(--q-radio-option-fg);
+    cursor: pointer;
+
+    &--disabled {
+      opacity: var(--q-radio-disabled-opacity);
+      cursor: not-allowed;
+    }
+  }
+
+  .q-radio__control {
+    display: grid;
+    flex: none;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--_size);
+    height: var(--_size);
+    margin-top: var(--q-radio-control-offset);
+    border: var(--q-hairline) solid var(--q-radio-control-border);
+    border-radius: var(--q-radius-pill);
+
+    .q-radio[aria-invalid="true"] & {
+      border-color: var(--q-radio-control-border-invalid);
+    }
+  }
+
+  .q-radio__dot {
+    width: calc(var(--_size) / 2);
+    height: calc(var(--_size) / 2);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-radio-dot-bg);
+    opacity: 0;
+    transform: scale(var(--q-radio-dot-scale-off));
+    transition:
+      opacity var(--q-dur-hover) var(--q-ease-soft),
+      transform var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-radio__control[aria-checked="true"] > & {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .q-radio__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-radio-text-gap);
+  }
+
+  .q-radio__description {
+    font-size: var(--q-radio-description-font-size);
+    color: var(--q-radio-description-fg);
+  }
+
+  .q-radio__error {
+    font-family: var(--q-radio-error-font-family);
+    font-size: var(--q-radio-error-font-size);
+    color: var(--q-radio-error-fg);
+  }
+}

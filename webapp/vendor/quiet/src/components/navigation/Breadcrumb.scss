@@ -1,0 +1,90 @@
+// Breadcrumb — mono caps trail. BEM: .q-breadcrumb, __list, __item, __separator, __crumb, __more;
+// --{size}; __crumb--action (a link or a button with onClick). Current crumb: [aria-current="page"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-breadcrumb-gap: var(--q-space-1-25);
+    --q-breadcrumb-crumb-gap: var(--q-space-0-75);
+    --q-breadcrumb-font: var(--q-font-mono);
+    --q-breadcrumb-tracking: var(--q-tracking-mono);
+    --q-breadcrumb-sm-font-size: var(--q-text-3xs);
+    --q-breadcrumb-md-font-size: var(--q-text-2xs);
+    --q-breadcrumb-lg-font-size: var(--q-text-xs);
+    --q-breadcrumb-separator-fg: var(--q-fg-subtle);
+    --q-breadcrumb-crumb-fg: var(--q-fg-muted);
+    --q-breadcrumb-crumb-fg-hover: var(--q-accent);
+    --q-breadcrumb-crumb-fg-current: var(--q-fg);
+    --q-breadcrumb-more-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-breadcrumb__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-breadcrumb-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--q-breadcrumb-font);
+    font-size: var(--q-breadcrumb-md-font-size);
+    letter-spacing: var(--q-breadcrumb-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-breadcrumb--sm .q-breadcrumb__list {
+    font-size: var(--q-breadcrumb-sm-font-size);
+  }
+
+  .q-breadcrumb--lg .q-breadcrumb__list {
+    font-size: var(--q-breadcrumb-lg-font-size);
+  }
+
+  .q-breadcrumb__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-breadcrumb-gap);
+  }
+
+  .q-breadcrumb__separator {
+    color: var(--q-breadcrumb-separator-fg);
+  }
+
+  .q-breadcrumb__crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-breadcrumb-crumb-gap);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--q-breadcrumb-crumb-fg);
+    font: inherit;
+    letter-spacing: inherit;
+    text-decoration: none;
+    text-transform: inherit;
+    cursor: default;
+    transition: color var(--q-dur-hover) var(--q-ease-soft);
+
+    &--action {
+      cursor: pointer;
+    }
+
+    &:is(:hover, :focus-visible):not([aria-current="page"]) {
+      color: var(--q-breadcrumb-crumb-fg-hover);
+    }
+
+    &[aria-current="page"] {
+      color: var(--q-breadcrumb-crumb-fg-current);
+    }
+  }
+
+  .q-breadcrumb__more {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--q-breadcrumb-more-fg);
+    font: inherit;
+    cursor: pointer;
+  }
+}

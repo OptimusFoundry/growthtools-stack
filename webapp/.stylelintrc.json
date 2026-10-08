@@ -3,7 +3,11 @@
 		"stylelint-config-standard-scss",
 		"stylelint-config-recess-order"
 	],
-	"plugins": ["stylelint-scss", "stylelint-declaration-strict-value"],
+	"plugins": [
+		"stylelint-scss",
+		"stylelint-declaration-strict-value",
+		"@optimusfoundry/quiet/stylelint"
+	],
 	"rules": {
 		"order/properties-order": null,
 		"keyframes-name-pattern": null,
@@ -93,7 +97,8 @@
 		"declaration-property-value-keyword-no-deprecated": null,
 		"rule-empty-line-before": null,
 		"comment-empty-line-before": null,
-		"no-duplicate-selectors": null
+		"no-duplicate-selectors": null,
+		"quiet/known-tokens": true
 	},
 	"ignoreFiles": [
 		"**/*.js",
@@ -103,6 +108,7 @@
 		"node_modules/**",
 		"dist/**",
 		"build/**",
-		"storybook-static/**"
+		"storybook-static/**",
+		"vendor/quiet/**"
 	]
 }

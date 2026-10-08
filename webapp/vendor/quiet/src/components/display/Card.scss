@@ -1,0 +1,94 @@
+// Card — content surface; lifts on hover/focus when it is a link or button.
+// BEM: .q-card, __eyebrow, __title, __accent, __body, __footer, __meta; --interactive.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-card-gap: var(--q-space-2);
+    --q-card-padding: var(--q-space-4);
+    --q-card-bg: var(--q-bg);
+    --q-card-radius: var(--q-radius-lg);
+    --q-card-border: var(--q-border);
+    --q-card-border-hover: var(--q-border-strong);
+    --q-card-shadow-hover: var(--q-shadow-2);
+    --q-card-fg: var(--q-fg-body);
+    --q-card-label-font-size: var(--q-text-2xs);
+    --q-card-label-tracking: var(--q-tracking-mono);
+    --q-card-label-color: var(--q-fg-muted);
+    --q-card-title-font-size: var(--q-text-2xl);
+    --q-card-title-weight: var(--q-weight-semibold);
+    --q-card-title-leading: var(--q-leading-snug);
+    --q-card-title-tracking: var(--q-tracking-h4);
+    --q-card-title-color: var(--q-fg);
+    --q-card-body-font-size: var(--q-text-md);
+    --q-card-body-leading: var(--q-leading-body);
+    --q-card-footer-gap: var(--q-space-2);
+    --q-card-footer-padding-top: var(--q-space-2);
+    --q-card-footer-border: var(--q-border);
+  }
+}
+
+@layer q.components {
+  .q-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-card-gap);
+    padding: var(--q-card-padding);
+    border: var(--q-hairline) solid var(--q-card-border);
+    border-radius: var(--q-card-radius);
+    background: var(--q-card-bg);
+    box-shadow: none;
+    color: var(--q-card-fg);
+    text-decoration: none;
+    cursor: default;
+    transition:
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      box-shadow var(--q-dur-hover) var(--q-ease-soft);
+
+    &--interactive {
+      cursor: pointer;
+    }
+
+    &--interactive:is(:hover, :focus-visible) {
+      border-color: var(--q-card-border-hover);
+      box-shadow: var(--q-card-shadow-hover);
+    }
+  }
+
+  .q-card__eyebrow,
+  .q-card__meta {
+    color: var(--q-card-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-card-label-font-size);
+    letter-spacing: var(--q-card-label-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-card__title {
+    color: var(--q-card-title-color);
+    font-size: var(--q-card-title-font-size);
+    font-weight: var(--q-card-title-weight);
+    letter-spacing: var(--q-card-title-tracking);
+    line-height: var(--q-card-title-leading);
+  }
+
+  .q-card__accent {
+    font-style: italic;
+    font-weight: var(--q-card-title-weight);
+  }
+
+  .q-card__body {
+    font-size: var(--q-card-body-font-size);
+    line-height: var(--q-card-body-leading);
+    text-wrap: pretty;
+  }
+
+  .q-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--q-card-footer-gap);
+    margin-top: auto;
+    padding-top: var(--q-card-footer-padding-top);
+    border-top: var(--q-hairline) solid var(--q-card-footer-border);
+  }
+}

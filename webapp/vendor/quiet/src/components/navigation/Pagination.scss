@@ -1,0 +1,119 @@
+// Pagination — mono page pills. BEM: .q-pagination, __page, __ellipsis; --{variant} (default,
+// outline, ghost), --{size}. Current page: [aria-current="page"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-pagination-gap: var(--q-space-0-5);
+    --q-pagination-page-px: var(--q-space-1);
+    --q-pagination-page-radius: var(--q-radius-pill);
+    --q-pagination-font: var(--q-font-mono);
+    --q-pagination-disabled-opacity: 0.3;
+    --q-pagination-ellipsis-fg: var(--q-fg-subtle);
+    --q-pagination-ellipsis-font-size: var(--q-text-xs);
+
+    --q-pagination-sm-size: var(--q-control-sm);
+    --q-pagination-sm-font-size: var(--q-text-xs);
+    --q-pagination-md-size: var(--q-control-md);
+    --q-pagination-md-font-size: var(--q-text-xs);
+    --q-pagination-lg-size: var(--q-field-md);
+    --q-pagination-lg-font-size: var(--q-text-sm);
+
+    --q-pagination-fg: var(--q-fg);
+    --q-pagination-bg-hover: var(--q-bg-subtle);
+    --q-pagination-default-bg-current: var(--q-bg-inverse);
+    --q-pagination-default-fg-current: var(--q-fg-on-inverse);
+    --q-pagination-default-border-current: var(--q-bg-inverse);
+    --q-pagination-outline-border: var(--q-border);
+    --q-pagination-outline-border-current: var(--q-border-emphasis);
+    --q-pagination-ghost-fg: var(--q-fg-muted);
+    --q-pagination-ghost-fg-hover: var(--q-accent);
+    --q-pagination-ghost-bg-current: var(--q-bg-subtle);
+  }
+}
+
+@layer q.components {
+  .q-pagination {
+    --_size: var(--q-pagination-md-size);
+    --_font-size: var(--q-pagination-md-font-size);
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-pagination-gap);
+
+    &--sm {
+      --_size: var(--q-pagination-sm-size);
+      --_font-size: var(--q-pagination-sm-font-size);
+    }
+
+    &--lg {
+      --_size: var(--q-pagination-lg-size);
+      --_font-size: var(--q-pagination-lg-font-size);
+    }
+  }
+
+  .q-pagination__page {
+    box-sizing: border-box;
+    min-width: var(--_size);
+    height: var(--_size);
+    padding: 0 var(--q-pagination-page-px);
+    border: var(--q-hairline) solid transparent;
+    border-radius: var(--q-pagination-page-radius);
+    background: transparent;
+    color: var(--q-pagination-fg);
+    font-family: var(--q-pagination-font);
+    font-size: var(--_font-size);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      color var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      opacity var(--q-dur-hover) var(--q-ease-soft);
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: var(--q-pagination-disabled-opacity);
+    }
+
+    &:is(:hover, :focus-visible):not(:disabled, [aria-current="page"]) {
+      background: var(--q-pagination-bg-hover);
+    }
+  }
+
+  .q-pagination--default .q-pagination__page[aria-current="page"] {
+    border-color: var(--q-pagination-default-border-current);
+    background: var(--q-pagination-default-bg-current);
+    color: var(--q-pagination-default-fg-current);
+  }
+
+  .q-pagination--outline .q-pagination__page {
+    border-color: var(--q-pagination-outline-border);
+
+    &[aria-current="page"] {
+      border-color: var(--q-pagination-outline-border-current);
+    }
+  }
+
+  .q-pagination--ghost .q-pagination__page {
+    color: var(--q-pagination-ghost-fg);
+
+    &:is(:hover, :focus-visible):not(:disabled, [aria-current="page"]) {
+      background: transparent;
+      color: var(--q-pagination-ghost-fg-hover);
+    }
+
+    &[aria-current="page"] {
+      background: var(--q-pagination-ghost-bg-current);
+      color: var(--q-pagination-fg);
+    }
+  }
+
+  .q-pagination__ellipsis {
+    min-width: var(--_size);
+    color: var(--q-pagination-ellipsis-fg);
+    font-family: var(--q-pagination-font);
+    font-size: var(--q-pagination-ellipsis-font-size);
+    text-align: center;
+  }
+}

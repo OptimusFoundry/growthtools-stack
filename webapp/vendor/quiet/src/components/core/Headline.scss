@@ -1,0 +1,58 @@
+// Headline — display/h2/h3/h4 with an italic accent and the molten period.
+// BEM: .q-headline, __accent(--molten), __period; --display, --h2, --h3, --h4.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-headline-fg: var(--q-fg);
+    --q-headline-accent-molten-fg: var(--q-accent);
+    --q-headline-period-fg: var(--q-accent);
+
+    --q-headline-display-font-size: var(--q-text-display);
+    --q-headline-display-leading: var(--q-leading-display);
+    --q-headline-display-tracking: var(--q-tracking-display);
+    --q-headline-display-weight: var(--q-weight-bold);
+    --q-headline-h2-font-size: var(--q-text-6xl);
+    --q-headline-h2-leading: var(--q-leading-none);
+    --q-headline-h2-tracking: var(--q-tracking-h2);
+    --q-headline-h2-weight: var(--q-weight-bold);
+    --q-headline-h3-font-size: var(--q-text-3xl);
+    --q-headline-h3-leading: var(--q-leading-tight);
+    --q-headline-h3-tracking: var(--q-tracking-h3);
+    --q-headline-h3-weight: var(--q-weight-semibold);
+    --q-headline-h4-font-size: var(--q-text-2xl);
+    --q-headline-h4-leading: var(--q-leading-snug);
+    --q-headline-h4-tracking: var(--q-tracking-h4);
+    --q-headline-h4-weight: var(--q-weight-semibold);
+  }
+}
+
+@layer q.components {
+  .q-headline {
+    margin: 0;
+    color: var(--q-headline-fg);
+    font-family: var(--q-font-sans);
+    text-wrap: balance;
+
+    @each $size in display, h2, h3, h4 {
+      &--#{$size} {
+        font-size: var(--q-headline-#{$size}-font-size);
+        font-weight: var(--q-headline-#{$size}-weight);
+        letter-spacing: var(--q-headline-#{$size}-tracking);
+        line-height: var(--q-headline-#{$size}-leading);
+      }
+    }
+  }
+
+  .q-headline__accent {
+    color: inherit;
+    font-style: italic;
+
+    &--molten {
+      color: var(--q-headline-accent-molten-fg);
+    }
+  }
+
+  .q-headline__period {
+    color: var(--q-headline-period-fg);
+  }
+}

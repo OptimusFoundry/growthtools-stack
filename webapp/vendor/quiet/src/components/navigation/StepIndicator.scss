@@ -1,0 +1,214 @@
+// StepIndicator — numbered progress. BEM: .q-step-indicator, __step, __track, __marker, __line,
+// __text, __label, __description; --vertical, --{size}; __step--{complete|current|upcoming|error};
+// __line--done. Current step: [aria-current="step"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-step-indicator-gap: var(--q-space-2);
+    --q-step-indicator-step-gap: var(--q-space-1-5);
+    --q-step-indicator-vertical-step-gap: var(--q-space-2);
+    --q-step-indicator-track-gap: var(--q-space-1);
+    --q-step-indicator-text-gap: var(--q-space-0-5);
+    --q-step-indicator-vertical-step-pb: var(--q-space-3);
+    --q-step-indicator-vertical-line-min-height: var(--q-space-3);
+    // Completion fills slightly slower than a hover; calc keeps it at 0s under reduced motion.
+    --q-step-indicator-fill-dur: calc(var(--q-dur-hover) * 1.3);
+
+    --q-step-indicator-sm-marker-size: var(--q-space-3);
+    --q-step-indicator-sm-marker-font-size: var(--q-text-3xs);
+    --q-step-indicator-sm-label-font-size: var(--q-text-sm);
+    --q-step-indicator-md-marker-size: var(--q-space-4);
+    --q-step-indicator-md-marker-font-size: var(--q-text-2xs);
+    --q-step-indicator-md-label-font-size: var(--q-text-md);
+    --q-step-indicator-lg-marker-size: var(--q-space-5);
+    --q-step-indicator-lg-marker-font-size: var(--q-text-sm);
+    --q-step-indicator-lg-label-font-size: var(--q-text-lg);
+
+    --q-step-indicator-marker-font: var(--q-font-mono);
+    --q-step-indicator-marker-bg: var(--q-bg);
+    --q-step-indicator-marker-fg: var(--q-fg);
+    --q-step-indicator-marker-border: var(--q-border-emphasis);
+    --q-step-indicator-marker-complete-bg: var(--q-bg-inverse);
+    --q-step-indicator-marker-complete-fg: var(--q-fg-on-inverse);
+    --q-step-indicator-marker-complete-border: var(--q-bg-inverse);
+    --q-step-indicator-marker-upcoming-fg: var(--q-fg-subtle);
+    --q-step-indicator-marker-upcoming-border: var(--q-border);
+    --q-step-indicator-marker-error-fg: var(--q-accent);
+    --q-step-indicator-marker-error-border: var(--q-accent);
+    --q-step-indicator-line: var(--q-border);
+    --q-step-indicator-line-done: var(--q-border-emphasis);
+
+    --q-step-indicator-label-leading: var(--q-leading-ui);
+    --q-step-indicator-label-weight: var(--q-weight-regular);
+    --q-step-indicator-label-weight-current: var(--q-weight-semibold);
+    --q-step-indicator-label-fg: var(--q-fg);
+    --q-step-indicator-label-upcoming-fg: var(--q-fg-muted);
+    --q-step-indicator-label-error-fg: var(--q-accent);
+    --q-step-indicator-description-font-size: var(--q-text-sm);
+    --q-step-indicator-description-leading: var(--q-leading-compact);
+    --q-step-indicator-description-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-step-indicator {
+    --_marker: var(--q-step-indicator-md-marker-size);
+    --_marker-font-size: var(--q-step-indicator-md-marker-font-size);
+    --_label-font-size: var(--q-step-indicator-md-label-font-size);
+
+    display: flex;
+    flex-direction: row;
+    gap: var(--q-step-indicator-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    &--sm {
+      --_marker: var(--q-step-indicator-sm-marker-size);
+      --_marker-font-size: var(--q-step-indicator-sm-marker-font-size);
+      --_label-font-size: var(--q-step-indicator-sm-label-font-size);
+    }
+
+    &--lg {
+      --_marker: var(--q-step-indicator-lg-marker-size);
+      --_marker-font-size: var(--q-step-indicator-lg-marker-font-size);
+      --_label-font-size: var(--q-step-indicator-lg-label-font-size);
+    }
+
+    &--vertical {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+
+  .q-step-indicator__step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-step-indicator-step-gap);
+    min-width: 0;
+
+    .q-step-indicator--vertical & {
+      flex: none;
+      flex-direction: row;
+      gap: var(--q-step-indicator-vertical-step-gap);
+    }
+  }
+
+  .q-step-indicator__track {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--q-step-indicator-track-gap);
+
+    .q-step-indicator--vertical & {
+      flex-direction: column;
+    }
+  }
+
+  .q-step-indicator__marker {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--_marker);
+    height: var(--_marker);
+    padding: 0;
+    border: var(--q-hairline) solid var(--q-step-indicator-marker-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-step-indicator-marker-bg);
+    color: var(--q-step-indicator-marker-fg);
+    font-family: var(--q-step-indicator-marker-font);
+    font-size: var(--_marker-font-size);
+    line-height: var(--q-leading-none);
+    cursor: default;
+    transition:
+      background var(--q-step-indicator-fill-dur) var(--q-ease-soft),
+      color var(--q-step-indicator-fill-dur) var(--q-ease-soft),
+      border-color var(--q-step-indicator-fill-dur) var(--q-ease-soft);
+
+    &:enabled {
+      cursor: pointer;
+    }
+
+    .q-step-indicator__step--complete & {
+      border-color: var(--q-step-indicator-marker-complete-border);
+      background: var(--q-step-indicator-marker-complete-bg);
+      color: var(--q-step-indicator-marker-complete-fg);
+    }
+
+    .q-step-indicator__step--upcoming & {
+      border-color: var(--q-step-indicator-marker-upcoming-border);
+      color: var(--q-step-indicator-marker-upcoming-fg);
+    }
+
+    .q-step-indicator__step--error & {
+      border-color: var(--q-step-indicator-marker-error-border);
+      color: var(--q-step-indicator-marker-error-fg);
+    }
+  }
+
+  .q-step-indicator__line {
+    flex: 1;
+    height: 0;
+    border-top: var(--q-hairline) solid var(--q-step-indicator-line);
+    transition: border-color var(--q-step-indicator-fill-dur) var(--q-ease-soft);
+
+    &--done {
+      border-color: var(--q-step-indicator-line-done);
+    }
+
+    .q-step-indicator--vertical & {
+      width: 0;
+      height: auto;
+      min-height: var(--q-step-indicator-vertical-line-min-height);
+      border-top: 0;
+      border-left: var(--q-hairline) solid var(--q-step-indicator-line);
+    }
+
+    .q-step-indicator--vertical &--done {
+      border-left-color: var(--q-step-indicator-line-done);
+    }
+  }
+
+  .q-step-indicator__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-step-indicator-text-gap);
+    min-width: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+
+    .q-step-indicator--vertical & {
+      // Centres the first label line on the marker.
+      padding-top: calc((var(--_marker) - var(--_label-font-size) * var(--q-step-indicator-label-leading)) / 2);
+    }
+
+    .q-step-indicator--vertical .q-step-indicator__step:not(:last-child) & {
+      padding-bottom: var(--q-step-indicator-vertical-step-pb);
+    }
+  }
+
+  .q-step-indicator__label {
+    color: var(--q-step-indicator-label-fg);
+    font-size: var(--_label-font-size);
+    font-weight: var(--q-step-indicator-label-weight);
+    line-height: var(--q-step-indicator-label-leading);
+
+    .q-step-indicator__step--current & {
+      font-weight: var(--q-step-indicator-label-weight-current);
+    }
+
+    .q-step-indicator__step--upcoming & {
+      color: var(--q-step-indicator-label-upcoming-fg);
+    }
+
+    .q-step-indicator__step--error & {
+      color: var(--q-step-indicator-label-error-fg);
+    }
+  }
+
+  .q-step-indicator__description {
+    color: var(--q-step-indicator-description-fg);
+    font-size: var(--q-step-indicator-description-font-size);
+    line-height: var(--q-step-indicator-description-leading);
+  }
+}

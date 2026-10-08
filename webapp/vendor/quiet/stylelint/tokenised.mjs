@@ -1,0 +1,52 @@
+// The "no raw design values" rule, shared by quiet's own Stylelint config and the app config
+// (config.mjs): every colour, size, space, radius, type, duration and z-index must be a token.
+export const TOKENISED = [
+	"/color$/",
+	"background",
+	"background-color",
+	"fill",
+	"stroke",
+	"box-shadow",
+	"outline-color",
+	"font-size",
+	"font-family",
+	"font-weight",
+	"line-height",
+	"letter-spacing",
+	"/^gap$/",
+	"/^(row|column)-gap$/",
+	"/^padding/",
+	"/^margin/",
+	"border-radius",
+	"/^border-(top-|right-|bottom-|left-)?width$/",
+	"z-index",
+	"transition-duration",
+	"animation-duration",
+	"transition-timing-function",
+	"animation-timing-function",
+];
+
+export const strictValue = [
+	TOKENISED,
+	{
+		ignoreValues: [
+			"0",
+			"auto",
+			"inherit",
+			"initial",
+			"unset",
+			"none",
+			"transparent",
+			"currentColor",
+			"currentcolor",
+			"100%",
+			"50%",
+			"1",
+			"normal",
+			"/^-?var\\(--/",
+			"/^calc\\((?!.*\\d+(px|rem|em)).*var\\(--/",
+		],
+		ignoreFunctions: false,
+		disableFix: true,
+	},
+];

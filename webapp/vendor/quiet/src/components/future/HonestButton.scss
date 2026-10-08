@@ -1,0 +1,118 @@
+// HonestButton — outline pill whose length is its expected wait; the press fills it.
+// BEM: .q-honest-button, __fill, __label, __eta, __dot; --{size}; [data-state="running"|"done"].
+// --_reach (0–1, log of the expected seconds) sets the length; --_p (0–1) is the fill.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-honest-button-gap: var(--q-space-1-5);
+    --q-honest-button-radius: var(--q-radius-pill);
+    --q-honest-button-weight: var(--q-weight-semibold);
+    --q-honest-button-tracking: var(--q-tracking-tight);
+    --q-honest-button-fg: var(--q-fg);
+    --q-honest-button-border: var(--q-border-emphasis);
+    --q-honest-button-bg-hover: var(--q-bg-subtle);
+    --q-honest-button-fill-bg: var(--q-bg-subtle);
+    --q-honest-button-fill-line: inset 0 calc(var(--q-space-0-25) * -1) 0 var(--q-fg); // ink edge along the bottom
+    --q-honest-button-dot: var(--q-accent);
+    --q-honest-button-eta-font-family: var(--q-font-mono);
+    --q-honest-button-eta-font-size: var(--q-text-2xs);
+    --q-honest-button-eta-fg: var(--q-fg-muted);
+    --q-honest-button-disabled-opacity: 0.4;
+    --q-honest-button-extra: var(--q-space-16); // the extra length a 60s wait adds
+
+    --q-honest-button-sm-height: var(--q-control-sm);
+    --q-honest-button-sm-px: var(--q-space-2);
+    --q-honest-button-sm-font-size: var(--q-text-sm);
+    --q-honest-button-md-height: var(--q-control-md);
+    --q-honest-button-md-px: var(--q-space-3);
+    --q-honest-button-md-font-size: var(--q-text-md);
+    --q-honest-button-lg-height: var(--q-control-lg);
+    --q-honest-button-lg-px: var(--q-space-4);
+    --q-honest-button-lg-font-size: var(--q-text-lg);
+  }
+}
+
+@layer q.components {
+  .q-honest-button {
+    --_height: var(--q-honest-button-md-height);
+    --_px: var(--q-honest-button-md-px);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-honest-button-gap);
+    box-sizing: border-box;
+    min-width: calc(var(--_height) * 2 + var(--q-honest-button-extra) * var(--_reach));
+    height: var(--_height);
+    padding: 0 var(--_px);
+    overflow: hidden;
+    border: var(--q-hairline) solid var(--q-honest-button-border);
+    border-radius: var(--q-honest-button-radius);
+    background: transparent;
+    color: var(--q-honest-button-fg);
+    font-family: var(--q-font-sans);
+    font-size: var(--q-honest-button-md-font-size);
+    font-weight: var(--q-honest-button-weight);
+    letter-spacing: var(--q-honest-button-tracking);
+    line-height: var(--q-leading-none);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible):not(:disabled, [data-state]) {
+      background: var(--q-honest-button-bg-hover);
+    }
+
+    &[data-state] {
+      cursor: progress;
+    }
+
+    &:disabled {
+      opacity: var(--q-honest-button-disabled-opacity);
+      cursor: not-allowed;
+    }
+
+    @each $size in sm, md, lg {
+      &--#{$size} {
+        --_height: var(--q-honest-button-#{$size}-height);
+        --_px: var(--q-honest-button-#{$size}-px);
+        font-size: var(--q-honest-button-#{$size}-font-size);
+      }
+    }
+  }
+
+  // The fill is a grey wash plus an ink line along the bottom edge: the press is the progress bar.
+  .q-honest-button__fill {
+    position: absolute;
+    inset: 0;
+    background: var(--q-honest-button-fill-bg);
+    box-shadow: var(--q-honest-button-fill-line);
+    transform: scaleX(var(--_p));
+    transform-origin: left;
+    pointer-events: none;
+
+    .q-honest-button:not([data-state]) > & {
+      opacity: 0;
+      transition: opacity var(--q-dur-exit) var(--q-ease-soft);
+    }
+  }
+
+  .q-honest-button__label,
+  .q-honest-button__eta {
+    position: relative;
+  }
+
+  .q-honest-button__eta {
+    font-family: var(--q-honest-button-eta-font-family);
+    font-size: var(--q-honest-button-eta-font-size);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-weight-regular);
+    letter-spacing: var(--q-tracking-mono);
+    color: var(--q-honest-button-eta-fg);
+  }
+
+  .q-honest-button__dot {
+    color: var(--q-honest-button-dot);
+  }
+}

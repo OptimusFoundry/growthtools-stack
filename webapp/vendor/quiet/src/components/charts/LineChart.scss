@@ -1,0 +1,73 @@
+// LineChart — lines (optionally areas) over a shared x axis, with a crosshair + tooltip.
+// BEM: .q-line-chart, __title, __line, __area, __dot, __crosshair, __reference, __highlight, __mark.
+// Shared frame (grid, axes, legend, tooltip) lives in chart.scss as .q-chart__*.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-line-chart-title-fg: var(--q-fg);
+    --q-line-chart-title-font-size: var(--q-text-sm);
+    --q-line-chart-title-weight: var(--q-weight-semibold);
+    --q-line-chart-dot-ring: var(--q-chart-gap);
+    --q-line-chart-mark: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-line-chart__title {
+    color: var(--q-line-chart-title-fg);
+    font-size: var(--q-line-chart-title-font-size);
+    font-weight: var(--q-line-chart-title-weight);
+  }
+
+  .q-line-chart__line {
+    fill: none;
+    stroke: var(--_color);
+    stroke-dasharray: var(--_dash, none);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: var(--q-chart-line-width);
+  }
+
+  .q-line-chart__area {
+    fill: var(--_color);
+    fill-opacity: var(--q-chart-area-opacity);
+  }
+
+  .q-line-chart__crosshair line {
+    stroke: var(--q-chart-crosshair);
+    stroke-width: var(--q-hairline);
+    shape-rendering: crispedges;
+  }
+
+  .q-line-chart__dot {
+    fill: var(--_color);
+    stroke: var(--q-line-chart-dot-ring);
+    stroke-width: var(--q-chart-line-width);
+  }
+
+  .q-line-chart__reference {
+    line {
+      stroke: var(--q-chart-reference);
+      stroke-dasharray: 2 3;
+      stroke-width: var(--q-hairline);
+    }
+  }
+
+  .q-line-chart__highlight {
+    fill: var(--q-chart-highlight-bg);
+  }
+
+  .q-line-chart__mark {
+    line {
+      stroke: var(--q-line-chart-mark);
+      stroke-dasharray: 2 3;
+      stroke-width: var(--q-hairline);
+    }
+
+    circle {
+      fill: none;
+      stroke: var(--q-line-chart-mark);
+      stroke-width: calc(var(--q-hairline) * 1.5);
+    }
+  }
+}

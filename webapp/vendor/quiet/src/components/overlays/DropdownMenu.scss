@@ -1,0 +1,209 @@
+// DropdownMenu — menu button + menu. BEM: .q-dropdown-menu (anchor, --context), __trigger, __menu
+// (--end, --at-point: context-menu coordinates arrive as --_x/--_y; width as --_width), __header,
+// __caption, __separator, __group-label, __item (--sm, --active, --danger), __check, __icon,
+// __label, __sublabel, __shortcut. Item hover and keyboard focus share one look.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-dropdown-menu-z: var(--q-z-popover);
+    --q-dropdown-menu-offset: var(--q-space-0-5);
+    --q-dropdown-menu-width: 240px;
+    --q-dropdown-menu-padding: var(--q-space-0-75);
+    --q-dropdown-menu-bg: var(--q-bg);
+    --q-dropdown-menu-border: var(--q-border);
+    --q-dropdown-menu-radius: var(--q-radius-lg);
+    --q-dropdown-menu-shadow: var(--q-shadow-2);
+    --q-dropdown-menu-section-gap: var(--q-space-0-5);
+    --q-dropdown-menu-header-py: var(--q-space-1-5);
+    --q-dropdown-menu-label-px: var(--q-space-2);
+    --q-dropdown-menu-label-pt: var(--q-space-1-25);
+    --q-dropdown-menu-group-label-pb: var(--q-space-0-5);
+    --q-dropdown-menu-caption-pb: var(--q-space-0-75);
+    --q-dropdown-menu-mono-fg: var(--q-fg-muted);
+    --q-dropdown-menu-mono-size: var(--q-text-3xs);
+
+    --q-dropdown-menu-item-gap: var(--q-space-1-5);
+    --q-dropdown-menu-item-py: var(--q-space-1-25);
+    --q-dropdown-menu-item-px: var(--q-space-1-5);
+    --q-dropdown-menu-item-sm-py: var(--q-space-0-75);
+    --q-dropdown-menu-item-sm-px: var(--q-space-1-25);
+    --q-dropdown-menu-item-radius: var(--q-radius-sm);
+    --q-dropdown-menu-item-fg: var(--q-fg);
+    --q-dropdown-menu-item-font-size: var(--q-text-md);
+    --q-dropdown-menu-item-sm-font-size: var(--q-text-sm);
+    --q-dropdown-menu-item-weight: var(--q-weight-regular);
+    --q-dropdown-menu-item-active-weight: var(--q-weight-semibold);
+    --q-dropdown-menu-item-bg-hover: var(--q-bg-subtle);
+    --q-dropdown-menu-item-danger-fg-hover: var(--q-accent);
+    --q-dropdown-menu-item-disabled-opacity: 0.4;
+    --q-dropdown-menu-check-size: var(--q-space-1-75);
+    --q-dropdown-menu-check-radius: var(--q-radius-2xs);
+    --q-dropdown-menu-check-border: var(--q-fg);
+    --q-dropdown-menu-check-bg-checked: var(--q-fg);
+    --q-dropdown-menu-check-fg: var(--q-bg);
+    --q-dropdown-menu-check-font-size: var(--q-text-3xs);
+    --q-dropdown-menu-icon-width: var(--q-space-2);
+    --q-dropdown-menu-icon-fg: var(--q-fg-muted);
+    --q-dropdown-menu-label-gap: var(--q-space-0-25);
+    --q-dropdown-menu-sublabel-fg: var(--q-fg-muted);
+    --q-dropdown-menu-sublabel-size: var(--q-text-sm);
+  }
+}
+
+@layer q.components {
+  .q-dropdown-menu {
+    position: relative;
+    display: inline-flex;
+
+    &--context {
+      display: block;
+    }
+  }
+
+  .q-dropdown-menu__trigger {
+    display: inline-flex;
+  }
+
+  .q-dropdown-menu__menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: var(--q-dropdown-menu-z);
+    box-sizing: border-box;
+    width: var(--_width, var(--q-dropdown-menu-width));
+    margin-top: var(--q-dropdown-menu-offset);
+    padding: var(--q-dropdown-menu-padding);
+    border: var(--q-hairline) solid var(--q-dropdown-menu-border);
+    border-radius: var(--q-dropdown-menu-radius);
+    outline: none;
+    background: var(--q-dropdown-menu-bg);
+    box-shadow: var(--q-dropdown-menu-shadow);
+
+    &--end {
+      right: 0;
+      left: auto;
+    }
+
+    &--at-point {
+      top: var(--_y);
+      left: var(--_x);
+      margin-top: 0;
+    }
+  }
+
+  .q-dropdown-menu__header {
+    margin-bottom: var(--q-dropdown-menu-section-gap);
+    padding: var(--q-dropdown-menu-header-py) var(--q-dropdown-menu-label-px);
+    border-bottom: var(--q-hairline) solid var(--q-dropdown-menu-border);
+  }
+
+  .q-dropdown-menu__group-label,
+  .q-dropdown-menu__caption {
+    color: var(--q-dropdown-menu-mono-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-dropdown-menu-mono-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-dropdown-menu__group-label {
+    padding: var(--q-dropdown-menu-label-pt) var(--q-dropdown-menu-label-px) var(--q-dropdown-menu-group-label-pb);
+  }
+
+  .q-dropdown-menu__caption {
+    margin-top: var(--q-dropdown-menu-section-gap);
+    padding: var(--q-dropdown-menu-label-pt) var(--q-dropdown-menu-label-px) var(--q-dropdown-menu-caption-pb);
+    border-top: var(--q-hairline) solid var(--q-dropdown-menu-border);
+  }
+
+  .q-dropdown-menu__separator {
+    margin: var(--q-dropdown-menu-section-gap) 0;
+    border-top: var(--q-hairline) solid var(--q-dropdown-menu-border);
+  }
+
+  .q-dropdown-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--q-dropdown-menu-item-gap);
+    padding: var(--q-dropdown-menu-item-py) var(--q-dropdown-menu-item-px);
+    border-radius: var(--q-dropdown-menu-item-radius);
+    outline: none;
+    background: transparent;
+    color: var(--q-dropdown-menu-item-fg);
+    font-size: var(--q-dropdown-menu-item-font-size);
+    font-weight: var(--q-dropdown-menu-item-weight);
+    cursor: pointer;
+    transition:
+      color var(--q-dur-hover) var(--q-ease-soft),
+      background var(--q-dur-hover) var(--q-ease-soft);
+
+    &--sm {
+      padding: var(--q-dropdown-menu-item-sm-py) var(--q-dropdown-menu-item-sm-px);
+      font-size: var(--q-dropdown-menu-item-sm-font-size);
+    }
+
+    &--active {
+      font-weight: var(--q-dropdown-menu-item-active-weight);
+    }
+
+    &:is(:hover, :focus-visible, .q-dropdown-menu__item--active):not([aria-disabled="true"]) {
+      background: var(--q-dropdown-menu-item-bg-hover);
+    }
+
+    &--danger:is(:hover, :focus-visible) {
+      color: var(--q-dropdown-menu-item-danger-fg-hover);
+    }
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-dropdown-menu-item-disabled-opacity);
+      cursor: not-allowed;
+    }
+  }
+
+  .q-dropdown-menu__check {
+    display: grid;
+    flex: none;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--q-dropdown-menu-check-size);
+    height: var(--q-dropdown-menu-check-size);
+    border: var(--q-hairline) solid var(--q-dropdown-menu-check-border);
+    border-radius: var(--q-dropdown-menu-check-radius);
+    background: transparent;
+    color: var(--q-dropdown-menu-check-fg);
+    font-size: var(--q-dropdown-menu-check-font-size);
+    line-height: var(--q-leading-none);
+
+    [aria-checked="true"] > & {
+      background: var(--q-dropdown-menu-check-bg-checked);
+    }
+  }
+
+  .q-dropdown-menu__icon {
+    display: inline-flex;
+    justify-content: center;
+    width: var(--q-dropdown-menu-icon-width);
+    color: var(--q-dropdown-menu-icon-fg);
+  }
+
+  .q-dropdown-menu__label {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-dropdown-menu-label-gap);
+    min-width: 0;
+  }
+
+  .q-dropdown-menu__sublabel {
+    color: var(--q-dropdown-menu-sublabel-fg);
+    font-size: var(--q-dropdown-menu-sublabel-size);
+    font-weight: var(--q-dropdown-menu-item-weight);
+  }
+
+  .q-dropdown-menu__shortcut {
+    color: var(--q-dropdown-menu-mono-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-dropdown-menu-mono-size);
+    letter-spacing: var(--q-tracking-mono);
+  }
+}

@@ -1,0 +1,72 @@
+// Label — mono caps field label. BEM: .q-label, __row, __text, __required, __sub; --{size}.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-label-gap: var(--q-space-0-5);
+    --q-label-row-gap: var(--q-space-2);
+    --q-label-text-gap: var(--q-space-1);
+    --q-label-font-family: var(--q-font-mono);
+    --q-label-tracking: var(--q-tracking-mono);
+    --q-label-fg: var(--q-fg-muted);
+    --q-label-sm-font-size: var(--q-text-3xs);
+    --q-label-md-font-size: var(--q-text-2xs);
+    --q-label-lg-font-size: var(--q-text-xs);
+    --q-label-required-fg: var(--q-accent);
+    --q-label-required-gap: var(--q-space-0-25);
+    --q-label-sub-font-size: var(--q-text-sm);
+    --q-label-sub-leading: var(--q-leading-compact);
+    --q-label-sub-fg: var(--q-fg-muted);
+    --q-label-disabled-opacity: 0.4;
+  }
+}
+
+@layer q.components {
+  .q-label {
+    --_font-size: var(--q-label-md-font-size);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-label-gap);
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-label-disabled-opacity);
+    }
+
+    &--sm {
+      --_font-size: var(--q-label-sm-font-size);
+    }
+
+    &--lg {
+      --_font-size: var(--q-label-lg-font-size);
+    }
+  }
+
+  .q-label__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-label-row-gap);
+  }
+
+  .q-label__text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-label-text-gap);
+    font-family: var(--q-label-font-family);
+    font-size: var(--_font-size);
+    letter-spacing: var(--q-label-tracking);
+    text-transform: uppercase;
+    color: var(--q-label-fg);
+  }
+
+  .q-label__required {
+    margin-left: var(--q-label-required-gap);
+    color: var(--q-label-required-fg);
+  }
+
+  .q-label__sub {
+    font-size: var(--q-label-sub-font-size);
+    line-height: var(--q-label-sub-leading);
+    color: var(--q-label-sub-fg);
+  }
+}
