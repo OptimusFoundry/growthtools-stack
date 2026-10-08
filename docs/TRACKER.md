@@ -282,6 +282,7 @@ Backlog → Spec'd → Planned → In progress → Shipped. Tickets live in the 
 | EP-003 | Blog SEO Metadata Wiring | docs/prds/2026-08-02-blog-seo-metadata.md | docs/plans/2026-08-02-blog-seo-metadata.md | Shipped (d9a106e, 862a4ce) |
 | EP-004 | Delete Blog Posts (including live site removal) | docs/prds/2026-08-03-blog-delete.md | docs/plans/2026-08-03-blog-delete.md | Shipped (7e62b7b, ea3c9b3) |
 | EP-005 | Showcase Post from Brief | docs/prds/2026-08-03-showcase-post-from-brief.md | docs/plans/2026-08-03-showcase-post-from-brief.md | Shipped (7d5f9f4, 2c7feb2) |
+| EP-006 | Showcase Video Clips | docs/prds/2026-10-07-showcase-video-clips.md | — | Spec'd |
 
 ---
 
