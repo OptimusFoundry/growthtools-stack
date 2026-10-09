@@ -41,6 +41,39 @@ test.describe("Dashboard", () => {
 		});
 	});
 
+	test.describe("Structure and navigation", () => {
+		test("has exactly one h1, 'Dashboard'", async ({ page }) => {
+			await page.goto("/");
+
+			await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+			await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+				"Dashboard",
+			);
+		});
+
+		test("Posts quick link navigates client-side without a full page load", async ({
+			page,
+		}) => {
+			await page.goto("/");
+			// A full document load would discard this marker.
+			await page.evaluate(() => {
+				(window as unknown as { __spaMarker: boolean }).__spaMarker = true;
+			});
+
+			await page
+				.getByRole("region", { name: "Quick access" })
+				.getByRole("link", { name: "Open Posts, quick access" })
+				.click();
+
+			await expect(page).toHaveURL(/\/posts/);
+			expect(
+				await page.evaluate(
+					() => (window as unknown as { __spaMarker?: boolean }).__spaMarker,
+				),
+			).toBe(true);
+		});
+	});
+
 	// =========================================================================
 	// LastSevenDaysSection — happy path
 	// =========================================================================

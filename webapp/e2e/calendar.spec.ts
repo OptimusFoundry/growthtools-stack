@@ -116,18 +116,13 @@ test.describe("Calendar", () => {
 			page,
 		}) => {
 			await gotoCalendar(page);
-			// Before switching: stripes show status labels like "1 published"
-			await expect(
-				page.getByRole("button", { name: /1 published/i }),
-			).toBeVisible();
+			const dayCell = page.getByRole("button", { name: /^View posts for / });
+			await expect(dayCell.getByText(/1 published/i).first()).toBeVisible();
 
 			await page.getByRole("tab", { name: /by platform/i }).click();
 
-			// After switching: the day button's aria-label no longer contains
-			// status words — stripes render platform icons + raw counts instead.
-			await expect(
-				page.getByRole("button", { name: /1 published/i }),
-			).toHaveCount(0);
+			// Stripes render platform icons + raw counts instead of status words.
+			await expect(dayCell.getByText(/1 published/i)).toHaveCount(0);
 		});
 	});
 
@@ -143,7 +138,7 @@ test.describe("Calendar", () => {
 			const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
 			await page
-				.getByLabel(/previous month/i)
+				.getByLabel(/prev month, calendar nav/i)
 				.first()
 				.click();
 			await page.waitForLoadState("networkidle");
@@ -152,11 +147,11 @@ test.describe("Calendar", () => {
 			);
 
 			await page
-				.getByLabel(/next month/i)
+				.getByLabel(/next month, calendar nav/i)
 				.first()
 				.click();
 			await page
-				.getByLabel(/next month/i)
+				.getByLabel(/next month, calendar nav/i)
 				.first()
 				.click();
 			await page.waitForLoadState("networkidle");
@@ -168,7 +163,7 @@ test.describe("Calendar", () => {
 		test("today button resets to the current month", async ({ page }) => {
 			await gotoCalendar(page);
 			await page
-				.getByLabel(/next month/i)
+				.getByLabel(/next month, calendar nav/i)
 				.first()
 				.click();
 			await page.getByRole("button", { name: /today/i }).click();
@@ -239,7 +234,7 @@ test.describe("Calendar", () => {
 			// Fixture day 2026-04-05 has posts — any day cell button will work
 			// since only days with aggregate data render as buttons.
 			const dayButton = page
-				.getByRole("button", { name: /2 scheduled|1 published|1 draft/i })
+				.getByRole("button", { name: /^View posts for / })
 				.first();
 			if (!(await dayButton.isVisible().catch(() => false))) {
 				test.skip(
@@ -259,7 +254,7 @@ test.describe("Calendar", () => {
 			network.use(endpoints.posts.list[200]());
 			await gotoCalendar(page);
 			const dayButton = page
-				.getByRole("button", { name: /2 scheduled|1 published|1 draft/i })
+				.getByRole("button", { name: /^View posts for / })
 				.first();
 			if (!(await dayButton.isVisible().catch(() => false))) {
 				test.skip(true, "Fixture day not visible in current month viewport.");
@@ -277,7 +272,7 @@ test.describe("Calendar", () => {
 		test("back to month returns to the grid", async ({ page }) => {
 			await gotoCalendar(page);
 			const dayButton = page
-				.getByRole("button", { name: /2 scheduled|1 published|1 draft/i })
+				.getByRole("button", { name: /^View posts for / })
 				.first();
 			if (!(await dayButton.isVisible().catch(() => false))) {
 				test.skip(true, "Fixture day not visible in current month viewport.");
@@ -347,7 +342,7 @@ test.describe("Calendar", () => {
 				await gotoCalendar(page);
 
 				const dayButton = page
-					.getByRole("button", { name: /2 scheduled|1 published|1 draft/i })
+					.getByRole("button", { name: /^View posts for / })
 					.first();
 				if (!(await dayButton.isVisible().catch(() => false))) {
 					test.skip(true, "Fixture day not visible in current month viewport.");

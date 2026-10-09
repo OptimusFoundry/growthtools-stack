@@ -1,16 +1,21 @@
 // /signin page at root for TanStack Router
+import { PageShell, Stack, Text } from "@optimusfoundry/quiet";
 import { createFileRoute } from "@tanstack/react-router";
 import Login from "@/components/authentication/login";
-import "./signin.scss";
+import styles from "./signin.module.scss";
 
 function SignInPage() {
 	return (
-		<div className="login-page">
-			<div className="centered-container">
-				<h6>Welcome</h6>
-				<Login />
+		<PageShell narrow as="main">
+			<div className={styles.container}>
+				<Stack gap="lg">
+					<Text as="h1" heading={4}>
+						Welcome
+					</Text>
+					<Login />
+				</Stack>
 			</div>
-		</div>
+		</PageShell>
 	);
 }
 

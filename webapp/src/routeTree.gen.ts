@@ -16,6 +16,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as GithubRouteImport } from './routes/github'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as MainRouteImport } from './routes/main'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as PostsRouteImport } from './routes/posts'
@@ -66,6 +67,11 @@ const CalendarRoute = CalendarRouteImport.update({
 const GithubRoute = GithubRouteImport.update({
   id: '/github',
   path: '/github',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MainRoute = MainRouteImport.update({
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
   '/github': typeof GithubRoute
+  '/help': typeof HelpRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
   '/github': typeof GithubRoute
+  '/help': typeof HelpRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/blog': typeof BlogRoute
   '/calendar': typeof CalendarRoute
   '/github': typeof GithubRoute
+  '/help': typeof HelpRoute
   '/main': typeof MainRoute
   '/media': typeof MediaRoute
   '/posts': typeof PostsRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/calendar'
     | '/github'
+    | '/help'
     | '/main'
     | '/media'
     | '/posts'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/calendar'
     | '/github'
+    | '/help'
     | '/main'
     | '/media'
     | '/posts'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/calendar'
     | '/github'
+    | '/help'
     | '/main'
     | '/media'
     | '/posts'
@@ -311,6 +323,7 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRoute
   CalendarRoute: typeof CalendarRoute
   GithubRoute: typeof GithubRoute
+  HelpRoute: typeof HelpRoute
   MainRoute: typeof MainRoute
   MediaRoute: typeof MediaRoute
   PostsRoute: typeof PostsRoute
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       path: '/github'
       fullPath: '/github'
       preLoaderRoute: typeof GithubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/main': {
@@ -503,6 +523,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRoute,
   CalendarRoute: CalendarRoute,
   GithubRoute: GithubRoute,
+  HelpRoute: HelpRoute,
   MainRoute: MainRoute,
   MediaRoute: MediaRoute,
   PostsRoute: PostsRoute,

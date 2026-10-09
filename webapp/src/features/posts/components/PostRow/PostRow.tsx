@@ -1,9 +1,11 @@
+import { Badge, Button } from "@optimusfoundry/quiet";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Trash2 } from "lucide-react";
-import styles from "@/routes/posts.module.scss";
+import { Trash2 } from "lucide-react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { POST_STATUS_META, type PostListItem } from "@/types/post";
 import { timeAgo, truncate } from "@/utils/format";
 import { getPlatformIcon } from "@/utils/platformIcons";
+import styles from "./PostRow.module.scss";
 
 export interface PostRowProps {
 	post: PostListItem;
@@ -18,60 +20,48 @@ export function PostRow({ post, index, onDelete }: PostRowProps) {
 	const meta = POST_STATUS_META[post.status];
 
 	return (
-		<Link
-			to={isPublished ? "/posts/$id/analytics" : "/posts/$id"}
-			params={{ id: post.id }}
-			className={styles.postLink}
-		>
-			<div className={styles.postRow}>
-				<div className={styles.titleRow}>
-					<span className={styles.idx}>
-						№ {String(index + 1).padStart(2, "0")}
+		<div className={styles.row}>
+			<Link
+				to={isPublished ? "/posts/$id/analytics" : "/posts/$id"}
+				params={{ id: post.id }}
+				className={styles.link}
+			>
+				<span className={styles.idx}>
+					№ {String(index + 1).padStart(2, "0")}
+				</span>
+				<span className={styles.body}>
+					<span className={styles.title}>
+						{truncate(post.title ?? "Untitled post", 80)}
 					</span>
-					<div className={styles.postBody}>
-						<div className={styles.postTitleText}>
-							{truncate(post.title ?? "Untitled post", 80)}
-						</div>
-						<div className={styles.postMetaText}>{statusLine(post)}</div>
-					</div>
-				</div>
-				<div className={styles.metaRow}>
-					{post.platforms.length > 0 && (
-						<span className={styles.platformChips}>
-							{post.platforms.slice(0, 3).map((p) => (
-								<span key={p} className={styles.platformChip} title={p}>
-									{getPlatformIcon(p, 14)}
-								</span>
-							))}
-						</span>
-					)}
-					<span className={`${styles.statusBadge} ${styles[meta.className]}`}>
-						{meta.label}
+					<span className={styles.meta}>{statusLine(post)}</span>
+				</span>
+				{post.platforms.length > 0 && (
+					<span className={styles.chips}>
+						{post.platforms.slice(0, 3).map((p) => (
+							<span key={p} className={styles.chip} title={p}>
+								{getPlatformIcon(p, 14)}
+							</span>
+						))}
 					</span>
-					{canDelete && (
-						<button
-							type="button"
-							className={styles.deleteBtn}
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								onDelete(post.id);
-							}}
-							aria-label={`Delete post "${truncate(post.title ?? "Untitled post", 40)}"`}
-						>
-							<Trash2 size={16} />
-						</button>
-					)}
-					<span className={styles.chevronBtn} aria-hidden>
-						<ChevronRight size={16} />
-					</span>
-				</div>
-			</div>
-		</Link>
+				)}
+				<Badge variant={meta.badgeVariant} dot={meta.badgeDot}>
+					{meta.label}
+				</Badge>
+			</Link>
+			{canDelete && (
+				<Button
+					variant="ghost"
+					size="sm"
+					icon={<AppIcon icon={Trash2} size="md" />}
+					aria-label={`Delete post "${truncate(post.title ?? "Untitled post", 40)}"`}
+					onClick={() => onDelete(post.id)}
+				/>
+			)}
+		</div>
 	);
 }
 
-function statusLine(post: PostListItem): string {
+export function statusLine(post: PostListItem): string {
 	const when = post.publishedAt ?? post.scheduledAt ?? post.createdAt;
 	const ago = timeAgo(when);
 	if (post.status === "published") return `Published · ${ago}`;

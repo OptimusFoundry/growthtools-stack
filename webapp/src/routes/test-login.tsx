@@ -1,8 +1,14 @@
+import {
+	Alert,
+	Button,
+	PageShell,
+	Stack,
+	Text,
+	TextField,
+} from "@optimusfoundry/quiet";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { fetcher } from "@/api/client";
-import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import styles from "./test-login.module.scss";
 
 export const Route = createFileRoute("/test-login")({
@@ -35,45 +41,43 @@ function TestLoginPage() {
 	};
 
 	return (
-		<div className={styles.page}>
-			<form
-				className={styles.form}
-				onSubmit={handleSubmit}
-				aria-label="Test login"
-			>
-				<h1 className={styles.title}>Test Login</h1>
-				<TextField
-					label="Email"
-					type="email"
-					autoComplete="username"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					required
-					data-testid="test-login-email"
-				/>
-				<TextField
-					label="Password"
-					type="password"
-					autoComplete="current-password"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-					required
-					data-testid="test-login-password"
-				/>
-				{error && (
-					<p className={styles.error} role="alert">
-						{error}
-					</p>
-				)}
-				<Button
-					type="submit"
-					variant="primary"
-					disabled={submitting}
-					data-testid="test-login-submit"
-				>
-					{submitting ? "Signing in…" : "Sign in"}
-				</Button>
-			</form>
-		</div>
+		<PageShell narrow as="main">
+			<div className={styles.container}>
+				<form onSubmit={handleSubmit} aria-label="Test login">
+					<Stack gap="lg">
+						<Text as="h1" heading={4}>
+							Test Login
+						</Text>
+						<TextField
+							label="Email"
+							type="email"
+							autoComplete="username"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							required
+							data-testid="test-login-email"
+						/>
+						<TextField
+							label="Password"
+							type="password"
+							autoComplete="current-password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							required
+							data-testid="test-login-password"
+						/>
+						{error && <Alert variant="error">{error}</Alert>}
+						<Button
+							type="submit"
+							variant="primary"
+							disabled={submitting}
+							data-testid="test-login-submit"
+						>
+							{submitting ? "Signing in…" : "Sign in"}
+						</Button>
+					</Stack>
+				</form>
+			</div>
+		</PageShell>
 	);
 }

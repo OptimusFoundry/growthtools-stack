@@ -1,19 +1,31 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { BarChart, Calendar, Image, Newspaper, PenSquare } from "lucide-react";
+import {
+	Button,
+	Grid,
+	PageHero,
+	SectionHeader,
+	Stack,
+} from "@optimusfoundry/quiet";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+	BarChart,
+	Calendar,
+	Image,
+	type LucideIcon,
+	Newspaper,
+	PenSquare,
+} from "lucide-react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useAuth } from "@/contexts/auth";
 import { LastSevenDaysSection } from "@/features/analytics/components/LastSevenDaysSection/component";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
-import cardStyles from "./dashboard.module.scss";
-import styles from "./page.module.scss";
+import styles from "./dashboard.module.scss";
 
-const quickLinks = [
-	{ label: "Calendar", href: "/calendar", icon: <Calendar size={18} /> },
-	{ label: "Posts", href: "/posts", icon: <PenSquare size={18} /> },
-	{ label: "Media", href: "/media", icon: <Image size={18} /> },
-	{ label: "Blog", href: "/blog", icon: <Newspaper size={18} /> },
-	{ label: "Analytics", href: "/analytics", icon: <BarChart size={18} /> },
+const quickLinks: { label: string; href: string; icon: LucideIcon }[] = [
+	{ label: "Calendar", href: "/calendar", icon: Calendar },
+	{ label: "Posts", href: "/posts", icon: PenSquare },
+	{ label: "Media", href: "/media", icon: Image },
+	{ label: "Blog", href: "/blog", icon: Newspaper },
+	{ label: "Analytics", href: "/analytics", icon: BarChart },
 ];
 
 export const Route = createFileRoute("/")({
@@ -36,40 +48,40 @@ function Index() {
 	return (
 		<>
 			<Topbar title="Dashboard" />
-			<Stack gap="lg" className={styles.page} animate>
-				<header className={styles.pageHero}>
-					<div className={styles.pageHeroText}>
-						<div className={styles.pageEyebrow}>{eyebrowDate}</div>
-						<h1 className={styles.pageHeroTitle}>
-							{greeting}, {firstName} — your <em>command center</em>.
-						</h1>
-						<p className={styles.pageHeroSub}>
-							Drafts to finish, posts to schedule, and a calendar that knows
-							what's next. Pick where you want to spend your morning.
-						</p>
-					</div>
-				</header>
+			<Stack gap="lg" animated>
+				<PageHero
+					size="md"
+					as="h2"
+					ruled={false}
+					className={styles.hero}
+					eyebrow={eyebrowDate}
+					title={`${greeting}, ${firstName} — your`}
+					accent="command center"
+					description="Drafts to finish, posts to schedule, and a calendar that knows what's next. Pick where you want to spend your morning."
+				/>
 
 				<LastSevenDaysSection />
 
-				<Stack gap="xs">
-					<Text as="h3" size="lg" weight="semibold">
-						Quick Access
-					</Text>
-					<div className={cardStyles.cardGrid}>
-						{quickLinks.map((link) => (
-							<Link
-								key={link.href}
-								to={link.href}
-								className={cardStyles.card}
-								aria-label={`Open ${link.label}, quick access`}
-							>
-								{link.icon}
-								<span className={cardStyles.cardLabel}>{link.label}</span>
-							</Link>
-						))}
-					</div>
-				</Stack>
+				<section aria-label="Quick access">
+					<Stack gap="sm">
+						<SectionHeader size="sm" as="h2" title="Quick Access" />
+						<Grid minChildWidth={200} gap="sm" rowGap="sm">
+							{quickLinks.map((link) => (
+								<Button
+									key={link.href}
+									variant="outline"
+									size="lg"
+									fullWidth
+									href={link.href}
+									aria-label={`Open ${link.label}, quick access`}
+									leftIcon={<AppIcon icon={link.icon} size="lg" />}
+								>
+									{link.label}
+								</Button>
+							))}
+						</Grid>
+					</Stack>
+				</section>
 			</Stack>
 		</>
 	);
