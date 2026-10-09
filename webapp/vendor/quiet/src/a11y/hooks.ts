@@ -6,6 +6,7 @@ import {
 	type RefObject,
 	useCallback,
 	useEffect,
+	useLayoutEffect,
 	useRef,
 	useState,
 } from "react";
@@ -21,12 +22,20 @@ export function focusables(root: HTMLElement | null): HTMLElement[] {
 	);
 }
 
-/** While active: moves focus into `ref`, keeps Tab inside it, restores focus on deactivate. */
+/**
+ * While active: moves focus into `ref`, keeps Tab inside it, restores focus on deactivate.
+ * It takes hold in a layout effect, in the commit that shows `ref`: as a passive effect it can run
+ * after the first click on the new surface (a scrim mousedown has already moved focus to <body>)
+ * and would capture <body> as the element to restore. The restore stays in a passive cleanup:
+ * a layout cleanup runs inside React's commit, which re-focuses the element that had focus before
+ * the commit (still inside the closing surface) and so undoes it.
+ */
 export function useFocusTrap(ref: RefObject<HTMLElement | null>, active: boolean) {
-	useEffect(() => {
+	const previous = useRef<HTMLElement | null>(null);
+	useLayoutEffect(() => {
 		if (!active) return;
 		const root = ref.current;
-		const previous = document.activeElement as HTMLElement | null;
+		previous.current = document.activeElement as HTMLElement | null;
 		const first = focusables(root)[0];
 		if (root && !root.contains(document.activeElement))
 			(first ?? root).focus({ preventScroll: true });
@@ -51,11 +60,15 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, active: boolean
 			}
 		};
 		document.addEventListener("keydown", onKey, true);
-		return () => {
-			document.removeEventListener("keydown", onKey, true);
-			if (previous?.isConnected) previous.focus({ preventScroll: true });
-		};
+		return () => document.removeEventListener("keydown", onKey, true);
 	}, [active, ref]);
+	useEffect(() => {
+		if (!active) return;
+		return () => {
+			const el = previous.current;
+			if (el?.isConnected) el.focus({ preventScroll: true });
+		};
+	}, [active]);
 }
 
 /** Calls `onEscape` on Escape while active. */
@@ -161,9 +174,13 @@ export function motionToken(el: Element, name: TokenName): string | number {
 	return raw;
 }
 
-/** While active: everything outside `ref`'s branch is inert and the page doesn't scroll. */
+/**
+ * While active: everything outside `ref`'s branch is inert and the page doesn't scroll.
+ * A layout effect, so the background is inert from the commit that shows the modal, and released
+ * before useFocusTrap's (passive) restore returns focus to it.
+ */
 export function useModalBackground(ref: RefObject<HTMLElement | null>, active: boolean) {
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (!active || !ref.current) return;
 		const done: HTMLElement[] = [];
 		for (let n = ref.current; n.parentElement && n !== document.body; n = n.parentElement)

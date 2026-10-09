@@ -27,8 +27,9 @@ export interface DialogProps {
 
 const SIZES: string[] = ["sm", "md", "lg", "xl"];
 // quiet: while a modal is open, everything outside it is inert and the page doesn't scroll.
+// A layout effect: inert from the commit that shows the modal, released before focus returns.
 function useModalBackground(ref: React.RefObject<HTMLElement | null>, active: boolean) {
-	React.useEffect(() => {
+	React.useLayoutEffect(() => {
 		if (!active || !ref.current) return;
 		const done: HTMLElement[] = [];
 		for (

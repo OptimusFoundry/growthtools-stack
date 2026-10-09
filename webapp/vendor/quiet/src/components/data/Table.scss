@@ -111,6 +111,14 @@
     line-height: var(--q-table-leading);
   }
 
+  // A .q-sr-only label (an "Actions" header) is absolutely positioned at its column's x. .q-table
+  // isn't its containing block, so on a narrow screen it lands past the scroll box and widens the
+  // page. Positioning .q-table would contain it, but a positioned box is rastered on its own
+  // layer and shifts the table's anti-aliasing (parity). Pinned to the inline start, it can't.
+  .q-table .q-sr-only {
+    inset-inline-start: 0;
+  }
+
   .q-table__caption {
     padding: 0 0 var(--q-table-caption-padding-bottom);
     color: var(--q-table-label-color);

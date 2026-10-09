@@ -203,33 +203,102 @@ function place(app, before) {
 	return placed;
 }
 
-/** Adds (or replaces) quiet-guard's hook entries in .claude/settings.json, leaving the rest alone. */
+/** Adds (or replaces) quiet-guard's hook entries in .claude/settings.json, leaving the rest alone.
+ * Only the "hooks" value is rewritten in place; every other byte of the file stays as written, and
+ * nothing is written when quiet's entries are already current. */
 function registerHooks(app, where) {
 	const path = join(app, SETTINGS);
-	let text = "";
+	const text = existsSync(path) ? readFileSync(path, "utf8") : "";
 	let settings = {};
-	if (existsSync(path)) {
-		text = readFileSync(path, "utf8");
-		try {
-			settings = JSON.parse(text);
-		} catch {
-			return false;
-		}
+	try {
+		settings = text ? JSON.parse(text) : {};
+	} catch {
+		return false;
 	}
-	settings.hooks ??= {};
+	const before = settings.hooks ?? {};
+	const hooks = { ...before };
 	for (const [event, matcher, mode] of HOOKS) {
-		const kept = (settings.hooks[event] ?? [])
+		const kept = (hooks[event] ?? [])
 			.map((g) => ({
 				...g,
 				hooks: (g.hooks ?? []).filter((h) => !String(h.command).includes(GUARD)),
 			}))
 			.filter((g) => g.hooks.length);
 		const command = `node "$CLAUDE_PROJECT_DIR/${where}/claude/hooks/${GUARD}" ${mode} ${where}`;
-		settings.hooks[event] = [...kept, { matcher, hooks: [{ type: "command", command }] }];
+		hooks[event] = [...kept, { matcher, hooks: [{ type: "command", command }] }];
+	}
+	if (JSON.stringify(hooks) === JSON.stringify(before)) return true;
+
+	const next = { ...settings, hooks };
+	const unit = text.match(/^([ \t]+)"/m)?.[1] ?? "\t";
+	const value = JSON.stringify(hooks, null, unit).replace(/\n/g, `\n${unit}`);
+	const span = text ? topLevelValue(text, "hooks") : null;
+	let out;
+	if (span) out = text.slice(0, span[0]) + value + text.slice(span[1]);
+	else if (text.trim()) {
+		const close = text.lastIndexOf("}");
+		const body = text.slice(0, close).trimEnd();
+		const comma = body.endsWith("{") ? "" : ",";
+		out = `${body}${comma}\n${unit}"hooks": ${value}\n${text.slice(close)}`;
+	} else out = `${JSON.stringify(next, null, unit)}\n`;
+	// The splice must mean exactly what a full rewrite would; if not, leave the file alone.
+	try {
+		if (JSON.stringify(JSON.parse(out)) !== JSON.stringify(next)) return false;
+	} catch {
+		return false;
 	}
 	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(path, `${JSON.stringify(settings, null, /^\t/m.test(text) ? "\t" : 2)}\n`);
+	writeFileSync(path, out);
 	return true;
+}
+
+/** [start, end) of a top-level key's value in JSON text, or null. Skips strings and nesting. */
+function topLevelValue(text, key) {
+	let depth = 0;
+	for (let i = 0; i < text.length; i++) {
+		const c = text[i];
+		if (c === '"') {
+			const end = stringEnd(text, i);
+			let j = end;
+			while (/\s/.test(text[j] ?? "")) j++;
+			if (depth === 1 && text[j] === ":") {
+				j++;
+				while (/\s/.test(text[j] ?? "")) j++;
+				if (JSON.parse(text.slice(i, end)) === key) return [j, valueEnd(text, j)];
+				i = valueEnd(text, j) - 1;
+			} else i = end - 1;
+		} else if (c === "{" || c === "[") depth++;
+		else if (c === "}" || c === "]") depth--;
+	}
+	return null;
+}
+
+function stringEnd(text, i) {
+	for (let j = i + 1; j < text.length; j++) {
+		if (text[j] === "\\") j++;
+		else if (text[j] === '"') return j + 1;
+	}
+	return text.length;
+}
+
+function valueEnd(text, i) {
+	if (text[i] === '"') return stringEnd(text, i);
+	if (text[i] !== "{" && text[i] !== "[") {
+		let j = i;
+		while (j < text.length && !/[,}\]\s]/.test(text[j])) j++;
+		return j;
+	}
+	let depth = 0;
+	for (let j = i; j < text.length; j++) {
+		const c = text[j];
+		if (c === '"') j = stringEnd(text, j) - 1;
+		else if (c === "{" || c === "[") depth++;
+		else if (c === "}" || c === "]") {
+			depth--;
+			if (depth === 0) return j + 1;
+		}
+	}
+	return text.length;
 }
 
 function hooksRegistered(app) {
