@@ -10,8 +10,6 @@ interface PersonaContextType {
 	hasAccess: (allowedPersonas: UserPersona[]) => boolean;
 	/** Get filtered navigation groups based on persona */
 	getNavigationGroups: () => NavGroup[];
-	/** Check if persona can access a specific route */
-	canAccessRoute: (route: string) => boolean;
 }
 
 const PersonaContext = createContext<PersonaContextType | undefined>(undefined);
@@ -58,32 +56,10 @@ export function PersonaProvider({ children, persona }: PersonaProviderProps) {
 				.filter((group) => group.items.length > 0);
 		};
 
-		/**
-		 * Check if persona can access a specific route
-		 */
-		const canAccessRoute = (route: string): boolean => {
-			// Admin has access to all routes
-			if (persona === "admin") return true;
-
-			// Check if route exists in any nav item that the persona can access
-			for (const group of navigationConfig) {
-				for (const item of group.items) {
-					if (item.href === route && hasAccess(item.allowedPersonas)) {
-						return true;
-					}
-				}
-			}
-
-			// Default routes that everyone can access
-			const publicRoutes = ["/", "/account", "/billing"];
-			return publicRoutes.includes(route);
-		};
-
 		return {
 			persona,
 			hasAccess,
 			getNavigationGroups,
-			canAccessRoute,
 		};
 	}, [persona]);
 

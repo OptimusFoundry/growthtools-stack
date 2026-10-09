@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { fetcher } from "@/api/client";
 import type { ApiAdminUser } from "@/api/types/user";
 import { AdminPage } from "@/features/admin/AdminPage";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 /**
  * Admin route — gated server-side.
@@ -29,5 +30,6 @@ export const Route = createFileRoute("/admin")({
 });
 
 function RouteComponent() {
+	useDocumentTitle("Admin");
 	return <AdminPage />;
 }

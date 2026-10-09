@@ -7,6 +7,7 @@ import { ResourceListPage } from "@/components/patterns/ResourceListPage/Resourc
 import { MediaCard } from "@/features/media/components/MediaCard/MediaCard";
 import { MediaEmpty } from "@/features/media/components/MediaEmpty/MediaEmpty";
 import { MediaHero } from "@/features/media/components/MediaHero/MediaHero";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMedia } from "@/hooks/useMedia";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
 import styles from "./media.module.scss";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/media")({
 });
 
 function MediaPage() {
+	useDocumentTitle("Media");
 	const { media, loading, refetch } = useMedia();
 	const { uploadMedia, loading: uploading } = useUploadMedia();
 	const fileInputRef = useRef<HTMLInputElement>(null);

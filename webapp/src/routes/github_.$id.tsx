@@ -16,6 +16,7 @@ import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ArtifactGrid } from "@/components/github/ArtifactGrid";
 import { CaptureMetaCard } from "@/components/github/CaptureMetaCard";
 import { Topbar } from "@/components/Layout/Topbar";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useGitHubCommit } from "@/hooks/useGitHubCommit";
 import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 import styles from "./github.module.scss";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/github_/$id")({
 });
 
 function CommitDetailsPage() {
+	useDocumentTitle("Commit");
 	const { id } = Route.useParams();
 	const { commit, loading, retryCapture, retrying, retryError } =
 		useGitHubCommit(id);

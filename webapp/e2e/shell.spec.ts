@@ -163,25 +163,28 @@ test.describe("Proto theme migration", () => {
 
 // /billing/pay is skipped: Stripe.js is loaded from the network.
 const routes = [
-	{ path: "/" },
-	{ path: "/calendar" },
-	{ path: "/posts" },
-	{ path: "/posts/new" },
-	{ path: "/posts/post_2", draftDetails: true },
-	{ path: "/posts/post_1/analytics" },
-	{ path: "/media" },
-	{ path: "/blog" },
-	{ path: "/blog/new" },
-	{ path: `/blog/${fullBlogPost.id}` },
-	{ path: "/analytics" },
-	{ path: "/github" },
-	{ path: `/github/${githubCommit.id}` },
-	{ path: "/admin" },
-	{ path: "/account" },
-	{ path: "/billing" },
-	{ path: "/billing/plans" },
-	{ path: "/billing/payment_attempt?session_id=cs_test" },
-	{ path: "/help" },
+	{ path: "/", title: "Growth Tools" },
+	{ path: "/calendar", title: "Calendar · Growth Tools" },
+	{ path: "/posts", title: "Posts · Growth Tools" },
+	{ path: "/posts/new", title: "New Post · Growth Tools" },
+	{ path: "/posts/post_2", title: "Post · Growth Tools", draftDetails: true },
+	{ path: "/posts/post_1/analytics", title: "Post Analytics · Growth Tools" },
+	{ path: "/media", title: "Media · Growth Tools" },
+	{ path: "/blog", title: "Blog · Growth Tools" },
+	{ path: "/blog/new", title: "New Blog Post · Growth Tools" },
+	{ path: `/blog/${fullBlogPost.id}`, title: "Blog Post · Growth Tools" },
+	{ path: "/analytics", title: "Analytics · Growth Tools" },
+	{ path: "/github", title: "GitHub · Growth Tools" },
+	{ path: `/github/${githubCommit.id}`, title: "Commit · Growth Tools" },
+	{ path: "/admin", title: "Admin · Growth Tools" },
+	{ path: "/account", title: "Settings · Growth Tools" },
+	{ path: "/billing", title: "Billing · Growth Tools" },
+	{ path: "/billing/plans", title: "Plans · Growth Tools" },
+	{
+		path: "/billing/payment_attempt?session_id=cs_test",
+		title: "Payment · Growth Tools",
+	},
+	{ path: "/help", title: "Help · Growth Tools" },
 ] as const;
 
 const themes = ["foundry", "foundry-dark"] as const;
@@ -214,6 +217,7 @@ test.describe("Every route renders in both themes", () => {
 				).toHaveAttribute("data-theme", theme);
 				await expect(page.getByRole("main")).toHaveCount(1);
 				await expect(page.getByRole("main")).toBeVisible();
+				await expect(page).toHaveTitle(route.title);
 				expect(pageErrors).toEqual([]);
 			});
 		}

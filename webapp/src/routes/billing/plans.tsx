@@ -18,6 +18,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { fetcher } from "@/api/client";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
 import type { CustomerPortalResponse, Price } from "@/types/billing";
@@ -484,5 +485,6 @@ function PlansPage() {
 }
 
 function RouteComponent() {
+	useDocumentTitle("Plans");
 	return <PlansPage />;
 }

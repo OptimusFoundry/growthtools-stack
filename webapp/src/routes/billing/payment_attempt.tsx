@@ -1,6 +1,7 @@
 import { Alert, Spinner, Stack, Text } from "@optimusfoundry/quiet";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ErrorState } from "@/components/error/error";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useGetCheckoutSession } from "@/hooks/useGetCheckoutSession";
 import styles from "./payment_attempt.module.scss";
 
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/billing/payment_attempt")({
 });
 
 function RouteComponent() {
+	useDocumentTitle("Payment");
 	const { session_id } = Route.useSearch();
 	return <Page sessionId={session_id} />;
 }

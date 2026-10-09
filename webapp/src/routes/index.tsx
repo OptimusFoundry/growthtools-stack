@@ -18,6 +18,7 @@ import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useAuth } from "@/contexts/auth";
 import { LastSevenDaysSection } from "@/features/analytics/components/LastSevenDaysSection/component";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import styles from "./dashboard.module.scss";
 
 const quickLinks: { label: string; href: string; icon: LucideIcon }[] = [
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+	useDocumentTitle();
 	const { user } = useAuth();
 	const now = new Date();
 	const eyebrowDate = now.toLocaleDateString(undefined, {

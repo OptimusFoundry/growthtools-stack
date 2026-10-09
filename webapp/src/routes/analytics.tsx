@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnalyticsPage } from "@/features/analytics/components/AnalyticsPage/component";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/analytics")({
 	validateSearch: (search: Record<string, unknown>) => {
@@ -13,5 +14,6 @@ export const Route = createFileRoute("/analytics")({
 });
 
 function RouteComponent() {
+	useDocumentTitle("Analytics");
 	return <AnalyticsPage />;
 }

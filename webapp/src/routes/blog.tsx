@@ -14,6 +14,7 @@ import { BlogRow } from "@/features/blog/components/BlogRow/BlogRow";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { toFilterTabItems, useFilterCounts } from "@/hooks/useFilterCounts";
 import type { BlogStatus, DeleteBlogResult } from "@/types/blog";
 
@@ -32,6 +33,7 @@ const FILTER_KEYS = [
 }[];
 
 function BlogPage() {
+	useDocumentTitle("Blog");
 	const [statusFilter, setStatusFilter] = useState<string>("");
 
 	const filters = useMemo(

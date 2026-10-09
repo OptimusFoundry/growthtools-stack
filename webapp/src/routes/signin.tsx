@@ -2,9 +2,11 @@
 import { PageShell, Stack, Text } from "@optimusfoundry/quiet";
 import { createFileRoute } from "@tanstack/react-router";
 import Login from "@/components/authentication/login";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import styles from "./signin.module.scss";
 
 function SignInPage() {
+	useDocumentTitle("Sign in");
 	return (
 		<PageShell narrow as="main">
 			<div className={styles.container}>
