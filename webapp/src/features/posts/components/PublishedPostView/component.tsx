@@ -1,13 +1,19 @@
+import {
+	Col,
+	Grid,
+	PageHero,
+	SectionHeader,
+	Stack,
+} from "@optimusfoundry/quiet";
 import { PlatformPreviewTabs } from "@/components/create-post/PlatformPreviewTabs";
 import { PostPublishStatus } from "@/components/create-post/PostPublishStatus";
 import type { WizardState } from "@/components/create-post/useCreatePostWizard";
 import { Topbar } from "@/components/Layout/Topbar";
 import { InlinePostAnalytics } from "@/features/posts/components/InlinePostAnalytics/component";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 import styles from "./component.module.scss";
 
 interface PublishedPostViewProps {
@@ -22,13 +28,9 @@ interface PublishedPostViewProps {
 }
 
 /**
- * Read-only detail page for published / partially_published posts. Literal
- * strip of the edit wizard page: same shell, same hero rhythm, same two-col
- * split, same right-pane "Review Content" heading over PlatformPreviewTabs.
- * Omits idea input, platform toggle, post config, base-content accordion, and
- * the edit/save/schedule/publish topbar actions — none of those apply once a
- * post has shipped. Adds InlinePostAnalytics below the publish status in the
- * left column.
+ * Read-only detail page for published / partially_published posts: the edit
+ * wizard's two-column split without its inputs or topbar actions, plus
+ * InlinePostAnalytics below the publish status.
  */
 export function PublishedPostView({
 	postId,
@@ -50,47 +52,42 @@ export function PublishedPostView({
 	return (
 		<>
 			<Topbar breadcrumbs={breadcrumbs} />
-			<div className={styles.page}>
-				<header className={styles.header}>
-					<div className={styles.headerInner}>
-						<Stack direction="column" gap="0">
-							<div className={styles.eyebrow}>{eyebrowLabel}</div>
-							<h1 className={styles.title}>
-								<em>Shipped.</em> Here's how it landed.
-							</h1>
-							<p className={styles.sub}>
-								View your published post and see how each platform rendered it.
-							</p>
-						</Stack>
-					</div>
-				</header>
+			<Stack gap="xl">
+				<PageHero
+					size="md"
+					ruled={false}
+					className={styles.hero}
+					eyebrow={eyebrowLabel}
+					title={trimTrailingPeriod("Shipped. Here's how it landed.")}
+					description="View your published post and see how each platform rendered it."
+				/>
 
-				<div className={styles.twoColumn}>
-					<Stack gap="lg">
-						<PostPublishStatus platformPosts={platformPosts} />
-						<Stack gap="md">
-							<Text as="h3" size="lg" weight="medium">
-								Analytics
-							</Text>
-							<InlinePostAnalytics postId={postId} />
+				<Grid columns={12} gap="lg">
+					<Col span={6}>
+						<Stack gap="lg">
+							<PostPublishStatus platformPosts={platformPosts} />
+							<Stack gap="sm">
+								<SectionHeader size="sm" as="h2" title="Analytics" />
+								<InlinePostAnalytics postId={postId} />
+							</Stack>
 						</Stack>
-					</Stack>
+					</Col>
 
-					<Stack gap="md">
-						<Text as="h3" size="lg" weight="medium">
-							Review Content
-						</Text>
-						<PlatformPreviewTabs
-							selectedPlatforms={selectedPlatforms}
-							platformContent={platformContent}
-							threadContent={threadContent}
-							contentType={contentType}
-							uploadedMedia={uploadedMedia}
-							readOnly
-						/>
-					</Stack>
-				</div>
-			</div>
+					<Col span={6}>
+						<Stack gap="sm">
+							<SectionHeader size="sm" as="h2" title="Review Content" />
+							<PlatformPreviewTabs
+								selectedPlatforms={selectedPlatforms}
+								platformContent={platformContent}
+								threadContent={threadContent}
+								contentType={contentType}
+								uploadedMedia={uploadedMedia}
+								readOnly
+							/>
+						</Stack>
+					</Col>
+				</Grid>
+			</Stack>
 		</>
 	);
 }

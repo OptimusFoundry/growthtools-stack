@@ -50,6 +50,25 @@ export const analyticsScenarios = {
 			HttpResponse.json([]),
 		),
 	],
+	/** Connected nothing yet — zero totals and no platforms trigger the page's isNoPlatforms branch. */
+	noPlatforms: () => [
+		http.get("*/api/protected/analytics/overview", () =>
+			HttpResponse.json({
+				total_impressions: 0,
+				total_likes: 0,
+				total_comments: 0,
+				total_shares: 0,
+				total_clicks: 0,
+				engagement_rate: 0,
+			}),
+		),
+		http.get("*/api/protected/analytics/timeseries", () =>
+			HttpResponse.json([]),
+		),
+		http.get("*/api/protected/analytics/platforms", () =>
+			HttpResponse.json([]),
+		),
+	],
 	/** Post analytics with no platform posts (post not yet published). */
 	postAnalyticsEmpty: () => [
 		http.get("*/api/protected/posts/:id/analytics", () =>

@@ -1,22 +1,6 @@
+import { LineChart } from "@optimusfoundry/quiet";
 import { memo, useMemo } from "react";
-import {
-	Area,
-	CartesianGrid,
-	Line,
-	LineChart,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
-} from "recharts";
 import type { TimeSeriesDataPoint } from "@/types/analytics";
-import {
-	getChartColors,
-	gridProps,
-	xAxisProps,
-	yAxisProps,
-} from "../chart-theme";
-import styles from "./component.module.scss";
 
 export type MetricKey = "impressions" | "likes" | "comments" | "shares";
 
@@ -25,72 +9,40 @@ interface TimeSeriesChartProps {
 	metric: MetricKey;
 }
 
-function CustomTooltip({
-	active,
-	payload,
-	label,
-}: {
-	active?: boolean;
-	payload?: Array<{ value: number }>;
-	label?: string;
-}) {
-	if (!active || !payload?.length) return null;
-	return (
-		<div className={styles.tooltip}>
-			<span className={styles.tooltipDate}>{label}</span>
-			<span className={styles.tooltipValue}>
-				{payload[0].value.toLocaleString()}
-			</span>
-		</div>
-	);
+const METRIC_LABEL: Record<MetricKey, string> = {
+	impressions: "Impressions",
+	likes: "Likes",
+	comments: "Comments",
+	shares: "Shares",
+};
+
+// Daily buckets are UTC midnights; local formatting would shift the label a day west of UTC.
+function formatDay(iso: string): string {
+	return new Date(iso).toLocaleDateString(undefined, {
+		month: "short",
+		day: "numeric",
+		timeZone: "UTC",
+	});
 }
 
 export const TimeSeriesChart = memo(function TimeSeriesChart({
 	data,
 	metric,
 }: TimeSeriesChartProps) {
-	const colors = useMemo(() => getChartColors(), []);
-
-	const chartData = useMemo(
-		() => data.map((d) => ({ date: d.date.slice(0, 10), value: d[metric] })),
-		[data, metric],
-	);
-
-	const gradId = `tsc-area-${metric}`;
+	const label = METRIC_LABEL[metric];
+	const labels = useMemo(() => data.map((d) => d.date.slice(0, 10)), [data]);
+	const values = useMemo(() => data.map((d) => d[metric]), [data, metric]);
 
 	return (
-		<ResponsiveContainer width="100%" height={280}>
-			<LineChart
-				data={chartData}
-				margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
-			>
-				<defs>
-					<linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-						<stop offset="5%" stopColor={colors.primary} stopOpacity={0.08} />
-						<stop offset="95%" stopColor={colors.primary} stopOpacity={0} />
-					</linearGradient>
-				</defs>
-				<CartesianGrid {...gridProps} />
-				<XAxis dataKey="date" {...xAxisProps} />
-				<YAxis {...yAxisProps} />
-				<Tooltip content={<CustomTooltip />} />
-				<Area
-					type="monotone"
-					dataKey="value"
-					stroke="none"
-					fill={`url(#${gradId})`}
-					isAnimationActive={false}
-				/>
-				<Line
-					type="monotone"
-					dataKey="value"
-					stroke={colors.primary}
-					strokeWidth={2}
-					dot={false}
-					isAnimationActive={false}
-				/>
-			</LineChart>
-		</ResponsiveContainer>
+		<LineChart
+			series={[{ name: label, data: values }]}
+			labels={labels}
+			formatLabel={formatDay}
+			formatValue={(v) => v.toLocaleString()}
+			area
+			height={280}
+			aria-label={`${label} over time`}
+		/>
 	);
 });
 

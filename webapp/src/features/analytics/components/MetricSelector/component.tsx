@@ -1,33 +1,33 @@
+import { FilterTabs } from "@optimusfoundry/quiet";
 import type { MetricKey } from "../TimeSeriesChart/component";
-import styles from "./component.module.scss";
 
 interface MetricSelectorProps {
 	value: MetricKey;
 	onChange: (metric: MetricKey) => void;
 }
 
-const METRICS: { key: MetricKey; label: string }[] = [
-	{ key: "impressions", label: "Impressions" },
-	{ key: "likes", label: "Likes" },
-	{ key: "comments", label: "Comments" },
-	{ key: "shares", label: "Shares" },
+const METRICS = [
+	{ value: "impressions", label: "Impressions" },
+	{ value: "likes", label: "Likes" },
+	{ value: "comments", label: "Comments" },
+	{ value: "shares", label: "Shares" },
 ];
+
+function isMetricKey(value: string): value is MetricKey {
+	return METRICS.some((metric) => metric.value === value);
+}
 
 export function MetricSelector({ value, onChange }: MetricSelectorProps) {
 	return (
-		<div className={styles.root} role="tablist" aria-label="Select metric">
-			{METRICS.map(({ key, label }) => (
-				<button
-					key={key}
-					type="button"
-					role="tab"
-					aria-selected={value === key}
-					className={`${styles.tab} ${value === key ? styles.active : ""}`}
-					onClick={() => onChange(key)}
-				>
-					{label}
-				</button>
-			))}
-		</div>
+		<FilterTabs
+			size="sm"
+			showCounts={false}
+			label="Select metric"
+			items={METRICS}
+			value={value}
+			onChange={(next) => {
+				if (isMetricKey(next)) onChange(next);
+			}}
+		/>
 	);
 }
