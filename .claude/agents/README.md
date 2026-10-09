@@ -281,7 +281,7 @@ Backend worker agents read from `base-server/docs/`:
 | `HANDLERS.md` | Request/response structs, handler/processor templates, routing |
 | `KAFKA_SETUP.md` | Producer, consumer/worker, bootstrap integration |
 
-Frontend agents read quiet's docs in `webapp/vendor/quiet/` (DESIGN.md, docs/guidelines/), the repo copy of quiet's `quiet-app` skill (`.claude/skills/quiet-app/`) and the template supplement in `webapp/docs/`. quiet's docs are cited as `quiet:<package-root path>#<anchor>` (e.g. `quiet:docs/guidelines/spacing.md#job-tokens`) and exist only after `npm install` in `webapp/`. growth-tools' product screens still import Proto (`@optimusfoundry/proto-design-system`, frozen) until CH-001 (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) rewrites them; new UI is built on quiet.
+Frontend agents read quiet's docs in `webapp/vendor/quiet/` (DESIGN.md, docs/guidelines/), the repo copy of quiet's `quiet-app` skill (`.claude/skills/quiet-app/`) and the template supplement in `webapp/docs/`. quiet's docs are cited as `quiet:<package-root path>#<anchor>` (e.g. `quiet:docs/guidelines/spacing.md#job-tokens`) and exist only after `npm install` in `webapp/`.
 
 **`webapp/docs/`:**
 

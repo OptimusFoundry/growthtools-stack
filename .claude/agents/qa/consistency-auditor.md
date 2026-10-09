@@ -37,10 +37,7 @@ Fan out `audit-checker` — **one per rule-group below, single parallel batch (5
 - No barrel exports (`index.ts` re-exports) anywhere.
 - AP-10 — see `frontend-review-rules`.
 - **No Proto remnants** — the target is 0 (the template's [migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md) §4.5).
-  In growth-tools the product screens stay on Proto until CH-001
-  (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) lands, so until then each `PROTO` line is
-  remaining CH-001 work, not a regression. Give the checker Script D below verbatim; each `PROTO`
-  line it prints is one finding.
+  Give the checker Script D below verbatim; each `PROTO` line it prints is one finding.
 - No `any`; nested render ternaries — Auto-blocks, see `frontend-review-rules`.
 
 **Backend (`base-server`):**
@@ -371,7 +368,7 @@ print('\n'.join(out) if out else "0 findings")
 A stdlib-only walker over every text file under the repo root. A label fires only under its
 path prefix (`webapp/` for the CSS-var, theme-name and toast-locator labels, the whole repo for
 the rest); `EXC` is the one exception registry and must match the documented-exceptions table
-in the CH-001 plan's F17 section. Each `PROTO` line is one finding; a clean tree prints
+in the H2 section of `docs/plans/2026-10-08-quiet-product-rewrite.md`. Each `PROTO` line is one finding; a clean tree prints
 `0 findings`.
 
 ```python
@@ -398,20 +395,20 @@ EXC = {                                  # path glob -> labels allowed there
  'webapp/src/lib/migrateTheme.ts': {'PROTO-THEMEKEY', 'PROTO-THEMENAME'},
  'webapp/e2e/shell.spec.ts': {'PROTO-THEMEKEY', 'PROTO-THEMENAME'},
  'webapp/.stylelintrc.json': {'PROTO-VAR'},
- 'webapp/docs/scss-validation-setup.md': {'PROTO-VAR'},
- 'webapp/src/routes/api-keys.tsx': {'PROTO-THEMENAME'},
+ 'webapp/biome.json': {'PROTO-IMPORT', 'PROTO-PKG'},
+ 'webapp/vendor/*': ALL,
+ 'webapp/storybook-static/*': ALL,
  '.claude/skills/frontend-composition-rules/SKILL.md': {'PROTO-BANNER'},
  '.claude/skills/frontend-e2e-rules/SKILL.md': {'PROTO-THEMEKEY'},
- 'README.md': {'PROTO-STORYBOOK'},
- 'docs/design-system-migration.md': ALL,
+ 'base-server/internal/github/*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'base-server/internal/infra/clients/storybook/*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'base-server/migrations/V0053__*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'docs/GITHUB_AUTOPOST_*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'docs/PRD.md': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'docs/prds/*': ALL,
  'docs/briefs/*': ALL,
  'docs/plans/*': ALL,
  'docs/superpowers/*': ALL,
- 'scripts/lsp_audit/test_lsp_hint.py': {'PROTO-PKG'},
- 'landing/*': {'PROTO-VAR'},
- 'help-docs/*': {'PROTO-VAR'},
- 'ios/*': {'PROTO-FONT', 'PROTO-TOKENS'},
- 'mockups/*': {'PROTO-FONT', 'PROTO-TOKENS'},
  '.claude/agents/engineering/ios/*': {'PROTO-FONT', 'PROTO-TOKENS'},
  '.claude/skills/ios-*/*': {'PROTO-FONT', 'PROTO-TOKENS'},
  '.claude/agents/qa/consistency-auditor.md': ALL,
@@ -473,7 +470,7 @@ Behaviours neither script may "fix" — each confirmed empirically against this 
   naming a skill that was renamed or never existed is a `REVERSE` finding, not a `FileNotFoundError`:
   a checker that raises reports nothing at all, so the run reads as infrastructure failure rather
   than corpus drift and the finding is lost twice over.
-- Baselines for the current tree (CH-001, after the old web UI-kit docs left the frontend corpus): script
+- Baselines for the current tree (Proto removed, the old web UI-kit docs gone from the frontend corpus): script
   A prints nothing (it has no summary line); script B `scanned 2 forward pointers, 4 reverse
   rule-IDs, 8 frontend skills, 42 agents, 231 skill-name citations`; script C `scanned 57 forward
   pointers, 0 reverse rule-IDs, across 11 source docs` and `0 findings`. Script C's reverse direction
@@ -483,14 +480,15 @@ Behaviours neither script may "fix" — each confirmed empirically against this 
   matches, and only `webapp/docs/` carries backlinks. Every count is a **floor**, not an equality —
   each pointer or backlink added raises it — so a run that checks far fewer has a broken regex, not
   a clean corpus. Report that as a finding too.
-- Findings that predate CH-001 and are out of its scope: 7 iOS `BUDGET` (`ios-models-networking-rules`,
+- Known standing findings, out of scope for the frontend corpus: 7 iOS `BUDGET` (`ios-models-networking-rules`,
   `ios-screens-rules`, `ios-testing-rules`, and the agents `ios-code-reviewer`, `ios-plan-critic`,
   `ios-plan-writer`, `ios-supervisor`) and 2 `SKILLNAME` (`ios-xxx` quoted in this file,
   `ios-worktree` in `.claude/rules/ios-workflow.md`). Frontend `BUDGET` must read 0. Pragma only
   what genuinely trips direction 5 — a needless exemption is the same silent loosening as a slack
   regex.
-- Script D lists every Proto remnant still on the tree until the CH-001 tickets that own them land;
-  after its final sweep (F17) it must read `0 findings`.
+- Script D must read `0 findings`. Proto is gone from the tree, so any `PROTO` line is a regression:
+  remove the remnant, or add it to `EXC` only when it is a legitimate non-Proto hit (the storybook
+  autopost feature's `proto-design-system` repo name, vendored quiet, historical plans).
 
 **Verified against seeded mismatches** in a scratch copy of the repo (each reverted after; a check
 never seen to fail is not a verified check):

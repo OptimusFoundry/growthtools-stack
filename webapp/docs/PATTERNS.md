@@ -2,8 +2,7 @@
 
 > **growth-tools note.** These docs come from the saas-template at `quiet-1`; their worked examples cite the
 > template's `/webhooks` and `/api-keys` screens, which growth-tools doesn't have. The patterns apply unchanged
-> to `/posts`, `/blog`, `/media`, `/analytics` and `/admin`. Until CH-001
-> (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) lands, those product screens are still on Proto.
+> to `/posts`, `/blog`, `/media`, `/analytics` and `/admin`.
 
 How pages in this app compose quiet components. Components, layouts, spacing and type are specified in quiet's
 [guidelines](../vendor/quiet/docs/guidelines/README.md); props are authoritative in the component source (`.tsx`)

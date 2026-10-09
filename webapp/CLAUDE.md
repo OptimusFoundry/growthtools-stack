@@ -21,14 +21,13 @@ npm run build-storybook   # Static Storybook build
 - **SCSS Modules** — scoped styles with design tokens
 - **quiet** — `@optimusfoundry/quiet`, vendored in `webapp/vendor/quiet` (`"file:./vendor/quiet"`; the version and commit are in `vendor/quiet/quiet.manifest.json`). It is a read-only copy: `npm run quiet:check` (in CI) fails on any edit, and the `quiet-guard` hook blocks edits. A quiet bug is fixed in the quiet repo, then re-synced with `node <quiet>/scripts/quiet.mjs sync` from `webapp/`. One entry point: `import { Button, Stack } from "@optimusfoundry/quiet"`. Themes `foundry` / `foundry-dark` with a light/dark toggle in the Topbar (no theme picker); styles load once in `main.tsx`. Start at `vendor/quiet/DESIGN.md` and `vendor/quiet/docs/guidelines/README.md`.
 - **`quiet-app` skill** ([`.claude/skills/quiet-app/SKILL.md`](../.claude/skills/quiet-app/SKILL.md)) — the entry point for UI work. Its last step is the audit: `npx quiet-audit <url> --width 1280,390 --theme foundry,foundry-dark`.
-- **Proto (temporary)** — `@optimusfoundry/proto-design-system`, imported as `@/proto-design-system/<path>/<File>`, stays installed only for the product screens not yet rewritten (`components/create-post`, `features/{account,posts,blog,media,analytics,admin}`, their routes). CH-001 ([brief](../docs/briefs/2026-10-08-quiet-product-rewrite.md)) rewrites them on quiet and removes Proto. Don't add new Proto imports.
 - **Biome** (code) + **Stylelint** (SCSS)
 - **Playwright** + **MSW** for testing
 
 ## Key Rules
 
 - **Use quiet components** — check quiet's exports (`vendor/quiet/src/index.ts`) and the component source first (`vendor/quiet/src/components/<group>/<Name>.tsx`); props are authoritative there. No deep imports.
-- **Design tokens only** — `var(--q-space-2)` not `16px`; `var(--q-bg)` not `#fff`. Token tiers: `vendor/quiet/DESIGN.md`; Stylelint's `quiet/known-tokens` rejects any `var(--q-…)` that isn't a real quiet token. Proto `--color-*` / `--space-N` vars survive only in the not-yet-migrated product SCSS.
+- **Design tokens only** — `var(--q-space-2)` not `16px`; `var(--q-bg)` not `#fff`. Token tiers: `vendor/quiet/DESIGN.md`; Stylelint's `quiet/known-tokens` rejects any `var(--q-…)` that isn't a real quiet token.
 - **SCSS modules** — no inline styles for layout
 - **No barrel exports** — import directly from source files
 - **No `any`** — use `unknown` with type guards
@@ -42,7 +41,7 @@ npm run build-storybook   # Static Storybook build
 - **Dividers are elements** — quiet `Rule`; `Stat` / `StatCard` own their cell rule.
 - **Mixed-width rows** — `Grid columns={12}` with `Col span` (`1+10+1`, `2+8+2`, `1+11`); stylelint bans `display: grid`.
 - **Wrap rows use Stack** — `Stack direction="row" wrap gap="sm"`; its default `gap` is `sm`, set it where it matters.
-- **Toasts only via `useNotify()`** (`@/hooks/useNotify`), never quiet's `toast()` and never Proto's `useBannerCenter` in new code.
+- **Toasts only via `useNotify()`** (`@/hooks/useNotify`), never quiet's `toast()`.
 - **Icons and links** — `AppIcon` (`@/components/AppIcon/AppIcon`); in-app links through quiet components and the root `linkComponent` (`RouterLink`).
 - **quiet drops `id`, `data-*`, `aria-*` on most components** — wrap in a native element; see [docs/TEMPLATE-PATTERNS.md](docs/TEMPLATE-PATTERNS.md).
 
@@ -63,4 +62,3 @@ VITE_API_URL=http://localhost:3000
 - [Page templates](docs/PAGE-TEMPLATES.md) — scaffolds for the page layouts
 - [Testing patterns](docs/TESTING-PATTERNS.md) — Playwright + MSW
 - [Accessibility patterns](docs/A11Y-PATTERNS.md) — aria-label uniqueness, instance discriminators, region landmarks
-- Proto → quiet guide — the template's [migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md) §4 (rename map, token map, codemods)

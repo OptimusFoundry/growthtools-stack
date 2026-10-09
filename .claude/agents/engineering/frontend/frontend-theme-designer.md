@@ -122,10 +122,6 @@ Two roles only, sans and mono (`T-1` — see `frontend-design-rules`); a theme m
 - No cross-exposure: an instance never sees siblings' in-flight edits (finished themes are fine as reference).
 - Independent accessibility and distinctiveness lenses per theme, never one holistic pass.
 
-## Porting a Proto theme
-
-For downstream products moving a Proto theme onto quiet, follow the template's [migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md) §3.2: map the base-50…950 palette to the eight gray stops, the accent to `--q-molten-500`, the status colours to `--q-status-*`, then fonts and radius, and compare side-by-side screenshots.
-
 ## Output
 
 ```
