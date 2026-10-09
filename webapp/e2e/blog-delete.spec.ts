@@ -58,6 +58,17 @@ async function openEditorDeleteDialog(
 	return page.getByRole("dialog", { name: DIALOG_NAME });
 }
 
+// A toast under an open Dialog is inert, so a failed delete reports inline
+// and keeps the dialog open for retry.
+async function expectInlineDeleteError(page: import("@playwright/test").Page) {
+	const dialog = page.getByRole("dialog", { name: DIALOG_NAME });
+	await expect(dialog.getByRole("alert")).toContainText(
+		/couldn't delete blog post/i,
+	);
+	await expect(dialog).toBeVisible();
+	await expect(toastLocator(page, "alert")).toHaveCount(0);
+}
+
 test.describe("Blog Delete", () => {
 	// =========================================================================
 	// AC1 — delete button visible for every status, both entry points
@@ -274,9 +285,7 @@ test.describe("Blog Delete", () => {
 				await dialog.getByRole("button", { name: /^delete$/i }).click();
 				await page.waitForLoadState("networkidle");
 
-				await expect(page.getByRole("alert")).toContainText(
-					/couldn't delete blog post/i,
-				);
+				await expectInlineDeleteError(page);
 				await expect(page.getByText(title)).toBeVisible();
 			});
 		}
@@ -291,9 +300,7 @@ test.describe("Blog Delete", () => {
 			await dialog.getByRole("button", { name: /^delete$/i }).click();
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByRole("alert")).toContainText(
-				/couldn't delete blog post/i,
-			);
+			await expectInlineDeleteError(page);
 			await expect(page.getByText(title)).toBeVisible();
 		});
 	});
@@ -313,9 +320,7 @@ test.describe("Blog Delete", () => {
 				await page.waitForLoadState("networkidle");
 
 				await expect(page).toHaveURL(new RegExp(`/blog/${fullBlogPost.id}$`));
-				await expect(page.getByRole("alert")).toContainText(
-					/couldn't delete blog post/i,
-				);
+				await expectInlineDeleteError(page);
 			});
 		}
 
@@ -330,9 +335,7 @@ test.describe("Blog Delete", () => {
 			await page.waitForLoadState("networkidle");
 
 			await expect(page).toHaveURL(new RegExp(`/blog/${fullBlogPost.id}$`));
-			await expect(page.getByRole("alert")).toContainText(
-				/couldn't delete blog post/i,
-			);
+			await expectInlineDeleteError(page);
 		});
 	});
 });

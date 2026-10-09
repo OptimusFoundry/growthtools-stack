@@ -26,6 +26,8 @@ export interface AsyncListProps<T> {
 	 * to a vertical list container; pass your own class for grid layouts.
 	 */
 	listClassName?: string;
+	/** Wraps the mapped items instead of the default list container. */
+	renderContainer?: (children: ReactNode) => ReactNode;
 	renderItem: (item: T, index: number) => ReactNode;
 }
 
@@ -42,6 +44,7 @@ export function AsyncList<T>({
 	empty,
 	emptyFiltered,
 	listClassName,
+	renderContainer,
 	renderItem,
 }: AsyncListProps<T>) {
 	if (loading) {
@@ -51,6 +54,9 @@ export function AsyncList<T>({
 	}
 	if (items.length === 0) {
 		return <>{hasActiveFilter ? (emptyFiltered ?? empty) : empty}</>;
+	}
+	if (renderContainer) {
+		return <>{renderContainer(items.map((item, i) => renderItem(item, i)))}</>;
 	}
 	return (
 		<motion.div

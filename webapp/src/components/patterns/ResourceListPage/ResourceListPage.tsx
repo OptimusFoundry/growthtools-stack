@@ -1,8 +1,7 @@
+import { Stack } from "@optimusfoundry/quiet";
 import type { ReactNode } from "react";
 import { Topbar } from "@/components/Layout/Topbar";
 import { AsyncList } from "@/components/patterns/AsyncList/AsyncList";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import styles from "./ResourceListPage.module.scss";
 
 export interface ResourceListPageProps<T> {
 	/** Topbar title — e.g. "Posts", "Blog". */
@@ -23,6 +22,8 @@ export interface ResourceListPageProps<T> {
 	emptyFiltered?: ReactNode;
 	/** Override the list container class (e.g. for grid layouts). */
 	listClassName?: string;
+	/** Wraps the rendered items (e.g. in a quiet Grid) instead of the default list container. */
+	renderContainer?: (children: ReactNode) => ReactNode;
 	renderItem: (item: T, index: number) => ReactNode;
 	/** Confirmation modal or any overlays belonging to this page. */
 	overlays?: ReactNode;
@@ -45,16 +46,17 @@ export function ResourceListPage<T>({
 	empty,
 	emptyFiltered,
 	listClassName,
+	renderContainer,
 	renderItem,
 	overlays,
 }: ResourceListPageProps<T>) {
 	return (
 		<>
 			<Topbar title={title} actions={topbarAction} />
-			<Stack gap="lg" className={styles.page} animate>
+			<Stack gap="lg" animated>
 				{hero}
 				{filters}
-				<div className={styles.content}>
+				<div>
 					<AsyncList
 						loading={loading}
 						items={items}
@@ -62,6 +64,7 @@ export function ResourceListPage<T>({
 						empty={empty}
 						emptyFiltered={emptyFiltered}
 						listClassName={listClassName}
+						renderContainer={renderContainer}
 						renderItem={renderItem}
 					/>
 				</div>

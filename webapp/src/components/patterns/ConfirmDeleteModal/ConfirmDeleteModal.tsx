@@ -1,4 +1,4 @@
-import { Button, Dialog, Text } from "@optimusfoundry/quiet";
+import { Alert, Button, Dialog, Text } from "@optimusfoundry/quiet";
 import type { ConfirmableDeleteFlow } from "@/hooks/useConfirmableDelete";
 
 /**
@@ -27,6 +27,11 @@ export function ConfirmDeleteModal({ flow }: { flow: ConfirmableDeleteFlow }) {
 				</>
 			}
 		>
+			{flow.error && (
+				<Alert variant="error" title={flow.error}>
+					Please try again.
+				</Alert>
+			)}
 			<Text color="muted">{flow.confirmBody}</Text>
 		</Dialog>
 	);

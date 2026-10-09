@@ -16,7 +16,6 @@ import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
-import type { ExistingFile } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
 import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
 import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
 import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
@@ -150,17 +149,6 @@ export function BlogWizard({
 	const isStreaming = phase === "generating";
 	const hasPreview = Boolean(streamingContent || content);
 
-	const existingMediaFiles = useMemo<ExistingFile[]>(
-		() =>
-			existingMedia.map((m) => ({
-				id: m.id,
-				name: m.filename,
-				size: m.sizeBytes,
-				contentType: m.contentType,
-				url: m.url ?? undefined,
-			})),
-		[existingMedia],
-	);
 	const existingMediaIds = useMemo(
 		() => existingMedia.map((m) => m.id),
 		[existingMedia],
@@ -474,7 +462,7 @@ export function BlogWizard({
 
 						<MediaUploadSection
 							pendingFiles={managedMedia.uploadingFiles}
-							existingMedia={existingMediaFiles}
+							existingMedia={existingMedia}
 							onFilesChange={managedMedia.onFilesChange}
 							onRemoveExisting={handleRemoveMedia}
 							featuredImageId={featuredImageId}

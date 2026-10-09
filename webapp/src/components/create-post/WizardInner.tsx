@@ -711,13 +711,7 @@ export function WizardInner({
 							platformContent={state.platformContent}
 							pendingFiles={managedMedia.uploadingFiles}
 							uploading={managedMedia.isUploading}
-							existingMedia={state.uploadedMedia.map((m) => ({
-								id: m.id,
-								name: m.filename,
-								size: m.sizeBytes,
-								contentType: m.contentType,
-								url: m.url,
-							}))}
+							existingMedia={state.uploadedMedia}
 							onRemoveExistingMedia={actions.handleRemoveUploadedMedia}
 							mediaChanged={state.mediaChangedSinceGeneration}
 							generating={state.generating}

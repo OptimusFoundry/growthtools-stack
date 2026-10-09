@@ -23,6 +23,8 @@ export interface ConfirmableDeleteFlow {
 	targetId: string | null;
 	isOpen: boolean;
 	isLoading: boolean;
+	/** Inline failure message; a toast would sit under the open dialog. */
+	error: string | null;
 	modalTitle: string;
 	confirmBody: string;
 	request: (id: string) => void;
@@ -45,11 +47,20 @@ export function useConfirmableDelete<TResult = unknown>({
 	const { notify } = useNotify();
 	const [targetId, setTargetId] = useState<string | null>(null);
 
-	const request = useCallback((id: string) => setTargetId(id), []);
-	const cancel = useCallback(() => setTargetId(null), []);
+	const [error, setError] = useState<string | null>(null);
+
+	const request = useCallback((id: string) => {
+		setError(null);
+		setTargetId(id);
+	}, []);
+	const cancel = useCallback(() => {
+		setError(null);
+		setTargetId(null);
+	}, []);
 
 	const confirm = useCallback(async () => {
 		if (!targetId) return;
+		setError(null);
 		try {
 			const result = await mutate(targetId);
 			setTargetId(null);
@@ -68,11 +79,7 @@ export function useConfirmableDelete<TResult = unknown>({
 			}
 			onSuccess?.(result);
 		} catch {
-			notify({
-				status: "error",
-				title: `Couldn't delete ${copy.resource}`,
-				description: "Please try again.",
-			});
+			setError(`Couldn't delete ${copy.resource}`);
 		}
 	}, [targetId, mutate, onSuccess, getWarning, notify, copy.resource]);
 
@@ -87,6 +94,7 @@ export function useConfirmableDelete<TResult = unknown>({
 		targetId,
 		isOpen: targetId !== null,
 		isLoading: mutating,
+		error,
 		modalTitle: copy.modalTitle ?? `Delete ${copy.resource}`,
 		confirmBody,
 		request,

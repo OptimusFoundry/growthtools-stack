@@ -1,0 +1,22 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--q-space-2);
+}
+
+// quiet's own row list cannot show external progress or errors, so the
+// product renders PendingUploadRow instead.
+.intake [class~="q-file-upload__list"] {
+	display: none;
+}
+
+.note {
+	margin: 0;
+	color: var(--q-fg-muted);
+	font-size: var(--q-text-sm);
+}
+
+.pending {
+	margin: 0;
+	padding: 0;
+}

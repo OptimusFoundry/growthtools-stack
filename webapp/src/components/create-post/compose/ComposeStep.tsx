@@ -1,11 +1,9 @@
-import type {
-	ExistingFile,
-	UploadedFile,
-} from "@/proto-design-system/components/composite/FileUpload/FileUpload";
 import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
 import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
 import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+import type { MediaItem } from "@/types/media";
+import type { PendingUpload } from "@/types/mediaUpload";
 import type { PlatformType } from "@/types/platform";
 import styles from "../CreatePostWizard.module.scss";
 import type { WizardContentType } from "../useCreatePostWizard";
@@ -19,8 +17,8 @@ export interface ComposeStepProps {
 	contentType: WizardContentType;
 	selectedPlatforms: PlatformType[];
 	platformContent: Partial<Record<PlatformType, string>>;
-	pendingFiles: UploadedFile[];
-	existingMedia: ExistingFile[];
+	pendingFiles: PendingUpload[];
+	existingMedia: MediaItem[];
 	onRemoveExistingMedia: (id: string) => void;
 	/** True when the attached media set changed after the last successful
 	 * generation. Drives the "regenerate before publishing" banner. */
@@ -35,7 +33,7 @@ export interface ComposeStepProps {
 	onContentTypeChange: (contentType: WizardContentType) => void;
 	onMaxThreadPartsChange: (value: number) => void;
 	onTogglePlatform: (platform: PlatformType) => void;
-	onFilesChange: (files: UploadedFile[]) => void;
+	onFilesChange: (files: PendingUpload[]) => void;
 	onGenerate: () => void;
 }
 

@@ -2,7 +2,8 @@
  * Blog — Featured Image Toggle E2E Tests
  *
  * Covers the per-tile "featured image" toggle in the blog media grid
- * (MediaUploadSection / FileUpload). Each image tile can be marked as the
+ * (MediaUploadSection, the product-local MediaUpload built on quiet's
+ * FileUpload; every locator below is unchanged by that rewrite). Each image tile can be marked as the
  * post's featured image (single-select); video tiles never render the
  * toggle. Split out of blog.spec.ts to keep spec files under the ~600-line
  * budget (see frontend-e2e-rules).
