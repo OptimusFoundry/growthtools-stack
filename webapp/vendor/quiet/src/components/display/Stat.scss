@@ -1,0 +1,39 @@
+// Stat — big tight number over a mono label. BEM: .q-stat, __value, __label.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-stat-gap: var(--q-space-1);
+    --q-stat-value-font-size: 48px; // between --q-text-4xl (40) and -5xl (52); unique to Stat
+    --q-stat-value-weight: var(--q-weight-bold);
+    --q-stat-value-leading: var(--q-leading-none);
+    --q-stat-value-tracking: var(--q-tracking-display);
+    --q-stat-value-color: var(--q-fg);
+    --q-stat-label-font-size: var(--q-text-2xs);
+    --q-stat-label-tracking: var(--q-tracking-mono);
+    --q-stat-label-color: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-stat-gap);
+  }
+
+  .q-stat__value {
+    color: var(--q-stat-value-color);
+    font-size: var(--q-stat-value-font-size);
+    font-weight: var(--q-stat-value-weight);
+    letter-spacing: var(--q-stat-value-tracking);
+    line-height: var(--q-stat-value-leading);
+  }
+
+  .q-stat__label {
+    color: var(--q-stat-label-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-stat-label-font-size);
+    letter-spacing: var(--q-stat-label-tracking);
+    text-transform: uppercase;
+  }
+}

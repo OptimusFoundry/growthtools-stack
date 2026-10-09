@@ -1,0 +1,124 @@
+// Tag — mono caps pill; removable and selectable. BEM: .q-tag, __icon, __remove;
+// --sm, --ink, --{info|success|warning|error}, --selectable, --with-avatar, --disabled;
+// selected = [aria-pressed="true"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-tag-gap: var(--q-space-0-75);
+    --q-tag-radius: var(--q-radius-pill);
+    --q-tag-tracking: var(--q-tracking-mono);
+    --q-tag-font-size: var(--q-text-2xs);
+    --q-tag-py: var(--q-space-0-75);
+    --q-tag-px: var(--q-space-1-5);
+    --q-tag-sm-font-size: var(--q-text-3xs);
+    --q-tag-sm-py: var(--q-space-0-5);
+    --q-tag-sm-px: var(--q-space-1-25);
+    // The reference renders no left padding (its inline paddingLeft: undefined cleared the
+    // shorthand's left side); parity keeps that. An avatar sits 4px in.
+    --q-tag-pl: 0;
+    --q-tag-avatar-pl: var(--q-space-0-5);
+    --q-tag-fg: var(--q-fg-muted);
+    --q-tag-border: var(--q-border);
+    --q-tag-ink-fg: var(--q-fg);
+    --q-tag-ink-border: var(--q-fg);
+    --q-tag-selected-bg: var(--q-fg);
+    --q-tag-info-fg: var(--q-status-info-fg);
+    --q-tag-info-bg: var(--q-status-info-bg);
+    --q-tag-info-border: var(--q-status-info-border);
+    --q-tag-success-fg: var(--q-status-success-fg);
+    --q-tag-success-bg: var(--q-status-success-bg);
+    --q-tag-success-border: var(--q-status-success-border);
+    --q-tag-warning-fg: var(--q-status-warning-fg);
+    --q-tag-warning-bg: var(--q-status-warning-bg);
+    --q-tag-warning-border: var(--q-status-warning-border);
+    --q-tag-error-fg: var(--q-status-error-fg);
+    --q-tag-error-bg: var(--q-status-error-bg);
+    --q-tag-error-border: var(--q-status-error-border);
+    --q-tag-selected-fg: var(--q-bg);
+    --q-tag-disabled-opacity: 0.4;
+    --q-tag-remove-font-size: var(--q-text-sm);
+    --q-tag-remove-nudge: calc(var(--q-space-0-25) * -1);
+  }
+}
+
+@layer q.components {
+  .q-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-tag-gap);
+    padding: var(--q-tag-py) var(--q-tag-px);
+    padding-left: var(--q-tag-pl);
+    border: var(--q-hairline) solid var(--q-tag-border);
+    border-radius: var(--q-tag-radius);
+    background: transparent;
+    color: var(--q-tag-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-tag-font-size);
+    letter-spacing: var(--q-tag-tracking);
+    line-height: var(--q-leading-none);
+    text-transform: uppercase;
+    cursor: default;
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      color var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &--sm {
+      padding: var(--q-tag-sm-py) var(--q-tag-sm-px);
+      padding-left: var(--q-tag-pl);
+      font-size: var(--q-tag-sm-font-size);
+    }
+
+    &--with-avatar {
+      padding-left: var(--q-tag-avatar-pl);
+    }
+
+    &--ink,
+    &--selectable:is(:hover, :focus-visible):not(:disabled, [aria-pressed="true"]) {
+      border-color: var(--q-tag-ink-border);
+      color: var(--q-tag-ink-fg);
+    }
+
+    // After --ink so status wins over tone; hover and selected still win on specificity.
+    @each $status in info, success, warning, error {
+      &--#{$status} {
+        border-color: var(--q-tag-#{$status}-border);
+        background: var(--q-tag-#{$status}-bg);
+        color: var(--q-tag-#{$status}-fg);
+      }
+    }
+
+    &--selectable {
+      cursor: pointer;
+
+      &[aria-pressed="true"] {
+        border-color: var(--q-tag-ink-border);
+        background: var(--q-tag-selected-bg);
+        color: var(--q-tag-selected-fg);
+      }
+    }
+
+    &--disabled {
+      opacity: var(--q-tag-disabled-opacity);
+
+      &.q-tag--selectable {
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .q-tag__icon {
+    display: inline-flex;
+  }
+
+  .q-tag__remove {
+    margin-right: var(--q-tag-remove-nudge);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: var(--q-tag-remove-font-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+  }
+}

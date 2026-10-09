@@ -1,0 +1,41 @@
+// Global element defaults from the reference base.css, scoped to what quiet owns: a QuietRoot
+// subtree, or the whole document once ThemeProvider/applyTheme marks <html data-quiet>. Another
+// design system on the same page keeps its own element styles. :where() keeps specificity at
+// zero so any component class wins without a fight.
+
+// The reference sets type on <body>; a QuietRoot has no body of its own, so its outermost root
+// carries it instead. Nested roots inherit, as they did from <body>.
+:where([data-quiet]:not([data-quiet] [data-quiet])) {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+  font-family: var(--q-font-sans);
+  font-size: var(--q-text-lg);
+  line-height: var(--q-leading-body);
+}
+
+:where(html[data-quiet] > body) {
+  margin: 0;
+}
+
+:where([data-quiet] a) {
+  color: var(--q-fg);
+  text-decoration: none;
+  transition: color var(--q-dur-hover) var(--q-ease-linear);
+}
+
+:where([data-quiet] a:hover) {
+  color: var(--q-accent);
+}
+
+[data-quiet]::selection,
+[data-quiet] ::selection {
+  background: var(--q-selection-bg);
+  color: var(--q-selection-fg);
+}
+
+// A themed subtree paints its own ground, so a dark section reads as dark. Another system's
+// [data-theme] (e.g. on <html>) is not quiet's to paint.
+:where([data-quiet], [data-quiet] [data-theme]) {
+  background: var(--q-bg);
+  color: var(--q-fg-body);
+}

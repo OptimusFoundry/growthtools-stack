@@ -1,0 +1,45 @@
+// Sparkline — a word-sized trend line; the last point is a dot.
+// BEM: .q-sparkline, __line, __area, __dot; --accent (default), --ink.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-sparkline-accent: var(--q-chart-series-1);
+    --q-sparkline-ink: var(--q-chart-series-2);
+    --q-sparkline-line-width: 1.5px;
+    --q-sparkline-dot-ring: var(--q-chart-gap);
+  }
+}
+
+@layer q.components {
+  .q-sparkline {
+    --_color: var(--q-sparkline-accent);
+
+    display: inline-block;
+    flex: none;
+    overflow: visible;
+    vertical-align: middle;
+
+    &--ink {
+      --_color: var(--q-sparkline-ink);
+    }
+  }
+
+  .q-sparkline__line {
+    fill: none;
+    stroke: var(--_color);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: var(--q-sparkline-line-width);
+  }
+
+  .q-sparkline__area {
+    fill: var(--_color);
+    fill-opacity: var(--q-chart-area-opacity);
+  }
+
+  .q-sparkline__dot {
+    fill: var(--_color);
+    stroke: var(--q-sparkline-dot-ring);
+    stroke-width: var(--q-sparkline-line-width);
+  }
+}

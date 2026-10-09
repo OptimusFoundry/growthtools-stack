@@ -21,6 +21,12 @@ import type { ApiSitePublishTarget } from "../../../src/api/types/sitePublishTar
 import type { ApiTierInfo, ApiTierName } from "../../../src/api/types/tier";
 import type { ApiUser } from "../../../src/api/types/user";
 import type { ApiVoiceProfile } from "../../../src/api/types/voiceProfile";
+import type {
+	GitHubCommit,
+	GitHubCommitSummary,
+} from "../../../src/hooks/useGitHubCommits";
+import type { GitHubConnection } from "../../../src/hooks/useGitHubConnection";
+import type { GitHubAvailableRepo } from "../../../src/hooks/useGitHubRepos";
 
 // ============================================================================
 // Tier Configurations
@@ -177,6 +183,7 @@ export const posts: ApiPost[] = [
 		tags: ["announcement", "product"],
 		ai_generated: false,
 		source: "manual",
+		platforms: ["x", "linkedin"],
 		created_at: now,
 		updated_at: now,
 	},
@@ -192,6 +199,7 @@ export const posts: ApiPost[] = [
 		tags: ["tips", "development"],
 		ai_generated: true,
 		source: "ai_generated",
+		platforms: [],
 		created_at: now,
 		updated_at: now,
 	},
@@ -208,6 +216,7 @@ export const posts: ApiPost[] = [
 		tags: ["community", "weekly"],
 		ai_generated: false,
 		source: "manual",
+		platforms: ["bluesky"],
 		created_at: now,
 		updated_at: now,
 	},
@@ -291,6 +300,137 @@ export const platformConnections: ApiPlatformConnection[] = [
 		updated_at: now,
 	},
 ];
+
+// ============================================================================
+// GitHub Data
+// ============================================================================
+
+export const githubConnection: GitHubConnection = {
+	id: "ghc_1",
+	user_id: "user_123",
+	github_user_id: 4242,
+	github_username: "octo-tester",
+	scope: "repo,read:user",
+	created_at: now,
+	updated_at: now,
+};
+
+export const githubRepos: GitHubAvailableRepo[] = [
+	{
+		id: 1001,
+		name: "growth-app",
+		full_name: "octo-tester/growth-app",
+		owner: { login: "octo-tester" },
+		default_branch: "main",
+		private: false,
+		connected: false,
+	},
+	{
+		id: 1002,
+		name: "internal-tools",
+		full_name: "octo-tester/internal-tools",
+		owner: { login: "octo-tester" },
+		default_branch: "develop",
+		private: true,
+		connected: true,
+	},
+];
+
+export const githubCommitSummaries: GitHubCommitSummary[] = [
+	{
+		id: "gh_commit_1",
+		repo_id: "repo_1",
+		sha: "a1b2c3d4e5f6a7b8c9d0",
+		author_name: "Octo Tester",
+		message: "feat: add capture pipeline\n\nAdds the worker.",
+		branch: "main",
+		pushed_at: now,
+		created_at: now,
+		repo_owner: "octo-tester",
+		repo_name: "growth-app",
+		capture_requested_at: now,
+		processed_at: now,
+		capture_artifact_count: 3,
+	},
+	{
+		id: "gh_commit_2",
+		repo_id: "repo_1",
+		sha: "b2c3d4e5f6a7b8c9d0e1",
+		author_name: "Octo Tester",
+		message: "fix: crash on empty queue",
+		branch: "main",
+		pushed_at: now,
+		created_at: now,
+		repo_owner: "octo-tester",
+		repo_name: "growth-app",
+		capture_requested_at: now,
+		processed_at: now,
+		capture_artifact_count: 0,
+		capture_error: "browser crashed",
+	},
+	{
+		id: "gh_commit_3",
+		repo_id: "repo_1",
+		sha: "c3d4e5f6a7b8c9d0e1f2",
+		author_name: "Octo Tester",
+		message: "chore: bump deps",
+		branch: "main",
+		pushed_at: now,
+		created_at: now,
+		repo_owner: "octo-tester",
+		repo_name: "growth-app",
+		capture_artifact_count: 0,
+	},
+	{
+		id: "gh_commit_4",
+		repo_id: "repo_1",
+		sha: "d4e5f6a7b8c9d0e1f2a3",
+		author_name: "Octo Tester",
+		message: "feat: launch post generator",
+		branch: "main",
+		pushed_at: now,
+		created_at: now,
+		repo_owner: "octo-tester",
+		repo_name: "growth-app",
+		capture_requested_at: now,
+		processed_at: now,
+		capture_artifact_count: 2,
+		post_id: "post_1",
+	},
+];
+
+export const githubCommit: GitHubCommit = {
+	id: "gh_commit_1",
+	repo_id: "repo_1",
+	sha: "a1b2c3d4e5f6a7b8c9d0",
+	author_name: "Octo Tester",
+	message: "feat: add capture pipeline\n\nAdds the worker.",
+	branch: "main",
+	commit_url:
+		"https://github.com/octo-tester/growth-app/commit/a1b2c3d4e5f6a7b8c9d0",
+	pushed_at: now,
+	created_at: now,
+	repo_owner: "octo-tester",
+	repo_name: "growth-app",
+	capture_requested_at: now,
+	processed_at: now,
+	capture_output: {
+		uploaded: [
+			{
+				key: "captures/a1b2/shot-1.png",
+				url: "https://cdn.example.com/shot-1.png",
+			},
+			{
+				key: "captures/a1b2/demo.mp4",
+				url: "https://cdn.example.com/demo.mp4",
+			},
+			{
+				key: "captures/a1b2/steps.json",
+				url: "https://cdn.example.com/steps.json",
+			},
+		],
+	},
+};
 
 // ============================================================================
 // Media Data
@@ -557,7 +697,8 @@ export const sitePublishTarget: ApiSitePublishTarget = {
 	updated_at: now,
 };
 
-export const voiceProfile: ApiVoiceProfile = {
+export const voiceProfile: ApiVoiceProfile &
+	Required<Pick<ApiVoiceProfile, "industry" | "target_audience">> = {
 	id: "voice_1",
 	account_id: "acc_123",
 	tone: "professional",

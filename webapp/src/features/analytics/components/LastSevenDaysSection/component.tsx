@@ -1,24 +1,37 @@
-import { Link } from "@tanstack/react-router";
+import {
+	ArrowLink,
+	Col,
+	Grid,
+	SectionHeader,
+	Skeleton,
+	Sparkline,
+	Stack,
+	StatCard,
+} from "@optimusfoundry/quiet";
 import { useAnalyticsComparison } from "@/hooks/useAnalyticsComparison";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton/Skeleton";
-import { Sparkline } from "../Sparkline/component";
-import styles from "./component.module.scss";
+import { formatDelta, formatNumber, trendOf } from "@/utils/format";
 
-function formatNumber(value: number): string {
-	if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-	return value.toLocaleString();
+const SPARKLINE_WIDTH = 240;
+const SPARKLINE_HEIGHT = 48;
+
+function formatStat(value: number | string): string {
+	return formatNumber(Number(value));
 }
 
-function TrendChip({ delta }: { delta: number }) {
-	const dir = delta > 0 ? "up" : delta < 0 ? "down" : "neutral";
-	const prefix = delta > 0 ? "+" : "";
+function SectionHead({ withLink }: { withLink: boolean }) {
 	return (
-		<span className={`${styles.trendChip} ${styles[`trendChip--${dir}`]}`}>
-			{prefix}
-			{formatNumber(delta)} vs prior 7d
-		</span>
+		<SectionHeader
+			size="sm"
+			as="h2"
+			eyebrow="LAST 7 DAYS · PERFORMANCE"
+			title="Momentum"
+			accent="at a glance"
+			actions={
+				withLink ? (
+					<ArrowLink href="/analytics?range=7d">View analytics</ArrowLink>
+				) : undefined
+			}
+		/>
 	);
 }
 
@@ -42,14 +55,15 @@ export function LastSevenDaysSection() {
 	if (loading) {
 		return (
 			<Stack gap="md">
-				<div className={styles.eyebrow}>LAST 7 DAYS · PERFORMANCE</div>
-				<h2 className={styles.heading}>
-					Momentum <em>at a glance</em>.
-				</h2>
-				<div className={styles.grid}>
-					<Skeleton height={120} />
-					<Skeleton height={120} />
-				</div>
+				<SectionHead withLink={false} />
+				<Grid columns={12} gap="md" rowGap="md">
+					<Col span={6}>
+						<Skeleton variant="rounded" height={120} />
+					</Col>
+					<Col span={6}>
+						<Skeleton variant="rounded" height={120} />
+					</Col>
+				</Grid>
 			</Stack>
 		);
 	}
@@ -59,60 +73,65 @@ export function LastSevenDaysSection() {
 	const engagements =
 		overview.totalLikes + overview.totalComments + overview.totalShares;
 
-	const impressionSpark = timeseries.map((d) => ({ value: d.impressions }));
-	const engagementSpark = timeseries.map((d) => ({
-		value: d.likes + d.comments + d.shares,
-	}));
+	const impressionSpark = timeseries.map((d) => d.impressions);
+	const engagementSpark = timeseries.map(
+		(d) => d.likes + d.comments + d.shares,
+	);
+
+	const impressionsDelta = deltas ? formatDelta(deltas.impressions) : undefined;
+	const engagementsDelta = deltas
+		? formatDelta(deltas.likes + deltas.comments + deltas.shares)
+		: undefined;
 
 	return (
 		<Stack gap="md">
-			<div className={styles.eyebrow}>LAST 7 DAYS · PERFORMANCE</div>
-			<Stack direction="row" justify="between" align="end">
-				<h2 className={styles.heading}>
-					Momentum <em>at a glance</em>.
-				</h2>
-				<Link
-					to="/analytics"
-					search={{ range: "7d" }}
-					className={styles.viewAll}
-				>
-					View analytics →
-				</Link>
-			</Stack>
-			<div className={styles.grid}>
-				{/* Impressions card */}
-				<div className={styles.card}>
-					<div className={styles.cardLabel}>IMPRESSIONS</div>
-					<div className={styles.cardValue}>
-						{formatNumber(overview.totalImpressions)}
-					</div>
-					{impressionSpark.length > 0 && (
-						<Sparkline
-							data={impressionSpark}
-							stroke="var(--color-primary)"
-							height={60}
-							ariaLabel="Impressions sparkline for last 7 days"
+			<SectionHead withLink />
+			<Grid columns={12} gap="md" rowGap="md">
+				<Col span={6}>
+					<Stack gap="sm">
+						<StatCard
+							label="Impressions"
+							value={overview.totalImpressions}
+							format={formatStat}
+							delta={impressionsDelta}
+							trend={impressionsDelta ? trendOf(impressionsDelta) : undefined}
+							period={impressionsDelta ? "vs prior 7d" : undefined}
 						/>
-					)}
-					{deltas !== null && <TrendChip delta={deltas.impressions} />}
-				</div>
-				{/* Engagements card */}
-				<div className={styles.card}>
-					<div className={styles.cardLabel}>ENGAGEMENTS</div>
-					<div className={styles.cardValue}>{formatNumber(engagements)}</div>
-					{engagementSpark.length > 0 && (
-						<Sparkline
-							data={engagementSpark}
-							stroke="var(--color-accent)"
-							height={60}
-							ariaLabel="Engagements sparkline for last 7 days"
+						{impressionSpark.length > 0 && (
+							<Sparkline
+								data={impressionSpark}
+								tone="accent"
+								area
+								width={SPARKLINE_WIDTH}
+								height={SPARKLINE_HEIGHT}
+								aria-label="Impressions sparkline for last 7 days"
+							/>
+						)}
+					</Stack>
+				</Col>
+				<Col span={6}>
+					<Stack gap="sm">
+						<StatCard
+							label="Engagements"
+							value={engagements}
+							format={formatStat}
+							delta={engagementsDelta}
+							trend={engagementsDelta ? trendOf(engagementsDelta) : undefined}
+							period={engagementsDelta ? "vs prior 7d" : undefined}
 						/>
-					)}
-					{deltas !== null && (
-						<TrendChip delta={deltas.likes + deltas.comments + deltas.shares} />
-					)}
-				</div>
-			</div>
+						{engagementSpark.length > 0 && (
+							<Sparkline
+								data={engagementSpark}
+								tone="ink"
+								area
+								width={SPARKLINE_WIDTH}
+								height={SPARKLINE_HEIGHT}
+								aria-label="Engagements sparkline for last 7 days"
+							/>
+						)}
+					</Stack>
+				</Col>
+			</Grid>
 		</Stack>
 	);
 }

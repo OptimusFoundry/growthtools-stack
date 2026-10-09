@@ -1,16 +1,16 @@
-@use "@/proto-design-system/mixins" as *;
+@use "@/styles/breakpoints" as *;
 
 .row {
   align-items: stretch;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--q-space-5);
 
   @include breakpoint(md) {
     align-items: center;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: var(--space-7);
+    gap: var(--q-space-5);
   }
 }
 
@@ -26,24 +26,18 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-}
-
-.lengthFieldWrap {
-  // motion.div wrapper — overflow hidden so height 0 → auto animates
-  // cleanly without content leaking. Child handles the actual layout.
-  min-width: 0;
+  gap: var(--q-space-0-5);
 }
 
 .lengthField {
   align-items: flex-start;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--q-space-inline);
 
   @include breakpoint(md) {
     align-items: center;
     flex-direction: row;
-    gap: var(--space-4);
+    gap: var(--q-space-2);
   }
 }

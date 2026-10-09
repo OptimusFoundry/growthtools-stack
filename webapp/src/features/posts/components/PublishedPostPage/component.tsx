@@ -1,8 +1,7 @@
+import { Alert, Spinner } from "@optimusfoundry/quiet";
 import { Navigate } from "@tanstack/react-router";
 import { PublishedPostView } from "@/features/posts/components/PublishedPostView/component";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import type { PlatformType } from "@/types/platform";
 
 interface PublishedPostPageProps {
@@ -20,7 +19,7 @@ export function PublishedPostPage({ postId }: PublishedPostPageProps) {
 	const { post, platformPosts, media, loading, error } =
 		useGetPostDetails(postId);
 
-	if (loading) return <Spinner />;
+	if (loading) return <Spinner aria-label="Loading post" />;
 	if (error) return <Alert variant="error">{error}</Alert>;
 	if (!post) return <Alert variant="error">Post not found</Alert>;
 

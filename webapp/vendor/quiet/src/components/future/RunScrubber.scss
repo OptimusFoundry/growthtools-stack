@@ -1,0 +1,179 @@
+// RunScrubber — a slider over a finished run's steps, with the state at the current step below.
+// BEM: .q-run-scrubber, __track, __rail, __fill, __tick, __thumb, __steps, __step, __panel,
+// __agent, __body, __caption, __detail, __actions. --_pct (inline) is the current step's position.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-run-scrubber-gap: var(--q-space-1-5);
+    --q-run-scrubber-rail: var(--q-space-0-25);
+    --q-run-scrubber-thumb: var(--q-space-2);
+    --q-run-scrubber-tick: var(--q-space-0-75);
+    --q-run-scrubber-rail-bg: var(--q-border);
+    --q-run-scrubber-fill-bg: var(--q-fg);
+    --q-run-scrubber-tick-bg: var(--q-bg);
+    --q-run-scrubber-tick-border: var(--q-fg-muted);
+    --q-run-scrubber-tick-bg-past: var(--q-fg);
+    --q-run-scrubber-thumb-bg: var(--q-fg);
+    --q-run-scrubber-thumb-ring: var(--q-slider-thumb-ring);
+    --q-run-scrubber-step-font: var(--q-font-mono);
+    --q-run-scrubber-step-size: var(--q-text-3xs);
+    --q-run-scrubber-step-fg: var(--q-fg-muted);
+    --q-run-scrubber-step-fg-current: var(--q-fg);
+    --q-run-scrubber-panel-bg: var(--q-bg-subtle);
+    --q-run-scrubber-panel-radius: var(--q-radius-lg);
+    --q-run-scrubber-panel-pad: var(--q-space-2);
+    --q-run-scrubber-caption-fg: var(--q-fg-muted);
+    --q-run-scrubber-detail-size: var(--q-text-md);
+    --q-run-scrubber-detail-fg: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-run-scrubber {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr); // never wider than its container
+    gap: var(--q-run-scrubber-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-run-scrubber__track {
+    --_glide: 0s;
+
+    position: relative;
+    height: var(--q-run-scrubber-thumb);
+    margin: 0 calc(var(--q-run-scrubber-thumb) / 2);
+    cursor: pointer;
+    touch-action: none;
+
+    &[data-glide] {
+      --_glide: var(--q-dur-enter);
+    }
+  }
+
+  .q-run-scrubber__rail,
+  .q-run-scrubber__fill {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: var(--q-run-scrubber-rail);
+    border-radius: var(--q-radius-pill);
+    transform: translateY(-50%);
+  }
+
+  .q-run-scrubber__rail {
+    right: 0;
+    background: var(--q-run-scrubber-rail-bg);
+  }
+
+  .q-run-scrubber__fill {
+    width: var(--_pct);
+    background: var(--q-run-scrubber-fill-bg);
+    transition: width var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-run-scrubber__tick {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_at) - var(--q-run-scrubber-tick) / 2);
+    box-sizing: border-box;
+    width: var(--q-run-scrubber-tick);
+    height: var(--q-run-scrubber-tick);
+    border: var(--q-hairline) solid var(--q-run-scrubber-tick-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-run-scrubber-tick-bg);
+    transform: translateY(-50%);
+
+    &[data-past] {
+      border-color: var(--q-run-scrubber-tick-bg-past);
+      background: var(--q-run-scrubber-tick-bg-past);
+    }
+  }
+
+  .q-run-scrubber__thumb {
+    position: absolute;
+    top: 0;
+    left: calc(var(--_pct) - var(--q-run-scrubber-thumb) / 2);
+    width: var(--q-run-scrubber-thumb);
+    height: var(--q-run-scrubber-thumb);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-run-scrubber-thumb-bg);
+    outline: none;
+    transition: left var(--_glide) var(--q-ease-soft);
+
+    &:focus {
+      box-shadow: var(--q-run-scrubber-thumb-ring);
+    }
+  }
+
+  .q-run-scrubber__steps {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--q-space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-run-scrubber__step {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-family: var(--q-run-scrubber-step-font);
+    font-size: var(--q-run-scrubber-step-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--q-run-scrubber-step-fg);
+    cursor: pointer;
+    transition: color var(--q-dur-hover) var(--q-ease-soft);
+
+    &[aria-current="step"],
+    &:hover {
+      color: var(--q-run-scrubber-step-fg-current);
+    }
+  }
+
+  .q-run-scrubber__panel {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--q-space-1-5);
+    padding: var(--q-run-scrubber-panel-pad);
+    border-radius: var(--q-run-scrubber-panel-radius);
+    background: var(--q-run-scrubber-panel-bg);
+  }
+
+  .q-run-scrubber__agent {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .q-run-scrubber__body {
+    display: grid;
+    gap: var(--q-space-0-75);
+    min-width: 0;
+  }
+
+  .q-run-scrubber__caption {
+    font-family: var(--q-run-scrubber-step-font);
+    font-size: var(--q-run-scrubber-step-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-run-scrubber-caption-fg);
+  }
+
+  .q-run-scrubber__detail {
+    margin: 0;
+    font-size: var(--q-run-scrubber-detail-size);
+    line-height: var(--q-leading-body);
+    color: var(--q-run-scrubber-detail-fg);
+    animation: q-fade-in var(--q-dur-enter) var(--q-ease-soft);
+  }
+
+  .q-run-scrubber__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-space-1);
+  }
+}

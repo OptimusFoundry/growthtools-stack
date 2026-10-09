@@ -1,0 +1,192 @@
+// BudgetLeash — agent spend against a cap, drawn as a leash that sags with slack and goes taut.
+// BEM: .q-budget-leash(--taut), __header, __who, __agent, __heading, __label, __speed, __amount,
+// __cap, __track, __rail, __fill, __line, __stake, __runner, __controls, __presets, __presets-label.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-budget-leash-gap: var(--q-space-1-5);
+    --q-budget-leash-label-size: var(--q-text-md);
+    --q-budget-leash-label-weight: var(--q-weight-semibold);
+    --q-budget-leash-speed-font: var(--q-font-mono);
+    --q-budget-leash-speed-size: var(--q-text-3xs);
+    --q-budget-leash-speed-fg: var(--q-fg-muted);
+    --q-budget-leash-speed-fg-taut: var(--q-fg);
+    --q-budget-leash-amount-size: var(--q-text-md);
+    --q-budget-leash-amount-weight: var(--q-weight-semibold);
+    --q-budget-leash-cap-fg: var(--q-fg-muted);
+    --q-budget-leash-track-height: var(--q-space-5);
+    --q-budget-leash-rail-height: var(--q-space-0-25);
+    --q-budget-leash-rail-bg: var(--q-border);
+    --q-budget-leash-fill-bg: var(--q-fg);
+    --q-budget-leash-line: var(--q-fg-muted);
+    --q-budget-leash-line-taut: var(--q-accent);
+    --q-budget-leash-stake-bg: var(--q-fg);
+    --q-budget-leash-runner-size: var(--q-space-1-5);
+    --q-budget-leash-runner-bg: var(--q-fg);
+    --q-budget-leash-runner-ring: var(--q-bg);
+    --q-budget-leash-dur: 500ms;
+  }
+}
+
+@layer q.components {
+  .q-budget-leash {
+    --_line: var(--q-budget-leash-line);
+    --_dash: 3 3;
+
+    display: grid;
+    gap: var(--q-budget-leash-gap);
+    font-family: var(--q-font-sans);
+
+    &--taut {
+      --_line: var(--q-budget-leash-line-taut);
+      --_dash: none;
+    }
+  }
+
+  .q-budget-leash__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-1-5);
+  }
+
+  .q-budget-leash__who {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1-25);
+  }
+
+  .q-budget-leash__agent {
+    display: inline-flex;
+  }
+
+  .q-budget-leash__heading {
+    display: grid;
+    gap: var(--q-space-0-25);
+  }
+
+  .q-budget-leash__label {
+    font-size: var(--q-budget-leash-label-size);
+    font-weight: var(--q-budget-leash-label-weight);
+    color: var(--q-fg);
+  }
+
+  .q-budget-leash__speed {
+    font-family: var(--q-budget-leash-speed-font);
+    font-size: var(--q-budget-leash-speed-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-budget-leash-speed-fg);
+
+    .q-budget-leash--taut & {
+      color: var(--q-budget-leash-speed-fg-taut);
+    }
+  }
+
+  .q-budget-leash__amount {
+    font-size: var(--q-budget-leash-amount-size);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-budget-leash-amount-weight);
+    color: var(--q-fg);
+  }
+
+  .q-budget-leash__cap {
+    color: var(--q-budget-leash-cap-fg);
+  }
+
+  .q-budget-leash__track {
+    position: relative;
+    height: var(--q-budget-leash-track-height);
+  }
+
+  .q-budget-leash__rail,
+  .q-budget-leash__fill {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: var(--q-budget-leash-rail-height);
+    border-radius: var(--q-radius-pill);
+    transform: translateY(-50%);
+  }
+
+  .q-budget-leash__rail {
+    right: 0;
+    background: var(--q-budget-leash-rail-bg);
+  }
+
+  .q-budget-leash__fill {
+    width: var(--_pct);
+    background: var(--q-budget-leash-fill-bg);
+    transition: width var(--q-budget-leash-dur) var(--q-ease-linear);
+  }
+
+  // The leash: from the runner to the stake at the cap.
+  .q-budget-leash__line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+
+    path {
+      fill: none;
+      stroke: var(--_line);
+      stroke-dasharray: var(--_dash);
+      stroke-width: 1.5;
+      transition: stroke var(--q-dur-hover) var(--q-ease-soft);
+    }
+  }
+
+  .q-budget-leash__stake {
+    position: absolute;
+    top: 25%;
+    right: 0;
+    width: var(--q-hairline);
+    height: 50%;
+    background: var(--q-budget-leash-stake-bg);
+  }
+
+  .q-budget-leash__runner {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_pct) - var(--q-budget-leash-runner-size) / 2);
+    width: var(--q-budget-leash-runner-size);
+    height: var(--q-budget-leash-runner-size);
+    border-radius: var(--q-radius-2xs);
+    background: var(--q-budget-leash-runner-bg);
+    box-shadow: 0 0 0 var(--q-space-0-25) var(--q-budget-leash-runner-ring);
+    transform: translateY(-50%);
+    transition: left var(--q-budget-leash-dur) var(--q-ease-linear);
+  }
+
+  .q-budget-leash__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-1);
+  }
+
+  .q-budget-leash__presets {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1);
+  }
+
+  .q-budget-leash__presets-label {
+    font-family: var(--q-budget-leash-speed-font);
+    font-size: var(--q-budget-leash-speed-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-budget-leash-speed-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-budget-leash__fill,
+    .q-budget-leash__runner {
+      transition: none;
+    }
+  }
+}

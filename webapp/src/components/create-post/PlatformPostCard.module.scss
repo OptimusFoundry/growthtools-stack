@@ -1,66 +1,32 @@
-@use "@/proto-design-system/mixins" as *;
-
 // =============================================================================
 // BASE CARD
 // =============================================================================
 
 .card {
-	--platform-accent: var(--color-base-content);
+	--platform-accent: var(--q-fg);
 
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-xl);
-	background: var(--color-surface);
+	border: var(--q-hairline) solid var(--q-border);
+	border-radius: var(--q-radius-lg);
+	background: var(--q-bg);
 	overflow: hidden;
+	transition:
+		color var(--q-dur-hover) var(--q-ease-soft),
+		background-color var(--q-dur-hover) var(--q-ease-soft),
+		border-color var(--q-dur-hover) var(--q-ease-soft);
 
-	@include transition-colors;
-
-	// Platform-specific overrides
-	&[data-platform="x"] {
-		--platform-accent: var(--color-platform-x);
-
-		border-color: var(--color-border);
-	}
-
-	&[data-platform="bluesky"] {
-		--platform-accent: var(--color-platform-bluesky);
-	}
-
-	&[data-platform="threads"] {
-		--platform-accent: var(--color-platform-threads);
-	}
-
-	&[data-platform="linkedin"] {
-		--platform-accent: var(--color-platform-linkedin);
-
-		border-radius: var(--radius-card);
-		box-shadow: var(--shadow-sm);
-	}
-
+	// Platform-specific shape overrides
+	&[data-platform="linkedin"],
 	&[data-platform="facebook"] {
-		--platform-accent: var(--color-platform-facebook);
-
-		border-radius: var(--radius-card);
-		box-shadow: var(--shadow-sm);
-	}
-
-	&[data-platform="instagram"] {
-		--platform-accent: var(--color-platform-instagram);
-
-		border-radius: var(--radius-card);
+		box-shadow: var(--q-shadow-1);
 	}
 
 	&[data-platform="tiktok"] {
-		--platform-accent: var(--color-platform-tiktok);
-
-		border-radius: var(--radius-card);
-		background: var(--color-base-50);
+		background: var(--q-bg-subtle);
 	}
 
 	&[data-platform="pinterest"] {
-		--platform-accent: var(--color-platform-pinterest);
-
-		border-radius: var(--radius-2xl);
-		box-shadow: var(--shadow-sm);
+		border-radius: var(--q-radius-xl);
+		box-shadow: var(--q-shadow-1);
 	}
 }
 
@@ -69,17 +35,17 @@
 // =============================================================================
 
 .editableContent {
-	font-size: var(--font-size-base);
-	line-height: var(--line-height-relaxed);
-	color: var(--color-base-content);
-	min-height: 60px;
+	font-size: var(--q-text-md);
+	line-height: var(--q-leading-body);
+	color: var(--q-fg);
+	min-height: var(--q-space-7);
 	outline: none;
 	white-space: pre-wrap;
 	word-break: break-word;
 
 	&:empty::before {
 		content: attr(data-placeholder);
-		color: var(--color-muted);
+		color: var(--q-fg-muted);
 	}
 
 	&:focus {
@@ -93,8 +59,8 @@
 
 .xPost {
 	display: flex;
-	gap: var(--space-3);
-	padding: var(--space-3) var(--space-4);
+	gap: var(--q-space-1-5);
+	padding: var(--q-space-1-5) var(--q-space-2);
 }
 
 .avatarCol {
@@ -102,19 +68,19 @@
 }
 
 .avatar {
-	width: 40px;
-	height: 40px;
-	border-radius: var(--radius-full);
-	background: var(--color-base-200);
+	width: var(--q-space-5);
+	height: var(--q-space-5);
+	border-radius: var(--q-radius-pill);
+	background: var(--q-bg-subtle);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .avatarInitial {
-	font-size: var(--font-size-base);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-base-content-secondary);
+	font-size: var(--q-text-md);
+	font-weight: var(--q-weight-semibold);
+	color: var(--q-fg-body);
 	line-height: 1;
 }
 
@@ -123,7 +89,7 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-1);
+	gap: var(--q-space-0-5);
 }
 
 // =============================================================================
@@ -133,40 +99,36 @@
 .xHeader {
 	display: flex;
 	align-items: center;
-	gap: var(--space-1);
+	gap: var(--q-space-0-5);
 	flex-wrap: wrap;
 }
 
 .displayName {
-	font-size: var(--font-size-base);
-	font-weight: var(--font-weight-bold);
-	color: var(--color-base-content);
-	line-height: var(--line-height-tight);
-}
-
-.verified {
-	flex-shrink: 0;
+	font-size: var(--q-text-md);
+	font-weight: var(--q-weight-bold);
+	color: var(--q-fg);
+	line-height: var(--q-leading-tight);
 }
 
 .handleGray {
-	font-size: var(--font-size-sm);
-	color: var(--color-base-content-secondary);
+	font-size: var(--q-text-sm);
+	color: var(--q-fg-body);
 }
 
 .separator {
-	font-size: var(--font-size-sm);
-	color: var(--color-base-content-secondary);
+	font-size: var(--q-text-sm);
+	color: var(--q-fg-body);
 }
 
 .timestamp {
-	font-size: var(--font-size-sm);
-	color: var(--color-base-content-secondary);
+	font-size: var(--q-text-sm);
+	color: var(--q-fg-body);
 }
 
 .platformLogo {
 	margin-left: auto;
 	flex-shrink: 0;
-	color: var(--color-base-content-secondary);
+	color: var(--q-fg-body);
 }
 
 // =============================================================================
@@ -177,9 +139,9 @@
 .threadsActions {
 	display: flex;
 	align-items: center;
-	gap: var(--space-4);
-	margin-top: var(--space-2);
-	padding-top: var(--space-2);
+	gap: var(--q-space-2);
+	margin-top: var(--q-space-1);
+	padding-top: var(--q-space-1);
 }
 
 .xActions {
@@ -189,25 +151,26 @@
 
 .threadsActions {
 	// Threads groups icons to the left
-	gap: var(--space-5);
+	gap: var(--q-space-3);
 }
 
 .actionBtn {
 	appearance: none;
 	background: none;
 	border: none;
-	padding: var(--space-1);
+	padding: var(--q-space-0-5);
 	cursor: default;
-	color: var(--color-base-content-secondary);
+	color: var(--q-fg-body);
 	display: flex;
 	align-items: center;
-	border-radius: var(--radius-full);
-
-	@include transition-colors;
+	border-radius: var(--q-radius-pill);
+	transition:
+		color var(--q-dur-hover) var(--q-ease-soft),
+		background-color var(--q-dur-hover) var(--q-ease-soft);
 
 	&:hover {
 		color: var(--platform-accent);
-		background: var(--color-hover-overlay);
+		background: var(--q-bg-subtle);
 	}
 }
 
@@ -222,76 +185,52 @@
 .genericHeader {
 	display: flex;
 	align-items: center;
-	gap: var(--space-2);
-	padding: var(--space-3) var(--space-4);
-	border-bottom: 1px solid var(--color-border);
+	gap: var(--q-space-1);
+	padding: var(--q-space-1-5) var(--q-space-2);
+	border-bottom: var(--q-hairline) solid var(--q-border);
 }
 
 .dot {
-	width: var(--space-2);
-	height: var(--space-2);
-	border-radius: var(--radius-full);
+	width: var(--q-space-1);
+	height: var(--q-space-1);
+	border-radius: var(--q-radius-pill);
 	background: var(--platform-accent);
 	flex-shrink: 0;
 }
 
 .genericHandle {
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-	color: var(--color-base-content);
+	font-size: var(--q-text-sm);
+	font-weight: var(--q-weight-medium);
+	color: var(--q-fg);
 }
 
 .genericPlatformName {
-	font-size: var(--font-size-xs);
-	color: var(--color-base-content-secondary);
+	font-size: var(--q-text-xs);
+	color: var(--q-fg-body);
 	margin-left: auto;
 }
 
 .genericBody {
-	padding: var(--space-3) var(--space-4);
+	padding: var(--q-space-1-5) var(--q-space-2);
 }
 
 .genericFooter {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	padding: var(--space-2) var(--space-4);
-	border-top: 1px solid var(--color-border);
+	padding: var(--q-space-1) var(--q-space-2);
+	border-top: var(--q-hairline) solid var(--q-border);
 }
 
 // =============================================================================
-// MEDIA GRID (inside post cards, platform-style image layouts)
+// MEDIA GRID (inside post cards; tiling comes from quiet Grid/Col in MediaGrid.tsx)
 // =============================================================================
 
 .mediaGrid {
-	display: grid;
-	gap: var(--space-1, 2px);
-	border-radius: var(--radius-card);
+	border-radius: var(--q-radius-lg);
 	overflow: hidden;
-	margin-top: var(--space-3);
-	border: 1px solid var(--color-border);
-}
-
-.mediaGrid1 {
-	grid-template-columns: 1fr;
-}
-
-.mediaGrid2 {
-	grid-template-columns: 1fr 1fr;
-}
-
-.mediaGrid3 {
-	grid-template-columns: 1fr 1fr;
-	grid-template-rows: 1fr 1fr;
-
-	.mediaGridItem:first-child {
-		grid-row: 1 / -1;
-	}
-}
-
-.mediaGrid4 {
-	grid-template-columns: 1fr 1fr;
-	grid-template-rows: 1fr 1fr;
+	margin-top: var(--q-space-1-5);
+	border: var(--q-hairline) solid var(--q-border);
 }
 
 .mediaGridItem {
@@ -300,33 +239,19 @@
 	min-height: 0;
 }
 
-// Single image: 16:9 like X/Twitter
-.mediaGrid1 .mediaGridItem {
+// Single image and 2x2: 16:9 like X
+.aspectWide {
 	aspect-ratio: 16 / 9;
 }
 
 // 2 images: tall rectangles side by side (7:8 like X)
-.mediaGrid2 .mediaGridItem {
+.aspectTall {
 	aspect-ratio: 7 / 8;
 }
 
-// 3 images: left tall, right two stacked squares
-.mediaGrid3 {
-	grid-template-rows: 1fr 1fr;
-
-	.mediaGridItem:first-child {
-		aspect-ratio: auto;
-	}
-
-	.mediaGridItem:nth-child(2),
-	.mediaGridItem:nth-child(3) {
-		aspect-ratio: 1 / 1;
-	}
-}
-
-// 4 images: 2x2 grid of equal cells (16:9 each like X)
-.mediaGrid4 .mediaGridItem {
-	aspect-ratio: 16 / 9;
+// 3 images: the two stacked tiles on the right are squares
+.aspectSquare {
+	aspect-ratio: 1 / 1;
 }
 
 .mediaGridImg {
@@ -339,12 +264,12 @@
 .mediaGridPlaceholder {
 	width: 100%;
 	height: 100%;
-	min-height: 80px;
+	min-height: var(--q-space-10);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--color-base-200);
-	color: var(--color-muted);
+	background: var(--q-bg-subtle);
+	color: var(--q-fg-muted);
 }
 
 .mediaGridOverflow {
@@ -353,8 +278,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--color-overlay, rgb(0, 0, 0, 0.5));
-	color: var(--color-white, #fff);
-	font-size: var(--font-size-2xl);
-	font-weight: var(--font-weight-bold);
+	background: var(--q-scrim);
+	color: var(--q-fg-on-inverse);
+	font-size: var(--q-text-2xl);
+	font-weight: var(--q-weight-bold);
 }

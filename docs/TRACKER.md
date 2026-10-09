@@ -283,6 +283,16 @@ Backlog → Spec'd → Planned → In progress → Shipped. Tickets live in the 
 | EP-004 | Delete Blog Posts (including live site removal) | docs/prds/2026-08-03-blog-delete.md | docs/plans/2026-08-03-blog-delete.md | Shipped (7e62b7b, ea3c9b3) |
 | EP-005 | Showcase Post from Brief | docs/prds/2026-08-03-showcase-post-from-brief.md | docs/plans/2026-08-03-showcase-post-from-brief.md | Shipped (7d5f9f4, 2c7feb2) |
 
+## Change rows
+
+Non-feature work (refactor / infra / migration / re-architecture) entering via a
+[change brief](briefs/README.md). It then flows through `plan-writer` like an epic, with the same
+status flow: Backlog → Spec'd → Planned → In progress → Shipped.
+
+| ID | Change | Brief | Plan | Status |
+|----|--------|-------|------|--------|
+| CH-001 | Rewrite the product screens on quiet and remove Proto | [brief](briefs/2026-10-08-quiet-product-rewrite.md) | [plan](plans/2026-10-08-quiet-product-rewrite.md) | Planned |
+
 ---
 
 ## How to Use This Tracker

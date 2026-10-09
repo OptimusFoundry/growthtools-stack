@@ -1,8 +1,7 @@
+import { Button, TextField } from "@optimusfoundry/quiet";
 import React, { useEffect, useReducer } from "react";
+import { useNotify } from "@/hooks/useNotify";
 import { useSubmitLogin } from "@/hooks/useSubmitLogin";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
-import { Input } from "@/proto-design-system/components/forms/Input/Input";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import styles from "./email.module.scss";
 
 type EmailFormErrors = {
@@ -67,7 +66,7 @@ function formReducer(state: EmailFormState, action: Action) {
 export default function EmailSignIn() {
 	const [state, dispatch] = useReducer(formReducer, initialState);
 	const { submitLogin, data, error, loading } = useSubmitLogin();
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 
 	useEffect(() => {
 		if (data) {
@@ -80,14 +79,13 @@ export default function EmailSignIn() {
 
 	useEffect(() => {
 		if (error) {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Login failed",
 				description: error.message,
-				dismissible: true,
 			});
 		}
-	}, [error, addBanner]);
+	}, [error, notify]);
 
 	// Handle form submission
 	async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
@@ -138,41 +136,36 @@ export default function EmailSignIn() {
 	}
 
 	return (
-		<form className={styles["email-login-form"]} onSubmit={handleLogin}>
-			<div className={styles["form-item"]}>
-				<label htmlFor="email">Email</label>
-				<Input
-					id="email"
-					name="email"
-					type="text"
-					onChange={(e) =>
-						dispatch({
-							type: EmailFormAction.SET_FIELD,
-							field: "email",
-							value: e.target.value,
-						})
-					}
-					isError={!!state.errors.email}
-					formNoValidate={true}
-				/>
-			</div>
-			<div className={styles["form-item"]}>
-				<label htmlFor="password">Password</label>
-				<Input
-					id="password"
-					name="password"
-					type="password"
-					onChange={(e) =>
-						dispatch({
-							type: EmailFormAction.SET_FIELD,
-							field: "password",
-							value: e.target.value,
-						})
-					}
-					isError={!!state.errors.password}
-				/>
-			</div>
-			<Button type="submit" disabled={loading}>
+		<form className={styles.form} onSubmit={handleLogin}>
+			<TextField
+				label="Email"
+				id="email"
+				name="email"
+				type="text"
+				onChange={(e) =>
+					dispatch({
+						type: EmailFormAction.SET_FIELD,
+						field: "email",
+						value: e.target.value,
+					})
+				}
+				error={state.errors.email || undefined}
+			/>
+			<TextField
+				label="Password"
+				id="password"
+				name="password"
+				type="password"
+				onChange={(e) =>
+					dispatch({
+						type: EmailFormAction.SET_FIELD,
+						field: "password",
+						value: e.target.value,
+					})
+				}
+				error={state.errors.password || undefined}
+			/>
+			<Button type="submit" variant="primary" loading={loading}>
 				{loading ? "Signing in..." : "Sign in"}
 			</Button>
 		</form>

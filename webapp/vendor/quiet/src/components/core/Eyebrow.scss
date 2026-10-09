@@ -1,0 +1,33 @@
+// Eyebrow — mono caps kicker with an optional index. BEM: .q-eyebrow, __index; --ink.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-eyebrow-gap: var(--q-space-2);
+    --q-eyebrow-font-size: var(--q-text-2xs);
+    --q-eyebrow-tracking: var(--q-tracking-mono);
+    --q-eyebrow-fg: var(--q-fg-muted);
+    --q-eyebrow-ink-fg: var(--q-fg);
+    --q-eyebrow-index-fg: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: var(--q-eyebrow-gap);
+    color: var(--q-eyebrow-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-eyebrow-font-size);
+    letter-spacing: var(--q-eyebrow-tracking);
+    text-transform: uppercase;
+
+    &--ink {
+      color: var(--q-eyebrow-ink-fg);
+    }
+  }
+
+  .q-eyebrow__index {
+    color: var(--q-eyebrow-index-fg);
+  }
+}

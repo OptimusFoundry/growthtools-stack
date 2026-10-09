@@ -8,13 +8,14 @@
  *   GET /api/protected/analytics/timeseries → 200, 400, 401, 500, network error
  *   GET /api/protected/analytics/platforms  → 200, 400, 401, 500, network error
  *
- * UI behaviour on non-2xx: the fetcher throws, useAnalytics catches the error
- * and leaves `overview` as null. The component renders the EmptyState branch
- * ("No Analytics Data") for all error scenarios — there is no distinct error
- * banner in the current implementation.
+ * UI behaviour on non-2xx: the fetcher throws and useAnalytics records the
+ * error, so the page renders an error Alert ("Something went wrong") with a
+ * Retry action. A successful response with no connected platforms renders the
+ * separate "No platforms connected" empty state.
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
+import { analyticsScenarios } from "./handlers/analytics.handlers";
 
 // ── Shared status-code table type ────────────────────────────────────────────
 
@@ -110,25 +111,28 @@ test.describe("Analytics", () => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/analytics/i)).toBeVisible();
+			await expect(
+				page.getByRole("heading", { level: 1, name: "Analytics" }),
+			).toBeVisible();
 		});
 
-		test("renders date-range tabs (7d, 30d, 90d)", async ({ page }) => {
+		test("renders date-range options (7, 30, 90 days)", async ({ page }) => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByRole("button", { name: "7d" })).toBeVisible();
-			await expect(page.getByRole("button", { name: "30d" })).toBeVisible();
-			await expect(page.getByRole("button", { name: "90d" })).toBeVisible();
+			const range = page.getByRole("radiogroup", { name: "Date range" });
+			for (const name of ["7 days", "30 days", "90 days"]) {
+				await expect(
+					range.getByRole("radio", { name, exact: true }),
+				).toBeVisible();
+			}
 		});
 
 		test("shows time-series chart area", async ({ page }) => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			// Recharts renders an SVG; verify the chart container is present
-			const svg = page.locator("svg").first();
-			await expect(svg).toBeVisible();
+			await expect(page.getByLabel(/impressions over time/i)).toBeVisible();
 		});
 
 		test("shows stats cards", async ({ page }) => {
@@ -147,8 +151,10 @@ test.describe("Analytics", () => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/platform breakdown/i)).toBeVisible();
-			await expect(page.getByText(/linkedin/i)).toBeVisible();
+			await expect(
+				page.getByRole("heading", { name: /platform breakdown/i }),
+			).toBeVisible();
+			await expect(page.getByRole("cell", { name: "LinkedIn" })).toBeVisible();
 		});
 	});
 
@@ -157,26 +163,77 @@ test.describe("Analytics", () => {
 	// =========================================================================
 
 	test.describe("Empty State", () => {
-		test("shows empty state when no analytics data", async ({
+		test("shows the no-platforms empty state when nothing is connected", async ({
 			network,
 			page,
 		}) => {
-			network.use(
-				http.get("*/api/protected/analytics/overview", () => {
-					return HttpResponse.json(null);
-				}),
-				http.get("*/api/protected/analytics/timeseries", () => {
-					return HttpResponse.json([]);
-				}),
-				http.get("*/api/protected/analytics/platforms", () => {
-					return HttpResponse.json([]);
-				}),
-			);
+			network.use(...analyticsScenarios.noPlatforms());
 
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/no analytics data/i)).toBeVisible();
+			await expect(
+				page.getByRole("heading", { name: "No platforms connected" }),
+			).toBeVisible();
+		});
+	});
+
+	// =========================================================================
+	// Range and metric switching
+	// =========================================================================
+
+	test.describe("Switching", () => {
+		test("selecting a date range updates the checked radio", async ({
+			page,
+		}) => {
+			await page.goto("/analytics");
+			await page.waitForLoadState("networkidle");
+
+			const range = page.getByRole("radiogroup", { name: "Date range" });
+			for (const name of ["7 days", "90 days", "30 days"]) {
+				const radio = range.getByRole("radio", { name, exact: true });
+				await radio.click();
+				await expect(radio).toHaveAttribute("aria-checked", "true");
+				await expect(range.getByRole("radio", { checked: true })).toHaveCount(
+					1,
+				);
+			}
+		});
+
+		test("changing range refetches overview with a new window", async ({
+			page,
+		}) => {
+			await page.goto("/analytics");
+			await page.waitForLoadState("networkidle");
+
+			const refetch = page.waitForRequest((req) =>
+				req.url().includes("/api/protected/analytics/overview"),
+			);
+			await page
+				.getByRole("radiogroup", { name: "Date range" })
+				.getByRole("radio", { name: "7 days", exact: true })
+				.click();
+			await refetch;
+		});
+
+		test("selecting a metric updates the checked radio and chart label", async ({
+			page,
+		}) => {
+			await page.goto("/analytics");
+			await page.waitForLoadState("networkidle");
+
+			const metrics = page.getByRole("radiogroup", { name: "Select metric" });
+			for (const name of ["Likes", "Comments", "Shares", "Impressions"]) {
+				const radio = metrics.getByRole("radio", { name, exact: true });
+				await radio.click();
+				await expect(radio).toHaveAttribute("aria-checked", "true");
+				await expect(metrics.getByRole("radio", { checked: true })).toHaveCount(
+					1,
+				);
+				await expect(
+					page.getByLabel(new RegExp(`^${name} over time$`, "i")),
+				).toBeVisible();
+			}
 		});
 	});
 
@@ -196,9 +253,10 @@ test.describe("Analytics", () => {
 				await page.goto("/analytics");
 				await page.waitForLoadState("networkidle");
 
-				// Any non-2xx on the overview endpoint leaves `overview` null,
-				// causing the EmptyState branch to render.
-				await expect(page.getByText(/no analytics data/i)).toBeVisible();
+				// Any non-2xx on the overview endpoint surfaces the error Alert.
+				await expect(
+					page.getByRole("alert").filter({ hasText: /something went wrong/i }),
+				).toBeVisible();
 			});
 		}
 
@@ -215,7 +273,9 @@ test.describe("Analytics", () => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/no analytics data/i)).toBeVisible();
+			await expect(
+				page.getByRole("alert").filter({ hasText: /something went wrong/i }),
+			).toBeVisible();
 		});
 	});
 
@@ -235,9 +295,10 @@ test.describe("Analytics", () => {
 				await page.goto("/analytics");
 				await page.waitForLoadState("networkidle");
 
-				// A timeseries failure is part of the same Promise.all — any
-				// rejection sets error and leaves overview null → EmptyState.
-				await expect(page.getByText(/no analytics data/i)).toBeVisible();
+				// Part of the same Promise.all — any rejection surfaces the error Alert.
+				await expect(
+					page.getByRole("alert").filter({ hasText: /something went wrong/i }),
+				).toBeVisible();
 			});
 		}
 
@@ -254,7 +315,9 @@ test.describe("Analytics", () => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/no analytics data/i)).toBeVisible();
+			await expect(
+				page.getByRole("alert").filter({ hasText: /something went wrong/i }),
+			).toBeVisible();
 		});
 	});
 
@@ -274,9 +337,10 @@ test.describe("Analytics", () => {
 				await page.goto("/analytics");
 				await page.waitForLoadState("networkidle");
 
-				// A platforms failure is part of the same Promise.all — any
-				// rejection sets error and leaves overview null → EmptyState.
-				await expect(page.getByText(/no analytics data/i)).toBeVisible();
+				// Part of the same Promise.all — any rejection surfaces the error Alert.
+				await expect(
+					page.getByRole("alert").filter({ hasText: /something went wrong/i }),
+				).toBeVisible();
 			});
 		}
 
@@ -293,7 +357,9 @@ test.describe("Analytics", () => {
 			await page.goto("/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/no analytics data/i)).toBeVisible();
+			await expect(
+				page.getByRole("alert").filter({ hasText: /something went wrong/i }),
+			).toBeVisible();
 		});
 	});
 });

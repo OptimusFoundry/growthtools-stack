@@ -1,0 +1,82 @@
+// Rule — hairline divider, horizontal or vertical, optionally labelled.
+// BEM: .q-rule, __line, __label; --vertical, --labelled, --ink, --dashed, --dotted.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-rule-color: var(--q-border);
+    --q-rule-ink-color: var(--q-fg);
+    --q-rule-gap: var(--q-space-2);
+    --q-rule-vertical-gap: var(--q-space-1);
+    --q-rule-vertical-min-height: var(--q-space-2);
+    --q-rule-label-font-size: var(--q-text-2xs);
+    --q-rule-label-tracking: var(--q-tracking-mono);
+    --q-rule-label-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-rule {
+    --_style: solid;
+    --_color: var(--q-rule-color);
+    --_line: var(--q-hairline) var(--_style) var(--_color);
+
+    margin: 0;
+    border: 0;
+    border-top: var(--_line);
+
+    &--ink {
+      --_color: var(--q-rule-ink-color);
+    }
+
+    &--dashed {
+      --_style: dashed;
+    }
+
+    &--dotted {
+      --_style: dotted;
+    }
+
+    &--vertical {
+      display: inline-block;
+      align-self: stretch;
+      width: 0;
+      min-height: var(--q-rule-vertical-min-height);
+      border-top: 0;
+      border-left: var(--_line);
+    }
+
+    &--labelled {
+      display: flex;
+      align-items: center;
+      gap: var(--q-rule-gap);
+      border: 0;
+    }
+
+    &--vertical.q-rule--labelled {
+      display: inline-flex;
+      flex-direction: column;
+      width: auto;
+      min-height: auto;
+      gap: var(--q-rule-vertical-gap);
+    }
+  }
+
+  .q-rule__line {
+    flex: 1;
+    border-top: var(--_line);
+
+    .q-rule--vertical > & {
+      border-top: 0;
+      border-left: var(--_line);
+    }
+  }
+
+  .q-rule__label {
+    color: var(--q-rule-label-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-rule-label-font-size);
+    letter-spacing: var(--q-rule-label-tracking);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+}

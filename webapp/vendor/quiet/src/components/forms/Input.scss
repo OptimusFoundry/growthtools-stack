@@ -1,0 +1,82 @@
+// Input — labelled input / textarea. BEM: .q-input, __label, __field(--multiline, --invalid), __hint(--error).
+// Focus is :focus (any focus, as before).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-input-gap: var(--q-space-1);
+    --q-input-label-font-family: var(--q-font-mono);
+    --q-input-label-font-size: var(--q-text-2xs);
+    --q-input-label-tracking: var(--q-tracking-mono);
+    --q-input-label-fg: var(--q-fg-muted);
+    --q-input-font-family: var(--q-font-sans);
+    --q-input-font-size: var(--q-text-lg);
+    --q-input-fg: var(--q-fg);
+    --q-input-bg: var(--q-bg);
+    --q-input-py: var(--q-space-1-5);
+    --q-input-px: var(--q-space-2);
+    --q-input-radius: var(--q-radius-md);
+    --q-input-border: var(--q-border);
+    --q-input-border-focus: var(--q-fg);
+    --q-input-border-invalid: var(--q-accent);
+    --q-input-ring-focus: var(--q-ring-soft);
+    --q-input-multiline-min-height: 120px;
+    --q-input-hint-font-family: var(--q-font-mono);
+    --q-input-hint-font-size: var(--q-text-2xs);
+    --q-input-hint-tracking: var(--q-tracking-wide);
+    --q-input-hint-fg: var(--q-fg-muted);
+    --q-input-hint-error-fg: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-input {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-input-gap);
+  }
+
+  .q-input__label {
+    font-family: var(--q-input-label-font-family);
+    font-size: var(--q-input-label-font-size);
+    letter-spacing: var(--q-input-label-tracking);
+    text-transform: uppercase;
+    color: var(--q-input-label-fg);
+  }
+
+  .q-input__field {
+    padding: var(--q-input-py) var(--q-input-px);
+    border: var(--q-hairline) solid var(--q-input-border);
+    border-radius: var(--q-input-radius);
+    outline: none;
+    background: var(--q-input-bg);
+    font-family: var(--q-input-font-family);
+    font-size: var(--q-input-font-size);
+    color: var(--q-input-fg);
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:focus {
+      border-color: var(--q-input-border-focus);
+      box-shadow: var(--q-input-ring-focus);
+    }
+
+    &--invalid {
+      border-color: var(--q-input-border-invalid);
+    }
+
+    &--multiline {
+      min-height: var(--q-input-multiline-min-height);
+      resize: vertical;
+    }
+  }
+
+  .q-input__hint {
+    font-family: var(--q-input-hint-font-family);
+    font-size: var(--q-input-hint-font-size);
+    letter-spacing: var(--q-input-hint-tracking);
+    color: var(--q-input-hint-fg);
+
+    &--error {
+      color: var(--q-input-hint-error-fg);
+    }
+  }
+}

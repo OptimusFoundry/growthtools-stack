@@ -1,125 +1,150 @@
+.hero {
+	padding: 0;
+}
+
+// The 1px grid gap over a --q-border backdrop draws the cell hairlines.
 .calendarGrid {
-	display: grid;
-	grid-template-columns: repeat(7, 1fr);
-	gap: var(--border-width-sm);
-	background: var(--color-border);
-	border: var(--border-width-sm) solid var(--color-border);
-	border-radius: var(--radius-card);
+	background: var(--q-border);
+	border: var(--q-hairline) solid var(--q-border);
+	border-radius: var(--q-radius-lg);
 	overflow: hidden;
 }
 
 .dayHeader {
-	padding: var(--space-2);
+	background: var(--q-bg);
+	color: var(--q-fg-muted);
+	font-family: var(--q-font-mono);
+	font-size: var(--q-text-xs);
+	letter-spacing: var(--q-tracking-mono);
+	padding: var(--q-space-inline);
 	text-align: center;
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-base-content-secondary);
-	background: var(--color-surface);
+	text-transform: uppercase;
 }
 
 .dayCell {
-	min-height: 100px;
-	padding: var(--space-1);
-	background: var(--color-surface);
+	background: var(--q-bg);
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-1);
+	gap: var(--q-space-0-5);
+	min-height: var(--q-space-20);
+	min-width: 0;
+	padding: var(--q-space-0-5);
 }
 
 .emptyCell {
-	background: var(--color-base-200);
+	background: var(--q-bg-subtle);
 }
 
 .today {
-	background: var(--color-primary-50, var(--color-surface));
-	outline: 2px solid var(--color-primary);
-	outline-offset: -2px;
+	outline: calc(var(--q-hairline) * 2) solid var(--q-accent);
+	outline-offset: calc(var(--q-hairline) * -2);
 }
 
 .dayNumber {
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-	color: var(--color-base-content);
-	padding: var(--space-1) var(--space-1);
+	color: var(--q-fg);
+	font-size: var(--q-text-sm);
+	font-weight: var(--q-weight-medium);
+	padding: var(--q-space-0-5);
 }
 
 .dayCellButton {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-1);
-	flex: 1;
-	width: 100%;
-	border: none;
 	background: none;
-	padding: 0;
+	border: 0;
+	border-radius: var(--q-radius-sm);
+	color: inherit;
 	cursor: pointer;
-	border-radius: var(--radius-sm);
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	font: inherit;
+	gap: var(--q-space-0-5);
+	min-width: 0;
+	padding: 0;
 	text-align: left;
-	transition: background var(--duration-fast) var(--ease-out);
+	transition: background var(--q-dur-hover) var(--q-ease-soft);
+	width: 100%;
 
 	&:hover {
-		background: var(--color-base-200);
+		background: var(--q-bg-subtle);
 	}
 }
 
 .statusStripes {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-1);
-	padding: 0 var(--space-1);
+	gap: var(--q-space-0-5);
+	padding: 0 var(--q-space-0-5);
 }
 
 .stripe {
+	border-left: calc(var(--q-hairline) * 2) solid transparent;
+	border-radius: var(--q-radius-xs);
 	display: block;
-	padding: var(--space-1) var(--space-1);
-	border-radius: var(--radius-xs);
-	font-size: var(--font-size-xxs);
-	font-weight: var(--font-weight-medium);
-	white-space: nowrap;
+	font-size: var(--q-text-2xs);
+	font-weight: var(--q-weight-medium);
 	overflow: hidden;
+	padding: var(--q-space-0-5);
 	text-overflow: ellipsis;
-	border-left: var(--border-width-lg) solid transparent;
+	white-space: nowrap;
 }
 
 .stripePlatform {
-	display: inline-flex;
 	align-items: center;
-	gap: var(--space-1);
-	color: var(--color-text-secondary);
+	color: var(--q-fg-muted);
+	display: inline-flex;
+	gap: var(--q-space-0-5);
 }
 
 .stripePublished {
-	background: color-mix(in srgb, var(--color-success) 15%, transparent);
-	border-left-color: var(--color-success);
-	color: var(--color-success);
+	background: var(--q-status-success-bg);
+	border-left-color: var(--q-status-success-border);
+	color: var(--q-status-success-fg);
 }
 
-.stripePartial {
-	background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-	border-left-color: var(--color-warning);
-	color: var(--color-warning);
+.stripePartial,
+.stripeScheduled {
+	background: var(--q-status-warning-bg);
+	border-left-color: var(--q-status-warning-border);
+	color: var(--q-status-warning-fg);
 }
 
 .stripeFailed {
-	background: color-mix(in srgb, var(--color-error) 15%, transparent);
-	border-left-color: var(--color-error);
-	color: var(--color-error);
+	background: var(--q-status-error-bg);
+	border-left-color: var(--q-status-error-border);
+	color: var(--q-status-error-fg);
 }
 
 .stripePublishing {
-	background: color-mix(in srgb, var(--color-primary) 15%, transparent);
-	border-left-color: var(--color-primary);
-	color: var(--color-primary);
-}
-
-.stripeScheduled {
-	background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-	border-left-color: var(--color-warning);
-	color: var(--color-warning);
+	background: var(--q-status-info-bg);
+	border-left-color: var(--q-status-info-border);
+	color: var(--q-status-info-fg);
 }
 
 .stripeDraft {
-	background: var(--color-base-200);
-	border-left-color: var(--color-base-content-secondary);
-	color: var(--color-base-content-secondary);
+	background: var(--q-bg-subtle);
+	border-left-color: var(--q-border-strong);
+	color: var(--q-fg-muted);
+}
+
+.postTrailing {
+	align-items: center;
+	display: inline-flex;
+	gap: var(--q-space-stack);
+}
+
+.chips {
+	align-items: center;
+	display: inline-flex;
+	gap: var(--q-space-inline);
+}
+
+.chip {
+	align-items: center;
+	border: var(--q-hairline) solid var(--q-border);
+	border-radius: var(--q-radius-md);
+	color: var(--q-fg-muted);
+	display: inline-flex;
+	height: var(--q-space-6);
+	justify-content: center;
+	width: var(--q-space-6);
 }

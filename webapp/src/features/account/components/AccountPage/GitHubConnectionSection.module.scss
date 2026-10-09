@@ -1,54 +1,15 @@
-// Inline GitHub row used inside the Inbound Sources spec card.
-.row {
-	align-items: center;
-	display: flex;
-	gap: var(--space-4);
-}
-
 .icon {
 	align-items: center;
-	background: var(--color-base-200);
-	border-radius: var(--radius-md);
-	color: var(--color-base-content);
+	background: var(--q-bg-subtle);
+	border-radius: var(--q-radius-xs);
+	color: var(--q-fg);
 	display: flex;
 	flex-shrink: 0;
-	height: var(--space-9);
+	height: var(--q-space-5);
 	justify-content: center;
-	width: var(--space-9);
-}
-
-.body {
-	flex: 1;
-	min-width: 0;
-}
-
-.nameLine {
-	align-items: center;
-	display: flex;
-	gap: var(--space-2);
-}
-
-.statusDot {
-	background: var(--color-success);
-	border-radius: var(--radius-full);
-	display: inline-block;
-	height: var(--space-2);
-	width: var(--space-2);
-}
-
-.repoRow {
-	align-items: center;
-	display: flex;
-	gap: var(--space-3);
-	justify-content: space-between;
-	padding: var(--space-2) 0;
-}
-
-.repoInfo {
-	flex: 1;
-	min-width: 0;
+	width: var(--q-space-5);
 }
 
 .loading {
-	min-height: var(--space-16);
+	min-height: var(--q-space-12);
 }

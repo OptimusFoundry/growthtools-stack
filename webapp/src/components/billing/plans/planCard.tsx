@@ -1,14 +1,15 @@
 "use client";
-import { useGetAllPrices } from "@/hooks/useGetAllPrices";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
 import {
+	Badge,
 	Card,
-	CardBody,
-} from "@/proto-design-system/components/layout/Card/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+	EmptyState,
+	Spinner,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
+import { AlertCircle, Tag } from "lucide-react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
+import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { formatPrice } from "@/utils/formatPrice";
 
 interface PlanCardProps {
@@ -19,13 +20,13 @@ export default function PlanCard(props: PlanCardProps) {
 	const { loading, error, prices } = useGetAllPrices();
 
 	if (loading) {
-		return <Spinner size="md" label="Loading plan details..." />;
+		return <Spinner size="md" aria-label="Loading plan details..." />;
 	}
 
 	if (error) {
 		return (
 			<EmptyState
-				icon="error-warning-line"
+				icon={<AppIcon icon={AlertCircle} size="xl" />}
 				title="Error loading plans"
 				description={error}
 			/>
@@ -37,7 +38,7 @@ export default function PlanCard(props: PlanCardProps) {
 	if (!price) {
 		return (
 			<EmptyState
-				icon="price-tag-3-line"
+				icon={<AppIcon icon={Tag} size="xl" />}
 				title="Price not found"
 				description="The requested pricing plan could not be found."
 			/>
@@ -49,22 +50,20 @@ export default function PlanCard(props: PlanCardProps) {
 
 	return (
 		<Card>
-			<CardBody>
-				<Stack direction="row" gap="md" align="center" justify="between">
-					<Stack gap="xs">
-						<Text weight="semibold" transform="capitalize">
-							{price.description}
+			<Stack direction="row" gap="sm" align="center" justify="space-between">
+				<Stack gap={4}>
+					<Text weight="semibold" transform="capitalize">
+						{price.description}
+					</Text>
+					<Text size="lg" weight="bold">
+						{priceDisplay}
+						<Text as="span" size="sm" color="muted">
+							{intervalDisplay}
 						</Text>
-						<Text size="lg" weight="bold">
-							{priceDisplay}
-							<Text as="span" size="sm" color="secondary">
-								{intervalDisplay}
-							</Text>
-						</Text>
-					</Stack>
-					<Badge variant="success">Active</Badge>
+					</Text>
 				</Stack>
-			</CardBody>
+				<Badge variant="success">Active</Badge>
+			</Stack>
 		</Card>
 	);
 }

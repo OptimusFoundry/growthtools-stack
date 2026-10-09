@@ -1,0 +1,105 @@
+// Progress — thin bar. BEM: .q-progress, __meta, __value, __track, __fill (--indeterminate);
+// --{sm|md|lg}, --{success|warning|error|heat}. The fill width comes in as --_progress.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-progress-gap: var(--q-space-1);
+    --q-progress-meta-gap: var(--q-space-2);
+    --q-progress-meta-fg: var(--q-fg-muted);
+    --q-progress-value-fg: var(--q-fg);
+    --q-progress-track-bg: var(--q-border);
+    --q-progress-fill: var(--q-fg);
+    --q-progress-fill-hot: var(--q-accent);
+    --q-progress-success-fill: var(--q-status-success-fg);
+    --q-progress-warning-fill: var(--q-status-warning-fg);
+    --q-progress-error-fill: var(--q-status-error-fg);
+    --q-progress-error-value-fg: var(--q-status-error-fg);
+    --q-progress-sm-height: var(--q-space-px);
+    --q-progress-md-height: var(--q-space-0-25);
+    --q-progress-lg-height: var(--q-space-0-5);
+    --q-progress-dur: 0.4s;             // fill glides between values; slower than a hover
+    --q-progress-indeterminate-dur: 1.6s; // one pass of the indeterminate segment
+    --q-progress-indeterminate-width: 30%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @layer q.tokens {
+    :root,
+    [data-theme] {
+      --q-progress-dur: 0s;
+    }
+  }
+}
+
+@keyframes q-progress-indeterminate {
+  from { left: calc(var(--q-progress-indeterminate-width) * -1); }
+  to { left: 100%; }
+}
+
+@layer q.components {
+  .q-progress {
+    --_height: var(--q-progress-md-height);
+    --_fill: var(--q-progress-fill);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-progress-gap);
+
+    &--sm { --_height: var(--q-progress-sm-height); }
+    &--lg { --_height: var(--q-progress-lg-height); }
+
+    &--success { --_fill: var(--q-progress-success-fill); }
+    &--warning { --_fill: var(--q-progress-warning-fill); }
+    &--error { --_fill: var(--q-progress-error-fill); }
+    &--heat { --_fill: var(--q-progress-fill-hot); }
+  }
+
+  .q-progress__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--q-progress-meta-gap);
+    color: var(--q-progress-meta-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-text-2xs);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-progress__value {
+    color: var(--q-progress-value-fg);
+    font-variant-numeric: tabular-nums;
+
+    .q-progress--error & {
+      color: var(--q-progress-error-value-fg);
+    }
+  }
+
+  .q-progress__track {
+    position: relative;
+    height: var(--_height);
+    overflow: hidden;
+    border-radius: var(--q-radius-pill);
+    background: var(--q-progress-track-bg);
+  }
+
+  .q-progress__fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--_progress, 0%);
+    border-radius: var(--q-radius-pill);
+    background: var(--_fill);
+    transition: width var(--q-progress-dur) var(--q-ease-soft);
+
+    &--indeterminate {
+      width: var(--q-progress-indeterminate-width);
+      transition: none;
+
+      @media (prefers-reduced-motion: no-preference) {
+        animation: q-progress-indeterminate var(--q-progress-indeterminate-dur) var(--q-ease-forge) infinite;
+      }
+    }
+  }
+}

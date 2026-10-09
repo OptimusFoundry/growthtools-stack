@@ -1,0 +1,152 @@
+// Dialog — modal over a scrim. BEM: .q-dialog (scrim), __panel (--sm|md|lg|xl), __header, __heading,
+// __icon (--hot), __eyebrow, __title, __dot, __close, __body, __actions. A `width` prop sets --_max-width.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-dialog-scrim: var(--q-scrim);
+    --q-dialog-z: var(--q-z-overlay);
+    --q-dialog-inset: var(--q-space-4);
+    --q-dialog-sm-width: 440px;
+    --q-dialog-md-width: 560px;
+    --q-dialog-lg-width: 720px;
+    --q-dialog-xl-width: 960px;
+    --q-dialog-bg: var(--q-bg);
+    --q-dialog-border: var(--q-border);
+    --q-dialog-radius: var(--q-radius-xl);
+    --q-dialog-shadow: var(--q-shadow-3);
+    --q-dialog-padding: var(--q-space-5);
+    --q-dialog-gap: var(--q-space-3);
+    --q-dialog-header-gap: var(--q-space-2);
+    --q-dialog-heading-gap: var(--q-space-1-5);
+    --q-dialog-icon-size: var(--q-space-5);
+    --q-dialog-icon-fg: var(--q-fg);
+    --q-dialog-icon-hot: var(--q-accent);
+    --q-dialog-icon-font-size: var(--q-text-lg);
+    --q-dialog-icon-weight: var(--q-weight-semibold);
+    --q-dialog-eyebrow-fg: var(--q-fg-muted);
+    --q-dialog-title-fg: var(--q-fg);
+    --q-dialog-title-size: var(--q-text-3xl);
+    --q-dialog-title-weight: var(--q-weight-bold);
+    --q-dialog-title-leading: var(--q-leading-heading);
+    --q-dialog-title-tracking: -0.035em; // the reference's display tracking (--type-display-tracking)
+    --q-dialog-dot: var(--q-accent);
+    --q-dialog-close-fg: var(--q-fg);
+    --q-dialog-close-size: 20px; // the × glyph; between --q-text-xl and --q-text-2xl
+    --q-dialog-close-padding: var(--q-space-0-5);
+    --q-dialog-body-fg: var(--q-fg-body);
+    --q-dialog-body-size: var(--q-text-md);
+    --q-dialog-body-leading: var(--q-leading-body);
+    --q-dialog-actions-gap: var(--q-space-2);
+    --q-dialog-actions-pt: var(--q-space-3);
+    --q-dialog-actions-border: var(--q-border);
+  }
+}
+
+@layer q.components {
+  .q-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: var(--q-dialog-z);
+    display: grid;
+    place-items: center;
+    padding: var(--q-dialog-inset);
+    background: var(--q-dialog-scrim);
+  }
+
+  .q-dialog__panel {
+    --_max-width: var(--q-dialog-md-width);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-dialog-gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--_max-width);
+    max-height: calc(100vh - var(--q-dialog-inset) * 2);
+    padding: var(--q-dialog-padding);
+    overflow-y: auto;
+    border: var(--q-hairline) solid var(--q-dialog-border);
+    border-radius: var(--q-dialog-radius);
+    background: var(--q-dialog-bg);
+    box-shadow: var(--q-dialog-shadow);
+
+    &--sm { --_max-width: var(--q-dialog-sm-width); }
+    &--lg { --_max-width: var(--q-dialog-lg-width); }
+    &--xl { --_max-width: var(--q-dialog-xl-width); }
+  }
+
+  .q-dialog__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--q-dialog-header-gap);
+  }
+
+  .q-dialog__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-dialog-heading-gap);
+  }
+
+  .q-dialog__icon {
+    display: grid;
+    place-items: center;
+    width: var(--q-dialog-icon-size);
+    height: var(--q-dialog-icon-size);
+    border: var(--q-hairline) solid var(--q-dialog-icon-fg);
+    border-radius: var(--q-radius-pill);
+    color: var(--q-dialog-icon-fg);
+    font-size: var(--q-dialog-icon-font-size);
+    font-weight: var(--q-dialog-icon-weight);
+
+    &--hot {
+      border-color: var(--q-dialog-icon-hot);
+      color: var(--q-dialog-icon-hot);
+    }
+  }
+
+  .q-dialog__eyebrow {
+    color: var(--q-dialog-eyebrow-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-text-2xs);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-dialog__title {
+    color: var(--q-dialog-title-fg);
+    font-size: var(--q-dialog-title-size);
+    font-weight: var(--q-dialog-title-weight);
+    line-height: var(--q-dialog-title-leading);
+    letter-spacing: var(--q-dialog-title-tracking);
+  }
+
+  .q-dialog__dot {
+    color: var(--q-dialog-dot);
+  }
+
+  .q-dialog__close {
+    padding: var(--q-dialog-close-padding);
+    border: 0;
+    background: none;
+    color: var(--q-dialog-close-fg);
+    font-size: var(--q-dialog-close-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+  }
+
+  .q-dialog__body {
+    color: var(--q-dialog-body-fg);
+    font-size: var(--q-dialog-body-size);
+    line-height: var(--q-dialog-body-leading);
+  }
+
+  .q-dialog__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--q-dialog-actions-gap);
+    padding-top: var(--q-dialog-actions-pt);
+    border-top: var(--q-hairline) solid var(--q-dialog-actions-border);
+  }
+}

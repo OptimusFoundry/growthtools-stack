@@ -1,0 +1,58 @@
+// HoldButton — hold-to-confirm wrapper around Button. BEM: .q-hold-button, __button, __hint, __heat;
+// --confirmed. The heat hairline grows with --_hold (0–1); nothing moves at rest.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-hold-button-heat: var(--q-accent);
+    --q-hold-button-heat-height: var(--q-space-0-25);
+    --q-hold-button-hint-fg: var(--q-fg-on-inverse-muted);
+    --q-hold-button-hint-fg-plain: var(--q-fg-muted);
+    --q-hold-button-hint-font: var(--q-font-mono);
+    --q-hold-button-hint-size: var(--q-text-3xs);
+    --q-hold-button-hint-tracking: var(--q-tracking-mono);
+    --q-hold-button-release: var(--q-dur-expand);
+  }
+}
+
+@layer q.components {
+  .q-hold-button {
+    display: inline-flex;
+  }
+
+  .q-hold-button__button {
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .q-hold-button__hint {
+    font-family: var(--q-hold-button-hint-font);
+    font-size: var(--q-hold-button-hint-size);
+    letter-spacing: var(--q-hold-button-hint-tracking);
+    text-transform: uppercase;
+    color: var(--q-hold-button-hint-fg);
+  }
+
+  .q-hold-button__button:not(.q-button--primary) .q-hold-button__hint {
+    color: var(--q-hold-button-hint-fg-plain);
+  }
+
+  .q-hold-button__heat {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--q-hold-button-heat-height);
+    background: var(--q-hold-button-heat);
+    transform: scaleX(var(--_hold, 0));
+    transform-origin: left;
+    pointer-events: none;
+    transition: transform var(--q-hold-button-release) var(--q-ease-soft);
+  }
+
+  // While held the hairline tracks the hold exactly; on release it eases back.
+  .q-hold-button__button[data-holding] .q-hold-button__heat {
+    transition: none;
+  }
+}

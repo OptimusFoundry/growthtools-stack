@@ -1,13 +1,12 @@
 import {
-	AlertCircle,
-	CheckCircle,
-	Clock,
-	Loader,
-	RefreshCw,
-} from "lucide-react";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+	Button,
+	SectionHeader,
+	Spinner,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
+import { AlertCircle, CheckCircle, Clock, RefreshCw } from "lucide-react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
 import { getPlatformIcon } from "@/utils/platformIcons";
@@ -46,13 +45,13 @@ function friendlyError(raw?: string): string {
 function StatusIcon({ status }: { status: string }) {
 	switch (status) {
 		case "published":
-			return <CheckCircle size={16} className={styles.iconSuccess} />;
+			return <AppIcon icon={CheckCircle} color="success" />;
 		case "failed":
-			return <AlertCircle size={16} className={styles.iconError} />;
+			return <AppIcon icon={AlertCircle} color="error" />;
 		case "publishing":
-			return <Loader size={16} className={styles.iconSpinning} />;
+			return <Spinner size="xs" />;
 		default:
-			return <Clock size={16} className={styles.iconMuted} />;
+			return <AppIcon icon={Clock} color="muted" />;
 	}
 }
 
@@ -69,17 +68,15 @@ export function PostPublishStatus({
 
 	return (
 		<Stack gap="sm">
-			<Stack direction="row" justify="between" align="center">
-				<Text size="md" weight="semibold">
-					Publish Status
-				</Text>
+			<Stack direction="row" justify="space-between" align="center">
+				<SectionHeader size="sm" as="h2" title="Publish Status" />
 				{hasFailed && onRetry && (
 					<Button
 						variant="secondary"
 						size="sm"
 						onClick={onRetry}
-						isLoading={retrying}
-						leftIcon={<RefreshCw size={14} />}
+						loading={retrying}
+						leftIcon={<AppIcon icon={RefreshCw} />}
 					>
 						Retry failed
 					</Button>
@@ -100,22 +97,22 @@ export function PostPublishStatus({
 							<div className={styles.status}>
 								<StatusIcon status={pp.status} />
 								{pp.status === "published" && pp.publishedAt && (
-									<Text size="xs" color="secondary">
+									<Text size="xs" color="muted">
 										{formatTimestamp(pp.publishedAt)}
 									</Text>
 								)}
 								{pp.status === "failed" && (
-									<Text size="xs" color="secondary">
+									<Text size="xs" color="muted">
 										{friendlyError(pp.errorMessage)}
 									</Text>
 								)}
 								{pp.status === "publishing" && (
-									<Text size="xs" color="secondary">
+									<Text size="xs" color="muted">
 										Publishing...
 									</Text>
 								)}
 								{pp.status === "pending" && (
-									<Text size="xs" color="secondary">
+									<Text size="xs" color="muted">
 										Queued
 									</Text>
 								)}

@@ -1,1 +1,31 @@
-@import "@/proto-design-system/themes/theme.scss";
+@layer q.base {
+	:where(.quiet),
+	:where(.quiet) *,
+	:where(.quiet) *::before,
+	:where(.quiet) *::after {
+		box-sizing: border-box;
+	}
+
+	:where(.quiet)
+		:where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, dd, figure, blockquote) {
+		margin: 0;
+	}
+
+	:where(.quiet) :where(ul, ol) {
+		list-style: none;
+		padding: 0;
+	}
+
+	:where(.quiet) :where(img, picture, video, canvas) {
+		display: block;
+		max-width: 100%;
+	}
+}
+
+#root {
+	isolation: isolate;
+}
+
+#root > .quiet {
+	min-height: 100dvh;
+}

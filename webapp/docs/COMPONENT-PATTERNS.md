@@ -1,34 +1,30 @@
 # Component Patterns
 
-Patterns for building new components in the proto-design-system or as feature-level components.
+Patterns for building feature-level components on top of `@optimusfoundry/quiet`. Primitives (buttons, fields, layout, overlays) come from quiet; this repo only adds components that compose them. Template-only conventions (gating, `useNotify`, `AppIcon`, `RouterLink`) are in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).
 
 ---
 
 ## File Structure
 
-Design system primitives live in the `@optimusfoundry/proto-design-system` package under `src/components/{category}/{ComponentName}/` (imported as `@/proto-design-system/components/...`):
+Feature components live in `src/features/{feature}/components/{ComponentName}/`:
 
 ```
 ComponentName/
-├── ComponentName.tsx          # Main component (React 19 patterns)
-├── ComponentName.module.scss  # CSS Modules with design tokens
-├── ComponentName.types.ts     # TypeScript interfaces
-└── ComponentName.stories.tsx  # Storybook documentation
+├── component.tsx           # Main component (React 19 patterns)
+├── component.module.scss   # CSS Modules with quiet tokens
+└── component.stories.ts    # Optional Storybook story
 ```
 
-Feature-level components live in `src/features/{feature}/components/{ComponentName}/` and use `component.tsx` / `component.module.scss` (lowercase).
+Shared app-level components (not tied to one feature) live in `src/components/{ComponentName}/`.
 
-**Component categories in proto-design-system:**
+---
 
-| Category | Path |
-|----------|------|
-| primitives | `components/primitives/` — Button, Badge, Text, Avatar |
-| forms | `components/forms/` — TextField, Select, Checkbox |
-| layout | `components/layout/` — Stack, Card, Grid, Container |
-| feedback | `components/feedback/` — Alert, Toast, Progress |
-| overlays | `components/overlays/` — Modal, Dropdown, Tooltip |
-| navigation | `components/navigation/` — Tabs, Sidebar, Breadcrumb |
-| data | `components/data/` — Table, StatCard, EmptyState |
+## Using quiet
+
+- **Check quiet first.** Before building anything, look for it in quiet: `vendor/quiet/DESIGN.md`, and `docs/guidelines/*.md` (`components.md` says when to compose which).
+- **Import from the package root** — `import { Button, Stack } from "@optimusfoundry/quiet"`. No deep imports from `dist/`.
+- **Props are authoritative in the component source (`.tsx`)** — `vendor/quiet/src/components/<group>/<Name>.tsx`. Do not guess props from memory or copy lists of them into docs.
+- **A missing primitive** is built here on `--q-*` tokens and flagged for quiet; do not restyle a quiet component from outside.
 
 ---
 
@@ -37,22 +33,19 @@ Feature-level components live in `src/features/{feature}/components/{ComponentNa
 ### Basic Component — ref as prop, no forwardRef
 
 ```tsx
-import type { HTMLAttributes, Ref } from 'react';
-import styles from './ComponentName.module.scss';
+import type { HTMLAttributes, ReactNode, Ref } from 'react';
+import styles from './component.module.scss';
 
 export interface ComponentNameProps extends HTMLAttributes<HTMLDivElement> {
   /** Visual variant */
   variant?: 'primary' | 'secondary';
-  /** Size of the component */
-  size?: 'sm' | 'md' | 'lg';
   /** Ref to the root element */
   ref?: Ref<HTMLDivElement>;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function ComponentName({
   variant = 'primary',
-  size = 'md',
   className,
   children,
   ref,
@@ -61,7 +54,7 @@ export function ComponentName({
   return (
     <div
       ref={ref}
-      className={`${styles.root} ${styles[variant]} ${styles[size]} ${className ?? ''}`}
+      className={`${styles.root} ${styles[variant]} ${className ?? ''}`}
       {...props}
     >
       {children}
@@ -106,6 +99,8 @@ function SubmitButton() {
   );
 }
 ```
+
+Inside real screens use quiet's `TextField` and `Button` in place of the raw elements above.
 
 ### Optimistic UI (React 19)
 
@@ -158,6 +153,8 @@ export function useTheme() {
 }
 ```
 
+The app theme itself is quiet's `ThemeProvider` / `useTheme`; the example above shows the pattern only.
+
 ### Async Data with use()
 
 ```tsx
@@ -199,50 +196,44 @@ export function DataDisplay(props: { dataPromise: Promise<Data> }) {
 ## SCSS Template
 
 ```scss
-// ComponentName.module.scss — NEVER hardcode values, always use design tokens
+// component.module.scss — quiet tokens only (--q-*); never hardcode values.
+// Token tiers: vendor/quiet/DESIGN.md
 
 .root {
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  transition: all var(--duration-fast) var(--ease-out);
+  padding: var(--q-space-2);
+  border-radius: var(--q-radius-sm);
 }
 
 .primary {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--q-bg);
+  color: var(--q-fg);
 }
 
 .secondary {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
-
-.sm { padding: var(--space-2); font-size: var(--font-size-sm); }
-.md { padding: var(--space-4); font-size: var(--font-size-base); }
-.lg { padding: var(--space-6); font-size: var(--font-size-lg); }
-
-.root:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  background: var(--q-bg);
+  border: 1px solid var(--q-border);
+  color: var(--q-fg-body);
 }
 ```
+
+Gaps between elements are quiet `Stack` / `Grid` props, not margins; `display: grid` is banned by stylelint (use `Grid` with `Col span`). Spacing, type and layout rules: `vendor/quiet/docs/guidelines/` (`spacing.md`, `typography.md`, `layouts.md`).
 
 ---
 
 ## Storybook Template
 
+Storybook runs on quiet: `.storybook/preview.ts` loads quiet's styles and wraps every story in the theme provider and `AppRoot`, with a theme toolbar (`foundry` / `foundry-dark`). Stories sit next to the component as `component.stories.ts`.
+
 ```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { ComponentName } from './ComponentName';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { ComponentName } from './component';
 
 const meta = {
-  title: 'Components/Category/ComponentName',
+  title: 'Features/Feature/ComponentName',
   component: ComponentName,
   tags: ['autodocs'],
   argTypes: {
     variant: { control: 'select', options: ['primary', 'secondary'] },
-    size: { control: 'select', options: ['sm', 'md', 'lg'] },
   },
 } satisfies Meta<typeof ComponentName>;
 
@@ -253,13 +244,8 @@ export const Default: Story = {
   args: { children: 'Content' },
 };
 
-export const AllVariants: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-      <ComponentName variant="primary">Primary</ComponentName>
-      <ComponentName variant="secondary">Secondary</ComponentName>
-    </div>
-  ),
+export const Secondary: Story = {
+  args: { children: 'Content', variant: 'secondary' },
 };
 ```
 
@@ -278,17 +264,17 @@ import { useState, useEffect, useCallback } from 'react';
 // 2. Third-party
 import { useNavigate } from '@tanstack/react-router';
 
-// 3. API / utils
+// 3. quiet
+import { Button } from '@optimusfoundry/quiet';
+
+// 4. API / utils
 import { fetcher } from '@/api/client';
 
-// 4. Types (import type)
+// 5. Types (import type)
 import type { User } from '@/types/user';
 
-// 5. Components
-import { Button } from '@/proto-design-system/components/primitives/Button';
-
 // 6. Styles (always last)
-import styles from './Component.module.scss';
+import styles from './component.module.scss';
 ```
 
 ### Other TypeScript Patterns
@@ -297,7 +283,6 @@ import styles from './Component.module.scss';
 // satisfies for config objects — validates without widening the type
 const defaultConfig = {
   variant: 'primary',
-  size: 'md',
 } satisfies Partial<ComponentNameProps>;
 
 // import type for type-only imports — required in strict mode
@@ -309,84 +294,14 @@ const items = createItems<Item>([...]);
 
 ---
 
-## Component Import Paths
-
-All components are in the `@optimusfoundry/proto-design-system` package (`@/proto-design-system/components/...`). Import directly from source — no barrel exports.
-
-```tsx
-// Primitives
-import { Button } from "@/proto-design-system/components/primitives/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text";
-import { Badge } from "@/proto-design-system/components/primitives/Badge";
-import { Avatar } from "@/proto-design-system/components/primitives/Avatar";
-import { Icon } from "@/proto-design-system/components/primitives/Icon";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner";
-import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton";
-import { Tag } from "@/proto-design-system/components/primitives/Tag";
-
-// Forms
-import { Input } from "@/proto-design-system/components/forms/Input";
-import { TextField } from "@/proto-design-system/components/forms/TextField";
-import { TextArea } from "@/proto-design-system/components/forms/TextArea";
-import { Select } from "@/proto-design-system/components/forms/Select";
-import { Checkbox } from "@/proto-design-system/components/forms/Checkbox";
-import { Radio } from "@/proto-design-system/components/forms/Radio";
-import { Switch } from "@/proto-design-system/components/forms/Switch";
-import { Slider } from "@/proto-design-system/components/forms/Slider";
-import { FormField } from "@/proto-design-system/components/forms/FormField";
-
-// Layout
-import { Stack } from "@/proto-design-system/components/layout/Stack";
-import { Grid } from "@/proto-design-system/components/layout/Grid";
-import { Container } from "@/proto-design-system/components/layout/Container";
-import { Card, CardHeader, CardBody, CardFooter } from "@/proto-design-system/components/layout/Card";
-import { Divider } from "@/proto-design-system/components/layout/Divider";
-import { AspectRatio } from "@/proto-design-system/components/layout/AspectRatio";
-
-// Navigation
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@/proto-design-system/components/navigation/Tabs";
-import { Sidebar } from "@/proto-design-system/components/navigation/Sidebar";
-import { Navbar } from "@/proto-design-system/components/navigation/Navbar";
-import { Breadcrumb } from "@/proto-design-system/components/navigation/Breadcrumb";
-import { Pagination } from "@/proto-design-system/components/navigation/Pagination";
-import { StepIndicator } from "@/proto-design-system/components/navigation/StepIndicator";
-
-// Feedback
-import { Alert } from "@/proto-design-system/components/feedback/Alert";
-import { Toast } from "@/proto-design-system/components/feedback/Toast";
-import { Progress } from "@/proto-design-system/components/feedback/Progress";
-import { Banner } from "@/proto-design-system/components/feedback/Banner";
-
-// Overlays
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/proto-design-system/components/overlays/Modal";
-import { Dropdown } from "@/proto-design-system/components/overlays/Dropdown";
-import { DropdownMenu } from "@/proto-design-system/components/overlays/DropdownMenu";
-import { Popover } from "@/proto-design-system/components/overlays/Popover";
-import { Tooltip } from "@/proto-design-system/components/overlays/Tooltip";
-
-// Data Display
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/proto-design-system/components/data/Table";
-import { DataGrid } from "@/proto-design-system/components/data/DataGrid";
-import { List } from "@/proto-design-system/components/data/List";
-import { StatCard } from "@/proto-design-system/components/data/StatCard";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState";
-
-// Composite
-import { Accordion } from "@/proto-design-system/components/composite/Accordion";
-import { DatePicker } from "@/proto-design-system/components/composite/DatePicker";
-import { FileUpload } from "@/proto-design-system/components/composite/FileUpload";
-import { MultiSelect } from "@/proto-design-system/components/composite/MultiSelect";
-```
-
----
-
 ## Checklist Before Completing
 
-- [ ] Searched for existing component before creating
+- [ ] Searched quiet (and `src/components`) for an existing component before creating
+- [ ] Imported quiet from `@optimusfoundry/quiet` only; props checked against the component source (`.tsx`)
 - [ ] Used `ref` as prop (no `forwardRef`)
-- [ ] Used design tokens (no hardcoded values)
-- [ ] TypeScript types with JSDoc comments
-- [ ] Accessibility attributes (aria-label, role, etc.)
-- [ ] Storybook story
+- [ ] Used `--q-*` tokens (no hardcoded values, no inline styles)
+- [ ] TypeScript strict, no `any`
+- [ ] Accessibility attributes (aria-label, role, etc.), unique accessible names
+- [ ] Storybook story when the component is reusable
 - [ ] No `index.ts` barrel exports
 - [ ] React Compiler handles memoization (no manual `useMemo`/`useCallback`)

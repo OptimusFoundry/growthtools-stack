@@ -1,9 +1,19 @@
 ---
 name: consistency-auditor
-description: Sweeps the codebase for violations of house conventions — one parallel checker per rule-group. Catches drift like routes without PageShell, lists without EmptyState, endpoints without E2E coverage, store methods without tests, barrels, hardcoded values/strings, missing soft-delete guards, skill↔doc rule-ID drift, and iOS-specific drift (screens without a named mockup, AppStore singleton violations, hardcoded design values instead of semantic tokens, missing four-layer test coverage). Use before a PR or periodically to keep the codebase honest.
+description: Sweeps the codebase for violations of house conventions — one parallel checker per rule-group. Catches drift like product routes that double the shell's padding with PageShell, lists without EmptyState, endpoints without E2E coverage, store methods without tests, barrels, hardcoded values/strings, missing soft-delete guards, skill↔doc rule-ID drift, and iOS-specific drift (screens without a named mockup, AppStore singleton violations, hardcoded design values instead of semantic tokens, missing four-layer test coverage). Use before a PR or periodically to keep the codebase honest.
 tools: Read, Grep, Glob, LSP, Bash, Agent(audit-checker)
 model: sonnet
 skills: [backend-store-rules, backend-error-rules, frontend-review-rules, backend-architecture-rules]
+color: purple
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading
@@ -18,10 +28,16 @@ You verify the codebase follows its own rules. Rules are checked by parallel `au
 Fan out `audit-checker` — **one per rule-group below, single parallel batch (5 checkers)** — each scoped to the whole repo (or the diff, if your task says so) with its group's rules, where to look, and how to detect a violation. Each finding still names the specific rule violated:
 
 **Frontend (`webapp/src`):**
-- Every product route wraps content in `<PageShell>` (tab-shell routes excepted).
+- Product routes render inside the app shell, whose `<main>` supplies the page padding, and do not
+  wrap in `<PageShell>` (it would double the gutter); only the public routes outside the shell
+  (`/signin`, `/test-login`, `/oauth/signedin`) wrap in a narrow
+  `<PageShell as="main">`. Exactly one `<main>` per route. A `PageShell` import in a product route or
+  its page component is a finding; a public route without one is a finding.
 - Lists render `<EmptyState>` for the zero-data case.
 - No barrel exports (`index.ts` re-exports) anywhere.
 - AP-10 — see `frontend-review-rules`.
+- **No Proto remnants** — the target is 0 (the template's [migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md) §4.5).
+  Give the checker Script D below verbatim; each `PROTO` line it prints is one finding.
 - No `any`; nested render ternaries — Auto-blocks, see `frontend-review-rules`.
 
 **Backend (`base-server`):**
@@ -46,7 +62,7 @@ Fan out `audit-checker` — **one per rule-group below, single parallel batch (5
   a screen/flow ships an XCUITest) — flag a change with no matching test file in the same diff.
 
 **Skill ↔ doc sync + eager budget** — one rule-group, three corpora: `backend-*-rules` ↔
-`base-server/docs/`; `frontend-*-rules` ↔ `docs/design-docs/` + `webapp/docs/`; `ios-*-rules` ↔
+`base-server/docs/`; `frontend-*-rules` ↔ `webapp/docs/`; `ios-*-rules` ↔
 `ios/docs/engineering/` + `CLAUDE.md`. All three corpora run directions 1-2; budget/numeric/skill-name
 (3-5) are frontend-only (§ script B) — the iOS corpus is small enough that skill-name drift is caught
 by script B's repo-wide scan and neither budget nor numeric-constant drift has the same failure history
@@ -57,8 +73,10 @@ here yet. Five directions total:
 - **2. Reverse** — every `→ skill: <name> <ID…>` backlink in a doc cites a rule the skill still
   declares as `**<ID>**`. Catches a rule renumbered in the skill but not in the backlink.
 - **3. Budget** — no *preloaded* skill exceeds 4,096 B, and no agent's `skills:` list sums past
-  12,288 B.
-- **4. Numeric** — the constants restated across source doc → quickref digest → skill still agree.
+  12,288 B. `shared-repo-tooling` and `quiet-app` are exempt from both: `quiet-app` is vendored
+  unchanged from its package and `shared-repo-tooling` predates the ceilings.
+- **4. Numeric** — a number a skill rule restates agrees with the section its own pointer names, and
+  every constant registered in `PIN` states one value in every file that carries it.
 - **5. Skill names** — every skill *name* cited anywhere resolves to a real
   `.claude/skills/<name>/SKILL.md`. Directions 1-2 assume the skill exists and only check its rule
   IDs; a citation naming a skill that was renamed or never existed sails past them, and the agent
@@ -66,7 +84,7 @@ here yet. Five directions total:
   a `skills:` frontmatter entry, prose `` `<name>` skill ``, the `skill:<name>` routing target, the
   qualified `<name>:<ID>` declaration, and the `→ skill: <name> <IDs>` backlink. Scope is
   deliberately wider than directions 1-4: **all** of `.claude/agents/**`, `.claude/skills/*/SKILL.md`,
-  the three `CLAUDE.md` files, `webapp/docs/` + `base-server/docs/`, and `docs/plans/` + `docs/tickets/`.
+  the root + package `AGENTS.md`/`CLAUDE.md` files, `.claude/rules/`, `webapp/docs/` + `base-server/docs/`, and `docs/plans/` + `docs/tickets/`.
 
 Direction 5 needs an escape hatch that the others do not, because its scan set includes files whose
 *job* is to quote dead names — the rename table in `.claude/agents/README.md`, the tickets that
@@ -84,12 +102,20 @@ quotes both literals, and a substring test would exempt this very file from its 
 **Direction 4 is the one that earns this checker.** Directions 1-2 only prove an ID *exists* at both
 ends, and are structurally blind to the failure mode this rule-group was extended for: `12-judgment.md`'s
 `J-3.1` said page titles cap at `36–48px` while authoritative `T-3.4` said `22–24px` — **both rule IDs
-correct, only the number drifted.** Treat a silent direction 4 as a broken checker, not a clean corpus.
+correct, only the number drifted.** That is why 4b exists. Its registry is empty today and that is
+expected: the frontend skills cite quiet's docs instead of restating their constants, so nothing is
+stated in two places. 4a is silent when no rule line carries both a unit number and a pointer, which
+is also expected; a silent direction 4 is a broken checker only once `PIN` holds entries or a rule
+line restates a number next to its pointer.
 
 Three scope decisions, stated so a future reader does not mistake them for regressions:
 
-- **`shared-repo-tooling` is excluded from both size assertions.** It is 9,362 B, predates these
-  ceilings, and is preloaded on the five `Bash`-holding supervisors. Shrinking it is its own change.
+- **`shared-repo-tooling` and `quiet-app` are excluded from both size assertions** (`EX`), because
+  each is vendored unchanged from its package or predates the ceilings. `shared-repo-tooling`
+  (9,362 B) predates them and is preloaded on the five `Bash`-holding supervisors; shrinking it is
+  its own change. `quiet-app` (5,441 B) is quiet's own skill copied verbatim; a trimmed copy would
+  drift from quiet on every pin bump. Per-agent sums are computed without them, so an agent that
+  preloads `quiet-app` really loads 5.4 KB more than its sum.
 - **The 4,096 B ceiling applies to *preloaded* skills only** — those named in some agent's `skills:`
   frontmatter. `frontend-composition-rules` (~16 KB) and `frontend-e2e-rules` (~8.6 KB) are invoked
   on demand with the `Skill` tool and preloaded nowhere, so they are out of scope by construction.
@@ -97,7 +123,7 @@ Three scope decisions, stated so a future reader does not mistake them for regre
   one nobody added to the registry, is unguarded. Grow the registry when a new cross-file constant
   appears.
 
-Give this checker all three scripts below verbatim rather than a prose description — the slug rules are
+Give this checker Scripts A, B and C below verbatim (Script D belongs to the Frontend checker) rather than a prose description — the slug rules are
 easy to reimplement wrong, and a rule-ID check that is subtly wrong is worse than none. Python 3
 stdlib only (no pyyaml; none may be added), and it must run identically on `/usr/bin/python3` (3.9)
 and a Homebrew `python3`. Run from the repo root; report each line of output as one finding.
@@ -137,7 +163,7 @@ for p in sorted(pathlib.Path('base-server/docs').glob('*.md')):
 import re, pathlib, difflib
 SK = pathlib.Path('.claude/skills'); AG = pathlib.Path('.claude/agents')
 FE = sorted(SK.glob('frontend-*-rules/SKILL.md'))
-D, Q, S = 'docs/design-docs/', 'docs/design-docs/quickref/', '.claude/skills/'
+S = '.claude/skills/'
 def slug(h): return re.sub(r'[^a-z0-9 \-]', '', h.strip().lower()).replace(' ', '-')
 def flat(t):                      # fold a skill's wrapped `- **ID** …` bullet onto one line
     o, b = [], None
@@ -159,10 +185,9 @@ def heads(p):                     # slug -> (line, level) for every heading outs
         m = re.match(r'^(#{1,6})\s+(.*)', l)
         if m: s.setdefault(slug(m.group(2)), (i, len(m.group(1))))
     return s
-DOCS = {str(p): heads(p) for p in list(pathlib.Path(D).glob('*.md')) +
-        list(pathlib.Path(Q).glob('*.md')) + list(pathlib.Path('webapp/docs').glob('*.md')) +
+DOCS = {str(p): heads(p) for p in list(pathlib.Path('webapp/docs').glob('*.md')) +
         list(SK.glob('*/SKILL.md'))}
-PTR = re.compile(r'((?:docs/design-docs|webapp/docs|\.claude/skills)/[\w./-]+\.md)#([a-z0-9-]+)')
+PTR = re.compile(r'((?:webapp/docs|\.claude/skills)/[\w./-]+\.md)#([a-z0-9-]+)')
 out = []
 
 # 1. forward — every frontend skill pointer resolves to a real heading
@@ -176,7 +201,7 @@ for sk in FE:
 # 2. reverse — every doc backlink cites a rule the skill still declares
 rev = 0
 BL = re.compile(r'→ skill: (frontend-[a-z0-9-]+) ([^\n]+)')
-for p in sorted(pathlib.Path(D).glob('*.md')) + sorted(pathlib.Path('webapp/docs').glob('*.md')):
+for p in sorted(pathlib.Path('webapp/docs').glob('*.md')):
     for m in BL.finditer(p.read_text()):
         f = SK / m.group(1) / 'SKILL.md'
         if not f.exists(): out.append(f"REVERSE  {p.name} cites missing skill {m.group(1)}"); continue
@@ -192,8 +217,8 @@ for p in sorted(pathlib.Path(D).glob('*.md')) + sorted(pathlib.Path('webapp/docs
             elif rid not in labs:
                 out.append(f"REVERSE  {p.name} cites {rid}, absent from {m.group(1)}")
 
-# 3. budget — AC6 per preloaded skill, AC9 per agent; shared-repo-tooling excluded from both
-EX = 'shared-repo-tooling'; pre = {}
+# 3. budget — AC6 per preloaded skill, AC9 per agent; EX is excluded from both
+EX = {'shared-repo-tooling', 'quiet-app'}; pre = {}
 SKL = re.compile(r'^skills:\s*\[(.*?)\]\s*$', re.M)      # reused as direction 5's shape (a)
 for a in sorted(AG.rglob('*.md')):
     m = SKL.search(a.read_text())
@@ -201,9 +226,9 @@ for a in sorted(AG.rglob('*.md')):
 sizes = {s: (SK/s/'SKILL.md').stat().st_size for v in pre.values() for s in v
          if (SK/s/'SKILL.md').exists()}
 for s in sorted(sizes):
-    if s != EX and sizes[s] > 4096: out.append(f"BUDGET   skill {s} is {sizes[s]} B > 4096")
+    if s not in EX and sizes[s] > 4096: out.append(f"BUDGET   skill {s} is {sizes[s]} B > 4096")
 for a in sorted(pre):
-    t = sum(sizes.get(s, 0) for s in pre[a] if s != EX)
+    t = sum(sizes.get(s, 0) for s in pre[a] if s not in EX)
     if t > 12288: out.append(f"BUDGET   agent {a} preloads {t} B > 12288")
 
 # 4a. every number in a skill rule line appears in the section that line points at
@@ -229,88 +254,13 @@ for sk in FE:
         p = PTR.search(line)
         if not p or not DOCS.get(p.group(1), {}).get(p.group(2)): continue
         have = {float(x) for x in ANY.findall(section(p.group(1), p.group(2)))}
-        for rid in set(re.findall(r'\b[A-Z]{1,4}-\d+(?:\.\d+)*\b', line)) - {m.group(1)}:
-            base = re.match(r'[A-Z]+-\d+', rid).group(0).lower()     # a number sourced elsewhere
-            for d, hs in DOCS.items():                               # is fine if the line cites it
-                if not d.startswith(D) or d.startswith(Q): continue
-                for anc in hs:
-                    if anc == base or anc.startswith(base + '-'):
-                        have |= {float(x) for x in ANY.findall(section(d, anc))}
         for n in sorted(sk_nums(line[:p.start()]) - have):
             out.append(f"NUMERIC  {sk.parent.name} {m.group(1)}: {n:g} absent from "
                        f"{p.group(1)}#{p.group(2)}")
 
 # 4b. pinned constants — every file that restates one must state the same value
-PIN = [
- ("page-title cap", {22, 24}, [
-   (D+'19-typography-decisions.md', r'\*\*T-3\.4\*\*[^|]*\|\s*(\d+)–(\d+)px'),
-   (D+'12-judgment.md', r'Product pages top out at[^(]*\((\d+)–(\d+)px\)'),
-   (D+'00-overview.md', r'Page titles are (\d+)–(\d+)px'),
-   (Q+'12-judgment.md', r'product page titles cap at (\d+)-(\d+)px'),
-   (Q+'00-overview.md', r'page titles (\d+)-(\d+)px'),
-   (S+'frontend-design-rules/SKILL.md', r'page titles cap at\s+(\d+)–(\d+)px')]),
- ("prose size", {16}, [
-   (D+'19-typography-decisions.md', r'T-6\.1 — (\d+)px is the prose default'),
-   (D+'12-judgment.md', r'(\d+)px for editorial prose'),
-   (Q+'12-judgment.md', r'\*\*(\d+)px prose\*\*'),
-   (S+'frontend-design-rules/SKILL.md', r'(\d+)px in prose')]),
- ("UI body size", {15}, [
-   (D+'19-typography-decisions.md', r'(\d+)px is UI body'),
-   (D+'12-judgment.md', r'Body is (\d+)px'),
-   (Q+'12-judgment.md', r'Body (\d+)px UI'),
-   (S+'frontend-design-rules/SKILL.md', r'Body (\d+)px in UI')]),
- ("gap ladder", {4, 12, 24, 56, 80}, [
-   (D+'12-judgment.md', r'\| \*\*J-1\.\d\*\*[^|]*\|[^|]*\|\s*(\d+)\s*\|'),
-   (D+'14-composition.md', r'5-step ladder \((\d+)/(\d+)/(\d+)/(\d+)/(\d+)\)'),
-   (Q+'12-judgment.md', r'micro`(\d+)px`[\s\S]*?paired`(\d+)px`[\s\S]*?grouped`(\d+)px`'
-                        r'[\s\S]*?sectional`(\d+)px`[\s\S]*?page`(\d+)px`'),
-   (S+'frontend-design-rules/SKILL.md', r'Five vertical gaps — (\d+)/(\d+)/(\d+)/(\d+)/(\d+)px')]),
- ("page padding", {24, 56, 80}, [
-   (D+'20-spacing-decisions.md', r'padding-top\s+(\d+)px[\s\S]*?padding-sides\s+(\d+)px'
-                                 r'[\s\S]*?padding-bottom\s+(\d+)px'),
-   (Q+'00-overview.md', r'(\d+)px sides / (\d+)px top / (\d+)px bottom'),
-   (Q+'21-page-layout-decisions.md', r'gutter-x`=(\d+)px[\s\S]*?y-top`=(\d+)px'
-                                     r'[\s\S]*?y-bottom`=(\d+)px'),
-   (S+'frontend-design-rules/SKILL.md', r'(\d+)px sides, (\d+)px top, (\d+)px bottom')]),
- ("page max-width", {1280}, [
-   (D+'20-spacing-decisions.md', r'Page max-width\s+(\d+)px'),
-   (D+'20-spacing-decisions.md', r'\| Dashboard page \| \*\*(\d+)\*\*'),
-   (D+'20-spacing-decisions.md', r'\*\*Page max-width\.\*\* (\d+) for product'),
-   (D+'21-page-layout-decisions.md', r'`--page-max-width` \| `var\(--max-width-7xl\)` = (\d+)px'),
-   (D+'13-recipes.md', r'Max width (\d+)px'),
-   (D+'14-composition.md', r'\| Dashboard \| (\d+)px \|'),
-   (D+'11-page-composition.md', r'Single-column: `max-width: (\d+)px'),
-   (D+'03-layout-spacing.md', r'`\.page` — `padding: 56px 56px 80px; max-width: (\d+)px'),
-   (D+'03-layout-spacing.md', r'`max-width: (\d+)px` on `\.page`'),
-   (Q+'21-page-layout-decisions.md', r'`--page-max-width`=(\d+)px'),
-   (Q+'13-recipes.md', r'max-width (\d+)px'),
-   (Q+'14-composition.md', r'max-width Dashboard/Library (\d+)px'),
-   (Q+'20-spacing-decisions.md', r'max-width \*\*(\d+)\*\* \(`--page-max-width`, SP-5\)'),
-   (Q+'20-spacing-decisions.md', r'dashboard page (\d+) · catalog/docs'),
-   (Q+'20-spacing-decisions.md', r'page max-width (\d+)\(product\)'),
-   (Q+'11-page-composition.md', r'single-col `max-width:(\d+)px`'),
-   (Q+'03-layout-spacing.md', r'`\.page`\(`padding:56px 56px 80px; max-width:(\d+)px'),
-   (Q+'03-layout-spacing.md', r'`max-width:(\d+)px` on `\.page`'),
-   (S+'frontend-design-rules/SKILL.md', r'(\d+)px max-width')]),
- ("stat value size", {28, 32}, [
-   (D+'19-typography-decisions.md', r'Size is (\d+)px default, (\d+)px for hero stat'),
-   (D+'12-judgment.md', r'Stat values are always (\d+)–(\d+)px'),
-   (D+'18-review.md', r'Stat values in Geist,? (?:tnum on, )?(\d+)–(\d+)px'),
-   (D+'13-recipes.md', r'`\.sc-val` is (\d+)px default / (\d+)px hero'),
-   (Q+'19-typography-decisions.md', r'Size (\d+)px default / (\d+)px hero-stat'),
-   (S+'frontend-design-rules/SKILL.md', r'(\d+)px default, (\d+)px hero')]),
- ("hit targets", {44, 32, 8}, [
-   (D+'16-accessibility.md', r'Minimum hit target: (\d+)×\d+px'),
-   (D+'16-accessibility.md', r'Adjacent hit targets have ≥ (\d+)px'),
-   (D+'16-accessibility.md', r'Desktop hit targets can be smaller \((\d+)×\d+ min\)'),
-   (Q+'16-accessibility.md', r'(\d+)×\d+px minimum on touch[^.]*?\((\d+)×\d+ desktop'),
-   (Q+'16-accessibility.md', r'≥(\d+)px gap'),
-   (S+'frontend-a11y-rules/SKILL.md',
-    r'Hit targets (\d+)×\d+px on touch, (\d+)×\d+px desktop minimum, ≥(\d+)px apart')]),
- ("contrast ratios", {4.5, 3}, [
-   (D+'16-accessibility.md', r'Body text needs (\d+(?:\.\d+)?):1 contrast[\s\S]{0,60}?needs (\d+):1'),
-   (S+'frontend-a11y-rules/SKILL.md', r'Contrast (\d+(?:\.\d+)?):1 body, (\d+):1 large')]),
-]
+# quiet's docs are cited, not restated, so no constant lives in two places; grow this when one does
+PIN = []
 for label, exp, locs in PIN:
     seen = {}
     for path, rx in locs:
@@ -334,7 +284,8 @@ CITE = [re.compile(r'`(' + NM + r')`\s+skills?\b'),      # (b) `<name>` skill
 names = 0
 for p in sorted(set(list(AG.rglob('*.md')) + list(SK.glob('*/SKILL.md')) +
                     [pathlib.Path(f) for f in
-                     ('CLAUDE.md', 'webapp/CLAUDE.md', 'base-server/CLAUDE.md')] +
+                     ('CLAUDE.md', 'AGENTS.md', 'webapp/AGENTS.md', 'webapp/CLAUDE.md', 'base-server/AGENTS.md')] +
+                    list(pathlib.Path('.claude/rules').rglob('*.md')) +
                     [q for d in ('webapp/docs', 'base-server/docs', 'docs/plans', 'docs/tickets')
                      for q in pathlib.Path(d).glob('*.md')])):
     if not p.is_file(): continue
@@ -412,11 +363,82 @@ print(f"scanned {fwd} forward pointers, {rev} reverse rule-IDs, across {len(docs
 print('\n'.join(out) if out else "0 findings")
 ```
 
+**Script D — Proto remnants (Frontend group, "No Proto remnants"):**
+
+A stdlib-only walker over every text file under the repo root. A label fires only under its
+path prefix (`webapp/` for the CSS-var, theme-name and toast-locator labels, the whole repo for
+the rest); `EXC` is the one exception registry and must match the documented-exceptions table
+in the H2 section of `docs/plans/2026-10-08-quiet-product-rewrite.md`. Each `PROTO` line is one finding; a clean tree prints
+`0 findings`.
+
+```python
+import os, re, fnmatch
+SKIP = {'.git', 'node_modules', 'dist', 'playwright-report', 'test-results'}
+SKIP_PATHS = {'.claude/worktrees'}       # sibling checkouts; each is audited from its own root
+ALL = 'all'
+LABELS = [                               # (label, pattern, path prefix it applies under)
+ ('PROTO-IMPORT', r'@/proto-design-system', ''),
+ ('PROTO-PKG', r'(?<!@/)proto-design-system', ''),        # the @/ form is PROTO-IMPORT's
+ ('PROTO-VAR', r'--(?:color|space|font|line-height|letter-spacing|border-width|radius|shadow'
+               r'|duration|ease|z|max-width|page)-', 'webapp/'),
+ ('PROTO-BANNER', r'BannerCenter', ''),
+ ('PROTO-TOKENS', r'design-tokens', ''),
+ ('PROTO-FONT', r'Fraunces', ''),
+ ('PROTO-THEMEGRID', r'ThemeSwitcherGrid', ''),
+ ('PROTO-THEMEKEY', r'proto-theme', ''),
+ ('PROTO-THEMENAME', r'["\'](?:paper|carbon)["\']', 'webapp/'),
+ ('PROTO-TOASTLOC', r'output\[aria-live|locator\(["\']output["\']', 'webapp/'),
+ ('PROTO-STORYBOOK', r'ui\.protoapp\.xyz', ''),
+]
+LABELS = [(l, re.compile(p), s) for l, p, s in LABELS]
+EXC = {                                  # path glob -> labels allowed there
+ 'webapp/src/lib/migrateTheme.ts': {'PROTO-THEMEKEY', 'PROTO-THEMENAME'},
+ 'webapp/e2e/shell.spec.ts': {'PROTO-THEMEKEY', 'PROTO-THEMENAME'},
+ 'webapp/.stylelintrc.json': {'PROTO-VAR'},
+ 'webapp/biome.json': {'PROTO-IMPORT', 'PROTO-PKG'},
+ 'webapp/vendor/*': ALL,
+ 'webapp/storybook-static/*': ALL,
+ '.claude/skills/frontend-composition-rules/SKILL.md': {'PROTO-BANNER'},
+ '.claude/skills/frontend-e2e-rules/SKILL.md': {'PROTO-THEMEKEY'},
+ 'base-server/internal/github/*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'base-server/internal/infra/clients/storybook/*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'base-server/migrations/V0053__*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'docs/GITHUB_AUTOPOST_*': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'docs/PRD.md': {'PROTO-PKG', 'PROTO-STORYBOOK'},
+ 'docs/prds/*': ALL,
+ 'docs/briefs/*': ALL,
+ 'docs/plans/*': ALL,
+ 'docs/superpowers/*': ALL,
+ '.claude/agents/engineering/ios/*': {'PROTO-FONT', 'PROTO-TOKENS'},
+ '.claude/skills/ios-*/*': {'PROTO-FONT', 'PROTO-TOKENS'},
+ '.claude/agents/qa/consistency-auditor.md': ALL,
+}
+def allowed(path, label):
+    return any(fnmatch.fnmatch(path, g) and (labs == ALL or label in labs) for g, labs in EXC.items())
+files, out = 0, []
+for root, dirs, names in os.walk('.'):
+    rel = os.path.relpath(root, '.').replace(os.sep, '/')
+    rel = '' if rel == '.' else rel + '/'
+    dirs[:] = sorted(d for d in dirs if d not in SKIP and rel + d not in SKIP_PATHS)
+    for n in sorted(names):
+        path = rel + n
+        try: data = open(path, 'rb').read()
+        except OSError: continue
+        if b'\0' in data[:8192]: continue                 # binary
+        files += 1
+        for i, line in enumerate(data.decode('utf-8', 'replace').split('\n'), 1):
+            for label, rx, scope in LABELS:
+                if path.startswith(scope) and rx.search(line) and not allowed(path, label):
+                    out.append(f"PROTO   {label} {path}:{i}")
+print(f"scanned {files} files, {len(out)} matches")
+print('\n'.join(out) if out else "0 findings")
+```
+
 Backlinks were retrofitted into all nine `ios/docs/engineering/*.md` files plus `CLAUDE.md` (33 `→
 skill: ios-xxx <IDs>` lines total, one per doc heading a rule cites, multiple rule IDs comma-joined on
 one line where several rules share a heading) — direction 2 is live from the day this was added, not a
 placeholder. Skill-name citations for `ios-*-rules` needed no new scan — Script B's direction 5 scan
-set (`.claude/agents/**`, `.claude/skills/*/SKILL.md`, the three `CLAUDE.md` files) already includes
+set (`.claude/agents/**`, `.claude/skills/*/SKILL.md`, the root + package `AGENTS.md`/`CLAUDE.md` files, `.claude/rules/`) already includes
 every place an iOS skill name would be cited.
 
 Behaviours neither script may "fix" — each confirmed empirically against this tree:
@@ -435,41 +457,54 @@ Behaviours neither script may "fix" — each confirmed empirically against this 
 - Direction 5's prose shape is `` `<name>` `` followed *immediately* by whitespace and `skill`. A
   wider window (`` `<name>` `` … within N characters of "skill") pulls in agent names from sentences
   like "`frontend-e2e-test-writer` with this skill" and turns them into false findings.
-- A skill's `**AAP-\*** `-style family label needs the `(?=\s)` lookahead to capture the escaped
-  asterisk; without it the label reads as `AAP-` and every family backlink is a false finding.
-- 4a compares numeric **values**, not value+unit, because `J-1`'s `80px` is a bare `80` in an
-  unlabelled `Px` table column. Deliberate looseness — 4b is the strict half.
-- 4a forgives a number whose line cites the rule it came from (`R-2.2`'s `150ms` cites `J-9.1`).
-  Uncited numbers are not forgiven.
+- A skill's `**AP-\*** `-style family label needs the `(?=\s)` lookahead to capture the escaped
+  asterisk; without it the label reads as `AP-` and every family backlink is a false finding.
+- 4a compares numeric **values**, not value+unit, because a doc table can state a bare number under
+  a unit-labelled column. Deliberate looseness — 4b is the strict half.
+- 4a checks a number only against the section the line's own pointer names. A number sourced from
+  anywhere else is a finding, even if the line cites the rule it came from.
+- `quiet:<path>#<anchor>` citations (quiet's docs, shipped in `webapp/node_modules/`) are prose,
+  never a `→` pointer, and `PTR` deliberately cannot match them; they have no mechanical anchor
+  check because the harness CI job has no `node_modules`.
 - Both direction-2 loops must `.exists()`-guard the skill file **before** reading it. A backlink
   naming a skill that was renamed or never existed is a `REVERSE` finding, not a `FileNotFoundError`:
   a checker that raises reports nothing at all, so the run reads as infrastructure failure rather
   than corpus drift and the finding is lost twice over.
-- Baselines for the current tree: script A 36 forward pointers / 37 reverse rule-IDs; script B 73
-  forward pointers / 61 reverse rule-IDs / 8 frontend skills / 125 skill-name citations; script C 45
-  forward pointers / 45 reverse rule-IDs across 5 iOS rule skills, 11 source docs (10
-  `ios/docs/engineering/*.md` + `CLAUDE.md`), and 34 backlinks; **0 findings** from directions 1-4 of
-  scripts A and B, and directions 1-2 of script C. Every count is a **floor**, not an equality — each
-  rule added to a skill raises the corresponding script's forward-pointer count — so a run that checks
-  far fewer has a broken regex, not a clean
-  corpus. Report that as a finding too.
-- Direction 5 reports six `SKILLNAME` findings on this tree until `BUG-008`'s dead skill names are
-  corrected. That is the drift it was built to surface, not a checker fault; once those six are
-  fixed the direction is silent and stays that way. Pragma only what genuinely trips the check —
-  a needless exemption is the same silent loosening as a slack regex.
+- Baselines for the current tree (Proto removed, the old web UI-kit docs gone from the frontend corpus): script
+  A prints nothing (it has no summary line); script B `scanned 2 forward pointers, 4 reverse
+  rule-IDs, 8 frontend skills, 42 agents, 231 skill-name citations`; script C `scanned 57 forward
+  pointers, 0 reverse rule-IDs, across 11 source docs` and `0 findings`. Script C's reverse direction
+  checks nothing today: the iOS docs hold no `→ skill: ios-…` backlinks (the paragraph above
+  predates their removal), so a 0 there is vacuous rather than clean. The frontend counts are small
+  by design: the rewritten skills cite quiet's docs as `quiet:` prose, which no pointer regex
+  matches, and only `webapp/docs/` carries backlinks. Every count is a **floor**, not an equality —
+  each pointer or backlink added raises it — so a run that checks far fewer has a broken regex, not
+  a clean corpus. Report that as a finding too.
+- Known standing findings, out of scope for the frontend corpus: 7 iOS `BUDGET` (`ios-models-networking-rules`,
+  `ios-screens-rules`, `ios-testing-rules`, and the agents `ios-code-reviewer`, `ios-plan-critic`,
+  `ios-plan-writer`, `ios-supervisor`) and 2 `SKILLNAME` (`ios-xxx` quoted in this file,
+  `ios-worktree` in `.claude/rules/ios-workflow.md`). Frontend `BUDGET` must read 0. Pragma only
+  what genuinely trips direction 5 — a needless exemption is the same silent loosening as a slack
+  regex.
+- Script D must read `0 findings`. Proto is gone from the tree, so any `PROTO` line is a regression:
+  remove the remnant, or add it to `EXC` only when it is a legitimate non-Proto hit (the storybook
+  autopost feature's `proto-design-system` repo name, vendored quiet, historical plans).
 
-**Verified against five seeded mismatches** (each reverted after; a check never seen to fail is not
-a verified check):
+**Verified against seeded mismatches** in a scratch copy of the repo (each reverted after; a check
+never seen to fail is not a verified check):
 
 | Seed | Mutation | Expected |
 |---|---|---|
-| ID | `- **J-2**` → `- **J-2b**` in `frontend-design-rules` only | one `REVERSE` naming `J-2` |
-| Budget | pad `frontend-a11y-rules` past 4,096 B | one `BUDGET` |
-| Numeric | `4/12/24/56/80px` → `…/72px`, **every rule ID intact** | one `NUMERIC` + one `PINNED`, and the ID and budget assertions **stay silent** |
+| ID | append `→ skill: frontend-a11y-rules A-99` to `webapp/docs/A11Y-PATTERNS.md` | one `REVERSE` naming `A-99`; forward and every other backlink stay silent |
+| Budget | pad `frontend-a11y-rules` past 4,096 B | one `BUDGET` for the skill, plus one per agent the padding pushes past 12,288 B |
+| Budget exemption | remove `'quiet-app'` from `EX` | one `BUDGET   skill quiet-app is 5441 B > 4096`, plus one per agent that preloads it and then exceeds 12,288 B |
 | Skill name | in a non-exempt scanned file, misspell one cited skill name (e.g. `frontend-page-rules` → `frontend-pages-rules`) | one `SKILLNAME` naming the file:line and the closest real skill, and directions 1-4 **stay silent** |
-| iOS forward | append `-typo` to `ios-architecture-rules`' `#1-seven-layers` anchor (4 rules cite it) | four `FORWARD` findings, one per rule citing that anchor; script C alone flags it, A and B stay silent |
-| iOS reverse | append a nonexistent `A-99` to `01-architecture.md`'s `→ skill: ios-architecture-rules A-3` backlink | one `REVERSE` naming `A-99`; forward direction and every other backlink stay silent |
-| Missing skill | append `→ skill: <name> S-1` to a `base-server/docs/*.md`, `<name>` being a backend skill that does not exist | one `REVERSE  … cites missing skill <name>` from script A — **not** a traceback |
+| Proto remnant | append `import { Button } from "@/proto-design-system";` to a Proto-free `webapp/src` file | one `PROTO   PROTO-IMPORT` naming that file:line from script D |
+| iOS forward | append `-typo` to `ios-architecture-rules`' `#3-layer-map` anchor (2 rules cite it) | two `FORWARD` findings, one per rule citing that anchor; script C alone flags it, A stays silent and B only re-sizes its existing iOS `BUDGET` lines by the typo's bytes |
+| iOS reverse | append `→ skill: ios-architecture-rules A-99` to `ios/docs/engineering/01-architecture.md` | one `REVERSE` naming `A-99`; forward direction stays silent |
+| Missing skill | append `→ skill: <name> S-1` to a `base-server/docs/*.md`, `<name>` being a backend skill that does not exist | one `REVERSE  … cites missing skill <name>` from script A — **not** a traceback — and one `SKILLNAME` for the same line from script B's direction 5 |
+
+The numeric seed is dropped while `PIN` is empty; restore one when the registry gains an entry.
 
 Collect all findings, dedupe, and rank (a `critical` is a rule broken in a way that ships a bug or breaks a gate). Report-only — surface a ranked list; the owning agent fixes.
 

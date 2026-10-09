@@ -1,0 +1,75 @@
+// Grid — CSS grid on the 8px scale. BEM: .q-grid, __item (animated child); --auto (auto-fit by
+// --_min), --template (raw --_template), --gap-{size}, --row-gap-{size}. Fixed counts use --_cols.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-grid-gap-xs: var(--q-space-1);
+    --q-grid-gap-sm: var(--q-space-2);
+    --q-grid-gap-md: var(--q-space-3);
+    --q-grid-gap-lg: var(--q-space-4);
+    --q-grid-gap-xl: var(--q-space-6);
+    --q-grid-gap-2xl: var(--q-space-8);
+    --q-grid-rise-distance: var(--q-space-1);
+    --q-grid-rise-dur: 0.4s;
+    --q-grid-rise-stagger: 60ms;
+  }
+}
+
+@layer q.components {
+  .q-grid {
+    --_cols: 3;
+    --_gap: 0;
+    --_row-gap: normal;
+    --_align: normal;
+
+    display: grid;
+    grid-template-columns: repeat(var(--_cols), minmax(0, 1fr));
+    align-items: var(--_align);
+    // Rows don't gap unless rowGap is set: the reference clears row-gap (its inline rowGap: undefined
+    // follows the gap shorthand), and the catalog must match it pixel for pixel.
+    gap: var(--_row-gap) var(--_gap);
+
+    &--auto { grid-template-columns: repeat(auto-fit, minmax(min(var(--_min), 100%), 1fr)); }
+    &--template { grid-template-columns: var(--_template); }
+
+    &--gap-none { --_gap: 0; }
+    &--gap-xs { --_gap: var(--q-grid-gap-xs); }
+    &--gap-sm { --_gap: var(--q-grid-gap-sm); }
+    &--gap-md { --_gap: var(--q-grid-gap-md); }
+    &--gap-lg { --_gap: var(--q-grid-gap-lg); }
+    &--gap-xl { --_gap: var(--q-grid-gap-xl); }
+    &--gap-2xl { --_gap: var(--q-grid-gap-2xl); }
+
+    &--row-gap-none { --_row-gap: 0; }
+    &--row-gap-xs { --_row-gap: var(--q-grid-gap-xs); }
+    &--row-gap-sm { --_row-gap: var(--q-grid-gap-sm); }
+    &--row-gap-md { --_row-gap: var(--q-grid-gap-md); }
+    &--row-gap-lg { --_row-gap: var(--q-grid-gap-lg); }
+    &--row-gap-xl { --_row-gap: var(--q-grid-gap-xl); }
+    &--row-gap-2xl { --_row-gap: var(--q-grid-gap-2xl); }
+  }
+
+  .q-grid__item {
+    display: grid;
+    min-width: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .q-grid__item {
+      animation: q-grid-rise var(--q-grid-rise-dur) var(--q-ease-forge) both;
+      animation-delay: calc(var(--_i) * var(--q-grid-rise-stagger));
+    }
+  }
+
+  @keyframes q-grid-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--q-grid-rise-distance));
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

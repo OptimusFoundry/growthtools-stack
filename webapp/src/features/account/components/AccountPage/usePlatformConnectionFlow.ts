@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { useConnectPlatform } from "@/hooks/useConnectPlatform";
 import { useConnectWithToken } from "@/hooks/useConnectWithToken";
 import { useDisconnectPlatform } from "@/hooks/useDisconnectPlatform";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { useNotify } from "@/hooks/useNotify";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 
 // ============================================================================
@@ -23,7 +23,6 @@ export interface PlatformConnectionFlowState {
 export interface PlatformConnectionFlowHandlers {
 	handleConnect: (platform: PlatformType) => Promise<void>;
 	handleDisconnect: (connectionId: string) => Promise<void>;
-	handleBlueskyError: (message: string) => void;
 	setBlueskyModalOpen: (open: boolean) => void;
 	setConnectingPlatform: (platform: PlatformType | null) => void;
 	setDisconnectingId: (id: string | null) => void;
@@ -52,7 +51,7 @@ export function usePlatformConnectionFlow({
 	const { connectPlatform } = useConnectPlatform();
 	const { connectWithToken } = useConnectWithToken();
 	const { disconnectPlatform } = useDisconnectPlatform();
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 
 	const [connectingPlatform, setConnectingPlatform] =
 		useState<PlatformType | null>(null);
@@ -72,10 +71,9 @@ export function usePlatformConnectionFlow({
 					await connectWithToken(platform);
 					setConnectingPlatform(null);
 					onRefetch();
-					addBanner({
-						type: "success",
+					notify({
+						status: "success",
 						title: `Connected ${PLATFORM_DISPLAY_NAMES[platform]}`,
-						dismissible: true,
 					});
 				} else {
 					const response = await connectPlatform(platform);
@@ -86,16 +84,15 @@ export function usePlatformConnectionFlow({
 					err instanceof Error && err.message.includes("already connected")
 						? `${PLATFORM_DISPLAY_NAMES[platform]} is already connected.`
 						: "Please try again.";
-				addBanner({
-					type: "error",
+				notify({
+					status: "error",
 					title: `Couldn't connect ${PLATFORM_DISPLAY_NAMES[platform]}`,
 					description,
-					dismissible: true,
 				});
 				setConnectingPlatform(null);
 			}
 		},
-		[connectPlatform, connectWithToken, addBanner, onRefetch],
+		[connectPlatform, connectWithToken, notify, onRefetch],
 	);
 
 	const handleDisconnect = useCallback(
@@ -104,35 +101,18 @@ export function usePlatformConnectionFlow({
 			try {
 				await disconnectPlatform(connectionId);
 				onRefetch();
-				addBanner({
-					type: "success",
-					title: "Platform disconnected",
-					dismissible: true,
-				});
+				notify({ status: "success", title: "Platform disconnected" });
 			} catch {
-				addBanner({
-					type: "error",
+				notify({
+					status: "error",
 					title: "Couldn't disconnect platform",
 					description: "Please try again.",
-					dismissible: true,
 				});
 			} finally {
 				setDisconnectingId(null);
 			}
 		},
-		[disconnectPlatform, addBanner, onRefetch],
-	);
-
-	const handleBlueskyError = useCallback(
-		(message: string) => {
-			addBanner({
-				type: "error",
-				title: "Couldn't connect BlueSky",
-				description: message,
-				dismissible: true,
-			});
-		},
-		[addBanner],
+		[disconnectPlatform, notify, onRefetch],
 	);
 
 	return {
@@ -144,7 +124,6 @@ export function usePlatformConnectionFlow({
 		handlers: {
 			handleConnect,
 			handleDisconnect,
-			handleBlueskyError,
 			setBlueskyModalOpen,
 			setConnectingPlatform,
 			setDisconnectingId,

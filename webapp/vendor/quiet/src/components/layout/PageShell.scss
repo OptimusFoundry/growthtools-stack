@@ -1,0 +1,72 @@
+// PageShell — page frame: header, then a column layout that stacks below 720px. BEM: .q-page-shell,
+// __body, __column; --{single|half|third|sidebar|sidebar-right}, --narrow, --animated.
+// A raw column gap arrives as --_gap.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-page-shell-max: var(--q-w-max);
+    --q-page-shell-narrow-max: 880px; // reading width between form and content; no tier-2 width
+    --q-page-shell-px: var(--q-gutter);
+    --q-page-shell-pb: var(--q-space-12);
+    --q-page-shell-gap: var(--q-space-6);
+    --q-page-shell-column-gap: var(--q-space-4);
+    --q-page-shell-rise-distance: var(--q-space-1);
+    --q-page-shell-rise-dur: 0.4s;
+    --q-page-shell-rise-stagger: 80ms;
+  }
+}
+
+@layer q.components {
+  .q-page-shell {
+    --_gap: var(--q-page-shell-column-gap);
+    --_template: minmax(0, 1fr);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-page-shell-gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--q-page-shell-max);
+    margin: 0 auto;
+    padding: 0 var(--q-page-shell-px) var(--q-page-shell-pb);
+
+    &--narrow { max-width: var(--q-page-shell-narrow-max); }
+    &--half { --_template: repeat(2, minmax(0, 1fr)); }
+    &--third { --_template: repeat(3, minmax(0, 1fr)); }
+    &--sidebar { --_template: minmax(0, 1fr) minmax(0, 2fr); }
+    &--sidebar-right { --_template: minmax(0, 2fr) minmax(0, 1fr); }
+  }
+
+  .q-page-shell__body {
+    display: grid;
+    grid-template-columns: var(--_template);
+    align-items: start;
+    gap: var(--_gap);
+  }
+
+  .q-page-shell__column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--_gap);
+    min-width: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .q-page-shell--animated > .q-page-shell__body > .q-page-shell__column {
+      animation: q-page-shell-rise var(--q-page-shell-rise-dur) var(--q-ease-forge) both;
+      animation-delay: calc(var(--_i) * var(--q-page-shell-rise-stagger));
+    }
+  }
+
+  @keyframes q-page-shell-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--q-page-shell-rise-distance));
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

@@ -1,0 +1,102 @@
+// TextArea — labelled textarea with hint and counter. BEM: .q-text-area, __input(--invalid),
+// __footer, __count; --{size}, --disabled. --_resize (set inline) is the resize prop.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-text-area-gap: var(--q-space-1);
+    --q-text-area-disabled-opacity: 0.4;
+    --q-text-area-sm-font-size: var(--q-text-md);
+    --q-text-area-sm-py: var(--q-space-1);
+    --q-text-area-sm-px: var(--q-space-1-5);
+    --q-text-area-md-font-size: var(--q-text-lg);
+    --q-text-area-md-py: var(--q-space-1-5);
+    --q-text-area-md-px: var(--q-space-2);
+    --q-text-area-lg-font-size: var(--q-text-xl);
+    --q-text-area-lg-py: var(--q-space-2);
+    --q-text-area-lg-px: var(--q-space-2-5);
+    --q-text-area-font-family: var(--q-font-sans);
+    --q-text-area-leading: var(--q-leading-body);
+    --q-text-area-fg: var(--q-fg);
+    --q-text-area-bg: var(--q-bg);
+    --q-text-area-radius: var(--q-radius-md);
+    --q-text-area-border: var(--q-border);
+    --q-text-area-border-focus: var(--q-fg);
+    --q-text-area-border-invalid: var(--q-accent);
+    --q-text-area-ring-focus: var(--q-ring-soft);
+    --q-text-area-footer-gap: var(--q-space-2);
+    --q-text-area-count-font-family: var(--q-font-mono);
+    --q-text-area-count-font-size: var(--q-text-2xs);
+    --q-text-area-count-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-text-area {
+    --_font-size: var(--q-text-area-md-font-size);
+    --_py: var(--q-text-area-md-py);
+    --_px: var(--q-text-area-md-px);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-text-area-gap);
+
+    &--sm {
+      --_font-size: var(--q-text-area-sm-font-size);
+      --_py: var(--q-text-area-sm-py);
+      --_px: var(--q-text-area-sm-px);
+    }
+
+    &--lg {
+      --_font-size: var(--q-text-area-lg-font-size);
+      --_py: var(--q-text-area-lg-py);
+      --_px: var(--q-text-area-lg-px);
+    }
+
+    &--disabled {
+      opacity: var(--q-text-area-disabled-opacity);
+    }
+  }
+
+  .q-text-area__input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--_py) var(--_px);
+    border: var(--q-hairline) solid var(--q-text-area-border);
+    border-radius: var(--q-text-area-radius);
+    outline: none;
+    background: var(--q-text-area-bg);
+    font-family: var(--q-text-area-font-family);
+    font-size: var(--_font-size);
+    line-height: var(--q-text-area-leading);
+    color: var(--q-text-area-fg);
+    resize: var(--_resize, vertical);
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:focus {
+      border-color: var(--q-text-area-border-focus);
+      box-shadow: var(--q-text-area-ring-focus);
+    }
+
+    &--invalid,
+    &--invalid:focus {
+      border-color: var(--q-text-area-border-invalid);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-text-area__footer {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--q-text-area-footer-gap);
+  }
+
+  .q-text-area__count {
+    margin-left: auto;
+    font-family: var(--q-text-area-count-font-family);
+    font-size: var(--q-text-area-count-font-size);
+    color: var(--q-text-area-count-fg);
+  }
+}

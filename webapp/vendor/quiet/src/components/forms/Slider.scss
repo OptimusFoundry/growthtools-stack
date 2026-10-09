@@ -1,0 +1,120 @@
+// Slider — hairline track with an ink thumb. BEM: .q-slider, __header, __value, __track, __rail,
+// __fill, __thumb; --{size}. --_pct (set inline) is the value's position along the track.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-slider-gap: var(--q-space-1-5);
+    --q-slider-disabled-opacity: 0.4;
+    --q-slider-header-gap: var(--q-space-2);
+    --q-slider-header-font-family: var(--q-font-mono);
+    --q-slider-header-font-size: var(--q-text-2xs);
+    --q-slider-header-tracking: var(--q-tracking-mono);
+    --q-slider-header-fg: var(--q-fg-muted);
+    --q-slider-value-fg: var(--q-fg);
+    --q-slider-sm-rail: var(--q-space-0-25);
+    --q-slider-sm-thumb: var(--q-space-1-5);
+    --q-slider-md-rail: var(--q-space-0-25);
+    --q-slider-md-thumb: var(--q-space-2);
+    --q-slider-lg-rail: var(--q-space-0-5);
+    --q-slider-lg-thumb: var(--q-space-2-5);
+    --q-slider-rail-bg: var(--q-border);
+    --q-slider-fill-bg: var(--q-fg);
+    --q-slider-thumb-bg: var(--q-fg);
+    --q-slider-thumb-ring: 0 0 0 3px var(--q-bg), 0 0 0 4px var(--q-fg); // gap ring on focus
+  }
+}
+
+@layer q.components {
+  .q-slider {
+    --_rail: var(--q-slider-md-rail);
+    --_k: var(--q-slider-md-thumb);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-slider-gap);
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-slider-disabled-opacity);
+    }
+
+    &--sm {
+      --_rail: var(--q-slider-sm-rail);
+      --_k: var(--q-slider-sm-thumb);
+    }
+
+    &--lg {
+      --_rail: var(--q-slider-lg-rail);
+      --_k: var(--q-slider-lg-thumb);
+    }
+  }
+
+  .q-slider__header {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--q-slider-header-gap);
+    font-family: var(--q-slider-header-font-family);
+    font-size: var(--q-slider-header-font-size);
+    letter-spacing: var(--q-slider-header-tracking);
+    text-transform: uppercase;
+    color: var(--q-slider-header-fg);
+  }
+
+  .q-slider__value {
+    font-variant-numeric: tabular-nums;
+    color: var(--q-slider-value-fg);
+  }
+
+  .q-slider__track {
+    --_glide: 0s;
+
+    position: relative;
+    height: var(--_k);
+    cursor: pointer;
+    touch-action: none;
+
+    &[data-glide] {
+      --_glide: var(--q-dur-hover);
+    }
+
+    .q-slider[aria-disabled="true"] > & {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-slider__rail,
+  .q-slider__fill {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: var(--_rail);
+    border-radius: var(--q-radius-pill);
+    transform: translateY(-50%);
+  }
+
+  .q-slider__rail {
+    right: 0;
+    background: var(--q-slider-rail-bg);
+  }
+
+  .q-slider__fill {
+    width: var(--_pct);
+    background: var(--q-slider-fill-bg);
+    transition: width var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-slider__thumb {
+    position: absolute;
+    top: 0;
+    left: calc(var(--_pct) - var(--_k) / 2);
+    width: var(--_k);
+    height: var(--_k);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-slider-thumb-bg);
+    outline: none;
+    transition: left var(--_glide) var(--q-ease-soft);
+
+    &:focus {
+      box-shadow: var(--q-slider-thumb-ring);
+    }
+  }
+}

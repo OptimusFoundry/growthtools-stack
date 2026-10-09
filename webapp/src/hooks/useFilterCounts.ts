@@ -1,3 +1,4 @@
+import type { FilterTabsProps } from "@optimusfoundry/quiet";
 import { useMemo } from "react";
 import { countBy } from "@/utils/format";
 
@@ -8,6 +9,12 @@ export interface FilterKey<K extends string> {
 
 export interface FilterItemWithCount<K extends string> extends FilterKey<K> {
 	count: number;
+}
+
+export function toFilterTabItems<K extends string>(
+	items: FilterItemWithCount<K>[],
+): FilterTabsProps["items"] {
+	return items.map(({ id, label, count }) => ({ value: id, label, count }));
 }
 
 /**

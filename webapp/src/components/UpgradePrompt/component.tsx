@@ -1,10 +1,10 @@
+import { Button } from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { type HTMLAttributes, memo } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { FEATURE_DISPLAY_CONFIGS } from "@/config/tiers";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
 import styles from "./component.module.scss";
 
 // ============================================================================
@@ -84,15 +84,15 @@ export const UpgradePrompt = memo(function UpgradePrompt({
 	return (
 		<div className={classNames} {...props}>
 			<div className={styles.icon}>
-				<Icon icon={Lock} size="lg" />
+				<AppIcon icon={Lock} size="lg" color="muted" />
 			</div>
 			<div className={styles.content}>
 				<h4 className={styles.title}>{displayTitle}</h4>
 				<p className={styles.description}>{displayDescription}</p>
 			</div>
 			<Button
-				type="button"
-				className={styles.upgradeButton}
+				variant="primary"
+				size={variant === "banner" ? "sm" : "md"}
 				onClick={handleUpgradeClick}
 			>
 				Upgrade to {requiredTierDisplayName}

@@ -1,11 +1,19 @@
-import { ChevronLeft } from "lucide-react";
-import type { ReactNode } from "react";
 import {
 	Breadcrumb,
-	type BreadcrumbItem,
-} from "@/proto-design-system/components/navigation/Breadcrumb/Breadcrumb";
-import { SidebarMobileTrigger } from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
+	type BreadcrumbProps,
+	Link,
+	SidebarTrigger,
+	useSidebar,
+} from "@optimusfoundry/quiet";
+import { ChevronLeft } from "lucide-react";
+import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
+import { TopbarActionsTargetSlot } from "./TopbarActionsPortal";
+import { useTopbarSlot } from "./TopbarSlot";
 import styles from "./topbar.module.scss";
+
+type BreadcrumbItem = BreadcrumbProps["items"][number];
 
 interface TopbarProps {
 	/** Title shown when no breadcrumbs are provided. */
@@ -13,17 +21,9 @@ interface TopbarProps {
 	breadcrumbs?: BreadcrumbItem[];
 	actions?: ReactNode;
 	children?: ReactNode;
-	/**
-	 * Content rendered as the first flex child, before the title block.
-	 * Defaults to <SidebarMobileTrigger /> — shown only on mobile via its
-	 * own internal guard. Pass null to suppress the default.
-	 */
+	/** Rendered before the title block; defaults to <SidebarTrigger />, pass null to suppress. */
 	leading?: ReactNode;
-	/**
-	 * When true, the actions slot is hidden on mobile viewports (<768px).
-	 * Use when a MobileActionBar provides the same actions at the bottom of
-	 * the screen on small screens.
-	 */
+	/** Hides the actions slot below the `lg` breakpoint. */
 	hideActionsOnMobile?: boolean;
 }
 
@@ -35,56 +35,57 @@ export function Topbar({
 	leading,
 	hideActionsOnMobile = false,
 }: TopbarProps) {
+	const { isMobile } = useSidebar();
+	const slot = useTopbarSlot();
+
 	const hasBreadcrumbs = !!breadcrumbs && breadcrumbs.length > 0;
-	// The first breadcrumb item that has an href is the parent to navigate back to.
 	const parentCrumb = hasBreadcrumbs
 		? breadcrumbs.find((item) => item.href != null)
 		: undefined;
 
-	// Default leading: the hamburger trigger. Callers can pass `leading={null}` to suppress.
-	const leadingNode =
-		leading === undefined ? <SidebarMobileTrigger /> : leading;
+	const leadingNode = leading === undefined ? <SidebarTrigger /> : leading;
 
-	return (
+	const actionsClassName = hideActionsOnMobile
+		? `${styles.actions} ${styles.actionsHiddenOnMobile}`
+		: styles.actions;
+
+	// The breadcrumb swap follows the provider breakpoint (720), which has no
+	// step in _breakpoints.scss, so it cannot be a CSS media query.
+	const crumbs = isMobile ? (
+		parentCrumb?.href != null && (
+			<Link
+				href={parentCrumb.href}
+				variant="muted"
+				underline="none"
+				size="sm"
+				className={styles.backLink}
+				aria-label={`Back to ${String(parentCrumb.label)}`}
+			>
+				<AppIcon icon={ChevronLeft} size="md" />
+				<span>{parentCrumb.label}</span>
+			</Link>
+		)
+	) : (
+		<Breadcrumb items={breadcrumbs ?? []} className={styles.breadcrumb} />
+	);
+
+	const header = (
 		<header className={styles.topbar}>
 			{leadingNode != null && (
 				<div className={styles.leading}>{leadingNode}</div>
 			)}
 			<div className={styles.titleBlock}>
-				{hasBreadcrumbs ? (
-					<>
-						{/* Desktop: full breadcrumb trail */}
-						<span className={styles.breadcrumbDesktop}>
-							<Breadcrumb items={breadcrumbs} size="md" />
-						</span>
-						{/* Mobile: compact back link (only when a parent href exists) */}
-						{parentCrumb?.href != null && (
-							<a
-								href={parentCrumb.href}
-								className={styles.backLink}
-								aria-label={`Back to ${String(parentCrumb.label)}`}
-							>
-								<ChevronLeft size={16} aria-hidden="true" />
-								<span>{parentCrumb.label}</span>
-							</a>
-						)}
-					</>
-				) : (
-					title && <h1 className={styles.title}>{title}</h1>
-				)}
+				{hasBreadcrumbs
+					? crumbs
+					: title && <h1 className={styles.title}>{title}</h1>}
 			</div>
 			{children}
-			{actions && (
-				<div
-					className={
-						hideActionsOnMobile
-							? `${styles.actions} ${styles.actionsHiddenOnMobile}`
-							: styles.actions
-					}
-				>
-					{actions}
-				</div>
-			)}
+			<TopbarActionsTargetSlot className={styles.portalSlot} />
+			{actions && <div className={actionsClassName}>{actions}</div>}
 		</header>
 	);
+
+	if (slot === undefined) return header;
+	if (slot === null) return null;
+	return createPortal(header, slot);
 }

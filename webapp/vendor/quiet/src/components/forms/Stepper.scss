@@ -1,0 +1,95 @@
+// Stepper — pill group of − / value / +. BEM: .q-stepper, __button, __field; --{size}, --disabled.
+// --_chars (set inline) is the value's length; the field grows 10px per character.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-stepper-border: var(--q-border);
+    --q-stepper-radius: var(--q-radius-pill);
+    --q-stepper-disabled-opacity: 0.4;
+    --q-stepper-sm-height: var(--q-control-sm);
+    --q-stepper-sm-button-font-size: var(--q-text-md);
+    --q-stepper-sm-field-font-size: var(--q-text-xs);
+    --q-stepper-md-height: var(--q-control-md);
+    --q-stepper-md-button-font-size: var(--q-text-lg);
+    --q-stepper-md-field-font-size: 14px;
+    --q-stepper-lg-height: var(--q-field-md);
+    --q-stepper-lg-button-font-size: var(--q-text-xl);
+    --q-stepper-lg-field-font-size: 16px;
+    --q-stepper-button-fg: var(--q-fg);
+    --q-stepper-button-fg-off: var(--q-fg-subtle);
+    --q-stepper-button-bg-hover: var(--q-bg-subtle);
+    --q-stepper-field-min-width: var(--q-space-5);
+    --q-stepper-field-char: 10px;
+    --q-stepper-field-pad: var(--q-space-3);
+    --q-stepper-field-font-family: var(--q-font-mono);
+    --q-stepper-field-fg: var(--q-fg);
+    --q-stepper-field-bg: var(--q-bg);
+  }
+}
+
+@layer q.components {
+  .q-stepper {
+    --_height: var(--q-stepper-md-height);
+    --_button-font-size: var(--q-stepper-md-button-font-size);
+    --_field-font-size: var(--q-stepper-md-field-font-size);
+
+    display: inline-flex;
+    align-items: stretch;
+    box-sizing: border-box;
+    height: var(--_height);
+    overflow: hidden;
+    border: var(--q-hairline) solid var(--q-stepper-border);
+    border-radius: var(--q-stepper-radius);
+
+    &--sm {
+      --_height: var(--q-stepper-sm-height);
+      --_button-font-size: var(--q-stepper-sm-button-font-size);
+      --_field-font-size: var(--q-stepper-sm-field-font-size);
+    }
+
+    &--lg {
+      --_height: var(--q-stepper-lg-height);
+      --_button-font-size: var(--q-stepper-lg-button-font-size);
+      --_field-font-size: var(--q-stepper-lg-field-font-size);
+    }
+
+    &--disabled {
+      opacity: var(--q-stepper-disabled-opacity);
+    }
+  }
+
+  .q-stepper__button {
+    width: var(--_height);
+    height: 100%;
+    border: 0;
+    background: transparent;
+    font-size: var(--_button-font-size);
+    line-height: 1;
+    color: var(--q-stepper-button-fg);
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:hover:not([aria-disabled="true"]) {
+      background: var(--q-stepper-button-bg-hover);
+    }
+
+    &[aria-disabled="true"] {
+      color: var(--q-stepper-button-fg-off);
+      cursor: not-allowed;
+    }
+  }
+
+  .q-stepper__field {
+    width: max(var(--q-stepper-field-min-width), calc(var(--_chars) * var(--q-stepper-field-char) + var(--q-stepper-field-pad)));
+    border: 0;
+    border-right: var(--q-hairline) solid var(--q-stepper-border);
+    border-left: var(--q-hairline) solid var(--q-stepper-border);
+    outline: none;
+    background: var(--q-stepper-field-bg);
+    font-family: var(--q-stepper-field-font-family);
+    font-size: var(--_field-font-size);
+    font-variant-numeric: tabular-nums;
+    color: var(--q-stepper-field-fg);
+    text-align: center;
+  }
+}

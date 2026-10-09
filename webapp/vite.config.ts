@@ -15,27 +15,10 @@ export default defineConfig(({ mode }) => {
 			compression({ algorithm: "brotliCompress", ext: ".br" }),
 		],
 		resolve: {
-			// Proto ships as source from its own repo; this alias must precede
-			// "@" so existing @/proto-design-system imports resolve into it.
-			alias: [
-				{
-					find: /^@\/proto-design-system/,
-					replacement: path.resolve(
-						__dirname,
-						"node_modules/@optimusfoundry/proto-design-system/src",
-					),
-				},
-				{ find: "@", replacement: path.resolve(__dirname, "src") },
-			],
+			alias: [{ find: "@", replacement: path.resolve(__dirname, "src") }],
 		},
 		optimizeDeps: {
-			// Proto is app source in node_modules; pre-bundling part of it
-			// splits module state (two ThemeContexts) in dev.
-			exclude: [
-				".storybook",
-				"@optimusfoundry/proto-design-system",
-				"@/proto-design-system",
-			],
+			exclude: [".storybook"],
 		},
 		define: {
 			__APP_ENV__: JSON.stringify(env.APP_ENV),
@@ -52,7 +35,6 @@ export default defineConfig(({ mode }) => {
 							if (id.includes("/react/") || id.includes("/react-dom/"))
 								return "vendor-react";
 							if (id.includes("@tanstack/react-router")) return "vendor-router";
-							if (id.includes("/recharts/")) return "vendor-charts";
 							if (id.includes("@stripe/")) return "vendor-stripe";
 							if (
 								id.includes("/react-markdown/") ||

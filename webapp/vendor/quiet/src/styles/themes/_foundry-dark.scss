@@ -1,0 +1,23 @@
+// Theme: foundry-dark — derived, not in the brand (the brand is light-only). The same grey
+// ladder inverted: the ink end becomes the light end, so strong fills turn light.
+[data-theme="foundry-dark"] {
+  --q-gray-0: #131316;
+  --q-gray-50: #1c1c20;
+  --q-gray-100: #2a2a30;
+  --q-gray-200: #3d3d45;
+  --q-gray-400: #6e6e76;
+  --q-gray-500: #9a9aa2;
+  --q-gray-800: #c9c9cf;
+  --q-gray-900: #f3f3f5;
+  --q-molten-500: #f06a33;
+  --q-shadow-rgb: 0 0 0;
+
+  // Dark surfaces need heavier shadows and a hairline to separate floating panels.
+  --q-scrim: rgb(0 0 0 / 50%);
+  --q-shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --q-shadow-2: 0 0 0 1px var(--q-border), 0 12px 32px rgb(0 0 0 / 45%);
+  --q-shadow-3: 0 0 0 1px var(--q-border), 0 24px 64px rgb(0 0 0 / 60%);
+  --q-ring-soft: 0 0 0 4px color-mix(in srgb, var(--q-fg) 12%, transparent);
+
+  color-scheme: dark;
+}

@@ -1,0 +1,235 @@
+// ChatMessage — one turn. BEM: .q-chat-message, __header, __mark(--sm, --md), __name, __time, __files,
+// __body, __caret, __error, __error-dot, __actions; --user, --assistant, --system, --streaming, --error.
+// User turns are a soft bubble on the right; Claude's are plain prose — the calm claude.ai shape.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-chat-message-gap: var(--q-space-1);
+    --q-chat-message-body-fg: var(--q-fg-body);
+    --q-chat-message-body-size: var(--q-text-md);
+    --q-chat-message-body-leading: var(--q-leading-body);
+    --q-chat-message-body-measure: 68ch;
+    --q-chat-message-bubble-bg: var(--q-bg-subtle);
+    --q-chat-message-bubble-fg: var(--q-fg);
+    --q-chat-message-bubble-radius: var(--q-radius-lg);
+    --q-chat-message-bubble-px: var(--q-space-2);
+    --q-chat-message-bubble-py: var(--q-space-1-25);
+    --q-chat-message-bubble-max: 80%;
+    --q-chat-message-name-fg: var(--q-fg);
+    --q-chat-message-name-size: var(--q-text-sm);
+    --q-chat-message-name-weight: var(--q-weight-semibold);
+    --q-chat-message-time-fg: var(--q-fg-muted);
+    --q-chat-message-time-font: var(--q-font-mono);
+    --q-chat-message-time-size: var(--q-text-2xs);
+    --q-chat-message-mark-fg: var(--q-accent);
+    --q-chat-message-mark-bg: var(--q-bg-subtle);
+    --q-chat-message-mark-radius: var(--q-radius-xs);
+    --q-chat-message-mark-md: var(--q-space-3);
+    --q-chat-message-mark-sm: var(--q-space-2-5);
+    --q-chat-message-mark-size-text: var(--q-text-sm);
+    --q-chat-message-caret: var(--q-accent);
+    --q-chat-message-caret-width: var(--q-space-0-75);
+    --q-chat-message-error-fg: var(--q-fg-body);
+    --q-chat-message-error-dot: var(--q-accent);
+    --q-chat-message-system-fg: var(--q-fg-muted);
+    --q-chat-message-system-font: var(--q-font-mono);
+    --q-chat-message-system-size: var(--q-text-2xs);
+    --q-chat-message-action-fg: var(--q-fg-muted);
+    --q-chat-message-actions-gap: var(--q-space-2);
+  }
+}
+
+@layer q.components {
+  .q-chat-message {
+    display: grid;
+    gap: var(--q-chat-message-gap);
+    min-width: 0;
+    font-family: var(--q-font-sans);
+
+    &--user {
+      justify-items: end;
+    }
+
+    &--system {
+      justify-self: center;
+      color: var(--q-chat-message-system-fg);
+      font-family: var(--q-chat-message-system-font);
+      font-size: var(--q-chat-message-system-size);
+      letter-spacing: var(--q-tracking-mono);
+      text-align: center;
+      text-transform: uppercase;
+    }
+  }
+
+  .q-chat-message__header {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1);
+  }
+
+  .q-chat-message__mark {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--q-chat-message-mark-md);
+    height: var(--q-chat-message-mark-md);
+    border-radius: var(--q-chat-message-mark-radius);
+    background: var(--q-chat-message-mark-bg);
+    color: var(--q-chat-message-mark-fg);
+    font-size: var(--q-chat-message-mark-size-text);
+    line-height: var(--q-leading-none);
+
+    &--sm {
+      width: var(--q-chat-message-mark-sm);
+      height: var(--q-chat-message-mark-sm);
+    }
+  }
+
+  .q-chat-message__name {
+    margin: 0;
+    color: var(--q-chat-message-name-fg);
+    font-size: var(--q-chat-message-name-size);
+    font-weight: var(--q-chat-message-name-weight);
+    line-height: var(--q-leading-ui);
+  }
+
+  .q-chat-message__time {
+    color: var(--q-chat-message-time-fg);
+    font-family: var(--q-chat-message-time-font);
+    font-size: var(--q-chat-message-time-size);
+    letter-spacing: var(--q-tracking-mono);
+  }
+
+  .q-chat-message__files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-chat-message--user .q-chat-message__files {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+
+  .q-chat-message__body {
+    min-width: 0;
+    max-width: var(--q-chat-message-body-measure);
+    color: var(--q-chat-message-body-fg);
+    font-size: var(--q-chat-message-body-size);
+    line-height: var(--q-chat-message-body-leading);
+    overflow-wrap: anywhere;
+
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child:not(.q-chat-message__caret) {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin: 0 0 var(--q-space-1-5);
+    }
+  }
+
+  .q-chat-message--assistant .q-chat-message__body {
+    display: grid;
+    gap: var(--q-space-1-5);
+
+    p {
+      margin: 0;
+    }
+  }
+
+  .q-chat-message--user .q-chat-message__body {
+    max-width: var(--q-chat-message-bubble-max);
+    padding: var(--q-chat-message-bubble-py) var(--q-chat-message-bubble-px);
+    border-radius: var(--q-chat-message-bubble-radius);
+    background: var(--q-chat-message-bubble-bg);
+    color: var(--q-chat-message-bubble-fg);
+    white-space: pre-wrap;
+  }
+
+  // The caret trails the last text; a slow, soft blink — not a cursor flash.
+  .q-chat-message__caret {
+    display: inline-block;
+    width: var(--q-chat-message-caret-width);
+    height: 1em;
+    margin-left: var(--q-space-0-25);
+    border-radius: var(--q-radius-2xs);
+    background: var(--q-chat-message-caret);
+    vertical-align: text-bottom;
+    animation: q-chat-caret var(--q-dur-pulse) var(--q-ease-soft) infinite;
+  }
+
+  .q-chat-message--assistant .q-chat-message__body > .q-chat-message__caret {
+    margin-left: 0;
+  }
+
+  // When the reply ends in a paragraph, the caret trails its last word instead of sitting on a
+  // line of its own: the span hides and the paragraph draws it.
+  .q-chat-message__body:has(> p:nth-last-child(2)) > .q-chat-message__caret {
+    display: none;
+  }
+
+  .q-chat-message--streaming .q-chat-message__body > p:nth-last-child(2)::after {
+    display: inline-block;
+    width: var(--q-chat-message-caret-width);
+    height: 1em;
+    margin-left: var(--q-space-0-5);
+    border-radius: var(--q-radius-2xs);
+    background: var(--q-chat-message-caret);
+    vertical-align: text-bottom;
+    animation: q-chat-caret var(--q-dur-pulse) var(--q-ease-soft) infinite;
+    content: "";
+  }
+
+  .q-chat-message__error {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+    margin: 0;
+    color: var(--q-chat-message-error-fg);
+    font-size: var(--q-text-sm);
+  }
+
+  .q-chat-message__error-dot {
+    flex: none;
+    width: var(--q-space-0-75);
+    height: var(--q-space-0-75);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-chat-message-error-dot);
+  }
+
+  // Quiet text actions: muted ghost buttons that warm to molten on hover, like every ghost button.
+  .q-chat-message__actions {
+    --q-button-ghost-fg: var(--q-chat-message-action-fg);
+
+    display: flex;
+    gap: var(--q-chat-message-actions-gap);
+  }
+
+  // A person's own turn keeps its actions out of the way until hover or keyboard focus.
+  .q-chat-message--user .q-chat-message__actions {
+    opacity: 0;
+    transition: opacity var(--q-dur-hover) var(--q-ease-soft);
+  }
+
+  .q-chat-message--user:is(:hover, :focus-within) .q-chat-message__actions {
+    opacity: 1;
+  }
+}
+
+@keyframes q-chat-caret {
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-chat-message__caret,
+  .q-chat-message--streaming .q-chat-message__body > p:nth-last-child(2)::after {
+    animation: none;
+  }
+}

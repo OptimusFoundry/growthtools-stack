@@ -1,3 +1,4 @@
+import { Card, Stack, Text } from "@optimusfoundry/quiet";
 import {
 	EmbeddedCheckout,
 	EmbeddedCheckoutProvider,
@@ -14,16 +15,20 @@ interface CheckoutFormProps {
 
 const CustomCheckout = ({ clientSecret }: CheckoutFormProps) => {
 	return (
-		<div className={styles["checkout-wrapper"]}>
-			<div className={styles["checkout-container"]}>
-				<h2>Complete Your Payment</h2>
-				<EmbeddedCheckoutProvider
-					stripe={stripePromise}
-					options={{ clientSecret }}
-				>
-					<EmbeddedCheckout />
-				</EmbeddedCheckoutProvider>
-			</div>
+		<div className={styles.wrapper}>
+			<Card>
+				<Stack gap="sm">
+					<Text as="h1" size="xl" weight="semibold">
+						Complete Your Payment
+					</Text>
+					<EmbeddedCheckoutProvider
+						stripe={stripePromise}
+						options={{ clientSecret }}
+					>
+						<EmbeddedCheckout />
+					</EmbeddedCheckoutProvider>
+				</Stack>
+			</Card>
 		</div>
 	);
 };

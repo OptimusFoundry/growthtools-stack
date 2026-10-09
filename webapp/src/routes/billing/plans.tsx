@@ -1,16 +1,25 @@
+import {
+	Alert,
+	Badge,
+	Button,
+	Card,
+	Col,
+	Grid,
+	List,
+	PageHero,
+	Spinner,
+	Stack,
+	Switch,
+	Text,
+} from "@optimusfoundry/quiet";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { fetcher } from "@/api/client";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
-import { Banner } from "@/proto-design-system/components/feedback/Banner/Banner";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { CustomerPortalResponse, Price } from "@/types/billing";
 import { formatPrice } from "@/utils/formatPrice";
 import styles from "./plans.module.scss";
@@ -24,6 +33,9 @@ export const Route = createFileRoute("/billing/plans")({
 // ============================================================================
 
 interface PlanFeature {
+	/** Bolded leading phrase (the value hook). Optional. */
+	prefix?: string;
+	/** Plain trailing copy. Renders right after the prefix. */
 	text: string;
 	included: boolean;
 }
@@ -32,9 +44,13 @@ interface Plan {
 	id: string;
 	name: string;
 	description: string;
+	/** "Everything in {prevTier}, plus" eyebrow above the feature list. */
+	everythingIn?: string;
 	features: PlanFeature[];
 	highlighted?: boolean;
 	badge?: string;
+	/** Microcopy under the CTA — risk reversal / no-card line. */
+	ctaMicrocopy?: string;
 	note?: string;
 }
 
@@ -97,32 +113,26 @@ const PLANS: Plan[] = [
 
 interface BillingToggleProps {
 	isYearly: boolean;
-	onToggle: () => void;
+	onChange: (isYearly: boolean) => void;
 }
 
 const BillingToggle = memo(function BillingToggle({
 	isYearly,
-	onToggle,
+	onChange,
 }: BillingToggleProps) {
 	return (
-		<div className={styles.billingToggle}>
+		<Stack direction="row" gap={12} align="center">
 			<Text
 				weight={!isYearly ? "medium" : "normal"}
 				color={!isYearly ? "default" : "muted"}
 			>
 				Monthly
 			</Text>
-			<button
-				type="button"
-				className={styles.toggle}
-				onClick={onToggle}
-				role="switch"
-				aria-checked={isYearly}
-			>
-				<span
-					className={`${styles.toggleThumb} ${isYearly ? styles.toggleThumbActive : ""}`}
-				/>
-			</button>
+			<Switch
+				aria-label="Annual billing"
+				checked={isYearly}
+				onChange={(next: boolean) => onChange(next)}
+			/>
 			<Text
 				weight={isYearly ? "medium" : "normal"}
 				color={isYearly ? "default" : "muted"}
@@ -132,7 +142,7 @@ const BillingToggle = memo(function BillingToggle({
 					Save 17%
 				</Text>
 			</Text>
-		</div>
+		</Stack>
 	);
 });
 
@@ -148,6 +158,7 @@ interface PlanPriceInfo {
 interface PricingCardProps {
 	plan: Plan;
 	priceInfo: PlanPriceInfo | null;
+	isYearly: boolean;
 	onSelect: (planId: string) => void;
 	isCurrentPlan?: boolean;
 	isLoading?: boolean;
@@ -156,119 +167,112 @@ interface PricingCardProps {
 const PricingCard = memo(function PricingCard({
 	plan,
 	priceInfo,
+	isYearly,
 	onSelect,
 	isCurrentPlan = false,
 	isLoading = false,
 }: PricingCardProps) {
-	const priceDisplay = priceInfo
-		? formatPrice(priceInfo.unitAmount, priceInfo.currency)
+	// On yearly billing, show the per-month equivalent in the price slot and
+	// move the actual annual total to a smaller subline. Pre-launch math: a
+	// $290/yr plan reads as $24/mo, which converts better than a wall of $290.
+	const isAnnualPaid =
+		isYearly && plan.id !== "free" && priceInfo?.unitAmount != null;
+	const monthlyEquivalent = isAnnualPaid
+		? Math.round((priceInfo?.unitAmount ?? 0) / 12 / 100)
+		: null;
+
+	const priceDisplay = isAnnualPaid
+		? `$${monthlyEquivalent}`
+		: priceInfo
+			? formatPrice(priceInfo.unitAmount, priceInfo.currency)
+			: plan.id === "free"
+				? "Free"
+				: "—";
+	const priceLabel = isAnnualPaid
+		? "mo"
+		: (priceInfo?.interval ?? (plan.id === "free" ? "forever" : "month"));
+	const subprice = isAnnualPaid
+		? `${formatPrice(priceInfo?.unitAmount, priceInfo?.currency)} billed annually`
 		: plan.id === "free"
-			? "Free"
-			: "—";
-	const priceLabel =
-		priceInfo?.interval ?? (plan.id === "free" ? "forever" : "month");
+			? null
+			: "Billed monthly · cancel anytime";
+
+	const featureItems = plan.features.map((feature) => {
+		const label = (
+			<>
+				{feature.prefix && <strong>{feature.prefix}</strong>}
+				{feature.text}
+			</>
+		);
+		return {
+			id: `${feature.prefix ?? ""}${feature.text}`,
+			leading: feature.included ? (
+				<AppIcon icon={Check} size="lg" color="success" />
+			) : (
+				<AppIcon icon={X} size="lg" color="quiet" />
+			),
+			primary: feature.included ? (
+				label
+			) : (
+				<Text as="span" color="muted">
+					{label}
+				</Text>
+			),
+		};
+	});
 
 	return (
-		<div
+		<Card
 			className={`${styles.card} ${plan.highlighted ? styles.cardHighlighted : ""}`}
-		>
-			{plan.badge && (
-				<div className={styles.badgeWrapper}>
-					<Badge variant="success" size="sm">
+			eyebrow={
+				plan.badge ? (
+					<Badge variant="primary" size="sm">
 						{plan.badge}
 					</Badge>
-				</div>
-			)}
+				) : undefined
+			}
+			title={plan.name}
+			meta={plan.ctaMicrocopy ?? plan.note}
+		>
+			<Stack gap="sm">
+				<Text color="muted">{plan.description}</Text>
 
-			<div className={styles.specHeader}>
-				<span className={styles.specName}>
-					{plan.name === "Pro" ? (
-						<>
-							<em>{plan.name}</em>
-						</>
-					) : (
-						plan.name
-					)}
-				</span>
-				<span className={styles.specMeta}>{priceLabel}</span>
-			</div>
-
-			<div className={styles.cardBody}>
-				<Text
-					color={plan.highlighted ? "inherit" : "secondary"}
-					className={plan.highlighted ? styles.textLightMuted : ""}
-				>
-					{plan.description}
-				</Text>
-
-				<div className={styles.cardPricing}>
-					<Text
-						as="span"
-						size="4xl"
-						weight="bold"
-						className={plan.highlighted ? styles.textLight : ""}
-					>
+				<Stack direction="row" gap={4} align="baseline">
+					<Text as="span" size="4xl" weight="bold" color="heading">
 						{priceDisplay}
 					</Text>
-					<Text
-						as="span"
-						color={plan.highlighted ? "inherit" : "secondary"}
-						className={plan.highlighted ? styles.textLightMuted : ""}
-					>
+					<Text as="span" color="muted">
 						/{priceLabel}
 					</Text>
-				</div>
+				</Stack>
 
-				<ul className={styles.featureList}>
-					{plan.features.map((feature) => (
-						<li key={feature.text} className={styles.featureItem}>
-							{feature.included ? (
-								<Check
-									size={18}
-									className={
-										plan.highlighted ? styles.iconLight : styles.iconSuccess
-									}
-								/>
-							) : (
-								<X size={18} className={styles.iconMuted} />
-							)}
-							<Text
-								color={
-									plan.highlighted
-										? "inherit"
-										: feature.included
-											? "default"
-											: "muted"
-								}
-								className={plan.highlighted ? styles.textLight : ""}
-							>
-								{feature.text}
-							</Text>
-						</li>
-					))}
-				</ul>
-			</div>
+				{subprice && (
+					<Text size="xs" color="muted">
+						{subprice}
+					</Text>
+				)}
 
-			<div className={styles.cardFooter}>
+				{plan.everythingIn && <Text mono>{plan.everythingIn}</Text>}
+
+				<List items={featureItems} size="sm" divided={false} />
+
 				<Button
-					variant={
-						isCurrentPlan ? "ghost" : plan.highlighted ? "secondary" : "outline"
-					}
+					fullWidth
+					variant={ctaVariant(isCurrentPlan, plan.highlighted)}
 					onClick={() => onSelect(plan.id)}
-					className={styles.ctaButton}
 					disabled={isCurrentPlan || isLoading}
 				>
 					{isCurrentPlan ? "Current plan" : "Change plan"}
 				</Button>
-				{plan.note && (
-					<Text size="sm" color="muted" align="center">
-						{plan.note}
-					</Text>
-				)}
-			</div>
-		</div>
+			</Stack>
+		</Card>
 	);
 });
+
+function ctaVariant(isCurrentPlan: boolean, highlighted?: boolean) {
+	if (isCurrentPlan) return "ghost";
+	return highlighted ? "primary" : "secondary";
+}
 
 PricingCard.displayName = "PricingCard";
 
@@ -418,76 +422,63 @@ function PlansPage() {
 		return priceInfo?.priceId === currentSubscription.priceId;
 	};
 
-	const topbar = <Topbar title="Plans" />;
-
 	if (loading || subscriptionLoading) {
 		return (
-			<>
-				{topbar}
-				<div className={styles.page}>
-					<Stack gap="xl" align="center" justify="center">
-						<Spinner size="lg" />
-					</Stack>
-				</div>
-			</>
+			<Stack gap="xl" align="center" justify="center">
+				<Spinner size="lg" />
+			</Stack>
 		);
 	}
 
 	if (error) {
 		return (
-			<>
-				{topbar}
-				<div className={styles.page}>
-					<Stack gap="xl" align="center">
-						<Text color="error">Failed to load pricing: {error}</Text>
-					</Stack>
-				</div>
-			</>
+			<Stack gap="xl" align="center">
+				<Text color="error">Failed to load pricing: {error}</Text>
+			</Stack>
 		);
 	}
 
 	return (
 		<>
-			{topbar}
-			<div className={styles.page}>
-				<Stack gap="xl" align="center">
-					{portalError && (
-						<Banner
-							type="error"
-							variant="filled"
-							title="Error"
-							description={portalError}
-						/>
-					)}
+			<Topbar title="Plans" />
+			<Stack gap="xl" align="center" animated>
+				<PageHero
+					as="h1"
+					size="md"
+					ruled={false}
+					className={styles.hero}
+					title="Choose your plan"
+				/>
 
-					{portalLoading && (
-						<Banner
-							type="info"
-							variant="filled"
-							title="Opening Billing Portal"
-							description="Redirecting you to manage your subscription..."
-						/>
-					)}
+				{portalError && (
+					<Alert variant="error" title="Error">
+						{portalError}
+					</Alert>
+				)}
 
-					<BillingToggle
-						isYearly={isYearly}
-						onToggle={() => setIsYearly(!isYearly)}
-					/>
+				{portalLoading && (
+					<Alert variant="info" title="Opening Billing Portal">
+						Redirecting you to manage your subscription...
+					</Alert>
+				)}
 
-					<div className={styles.cardsGrid}>
-						{PLANS.map((plan) => (
+				<BillingToggle isYearly={isYearly} onChange={setIsYearly} />
+
+				<Grid columns={12} gap="lg" rowGap="lg">
+					{PLANS.map((plan) => (
+						<Col key={plan.id} span={4}>
 							<PricingCard
-								key={plan.id}
 								plan={plan}
 								priceInfo={getPriceInfo(plan.id)}
+								isYearly={isYearly}
 								onSelect={handleSelectPlan}
 								isCurrentPlan={isCurrentPlan(plan.id)}
 								isLoading={portalLoading}
 							/>
-						))}
-					</div>
-				</Stack>
-			</div>
+						</Col>
+					))}
+				</Grid>
+			</Stack>
 		</>
 	);
 }

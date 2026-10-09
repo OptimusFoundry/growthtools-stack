@@ -1,47 +1,34 @@
-/**
- * PlatformConnectionsTab Component
- * Connect and disconnect platforms — split into Outbound (publish destinations)
- * and Inbound (content sources).
- */
-
-import { useNavigate, useSearch } from "@tanstack/react-router";
-import { memo, useCallback, useEffect, useState } from "react";
-import { useConnectBluesky } from "@/hooks/useConnectBluesky";
-import { useConnectPlatform } from "@/hooks/useConnectPlatform";
-import { useConnectWithToken } from "@/hooks/useConnectWithToken";
-import { useDisconnectPlatform } from "@/hooks/useDisconnectPlatform";
-import { usePlatformConnections } from "@/hooks/usePlatformConnections";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
-import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
 import {
-	Card,
-	CardBody,
-	CardHeader,
-} from "@/proto-design-system/components/layout/Card/Card";
-import { Container } from "@/proto-design-system/components/layout/Container/Container";
-import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import type { BadgeVariant } from "@/proto-design-system/components/primitives/Badge/Badge.types";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Tag } from "@/proto-design-system/components/primitives/Tag/Tag";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+	Badge,
+	type BadgeProps,
+	Button,
+	Container,
+	List,
+	type ListProps,
+	SectionHeader,
+	Spinner,
+	Stack,
+	Tag,
+	Text,
+} from "@optimusfoundry/quiet";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { memo, useCallback, useEffect } from "react";
+import { useNotify } from "@/hooks/useNotify";
+import { usePlatformConnections } from "@/hooks/usePlatformConnections";
 import {
 	PLATFORM_DISPLAY_NAMES,
 	type PlatformConnection,
 	type PlatformType,
 } from "@/types/platform";
+import { BlueskyConnectionModal } from "./BlueskyConnectionModal";
 import { GitHubConnectionSection } from "./GitHubConnectionSection";
 import styles from "./PlatformConnectionsTab.module.scss";
+import { usePlatformConnectionFlow } from "./usePlatformConnectionFlow";
 
-// ============================================================================
-// Constants
-// ============================================================================
+type BadgeVariant = NonNullable<BadgeProps["variant"]>;
+type ListItems = NonNullable<ListProps["items"]>;
 
 const ENABLED_PLATFORMS: PlatformType[] = ["x", "bluesky", "threads"];
-const TOKEN_PLATFORMS = new Set<PlatformType>(["threads"]);
 
 const PLATFORM_INFO: Record<
 	string,
@@ -77,7 +64,7 @@ const STATUS_BADGE: Record<
 	PlatformConnection["status"],
 	{ variant: BadgeVariant; label: string }
 > = {
-	active: { variant: "success", label: "Active" },
+	active: { variant: "success", label: "Connected" },
 	expired: { variant: "warning", label: "Expired" },
 	revoked: { variant: "secondary", label: "Revoked" },
 	error: { variant: "error", label: "Error" },
@@ -96,199 +83,110 @@ function formatDate(dateStr: string): string {
 	});
 }
 
-// ============================================================================
-// Platform Row — unified row used inside the Outbound spec card
-// ============================================================================
-
-interface PlatformRowProps {
+interface PlatformItemParams {
 	platform: PlatformType;
 	connection: PlatformConnection | null;
-	onConnect: (platform: PlatformType) => void;
-	onDisconnect: (connectionId: string) => void;
 	connecting: boolean;
 	disconnecting: boolean;
+	onConnect: (platform: PlatformType) => void;
+	onDisconnect: (connectionId: string) => void;
 }
 
-const PlatformRow = memo(function PlatformRow({
+function buildPlatformItem({
 	platform,
 	connection,
-	onConnect,
-	onDisconnect,
 	connecting,
 	disconnecting,
-}: PlatformRowProps) {
+	onConnect,
+	onDisconnect,
+}: PlatformItemParams): ListItems[number] {
 	const info = PLATFORM_INFO[platform];
 	const name = PLATFORM_DISPLAY_NAMES[platform];
-
-	const meta = connection
-		? `@${connection.platformUserId} · Connected ${formatDate(connection.connectedAt)}`
-		: info?.description;
-
 	const badge = connection ? STATUS_BADGE[connection.status] : null;
 	const needsReconnect = connection
 		? NEEDS_RECONNECT.has(connection.status)
 		: false;
 	const scopes = connection?.scopes ?? [];
+	const meta = connection
+		? `@${connection.platformUserId} · Connected ${formatDate(connection.connectedAt)}`
+		: info?.description;
 
-	return (
-		<div className={styles.platformRow}>
-			<div className={styles.platformIcon}>{info?.icon}</div>
-			<div className={styles.platformBody}>
-				<div className={styles.platformNameLine}>
-					<Text weight="semibold">{name}</Text>
-					{badge && (
-						<Badge variant={badge.variant} size="sm" rounded>
-							{badge.label}
-						</Badge>
-					)}
-				</div>
-				{meta && (
-					<Text size="sm" color="secondary">
-						{meta}
-					</Text>
+	return {
+		id: platform,
+		leading: <span className={styles.platformIcon}>{info?.icon}</span>,
+		primary: (
+			<span className={styles.nameLine}>
+				<Text weight="semibold" as="span">
+					{name}
+				</Text>
+				{badge && (
+					<Badge variant={badge.variant} size="sm">
+						{badge.label}
+					</Badge>
 				)}
+			</span>
+		),
+		secondary: (
+			<span className={styles.meta}>
+				{meta && <span>{meta}</span>}
 				{scopes.length > 0 && (
-					<div className={styles.scopeChips}>
+					<span className={styles.scopes}>
 						{scopes.map((scope) => (
 							<Tag key={scope} size="sm">
 								{scope}
 							</Tag>
 						))}
-					</div>
+					</span>
 				)}
-			</div>
-			<div className={styles.platformAction}>
+			</span>
+		),
+		trailing: (
+			<span className={styles.actions}>
 				{connection ? (
-					<Stack direction="row" gap="sm">
+					<>
 						{needsReconnect && (
 							<Button
 								variant="primary"
 								size="sm"
+								aria-label={`Reconnect ${name}`}
 								onClick={() => onConnect(platform)}
-								disabled={connecting}
+								loading={connecting}
 							>
-								{connecting ? "Reconnecting…" : "Reconnect"}
+								Reconnect
 							</Button>
 						)}
 						<Button
 							variant="ghost"
 							size="sm"
+							aria-label={`Disconnect ${name}`}
 							onClick={() => onDisconnect(connection.id)}
-							disabled={disconnecting}
+							loading={disconnecting}
 						>
-							{disconnecting ? "Disconnecting…" : "Disconnect"}
+							Disconnect
 						</Button>
-					</Stack>
+					</>
 				) : (
 					<Button
 						variant="secondary"
 						size="sm"
+						aria-label={`Connect ${name}`}
 						onClick={() => onConnect(platform)}
-						disabled={connecting}
+						loading={connecting}
 					>
-						{connecting ? "Connecting…" : "Connect"}
+						Connect
 					</Button>
 				)}
-			</div>
-		</div>
-	);
-});
-
-PlatformRow.displayName = "PlatformRow";
-
-// ============================================================================
-// BlueSky Modal
-// ============================================================================
-
-interface BlueskyModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onSuccess: () => void;
-	onError: (message: string) => void;
+			</span>
+		),
+	};
 }
-
-const BlueskyModal = memo(function BlueskyModal({
-	isOpen,
-	onClose,
-	onSuccess,
-	onError,
-}: BlueskyModalProps) {
-	const { connectBluesky, loading } = useConnectBluesky();
-	const [handle, setHandle] = useState("");
-	const [appPassword, setAppPassword] = useState("");
-
-	const handleSubmit = useCallback(async () => {
-		if (!handle.trim() || !appPassword.trim()) return;
-
-		try {
-			await connectBluesky(handle.trim(), appPassword.trim());
-			setHandle("");
-			setAppPassword("");
-			onClose();
-			onSuccess();
-		} catch {
-			onError("Failed to connect BlueSky. Check your handle and app password.");
-		}
-	}, [handle, appPassword, connectBluesky, onClose, onSuccess, onError]);
-
-	return (
-		<Modal
-			isOpen={isOpen}
-			onClose={onClose}
-			title="Connect BlueSky"
-			description="Enter your BlueSky handle and app password to connect your account."
-			size="sm"
-			footer={
-				<Stack direction="row" gap="sm" justify="end">
-					<Button variant="ghost" onClick={onClose} disabled={loading}>
-						Cancel
-					</Button>
-					<Button
-						onClick={handleSubmit}
-						disabled={loading || !handle.trim() || !appPassword.trim()}
-					>
-						{loading ? "Connecting..." : "Connect"}
-					</Button>
-				</Stack>
-			}
-		>
-			<Stack gap="md">
-				<TextField
-					label="Handle"
-					value={handle}
-					onChange={(e) => setHandle(e.target.value)}
-					placeholder="yourname.bsky.social"
-				/>
-				<TextField
-					label="App Password"
-					type="password"
-					value={appPassword}
-					onChange={(e) => setAppPassword(e.target.value)}
-					placeholder="xxxx-xxxx-xxxx-xxxx"
-					helperText="Generate an app password at Settings > App Passwords on bsky.app"
-				/>
-			</Stack>
-		</Modal>
-	);
-});
-
-BlueskyModal.displayName = "BlueskyModal";
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 	const { connections, loading, error, refetch } = usePlatformConnections();
-	const { connectPlatform, loading: connectLoading } = useConnectPlatform();
-	const { connectWithToken, loading: tokenLoading } = useConnectWithToken();
-	const { disconnectPlatform, loading: disconnectLoading } =
-		useDisconnectPlatform();
-	const { addBanner } = useBannerCenter();
-	const [connectingPlatform, setConnectingPlatform] =
-		useState<PlatformType | null>(null);
-	const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
-	const [blueskyModalOpen, setBlueskyModalOpen] = useState(false);
+	const { notify } = useNotify();
+	const { state, handlers } = usePlatformConnectionFlow({ onRefetch: refetch });
+	const { connectingPlatform, disconnectingId, blueskyModalOpen } = state;
+	const { handleConnect, handleDisconnect, setBlueskyModalOpen } = handlers;
 
 	const search = useSearch({ from: "/account" });
 	const navigate = useNavigate();
@@ -309,99 +207,22 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 
 	useEffect(() => {
 		if (error && !isNotFoundError) {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't load platform connections",
 				description: error,
-				dismissible: true,
 			});
 		}
-	}, [error, isNotFoundError, addBanner]);
+	}, [error, isNotFoundError, notify]);
 
 	const connectionMap = new Map(connections.map((c) => [c.platform, c]));
 	const connectedCount = ENABLED_PLATFORMS.filter((p) =>
 		connectionMap.has(p),
 	).length;
 
-	const handleConnect = useCallback(
-		async (platform: PlatformType) => {
-			if (platform === "bluesky") {
-				setBlueskyModalOpen(true);
-				return;
-			}
-
-			setConnectingPlatform(platform);
-			try {
-				if (TOKEN_PLATFORMS.has(platform)) {
-					await connectWithToken(platform);
-					setConnectingPlatform(null);
-					refetch();
-					addBanner({
-						type: "success",
-						title: `Connected ${PLATFORM_DISPLAY_NAMES[platform]}`,
-						dismissible: true,
-					});
-				} else {
-					const response = await connectPlatform(platform);
-					window.location.href = response.auth_url;
-				}
-			} catch (err: unknown) {
-				const description =
-					err instanceof Error && err.message.includes("already connected")
-						? `${PLATFORM_DISPLAY_NAMES[platform]} is already connected.`
-						: "Please try again.";
-				addBanner({
-					type: "error",
-					title: `Couldn't connect ${PLATFORM_DISPLAY_NAMES[platform]}`,
-					description,
-					dismissible: true,
-				});
-				setConnectingPlatform(null);
-			}
-		},
-		[connectPlatform, connectWithToken, refetch, addBanner],
-	);
-
-	const handleDisconnect = useCallback(
-		async (connectionId: string) => {
-			setDisconnectingId(connectionId);
-			try {
-				await disconnectPlatform(connectionId);
-				refetch();
-				addBanner({
-					type: "success",
-					title: "Platform disconnected",
-					dismissible: true,
-				});
-			} catch {
-				addBanner({
-					type: "error",
-					title: "Couldn't disconnect platform",
-					description: "Please try again.",
-					dismissible: true,
-				});
-			} finally {
-				setDisconnectingId(null);
-			}
-		},
-		[disconnectPlatform, refetch, addBanner],
-	);
-
-	const handleBlueskyError = useCallback(
-		(message: string) => {
-			addBanner({
-				type: "error",
-				title: "Couldn't connect BlueSky",
-				description: message,
-				dismissible: true,
-			});
-		},
-		[addBanner],
-	);
-
 	if (loading) {
 		return (
-			<Container size="lg" padded={false} className={styles.container}>
+			<Container size="md" padded={false} className={styles.container}>
 				<Stack align="center" justify="center" className={styles.loadingState}>
 					<Spinner size="lg" />
 				</Stack>
@@ -409,68 +230,53 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 		);
 	}
 
-	return (
-		<Container size="lg" padded={false} className={styles.container}>
-			<Stack gap="xl">
-				{/* Outbound Platforms — publish destinations */}
-				<Card variant="spec">
-					<CardHeader
-						name={
-							<>
-								Outbound <em>Platforms</em>
-							</>
-						}
-						meta={`${connectedCount} of ${ENABLED_PLATFORMS.length} CONNECTED`}
-					/>
-					<CardBody className={styles.rowsBody}>
-						{ENABLED_PLATFORMS.map((platform, idx) => {
-							const conn = connectionMap.get(platform) ?? null;
-							return (
-								<div key={platform}>
-									{idx > 0 && <Divider />}
-									<PlatformRow
-										platform={platform}
-										connection={conn}
-										onConnect={handleConnect}
-										onDisconnect={handleDisconnect}
-										connecting={
-											(connectLoading || tokenLoading) &&
-											connectingPlatform === platform
-										}
-										disconnecting={
-											disconnectLoading && disconnectingId === conn?.id
-										}
-									/>
-								</div>
-							);
-						})}
-					</CardBody>
-				</Card>
+	const items = ENABLED_PLATFORMS.map((platform) => {
+		const connection = connectionMap.get(platform) ?? null;
+		return buildPlatformItem({
+			platform,
+			connection,
+			connecting: connectingPlatform === platform,
+			disconnecting: connection !== null && disconnectingId === connection.id,
+			onConnect: handleConnect,
+			onDisconnect: handleDisconnect,
+		});
+	});
 
-				{/* Inbound Sources — content origins */}
-				<Card variant="spec">
-					<CardHeader
-						name={
-							<>
-								Inbound <em>Sources</em>
-							</>
-						}
-						meta="CONTENT ORIGIN"
-					/>
-					<CardBody className={styles.rowsBody}>
+	return (
+		<Container size="md" padded={false} className={styles.container}>
+			<Stack gap="xl">
+				<section aria-label="Outbound">
+					<Stack gap="lg">
+						<SectionHeader
+							size="sm"
+							as="h2"
+							eyebrow={`${connectedCount} of ${ENABLED_PLATFORMS.length} CONNECTED`}
+							title="Platforms"
+						/>
+						<List divided items={items} />
+					</Stack>
+				</section>
+
+				<section aria-label="Inbound">
+					<Stack gap="lg">
+						<SectionHeader
+							size="sm"
+							as="h2"
+							eyebrow="CONTENT ORIGIN"
+							title="Sources"
+						/>
 						<GitHubConnectionSection
 							callbackStatus={githubCallbackStatus}
 							onClearCallbackStatus={clearGitHubCallback}
 						/>
-					</CardBody>
-				</Card>
+					</Stack>
+				</section>
 			</Stack>
 
-			<BlueskyModal
+			<BlueskyConnectionModal
 				isOpen={blueskyModalOpen}
 				onClose={() => setBlueskyModalOpen(false)}
 				onSuccess={refetch}
-				onError={handleBlueskyError}
 			/>
 		</Container>
 	);

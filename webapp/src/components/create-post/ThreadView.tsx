@@ -1,5 +1,7 @@
+import { Button } from "@optimusfoundry/quiet";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
@@ -57,44 +59,44 @@ export function ThreadView({
 				readOnly={readOnly}
 			/>
 
-			<button
-				type="button"
-				className={styles.toggle}
-				onClick={() => setExpanded((prev) => !prev)}
-				aria-expanded={expanded}
-			>
-				<ChevronDown
-					className={`${styles.chevron} ${expanded ? styles.chevronExpanded : ""}`}
-				/>
-				{expanded ? "Collapse thread" : `Show ${remaining} more`}
-			</button>
-
-			<div
-				className={`${styles.collapsible} ${expanded ? styles.collapsibleExpanded : ""}`}
-			>
-				<div className={styles.collapsibleInner}>
-					<div className={styles.segments}>
-						{segments.slice(1).map((segment, i) => {
-							const media = getMediaForSegment(segment);
-							return (
-								<div
-									key={`${platform}-segment-${i + 1}`}
-									className={styles.segment}
-									data-platform={platform}
-								>
-									<PlatformPostCard
-										platform={platform}
-										content={segment.content}
-										onChange={(content) => onSegmentChange(i + 1, content)}
-										media={media.length > 0 ? media : undefined}
-										readOnly={readOnly}
-									/>
-								</div>
-							);
-						})}
-					</div>
-				</div>
+			<div className={styles.toggleRow}>
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => setExpanded((prev) => !prev)}
+					aria-expanded={expanded}
+					leftIcon={
+						<AppIcon
+							icon={ChevronDown}
+							className={`${styles.chevron} ${expanded ? styles.chevronExpanded : ""}`}
+						/>
+					}
+				>
+					{expanded ? "Collapse thread" : `Show ${remaining} more`}
+				</Button>
 			</div>
+
+			{expanded && (
+				<div className={styles.segments}>
+					{segments.slice(1).map((segment, i) => {
+						const media = getMediaForSegment(segment);
+						return (
+							<div
+								key={`${platform}-segment-${i + 1}`}
+								className={styles.segment}
+							>
+								<PlatformPostCard
+									platform={platform}
+									content={segment.content}
+									onChange={(content) => onSegmentChange(i + 1, content)}
+									media={media.length > 0 ? media : undefined}
+									readOnly={readOnly}
+								/>
+							</div>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 }

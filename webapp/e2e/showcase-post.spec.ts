@@ -3,15 +3,10 @@
  *
  * A modal on /posts with a single brief textarea. Submit fires
  * POST /api/protected/showcase-posts (fire-and-forget — no job-status UI,
- * that's a hard PRD non-goal). On 202 the modal closes and a success banner
- * appears. On any 4xx/5xx/transport failure the modal stays open and shows
- * an inline error (TextArea's `errorMessage` → `role="alert"` inside the
- * dialog) — no toast/banner is rendered in that path.
- *
- * THIS FILE IS EXPECTED TO BE RED until the "Create Showcase Post" modal is
- * built — the trigger button, dialog, and wiring described by the selector
- * contract below do not exist yet. Failures should be "element not found",
- * not a syntax/type error in this spec.
+ * that's a hard PRD non-goal). On 202 the modal closes and a success
+ * toast appears. On any 4xx/5xx/transport failure the modal stays open and
+ * shows an inline error (TextArea `error` → `role="alert"` inside the dialog)
+ * — a toast would be inert under the open Dialog, so none is raised.
  */
 import type { Locator, Page } from "@playwright/test";
 import { HttpResponse, http } from "msw";
@@ -20,8 +15,11 @@ import {
 	showcaseEndpoints,
 	showcaseScenarios,
 } from "./handlers/showcase.handlers";
+import { toastLocator } from "./helpers/toast";
 
 const TRIGGER_NAME = /create showcase post/i;
+// quiet appends a period to the Dialog title, so match the name loosely.
+// Regex: quiet appends a period to the Dialog title.
 const DIALOG_NAME = /create showcase post/i;
 const BRIEF_LABEL = /brief/i;
 
@@ -43,7 +41,7 @@ async function fillAndSubmit(
 // ─────────────────────────────────────────────────────────────────────────────
 // Table-drive: every error status this endpoint can return. In every case the
 // dialog stays open, an inline `role="alert"` error appears inside it, and no
-// success banner is rendered.
+// success toast is rendered.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const errorCases = [
@@ -103,7 +101,7 @@ test.describe("Create Showcase Post modal", () => {
 		network,
 	}) => {
 		// If Cancel fired a POST, this handler would resolve it as a success —
-		// the assertion below (no dialog, no banner) still fails the test if a
+		// the assertion below (no dialog, no toast) still fails the test if a
 		// stray request slipped through and somehow produced visible feedback.
 		network.use(
 			http.post("*/api/protected/showcase-posts", () => {
@@ -117,14 +115,15 @@ test.describe("Create Showcase Post modal", () => {
 		await dialog.getByRole("button", { name: "Cancel" }).click();
 
 		await expect(dialog).not.toBeVisible();
-		await expect(page.getByRole("alert")).not.toBeVisible();
+		await expect(toastLocator(page, "status")).toHaveCount(0);
+		await expect(toastLocator(page, "alert")).toHaveCount(0);
 	});
 
 	// =========================================================================
 	// Happy path — 202 Accepted
 	// =========================================================================
 
-	test("submitting the brief on 202 closes the modal and shows a success banner", async ({
+	test("submitting the brief on 202 closes the modal and shows a success toast", async ({
 		page,
 		network,
 	}) => {
@@ -134,7 +133,9 @@ test.describe("Create Showcase Post modal", () => {
 		await fillAndSubmit(dialog);
 
 		await expect(dialog).not.toBeVisible();
-		await expect(page.getByRole("alert")).toBeVisible();
+		await expect(
+			toastLocator(page, "status", "Showcase post is being generated"),
+		).toBeVisible();
 	});
 
 	test("reopening the modal after a successful submit shows the textarea cleared", async ({
@@ -170,11 +171,8 @@ test.describe("Create Showcase Post modal", () => {
 
 				await expect(dialog).toBeVisible();
 				await expect(dialog.getByRole("alert")).toBeVisible();
-				// No success banner should escape the dialog on an error path —
-				// every alert on the page must live inside the still-open dialog.
-				const pageAlerts = await page.getByRole("alert").count();
-				const dialogAlerts = await dialog.getByRole("alert").count();
-				expect(pageAlerts).toBe(dialogAlerts);
+				await expect(toastLocator(page, "status")).toHaveCount(0);
+				await expect(toastLocator(page, "alert")).toHaveCount(0);
 			});
 		}
 

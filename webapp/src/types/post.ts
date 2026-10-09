@@ -1,3 +1,5 @@
+import type { BadgeProps } from "@optimusfoundry/quiet";
+
 export type PostStatus =
 	| "draft"
 	| "scheduled"
@@ -7,20 +9,23 @@ export type PostStatus =
 	| "partially_published";
 
 /**
- * Display metadata for each PostStatus. `className` is the key into the
- * owning route's CSS module (posts.module.scss declares `statusDraft`,
- * `statusScheduled`, etc.). Keep these in sync with that module.
+ * Display metadata for each PostStatus. `badgeDot: false` keeps the plain pill
+ * for the warning variant, whose dot quiet would otherwise add.
  */
 export const POST_STATUS_META: Record<
 	PostStatus,
-	{ label: string; className: string }
+	{ label: string; badgeVariant: BadgeProps["variant"]; badgeDot?: boolean }
 > = {
-	draft: { label: "Draft", className: "statusDraft" },
-	scheduled: { label: "Scheduled", className: "statusScheduled" },
-	publishing: { label: "Publishing", className: "statusPublishing" },
-	published: { label: "Published", className: "statusPublished" },
-	failed: { label: "Failed", className: "statusFailed" },
-	partially_published: { label: "Partial", className: "statusPartial" },
+	draft: { label: "Draft", badgeVariant: "secondary" },
+	scheduled: { label: "Scheduled", badgeVariant: "warning", badgeDot: false },
+	publishing: { label: "Publishing", badgeVariant: "default" },
+	published: { label: "Published", badgeVariant: "success" },
+	failed: { label: "Failed", badgeVariant: "error" },
+	partially_published: {
+		label: "Partial",
+		badgeVariant: "warning",
+		badgeDot: false,
+	},
 };
 export type ContentType =
 	| "text"

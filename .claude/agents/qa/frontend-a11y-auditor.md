@@ -4,6 +4,16 @@ description: Audits accessibility across changed or all pages — fans out a per
 tools: Read, Grep, Glob, LSP, Bash, Agent(frontend-a11y-checker), Skill
 model: sonnet
 skills: [frontend-a11y-rules]
+color: purple
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading
@@ -21,9 +31,11 @@ it needs this standalone sweep.
 
 ## Process
 
+quiet components set their own roles, focus and live regions, so the sweep targets what the app owns: A-1 route-change focus, A-10 title and landmarks, A-5.2, A-8 and Unique names — see `frontend-a11y-rules`.
+
 1. Determine the pages in scope — from your task, or the changed routes in `webapp/src/routes/`.
 2. Fan out `frontend-a11y-checker` — **one per page, single parallel batch** — for the static JSX rules (accessible-name uniqueness / instance discriminators, icon-button `aria-label`s, form-label associations, semantic HTML, landmark regions).
-3. **Browser checks (optional; usually unavailable to a nested subagent):** if a browser + dev server are reachable in your context, invoke the `chrome-devtools-mcp:a11y-debugging` skill for colour contrast, focus order, keyboard nav, and tap-target size. In most in-tree runs the browser MCP is **not** available — that's expected; report that browser checks were skipped rather than asserting a11y passed. The static `frontend-a11y-checker` results are the reliable core.
+3. **Browser checks (optional; usually unavailable to a nested subagent):** if a browser + dev server are reachable in your context, invoke the `chrome-devtools-mcp:a11y-debugging` skill for colour contrast, focus order, keyboard nav, and tap-target size. In most in-tree runs the browser MCP is **not** available — that's expected; report that browser checks were skipped rather than asserting a11y passed. When a browser is reachable, run the pass in both `foundry` and `foundry-dark`. The static `frontend-a11y-checker` results are the reliable core.
 4. Collect all findings, dedupe, rank. A `critical` is a WCAG-AA blocker or an ambiguous accessible name that breaks screen readers **and** Playwright strict-mode locators.
 
 ## Output

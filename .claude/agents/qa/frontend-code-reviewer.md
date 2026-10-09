@@ -4,6 +4,16 @@ description: Reviews frontend React/TypeScript code for quality, React 19 compli
 tools: Read, Grep, Glob, Bash, LSP, Agent(review-checker)
 model: sonnet
 skills: [frontend-design-rules, frontend-review-rules, frontend-page-rules]
+color: purple
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading
@@ -16,7 +26,7 @@ You review frontend code for quality, correctness, and adherence to project stan
 
 ## Required First Steps
 
-1. Your design and review rules are preloaded (`frontend-design-rules`, `frontend-review-rules`); read a `docs/design-docs/quickref/NN-*.md` file (index: `docs/design-docs/QUICKREF.md`) only when a preloaded rule's pointer sends you there.
+1. Your design, review and page rules are preloaded (`frontend-design-rules`, `frontend-review-rules`, `frontend-page-rules`); then the `quiet:` pointer a rule names (a file in `webapp/vendor/quiet/`), then `quiet:docs/guidelines/checklist.md`; for a layout finding read `.claude/skills/quiet-app/SKILL.md` first.
 2. Read `webapp/docs/REACT19-PATTERNS.md` — new APIs to use, deprecated patterns to flag
 3. Read `webapp/docs/COMPONENT-PATTERNS.md` — component structure and TypeScript patterns
 4. Read `webapp/docs/ARCHITECTURE.md` — module structure, hook patterns, API layer
@@ -58,7 +68,8 @@ Flag deprecated patterns:
 
 ### Design System
 
-- [ ] AP-10 — see `frontend-review-rules`
+- [ ] AP-* (cite the number) — see `frontend-review-rules`
+- [ ] Imports only from `@optimusfoundry/quiet` (no deep path, no pre-quiet design-system import); tokens are `--q-*`; toasts via `useNotify`, never the retired banner-center hook; icons via `AppIcon`, not raw Lucide sizes
 
 ### Code Quality
 
@@ -73,8 +84,8 @@ Flag deprecated patterns:
 - [ ] No render-branching ternary deeper than 2 levels (use `<AsyncList>` / early returns)
 - [ ] No per-route `timeAgo` / `truncate` / inline status-label maps — moved to `utils/` / `types/`
 - [ ] No inline user-facing strings for resource nouns in generic components (use `copy` / `labels` prop)
-- [ ] `useState<string | null>` + `<Modal>` delete wiring → extracted to `useConfirmableDelete`
-- [ ] Mutation + `addBanner` success/error + `refetch` → extracted to a hook
+- [ ] `useState<string | null>` + `<Dialog>` delete wiring → extracted to `useConfirmableDelete`
+- [ ] Mutation + `notify` success/error + `refetch` → extracted to a hook
 - [ ] If a sibling route already exists with similar structure, shared shell extracted before the second copy lands
 
 ### Security
@@ -101,7 +112,7 @@ Flag deprecated patterns:
 - `src/components/Bar.tsx:15` — still using forwardRef → use ref as prop
 
 ### Design System Violations
-- `src/components/Baz.module.scss:8` — hardcoded `16px` → `var(--space-4)`
+- `src/components/Baz.module.scss:8` — hardcoded `16px` → `var(--q-space-stack)`
 
 ### TypeScript Issues
 - `src/hooks/useData.ts:23` — using `any` → use proper type or `unknown`

@@ -1,0 +1,91 @@
+// SectionHeader — ruled section top: heading on the left, description/actions on the right.
+// BEM: .q-section-header, __heading, __aside, __description, __actions; --md, --sm, --split.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-section-header-rule: var(--q-fg);
+    --q-section-header-md-gap: var(--q-space-4);
+    --q-section-header-md-pt: var(--q-space-4);
+    --q-section-header-md-heading-gap: var(--q-space-2);
+    --q-section-header-md-description-font-size: var(--q-text-lg);
+    --q-section-header-md-title-size: var(--q-text-4xl);
+    --q-section-header-md-title-weight: var(--q-weight-bold);
+    --q-section-header-md-title-tracking: var(--q-tracking-h2);
+    --q-section-header-md-title-leading: var(--q-leading-none);
+    --q-section-header-sm-gap: var(--q-space-2);
+    --q-section-header-sm-pt: var(--q-space-2);
+    --q-section-header-sm-heading-gap: var(--q-space-1);
+    --q-section-header-sm-description-font-size: var(--q-text-md);
+    --q-section-header-column-min: 320px; // split columns wrap below this width; no tier-2 equivalent
+    --q-section-header-aside-gap: var(--q-space-2);
+    --q-section-header-description-fg: var(--q-fg-body);
+    --q-section-header-description-max: 520px; // measure for the aside copy; no tier-2 equivalent
+    --q-section-header-description-leading: var(--q-leading-body);
+    --q-section-header-actions-gap: var(--q-space-2);
+  }
+}
+
+@layer q.components {
+  .q-section-header {
+    --_gap: var(--q-section-header-md-gap);
+    --_heading-gap: var(--q-section-header-md-heading-gap);
+    --_description-size: var(--q-section-header-md-description-font-size);
+
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: end;
+    gap: var(--_gap);
+    padding-top: var(--q-section-header-md-pt);
+    border-top: var(--q-hairline) solid var(--q-section-header-rule);
+
+    &--sm {
+      --_gap: var(--q-section-header-sm-gap);
+      --_heading-gap: var(--q-section-header-sm-heading-gap);
+      --_description-size: var(--q-section-header-sm-description-font-size);
+
+      padding-top: var(--q-section-header-sm-pt);
+    }
+
+    &--split {
+      grid-template-columns: repeat(auto-fit, minmax(min(var(--q-section-header-column-min), 100%), 1fr));
+    }
+  }
+
+  .q-section-header__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--_heading-gap);
+  }
+
+  .q-section-header__aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--q-section-header-aside-gap);
+  }
+
+  .q-section-header__description {
+    max-width: var(--q-section-header-description-max);
+    margin: 0;
+    color: var(--q-section-header-description-fg);
+    font-size: var(--_description-size);
+    line-height: var(--q-section-header-description-leading);
+    text-wrap: pretty;
+  }
+
+  .q-section-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-section-header-actions-gap);
+  }
+
+  // A md title borrows the h3 element but sets its own type scale; the block selector outranks
+  // Headline's size modifier inside the same layer.
+  .q-section-header .q-section-header__title--md {
+    font-size: var(--q-section-header-md-title-size);
+    font-weight: var(--q-section-header-md-title-weight);
+    letter-spacing: var(--q-section-header-md-title-tracking);
+    line-height: var(--q-section-header-md-title-leading);
+  }
+}

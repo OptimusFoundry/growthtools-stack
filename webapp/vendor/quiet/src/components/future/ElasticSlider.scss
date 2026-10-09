@@ -1,0 +1,212 @@
+// ElasticSlider — quiet's Slider with a safe line it resists crossing. BEM: .q-elastic-slider,
+// __header, __label, __value, __track, __rail, __fill, __line, __thumb, __footer, __hint,
+// __override, __lock; [data-over] while the value is past the line.
+// Set inline: --_t (0–1) value, --_safe (0–1) the line, --_stretch (0–1) how hard the pointer pulls.
+// Past the line is molten — a thin line and a ring, never a fill.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-elastic-slider-gap: var(--q-space-1-5);
+    --q-elastic-slider-rail: var(--q-space-0-25);
+    --q-elastic-slider-thumb: var(--q-space-2);
+    --q-elastic-slider-rail-bg: var(--q-border);
+    --q-elastic-slider-fill-bg: var(--q-fg);
+    --q-elastic-slider-over-bg: var(--q-accent);
+    --q-elastic-slider-line-bg: var(--q-fg-muted);
+    --q-elastic-slider-line-height: var(--q-space-2);
+    --q-elastic-slider-thumb-bg: var(--q-fg);
+    --q-elastic-slider-thumb-ring: 0 0 0 3px var(--q-bg), 0 0 0 4px var(--q-fg);
+    --q-elastic-slider-thumb-ring-over: 0 0 0 3px var(--q-bg), 0 0 0 4px var(--q-accent);
+    --q-elastic-slider-stretch: 2; // extra width per unit of pull
+    --q-elastic-slider-header-font-family: var(--q-font-mono);
+    --q-elastic-slider-header-font-size: var(--q-text-2xs);
+    --q-elastic-slider-header-tracking: var(--q-tracking-mono);
+    --q-elastic-slider-header-fg: var(--q-fg-muted);
+    --q-elastic-slider-value-fg: var(--q-fg);
+    --q-elastic-slider-value-fg-over: var(--q-accent);
+    --q-elastic-slider-hint-font-size: var(--q-text-sm);
+    --q-elastic-slider-hint-fg: var(--q-fg-muted);
+    --q-elastic-slider-override-gap: var(--q-space-0-75);
+    --q-elastic-slider-override-height: var(--q-control-sm);
+    --q-elastic-slider-override-px: var(--q-space-1-5);
+    --q-elastic-slider-override-border: var(--q-border);
+    --q-elastic-slider-override-border-on: var(--q-fg);
+    --q-elastic-slider-override-bg-hover: var(--q-bg-subtle);
+    --q-elastic-slider-override-fg: var(--q-fg);
+    --q-elastic-slider-override-font-family: var(--q-font-mono);
+    --q-elastic-slider-override-font-size: var(--q-text-2xs);
+    --q-elastic-slider-lock-size: var(--q-space-0-75);
+    --q-elastic-slider-lock-on: var(--q-accent);
+    --q-elastic-slider-disabled-opacity: 0.4;
+  }
+}
+
+@layer q.components {
+  .q-elastic-slider {
+    --_k: var(--q-elastic-slider-thumb);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-elastic-slider-gap);
+
+    &[aria-disabled="true"] {
+      opacity: var(--q-elastic-slider-disabled-opacity);
+    }
+  }
+
+  .q-elastic-slider__header,
+  .q-elastic-slider__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-elastic-slider-gap);
+  }
+
+  .q-elastic-slider__header {
+    font-family: var(--q-elastic-slider-header-font-family);
+    font-size: var(--q-elastic-slider-header-font-size);
+    letter-spacing: var(--q-elastic-slider-header-tracking);
+    text-transform: uppercase;
+    color: var(--q-elastic-slider-header-fg);
+  }
+
+  .q-elastic-slider__value {
+    font-variant-numeric: tabular-nums;
+    color: var(--q-elastic-slider-value-fg);
+    transition: color var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-elastic-slider[data-over] & {
+      color: var(--q-elastic-slider-value-fg-over);
+    }
+  }
+
+  .q-elastic-slider__track {
+    --_glide: 0s;
+
+    position: relative;
+    height: var(--_k);
+    cursor: ew-resize;
+    touch-action: none;
+
+    // Keyboard steps and the spring back to the line ease; pointer drags follow exactly.
+    &[data-glide] {
+      --_glide: var(--q-dur-expand);
+    }
+
+    .q-elastic-slider[aria-disabled="true"] > & {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-elastic-slider__rail,
+  .q-elastic-slider__fill {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: var(--q-elastic-slider-rail);
+    border-radius: var(--q-radius-pill);
+    transform: translateY(-50%);
+  }
+
+  .q-elastic-slider__rail {
+    right: 0;
+    background: var(--q-elastic-slider-rail-bg);
+  }
+
+  // Ink up to the line, molten beyond it.
+  .q-elastic-slider__fill {
+    --_fill: linear-gradient(to right, var(--q-elastic-slider-fill-bg) calc(var(--_safe) / max(var(--_t), 0.0001) * 100%), var(--q-elastic-slider-over-bg) 0);
+
+    width: calc(var(--_t) * 100%);
+    background: var(--_fill);
+    transition: width var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-elastic-slider__line {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_safe) * 100%);
+    width: var(--q-hairline);
+    height: var(--q-elastic-slider-line-height);
+    background: var(--q-elastic-slider-line-bg);
+    transform: translate(-50%, -50%);
+  }
+
+  .q-elastic-slider__thumb {
+    position: absolute;
+    top: 0;
+    left: calc(var(--_t) * 100% - var(--_k) / 2);
+    width: var(--_k);
+    height: var(--_k);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-elastic-slider-thumb-bg);
+    outline: none;
+    transform: scaleX(calc(1 + var(--_stretch) * var(--q-elastic-slider-stretch)));
+    transform-origin: left;
+    transition:
+      left var(--_glide) var(--q-ease-soft),
+      transform var(--q-dur-expand) var(--q-ease-soft),
+      box-shadow var(--q-dur-hover) var(--q-ease-soft);
+
+    &:focus {
+      box-shadow: var(--q-elastic-slider-thumb-ring);
+    }
+
+    .q-elastic-slider[data-over] & {
+      box-shadow: var(--q-elastic-slider-thumb-ring-over);
+    }
+  }
+
+  .q-elastic-slider__hint {
+    font-size: var(--q-elastic-slider-hint-font-size);
+    color: var(--q-elastic-slider-hint-fg);
+  }
+
+  .q-elastic-slider__override {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-elastic-slider-override-gap);
+    height: var(--q-elastic-slider-override-height);
+    padding: 0 var(--q-elastic-slider-override-px);
+    border: var(--q-hairline) solid var(--q-elastic-slider-override-border);
+    border-radius: var(--q-radius-pill);
+    background: transparent;
+    color: var(--q-elastic-slider-override-fg);
+    font-family: var(--q-elastic-slider-override-font-family);
+    font-size: var(--q-elastic-slider-override-font-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible):not(:disabled) {
+      background: var(--q-elastic-slider-override-bg-hover);
+    }
+
+    &[aria-pressed="true"] {
+      border-color: var(--q-elastic-slider-override-border-on);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  // A hollow ring at rest; filled molten once you've taken the override.
+  .q-elastic-slider__lock {
+    box-sizing: border-box;
+    width: var(--q-elastic-slider-lock-size);
+    height: var(--q-elastic-slider-lock-size);
+    border: var(--q-hairline) solid currentcolor;
+    border-radius: var(--q-radius-pill);
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    [aria-pressed="true"] > & {
+      border-color: var(--q-elastic-slider-lock-on);
+      background: var(--q-elastic-slider-lock-on);
+    }
+  }
+}

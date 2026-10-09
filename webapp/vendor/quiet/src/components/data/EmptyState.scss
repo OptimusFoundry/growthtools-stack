@@ -1,0 +1,136 @@
+// EmptyState — ring glyph, title with an accent full stop, description, actions.
+// BEM: .q-empty-state, __icon, __eyebrow, __title, __dot, __description, __actions;
+// --sm/--md/--lg, --bordered, --start.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-empty-state-gap: var(--q-space-2);
+    --q-empty-state-radius: var(--q-radius-lg);
+    --q-empty-state-border: var(--q-fg-subtle);
+
+    --q-empty-state-sm-padding: var(--q-space-4);
+    --q-empty-state-sm-title-font-size: var(--q-text-xl);
+    --q-empty-state-sm-icon-size: var(--q-space-4);
+    --q-empty-state-sm-description-font-size: var(--q-text-md);
+    --q-empty-state-md-padding: var(--q-space-6);
+    --q-empty-state-md-title-font-size: var(--q-text-2xl);
+    --q-empty-state-md-icon-size: var(--q-space-5);
+    --q-empty-state-md-description-font-size: var(--q-text-lg);
+    --q-empty-state-lg-padding: var(--q-space-8);
+    --q-empty-state-lg-title-font-size: var(--q-text-3xl);
+    --q-empty-state-lg-icon-size: var(--q-space-6);
+    --q-empty-state-lg-description-font-size: var(--q-text-lg);
+
+    --q-empty-state-icon-radius: var(--q-radius-pill);
+    --q-empty-state-icon-border: var(--q-border);
+    --q-empty-state-icon-color: var(--q-fg-muted);
+    --q-empty-state-icon-scale: 0.38; // glyph size as a fraction of the ring
+    --q-empty-state-eyebrow-font-size: var(--q-text-2xs);
+    --q-empty-state-eyebrow-tracking: var(--q-tracking-mono);
+    --q-empty-state-eyebrow-color: var(--q-fg-muted);
+    --q-empty-state-title-weight: var(--q-weight-semibold);
+    --q-empty-state-title-tracking: var(--q-tracking-h4);
+    --q-empty-state-title-leading: var(--q-leading-snug);
+    --q-empty-state-title-color: var(--q-fg);
+    --q-empty-state-dot-color: var(--q-accent);
+    --q-empty-state-description-max-width: 420px;
+    --q-empty-state-description-leading: var(--q-leading-body);
+    --q-empty-state-description-color: var(--q-fg-muted);
+    --q-empty-state-actions-gap: var(--q-space-2);
+    --q-empty-state-actions-margin-top: var(--q-space-1);
+  }
+}
+
+@layer q.components {
+  .q-empty-state {
+    --_padding: var(--q-empty-state-md-padding);
+    --_title-size: var(--q-empty-state-md-title-font-size);
+    --_icon-size: var(--q-empty-state-md-icon-size);
+    --_description-size: var(--q-empty-state-md-description-font-size);
+    --_align: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: var(--_align);
+    gap: var(--q-empty-state-gap);
+    box-sizing: border-box;
+    padding: var(--_padding);
+    border: none;
+    border-radius: var(--q-empty-state-radius);
+    text-align: center;
+
+    &--sm {
+      --_padding: var(--q-empty-state-sm-padding);
+      --_title-size: var(--q-empty-state-sm-title-font-size);
+      --_icon-size: var(--q-empty-state-sm-icon-size);
+      --_description-size: var(--q-empty-state-sm-description-font-size);
+    }
+
+    &--lg {
+      --_padding: var(--q-empty-state-lg-padding);
+      --_title-size: var(--q-empty-state-lg-title-font-size);
+      --_icon-size: var(--q-empty-state-lg-icon-size);
+      --_description-size: var(--q-empty-state-lg-description-font-size);
+    }
+
+    &--bordered {
+      border: var(--q-hairline) dashed var(--q-empty-state-border);
+    }
+
+    &--start {
+      --_align: flex-start;
+      text-align: left;
+    }
+  }
+
+  .q-empty-state__icon {
+    display: grid;
+    place-items: center;
+    width: var(--_icon-size);
+    height: var(--_icon-size);
+    border: var(--q-hairline) solid var(--q-empty-state-icon-border);
+    border-radius: var(--q-empty-state-icon-radius);
+    color: var(--q-empty-state-icon-color);
+    font-family: var(--q-font-mono);
+    font-size: calc(var(--_icon-size) * var(--q-empty-state-icon-scale));
+  }
+
+  .q-empty-state__eyebrow {
+    color: var(--q-empty-state-eyebrow-color);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-empty-state-eyebrow-font-size);
+    letter-spacing: var(--q-empty-state-eyebrow-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-empty-state__title {
+    margin: 0;
+    color: var(--q-empty-state-title-color);
+    font-size: var(--_title-size);
+    font-weight: var(--q-empty-state-title-weight);
+    letter-spacing: var(--q-empty-state-title-tracking);
+    line-height: var(--q-empty-state-title-leading);
+    text-wrap: balance;
+  }
+
+  .q-empty-state__dot {
+    color: var(--q-empty-state-dot-color);
+  }
+
+  .q-empty-state__description {
+    max-width: var(--q-empty-state-description-max-width);
+    margin: 0;
+    color: var(--q-empty-state-description-color);
+    font-size: var(--_description-size);
+    line-height: var(--q-empty-state-description-leading);
+    text-wrap: pretty;
+  }
+
+  .q-empty-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: var(--_align);
+    gap: var(--q-empty-state-actions-gap);
+    margin-top: var(--q-empty-state-actions-margin-top);
+  }
+}

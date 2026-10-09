@@ -1,0 +1,115 @@
+// GhostFuture — real rows, then dashed ghost rows of what's likely next, then a caption.
+// BEM: .q-ghost-future, __rows, __ghosts, __slot, __ghost, __row, __avatar, __label, __hint, __caption.
+// A slot folds away with [data-state="gone"]; --_distance (0, 1, 2…) fades ghosts further out.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-ghost-future-gap: var(--q-space-1);
+    --q-ghost-future-row-height: var(--q-row);
+    --q-ghost-future-row-gap: var(--q-space-1-5);
+    --q-ghost-future-row-px: var(--q-space-1-5);
+    --q-ghost-future-row-radius: var(--q-radius-md);
+    --q-ghost-future-row-border: var(--q-border-strong);
+    --q-ghost-future-avatar-size: var(--q-space-3);
+    --q-ghost-future-avatar-hatch: repeating-linear-gradient(45deg, var(--q-border-strong) 0 1px, transparent 1px 4px);
+    --q-ghost-future-label-fg: var(--q-fg-muted);
+    --q-ghost-future-label-font-size: var(--q-text-sm);
+    --q-ghost-future-hint-fg: var(--q-fg-muted);
+    --q-ghost-future-hint-font-size: var(--q-text-2xs);
+    --q-ghost-future-caption-fg: var(--q-fg-muted);
+    --q-ghost-future-caption-font-size: var(--q-text-2xs);
+    --q-ghost-future-opacity: 0.9; // nearest ghost
+    --q-ghost-future-opacity-step: 0.18; // each further ghost
+    --q-ghost-future-opacity-min: 0.3;
+    --q-ghost-future-dur: var(--q-dur-expand);
+  }
+}
+
+@layer q.components {
+  .q-ghost-future {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-ghost-future-gap);
+  }
+
+  .q-ghost-future__rows,
+  .q-ghost-future__ghosts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-ghost-future-gap);
+  }
+
+  .q-ghost-future__ghosts:empty {
+    display: none;
+  }
+
+  // Fold: the slot's single row track collapses from 1fr to 0fr.
+  .q-ghost-future__slot {
+    --_distance: 0;
+
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: max(var(--q-ghost-future-opacity-min), calc(var(--q-ghost-future-opacity) - var(--_distance) * var(--q-ghost-future-opacity-step)));
+    transition:
+      grid-template-rows var(--q-ghost-future-dur) var(--q-ease-soft),
+      opacity var(--q-ghost-future-dur) var(--q-ease-soft),
+      margin var(--q-ghost-future-dur) var(--q-ease-soft);
+
+    &[data-state="gone"] {
+      grid-template-rows: 0fr;
+      margin-top: calc(var(--q-ghost-future-gap) * -1);
+      opacity: 0;
+    }
+  }
+
+  .q-ghost-future__ghost {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .q-ghost-future__row {
+    display: flex;
+    align-items: center;
+    gap: var(--q-ghost-future-row-gap);
+    box-sizing: border-box;
+    height: var(--q-ghost-future-row-height);
+    padding: 0 var(--q-ghost-future-row-px);
+    border: var(--q-hairline) dashed var(--q-ghost-future-row-border);
+    border-radius: var(--q-ghost-future-row-radius);
+  }
+
+  .q-ghost-future__avatar {
+    flex: none;
+    width: var(--q-ghost-future-avatar-size);
+    height: var(--q-ghost-future-avatar-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-ghost-future-avatar-hatch);
+  }
+
+  .q-ghost-future__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--q-ghost-future-label-fg);
+    font-size: var(--q-ghost-future-label-font-size);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .q-ghost-future__hint,
+  .q-ghost-future__caption {
+    color: var(--q-ghost-future-hint-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-ghost-future-hint-font-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-ghost-future__caption {
+    margin: var(--q-space-0-5) 0 0;
+    color: var(--q-ghost-future-caption-fg);
+    font-size: var(--q-ghost-future-caption-font-size);
+    line-height: var(--q-leading-body);
+    text-transform: none;
+  }
+}

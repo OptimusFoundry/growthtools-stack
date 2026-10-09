@@ -1,0 +1,99 @@
+// DonutChart — share of a total; largest segment molten, the rest ink then greys.
+// BEM: .q-donut-chart, __title, __body, __ring, __segment[data-active], __center, __center-label,
+// __center-value, __center-sub, __legend, __share.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-donut-chart-title-fg: var(--q-fg);
+    --q-donut-chart-title-font-size: var(--q-text-sm);
+    --q-donut-chart-title-weight: var(--q-weight-semibold);
+    --q-donut-chart-gap: var(--q-space-4);
+    --q-donut-chart-segment-gap: var(--q-chart-gap);
+    --q-donut-chart-dim-opacity: 0.45;
+    --q-donut-chart-center-label-fg: var(--q-fg-muted);
+    --q-donut-chart-center-value-fg: var(--q-fg);
+    --q-donut-chart-center-value-font-size: var(--q-text-2xl);
+    --q-donut-chart-center-value-weight: var(--q-weight-bold);
+    --q-donut-chart-share-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-donut-chart__title {
+    color: var(--q-donut-chart-title-fg);
+    font-size: var(--q-donut-chart-title-font-size);
+    font-weight: var(--q-donut-chart-title-weight);
+  }
+
+  .q-donut-chart__body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-donut-chart-gap);
+  }
+
+  .q-donut-chart__ring {
+    position: relative;
+    flex: none;
+    width: var(--_size);
+    height: var(--_size);
+  }
+
+  .q-donut-chart__segment {
+    fill: var(--_color);
+    stroke: var(--q-donut-chart-segment-gap);
+    stroke-width: var(--q-chart-line-width);
+    outline: none;
+    transition: opacity var(--q-dur-hover) var(--q-ease-soft);
+
+    &:focus-visible {
+      stroke: var(--q-focus-ring-color);
+    }
+  }
+
+  svg:has(.q-donut-chart__segment[data-active]) .q-donut-chart__segment:not([data-active]) {
+    opacity: var(--q-donut-chart-dim-opacity);
+  }
+
+  .q-donut-chart__center {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--q-space-0-25);
+    pointer-events: none;
+  }
+
+  .q-donut-chart__center-label {
+    color: var(--q-donut-chart-center-label-fg);
+    font-family: var(--q-chart-axis-font-family);
+    font-size: var(--q-chart-axis-font-size);
+    letter-spacing: var(--q-chart-axis-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-donut-chart__center-value {
+    color: var(--q-donut-chart-center-value-fg);
+    font-size: var(--q-donut-chart-center-value-font-size);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--q-donut-chart-center-value-weight);
+    letter-spacing: var(--q-tracking-tight);
+    line-height: var(--q-leading-none);
+  }
+
+  .q-donut-chart__center-sub {
+    color: var(--q-donut-chart-center-label-fg);
+    font-size: var(--q-text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .q-donut-chart__legend {
+    flex-direction: column;
+  }
+
+  .q-donut-chart__share {
+    color: var(--q-donut-chart-share-fg);
+    font-variant-numeric: tabular-nums;
+  }
+}

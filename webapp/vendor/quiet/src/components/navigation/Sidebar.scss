@@ -1,0 +1,327 @@
+// Sidebar — app navigation rail. BEM: .q-sidebar, __header, __toggle, __body, __group,
+// __group-label, __group-toggle, __chevron, __list, __item, __icon, __label, __badge, __footer;
+// --collapsed, --compact, --dividers, --drawer; __icon--initials. Current item: [aria-current="page"].
+// Mobile drawer: .q-sidebar-drawer, __scrim, __panel. External opener: .q-sidebar-trigger.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-sidebar-width: var(--q-w-sidebar);
+    --q-sidebar-collapsed-width: var(--q-w-sidebar-collapsed);
+    --q-sidebar-gap: var(--q-space-3);
+    --q-sidebar-py: var(--q-space-3);
+    --q-sidebar-px: var(--q-space-2);
+    --q-sidebar-collapsed-px: var(--q-space-1);
+    --q-sidebar-bg: var(--q-bg);
+    --q-sidebar-border: var(--q-border);
+    --q-sidebar-width-dur: 0.3s; // the reference's collapse timing (between --q-dur-expand and a slide)
+    --q-sidebar-width-ease: var(--q-ease-forge);
+    --q-sidebar-inset: var(--q-space-1-5); // header, group label and item side padding
+
+    --q-sidebar-header-gap: var(--q-space-1);
+    --q-sidebar-header-min-height: var(--q-control-sm);
+    --q-sidebar-toggle-size: var(--q-control-sm);
+    --q-sidebar-toggle-radius: var(--q-radius-pill);
+    --q-sidebar-toggle-bg: var(--q-bg);
+    --q-sidebar-toggle-fg: var(--q-fg);
+    --q-sidebar-toggle-font-size: var(--q-text-sm);
+
+    --q-sidebar-dividers-gap: var(--q-space-2);
+    --q-sidebar-list-gap: var(--q-space-0-25);
+    --q-sidebar-label-font: var(--q-font-mono);
+    --q-sidebar-label-font-size: var(--q-text-3xs);
+    --q-sidebar-label-tracking: var(--q-tracking-mono);
+    --q-sidebar-label-fg: var(--q-fg-subtle);
+    --q-sidebar-label-pb: var(--q-space-1);
+
+    --q-sidebar-item-gap: var(--q-space-1-5);
+    --q-sidebar-item-height: var(--q-control-md);
+    --q-sidebar-item-compact-height: var(--q-control-sm);
+    --q-sidebar-item-radius: var(--q-radius-sm);
+    --q-sidebar-item-font: var(--q-font-sans);
+    --q-sidebar-item-font-size: var(--q-text-md);
+    --q-sidebar-item-compact-font-size: var(--q-text-sm);
+    --q-sidebar-item-weight: var(--q-weight-regular);
+    --q-sidebar-item-weight-current: var(--q-weight-semibold);
+    --q-sidebar-item-fg: var(--q-fg-body);
+    --q-sidebar-item-fg-current: var(--q-fg);
+    --q-sidebar-item-bg-hover: var(--q-bg-subtle);
+    --q-sidebar-item-bg-current: var(--q-bg-subtle);
+    --q-sidebar-item-disabled-opacity: 0.4;
+    --q-sidebar-icon-width: var(--q-space-2-5);
+    --q-sidebar-icon-font-size: var(--q-text-md);
+    --q-sidebar-icon-tracking: var(--q-tracking-wide);
+    --q-sidebar-icon-fg: var(--q-fg-muted);
+    --q-sidebar-icon-fg-current: var(--q-fg);
+    --q-sidebar-initials-font: var(--q-font-mono);
+    --q-sidebar-initials-font-size: var(--q-text-3xs);
+    --q-sidebar-badge-font: var(--q-font-mono);
+    --q-sidebar-badge-font-size: var(--q-text-2xs);
+    --q-sidebar-badge-fg: var(--q-fg-muted);
+    --q-sidebar-footer-pt: var(--q-space-2);
+
+    --q-sidebar-drawer-z: var(--q-z-overlay);
+    --q-sidebar-drawer-scrim: var(--q-scrim);
+    --q-sidebar-drawer-width: var(--q-sidebar-width);
+    --q-sidebar-drawer-gutter: var(--q-space-6); // scrim left showing at the narrowest widths
+    --q-sidebar-drawer-shadow: var(--q-shadow-3);
+
+    --q-sidebar-trigger-size: var(--q-control-sm);
+    --q-sidebar-trigger-radius: var(--q-radius-pill);
+    --q-sidebar-trigger-border: var(--q-border);
+    --q-sidebar-trigger-bg: var(--q-bg);
+    --q-sidebar-trigger-bg-hover: var(--q-bg-subtle);
+    --q-sidebar-trigger-fg: var(--q-fg);
+    --q-sidebar-trigger-font-size: var(--q-text-md);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root,
+    [data-theme] {
+      --q-sidebar-width-dur: 0s;
+    }
+  }
+}
+
+@layer q.components {
+  .q-sidebar {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: var(--q-sidebar-gap);
+    box-sizing: border-box;
+    width: var(--_width, var(--q-sidebar-width));
+    padding: var(--q-sidebar-py) var(--q-sidebar-px);
+    overflow: hidden;
+    border-right: var(--q-hairline) solid var(--q-sidebar-border);
+    background: var(--q-sidebar-bg);
+    transition: width var(--q-sidebar-width-dur) var(--q-sidebar-width-ease);
+
+    &--collapsed {
+      width: var(--_collapsed-width, var(--q-sidebar-collapsed-width));
+      padding: var(--q-sidebar-py) var(--q-sidebar-collapsed-px);
+    }
+  }
+
+  .q-sidebar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-sidebar-header-gap);
+    min-height: var(--q-sidebar-header-min-height);
+    padding: 0 var(--q-sidebar-inset);
+
+    .q-sidebar--collapsed & {
+      justify-content: center;
+      padding: 0;
+    }
+  }
+
+  .q-sidebar__toggle {
+    flex: none;
+    width: var(--q-sidebar-toggle-size);
+    height: var(--q-sidebar-toggle-size);
+    border: var(--q-hairline) solid var(--q-sidebar-border);
+    border-radius: var(--q-sidebar-toggle-radius);
+    background: var(--q-sidebar-toggle-bg);
+    color: var(--q-sidebar-toggle-fg);
+    font-size: var(--q-sidebar-toggle-font-size);
+    cursor: pointer;
+  }
+
+  .q-sidebar__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-sidebar-gap);
+    min-height: 0;
+    overflow-y: auto;
+
+    .q-sidebar--dividers & {
+      gap: var(--q-sidebar-dividers-gap);
+    }
+  }
+
+  .q-sidebar__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-sidebar-list-gap);
+
+    .q-sidebar--dividers & + & {
+      padding-top: var(--q-sidebar-dividers-gap);
+      border-top: var(--q-hairline) solid var(--q-sidebar-border);
+    }
+  }
+
+  .q-sidebar__group-label {
+    padding: 0 var(--q-sidebar-inset) var(--q-sidebar-label-pb);
+    color: var(--q-sidebar-label-fg);
+    font-family: var(--q-sidebar-label-font);
+    font-size: var(--q-sidebar-label-font-size);
+    letter-spacing: var(--q-sidebar-label-tracking);
+    text-transform: uppercase;
+
+    // Collapsible groups: the label is a disclosure button.
+    &:is(button) {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      border: 0;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+    }
+  }
+
+  .q-sidebar__chevron {
+    display: inline-block;
+    transition: transform var(--q-dur-hover) var(--q-ease-soft);
+
+    [aria-expanded="false"] > & {
+      transform: rotate(-90deg);
+    }
+  }
+
+  .q-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-sidebar-list-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-sidebar__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--q-sidebar-item-gap);
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--q-sidebar-item-height);
+    padding: 0 var(--q-sidebar-inset);
+    border: 0;
+    border-radius: var(--q-sidebar-item-radius);
+    background: transparent;
+    color: var(--q-sidebar-item-fg);
+    font-family: var(--q-sidebar-item-font);
+    font-size: var(--q-sidebar-item-font-size);
+    font-weight: var(--q-sidebar-item-weight);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-sidebar--compact & {
+      height: var(--q-sidebar-item-compact-height);
+      font-size: var(--q-sidebar-item-compact-font-size);
+    }
+
+    .q-sidebar--collapsed & {
+      justify-content: center;
+      padding: 0;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: var(--q-sidebar-item-disabled-opacity);
+    }
+
+    &:is(:hover, :focus-visible):not(:disabled) {
+      background: var(--q-sidebar-item-bg-hover);
+    }
+
+    &[aria-current="page"] {
+      background: var(--q-sidebar-item-bg-current);
+      color: var(--q-sidebar-item-fg-current);
+      font-weight: var(--q-sidebar-item-weight-current);
+    }
+  }
+
+  .q-sidebar__icon {
+    display: inline-flex;
+    flex: none;
+    justify-content: center;
+    width: var(--q-sidebar-icon-width);
+    color: var(--q-sidebar-icon-fg);
+    font-family: inherit;
+    font-size: var(--q-sidebar-icon-font-size);
+    letter-spacing: var(--q-sidebar-icon-tracking);
+
+    &--initials {
+      font-family: var(--q-sidebar-initials-font);
+      font-size: var(--q-sidebar-initials-font-size);
+    }
+
+    [aria-current="page"] > & {
+      color: var(--q-sidebar-icon-fg-current);
+    }
+  }
+
+  .q-sidebar__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .q-sidebar__badge {
+    color: var(--q-sidebar-badge-fg);
+    font-family: var(--q-sidebar-badge-font);
+    font-size: var(--q-sidebar-badge-font-size);
+  }
+
+  .q-sidebar__footer {
+    padding-top: var(--q-sidebar-footer-pt);
+    border-top: var(--q-hairline) solid var(--q-sidebar-border);
+  }
+
+  .q-sidebar--drawer {
+    width: min(var(--_width, var(--q-sidebar-drawer-width)), calc(100vw - var(--q-sidebar-drawer-gutter)));
+    height: 100%;
+    transition: none;
+  }
+
+  .q-sidebar-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: var(--q-sidebar-drawer-z);
+  }
+
+  .q-sidebar-drawer__scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--q-sidebar-drawer-scrim);
+  }
+
+  .q-sidebar-drawer__panel {
+    position: absolute;
+    inset: 0 auto 0 0;
+    display: flex;
+    box-shadow: var(--q-sidebar-drawer-shadow);
+    outline: none;
+  }
+
+  .q-sidebar-trigger {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--q-sidebar-trigger-size);
+    height: var(--q-sidebar-trigger-size);
+    padding: 0;
+    border: var(--q-hairline) solid var(--q-sidebar-trigger-border);
+    border-radius: var(--q-sidebar-trigger-radius);
+    background: var(--q-sidebar-trigger-bg);
+    color: var(--q-sidebar-trigger-fg);
+    font-size: var(--q-sidebar-trigger-font-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      background: var(--q-sidebar-trigger-bg-hover);
+    }
+  }
+}

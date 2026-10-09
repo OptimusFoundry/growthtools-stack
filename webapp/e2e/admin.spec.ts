@@ -14,10 +14,20 @@
  * transport-failure test. Golden-path and interaction tests are preserved.
  */
 
+import type { Page } from "@playwright/test";
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
-import { adminScenarios, endpoints, scenarios } from "./handlers";
+import { endpoints, scenarios } from "./handlers";
 import { loginAs } from "./helpers/auth";
+
+// ImpersonationBanner is a product-local strip with role="alert" (not a quiet Alert).
+const impersonationBanner = (page: Page) =>
+	page.getByRole("alert").filter({
+		has: page.getByRole("button", { name: /stop impersonating/i }),
+	});
+
+const confirmDialog = (page: Page) =>
+	page.getByRole("dialog", { name: /confirm impersonation/i });
 
 // ── Status-code tables ─────────────────────────────────────────────────────
 
@@ -66,17 +76,14 @@ const startImpersonationErrorCases = [
 // ── Admin page — golden paths ─────────────────────────────────────────────
 
 test.describe("Admin page — golden paths", () => {
-	test("admin user sees the admin page with user list", async ({
-		page,
-		network,
-	}) => {
+	test("admin user sees the admin page with user list", async ({ page }) => {
 		await loginAs(page);
 		await page.goto("/admin");
 
-		const userList = page.getByTestId("admin-user-list");
+		const userList = page.getByRole("table", { name: "Users" });
 		await expect(userList).toBeVisible();
 
-		const rows = page.getByTestId("admin-user-row");
+		const rows = page.getByRole("row", { name: /@example\.com/ });
 		await expect(rows).toHaveCount(2);
 	});
 
@@ -107,12 +114,14 @@ test.describe("Admin page — golden paths", () => {
 		await loginAs(page);
 		await page.goto("/admin");
 
-		const searchInput = page.getByTestId("admin-search-input");
+		const searchInput = page.getByRole("textbox", {
+			name: "Search users by email",
+		});
 		await searchInput.fill("jane");
 
 		// Wait for debounce + fetch to complete
 		await page.waitForTimeout(350);
-		const rows = page.getByTestId("admin-user-row");
+		const rows = page.getByRole("row", { name: /@example\.com/ });
 		await expect(rows).toHaveCount(1);
 		await expect(page.getByText("jane@example.com")).toBeVisible();
 	});
@@ -126,7 +135,7 @@ test.describe("Admin page — golden paths", () => {
 		});
 		await firstLoginBtn.click();
 
-		await expect(page.getByText(/confirm impersonation/i)).toBeVisible();
+		await expect(confirmDialog(page)).toBeVisible();
 		await expect(
 			page.getByText(/actions will affect their account/i),
 		).toBeVisible();
@@ -152,7 +161,7 @@ test.describe("Admin page — golden paths", () => {
 			.click();
 		await page.getByRole("button", { name: /cancel/i }).click();
 
-		await expect(page.getByText(/confirm impersonation/i)).not.toBeVisible();
+		await expect(confirmDialog(page)).not.toBeVisible();
 		expect(postCalled).toBe(false);
 	});
 
@@ -197,7 +206,7 @@ test.describe("Route guard", () => {
 		page,
 		network,
 	}) => {
-		network.use(adminScenarios.notAdmin());
+		network.use(scenarios.admin.notAdmin());
 
 		await loginAs(page);
 		await page.goto("/admin");
@@ -217,19 +226,19 @@ test.describe("ImpersonationBanner", () => {
 		await loginAs(page);
 		await page.goto("/");
 
-		await expect(page.getByRole("alert")).not.toBeVisible();
+		await expect(impersonationBanner(page)).toHaveCount(0);
 	});
 
 	test("banner is shown when is_impersonated=true", async ({
 		page,
 		network,
 	}) => {
-		network.use(adminScenarios.impersonating());
+		network.use(scenarios.admin.impersonating());
 
 		await loginAs(page);
 		await page.goto("/");
 
-		const banner = page.getByRole("alert");
+		const banner = impersonationBanner(page);
 		await expect(banner).toBeVisible();
 		await expect(banner).toContainText(/impersonating/i);
 		await expect(banner).toContainText("Jane Doe");
@@ -239,7 +248,7 @@ test.describe("ImpersonationBanner", () => {
 		page,
 		network,
 	}) => {
-		network.use(adminScenarios.impersonating());
+		network.use(scenarios.admin.impersonating());
 
 		let deleteCalled = false;
 		network.use(
@@ -252,7 +261,7 @@ test.describe("ImpersonationBanner", () => {
 		await loginAs(page);
 		await page.goto("/");
 
-		const banner = page.getByRole("alert");
+		const banner = impersonationBanner(page);
 		await expect(banner).toBeVisible();
 
 		await banner.getByRole("button", { name: /stop impersonating/i }).click();
@@ -318,8 +327,8 @@ test.describe("POST /api/protected/admin/impersonate — error status codes", ()
 			await page.getByRole("button", { name: /continue/i }).click();
 
 			// Dialog should stay open; error message should appear
-			await expect(page.getByText(/confirm impersonation/i)).toBeVisible();
-			await expect(page.getByRole("alert")).toBeVisible();
+			await expect(confirmDialog(page)).toBeVisible();
+			await expect(confirmDialog(page).getByRole("alert")).toBeVisible();
 		});
 	}
 
@@ -334,7 +343,7 @@ test.describe("POST /api/protected/admin/impersonate — error status codes", ()
 			.click();
 		await page.getByRole("button", { name: /continue/i }).click();
 
-		await expect(page.getByRole("alert")).toBeVisible();
+		await expect(confirmDialog(page).getByRole("alert")).toBeVisible();
 	});
 });
 
@@ -345,14 +354,13 @@ test.describe("DELETE /api/protected/admin/impersonate — status codes", () => 
 		page,
 		network,
 	}) => {
-		network.use(adminScenarios.impersonating());
+		network.use(scenarios.admin.impersonating());
 		network.use(endpoints.admin.stopImpersonation[200]());
 
 		await loginAs(page);
 		await page.goto("/");
 
-		await page
-			.getByRole("alert")
+		await impersonationBanner(page)
 			.getByRole("button", { name: /stop impersonating/i })
 			.click();
 		await page.waitForURL("/");
@@ -362,14 +370,13 @@ test.describe("DELETE /api/protected/admin/impersonate — status codes", () => 
 		page,
 		network,
 	}) => {
-		network.use(adminScenarios.impersonating());
+		network.use(scenarios.admin.impersonating());
 		network.use(endpoints.admin.stopImpersonation.transport());
 
 		await loginAs(page);
 		await page.goto("/");
 
-		await page
-			.getByRole("alert")
+		await impersonationBanner(page)
 			.getByRole("button", { name: /stop impersonating/i })
 			.click();
 

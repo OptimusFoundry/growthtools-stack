@@ -1,0 +1,166 @@
+// UndoRiver — recent actions drift left to right as they age, dimming; any one can be pulled back.
+// BEM: .q-undo-river, __band, __items, __lane, __item, __who(--you, --person, --agent), __undo,
+// __edge(--start, --end), __status. A lane reads --_age (0–1), --_lane and data-age.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-undo-river-gap: var(--q-space-1-5);
+    --q-undo-river-band-bg: var(--q-bg-subtle);
+    --q-undo-river-band-radius: var(--q-radius-lg);
+    --q-undo-river-band-px: var(--q-space-1-5);
+    --q-undo-river-band-pt: var(--q-space-1-5);
+    --q-undo-river-band-pb: var(--q-space-4);
+    --q-undo-river-lane-height: var(--q-space-4);
+    --q-undo-river-item-height: calc(var(--q-space-3) + var(--q-space-0-5));
+    --q-undo-river-item-px: var(--q-space-1-25);
+    --q-undo-river-item-size: var(--q-text-xs);
+    --q-undo-river-item-bg: var(--q-bg);
+    --q-undo-river-item-border: var(--q-border-strong);
+    --q-undo-river-item-border-hover: var(--q-fg);
+    --q-undo-river-item-fg-fresh: var(--q-fg);
+    --q-undo-river-item-fg-drifting: var(--q-fg-body);
+    --q-undo-river-item-fg-fading: var(--q-fg-muted);
+    --q-undo-river-who-size: var(--q-space-0-75);
+    --q-undo-river-who-you: var(--q-accent);
+    --q-undo-river-who-ink: var(--q-fg);
+    --q-undo-river-undo-fg: var(--q-fg-muted);
+    --q-undo-river-edge-font: var(--q-font-mono);
+    --q-undo-river-edge-size: var(--q-text-3xs);
+    --q-undo-river-edge-fg: var(--q-fg-muted);
+    --q-undo-river-status-size: var(--q-text-sm);
+    --q-undo-river-status-fg: var(--q-fg-muted);
+    --q-undo-river-status-fg-undone: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-undo-river {
+    display: grid;
+    gap: var(--q-undo-river-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-undo-river__band {
+    position: relative;
+    padding: var(--q-undo-river-band-pt) var(--q-undo-river-band-px) var(--q-undo-river-band-pb);
+    border-radius: var(--q-undo-river-band-radius);
+    background: var(--q-undo-river-band-bg);
+    overflow: hidden;
+  }
+
+  .q-undo-river__items {
+    position: relative;
+    height: calc(var(--q-undo-river-lane-height) * 3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Age 0 sits at the left edge, age 1 at the right; the chip never leaves the band.
+  .q-undo-river__lane {
+    position: absolute;
+    top: calc(var(--_lane) * var(--q-undo-river-lane-height));
+    left: calc(var(--_age) * 100%);
+    transform: translateX(calc(var(--_age) * -100%));
+    transition: left var(--q-dur-expand) var(--q-ease-linear), transform var(--q-dur-expand) var(--q-ease-linear);
+  }
+
+  .q-undo-river__item {
+    --_fg: var(--q-undo-river-item-fg-fresh);
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-space-0-75);
+    box-sizing: border-box;
+    height: var(--q-undo-river-item-height);
+    margin: 0;
+    padding: 0 var(--q-undo-river-item-px);
+    border: var(--q-hairline) solid var(--q-undo-river-item-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-undo-river-item-bg);
+    font-family: inherit;
+    font-size: var(--q-undo-river-item-size);
+    white-space: nowrap;
+    color: var(--_fg);
+    cursor: pointer;
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft), color var(--q-dur-hover) var(--q-ease-soft);
+
+    [data-age="drifting"] > & {
+      --_fg: var(--q-undo-river-item-fg-drifting);
+
+      border-style: dashed;
+    }
+
+    [data-age="fading"] > & {
+      --_fg: var(--q-undo-river-item-fg-fading);
+
+      border-style: dashed;
+      border-color: var(--q-border);
+    }
+
+    &:is(:hover, :focus-visible) {
+      border-style: solid;
+      border-color: var(--q-undo-river-item-border-hover);
+      color: var(--q-undo-river-item-fg-fresh);
+    }
+  }
+
+  .q-undo-river__who {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--q-undo-river-who-size);
+    height: var(--q-undo-river-who-size);
+    border-radius: var(--q-radius-pill);
+
+    &--you {
+      background: var(--q-undo-river-who-you);
+    }
+
+    &--person {
+      border: var(--q-hairline) solid var(--q-undo-river-who-ink);
+    }
+
+    &--agent {
+      border-radius: var(--q-radius-2xs);
+      background: var(--q-undo-river-who-ink);
+    }
+  }
+
+  .q-undo-river__undo {
+    color: var(--q-undo-river-undo-fg);
+  }
+
+  .q-undo-river__edge {
+    position: absolute;
+    bottom: var(--q-space-1);
+    font-family: var(--q-undo-river-edge-font);
+    font-size: var(--q-undo-river-edge-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-undo-river-edge-fg);
+
+    &--start {
+      left: var(--q-undo-river-band-px);
+    }
+
+    &--end {
+      right: var(--q-undo-river-band-px);
+    }
+  }
+
+  .q-undo-river__status {
+    margin: 0;
+    font-size: var(--q-undo-river-status-size);
+    color: var(--q-undo-river-status-fg);
+
+    &[data-undone] {
+      color: var(--q-undo-river-status-fg-undone);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-undo-river__lane {
+      transition: none;
+    }
+  }
+}

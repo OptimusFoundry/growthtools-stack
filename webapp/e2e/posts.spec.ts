@@ -8,6 +8,7 @@
 import type { NetworkFixture } from "@msw/playwright";
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
+import { toastLocator } from "./helpers/toast";
 import { postListItems, posts } from "./mocks/data";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,19 +51,16 @@ const deleteStatusCases = [
 		status: 401,
 		body: { error: "Account ID not found in context", code: "UNAUTHORIZED" },
 		label: "unauthorized",
-		expect: /couldn't delete post|error|failed|try again/i,
 	},
 	{
 		status: 400,
 		body: { error: "Invalid post ID format", code: "INVALID_INPUT" },
 		label: "bad request",
-		expect: /couldn't delete post|error|failed|try again/i,
 	},
 	{
 		status: 404,
 		body: { error: "Post not found", code: "NOT_FOUND" },
 		label: "not found",
-		expect: /couldn't delete post|error|failed|try again/i,
 	},
 	{
 		status: 500,
@@ -71,7 +69,6 @@ const deleteStatusCases = [
 			code: "INTERNAL_ERROR",
 		},
 		label: "server error",
-		expect: /couldn't delete post|error|failed|try again/i,
 	},
 ] as const;
 
@@ -138,10 +135,9 @@ test.describe("Posts", () => {
 			await page.goto("/posts");
 			await page.waitForLoadState("networkidle");
 
-			const createBtn = page.getByRole("button", {
-				name: /create post/i,
-			});
-			expect(await createBtn.isVisible()).toBeTruthy();
+			await expect(
+				page.getByRole("link", { name: /create post/i }).first(),
+			).toBeVisible();
 		});
 	});
 
@@ -169,6 +165,26 @@ test.describe("Posts", () => {
 
 			const content = await page.textContent("body");
 			expect(content).toMatch(/posts/i);
+		});
+
+		test("selecting the Draft filter tab requests status=draft", async ({
+			page,
+		}) => {
+			await page.goto("/posts");
+			await page.waitForLoadState("networkidle");
+
+			const draftTab = page
+				.getByRole("radiogroup", { name: "Filter posts by status" })
+				.getByRole("radio", { name: /^draft/i });
+			const request = page.waitForRequest(
+				(req) =>
+					req.method() === "GET" &&
+					new URL(req.url()).pathname === "/api/protected/posts" &&
+					new URL(req.url()).searchParams.get("status") === "draft",
+			);
+			await draftTab.click();
+			await request;
+			await expect(draftTab).toHaveAttribute("aria-checked", "true");
 		});
 	});
 
@@ -233,8 +249,9 @@ test.describe("Posts", () => {
 	// Status Code Coverage — DELETE /api/protected/posts/:id
 	//
 	// The delete flow requires UI interaction: the user clicks the trash icon
-	// on a draft/scheduled post, then confirms in the modal. Errors surface as
-	// a BannerCenter notification: "Couldn't delete post".
+	// on a draft/scheduled post, then confirms in the dialog. Failures show as
+	// an inline Alert inside the open dialog ("Couldn't delete post"); a toast
+	// would be inert under the dialog, so none is raised.
 	// =========================================================================
 
 	test.describe("Status Code Coverage — DELETE /posts/:id", () => {
@@ -245,18 +262,32 @@ test.describe("Posts", () => {
 			await page.waitForLoadState("networkidle");
 
 			// Click the trash icon on the first deletable post (draft or scheduled)
-			const deleteBtn = page.getByRole("button", { name: /delete/i }).first();
-			await deleteBtn.click();
+			await page
+				.getByRole("button", { name: /^delete post "/i })
+				.first()
+				.click();
 
-			// Confirm in the modal
-			const confirmBtn = page.getByRole("button", { name: /^delete$/i }).last();
-			await confirmBtn.click();
+			await page
+				.getByRole("dialog", { name: /delete post/i })
+				.getByRole("button", { name: /^delete$/i })
+				.click();
 
 			// Wait for the async delete to settle
 			await page.waitForLoadState("networkidle");
 		}
 
-		// 200 happy path — banner confirms deletion
+		async function expectInlineDeleteFailure(
+			page: import("@playwright/test").Page,
+		) {
+			const dialog = page.getByRole("dialog", { name: /delete post/i });
+			await expect(dialog).toBeVisible();
+			await expect(dialog.getByRole("alert")).toContainText(
+				"Couldn't delete post",
+			);
+			await expect(toastLocator(page, "alert")).toHaveCount(0);
+		}
+
+		// 200 happy path — success toast once the dialog has closed
 		test("DELETE /posts/:id handles 200 — success", async ({
 			network,
 			page,
@@ -267,8 +298,10 @@ test.describe("Posts", () => {
 				),
 			);
 			await triggerDelete(page);
-			const content = await page.textContent("body");
-			expect(content).toMatch(/post deleted|deleted/i);
+			await expect(
+				page.getByRole("dialog", { name: /delete post/i }),
+			).toHaveCount(0);
+			await expect(toastLocator(page, "status", /deleted/i)).toBeVisible();
 		});
 
 		for (const tc of deleteStatusCases) {
@@ -282,8 +315,7 @@ test.describe("Posts", () => {
 					),
 				);
 				await triggerDelete(page);
-				const content = await page.textContent("body");
-				expect(content).toMatch(tc.expect);
+				await expectInlineDeleteFailure(page);
 			});
 		}
 
@@ -295,9 +327,7 @@ test.describe("Posts", () => {
 				http.delete("*/api/protected/posts/:id", () => HttpResponse.error()),
 			);
 			await triggerDelete(page);
-			const content = await page.textContent("body");
-			// Transport failure also triggers the error banner
-			expect(content).toMatch(/couldn't delete post|error|failed|try again/i);
+			await expectInlineDeleteFailure(page);
 		});
 	});
 
@@ -596,10 +626,8 @@ test.describe("Posts", () => {
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// Before the fix there were three <header> elements: Layout's standalone
-			// header bar, Topbar's <header>, and the page editorial header inside
-			// WizardInner. After the fix the Layout header is removed, leaving exactly
-			// two (Topbar + WizardInner editorial header).
+			// Exactly two: the Topbar <header> and the composer's PageHero <header>.
+			// A third would mean Layout's standalone header bar is back.
 			const visibleHeaders = page.locator("header:visible");
 			await expect(visibleHeaders).toHaveCount(2);
 		});
@@ -654,8 +682,8 @@ test.describe("Posts", () => {
 			await page.waitForLoadState("networkidle");
 
 			// The topbar actions wrapper has display:none below lg (1024px).
-			// Scope to the topbar <header> so we don't also match the MobileActionBar.
-			const topbar = page.locator("header").first();
+			// Scope to the topbar banner so we don't also match the MobileActionBar.
+			const topbar = page.getByRole("banner");
 			await expect(
 				topbar.getByRole("button", { name: /^save draft$/i }),
 			).not.toBeVisible();
@@ -762,9 +790,9 @@ test.describe("Posts", () => {
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// SidebarMobileTrigger returns null when !isMobile, so no button
-			// with aria-label "Open menu" should exist in the DOM.
-			const hamburger = page.getByRole("button", { name: /open menu/i });
+			// The sidebar trigger is only rendered on mobile, so no "Open
+			// navigation" button should exist in the DOM on desktop.
+			const hamburger = page.getByRole("button", { name: "Open navigation" });
 			await expect(hamburger).toHaveCount(0);
 		});
 	});

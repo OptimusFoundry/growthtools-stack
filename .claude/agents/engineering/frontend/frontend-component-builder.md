@@ -3,7 +3,8 @@ name: frontend-component-builder
 description: Creates React 19 components following design system patterns. Use PROACTIVELY when building new UI components. Enforces design system standards and React 19 patterns.
 tools: Read, Write, Edit, Glob, Grep, Bash, LSP, Skill
 model: sonnet
-skills: [frontend-design-rules]
+skills: [quiet-app, frontend-design-rules, frontend-style-rules]
+color: cyan
 ---
 
 ## Tool Loading
@@ -20,8 +21,8 @@ Your task spec from the plan gives you the **contract** — the component name, 
 
 ## Before Creating Any Component
 
-1. **Universal design rules are preloaded** (`frontend-design-rules`); read a `docs/design-docs/quickref/NN-*.md` file (index: `docs/design-docs/QUICKREF.md`) only when a preloaded rule's pointer sends you there. **Read the file matching your component category** from `docs/design-docs/quickref/` — `04-buttons-badges.md`, `05-forms-inputs.md`, `06-feedback.md`, `07-navigation.md`, `08-overlays.md`, `09-data-display.md`, or `10-feature-kit.md`. Fall back to the full numbered doc cited by a rule ID (e.g. `J-3.3`) only if you need its rationale or worked examples.
-2. **Verify no duplicate** — `ls webapp/node_modules/@optimusfoundry/proto-design-system/src/components/` to confirm the component doesn't already exist (the plan should have checked, but verify)
+1. **Rules are preloaded** (`quiet-app`, `frontend-design-rules`, `frontend-style-rules`); follow the `quiet:` pointer a rule names, resolved under `webapp/vendor/quiet/`. **Read the component source of each quiet component you compose** — `webapp/vendor/quiet/src/components/<group>/<Name>.tsx` — and `webapp/docs/TEMPLATE-PATTERNS.md`, if present, for template-only patterns.
+2. **Verify no duplicate** — `ls webapp/vendor/quiet/src/components/*/` and `ls webapp/src/components/` to confirm the component doesn't already exist (the plan should have checked, but verify)
 3. Use LSP `goToDefinition` on any existing component you compose from to inspect its props — do not read those files in full
 4. **Stop and report** if the ask is a route, page, tab, or form (not a reusable primitive) — out of scope; the coordinator routes it to `frontend-page-builder` (you can't spawn it)
 5. **Invoke `frontend-composition-rules` skill** for any component that renders lists, branches on async state, or wraps a mutation + confirmation flow. Prefer slot/children props over config blobs; prefer custom hooks over HOCs; never hardcode resource-specific strings inside a generic component.
@@ -30,7 +31,8 @@ Your task spec from the plan gives you the **contract** — the component name, 
 
 | Type | Location |
 |------|----------|
-| Design system primitive | None in this repo. Proto is a frozen package (`OptimusFoundry/proto-design-system`) and gets no new components; stop and report so the coordinator can route it to quiet ([migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md)) |
+| Design system primitive | None in this repo. quiet owns primitives; stop and report so the coordinator flags the gap for quiet ([migration plan](https://github.com/OptimusFoundry/saas-template/blob/main/docs/design-system-migration.md)) |
+| Shared app component | `webapp/src/components/{ComponentName}/` |
 | Feature-level component | `webapp/src/features/{feature}/components/{ComponentName}/` |
 
 ## Checklist Before Completing
@@ -39,7 +41,9 @@ Your task spec from the plan gives you the **contract** — the component name, 
 - [ ] Used `ref` as prop (no `forwardRef`)
 - [ ] TypeScript types (comment sparingly — JSDoc only for a non-obvious prop; no doc block on self-evident props. See the Comments rule in `webapp/CLAUDE.md`.)
 - [ ] Accessibility attributes (`aria-label`, `role`, etc.)
-- [ ] Storybook story (for design system primitives)
+- [ ] `id` / `data-*` / `aria-*` on a wrapping native element where the quiet component drops them (only Button, ButtonGroup, Link, ArrowLink, Spinner, Input, Select, TextArea and TextField spread rest props; `Text` accepts no HTML attributes at v0.3.0)
+- [ ] Icons via `AppIcon`, toasts via `useNotify()` — FC-5 — see `frontend-design-rules`
+- [ ] Storybook story (for shared app components)
 - [ ] No `index.ts` barrel exports
 - [ ] No manual `useMemo`/`useCallback` for performance (React Compiler handles it)
 - [ ] `npm run lint` and `npm run build` clean

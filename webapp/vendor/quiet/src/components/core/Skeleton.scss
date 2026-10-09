@@ -1,0 +1,86 @@
+// Skeleton — pulsing placeholder; still under reduced motion.
+// BEM: .q-skeleton (--text, --circular, --rectangular, --rounded, --still; --_width/--_height),
+// .q-skeleton-group (multi-line text; --_width/--_gap).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-skeleton-bg: var(--q-bg-subtle);
+    --q-skeleton-ease: ease-in-out; // a symmetric breathe; no motion token matches it
+    --q-skeleton-text-height: var(--q-space-1-5);
+    --q-skeleton-text-radius: var(--q-radius-xs);
+    --q-skeleton-circular-size: var(--q-space-5);
+    --q-skeleton-rectangular-height: calc(var(--q-space-12) + var(--q-space-3));
+    --q-skeleton-rectangular-radius: var(--q-radius-lg);
+    --q-skeleton-rounded-width: var(--q-space-12);
+    --q-skeleton-rounded-height: var(--q-space-4);
+    --q-skeleton-pill-radius: var(--q-radius-pill);
+    --q-skeleton-group-gap: var(--q-space-1);
+    --q-skeleton-last-line-width: 60%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes of-pulse {
+    0%,
+    100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+}
+
+@layer q.components {
+  .q-skeleton {
+    display: block;
+    flex: none;
+    width: var(--_width);
+    height: var(--_height);
+    background: var(--q-skeleton-bg);
+    animation: of-pulse var(--q-dur-pulse) var(--q-skeleton-ease) infinite;
+
+    &--text {
+      --_width: 100%;
+      --_height: var(--q-skeleton-text-height);
+      border-radius: var(--q-skeleton-text-radius);
+    }
+
+    &--circular {
+      --_width: var(--q-skeleton-circular-size);
+      --_height: var(--_width);
+      border-radius: var(--q-skeleton-pill-radius);
+    }
+
+    &--rectangular {
+      --_width: 100%;
+      --_height: var(--q-skeleton-rectangular-height);
+      border-radius: var(--q-skeleton-rectangular-radius);
+    }
+
+    &--rounded {
+      --_width: var(--q-skeleton-rounded-width);
+      --_height: var(--q-skeleton-rounded-height);
+      border-radius: var(--q-skeleton-pill-radius);
+    }
+
+    &--still {
+      animation: none;
+    }
+  }
+
+  .q-skeleton-group {
+    --_width: 100%;
+    --_gap: var(--q-skeleton-group-gap);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--_gap);
+    width: var(--_width);
+
+    > .q-skeleton {
+      --_width: 100%;
+      border-radius: 0;
+    }
+
+    > .q-skeleton:last-child {
+      --_width: var(--q-skeleton-last-line-width);
+    }
+  }
+}

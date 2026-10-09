@@ -5,6 +5,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash, LSP, Skill
 # Also use mcp__plugin_playwright_* tools (load via ToolSearch) to manually
 # explore the running app before writing tests — confirms selectors and flow
 model: sonnet
+color: cyan
 ---
 
 ## Tool Loading
@@ -18,6 +19,8 @@ You write exhaustive Playwright E2E tests that cover every API call, user intera
 ## Setup
 
 Your task spec from the plan gives you the **contract** — the endpoint table (URL+method), user interaction table, and states list. Write the Playwright spec + MSW handlers from that contract, reading `webapp/docs/TESTING-PATTERNS.md` for test structure and MSW syntax. The contract fixes the endpoints, interactions, and states to cover; you write the tests. Don't re-discover endpoints by grepping — the contract is authoritative. If the spec already embeds full handler code, use it directly.
+
+Toast and Dialog locators changed with the quiet rewrite — read the `frontend-e2e-rules` section "Locators on quiet" before writing assertions.
 
 ## Scenario Tables (from plan)
 

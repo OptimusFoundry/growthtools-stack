@@ -31,6 +31,12 @@ import {
 	contentScenarios,
 } from "./content.handlers";
 import {
+	githubEndpoints,
+	githubHandlers,
+	githubReposEndpoints,
+	githubScenarios,
+} from "./github.handlers";
+import {
 	mediaEndpoints,
 	mediaHandlers,
 	mediaScenarios,
@@ -65,6 +71,7 @@ export const handlers = [
 	...billingHandlers,
 	...postsHandlers,
 	...platformsHandlers,
+	...githubHandlers,
 	...mediaHandlers,
 	...blogHandlers,
 	...analyticsHandlers,
@@ -94,6 +101,9 @@ export {
 	chatHandlers,
 	contentEndpoints,
 	contentHandlers,
+	githubEndpoints,
+	githubHandlers,
+	githubReposEndpoints,
 	mediaEndpoints,
 	mediaHandlers,
 	platformsEndpoints,
@@ -122,6 +132,8 @@ export const endpoints = {
 	blog: blogEndpoints,
 	chat: chatEndpoints,
 	content: contentEndpoints,
+	github: githubEndpoints,
+	githubRepos: githubReposEndpoints,
 	media: mediaEndpoints,
 	platforms: platformsEndpoints,
 	posts: postsEndpoints,
@@ -142,6 +154,7 @@ export const scenarios = {
 	blog: blogScenarios,
 	chat: chatScenarios,
 	content: contentScenarios,
+	github: githubScenarios,
 	media: mediaScenarios,
 	platforms: platformsScenarios,
 	posts: postsScenarios,

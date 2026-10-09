@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { UploadedFile } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
 import type { MediaItem } from "@/types/media";
+import type { PendingUpload } from "@/types/mediaUpload";
 import { useUploadMedia } from "./useUploadMedia";
 
 interface UseManagedMediaUploadOptions {
@@ -8,9 +8,9 @@ interface UseManagedMediaUploadOptions {
 }
 
 export interface ManagedMediaUpload {
-	uploadingFiles: UploadedFile[];
+	uploadingFiles: PendingUpload[];
 	isUploading: boolean;
-	onFilesChange: (files: UploadedFile[]) => void;
+	onFilesChange: (files: PendingUpload[]) => void;
 }
 
 /**
@@ -23,7 +23,7 @@ export interface ManagedMediaUpload {
 export function useManagedMediaUpload({
 	onUploaded,
 }: UseManagedMediaUploadOptions): ManagedMediaUpload {
-	const [uploadingFiles, setUploadingFiles] = useState<UploadedFile[]>([]);
+	const [uploadingFiles, setUploadingFiles] = useState<PendingUpload[]>([]);
 	const { uploadMedia } = useUploadMedia();
 	const controllers = useRef(new Map<string, AbortController>());
 	const onUploadedRef = useRef(onUploaded);
@@ -40,7 +40,7 @@ export function useManagedMediaUpload({
 	}, []);
 
 	const onFilesChange = useCallback(
-		(files: UploadedFile[]) => {
+		(files: PendingUpload[]) => {
 			const prevIds = new Set(uploadingFiles.map((f) => f.id));
 			const newIds = new Set(files.map((f) => f.id));
 

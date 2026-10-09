@@ -1,0 +1,61 @@
+// Tier 2 — space. The reference's 8px ladder (--q-space-1 = 8px) plus the 2/4/6/10/12/14px
+// steps it uses inside controls. Names are multiples of 8.
+:root {
+  --q-space-0: 0;
+  --q-space-px: 1px;
+  --q-space-0-25: 2px;
+  --q-space-0-5: 4px;
+  --q-space-0-75: 6px;
+  --q-space-1: 8px;
+  --q-space-1-25: 10px;
+  --q-space-1-5: 12px;
+  --q-space-1-75: 14px;
+  --q-space-2: 16px;
+  --q-space-2-5: 20px;
+  --q-space-3: 24px;
+  --q-space-4: 32px;
+  --q-space-5: 40px;
+  --q-space-6: 48px;
+  --q-space-7: 56px;
+  --q-space-8: 64px;
+  --q-space-10: 80px;
+  --q-space-12: 96px;
+  --q-space-16: 128px;
+  --q-space-20: 160px;
+}
+
+// Spacing by job — the reference's density modes. Set data-density on any container.
+:root,
+[data-density="marketing"] {
+  --q-space-inline: var(--q-space-1);
+  --q-space-stack: var(--q-space-2);
+  --q-space-field: var(--q-space-3);
+  --q-space-card-pad: var(--q-space-4);
+  --q-space-card-gap: var(--q-space-4);
+  --q-space-block: var(--q-space-8);
+  --q-space-section: var(--q-space-16);
+  --q-space-page-x: var(--q-space-4);
+  --q-grid-gutter: var(--q-space-4);
+  --q-font-body: var(--q-weight-regular) var(--q-text-lg) / 28px var(--q-font-sans);
+}
+
+[data-density="app"] {
+  --q-space-card-pad: var(--q-space-3);
+  --q-space-card-gap: var(--q-space-3);
+  --q-space-block: var(--q-space-4);
+  --q-space-section: var(--q-space-6);
+  --q-grid-gutter: var(--q-space-3);
+  --q-font-body: var(--q-weight-regular) var(--q-text-md) / 24px var(--q-font-sans);
+}
+
+[data-density="compact"] {
+  --q-space-stack: var(--q-space-1);
+  --q-space-field: var(--q-space-2);
+  --q-space-card-pad: var(--q-space-2);
+  --q-space-card-gap: var(--q-space-2);
+  --q-space-block: var(--q-space-3);
+  --q-space-section: var(--q-space-4);
+  --q-space-page-x: var(--q-space-3);
+  --q-grid-gutter: var(--q-space-2);
+  --q-font-body: var(--q-weight-regular) var(--q-text-sm) / 20px var(--q-font-sans);
+}

@@ -30,6 +30,25 @@ export function truncate(text: string, maxLen: number): string {
 	);
 }
 
+export function formatNumber(value: number): string {
+	if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+	return value.toLocaleString();
+}
+
+export function formatDelta(delta: number): string {
+	return delta > 0 ? `+${formatNumber(delta)}` : formatNumber(delta);
+}
+
+/**
+ * StatCard cannot infer a trend from a string delta, so derive it from the sign.
+ */
+export function trendOf(delta: string): "up" | "down" | "neutral" {
+	if (delta.startsWith("-")) return "down";
+	if (delta === "0" || delta === "+0") return "neutral";
+	return "up";
+}
+
 /**
  * Group items by a discriminator key and return occurrence counts.
  * Useful for computing filter-tab counts in one pass instead of N .filter() calls.

@@ -40,6 +40,9 @@ jobs:
         # Mac. `npm ci` fails on Linux because those transitive deps aren't
         # locked. `npm install` resolves them on the running platform.
         run: npm install --no-audit --no-fund
+      # vendor/quiet is a read-only copy of quiet: fails if it was edited instead of re-synced.
+      - name: Check vendored quiet
+        run: npm run quiet:check
       - name: Run Biome lint
         run: npm run lint
 

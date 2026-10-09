@@ -12,22 +12,22 @@
 		"lint:scss:fix": "stylelint \"src/**/*.scss\" --fix",
 		"format": "biome format --write .",
 		"preview": "vite preview",
-		"storybook": "storybook dev -p 6006"
+		"storybook": "storybook dev -p 6006",
+		"build-storybook": "storybook build",
+		"quiet:check": "quiet check"
 	},
 	"dependencies": {
-		"@optimusfoundry/proto-design-system": "git+https://github.com/OptimusFoundry/proto-design-system.git#v1.1.0",
+		"@optimusfoundry/quiet": "file:./vendor/quiet",
 		"@stripe/react-stripe-js": "^6.8.0",
 		"@stripe/stripe-js": "^9.12.0",
 		"@tanstack/react-router": "^1.170.18",
 		"lucide-react": "^1.27.0",
 		"motion": "^12.42.2",
-		"react": "^19.2.8",
-		"react-dom": "^19.2.8",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0",
 		"react-markdown": "^10.1.0",
-		"recharts": "^3.10.1",
 		"rehype-highlight": "^7.0.2",
-		"remark-gfm": "^4.0.1",
-		"remixicon": "^4.9.1"
+		"remark-gfm": "^4.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.5",
@@ -39,8 +39,8 @@
 		"@tanstack/react-router-devtools": "^1.167.0",
 		"@tanstack/router-plugin": "^1.168.23",
 		"@types/node": "^25.9.5",
-		"@types/react": "^19.2.17",
-		"@types/react-dom": "^19.2.3",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
 		"@vitejs/plugin-react": "^6.0.4",
 		"msw": "^2.15.0",
 		"sass-embedded": "^1.100.0",
@@ -50,7 +50,7 @@
 		"stylelint-config-standard-scss": "^17.0.0",
 		"stylelint-declaration-strict-value": "^1.11.1",
 		"stylelint-scss": "^7.2.0",
-		"typescript": "~7.0.2",
+		"typescript": "7.0.2",
 		"vite": "^8.1.5",
 		"vite-plugin-compression": "^0.5.1"
 	},

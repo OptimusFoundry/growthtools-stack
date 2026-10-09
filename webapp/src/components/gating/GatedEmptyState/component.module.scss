@@ -1,7 +1,0 @@
-@use "@/design-tokens/layout" as layout;
-
-.root {
-	display: flex;
-	flex-direction: column;
-	gap: layout.$spacing-05;
-}

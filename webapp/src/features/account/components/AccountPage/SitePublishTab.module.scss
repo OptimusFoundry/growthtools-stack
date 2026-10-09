@@ -1,7 +1,7 @@
-.settings {
-  max-width: 800px;
+.container {
+  padding-top: var(--q-space-block);
 }
 
 .loadingState {
-  min-height: var(--space-24);
+  min-height: var(--q-space-20);
 }

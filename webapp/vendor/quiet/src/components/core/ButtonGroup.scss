@@ -1,0 +1,75 @@
+// ButtonGroup — spaced or attached run of buttons. BEM: .q-button-group;
+// --sm/--md/--lg (or --_gap), --vertical, --attached, --full.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-button-group-sm-gap: var(--q-space-1);
+    --q-button-group-md-gap: var(--q-space-2);
+    --q-button-group-lg-gap: var(--q-space-3);
+    --q-button-group-attached-border: var(--q-fg);
+    --q-button-group-attached-radius: var(--q-radius-pill);
+    --q-button-group-attached-vertical-radius: var(--q-radius-lg);
+    // Divider between attached buttons: light on the ink primary, ink on everything else.
+    --q-button-group-divider: var(--q-border-on-inverse);
+    --q-button-group-divider-ink: var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-button-group {
+    display: inline-flex;
+    flex-direction: row;
+    gap: var(--_gap);
+
+    @each $space in sm, md, lg {
+      &--#{$space} {
+        --_gap: var(--q-button-group-#{$space}-gap);
+      }
+    }
+
+    &--vertical {
+      flex-direction: column;
+    }
+
+    &--full {
+      display: flex;
+
+      > * {
+        flex: 1;
+      }
+    }
+
+    &--attached {
+      gap: 0;
+      overflow: hidden;
+      border: var(--q-hairline) solid var(--q-button-group-attached-border);
+      border-radius: var(--q-button-group-attached-radius);
+
+      &.q-button-group--vertical {
+        border-radius: var(--q-button-group-attached-vertical-radius);
+      }
+
+      // Children are flattened into one shape; these used to be inline styles on each child, so
+      // they still win over the child's own (hover) rules.
+      > * {
+        --_divider: var(--q-button-group-divider);
+
+        border: 0 !important;
+        border-radius: 0 !important;
+      }
+
+      > .q-button:not(.q-button--primary) {
+        --_divider: var(--q-button-group-divider-ink);
+      }
+
+      > * + * {
+        border-left: var(--q-hairline) solid var(--_divider) !important;
+      }
+
+      &.q-button-group--vertical > * + * {
+        border-top: var(--q-hairline) solid var(--_divider) !important;
+        border-left: 0 !important;
+      }
+    }
+  }
+}

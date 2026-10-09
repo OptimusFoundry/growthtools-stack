@@ -1,0 +1,142 @@
+// Drawer — side sheet over a scrim. BEM: .q-drawer (scrim, --right|--left), __panel (--sm|md|lg; a
+// numeric size sets --_max-width), __header, __heading, __eyebrow, __title, __dot, __description,
+// __close, __body, __footer.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-drawer-scrim: var(--q-scrim);
+    --q-drawer-z: var(--q-z-overlay);
+    --q-drawer-sm-width: 360px;
+    --q-drawer-md-width: 480px;
+    --q-drawer-lg-width: 640px;
+    --q-drawer-bg: var(--q-bg);
+    --q-drawer-radius: var(--q-radius-xl);
+    --q-drawer-shadow: var(--q-shadow-3);
+    --q-drawer-border: var(--q-border);
+    --q-drawer-padding: var(--q-space-4);
+    --q-drawer-header-pb: var(--q-space-3);
+    --q-drawer-header-gap: var(--q-space-2);
+    --q-drawer-heading-gap: var(--q-space-1);
+    --q-drawer-eyebrow-fg: var(--q-fg-muted);
+    --q-drawer-title-fg: var(--q-fg);
+    --q-drawer-title-size: var(--q-text-2xl);
+    --q-drawer-title-weight: var(--q-weight-semibold);
+    --q-drawer-title-leading: var(--q-leading-snug);
+    --q-drawer-title-tracking: var(--q-tracking-h4);
+    --q-drawer-dot: var(--q-accent);
+    --q-drawer-description-fg: var(--q-fg-muted);
+    --q-drawer-text-size: var(--q-text-md);
+    --q-drawer-text-leading: var(--q-leading-body);
+    --q-drawer-body-fg: var(--q-fg-body);
+    --q-drawer-close-fg: var(--q-fg);
+    --q-drawer-close-size: 20px; // the × glyph; between --q-text-xl and --q-text-2xl
+    --q-drawer-close-padding: var(--q-space-0-5);
+    --q-drawer-footer-gap: var(--q-space-2);
+    --q-drawer-footer-py: var(--q-space-3);
+  }
+}
+
+@layer q.components {
+  .q-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: var(--q-drawer-z);
+    display: flex;
+    justify-content: flex-end;
+    background: var(--q-drawer-scrim);
+
+    &--left {
+      justify-content: flex-start;
+    }
+  }
+
+  .q-drawer__panel {
+    --_max-width: var(--q-drawer-md-width);
+
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--_max-width);
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--q-drawer-radius) 0 0 var(--q-drawer-radius);
+    background: var(--q-drawer-bg);
+    box-shadow: var(--q-drawer-shadow);
+
+    .q-drawer--left > & {
+      border-radius: 0 var(--q-drawer-radius) var(--q-drawer-radius) 0;
+    }
+
+    &--sm { --_max-width: var(--q-drawer-sm-width); }
+    &--lg { --_max-width: var(--q-drawer-lg-width); }
+  }
+
+  .q-drawer__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--q-drawer-header-gap);
+    padding: var(--q-drawer-padding) var(--q-drawer-padding) var(--q-drawer-header-pb);
+    border-bottom: var(--q-hairline) solid var(--q-drawer-border);
+  }
+
+  .q-drawer__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-drawer-heading-gap);
+  }
+
+  .q-drawer__eyebrow {
+    color: var(--q-drawer-eyebrow-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-text-2xs);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-drawer__title {
+    color: var(--q-drawer-title-fg);
+    font-size: var(--q-drawer-title-size);
+    font-weight: var(--q-drawer-title-weight);
+    line-height: var(--q-drawer-title-leading);
+    letter-spacing: var(--q-drawer-title-tracking);
+  }
+
+  .q-drawer__dot {
+    color: var(--q-drawer-dot);
+  }
+
+  .q-drawer__description {
+    color: var(--q-drawer-description-fg);
+    font-size: var(--q-drawer-text-size);
+    line-height: var(--q-drawer-text-leading);
+  }
+
+  .q-drawer__close {
+    padding: var(--q-drawer-close-padding);
+    border: 0;
+    background: none;
+    color: var(--q-drawer-close-fg);
+    font-size: var(--q-drawer-close-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+  }
+
+  .q-drawer__body {
+    flex: 1;
+    padding: var(--q-drawer-padding);
+    overflow-y: auto;
+    color: var(--q-drawer-body-fg);
+    font-size: var(--q-drawer-text-size);
+    line-height: var(--q-drawer-text-leading);
+  }
+
+  .q-drawer__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--q-drawer-footer-gap);
+    padding: var(--q-drawer-footer-py) var(--q-drawer-padding);
+    border-top: var(--q-hairline) solid var(--q-drawer-border);
+  }
+}

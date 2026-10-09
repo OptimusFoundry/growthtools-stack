@@ -1,13 +1,13 @@
 .loadingState {
   display: flex;
   justify-content: center;
-  padding: var(--space-7) 0;
+  padding: var(--q-space-5) 0;
 }
 
 .list {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
+  background-color: var(--q-bg);
+  border: var(--q-hairline) solid var(--q-border);
+  border-radius: var(--q-radius-lg);
   display: flex;
   flex-direction: column;
 }

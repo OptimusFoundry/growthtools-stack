@@ -30,8 +30,8 @@ export async function loginAs(page: Page, options: LoginOptions = {}) {
 	} = options;
 
 	await page.goto("/test-login");
-	await page.getByTestId("test-login-email").fill(email);
-	await page.getByTestId("test-login-password").fill(password);
-	await page.getByTestId("test-login-submit").click();
+	await page.getByLabel("Email").fill(email);
+	await page.getByLabel("Password").fill(password);
+	await page.getByRole("button", { name: /sign(ing)? in/i }).click();
 	await page.waitForURL(redirectTo);
 }

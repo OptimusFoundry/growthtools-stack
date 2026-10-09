@@ -1,0 +1,201 @@
+// CommandPalette — ⌘K dialog. BEM: .q-command-palette (scrim), __dialog, __search, __slash, __input,
+// __hint, __list, __empty, __group-label, __option, __option-icon, __option-text, __option-label,
+// __option-description, __option-enter, __footer. Active option: [aria-selected="true"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-command-palette-z: var(--q-z-palette);
+    --q-command-palette-scrim: var(--q-scrim);
+    --q-command-palette-offset: 15vh; // distance of the dialog from the viewport top
+    --q-command-palette-pad: var(--q-space-3);
+    --q-command-palette-width: var(--q-w-form);
+    --q-command-palette-max-height: 70vh;
+    --q-command-palette-bg: var(--q-bg);
+    --q-command-palette-border: var(--q-border);
+    --q-command-palette-radius: var(--q-radius-xl);
+    --q-command-palette-shadow: var(--q-shadow-3);
+    --q-command-palette-px: var(--q-space-2-5);
+
+    --q-command-palette-mono-font: var(--q-font-mono);
+    --q-command-palette-mono-font-size: var(--q-text-3xs);
+    --q-command-palette-mono-tracking: var(--q-tracking-mono);
+    --q-command-palette-mono-fg: var(--q-fg-muted);
+
+    --q-command-palette-search-gap: var(--q-space-1-5);
+    --q-command-palette-slash-font-size: var(--q-text-2xs);
+    --q-command-palette-slash-fg: var(--q-fg);
+    --q-command-palette-input-height: var(--q-field-lg);
+    --q-command-palette-input-font: var(--q-font-sans);
+    --q-command-palette-input-font-size: var(--q-text-xl);
+    --q-command-palette-input-fg: var(--q-fg);
+
+    --q-command-palette-list-py: var(--q-space-1);
+    --q-command-palette-empty-py: var(--q-space-4);
+    --q-command-palette-empty-font-size: var(--q-text-md);
+    --q-command-palette-empty-fg: var(--q-fg-muted);
+    --q-command-palette-group-label-pt: var(--q-space-1-5);
+    --q-command-palette-group-label-pb: var(--q-space-0-75);
+
+    --q-command-palette-option-gap: var(--q-space-1-5);
+    --q-command-palette-option-py: var(--q-space-1-25);
+    --q-command-palette-option-px: var(--q-space-1-5);
+    --q-command-palette-option-mx: var(--q-space-1);
+    --q-command-palette-option-radius: var(--q-radius-sm);
+    --q-command-palette-option-bg-active: var(--q-bg-subtle);
+    --q-command-palette-option-icon-width: var(--q-space-2-5);
+    --q-command-palette-option-icon-fg: var(--q-fg-muted);
+    --q-command-palette-option-text-gap: var(--q-space-0-25);
+    --q-command-palette-option-label-font-size: var(--q-text-md);
+    --q-command-palette-option-label-fg: var(--q-fg);
+    --q-command-palette-option-description-font-size: var(--q-text-sm);
+    --q-command-palette-option-description-fg: var(--q-fg-muted);
+    --q-command-palette-option-enter-font-size: var(--q-text-sm);
+    --q-command-palette-option-enter-fg: var(--q-fg);
+
+    --q-command-palette-footer-gap: var(--q-space-3);
+    --q-command-palette-footer-py: var(--q-space-1-25);
+  }
+}
+
+// Kept from the reference's injected <style> (of-kf-fade) for code that names it.
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes of-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@layer q.components {
+  .q-command-palette {
+    position: fixed;
+    inset: 0;
+    z-index: var(--q-command-palette-z);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: var(--q-command-palette-offset) var(--q-command-palette-pad) var(--q-command-palette-pad);
+    background: var(--q-command-palette-scrim);
+
+    &[data-state="closing"] {
+      pointer-events: none;
+    }
+  }
+
+  .q-command-palette__dialog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--q-command-palette-width);
+    max-height: var(--q-command-palette-max-height);
+    overflow: hidden;
+    border: var(--q-hairline) solid var(--q-command-palette-border);
+    border-radius: var(--q-command-palette-radius);
+    background: var(--q-command-palette-bg);
+    box-shadow: var(--q-command-palette-shadow);
+  }
+
+  .q-command-palette__hint,
+  .q-command-palette__slash,
+  .q-command-palette__group-label,
+  .q-command-palette__footer {
+    color: var(--q-command-palette-mono-fg);
+    font-family: var(--q-command-palette-mono-font);
+    font-size: var(--q-command-palette-mono-font-size);
+    letter-spacing: var(--q-command-palette-mono-tracking);
+    text-transform: uppercase;
+  }
+
+  .q-command-palette__search {
+    display: flex;
+    align-items: center;
+    gap: var(--q-command-palette-search-gap);
+    padding: 0 var(--q-command-palette-px);
+    border-bottom: var(--q-hairline) solid var(--q-command-palette-border);
+  }
+
+  .q-command-palette__slash {
+    color: var(--q-command-palette-slash-fg);
+    font-size: var(--q-command-palette-slash-font-size);
+  }
+
+  .q-command-palette__input {
+    flex: 1;
+    height: var(--q-command-palette-input-height);
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--q-command-palette-input-fg);
+    font-family: var(--q-command-palette-input-font);
+    font-size: var(--q-command-palette-input-font-size);
+  }
+
+  .q-command-palette__list {
+    position: relative;
+    padding: var(--q-command-palette-list-py) 0;
+    overflow-y: auto;
+  }
+
+  .q-command-palette__empty {
+    padding: var(--q-command-palette-empty-py) var(--q-command-palette-px);
+    color: var(--q-command-palette-empty-fg);
+    font-size: var(--q-command-palette-empty-font-size);
+    text-align: center;
+  }
+
+  .q-command-palette__group-label {
+    padding: var(--q-command-palette-group-label-pt) var(--q-command-palette-px) var(--q-command-palette-group-label-pb);
+  }
+
+  .q-command-palette__option {
+    display: flex;
+    align-items: center;
+    gap: var(--q-command-palette-option-gap);
+    margin: 0 var(--q-command-palette-option-mx);
+    padding: var(--q-command-palette-option-py) var(--q-command-palette-option-px);
+    border-radius: var(--q-command-palette-option-radius);
+    background: transparent;
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &[aria-selected="true"] {
+      background: var(--q-command-palette-option-bg-active);
+    }
+  }
+
+  .q-command-palette__option-icon {
+    display: inline-flex;
+    justify-content: center;
+    width: var(--q-command-palette-option-icon-width);
+    color: var(--q-command-palette-option-icon-fg);
+  }
+
+  .q-command-palette__option-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-command-palette-option-text-gap);
+    min-width: 0;
+  }
+
+  .q-command-palette__option-label {
+    color: var(--q-command-palette-option-label-fg);
+    font-size: var(--q-command-palette-option-label-font-size);
+  }
+
+  .q-command-palette__option-description {
+    color: var(--q-command-palette-option-description-fg);
+    font-size: var(--q-command-palette-option-description-font-size);
+  }
+
+  .q-command-palette__option-enter {
+    color: var(--q-command-palette-option-enter-fg);
+    font-size: var(--q-command-palette-option-enter-font-size);
+  }
+
+  .q-command-palette__footer {
+    display: flex;
+    gap: var(--q-command-palette-footer-gap);
+    padding: var(--q-command-palette-footer-py) var(--q-command-palette-px);
+    border-top: var(--q-hairline) solid var(--q-command-palette-border);
+  }
+}

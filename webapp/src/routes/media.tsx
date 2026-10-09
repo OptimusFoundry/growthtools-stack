@@ -1,13 +1,14 @@
+import { Button, Grid } from "@optimusfoundry/quiet";
 import { createFileRoute } from "@tanstack/react-router";
 import { Upload } from "lucide-react";
 import { useCallback, useRef } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
 import { MediaCard } from "@/features/media/components/MediaCard/MediaCard";
 import { MediaEmpty } from "@/features/media/components/MediaEmpty/MediaEmpty";
 import { MediaHero } from "@/features/media/components/MediaHero/MediaHero";
 import { useMedia } from "@/hooks/useMedia";
 import { useUploadMedia } from "@/hooks/useUploadMedia";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import styles from "./media.module.scss";
 
 export const Route = createFileRoute("/media")({
@@ -56,16 +57,21 @@ function MediaPage() {
 					<Button
 						variant="primary"
 						onClick={handleUploadClick}
-						isLoading={uploading}
+						loading={uploading}
+						leftIcon={<AppIcon icon={Upload} />}
 					>
-						<Upload size={16} /> Upload
+						Upload
 					</Button>
 				}
 				hero={<MediaHero count={media.length} />}
 				loading={loading}
 				items={media}
 				empty={<MediaEmpty onUpload={handleUploadClick} />}
-				listClassName={styles.mediaGrid}
+				renderContainer={(children) => (
+					<Grid minChildWidth={200} gap="md" rowGap="md">
+						{children}
+					</Grid>
+				)}
 				renderItem={(item) => <MediaCard key={item.id} item={item} />}
 			/>
 		</>

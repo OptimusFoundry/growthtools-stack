@@ -8,6 +8,7 @@
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
+import { analyticsScenarios } from "./handlers/analytics.handlers";
 
 // ── Status-code table ─────────────────────────────────────────────────────────
 
@@ -54,8 +55,8 @@ test.describe("Post Analytics", () => {
 			await expect(page.getByText(/posts/i).first()).toBeVisible();
 
 			// Platform badges should be visible
-			await expect(page.getByText(/^X$/i)).toBeVisible();
-			await expect(page.getByText(/threads/i)).toBeVisible();
+			await expect(page.getByText("X", { exact: true })).toBeVisible();
+			await expect(page.getByText("Threads", { exact: true })).toBeVisible();
 		});
 
 		test("shows KPI metrics for each platform card", async ({ page }) => {
@@ -74,9 +75,10 @@ test.describe("Post Analytics", () => {
 			await page.goto("/posts/post_1/analytics");
 			await page.waitForLoadState("networkidle");
 
-			// External link anchors should be rendered for X and Threads
-			const links = await page.locator('a[target="_blank"]').all();
-			expect(links.length).toBeGreaterThanOrEqual(1);
+			await expect(page.getByRole("link", { name: "Open on X" })).toBeVisible();
+			await expect(
+				page.getByRole("link", { name: "Open on Threads" }),
+			).toBeVisible();
 		});
 	});
 
@@ -98,7 +100,9 @@ test.describe("Post Analytics", () => {
 			await page.goto("/posts/post_1/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/no analytics yet/i)).toBeVisible();
+			await expect(
+				page.getByRole("heading", { name: /no analytics yet/i }),
+			).toBeVisible();
 		});
 	});
 
@@ -111,36 +115,12 @@ test.describe("Post Analytics", () => {
 			network,
 			page,
 		}) => {
-			network.use(
-				http.get("*/api/protected/posts/:id/analytics", () =>
-					HttpResponse.json({
-						platform_posts: [
-							{
-								platform_post_id: "pp_x_1",
-								platform: "x",
-								status: "published",
-								published_at: "2025-12-15T10:00:00Z",
-								post_url: "https://x.com/testuser/status/123456",
-								analytics_unavailable_at: "2025-12-18T00:00:00Z",
-								latest: {
-									impressions: 4200,
-									likes: 310,
-									comments: 62,
-									shares: 31,
-									clicks: 103,
-									collected_at: "2025-12-18T00:00:00Z",
-								},
-								history: [],
-							},
-						],
-					}),
-				),
-			);
+			network.use(...analyticsScenarios.postAnalyticsUnavailable());
 
 			await page.goto("/posts/post_1/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/analytics unavailable/i)).toBeVisible();
+			await expect(page.getByText("Analytics unavailable")).toBeVisible();
 		});
 	});
 
@@ -149,7 +129,7 @@ test.describe("Post Analytics", () => {
 	// =========================================================================
 
 	test.describe("Not Found", () => {
-		test("shows post-not-found message on 404", async ({ network, page }) => {
+		test("shows the empty state on 404", async ({ network, page }) => {
 			network.use(
 				http.get("*/api/protected/posts/:id/analytics", () =>
 					HttpResponse.json(
@@ -162,7 +142,9 @@ test.describe("Post Analytics", () => {
 			await page.goto("/posts/post_1/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/post not found/i)).toBeVisible();
+			await expect(
+				page.getByRole("heading", { name: /no analytics yet/i }),
+			).toBeVisible();
 		});
 	});
 
@@ -182,7 +164,12 @@ test.describe("Post Analytics", () => {
 				await page.goto("/posts/post_1/analytics");
 				await page.waitForLoadState("networkidle");
 
-				await expect(page.getByText(/something went wrong/i)).toBeVisible();
+				await expect(
+					page
+						.getByRole("alert")
+						.filter({ hasText: /couldn't load analytics/i }),
+				).toBeVisible();
+				await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
 			});
 		}
 
@@ -199,7 +186,10 @@ test.describe("Post Analytics", () => {
 			await page.goto("/posts/post_1/analytics");
 			await page.waitForLoadState("networkidle");
 
-			await expect(page.getByText(/something went wrong/i)).toBeVisible();
+			await expect(
+				page.getByRole("alert").filter({ hasText: /couldn't load analytics/i }),
+			).toBeVisible();
+			await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
 		});
 	});
 });

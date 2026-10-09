@@ -1,9 +1,6 @@
+import { Alert, Button, Link } from "@optimusfoundry/quiet";
 import type { FC } from "react";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Link } from "@/proto-design-system/components/primitives/Button/Link";
 import type { BlogPost } from "@/types/blog";
-import styles from "./blog-site-publish-status.module.scss";
 
 export interface BlogSitePublishStatusProps {
 	post: BlogPost;
@@ -25,17 +22,21 @@ export const BlogSitePublishStatus: FC<BlogSitePublishStatusProps> = ({
 }) => {
 	if (sitePublishError) {
 		return (
-			<section aria-label="Site publish status" className={styles.row}>
-				<Alert variant="error">
-					<span>{sitePublishError}</span>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onRetry}
-						isLoading={retrying}
-					>
-						Retry
-					</Button>
+			<section aria-label="Site publish status">
+				<Alert
+					variant="error"
+					action={
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={onRetry}
+							loading={retrying}
+						>
+							Retry
+						</Button>
+					}
+				>
+					{sitePublishError}
 				</Alert>
 			</section>
 		);
@@ -43,9 +44,9 @@ export const BlogSitePublishStatus: FC<BlogSitePublishStatusProps> = ({
 
 	if (post.sitePrUrl) {
 		return (
-			<section aria-label="Site publish status" className={styles.row}>
-				<Link href={post.sitePrUrl} target="_blank">
-					Pushed to GitHub &rarr; PR #{post.sitePrNumber ?? post.sitePrUrl}
+			<section aria-label="Site publish status">
+				<Link href={post.sitePrUrl} external>
+					Pushed to GitHub → PR #{post.sitePrNumber ?? post.sitePrUrl}
 				</Link>
 			</section>
 		);

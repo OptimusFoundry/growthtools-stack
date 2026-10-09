@@ -1,4 +1,4 @@
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Badge } from "@optimusfoundry/quiet";
 import type { MediaItem } from "@/types/media";
 import styles from "../PlatformPostCard.module.scss";
 import { EditableContent } from "./EditableContent";
@@ -72,7 +72,11 @@ export function XPostCard({
 							<IconShare />
 						</button>
 						<div className={styles.charBadge}>
-							<Badge variant={isOver ? "error" : "default"} size="sm">
+							<Badge
+								variant={isOver ? "error" : "default"}
+								size="sm"
+								dot={false}
+							>
 								{content.length} / {charLimit}
 							</Badge>
 						</div>

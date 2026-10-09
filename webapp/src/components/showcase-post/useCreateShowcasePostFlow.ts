@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useCreateShowcasePost } from "@/hooks/useCreateShowcasePost";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { useNotify } from "@/hooks/useNotify";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { SHOWCASE_POST_COPY } from "./copy";
 
@@ -21,7 +21,7 @@ export interface CreateShowcasePostFlow {
  * inline error so the user can revise the brief — no toast on that path.
  */
 export function useCreateShowcasePostFlow(): CreateShowcasePostFlow {
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 	const { createShowcasePost, loading } = useCreateShowcasePost();
 	const [isOpen, setIsOpen] = useState(false);
 	const [brief, setBrief] = useState("");
@@ -42,17 +42,16 @@ export function useCreateShowcasePostFlow(): CreateShowcasePostFlow {
 		if (brief.trim() === "") return;
 		try {
 			await createShowcasePost(brief);
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: SHOWCASE_POST_COPY.successBannerTitle,
-				dismissible: true,
 			});
 			setIsOpen(false);
 			setBrief("");
 		} catch (err: unknown) {
 			setErrorMessage(getErrorMessage(err));
 		}
-	}, [brief, createShowcasePost, addBanner]);
+	}, [brief, createShowcasePost, notify]);
 
 	return {
 		isOpen,

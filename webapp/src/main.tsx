@@ -1,12 +1,17 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
+import "@optimusfoundry/quiet/style.css";
+import "@optimusfoundry/quiet/fonts.css";
 import "./index.css";
 
 import { AuthProvider, loadAuth } from "@/contexts/auth";
 import { Providers } from "@/contexts/providers";
+import { migrateProtoTheme } from "@/lib/migrateTheme";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
+
+migrateProtoTheme();
 
 const router = createRouter({ routeTree });
 declare module "@tanstack/react-router" {

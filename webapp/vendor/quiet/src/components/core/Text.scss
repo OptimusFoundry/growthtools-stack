@@ -1,0 +1,138 @@
+// Text — typography primitive. BEM: .q-text; --size-{xs…5xl|mono|custom} (--_size), --weight-*,
+// --color-{name|custom} (--_color), --h1…--h4, --large (24px+), --mono, --italic, --underline, --strike,
+// --uppercase/--lowercase/--capitalize, --align-*, --truncate, --clamp (--_lines).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-text-leading: var(--q-leading-body);
+    --q-text-large-leading: var(--q-leading-snug);
+    --q-text-large-tracking: var(--q-tracking-h4);
+    --q-text-mono-font-size: var(--q-text-2xs);
+    --q-text-mono-tracking: var(--q-tracking-mono);
+
+    --q-text-default-fg: var(--q-fg-body);
+    --q-text-heading-fg: var(--q-fg);
+    --q-text-muted-fg: var(--q-fg-muted);
+    --q-text-quiet-fg: var(--q-fg-subtle);
+    --q-text-primary-fg: var(--q-accent);
+    --q-text-success-fg: var(--q-fg);
+    --q-text-warning-fg: var(--q-accent);
+    --q-text-error-fg: var(--q-accent);
+
+    --q-text-h1-leading: var(--q-leading-none);
+    --q-text-h1-tracking: var(--q-tracking-h2);
+    --q-text-h2-leading: var(--q-leading-heading);
+    --q-text-h2-tracking: -0.035em; // between the h2 and h3 steps; Text's 40px heading
+    --q-text-h3-leading: var(--q-leading-tight);
+    --q-text-h3-tracking: var(--q-tracking-h3);
+    --q-text-h4-leading: var(--q-leading-snug);
+    --q-text-h4-tracking: var(--q-tracking-h4);
+  }
+}
+
+$sizes: xs, sm, md, lg, xl, 2xl, 3xl, 4xl, 5xl;
+$weights: (normal: regular, medium: medium, semibold: semibold, bold: bold);
+$colors: default, heading, muted, quiet, primary, success, warning, error;
+
+@layer q.components {
+  .q-text {
+    margin: 0;
+    font-family: var(--q-font-sans);
+    line-height: var(--q-text-leading);
+    text-wrap: pretty;
+
+    @each $size in $sizes {
+      &--size-#{$size} {
+        font-size: var(--q-text-#{$size});
+      }
+    }
+
+    &--size-mono {
+      font-size: var(--q-text-mono-font-size);
+    }
+
+    &--size-custom {
+      font-size: var(--_size);
+    }
+
+    @each $name, $token in $weights {
+      &--weight-#{$name} {
+        font-weight: var(--q-weight-#{$token});
+      }
+    }
+
+    @each $color in $colors {
+      &--color-#{$color} {
+        color: var(--q-text-#{$color}-fg);
+      }
+    }
+
+    &--color-inherit {
+      color: inherit;
+    }
+
+    &--color-custom {
+      color: var(--_color);
+    }
+
+    &--large {
+      letter-spacing: var(--q-text-large-tracking);
+      line-height: var(--q-text-large-leading);
+    }
+
+    @each $level in 1, 2, 3, 4 {
+      &--h#{$level} {
+        letter-spacing: var(--q-text-h#{$level}-tracking);
+        line-height: var(--q-text-h#{$level}-leading);
+        text-wrap: balance;
+      }
+    }
+
+    &--mono {
+      font-family: var(--q-font-mono);
+      letter-spacing: var(--q-text-mono-tracking);
+      text-transform: uppercase;
+    }
+
+    @each $transform in uppercase, lowercase, capitalize {
+      &--#{$transform} {
+        text-transform: $transform;
+      }
+    }
+
+    &--italic {
+      font-style: italic;
+    }
+
+    &--underline {
+      text-decoration: underline;
+    }
+
+    &--strike {
+      text-decoration: line-through;
+    }
+
+    &--underline.q-text--strike {
+      text-decoration: underline line-through;
+    }
+
+    @each $align in left, center, right {
+      &--align-#{$align} {
+        text-align: $align;
+      }
+    }
+
+    &--truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &--clamp {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: var(--_lines);
+    }
+  }
+}

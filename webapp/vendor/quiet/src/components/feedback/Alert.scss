@@ -1,0 +1,149 @@
+// Alert — inline status message. BEM: .q-alert, __icon, __glyph, __content, __title, __body,
+// __actions, __dismiss, __collapse; --{info|success|warning|error}.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-alert-gap: var(--q-space-2);
+    --q-alert-py: var(--q-space-2);
+    --q-alert-px: var(--q-space-2-5);
+    --q-alert-radius: var(--q-radius-md);
+    --q-alert-content-gap: var(--q-space-0-5);
+    --q-alert-glyph-size: var(--q-space-2-5);
+    --q-alert-glyph-font-size: var(--q-text-2xs);
+    --q-alert-glyph-weight: var(--q-weight-semibold);
+    --q-alert-icon-nudge: var(--q-space-px);
+    --q-alert-title-size: var(--q-text-md);
+    --q-alert-title-weight: var(--q-weight-semibold);
+    --q-alert-title-leading: var(--q-leading-ui);
+    --q-alert-title-fg: var(--q-fg);
+    --q-alert-body-size: var(--q-text-md);
+    --q-alert-body-leading: var(--q-leading-body);
+    --q-alert-body-fg: var(--q-fg-body);
+    --q-alert-actions-gap: var(--q-space-2);
+    --q-alert-actions-mt: var(--q-space-1);
+    --q-alert-dismiss-fg: var(--q-fg-muted);
+    --q-alert-dismiss-size: 18px; // the × glyph; between --q-text-lg and --q-text-xl
+
+    --q-alert-info-bg: var(--q-status-info-bg);
+    --q-alert-info-border: var(--q-status-info-border);
+    --q-alert-info-ring: var(--q-status-info-fg);
+    --q-alert-info-glyph: var(--q-status-info-fg);
+    --q-alert-success-bg: var(--q-status-success-bg);
+    --q-alert-success-border: var(--q-status-success-border);
+    --q-alert-success-ring: var(--q-status-success-fg);
+    --q-alert-success-glyph: var(--q-status-success-fg);
+    --q-alert-warning-bg: var(--q-status-warning-bg);
+    --q-alert-warning-border: var(--q-status-warning-border);
+    --q-alert-warning-ring: var(--q-status-warning-fg);
+    --q-alert-warning-glyph: var(--q-status-warning-fg);
+    --q-alert-error-bg: var(--q-status-error-bg);
+    --q-alert-error-border: var(--q-status-error-border);
+    --q-alert-error-ring: var(--q-status-error-fg);
+    --q-alert-error-glyph: var(--q-status-error-fg);
+  }
+}
+
+@layer q.components {
+  .q-alert {
+    --_bg: var(--q-alert-info-bg);
+    --_border: var(--q-alert-info-border);
+    --_ring: var(--q-alert-info-ring);
+    --_glyph: var(--q-alert-info-glyph);
+
+    display: flex;
+    align-items: flex-start;
+    gap: var(--q-alert-gap);
+    padding: var(--q-alert-py) var(--q-alert-px);
+    border: var(--q-hairline) solid var(--_border);
+    border-radius: var(--q-alert-radius);
+    background: var(--_bg);
+
+    &--success {
+      --_bg: var(--q-alert-success-bg);
+      --_border: var(--q-alert-success-border);
+      --_ring: var(--q-alert-success-ring);
+      --_glyph: var(--q-alert-success-glyph);
+    }
+
+    &--warning {
+      --_bg: var(--q-alert-warning-bg);
+      --_border: var(--q-alert-warning-border);
+      --_ring: var(--q-alert-warning-ring);
+      --_glyph: var(--q-alert-warning-glyph);
+    }
+
+    &--error {
+      --_bg: var(--q-alert-error-bg);
+      --_border: var(--q-alert-error-border);
+      --_ring: var(--q-alert-error-ring);
+      --_glyph: var(--q-alert-error-glyph);
+    }
+  }
+
+  .q-alert__icon {
+    display: inline-flex;
+    flex: none;
+    margin-top: var(--q-alert-icon-nudge);
+  }
+
+  .q-alert__glyph {
+    display: grid;
+    place-items: center;
+    width: var(--q-alert-glyph-size);
+    height: var(--q-alert-glyph-size);
+    border: var(--q-hairline) solid var(--_ring);
+    border-radius: var(--q-radius-pill);
+    color: var(--_glyph);
+    font-size: var(--q-alert-glyph-font-size);
+    font-weight: var(--q-alert-glyph-weight);
+    line-height: var(--q-leading-none);
+  }
+
+  .q-alert__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-alert-content-gap);
+    min-width: 0;
+  }
+
+  .q-alert__title {
+    color: var(--q-alert-title-fg);
+    font-size: var(--q-alert-title-size);
+    font-weight: var(--q-alert-title-weight);
+    line-height: var(--q-alert-title-leading);
+  }
+
+  .q-alert__body {
+    color: var(--q-alert-body-fg);
+    font-size: var(--q-alert-body-size);
+    line-height: var(--q-alert-body-leading);
+    text-wrap: pretty;
+  }
+
+  .q-alert__actions {
+    display: flex;
+    gap: var(--q-alert-actions-gap);
+    margin-top: var(--q-alert-actions-mt);
+  }
+
+  .q-alert__dismiss {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--q-alert-dismiss-fg);
+    font-size: var(--q-alert-dismiss-size);
+    line-height: var(--q-leading-none);
+    cursor: pointer;
+  }
+
+  // Dismiss: the .q-collapse wrapper folds the height; this fades the content with it.
+  .q-alert__collapse {
+    opacity: 0;
+    transition: opacity var(--q-dur-expand) var(--q-ease-soft);
+
+    &[data-open="true"] {
+      opacity: 1;
+    }
+  }
+}

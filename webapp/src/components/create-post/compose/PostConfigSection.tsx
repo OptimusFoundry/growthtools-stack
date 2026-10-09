@@ -1,8 +1,5 @@
+import { Stack, Stepper, Switch, Text } from "@optimusfoundry/quiet";
 import { motion } from "motion/react";
-import { Stepper } from "@/proto-design-system/components/forms/Stepper/Stepper";
-import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import { PLATFORM_SUPPORTS_THREADS, type PlatformType } from "@/types/platform";
 import type { WizardContentType } from "../useCreatePostWizard";
 import styles from "./PostConfigSection.module.scss";
@@ -28,14 +25,10 @@ export function PostConfigSection({
 		(p) => PLATFORM_SUPPORTS_THREADS[p],
 	);
 
-	const handleContentTypeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-		onContentTypeChange(e.target.checked ? "thread" : "text");
-	};
-
 	if (!threadSupported) return null;
 
 	return (
-		<Stack gap="md">
+		<Stack gap="sm">
 			<Text size="md" weight="semibold">
 				Post Config
 			</Text>
@@ -44,7 +37,9 @@ export function PostConfigSection({
 					label="Thread mode"
 					description="Generate as multi-part posts"
 					checked={contentType === "thread"}
-					onChange={handleContentTypeToggle}
+					onChange={(checked: boolean) =>
+						onContentTypeChange(checked ? "thread" : "text")
+					}
 					size="sm"
 					disabled={readOnly}
 				/>
@@ -57,7 +52,7 @@ export function PostConfigSection({
 				>
 					<div className={styles.field}>
 						<Text size="sm">Thread length</Text>
-						<Text size="xs" color="muted">
+						<Text size="xs" color="quiet">
 							3–25 posts
 						</Text>
 					</div>
@@ -68,7 +63,7 @@ export function PostConfigSection({
 						max={25}
 						size="md"
 						disabled={readOnly || contentType !== "thread"}
-						aria-label="Thread length"
+						label="Thread length"
 					/>
 				</motion.div>
 			</div>

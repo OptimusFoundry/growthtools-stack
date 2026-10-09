@@ -1,0 +1,158 @@
+// AgentRun — an agent's work as named, timed, interruptible steps; the last step is a person.
+// BEM: .q-agent-run, __header, __heading, __title, __meta, __controls, __steps, __step, __marker,
+// __dot, __label, __aside, __tool, __duration, __actions; --{status};
+// __step--{done, running, paused, waiting, stopped, queued}, __step--human.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-agent-run-gap: var(--q-space-2);
+    --q-agent-run-title-size: var(--q-text-md);
+    --q-agent-run-title-weight: var(--q-weight-semibold);
+    --q-agent-run-title-fg: var(--q-fg);
+    --q-agent-run-meta-font: var(--q-font-mono);
+    --q-agent-run-meta-size: var(--q-text-2xs);
+    --q-agent-run-meta-tracking: var(--q-tracking-mono);
+    --q-agent-run-meta-fg: var(--q-fg-muted);
+    --q-agent-run-step-height: var(--q-row-compact);
+    --q-agent-run-step-px: var(--q-space-1-25);
+    --q-agent-run-step-radius: var(--q-radius-sm);
+    --q-agent-run-step-size: var(--q-text-sm);
+    --q-agent-run-step-fg: var(--q-fg);
+    --q-agent-run-step-queued-fg: var(--q-fg-muted);
+    --q-agent-run-step-current-bg: var(--q-bg-subtle);
+    --q-agent-run-marker-size: var(--q-space-2-5);
+    --q-agent-run-dot-size: var(--q-space-0-75);
+    --q-agent-run-dot-done: var(--q-fg);
+    --q-agent-run-dot-queued: var(--q-border-strong);
+    --q-agent-run-dot-paused: var(--q-fg);
+    --q-agent-run-dot-human: var(--q-accent);
+    --q-agent-run-dot-stopped: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-agent-run {
+    display: grid;
+    gap: var(--q-agent-run-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-agent-run__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-2);
+  }
+
+  .q-agent-run__heading {
+    display: grid;
+    gap: var(--q-space-0-5);
+  }
+
+  .q-agent-run__title {
+    margin: 0;
+    font-size: var(--q-agent-run-title-size);
+    font-weight: var(--q-agent-run-title-weight);
+    letter-spacing: var(--q-tracking-tight);
+    line-height: var(--q-leading-snug);
+    color: var(--q-agent-run-title-fg);
+  }
+
+  .q-agent-run__meta,
+  .q-agent-run__tool,
+  .q-agent-run__duration {
+    font-family: var(--q-agent-run-meta-font);
+    font-size: var(--q-agent-run-meta-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-agent-run-meta-tracking);
+    text-transform: uppercase;
+    color: var(--q-agent-run-meta-fg);
+  }
+
+  .q-agent-run__controls {
+    display: flex;
+    gap: var(--q-space-0-5);
+  }
+
+  .q-agent-run__steps {
+    display: grid;
+    gap: var(--q-space-0-25);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-agent-run__step {
+    display: grid;
+    grid-template-columns: var(--q-agent-run-marker-size) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--q-space-1-5);
+    min-height: var(--q-agent-run-step-height);
+    padding: 0 var(--q-agent-run-step-px);
+    border-radius: var(--q-agent-run-step-radius);
+    font-size: var(--q-agent-run-step-size);
+    color: var(--q-agent-run-step-fg);
+    transition: background-color var(--q-dur-enter) var(--q-ease-soft), color var(--q-dur-enter) var(--q-ease-soft);
+
+    &[aria-current="step"] {
+      background: var(--q-agent-run-step-current-bg);
+    }
+
+    &--queued {
+      color: var(--q-agent-run-step-queued-fg);
+    }
+  }
+
+  .q-agent-run__marker {
+    display: grid;
+    place-items: center;
+    width: var(--q-agent-run-marker-size);
+    height: var(--q-agent-run-marker-size);
+  }
+
+  .q-agent-run__dot {
+    box-sizing: border-box;
+    width: var(--q-agent-run-dot-size);
+    height: var(--q-agent-run-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-agent-run-dot-queued);
+    transition: background-color var(--q-dur-enter) var(--q-ease-soft), transform var(--q-dur-enter) var(--q-ease-soft);
+
+    .q-agent-run__step--done & {
+      background: var(--q-agent-run-dot-done);
+    }
+
+    .q-agent-run__step--paused & {
+      border: var(--q-hairline) solid var(--q-agent-run-dot-paused);
+      background: transparent;
+    }
+
+    .q-agent-run__step--stopped & {
+      border: var(--q-hairline) solid var(--q-agent-run-dot-stopped);
+      background: transparent;
+    }
+
+    // The person's turn: the one molten mark on the surface.
+    .q-agent-run__step--waiting & {
+      background: var(--q-agent-run-dot-human);
+      transform: scale(1.4);
+    }
+  }
+
+  .q-agent-run__aside {
+    display: inline-flex;
+    gap: var(--q-space-1);
+  }
+
+  .q-agent-run__duration {
+    min-width: var(--q-space-4);
+    text-align: right;
+  }
+
+  .q-agent-run__actions {
+    display: flex;
+    gap: var(--q-space-1);
+    padding-top: var(--q-space-0-5);
+  }
+}

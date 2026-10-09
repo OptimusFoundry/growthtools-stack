@@ -1,0 +1,80 @@
+// Tooltip — ink bubble, mono caps. BEM: .q-tooltip (trigger wrapper), __bubble with
+// [data-placement="top|bottom|left|right"] and [data-state="open|closed"] (the delay/grace timer is JS).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-tooltip-bg: var(--q-fg);
+    --q-tooltip-fg: var(--q-bg);
+    --q-tooltip-font-size: var(--q-text-3xs);
+    --q-tooltip-leading: 1.5; // mono caps at 10px need a little more air than --q-leading-compact
+    --q-tooltip-py: var(--q-space-0-75);
+    --q-tooltip-px: var(--q-space-1-25);
+    --q-tooltip-max-width: 240px;
+    --q-tooltip-radius: var(--q-radius-sm);
+    --q-tooltip-offset: var(--q-space-1);
+    --q-tooltip-z: var(--q-z-sticky);
+  }
+}
+
+@layer q.components {
+  .q-tooltip {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .q-tooltip__bubble {
+    position: absolute;
+    z-index: var(--q-tooltip-z);
+    visibility: hidden;
+    width: max-content;
+    max-width: var(--q-tooltip-max-width);
+    padding: var(--q-tooltip-py) var(--q-tooltip-px);
+    border-radius: var(--q-tooltip-radius);
+    background: var(--q-tooltip-bg);
+    color: var(--q-tooltip-fg);
+    font-family: var(--q-font-mono);
+    font-size: var(--q-tooltip-font-size);
+    line-height: var(--q-tooltip-leading);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--q-dur-hover) var(--q-ease-soft),
+      visibility var(--q-dur-hover);
+
+    &[data-state="open"] {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    &[data-placement="top"] {
+      bottom: 100%;
+      left: 50%;
+      margin-bottom: var(--q-tooltip-offset);
+      transform: translateX(-50%);
+    }
+
+    &[data-placement="bottom"] {
+      top: 100%;
+      left: 50%;
+      margin-top: var(--q-tooltip-offset);
+      transform: translateX(-50%);
+    }
+
+    &[data-placement="left"] {
+      top: 50%;
+      right: 100%;
+      margin-right: var(--q-tooltip-offset);
+      transform: translateY(-50%);
+    }
+
+    &[data-placement="right"] {
+      top: 50%;
+      left: 100%;
+      margin-left: var(--q-tooltip-offset);
+      transform: translateY(-50%);
+    }
+  }
+}

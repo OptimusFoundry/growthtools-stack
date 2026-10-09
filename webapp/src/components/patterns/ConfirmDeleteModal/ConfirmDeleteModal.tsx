@@ -1,8 +1,5 @@
+import { Alert, Button, Dialog, Text } from "@optimusfoundry/quiet";
 import type { ConfirmableDeleteFlow } from "@/hooks/useConfirmableDelete";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 /**
  * Presentation half of useConfirmableDelete. Accepts the flow object directly
@@ -10,27 +7,32 @@ import { Text } from "@/proto-design-system/components/primitives/Text/Text";
  */
 export function ConfirmDeleteModal({ flow }: { flow: ConfirmableDeleteFlow }) {
 	return (
-		<Modal
-			isOpen={flow.isOpen}
+		<Dialog
+			open={flow.isOpen}
 			onClose={flow.cancel}
 			title={flow.modalTitle}
 			size="sm"
-			footer={
-				<Stack direction="row" gap="sm" justify="end">
+			actions={
+				<>
 					<Button variant="ghost" onClick={flow.cancel}>
 						Cancel
 					</Button>
 					<Button
 						variant="destructive"
 						onClick={flow.confirm}
-						isLoading={flow.isLoading}
+						loading={flow.isLoading}
 					>
 						Delete
 					</Button>
-				</Stack>
+				</>
 			}
 		>
-			<Text color="secondary">{flow.confirmBody}</Text>
-		</Modal>
+			{flow.error && (
+				<Alert variant="error" title={flow.error}>
+					Please try again.
+				</Alert>
+			)}
+			<Text color="muted">{flow.confirmBody}</Text>
+		</Dialog>
 	);
 }

@@ -3,13 +3,12 @@
  * Modal that displays when a user has reached their plan's limit for a resource
  */
 
+import { Button, Dialog, Stack, Text } from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { memo, useCallback } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { useTier } from "@/contexts/tier";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 
 // ============================================================================
 // Types
@@ -73,26 +72,27 @@ export const LimitUpgradeModal = memo(function LimitUpgradeModal({
 		`Your ${tier.displayName} plan allows up to ${limit} ${resourceName}${limit === 1 ? "" : "s"}. Upgrade to create more ${resourceName}s and unlock additional features.`;
 
 	return (
-		<Modal
-			isOpen={isOpen}
+		<Dialog
+			open={isOpen}
 			onClose={onClose}
-			icon={<Sparkles />}
-			iconVariant="info"
+			icon={<AppIcon icon={Sparkles} size="lg" />}
 			title={displayTitle}
-			description={displayDescription}
-			footer={
-				<Stack direction="row" gap="sm" justify="end">
+			actions={
+				<>
 					<Button variant="ghost" onClick={onClose}>
 						Maybe Later
 					</Button>
 					<Button variant="primary" onClick={handleUpgrade}>
 						View Plans
 					</Button>
-				</Stack>
+				</>
 			}
 		>
-			<p>Upgrade to continue using this feature.</p>
-		</Modal>
+			<Stack gap="xs">
+				<Text color="muted">{displayDescription}</Text>
+				<Text>Upgrade to continue using this feature.</Text>
+			</Stack>
+		</Dialog>
 	);
 });
 

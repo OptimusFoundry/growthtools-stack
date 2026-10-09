@@ -1,20 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	Alert,
+	Button,
+	EmptyState,
+	Spinner,
+	Stack,
+} from "@optimusfoundry/quiet";
+import { createFileRoute } from "@tanstack/react-router";
 import {
 	GitCommit,
 	GitBranch as Github,
 	Image as ImageIcon,
 	RefreshCw,
 } from "lucide-react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ArtifactGrid } from "@/components/github/ArtifactGrid";
 import { CaptureMetaCard } from "@/components/github/CaptureMetaCard";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useGitHubCommit } from "@/hooks/useGitHubCommit";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import styles from "./github-details.module.scss";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
+import styles from "./github.module.scss";
 
 export const Route = createFileRoute("/github_/$id")({
 	component: CommitDetailsPage,
@@ -29,11 +33,9 @@ function CommitDetailsPage() {
 		return (
 			<>
 				<CommitTopbar />
-				<Stack gap="lg" className={styles.page} animate>
-					<Stack align="center" justify="center" className={styles.loading}>
-						<Spinner size="lg" />
-					</Stack>
-				</Stack>
+				<div className={styles.loading}>
+					<Spinner size="lg" />
+				</div>
 			</>
 		);
 	}
@@ -42,10 +44,10 @@ function CommitDetailsPage() {
 		return (
 			<>
 				<CommitTopbar />
-				<Stack gap="lg" className={styles.page} animate>
+				<Stack gap="lg" animated>
 					<EmptyState
-						icon={<GitCommit size={48} />}
-						title="Commit not found"
+						icon={<AppIcon icon={GitCommit} size="xl" />}
+						title={trimTrailingPeriod("Commit not found")}
 						description="We couldn't find this commit — the link may be stale or belong to a disconnected repo."
 					/>
 				</Stack>
@@ -58,11 +60,13 @@ function CommitDetailsPage() {
 	const hasAnyMedia = (output?.uploaded ?? []).length > 0;
 	const isSkipped = Boolean(commit.skipped_reason);
 	const isWaiting = !isSkipped && !commit.capture_requested_at;
+	const showPostLink = Boolean(commit.post_id && !commit.post_deleted);
+	const showBlogLink = Boolean(commit.blog_post_id && !commit.blog_deleted);
 
 	return (
 		<>
 			<CommitTopbar label={firstLine} />
-			<Stack gap="lg" className={styles.page} animate>
+			<Stack gap="lg" animated>
 				<CaptureMetaCard commit={commit} />
 
 				{isSkipped && (
@@ -79,21 +83,24 @@ function CommitDetailsPage() {
 				)}
 
 				{!isSkipped && output?.error && (
-					<Alert variant="error" title="Capture failed">
-						<Stack gap="sm">
+					<Alert
+						variant="error"
+						title="Capture failed"
+						action={
+							<Button
+								variant="primary"
+								size="sm"
+								onClick={retryCapture}
+								loading={retrying}
+								leftIcon={<AppIcon icon={RefreshCw} size="md" />}
+							>
+								Retry capture
+							</Button>
+						}
+					>
+						<Stack gap="xs">
 							<span>{output.error}</span>
 							{retryError && <span>Retry failed: {retryError}</span>}
-							<Stack direction="row" gap="sm">
-								<Button
-									variant="primary"
-									size="sm"
-									onClick={retryCapture}
-									disabled={retrying}
-									leftIcon={<RefreshCw size={14} />}
-								>
-									{retrying ? "Retrying…" : "Retry capture"}
-								</Button>
-							</Stack>
 						</Stack>
 					</Alert>
 				)}
@@ -107,22 +114,25 @@ function CommitDetailsPage() {
 						</Alert>
 					)}
 
-				{((commit.post_id && !commit.post_deleted) ||
-					(commit.blog_post_id && !commit.blog_deleted)) && (
+				{(showPostLink || showBlogLink) && (
 					<Stack direction="row" gap="sm">
-						{commit.post_id && !commit.post_deleted && (
-							<Link to="/posts/$id" params={{ id: commit.post_id }}>
-								<Button variant="primary" size="sm">
-									View generated post →
-								</Button>
-							</Link>
+						{showPostLink && (
+							<Button
+								variant="primary"
+								size="sm"
+								href={`/posts/${commit.post_id}`}
+							>
+								View generated post →
+							</Button>
 						)}
-						{commit.blog_post_id && !commit.blog_deleted && (
-							<Link to="/blog/$id" params={{ id: commit.blog_post_id }}>
-								<Button variant="secondary" size="sm">
-									View generated blog →
-								</Button>
-							</Link>
+						{showBlogLink && (
+							<Button
+								variant="secondary"
+								size="sm"
+								href={`/blog/${commit.blog_post_id}`}
+							>
+								View generated blog →
+							</Button>
 						)}
 					</Stack>
 				)}
@@ -141,8 +151,8 @@ function CommitDetailsPage() {
 
 				{!hasAnyMedia && !output?.error && !isSkipped && !isWaiting && (
 					<EmptyState
-						icon={<ImageIcon size={48} />}
-						title="No artifacts yet"
+						icon={<AppIcon icon={ImageIcon} size="xl" />}
+						title={trimTrailingPeriod("No artifacts yet")}
 						description="The capture worker hasn't uploaded any media for this commit."
 					/>
 				)}
@@ -158,7 +168,11 @@ function CommitTopbar({ label }: { label?: string } = {}) {
 	return (
 		<Topbar
 			breadcrumbs={[
-				{ label: "GitHub", href: "/github", icon: <Github size={18} /> },
+				{
+					label: "GitHub",
+					href: "/github",
+					icon: <AppIcon icon={Github} size="lg" />,
+				},
 				{ label: trail ?? "Commit" },
 			]}
 		/>

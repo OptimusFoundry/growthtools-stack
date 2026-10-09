@@ -1,0 +1,44 @@
+.row {
+	display: flex;
+	flex-direction: column;
+	gap: var(--q-space-1-5);
+	padding: var(--q-space-2) 0;
+	border-bottom: 1px solid var(--q-hairline);
+	list-style: none;
+}
+
+.main {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--q-space-1-5);
+}
+
+.file {
+	display: flex;
+	flex-direction: column;
+	gap: var(--q-space-1);
+	min-width: 0;
+}
+
+.name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--q-fg);
+}
+
+.meta {
+	color: var(--q-fg-muted);
+	font-size: var(--q-text-sm);
+}
+
+.status {
+	min-height: 1px;
+}
+
+.error {
+	color: var(--q-status-error-fg);
+	font-size: var(--q-text-sm);
+	overflow-wrap: anywhere;
+}

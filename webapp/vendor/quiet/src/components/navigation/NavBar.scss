@@ -1,0 +1,56 @@
+// NavBar — site header. BEM: .q-nav-bar, __home, __links, __link. Current link: [aria-current="page"].
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-nav-bar-row-gap: var(--q-space-2);
+    --q-nav-bar-column-gap: var(--q-space-4);
+    --q-nav-bar-py: var(--q-space-2);
+    --q-nav-bar-px: var(--q-space-4);
+    --q-nav-bar-bg: var(--q-bg);
+    --q-nav-bar-border: var(--q-border);
+    --q-nav-bar-home-gap: var(--q-space-1-25);
+    --q-nav-bar-links-gap: var(--q-space-4);
+    --q-nav-bar-link-font-size: var(--q-text-md);
+    --q-nav-bar-link-weight: var(--q-weight-medium);
+    --q-nav-bar-link-fg: var(--q-fg);
+    --q-nav-bar-link-fg-hover: var(--q-accent);
+  }
+}
+
+@layer q.components {
+  .q-nav-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-nav-bar-row-gap) var(--q-nav-bar-column-gap);
+    padding: var(--q-nav-bar-py) var(--q-nav-bar-px);
+    border-bottom: var(--q-hairline) solid var(--q-nav-bar-border);
+    background: var(--q-nav-bar-bg);
+  }
+
+  .q-nav-bar__home {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-nav-bar-home-gap);
+    text-decoration: none;
+  }
+
+  .q-nav-bar__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-nav-bar-links-gap);
+  }
+
+  .q-nav-bar__link {
+    color: var(--q-nav-bar-link-fg);
+    font-size: var(--q-nav-bar-link-font-size);
+    font-weight: var(--q-nav-bar-link-weight);
+    text-decoration: none;
+    transition: color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--q-nav-bar-link-fg-hover);
+    }
+  }
+}

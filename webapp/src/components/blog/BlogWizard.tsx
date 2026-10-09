@@ -1,3 +1,18 @@
+import {
+	Alert,
+	Button,
+	Col,
+	EmptyState,
+	Grid,
+	PageHero,
+	SectionHeader,
+	Spinner,
+	Stack,
+	Tabs,
+	Text,
+	TextArea,
+	TextField,
+} from "@optimusfoundry/quiet";
 import { BookOpen, RefreshCw, Send, Sparkles, Trash2 } from "lucide-react";
 import "highlight.js/styles/github.css";
 import type { ReactNode } from "react";
@@ -6,6 +21,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { toBlogPost } from "@/api/transforms/blog";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { MediaUploadSection } from "@/components/create-post/compose/MediaUploadSection";
 import { Topbar } from "@/components/Layout/Topbar";
 import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
@@ -13,26 +29,10 @@ import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useCreateBlogPost } from "@/hooks/useCreateBlogPost";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
+import { useNotify } from "@/hooks/useNotify";
 import { usePublishBlog } from "@/hooks/usePublishBlog";
 import { useSSEBlogGenerate } from "@/hooks/useSSEBlogGenerate";
 import { useUpdateBlogPost } from "@/hooks/useUpdateBlogPost";
-import type { ExistingFile } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
-import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
-import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
-import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import {
-	Tab,
-	TabList,
-	TabPanel,
-	TabPanels,
-	Tabs,
-} from "@/proto-design-system/components/navigation/Tabs/Tabs";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type {
 	BlogPost,
 	BlogPublishResult,
@@ -64,6 +64,49 @@ const slugify = (text: string): string =>
 		.replace(/[^\w\s-]/g, "")
 		.replace(/\s+/g, "-")
 		.replace(/-+/g, "-");
+
+const PREVIEW_TABS = [
+	{ value: "preview", label: "Preview" },
+	{ value: "markdown", label: "Markdown" },
+];
+
+interface HeroCopy {
+	eyebrow: string;
+	title: string;
+	accent?: string;
+	description: string;
+}
+
+function heroCopy(
+	isEditMode: boolean,
+	status: BlogPost["status"] | undefined,
+): HeroCopy {
+	if (!isEditMode) {
+		return {
+			eyebrow: "Editor · new post",
+			title: "One idea, a full post",
+			description:
+				"Write a topic — AI drafts a full post in your voice, complete with SEO metadata and an excerpt.",
+		};
+	}
+	if (status === "published") {
+		return {
+			eyebrow: "Editor · published",
+			title: "Published. Edit with care",
+			description:
+				"Changes save when you publish again, and your live post updates in place.",
+		};
+	}
+	const eyebrow =
+		status === "draft" ? "Editor · edit draft" : `Editor · ${status ?? "edit"}`;
+	return {
+		eyebrow,
+		title: "Refine the",
+		accent: "story",
+		description:
+			"Update content, media, and SEO. Save as draft or publish when it's ready.",
+	};
+}
 
 export function BlogWizard({
 	initialBlogPost,
@@ -123,7 +166,7 @@ export function BlogWizard({
 	const { updateBlogPost, loading: updating } = useUpdateBlogPost();
 	const { publishBlog, loading: publishing } = usePublishBlog();
 	const { deleteBlog, loading: deleting } = useDeleteBlog();
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 
 	const saving = creating || updating || publishing;
 	const busy = saving || generating || managedMedia.isUploading;
@@ -150,17 +193,6 @@ export function BlogWizard({
 	const isStreaming = phase === "generating";
 	const hasPreview = Boolean(streamingContent || content);
 
-	const existingMediaFiles = useMemo<ExistingFile[]>(
-		() =>
-			existingMedia.map((m) => ({
-				id: m.id,
-				name: m.filename,
-				size: m.sizeBytes,
-				contentType: m.contentType,
-				url: m.url ?? undefined,
-			})),
-		[existingMedia],
-	);
 	const existingMediaIds = useMemo(
 		() => existingMedia.map((m) => m.id),
 		[existingMedia],
@@ -253,10 +285,9 @@ export function BlogWizard({
 			} else {
 				await createBlogPost({ ...buildRequest(), status: "draft" });
 			}
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: isEditMode ? "Draft updated" : "Draft saved",
-				dismissible: true,
 			});
 			onDone();
 		} catch (err) {
@@ -269,7 +300,7 @@ export function BlogWizard({
 		updateBlogPost,
 		createBlogPost,
 		buildRequest,
-		addBanner,
+		notify,
 		onDone,
 	]);
 
@@ -289,17 +320,15 @@ export function BlogWizard({
 			}
 			const result = await publishBlog(postId as string);
 			if (result.sitePublishError) {
-				addBanner({
-					type: "warning",
+				notify({
+					status: "warning",
 					title: "Blog post published, but the GitHub push failed",
 					description: result.sitePublishError,
-					dismissible: true,
 				});
 			} else {
-				addBanner({
-					type: "success",
+				notify({
+					status: "success",
 					title: "Blog post published",
-					dismissible: true,
 				});
 			}
 			// Edit mode has a detail page to stay on and reflect the outcome
@@ -321,7 +350,7 @@ export function BlogWizard({
 		createBlogPost,
 		publishBlog,
 		buildRequest,
-		addBanner,
+		notify,
 		onPublished,
 		onPublishedNavigate,
 	]);
@@ -329,31 +358,8 @@ export function BlogWizard({
 	// Suppress unused warning — reset is available for future use (e.g. cancel button)
 	void resetSSE;
 
-	const eyebrowLabel = !isEditMode
-		? "Editor · new post"
-		: postStatus === "draft"
-			? "Editor · edit draft"
-			: `Editor · ${postStatus ?? "edit"}`;
-
-	const titleFragment: ReactNode = !isEditMode ? (
-		<>
-			One <em>idea</em>, a full post.
-		</>
-	) : postStatus === "published" ? (
-		<>
-			<em>Published.</em> Edit with care.
-		</>
-	) : (
-		<>
-			Refine the <em>story</em>.
-		</>
-	);
-
-	const subLine = !isEditMode
-		? "Write a topic — AI drafts a full post in your voice, complete with SEO metadata and an excerpt."
-		: postStatus === "published"
-			? "Changes save when you publish again, and your live post updates in place."
-			: "Update content, media, and SEO. Save as draft or publish when it's ready.";
+	const copy = heroCopy(isEditMode, postStatus);
+	const generateIcon = content ? RefreshCw : Sparkles;
 
 	const breadcrumbs = [
 		{ label: "Blog", href: "/blog" as const },
@@ -385,15 +391,16 @@ export function BlogWizard({
 					onClick={() => deleteFlow.request(initialBlogPost!.id)}
 					disabled={busy || deleting}
 					aria-label="Delete blog post"
+					leftIcon={<AppIcon icon={Trash2} size="md" />}
 				>
-					<Trash2 size={14} /> Delete
+					Delete
 				</Button>
 			)}
 			<Button
 				variant="ghost"
 				size="sm"
 				onClick={handleSaveDraft}
-				isLoading={creating || updating}
+				loading={creating || updating}
 				disabled={busy}
 			>
 				Save draft
@@ -402,10 +409,11 @@ export function BlogWizard({
 				variant="primary"
 				size="sm"
 				onClick={handlePublish}
-				isLoading={publishing}
+				loading={publishing}
 				disabled={busy}
+				leftIcon={<AppIcon icon={Send} size="md" />}
 			>
-				<Send size={14} /> Publish
+				Publish
 			</Button>
 		</>
 	);
@@ -413,207 +421,187 @@ export function BlogWizard({
 	return (
 		<>
 			<Topbar breadcrumbs={breadcrumbs} actions={topbarActions} />
-			<div className={styles.page}>
-				<header className={styles.header}>
-					<div className={styles.headerInner}>
-						<div>
-							<div className={styles.eyebrow}>{eyebrowLabel}</div>
-							<h1 className={styles.title}>{titleFragment}</h1>
-							<p className={styles.sub}>{subLine}</p>
-						</div>
-					</div>
-				</header>
+			<Stack gap="lg">
+				<PageHero
+					size="md"
+					ruled={false}
+					className={styles.hero}
+					eyebrow={copy.eyebrow}
+					title={copy.title}
+					accent={copy.accent}
+					description={copy.description}
+				/>
 
 				{statusSlot}
 
 				{error && <Alert variant="error">{error}</Alert>}
 				{generateError && <Alert variant="error">{generateError}</Alert>}
 
-				<div className={styles.twoColumn}>
-					{/* ── Left: compose ──────────────────────────────────────────── */}
-					<Stack gap="lg">
-						<Stack gap="sm">
-							<Text size="md" weight="semibold">
-								Idea or instructions
-							</Text>
-							<TextArea
-								placeholder="What should this blog post be about? Give the AI a topic or detailed instructions..."
-								rows={5}
-								value={instruction}
-								onChange={(e) => setInstruction(e.target.value)}
-								fullWidth
+				<Grid columns={12} gap="lg">
+					<Col span={6} spanMd={12}>
+						<Stack gap="lg">
+							<Stack gap="md">
+								<SectionHeader size="sm" as="h2" title="Idea or instructions" />
+								<TextArea
+									label="Instructions"
+									hideLabel
+									placeholder="What should this blog post be about? Give the AI a topic or detailed instructions..."
+									rows={5}
+									value={instruction}
+									onChange={(e) => setInstruction(e.target.value)}
+								/>
+								<TextField
+									label="Keywords"
+									placeholder="Comma-separated keywords"
+									value={keywords}
+									onChange={(e) => setKeywords(e.target.value)}
+									helperText="Used to guide AI generation"
+								/>
+								<Stack direction="row" gap="sm" justify="flex-end">
+									<Button
+										variant={content ? "secondary" : "primary"}
+										onClick={handleRegenerate}
+										loading={generating}
+										disabled={busy}
+										leftIcon={<AppIcon icon={generateIcon} size="md" />}
+									>
+										{content ? "Regenerate" : "Generate"}
+									</Button>
+								</Stack>
+							</Stack>
+
+							<MediaUploadSection
+								pendingFiles={managedMedia.uploadingFiles}
+								existingMedia={existingMedia}
+								onFilesChange={managedMedia.onFilesChange}
+								onRemoveExisting={handleRemoveMedia}
+								featuredImageId={featuredImageId}
+								onSetFeatured={handleSetFeatured}
 							/>
-							<TextField
-								label="Keywords"
-								placeholder="Comma-separated keywords"
-								value={keywords}
-								onChange={(e) => setKeywords(e.target.value)}
-								helperText="Used to guide AI generation"
-							/>
-							<Stack direction="row" gap="sm" justify="end">
-								<Button
-									variant={content ? "secondary" : "primary"}
-									onClick={handleRegenerate}
-									isLoading={generating}
-									disabled={busy}
-								>
-									{content ? (
-										<>
-											<RefreshCw size={16} /> Regenerate
-										</>
-									) : (
-										<>
-											<Sparkles size={16} /> Generate
-										</>
-									)}
-								</Button>
+
+							<Stack gap="md">
+								<SectionHeader size="sm" as="h2" title="Details" />
+								<TextField
+									label="Title"
+									placeholder="Blog post title"
+									value={title}
+									onChange={(e) => setTitle(e.target.value)}
+									onBlur={handleTitleBlur}
+									required
+								/>
+								<TextField
+									label="Slug"
+									placeholder="url-friendly-slug"
+									value={slug}
+									onChange={(e) => setSlug(e.target.value)}
+									helperText="URL path for this post"
+								/>
+								<TextArea
+									label="Excerpt"
+									placeholder="Brief summary of the post..."
+									rows={3}
+									value={excerpt}
+									onChange={(e) => setExcerpt(e.target.value)}
+								/>
+								<TextField
+									label="Published date"
+									type="date"
+									value={publishedAt}
+									onChange={(e) => setPublishedAt(e.target.value)}
+									helperText="Backdate the post's public date, e.g. to match when the work actually happened. Leave blank to use today's date when you publish."
+								/>
+							</Stack>
+
+							<Stack gap="md">
+								<SectionHeader size="sm" as="h2" title="SEO" />
+								<TextField
+									label="SEO title"
+									placeholder="SEO title"
+									value={seoTitle}
+									onChange={(e) => setSeoTitle(e.target.value)}
+								/>
+								<TextArea
+									label="Meta description"
+									placeholder="Meta description for search engines..."
+									rows={3}
+									value={metaDescription}
+									onChange={(e) => setMetaDescription(e.target.value)}
+								/>
+								<TextField
+									label="OG title"
+									placeholder="Open Graph title"
+									value={ogTitle}
+									onChange={(e) => setOgTitle(e.target.value)}
+								/>
+								<TextArea
+									label="OG description"
+									placeholder="Open Graph description..."
+									rows={3}
+									value={ogDescription}
+									onChange={(e) => setOgDescription(e.target.value)}
+								/>
 							</Stack>
 						</Stack>
+					</Col>
 
-						<Divider />
+					<Col span={6} spanMd={12}>
+						<div className={styles.previewPanel}>
+							{generating && !streamingContent && (
+								<Stack gap="sm" align="center">
+									<Spinner size="lg" />
+									<Text size="sm" color="muted" weight="medium">
+										Generating your blog post...
+									</Text>
+								</Stack>
+							)}
 
-						<MediaUploadSection
-							pendingFiles={managedMedia.uploadingFiles}
-							existingMedia={existingMediaFiles}
-							onFilesChange={managedMedia.onFilesChange}
-							onRemoveExisting={handleRemoveMedia}
-							featuredImageId={featuredImageId}
-							onSetFeatured={handleSetFeatured}
-						/>
+							{hasPreview && (
+								<Tabs
+									tabs={PREVIEW_TABS}
+									defaultValue="preview"
+									label="Blog post view"
+									panels={{
+										preview: (
+											<div className={styles.markdown}>
+												<ReactMarkdown
+													remarkPlugins={[remarkGfm]}
+													rehypePlugins={[rehypeHighlight]}
+												>
+													{previewContent}
+												</ReactMarkdown>
+												{isStreaming && (
+													<span className={styles.streamingCursor} />
+												)}
+											</div>
+										),
+										markdown: (
+											<TextArea
+												label="Markdown content"
+												hideLabel
+												placeholder="Blog post content will appear here after generation, or type directly..."
+												rows={30}
+												value={isStreaming ? streamingContent : content}
+												onChange={(e) =>
+													!isStreaming && setContent(e.target.value)
+												}
+											/>
+										),
+									}}
+								/>
+							)}
 
-						<Divider />
-
-						<Stack gap="sm">
-							<Text size="md" weight="semibold">
-								Details
-							</Text>
-							<TextField
-								label="Title"
-								placeholder="Blog post title"
-								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								onBlur={handleTitleBlur}
-								required
-							/>
-							<TextField
-								label="Slug"
-								placeholder="url-friendly-slug"
-								value={slug}
-								onChange={(e) => setSlug(e.target.value)}
-								helperText="URL path for this post"
-							/>
-							<TextArea
-								label="Excerpt"
-								placeholder="Brief summary of the post..."
-								rows={3}
-								value={excerpt}
-								onChange={(e) => setExcerpt(e.target.value)}
-							/>
-							<TextField
-								label="Published date"
-								type="date"
-								value={publishedAt}
-								onChange={(e) => setPublishedAt(e.target.value)}
-								helperText="Backdate the post's public date, e.g. to match when the work actually happened. Leave blank to use today's date when you publish."
-							/>
-						</Stack>
-
-						<Divider />
-
-						<Stack gap="sm">
-							<Text size="md" weight="semibold">
-								SEO
-							</Text>
-							<TextField
-								label="SEO title"
-								placeholder="SEO title"
-								value={seoTitle}
-								onChange={(e) => setSeoTitle(e.target.value)}
-							/>
-							<TextArea
-								label="Meta description"
-								placeholder="Meta description for search engines..."
-								rows={3}
-								value={metaDescription}
-								onChange={(e) => setMetaDescription(e.target.value)}
-							/>
-							<TextField
-								label="OG title"
-								placeholder="Open Graph title"
-								value={ogTitle}
-								onChange={(e) => setOgTitle(e.target.value)}
-							/>
-							<TextArea
-								label="OG description"
-								placeholder="Open Graph description..."
-								rows={3}
-								value={ogDescription}
-								onChange={(e) => setOgDescription(e.target.value)}
-							/>
-						</Stack>
-					</Stack>
-
-					{/* ── Right: preview ──────────────────────────────────────────── */}
-					<div className={styles.previewPanel}>
-						{generating && !streamingContent && (
-							<Stack
-								gap="sm"
-								align="center"
-								className={styles.generatingLoader}
-							>
-								<Spinner size="lg" />
-								<Text size="sm" color="secondary" weight="medium">
-									Generating your blog post...
-								</Text>
-							</Stack>
-						)}
-
-						{hasPreview && (
-							<Tabs defaultTab="preview">
-								<TabList>
-									<Tab id="preview">Preview</Tab>
-									<Tab id="markdown">Markdown</Tab>
-								</TabList>
-								<TabPanels>
-									<TabPanel id="preview">
-										<div className={styles.markdown}>
-											<ReactMarkdown
-												remarkPlugins={[remarkGfm]}
-												rehypePlugins={[rehypeHighlight]}
-											>
-												{previewContent}
-											</ReactMarkdown>
-											{isStreaming && (
-												<span className={styles.streamingCursor} />
-											)}
-										</div>
-									</TabPanel>
-									<TabPanel id="markdown">
-										<TextArea
-											placeholder="Blog post content will appear here after generation, or type directly..."
-											rows={30}
-											value={isStreaming ? streamingContent : content}
-											onChange={(e) =>
-												!isStreaming && setContent(e.target.value)
-											}
-											fullWidth
-										/>
-									</TabPanel>
-								</TabPanels>
-							</Tabs>
-						)}
-
-						{!generating && !hasPreview && (
-							<div className={styles.emptyPreview}>
-								<BookOpen size={40} className={styles.emptyPreviewIcon} />
-								<Text size="sm" color="muted">
-									Enter a topic and click Generate to draft your blog post.
-								</Text>
-							</div>
-						)}
-					</div>
-				</div>
-			</div>
+							{!generating && !hasPreview && (
+								<EmptyState
+									bordered
+									size="sm"
+									icon={<AppIcon icon={BookOpen} size="xl" />}
+									description="Enter a topic and click Generate to draft your blog post."
+								/>
+							)}
+						</div>
+					</Col>
+				</Grid>
+			</Stack>
 
 			<ConfirmDeleteModal flow={deleteFlow} />
 		</>

@@ -1,6 +1,6 @@
 .picker {
-  border-top: var(--border-width-sm) solid var(--color-border);
-  padding-top: var(--space-5);
+  border-top: var(--q-hairline) solid var(--q-border);
+  padding-top: var(--q-space-block);
 }
 
 // Stacked at every width: the compose column is narrow, and a side-by-side
@@ -9,46 +9,39 @@
   align-items: flex-start;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-}
-
-.grid {
-  display: grid;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  gap: var(--q-space-3);
 }
 
 .tile {
-  border: var(--border-width-sm) solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: var(--q-hairline) solid var(--q-border);
+  border-radius: var(--q-radius-sm);
   overflow: hidden;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color var(--q-dur-hover) var(--q-ease-soft),
+    box-shadow var(--q-dur-hover) var(--q-ease-soft);
 
   &[data-selected] {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 1px var(--color-primary);
+    border-color: var(--q-accent);
+    box-shadow: 0 0 0 var(--q-hairline) var(--q-accent);
   }
 
   &:focus-within {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+    outline: 2px solid var(--q-accent);
+    outline-offset: var(--q-space-0-5);
   }
-}
-
-.tileInner {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
 }
 
 .thumb {
   aspect-ratio: 4 / 3;
-  background-color: var(--color-base-200);
+  background-color: var(--q-bg-subtle);
   display: block;
   position: relative;
+}
+
+.mediaTarget {
+  cursor: pointer;
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 .media {
@@ -59,22 +52,24 @@
 }
 
 .check {
-  left: var(--space-2);
+  left: var(--q-space-inline);
   position: absolute;
-  top: var(--space-2);
+  top: var(--q-space-inline);
 }
 
 .videoBadge {
-  bottom: var(--space-2);
-  color: var(--color-base-content);
+  bottom: var(--q-space-inline);
+  color: var(--q-fg);
+  display: flex;
   position: absolute;
-  right: var(--space-2);
+  right: var(--q-space-inline);
 }
 
 .caption {
-  font-size: var(--font-size-xs);
+  display: block;
+  font-size: var(--q-text-xs);
   overflow: hidden;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--q-space-0-5) var(--q-space-inline);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -1,26 +1,55 @@
 .container {
-  background-color: var(--color-background);
+  background-color: var(--q-bg);
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
 .content {
-  background-color: var(--color-background);
   display: flex;
   flex: 1;
   flex-direction: column;
+  min-width: 0;
   overflow: hidden;
 }
 
-.main {
-  background-color: var(--color-background);
-  flex: 1;
-  overflow: auto;
+.topbarSlot {
+  flex-shrink: 0;
+
+  &:empty {
+    display: none;
+  }
 }
 
-.userFooter {
-  border-top: 1px solid var(--color-border);
-  margin-top: auto;
-  padding: var(--space-3) var(--space-4);
+// width: 100% because an auto margin stops a flex item stretching.
+.main {
+  background-color: var(--q-bg);
+  box-sizing: border-box;
+  flex: 1;
+  margin-inline: auto;
+  max-width: var(--q-w-max);
+  min-height: 0;
+  overflow: auto;
+  padding-block: var(--q-space-section);
+  padding-inline: var(--q-space-page-x);
+  width: 100%;
+}
+
+.brand {
+  align-items: center;
+  display: flex;
+  gap: var(--q-space-inline);
+  min-width: 0;
+}
+
+.brandMark {
+  align-items: center;
+  background-color: var(--q-bg-inverse);
+  border-radius: var(--q-radius-xs);
+  color: var(--q-fg-on-inverse);
+  display: flex;
+  flex-shrink: 0;
+  height: var(--q-space-3);
+  justify-content: center;
+  width: var(--q-space-3);
 }

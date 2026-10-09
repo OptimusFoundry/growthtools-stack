@@ -1,8 +1,17 @@
-/**
- * BillingTab Component
- * Displays current subscription and allows plan changes
- */
-
+import {
+	Badge,
+	Button,
+	Card,
+	Col,
+	Container,
+	EmptyState,
+	Grid,
+	Rule,
+	SectionHeader,
+	Spinner,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	ArrowUpRight,
@@ -13,32 +22,15 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { memo, useCallback } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import PlanToPay from "@/components/billing/plans/planPay";
 import { ErrorState } from "@/components/error/error";
 import { useCreateCustomerPortal } from "@/hooks/useCreateCustomerPortal";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import {
-	Card,
-	CardBody,
-	CardFooter,
-	CardHeader,
-} from "@/proto-design-system/components/layout/Card/Card";
-import { Container } from "@/proto-design-system/components/layout/Container/Container";
-import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
-import { Grid } from "@/proto-design-system/components/layout/Grid/Grid";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { Price, Subscription } from "@/types/billing";
 import { formatPrice } from "@/utils/formatPrice";
 import styles from "./BillingTab.module.scss";
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface PlanDetails {
 	name: string;
@@ -46,9 +38,13 @@ interface PlanDetails {
 	interval: string;
 }
 
-// ============================================================================
-// Hooks
-// ============================================================================
+type StatusVariant = "success" | "warning" | "secondary";
+
+function getStatusVariant(status: Subscription["status"]): StatusVariant {
+	if (status === "active") return "success";
+	if (status === "canceled") return "warning";
+	return "secondary";
+}
 
 function usePlanDetails(priceId: string | undefined): PlanDetails | null {
 	const { prices, loading } = useGetAllPrices();
@@ -88,10 +84,6 @@ function useBillingActions() {
 	};
 }
 
-// ============================================================================
-// Sub-Components
-// ============================================================================
-
 interface SubscriptionSummaryProps {
 	subscription: Subscription;
 	planDetails: PlanDetails | null;
@@ -104,39 +96,35 @@ const SubscriptionSummary = memo(function SubscriptionSummary({
 	onChangePlan,
 }: SubscriptionSummaryProps) {
 	return (
-		<Card variant="spec">
-			<CardHeader
-				name={
-					<>
-						Current <em>Plan</em>
-					</>
-				}
-				meta={subscription.status.toUpperCase()}
-			/>
-			<CardBody>
-				<Stack gap="sm">
-					<Stack direction="row" gap="sm" align="center">
-						<Sparkles size={20} className={styles.planIcon} />
-						<Text size="xl" weight="semibold">
+		<Stack as="section" gap="lg">
+			<SectionHeader size="sm" as="h2" title="Current Plan" />
+			<Card>
+				<Stack gap="sm" align="flex-start">
+					<Stack gap="xs" direction="row" align="center">
+						<AppIcon icon={Sparkles} size="lg" />
+						<Text size="xl" weight="semibold" as="span">
 							{planDetails?.name || "Loading..."}
 						</Text>
+						<Badge variant={getStatusVariant(subscription.status)} size="sm">
+							{subscription.status}
+						</Badge>
 					</Stack>
 
-					<Stack direction="row" gap="xs" align="baseline">
-						<Text size="2xl" weight="bold">
+					<Stack direction="row" gap={4} align="baseline">
+						<Text size="2xl" weight="bold" as="span">
 							{planDetails?.price || "--"}
 						</Text>
 						{planDetails?.interval && (
-							<Text size="sm" color="secondary">
+							<Text size="sm" color="muted" as="span">
 								/{planDetails.interval}
 							</Text>
 						)}
 					</Stack>
 
 					{subscription.status === "active" && subscription.nextBillingDate && (
-						<Stack direction="row" gap="xs" align="center">
-							<Calendar size={14} className={styles.secondaryIcon} />
-							<Text size="sm" color="secondary">
+						<Stack direction="row" gap={4} align="center">
+							<AppIcon icon={Calendar} size="md" color="muted" />
+							<Text size="sm" color="muted" as="span">
 								Renews{" "}
 								{new Date(subscription.nextBillingDate).toLocaleDateString(
 									"en-US",
@@ -156,15 +144,17 @@ const SubscriptionSummary = memo(function SubscriptionSummary({
 							billing period.
 						</Text>
 					)}
+
+					<Button
+						variant="secondary"
+						onClick={onChangePlan}
+						rightIcon={<AppIcon icon={ArrowUpRight} />}
+					>
+						{subscription.status === "canceled" ? "Resubscribe" : "Change Plan"}
+					</Button>
 				</Stack>
-			</CardBody>
-			<CardFooter className={styles.footerActions}>
-				<Button variant="secondary" onClick={onChangePlan}>
-					{subscription.status === "canceled" ? "Resubscribe" : "Change Plan"}
-					<ArrowUpRight size={16} />
-				</Button>
-			</CardFooter>
-		</Card>
+			</Card>
+		</Stack>
 	);
 });
 
@@ -184,88 +174,84 @@ const QuickAction = memo(function QuickAction({
 	action,
 }: QuickActionProps) {
 	return (
-		<div className={styles.quickAction}>
+		<Stack
+			direction="row"
+			gap="xs"
+			align="center"
+			className={styles.quickAction}
+		>
 			<div className={styles.quickActionIcon}>{icon}</div>
-			<Stack gap="xs" className={styles.quickActionContent}>
+			<Stack gap={4} className={styles.quickActionContent}>
 				<Text weight="medium">{title}</Text>
-				<Text size="sm" color="secondary">
+				<Text size="sm" color="muted">
 					{description}
 				</Text>
 			</Stack>
 			<div className={styles.quickActionButton}>{action}</div>
-		</div>
+		</Stack>
 	);
 });
 
 QuickAction.displayName = "QuickAction";
 
-interface BillingActionsCardProps {
+interface BillingActionsProps {
 	portalUrl?: string;
 	portalLoading: boolean;
 	onManageBilling: () => void;
 }
 
-const BillingActionsCard = memo(function BillingActionsCard({
+const BillingActions = memo(function BillingActions({
 	portalUrl,
 	portalLoading,
 	onManageBilling,
-}: BillingActionsCardProps) {
+}: BillingActionsProps) {
 	return (
-		<Card variant="spec">
-			<CardHeader
-				name={
-					<>
-						Billing & <em>Invoices</em>
-					</>
-				}
-				meta="ACCOUNT"
-			/>
-			<CardBody>
-				<Stack gap="sm">
-					<QuickAction
-						icon={<Receipt size={20} />}
-						title="View Invoices"
-						description="Download past invoices and receipts"
-						action={
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={onManageBilling}
-								disabled={portalLoading || !portalUrl}
-								rightIcon={<ExternalLink size={14} />}
-							>
-								View
-							</Button>
-						}
-					/>
+		<Stack as="section" gap="lg">
+			<SectionHeader size="sm" as="h2" title="Billing & Invoices" />
 
-					<Divider />
+			<Stack gap="none">
+				<QuickAction
+					icon={<AppIcon icon={Receipt} size="lg" color="muted" />}
+					title="View Invoices"
+					description="Download past invoices and receipts"
+					action={
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={onManageBilling}
+							disabled={portalLoading || !portalUrl}
+							rightIcon={<AppIcon icon={ExternalLink} />}
+						>
+							View
+						</Button>
+					}
+				/>
 
-					<QuickAction
-						icon={<CreditCard size={20} />}
-						title="Payment Method"
-						description="Update your card or payment details"
-						action={
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={onManageBilling}
-								disabled={portalLoading || !portalUrl}
-								rightIcon={<ExternalLink size={14} />}
-							>
-								Manage
-							</Button>
-						}
-					/>
-				</Stack>
-			</CardBody>
-		</Card>
+				<Rule />
+
+				<QuickAction
+					icon={<AppIcon icon={CreditCard} size="lg" color="muted" />}
+					title="Payment Method"
+					description="Update your card or payment details"
+					action={
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={onManageBilling}
+							disabled={portalLoading || !portalUrl}
+							rightIcon={<AppIcon icon={ExternalLink} />}
+						>
+							Manage
+						</Button>
+					}
+				/>
+			</Stack>
+		</Stack>
 	);
 });
 
-BillingActionsCard.displayName = "BillingActionsCard";
+BillingActions.displayName = "BillingActions";
 
-/** No subscription state - shows available plans */
 const NoSubscriptionState = memo(function NoSubscriptionState() {
 	const { loading, prices, error } = useGetAllPrices();
 
@@ -278,22 +264,22 @@ const NoSubscriptionState = memo(function NoSubscriptionState() {
 	}
 
 	if (!prices?.length) {
-		return <EmptyState title="No pricing plans available" />;
+		return <EmptyState title="No pricing plans available" icon={null} />;
 	}
 
 	return (
 		<Stack gap="lg">
-			<Stack gap="xs">
-				<Text as="h2" size="xl" weight="semibold">
-					Choose a Plan
-				</Text>
-				<Text color="secondary">
-					Select a plan below to get started with your subscription.
-				</Text>
-			</Stack>
-			<Grid columns="3" gap="md" className={styles.plansGrid}>
+			<SectionHeader
+				size="sm"
+				as="h2"
+				title="Choose a Plan"
+				description="Select a plan below to get started with your subscription."
+			/>
+			<Grid columns={12} gap="sm">
 				{prices.map((price) => (
-					<PlanToPay key={price.priceId} {...price} />
+					<Col key={price.priceId} span={4} spanMd={6} spanSm={12}>
+						<PlanToPay {...price} />
+					</Col>
 				))}
 			</Grid>
 		</Stack>
@@ -302,13 +288,6 @@ const NoSubscriptionState = memo(function NoSubscriptionState() {
 
 NoSubscriptionState.displayName = "NoSubscriptionState";
 
-// ============================================================================
-// Component
-// ============================================================================
-
-/**
- * BillingTab displays current subscription and plan options
- */
 export const BillingTab = memo(function BillingTab() {
 	const { loading, error, currentSubscription } = useGetCurrentSubscription();
 	const planDetails = usePlanDetails(currentSubscription?.priceId);
@@ -325,7 +304,6 @@ export const BillingTab = memo(function BillingTab() {
 		);
 	}
 
-	// No subscription - show available plans
 	if (error?.error === "no active subscription found" || !currentSubscription) {
 		return (
 			<Container size="lg" padded={false} className={styles.container}>
@@ -334,7 +312,6 @@ export const BillingTab = memo(function BillingTab() {
 		);
 	}
 
-	// Error state
 	if (error) {
 		return (
 			<Container size="md" padded={false} className={styles.container}>
@@ -352,7 +329,7 @@ export const BillingTab = memo(function BillingTab() {
 					onChangePlan={handleChangePlan}
 				/>
 
-				<BillingActionsCard
+				<BillingActions
 					portalUrl={portalUrl}
 					portalLoading={portalLoading}
 					onManageBilling={handleManageBilling}

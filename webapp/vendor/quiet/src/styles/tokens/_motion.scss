@@ -1,0 +1,24 @@
+// Tier 2 — motion. Slow and soft, eased, never a bounce.
+:root {
+  --q-ease-linear: linear;
+  --q-ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --q-ease-forge: cubic-bezier(0.45, 0, 0.55, 1);
+  --q-dur-hover: 0.22s;
+  --q-dur-enter: 0.22s;
+  --q-dur-exit: 0.16s;
+  --q-dur-expand: 0.28s;
+  --q-dur-spin: 0.9s;
+  --q-dur-pulse: 2s;
+  --q-dur-forge-loop: 6s;
+  --q-dur-heat-pass: 10s;
+  --q-angle-cut: 14deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --q-dur-hover: 0s;
+    --q-dur-enter: 0s;
+    --q-dur-exit: 0s;
+    --q-dur-expand: 0s;
+  }
+}

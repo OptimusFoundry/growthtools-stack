@@ -1,7 +1,7 @@
 /**
  * Media API handlers
  */
-import { HttpResponse, http } from "msw";
+import { delay, HttpResponse, http } from "msw";
 import { setupEndpoint } from "../helpers/endpoint";
 import { mediaItems } from "../mocks/data";
 
@@ -38,4 +38,10 @@ export const mediaScenarios = {
 	/** 200 with empty media library */
 	listEmpty: () =>
 		http.get("*/api/protected/media", () => HttpResponse.json([])),
+	/** 201 upload that stays pending until `gate` resolves (or 1.5s without one) */
+	uploadSlow: (gate?: Promise<void>) =>
+		http.post("*/api/protected/media", async () => {
+			await (gate ?? delay(1500));
+			return HttpResponse.json(uploadedMedia, { status: 201 });
+		}),
 };

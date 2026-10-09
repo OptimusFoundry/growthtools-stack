@@ -1,0 +1,110 @@
+// Motion utilities: enter/exit (.q-anim-* with data-state="open"|"closing", paired with
+// usePresence) and height expand (.q-collapse). Built on the motion tokens; nothing animates at rest.
+@keyframes q-fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes q-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes q-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--q-space-0-5));
+  }
+}
+
+@keyframes q-rise-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--q-space-0-5));
+  }
+}
+
+@keyframes q-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--q-space-0-5) * -1));
+  }
+}
+
+@keyframes q-drop-out {
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--q-space-0-5) * -1));
+  }
+}
+
+@keyframes q-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes q-scale-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes q-slide-in-right {
+  from { transform: translateX(100%); }
+}
+
+@keyframes q-slide-out-right {
+  to { transform: translateX(100%); }
+}
+
+@keyframes q-slide-in-left {
+  from { transform: translateX(-100%); }
+}
+
+@keyframes q-slide-out-left {
+  to { transform: translateX(-100%); }
+}
+
+@mixin enter-exit($name, $in, $out, $enter: var(--q-dur-enter), $exit: var(--q-dur-exit), $ease: var(--q-ease-soft)) {
+  .q-anim-#{$name}[data-state="open"] {
+    animation: $in $enter $ease;
+  }
+
+  .q-anim-#{$name}[data-state="closing"] {
+    animation: $out $exit $ease forwards;
+  }
+}
+
+@include enter-exit(fade, q-fade-in, q-fade-out);
+@include enter-exit(rise, q-rise-in, q-rise-out);
+@include enter-exit(drop, q-drop-in, q-drop-out);
+@include enter-exit(scale, q-scale-in, q-scale-out);
+@include enter-exit(slide-right, q-slide-in-right, q-slide-out-right, var(--q-dur-expand), var(--q-dur-exit), var(--q-ease-forge));
+@include enter-exit(slide-left, q-slide-in-left, q-slide-out-left, var(--q-dur-expand), var(--q-dur-exit), var(--q-ease-forge));
+
+// Height expand without measuring: .q-collapse[data-open] > .q-collapse-inner.
+.q-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--q-dur-expand) var(--q-ease-soft);
+
+  &[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+
+  > .q-collapse-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="q-anim-"] {
+    animation: none !important;
+  }
+
+  .q-collapse {
+    transition: none;
+  }
+}

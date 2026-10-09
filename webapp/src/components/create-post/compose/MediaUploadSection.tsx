@@ -1,15 +1,12 @@
-import type {
-	ExistingFile,
-	UploadedFile,
-} from "@/proto-design-system/components/composite/FileUpload/FileUpload";
-import { FileUpload } from "@/proto-design-system/components/composite/FileUpload/FileUpload";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+import { SectionHeader } from "@optimusfoundry/quiet";
+import { MediaUpload } from "@/components/MediaUpload/MediaUpload";
+import type { MediaItem } from "@/types/media";
+import type { PendingUpload } from "@/types/mediaUpload";
 
 interface MediaUploadSectionProps {
-	pendingFiles: UploadedFile[];
-	existingMedia: ExistingFile[];
-	onFilesChange: (files: UploadedFile[]) => void;
+	pendingFiles: PendingUpload[];
+	existingMedia: MediaItem[];
+	onFilesChange: (files: PendingUpload[]) => void;
 	onRemoveExisting: (id: string) => void;
 	featuredImageId?: string;
 	onSetFeatured?: (id: string) => void;
@@ -24,24 +21,19 @@ export function MediaUploadSection({
 	onSetFeatured,
 }: MediaUploadSectionProps) {
 	return (
-		<Stack gap="sm">
-			<Text size="md" weight="semibold">
-				Media
-			</Text>
-			<FileUpload
+		<section aria-label="Media">
+			<SectionHeader size="sm" as="h2" title="Media" />
+			<MediaUpload
 				accept="image/*,video/*"
-				multiple
 				maxSize={50 * 1024 * 1024}
 				maxFiles={10}
-				files={pendingFiles}
+				pendingFiles={pendingFiles}
+				existingMedia={existingMedia}
 				onFilesChange={onFilesChange}
-				existingFiles={existingMedia}
 				onRemoveExisting={onRemoveExisting}
 				featuredId={featuredImageId}
 				onSetFeatured={onSetFeatured}
-				label="Drag & drop files here"
-				description="or click to browse"
 			/>
-		</Stack>
+		</section>
 	);
 }

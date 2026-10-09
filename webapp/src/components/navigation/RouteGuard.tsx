@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import React from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { usePersona } from "@/contexts/persona";
-import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
 import styles from "./routeguard.module.scss";
 
 interface RouteGuardProps {
@@ -26,7 +26,7 @@ export function RouteGuard({ children }: RouteGuardProps) {
 		return (
 			<div className={styles.accessDenied}>
 				<div className={styles.accessDeniedContent}>
-					<Icon icon={Lock} size="2xl" />
+					<AppIcon icon={Lock} size="2xl" color="error" />
 					<h2>Access Denied</h2>
 					<p>
 						Your account role ({persona}) does not have access to this page.

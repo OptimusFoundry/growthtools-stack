@@ -1,0 +1,30 @@
+{
+	"name": "@optimusfoundry/quiet",
+	"version": "0.4.1",
+	"description": "A design system built from 1,384 saved UI references. Quiet, precise, neutral. Vendored by quiet sync — do not edit; change quiet and sync again.",
+	"type": "module",
+	"private": true,
+	"sideEffects": [
+		"**/*.css",
+		"**/*.scss"
+	],
+	"exports": {
+		".": "./src/index.ts",
+		"./style.css": "./src/styles/index.scss",
+		"./fonts.css": "./src/styles/fonts.css",
+		"./tokens.json": "./src/styles/tokens.generated.json",
+		"./stylelint": "./stylelint/index.mjs",
+		"./stylelint/config": "./stylelint/config.mjs"
+	},
+	"bin": {
+		"quiet": "scripts/quiet.mjs",
+		"quiet-audit": "scripts/quiet-audit.mjs"
+	},
+	"dependencies": {
+		"motion": "^12.38.0"
+	},
+	"peerDependencies": {
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0"
+	}
+}

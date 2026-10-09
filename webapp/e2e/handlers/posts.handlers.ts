@@ -140,6 +140,28 @@ export const postsEndpoints = {
 			},
 		},
 	),
+	saveDraft: setupEndpoint("POST", "*/api/protected/posts/draft", createdPost),
+	updateDraft: setupEndpoint(
+		"PUT",
+		"*/api/protected/posts/:id/draft",
+		posts[1],
+	),
+	// WizardInner reads the body through `fetcher`, which JSON-parses every
+	// non-204 response, so the success body must not be empty.
+	retry: setupEndpoint(
+		"POST",
+		"*/api/protected/posts/:id/retry",
+		{ message: "Retry queued" },
+		{ successStatus: 200 },
+	),
+	// SSE; the 200 factory is swapped for a stream below. Non-2xx statuses make
+	// the hook set "Failed to start content generation".
+	generateStream: setupEndpoint(
+		"POST",
+		"*/api/protected/content/generate/stream",
+		null,
+		{ successStatus: 200 },
+	),
 	details: setupEndpoint("GET", "*/api/protected/posts/:id/details", {
 		post: posts[0],
 		platform_posts: [],
@@ -187,6 +209,47 @@ postsEndpoints.calendarMonth[200] = () =>
 		});
 	});
 
+const encoder = new TextEncoder();
+
+function sseFrame(event: string, data: unknown): Uint8Array {
+	return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+export const GENERATED_X_CONTENT = "Shipping the new composer today.";
+
+function contentStreamResponse(
+	frames: Uint8Array[],
+): HttpResponse<ReadableStream> {
+	const stream = new ReadableStream({
+		start(controller) {
+			for (const frame of frames) controller.enqueue(frame);
+			controller.close();
+		},
+	});
+	return new HttpResponse(stream, {
+		headers: {
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache",
+			Connection: "keep-alive",
+		},
+	});
+}
+
+postsEndpoints.generateStream[200] = () =>
+	http.post("*/api/protected/content/generate/stream", () =>
+		contentStreamResponse([
+			sseFrame("phase", { phase: "generating" }),
+			sseFrame("chunk", { platform: "", text: "Shipping the new " }),
+			sseFrame("base_done", { content: GENERATED_X_CONTENT }),
+			sseFrame("phase", { phase: "adapting" }),
+			sseFrame("platform_done", {
+				platform: "x",
+				content: GENERATED_X_CONTENT,
+			}),
+			sseFrame("done", {}),
+		]),
+	);
+
 // ── Default (happy-path) handler array ─────────────────────────────────────
 
 export const postsHandlers = Object.values(postsEndpoints).map((e) => e[200]());
@@ -196,4 +259,13 @@ export const postsHandlers = Object.values(postsEndpoints).map((e) => e[200]());
 export const postsScenarios = {
 	/** 200 with empty list */
 	empty: () => http.get("*/api/protected/posts", () => HttpResponse.json([])),
+
+	/** 200 SSE that emits an `error` event mid-stream (hook surfaces the raw data). */
+	generateStreamError: () =>
+		http.post("*/api/protected/content/generate/stream", () =>
+			contentStreamResponse([
+				sseFrame("phase", { phase: "generating" }),
+				encoder.encode("event: error\ndata: model overloaded\n\n"),
+			]),
+		),
 };

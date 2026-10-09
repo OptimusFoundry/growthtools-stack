@@ -3,16 +3,19 @@
  * Configure the GitHub repo target blog posts publish to
  */
 
+import {
+	Alert,
+	Button,
+	Container,
+	SectionHeader,
+	Spinner,
+	Stack,
+	TextField,
+} from "@optimusfoundry/quiet";
 import { Check } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { useSitePublishTarget } from "@/hooks/useSitePublishTarget";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
-import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { UpdateSitePublishTargetRequest } from "@/types/sitePublishTarget";
 import { getErrorMessage } from "@/utils/errorHandler";
 import styles from "./SitePublishTab.module.scss";
@@ -85,40 +88,6 @@ function useSitePublishForm() {
 }
 
 // ============================================================================
-// Sub-components
-// ============================================================================
-
-/**
- * Section — title + optional description + body content. Mirrors
- * VoiceProfileTab's rhythm so every settings tab reads the same.
- */
-function Section({
-	title,
-	description,
-	children,
-}: {
-	title: string;
-	description?: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<Stack gap="md">
-			<Stack gap="xs">
-				<Text as="h3" size="lg">
-					{title}
-				</Text>
-				{description ? (
-					<Text size="sm" color="secondary">
-						{description}
-					</Text>
-				) : null}
-			</Stack>
-			{children}
-		</Stack>
-	);
-}
-
-// ============================================================================
 // Component
 // ============================================================================
 
@@ -144,13 +113,11 @@ export const SitePublishTab = memo(function SitePublishTab() {
 
 	if (loading && !repoOwner) {
 		return (
-			<Stack
-				align="center"
-				justify="center"
-				className={`${styles.settings} ${styles.loadingState}`}
-			>
-				<Spinner size="lg" />
-			</Stack>
+			<Container size="sm" padded={false} className={styles.container}>
+				<Stack align="center" justify="center" className={styles.loadingState}>
+					<Spinner size="lg" />
+				</Stack>
+			</Container>
 		);
 	}
 
@@ -160,98 +127,101 @@ export const SitePublishTab = memo(function SitePublishTab() {
 
 	if (error && !repoOwner && !isNotFoundError) {
 		return (
-			<Stack className={styles.settings}>
+			<Container size="sm" padded={false} className={styles.container}>
 				<Alert variant="error" title="Error">
 					{error}
 				</Alert>
-			</Stack>
+			</Container>
 		);
 	}
 
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		handleSave();
+	};
+
 	return (
-		<Stack gap="xl" className={styles.settings}>
-			{/* Page Header */}
-			<Stack gap="xs">
-				<Text as="h2" size="xl">
-					Site Publish
-				</Text>
-				<Text size="md" color="secondary">
-					Configure the GitHub repository your blog posts publish to
-				</Text>
-			</Stack>
+		<Container size="sm" padded={false} className={styles.container}>
+			<form noValidate onSubmit={handleSubmit}>
+				<Stack gap="xl">
+					<SectionHeader
+						size="sm"
+						as="h2"
+						title="Site Publish"
+						description="Configure the GitHub repository your blog posts publish to"
+					/>
 
-			{successMessage ? (
-				<Alert
-					variant="success"
-					dismissible
-					onDismiss={() => setSuccessMessage(null)}
-				>
-					{successMessage}
-				</Alert>
-			) : null}
+					{successMessage ? (
+						<Alert variant="success" onDismiss={() => setSuccessMessage(null)}>
+							{successMessage}
+						</Alert>
+					) : null}
 
-			{saveError ? (
-				<Alert variant="error" dismissible onDismiss={() => setSaveError(null)}>
-					{saveError}
-				</Alert>
-			) : null}
+					{saveError ? (
+						<Alert variant="error" onDismiss={() => setSaveError(null)}>
+							{saveError}
+						</Alert>
+					) : null}
 
-			<Section
-				title="Repository"
-				description="The GitHub repository that receives published blog posts"
-			>
-				<TextField
-					label="Repository Owner"
-					value={repoOwner}
-					onChange={(e) => setRepoOwner(e.target.value)}
-					placeholder="e.g. shubhanshu-dev"
-					isFullWidth
-				/>
+					<section aria-label="Repository">
+						<Stack gap="lg">
+							<SectionHeader
+								size="sm"
+								as="h3"
+								title="Repository"
+								description="The GitHub repository that receives published blog posts"
+							/>
+							<TextField
+								label="Repository Owner"
+								value={repoOwner}
+								onChange={(e) => setRepoOwner(e.target.value)}
+								placeholder="e.g. shubhanshu-dev"
+							/>
+							<TextField
+								label="Repository Name"
+								value={repoName}
+								onChange={(e) => setRepoName(e.target.value)}
+								placeholder="e.g. site"
+							/>
+						</Stack>
+					</section>
 
-				<TextField
-					label="Repository Name"
-					value={repoName}
-					onChange={(e) => setRepoName(e.target.value)}
-					placeholder="e.g. site"
-					isFullWidth
-				/>
-			</Section>
+					<section aria-label="Publish Target">
+						<Stack gap="lg">
+							<SectionHeader
+								size="sm"
+								as="h3"
+								title="Publish Target"
+								description="Where in the repository new posts are committed"
+							/>
+							<TextField
+								label="Base Branch"
+								value={baseBranch}
+								onChange={(e) => setBaseBranch(e.target.value)}
+								placeholder="e.g. main"
+							/>
+							<TextField
+								label="Content Path"
+								value={contentPath}
+								onChange={(e) => setContentPath(e.target.value)}
+								placeholder="e.g. src/content/blog"
+							/>
+						</Stack>
+					</section>
 
-			<Divider />
-
-			<Section
-				title="Publish Target"
-				description="Where in the repository new posts are committed"
-			>
-				<TextField
-					label="Base Branch"
-					value={baseBranch}
-					onChange={(e) => setBaseBranch(e.target.value)}
-					placeholder="e.g. main"
-					isFullWidth
-				/>
-
-				<TextField
-					label="Content Path"
-					value={contentPath}
-					onChange={(e) => setContentPath(e.target.value)}
-					placeholder="e.g. src/content/blog"
-					isFullWidth
-				/>
-			</Section>
-
-			<Divider />
-
-			<Stack direction="row" justify="end">
-				<Button
-					onClick={handleSave}
-					isLoading={saving}
-					leftIcon={<Check size={16} />}
-				>
-					{saving ? "Saving..." : "Save"}
-				</Button>
-			</Stack>
-		</Stack>
+					<Stack direction="row" justify="flex-end">
+						<Button
+							type="submit"
+							variant="primary"
+							loading={saving}
+							leftIcon={<AppIcon icon={Check} />}
+						>
+							{saving ? "Saving..." : "Save"}
+						</Button>
+					</Stack>
+				</Stack>
+			</form>
+		</Container>
 	);
 });
 

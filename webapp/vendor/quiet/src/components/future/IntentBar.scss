@@ -1,0 +1,197 @@
+// IntentBar — free text in; the reading comes back as editable chips before anything runs.
+// BEM: .q-intent-bar, __field, __mark, __input, __chips, __chip-item, __chip(--fixed),
+// __chip-key, __chip-value, __chip-caret, __footer, __summary, __actions, __suggestions, __suggestion.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-intent-bar-gap: var(--q-space-1-5);
+    --q-intent-bar-field-bg: var(--q-bg);
+    --q-intent-bar-field-border: var(--q-border);
+    --q-intent-bar-field-border-focus: var(--q-fg);
+    --q-intent-bar-field-ring-focus: var(--q-ring-soft);
+    --q-intent-bar-field-radius: var(--q-radius-pill);
+    --q-intent-bar-field-pl: var(--q-space-2);
+    --q-intent-bar-field-pr: var(--q-space-0-75);
+    --q-intent-bar-field-height: var(--q-field-md);
+    --q-intent-bar-mark-size: var(--q-space-0-75);
+    --q-intent-bar-mark-bg: var(--q-accent);
+    --q-intent-bar-input-size: var(--q-text-md);
+    --q-intent-bar-input-fg: var(--q-fg);
+    --q-intent-bar-chip-height: calc(var(--q-space-3) + var(--q-space-0-75));
+    --q-intent-bar-chip-px: var(--q-space-1-25);
+    --q-intent-bar-chip-gap: var(--q-space-1);
+    --q-intent-bar-chip-bg: var(--q-bg);
+    --q-intent-bar-chip-bg-hover: var(--q-bg-subtle);
+    --q-intent-bar-chip-border: var(--q-border);
+    --q-intent-bar-chip-border-hover: var(--q-fg);
+    --q-intent-bar-chip-size: var(--q-text-xs);
+    --q-intent-bar-chip-key-font: var(--q-font-mono);
+    --q-intent-bar-chip-key-size: var(--q-text-3xs);
+    --q-intent-bar-chip-key-fg: var(--q-fg-muted);
+    --q-intent-bar-chip-value-fg: var(--q-fg);
+    --q-intent-bar-chip-value-weight: var(--q-weight-medium);
+    --q-intent-bar-chip-stagger: 60ms;
+    --q-intent-bar-summary-size: var(--q-text-sm);
+    --q-intent-bar-summary-fg: var(--q-fg-body);
+    --q-intent-bar-suggestion-size: var(--q-text-xs);
+    --q-intent-bar-suggestion-fg: var(--q-fg-muted);
+    --q-intent-bar-suggestion-fg-hover: var(--q-fg);
+    --q-intent-bar-suggestion-border: var(--q-border);
+  }
+}
+
+@layer q.components {
+  .q-intent-bar {
+    display: grid;
+    gap: var(--q-intent-bar-gap);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-intent-bar__field {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1);
+    box-sizing: border-box;
+    min-height: var(--q-intent-bar-field-height);
+    margin: 0;
+    padding: var(--q-space-0-5) var(--q-intent-bar-field-pr) var(--q-space-0-5) var(--q-intent-bar-field-pl);
+    border: var(--q-hairline) solid var(--q-intent-bar-field-border);
+    border-radius: var(--q-intent-bar-field-radius);
+    background: var(--q-intent-bar-field-bg);
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:focus-within {
+      border-color: var(--q-intent-bar-field-border-focus);
+      box-shadow: var(--q-intent-bar-field-ring-focus);
+    }
+  }
+
+  // The one molten dot: this is where you speak.
+  .q-intent-bar__mark {
+    flex: none;
+    width: var(--q-intent-bar-mark-size);
+    height: var(--q-intent-bar-mark-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-intent-bar-mark-bg);
+  }
+
+  .q-intent-bar__input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--q-intent-bar-input-size);
+    color: var(--q-intent-bar-input-fg);
+  }
+
+  .q-intent-bar__chips,
+  .q-intent-bar__suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--q-space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .q-intent-bar__chip-item {
+    animation: q-rise-in var(--q-dur-enter) var(--q-ease-soft) calc(var(--_i, 0) * var(--q-intent-bar-chip-stagger)) backwards;
+  }
+
+  .q-intent-bar__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-intent-bar-chip-gap);
+    box-sizing: border-box;
+    height: var(--q-intent-bar-chip-height);
+    margin: 0;
+    padding: 0 var(--q-intent-bar-chip-px);
+    border: var(--q-hairline) solid var(--q-intent-bar-chip-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-intent-bar-chip-bg);
+    font-family: inherit;
+    font-size: var(--q-intent-bar-chip-size);
+    line-height: var(--q-leading-none);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color var(--q-dur-hover) var(--q-ease-soft), background-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible),
+    &[aria-expanded="true"] {
+      border-color: var(--q-intent-bar-chip-border-hover);
+      background: var(--q-intent-bar-chip-bg-hover);
+    }
+
+    &--fixed {
+      cursor: default;
+    }
+  }
+
+  .q-intent-bar__chip-key {
+    font-family: var(--q-intent-bar-chip-key-font);
+    font-size: var(--q-intent-bar-chip-key-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-intent-bar-chip-key-fg);
+  }
+
+  .q-intent-bar__chip-value {
+    font-weight: var(--q-intent-bar-chip-value-weight);
+    color: var(--q-intent-bar-chip-value-fg);
+  }
+
+  // A hairline chevron: the chip opens.
+  .q-intent-bar__chip-caret {
+    width: var(--q-space-0-5);
+    height: var(--q-space-0-5);
+    margin: 0 var(--q-space-0-25) var(--q-space-0-25);
+    border-right: var(--q-hairline) solid var(--q-intent-bar-chip-key-fg);
+    border-bottom: var(--q-hairline) solid var(--q-intent-bar-chip-key-fg);
+    transform: rotate(45deg);
+  }
+
+  .q-intent-bar__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--q-space-1-5);
+  }
+
+  .q-intent-bar__summary {
+    font-size: var(--q-intent-bar-summary-size);
+    color: var(--q-intent-bar-summary-fg);
+  }
+
+  .q-intent-bar__actions {
+    display: flex;
+    gap: var(--q-space-1);
+  }
+
+  .q-intent-bar__suggestion {
+    margin: 0;
+    padding: var(--q-space-0-5) var(--q-space-1-25);
+    border: var(--q-hairline) dashed var(--q-intent-bar-suggestion-border);
+    border-radius: var(--q-radius-pill);
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--q-intent-bar-suggestion-size);
+    color: var(--q-intent-bar-suggestion-fg);
+    cursor: pointer;
+    transition: color var(--q-dur-hover) var(--q-ease-soft), border-color var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus-visible) {
+      border-color: var(--q-intent-bar-chip-border-hover);
+      color: var(--q-intent-bar-suggestion-fg-hover);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .q-intent-bar__chip-item {
+      animation: none;
+    }
+  }
+}

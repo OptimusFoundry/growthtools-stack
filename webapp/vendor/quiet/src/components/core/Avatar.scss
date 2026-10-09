@@ -1,0 +1,72 @@
+// Avatar — image, mono initials or fallback in a circle or soft square.
+// BEM: .q-avatar, __img([data-loaded]), __empty; --{size} (--_size), --square.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-avatar-xs-size: var(--q-space-3);
+    --q-avatar-sm-size: var(--q-space-4);
+    --q-avatar-md-size: var(--q-space-5);
+    --q-avatar-lg-size: var(--q-space-6);
+    --q-avatar-xl-size: var(--q-space-8);
+    --q-avatar-2xl-size: var(--q-space-12);
+    --q-avatar-radius: var(--q-radius-pill);
+    --q-avatar-square-radius: var(--q-radius-md);
+    --q-avatar-bg: var(--q-bg-subtle);
+    --q-avatar-border: var(--q-border);
+    --q-avatar-fg: var(--q-fg);
+    --q-avatar-empty-fg: var(--q-fg-subtle);
+    --q-avatar-tracking: var(--q-tracking-wide);
+    // Initials scale with the avatar: round(size × 0.34), never below 9px.
+    --q-avatar-font-scale: 0.34;
+    --q-avatar-font-size-min: 9px;
+  }
+}
+
+@layer q.components {
+  .q-avatar {
+    --_size: var(--q-avatar-md-size);
+
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--_size);
+    height: var(--_size);
+    overflow: hidden;
+    border: var(--q-hairline) solid var(--q-avatar-border);
+    border-radius: var(--q-avatar-radius);
+    background: var(--q-avatar-bg);
+    color: var(--q-avatar-fg);
+    font-family: var(--q-font-mono);
+    font-size: calc(max(var(--q-avatar-font-size-min), round(var(--_size) * var(--q-avatar-font-scale), var(--q-space-px))));
+    letter-spacing: var(--q-avatar-tracking);
+    line-height: var(--q-leading-none);
+
+    @each $size in xs, sm, md, lg, xl, 2xl {
+      &--#{$size} {
+        --_size: var(--q-avatar-#{$size}-size);
+      }
+    }
+
+    &--square {
+      border-radius: var(--q-avatar-square-radius);
+    }
+  }
+
+  .q-avatar__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity var(--q-dur-hover) var(--q-ease-soft);
+
+    &[data-loaded] {
+      opacity: 1;
+    }
+  }
+
+  .q-avatar__empty {
+    color: var(--q-avatar-empty-fg);
+  }
+}

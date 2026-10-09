@@ -3,7 +3,11 @@
 		"stylelint-config-standard-scss",
 		"stylelint-config-recess-order"
 	],
-	"plugins": ["stylelint-scss", "stylelint-declaration-strict-value"],
+	"plugins": [
+		"stylelint-scss",
+		"stylelint-declaration-strict-value",
+		"@optimusfoundry/quiet/stylelint"
+	],
 	"rules": {
 		"order/properties-order": null,
 		"keyframes-name-pattern": null,
@@ -45,7 +49,7 @@
 					"/^[0-9.]+em$/",
 					"/^var\\(--/"
 				],
-				"message": "Use design tokens from @/design-tokens/ instead of hardcoded values. See docs/design-tokens.md"
+				"message": "Use quiet --q-* tokens instead of hardcoded values. See vendor/quiet/DESIGN.md (token tiers), vendor/quiet/docs/guidelines/spacing.md (job-token gaps), vendor/quiet/docs/guidelines/typography.md (type roles) and webapp/docs/TEMPLATE-PATTERNS.md (template-only rules)."
 			}
 		],
 		"scss/dollar-variable-pattern": [
@@ -93,7 +97,8 @@
 		"declaration-property-value-keyword-no-deprecated": null,
 		"rule-empty-line-before": null,
 		"comment-empty-line-before": null,
-		"no-duplicate-selectors": null
+		"no-duplicate-selectors": null,
+		"quiet/known-tokens": true
 	},
 	"ignoreFiles": [
 		"**/*.js",
@@ -104,6 +109,24 @@
 		"dist/**",
 		"build/**",
 		"storybook-static/**",
-		"src/design-tokens/**"
+		"vendor/quiet/**"
+	],
+	"overrides": [
+		{
+			"files": ["src/**/*.scss", ".storybook/**/*.scss"],
+			"rules": {
+				"declaration-property-value-disallowed-list": [
+					{
+						"display": ["grid"],
+						"/.*/": [
+							"/var\\(\\s*--(color|space|font|line-height|letter-spacing|border-width|radius|shadow|duration|ease|z|max-width|page)-/"
+						]
+					},
+					{
+						"message": "Use quiet Grid / Col instead of display: grid (display: flex for micro-alignment stays allowed), and use quiet --q-* tokens instead of legacy Proto custom properties such as --space-*, --color-* or --font-*. See vendor/quiet/DESIGN.md, vendor/quiet/docs/guidelines/spacing.md and vendor/quiet/docs/guidelines/typography.md."
+					}
+				]
+			}
+		}
 	]
 }

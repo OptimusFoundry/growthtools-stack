@@ -1,0 +1,50 @@
+// Icon — a type glyph sized in em. BEM: .q-icon; --{size}, --custom-size (--_size), --{color}, --custom-color (--_color).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-icon-weight: var(--q-weight-medium);
+    --q-icon-default-fg: var(--q-fg);
+    --q-icon-muted-fg: var(--q-fg-muted);
+    --q-icon-quiet-fg: var(--q-fg-subtle);
+    --q-icon-primary-fg: var(--q-accent);
+    --q-icon-success-fg: var(--q-status-success-fg);
+    --q-icon-warning-fg: var(--q-status-warning-fg);
+    --q-icon-error-fg: var(--q-status-error-fg);
+  }
+}
+
+@layer q.components {
+  .q-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    color: inherit;
+    font-family: var(--q-font-sans);
+    font-style: normal;
+    font-weight: var(--q-icon-weight);
+    line-height: var(--q-leading-none);
+
+    @each $size in xs, sm, md, lg, xl, 2xl {
+      &--#{$size} {
+        font-size: var(--q-icon-#{$size});
+      }
+    }
+
+    &--custom-size {
+      font-size: var(--_size);
+    }
+
+    @each $color in default, muted, quiet, primary, success, warning, error {
+      &--#{$color} {
+        color: var(--q-icon-#{$color}-fg);
+      }
+    }
+
+    &--custom-color {
+      color: var(--_color);
+    }
+  }
+}

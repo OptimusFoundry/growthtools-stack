@@ -6,6 +6,8 @@ Conventions for accessible names on interactive elements. Enforced by review.
 
 ## Rule: aria-label must be unique within its visible context
 
+→ skill: frontend-a11y-rules (unique names)
+
 Every focusable control on a page (`button`, `a`, `[role="button"]`, `input`,
 custom widgets) needs an accessible name. When two controls would otherwise
 share the same name, the label MUST disambiguate them.
@@ -126,5 +128,5 @@ when the duplication is structural rather than incidental.
   in strict mode if `X` matches more than one element. Treat that error as
   evidence of an a11y bug, not a test bug.
 
-See also: [DESIGN-GUIDELINES.md](DESIGN-GUIDELINES.md) for visual / spacing
-patterns.
+See also: [quiet accessibility guidelines](../vendor/quiet/docs/guidelines/accessibility.md)
+for what quiet guarantees.

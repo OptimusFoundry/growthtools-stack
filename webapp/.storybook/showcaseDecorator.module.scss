@@ -3,11 +3,11 @@
 	align-items: center;
 	justify-content: center;
 	min-height: 100%;
-	padding: var(--space-12);
+	padding: var(--q-space-10);
 	background: linear-gradient(
 		135deg,
-		var(--color-primary) 0%,
-		var(--color-accent) 100%
+		var(--q-bg-inverse) 0%,
+		var(--q-accent) 100%
 	);
 }
 

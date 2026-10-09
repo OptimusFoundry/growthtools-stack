@@ -3,19 +3,25 @@
  * Container component for billing and subscription management
  */
 
+import {
+	Badge,
+	Button,
+	EmptyState,
+	List,
+	PageHero,
+	SectionHeader,
+	Spinner,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
 import { CreditCard, ExternalLink } from "lucide-react";
 import { memo, useCallback, useEffect } from "react";
-
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ErrorState } from "@/components/error/error";
 import { useCreateCustomerPortal } from "@/hooks/useCreateCustomerPortal";
 import { useGetAllPrices } from "@/hooks/useGetAllPrices";
 import { useGetCurrentSubscription } from "@/hooks/useGetCurrentSubscription";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import type { Price, Subscription } from "@/types/billing";
 import styles from "./component.module.scss";
 
@@ -108,31 +114,33 @@ const SubscriptionCard = memo(function SubscriptionCard({
 				: "secondary";
 
 	return (
-		<section className={styles.section}>
-			<h3 className={styles.sectionTitle}>Current Plan</h3>
-			<div className={styles.card}>
-				<div className={styles.planHeader}>
-					<span className={styles.planName}>
+		<Stack as="section" gap={12}>
+			<SectionHeader size="sm" as="h2" title="Current Plan" />
+			<div className={styles.panel}>
+				<Stack gap="xs">
+					<Text size="lg" weight="medium" color="heading">
 						{subscription.planName || "Unknown Plan"}
-					</span>
-					<Badge variant={statusVariant} size="md">
-						{subscription.status}
-					</Badge>
-				</div>
-				{subscription.status === "active" && subscription.nextBillingDate && (
-					<p className={styles.billingDate}>
-						Next billing date:{" "}
-						{new Date(subscription.nextBillingDate).toLocaleDateString()}
-					</p>
-				)}
-				{subscription.status === "canceled" && (
-					<p className={styles.canceledNote}>
-						Your subscription will remain active until the end of the current
-						billing period.
-					</p>
-				)}
+					</Text>
+					<div>
+						<Badge variant={statusVariant} size="md">
+							{subscription.status}
+						</Badge>
+					</div>
+					{subscription.status === "active" && subscription.nextBillingDate && (
+						<Text color="muted">
+							Next billing date:{" "}
+							{new Date(subscription.nextBillingDate).toLocaleDateString()}
+						</Text>
+					)}
+					{subscription.status === "canceled" && (
+						<Text size="sm" color="warning">
+							Your subscription will remain active until the end of the current
+							billing period.
+						</Text>
+					)}
+				</Stack>
 			</div>
-		</section>
+		</Stack>
 	);
 });
 
@@ -155,44 +163,41 @@ const BillingActions = memo(function BillingActions({
 	onChangePlan,
 }: BillingActionsProps) {
 	return (
-		<section className={styles.section}>
-			<h3 className={styles.sectionTitle}>Manage Billing</h3>
-			<div className={styles.card}>
-				<div className={styles.actionsList}>
-					<div className={styles.actionRow}>
-						<div className={styles.actionInfo}>
-							<span className={styles.actionLabel}>Billing Portal</span>
-							<span className={styles.actionDescription}>
-								View invoices, update payment method, and manage your
-								subscription
-							</span>
-						</div>
-						<Button
-							variant="secondary"
-							leftIcon={<ExternalLink size={16} />}
-							onClick={onManage}
-							disabled={portalLoading || !portalUrl}
-						>
-							{portalLoading ? "Loading..." : "Open Portal"}
-						</Button>
-					</div>
-
-					<div className={styles.divider} />
-
-					<div className={styles.actionRow}>
-						<div className={styles.actionInfo}>
-							<span className={styles.actionLabel}>Change Plan</span>
-							<span className={styles.actionDescription}>
-								Upgrade or downgrade your subscription
-							</span>
-						</div>
-						<Button variant="secondary" onClick={onChangePlan}>
-							{status === "canceled" ? "Resubscribe" : "Change Plan"}
-						</Button>
-					</div>
-				</div>
-			</div>
-		</section>
+		<Stack as="section" gap={12}>
+			<SectionHeader size="sm" as="h2" title="Manage Billing" />
+			<List
+				bordered
+				size="md"
+				items={[
+					{
+						id: "portal",
+						primary: "Billing Portal",
+						secondary:
+							"View invoices, update payment method, and manage your subscription",
+						trailing: (
+							<Button
+								variant="secondary"
+								leftIcon={<AppIcon icon={ExternalLink} size="md" />}
+								onClick={onManage}
+								disabled={portalLoading || !portalUrl}
+							>
+								{portalLoading ? "Loading..." : "Open Portal"}
+							</Button>
+						),
+					},
+					{
+						id: "plan",
+						primary: "Change Plan",
+						secondary: "Upgrade or downgrade your subscription",
+						trailing: (
+							<Button variant="secondary" onClick={onChangePlan}>
+								{status === "canceled" ? "Resubscribe" : "Change Plan"}
+							</Button>
+						),
+					},
+				]}
+			/>
+		</Stack>
 	);
 });
 
@@ -216,7 +221,7 @@ export const BillingPage = memo(function BillingPage() {
 
 	// Loading state
 	if (loading) {
-		return <Spinner size="lg" label="Loading billing information..." />;
+		return <Spinner size="lg" aria-label="Loading billing information..." />;
 	}
 
 	// Redirect pending (no subscription)
@@ -233,10 +238,11 @@ export const BillingPage = memo(function BillingPage() {
 	if (!subscription) {
 		return (
 			<EmptyState
-				icon={<CreditCard size={48} />}
+				headingLevel={2}
+				icon={<AppIcon icon={CreditCard} size="xl" />}
 				title="No subscription found"
 				description="You don't have an active subscription."
-				action={
+				actions={
 					<Button variant="primary" onClick={handleChangePlan}>
 						View Plans
 					</Button>
@@ -246,8 +252,13 @@ export const BillingPage = memo(function BillingPage() {
 	}
 
 	return (
-		<Stack gap="lg" className={styles.billing} animate>
-			<h2 className={styles.pageTitle}>Billing</h2>
+		<Stack gap="md" className={styles.billing} animated>
+			<PageHero
+				size="md"
+				ruled={false}
+				className={styles.hero}
+				title="Billing"
+			/>
 
 			<SubscriptionCard subscription={subscription} />
 

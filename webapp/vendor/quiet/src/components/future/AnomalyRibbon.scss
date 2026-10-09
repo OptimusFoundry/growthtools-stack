@@ -1,0 +1,127 @@
+// AnomalyRibbon — a ribbon of anomaly marks along a series. BEM: .q-anomaly-ribbon, __ribbon,
+// __mark ([aria-pressed]), __caption, __summary, __detail, __series, __bar
+// ([data-mark="anomaly"|"selected"|"near"]).
+// Set inline: --_x (0–1) per mark, --_h (0–1) per bar. Anomalies are molten — rings and thin
+// marks, never a fill.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-anomaly-ribbon-gap: var(--q-space-1);
+    --q-anomaly-ribbon-ribbon-height: var(--q-space-1);
+    --q-anomaly-ribbon-ribbon-bg: var(--q-bg-subtle);
+    --q-anomaly-ribbon-ribbon-border: var(--q-border);
+    --q-anomaly-ribbon-mark-size: var(--q-space-2);
+    --q-anomaly-ribbon-mark-bg: var(--q-bg);
+    --q-anomaly-ribbon-mark-bg-selected: var(--q-accent);
+    --q-anomaly-ribbon-mark-ring: var(--q-accent);
+    --q-anomaly-ribbon-mark-focus-ring: 0 0 0 2px var(--q-bg), 0 0 0 3px var(--q-fg);
+    --q-anomaly-ribbon-caption-font-family: var(--q-font-mono);
+    --q-anomaly-ribbon-caption-font-size: var(--q-text-2xs);
+    --q-anomaly-ribbon-caption-fg: var(--q-fg-muted);
+    --q-anomaly-ribbon-detail-fg: var(--q-fg);
+    --q-anomaly-ribbon-series-height: calc(var(--q-space-10) + var(--q-space-1-25));
+    --q-anomaly-ribbon-bar-gap: var(--q-space-0-25);
+    --q-anomaly-ribbon-bar-min: var(--q-space-0-25);
+    --q-anomaly-ribbon-bar-radius: var(--q-radius-2xs);
+    --q-anomaly-ribbon-bar-bg: var(--q-border-strong);
+    --q-anomaly-ribbon-bar-bg-near: var(--q-fg-muted);
+    --q-anomaly-ribbon-bar-bg-anomaly: var(--q-accent);
+    --q-anomaly-ribbon-bar-anomaly-opacity: 0.45;
+  }
+}
+
+@layer q.components {
+  .q-anomaly-ribbon {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-anomaly-ribbon-gap);
+  }
+
+  .q-anomaly-ribbon__ribbon {
+    position: relative;
+    height: var(--q-anomaly-ribbon-ribbon-height);
+    margin: calc((var(--q-anomaly-ribbon-mark-size) - var(--q-anomaly-ribbon-ribbon-height)) / 2) 0;
+    box-sizing: border-box;
+    border: var(--q-hairline) solid var(--q-anomaly-ribbon-ribbon-border);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-anomaly-ribbon-ribbon-bg);
+  }
+
+  .q-anomaly-ribbon__mark {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_x) * 100%);
+    width: var(--q-anomaly-ribbon-mark-size);
+    height: var(--q-anomaly-ribbon-mark-size);
+    padding: 0;
+    box-sizing: border-box;
+    border: var(--q-hairline) solid var(--q-anomaly-ribbon-mark-ring);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-anomaly-ribbon-mark-bg);
+    color: inherit;
+    font: inherit;
+    outline: none;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition:
+      background var(--q-dur-hover) var(--q-ease-soft),
+      box-shadow var(--q-dur-hover) var(--q-ease-soft);
+
+    &:hover,
+    &[aria-pressed="true"] {
+      background: var(--q-anomaly-ribbon-mark-bg-selected);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--q-anomaly-ribbon-mark-focus-ring);
+    }
+  }
+
+  .q-anomaly-ribbon__caption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--q-anomaly-ribbon-gap);
+    font-family: var(--q-anomaly-ribbon-caption-font-family);
+    font-size: var(--q-anomaly-ribbon-caption-font-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-anomaly-ribbon-caption-fg);
+  }
+
+  .q-anomaly-ribbon__detail {
+    color: var(--q-anomaly-ribbon-detail-fg);
+  }
+
+  .q-anomaly-ribbon__series {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--q-anomaly-ribbon-bar-gap);
+    height: var(--q-anomaly-ribbon-series-height);
+  }
+
+  .q-anomaly-ribbon__bar {
+    flex: 1;
+    min-height: var(--q-anomaly-ribbon-bar-min);
+    height: calc(var(--_h) * 100%);
+    border-radius: var(--q-anomaly-ribbon-bar-radius);
+    background: var(--q-anomaly-ribbon-bar-bg);
+    transition:
+      background var(--q-dur-expand) var(--q-ease-soft),
+      opacity var(--q-dur-expand) var(--q-ease-soft);
+
+    &[data-mark="near"] {
+      background: var(--q-anomaly-ribbon-bar-bg-near);
+    }
+
+    &[data-mark="anomaly"] {
+      background: var(--q-anomaly-ribbon-bar-bg-anomaly);
+      opacity: var(--q-anomaly-ribbon-bar-anomaly-opacity);
+    }
+
+    &[data-mark="selected"] {
+      background: var(--q-anomaly-ribbon-bar-bg-anomaly);
+    }
+  }
+}

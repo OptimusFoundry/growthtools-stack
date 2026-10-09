@@ -1,15 +1,11 @@
 "use client";
 
+import { Avatar, Stack, Text } from "@optimusfoundry/quiet";
 import { useContext } from "react";
 import { AuthContext } from "@/contexts/auth";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { useSidebarContext } from "@/proto-design-system/components/navigation/Sidebar/Sidebar";
-import { Avatar } from "@/proto-design-system/components/primitives/Avatar/Avatar";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 
 export default function UserName() {
 	const auth = useContext(AuthContext);
-	const { collapsed } = useSidebarContext();
 
 	if (!auth.user) {
 		return null;
@@ -20,14 +16,10 @@ export default function UserName() {
 	const fullName =
 		`${auth.user.firstName || ""} ${auth.user.lastName || ""}`.trim();
 
-	if (collapsed) {
-		return <Avatar size="sm" fallback={initials} />;
-	}
-
 	return (
-		<Stack direction="row" gap="sm" align="center">
+		<Stack direction="row" gap="xs" align="center">
 			<Avatar size="sm" fallback={initials} />
-			<Text size="sm" weight="medium">
+			<Text size="sm" weight="medium" color="heading">
 				{fullName}
 			</Text>
 		</Stack>

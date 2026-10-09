@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button, FilterTabs, Stack } from "@optimusfoundry/quiet";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
 import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
 import { CreateShowcasePostModal } from "@/components/showcase-post/CreateShowcasePostModal";
@@ -14,11 +16,8 @@ import {
 import { PostsHero } from "@/features/posts/components/PostsHero/PostsHero";
 import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeletePost } from "@/hooks/useDeletePost";
-import { useFilterCounts } from "@/hooks/useFilterCounts";
+import { toFilterTabItems, useFilterCounts } from "@/hooks/useFilterCounts";
 import { useGetPosts } from "@/hooks/useGetPosts";
-import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs/FilterTabs";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
 import type { PostStatus } from "@/types/post";
 
 export const Route = createFileRoute("/posts")({
@@ -69,13 +68,16 @@ function PostsPage() {
 		<ResourceListPage
 			title="Posts"
 			topbarAction={
-				<Stack direction="row" gap="sm">
-					<Link to="/posts/new">
-						<Button variant="primary">
-							<Plus size={16} /> Create Post
-						</Button>
-					</Link>
-					<Button onClick={showcaseFlow.open}>
+				<Stack direction="row" gap="xs">
+					<Button
+						variant="primary"
+						size="sm"
+						href="/posts/new"
+						leftIcon={<AppIcon icon={Plus} size="md" />}
+					>
+						Create Post
+					</Button>
+					<Button variant="secondary" size="sm" onClick={showcaseFlow.open}>
 						{SHOWCASE_POST_COPY.triggerLabel}
 					</Button>
 				</Stack>
@@ -83,10 +85,11 @@ function PostsPage() {
 			hero={<PostsHero count={allPosts.length} />}
 			filters={
 				<FilterTabs
+					size="sm"
+					label="Filter posts by status"
+					items={toFilterTabItems(filterItems)}
 					value={statusFilter}
 					onChange={setStatusFilter}
-					items={filterItems}
-					aria-label="Filter posts by status"
 				/>
 			}
 			loading={loading}

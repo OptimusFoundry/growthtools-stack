@@ -1,0 +1,160 @@
+// ThresholdHandles — alert thresholds dragged on the chart. BEM: .q-threshold-handles, __header,
+// __label, __summary ([data-firing]), __chart ([data-glide]), __bars, __bar ([data-out]), __band,
+// __handle (--high, --low), __line, __tag.
+// Set inline: --_low/--_high (0–1) on the chart, --_h (0–1) per bar, --_t (0–1) per handle.
+// Bars that would have fired turn ink-muted and carry a molten cap — punctuation, never a fill.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-threshold-handles-gap: var(--q-space-1-5);
+    --q-threshold-handles-chart-height: calc(var(--q-space-16) + var(--q-space-2-5));
+    --q-threshold-handles-bar-gap: var(--q-space-0-25);
+    --q-threshold-handles-bar-radius: var(--q-radius-2xs);
+    --q-threshold-handles-bar-bg: var(--q-border);
+    --q-threshold-handles-bar-bg-out: var(--q-fg-muted);
+    --q-threshold-handles-bar-cap: inset 0 var(--q-space-0-25) 0 var(--q-accent);
+    --q-threshold-handles-band-bg: var(--q-bg-subtle);
+    --q-threshold-handles-label-font-size: var(--q-text-md);
+    --q-threshold-handles-label-weight: var(--q-weight-medium);
+    --q-threshold-handles-summary-font-family: var(--q-font-mono);
+    --q-threshold-handles-summary-font-size: var(--q-text-2xs);
+    --q-threshold-handles-summary-fg: var(--q-fg-muted);
+    --q-threshold-handles-summary-fg-firing: var(--q-fg);
+    --q-threshold-handles-hit: var(--q-space-2);
+    --q-threshold-handles-line: var(--q-space-0-25);
+    --q-threshold-handles-line-bg: var(--q-fg);
+    --q-threshold-handles-tag-height: var(--q-space-2-5);
+    --q-threshold-handles-tag-px: var(--q-space-0-75);
+    --q-threshold-handles-tag-radius: var(--q-radius-xs);
+    --q-threshold-handles-tag-bg: var(--q-fg);
+    --q-threshold-handles-tag-fg: var(--q-bg);
+    --q-threshold-handles-tag-font-family: var(--q-font-mono);
+    --q-threshold-handles-tag-font-size: var(--q-text-3xs);
+    --q-threshold-handles-tag-ring: 0 0 0 2px var(--q-bg), 0 0 0 3px var(--q-fg);
+  }
+}
+
+@layer q.components {
+  .q-threshold-handles {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-threshold-handles-gap);
+  }
+
+  .q-threshold-handles__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--q-threshold-handles-gap);
+  }
+
+  .q-threshold-handles__label {
+    font-size: var(--q-threshold-handles-label-font-size);
+    font-weight: var(--q-threshold-handles-label-weight);
+    color: var(--q-fg);
+  }
+
+  .q-threshold-handles__summary {
+    font-family: var(--q-threshold-handles-summary-font-family);
+    font-size: var(--q-threshold-handles-summary-font-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    color: var(--q-threshold-handles-summary-fg);
+
+    &[data-firing] {
+      color: var(--q-threshold-handles-summary-fg-firing);
+    }
+  }
+
+  .q-threshold-handles__chart {
+    --_glide: 0s;
+
+    position: relative;
+    height: var(--q-threshold-handles-chart-height);
+    user-select: none;
+
+    &[data-glide] {
+      --_glide: var(--q-dur-hover);
+    }
+  }
+
+  .q-threshold-handles__bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: var(--q-threshold-handles-bar-gap);
+  }
+
+  .q-threshold-handles__bar {
+    flex: 1;
+    height: calc(var(--_h) * 100%);
+    border-radius: var(--q-threshold-handles-bar-radius);
+    background: var(--q-threshold-handles-bar-bg);
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &[data-out] {
+      background: var(--q-threshold-handles-bar-bg-out);
+      box-shadow: var(--q-threshold-handles-bar-cap);
+    }
+  }
+
+  // The quiet zone between the lines, painted behind the bars.
+  .q-threshold-handles__band {
+    position: absolute;
+    inset: calc((1 - var(--_high)) * 100%) 0 calc(var(--_low) * 100%);
+    background: var(--q-threshold-handles-band-bg);
+    pointer-events: none;
+    transition: inset var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-threshold-handles__handle {
+    position: absolute;
+    top: calc((1 - var(--_t)) * 100%);
+    left: 0;
+    right: 0;
+    height: var(--q-threshold-handles-hit);
+    outline: none;
+    cursor: ns-resize;
+    touch-action: none;
+    transform: translateY(-50%);
+    transition: top var(--_glide) var(--q-ease-soft);
+  }
+
+  .q-threshold-handles__line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: var(--q-threshold-handles-line);
+    background: var(--q-threshold-handles-line-bg);
+    transform: translateY(-50%);
+  }
+
+  .q-threshold-handles__tag {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    height: var(--q-threshold-handles-tag-height);
+    padding: 0 var(--q-threshold-handles-tag-px);
+    border-radius: var(--q-threshold-handles-tag-radius);
+    background: var(--q-threshold-handles-tag-bg);
+    color: var(--q-threshold-handles-tag-fg);
+    font-family: var(--q-threshold-handles-tag-font-family);
+    font-size: var(--q-threshold-handles-tag-font-size);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateY(-50%);
+    transition: box-shadow var(--q-dur-hover) var(--q-ease-soft);
+
+    .q-threshold-handles__handle:focus-visible > & {
+      box-shadow: var(--q-threshold-handles-tag-ring);
+    }
+  }
+}

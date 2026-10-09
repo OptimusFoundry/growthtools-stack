@@ -10,6 +10,19 @@
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
 
+const quickLinks = [
+	{ label: "Calendar", href: "/calendar" },
+	{ label: "Posts", href: "/posts" },
+	{ label: "Media", href: "/media" },
+	{ label: "Blog", href: "/blog" },
+	{ label: "Analytics", href: "/analytics" },
+];
+
+const greetingHeading = {
+	level: 2,
+	name: /^good (morning|afternoon|evening),\s*test\b/i,
+} as const;
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe("Dashboard", () => {
@@ -18,26 +31,59 @@ test.describe("Dashboard", () => {
 	// =========================================================================
 
 	test.describe("Page Load", () => {
-		test("shows dashboard greeting and quick-access links", async ({
+		test("shows the time-of-day greeting for the signed-in user", async ({
 			page,
 		}) => {
 			await page.goto("/");
-			await page.waitForLoadState("networkidle");
 
-			// Greeting is present
-			const content = await page.textContent("body");
-			expect(content).toMatch(/good morning|good afternoon|good evening/i);
+			await expect(page.getByRole("heading", greetingHeading)).toBeVisible();
+		});
 
-			// Quick access links
-			await expect(
-				page.getByRole("link", { name: /open calendar, quick access/i }),
-			).toBeVisible();
-			await expect(
-				page.getByRole("link", { name: /open posts, quick access/i }),
-			).toBeVisible();
-			await expect(
-				page.getByRole("link", { name: /open analytics, quick access/i }),
-			).toBeVisible();
+		for (const { label, href } of quickLinks) {
+			test(`quick access link "${label}" points to ${href}`, async ({
+				page,
+			}) => {
+				await page.goto("/");
+
+				await expect(
+					page
+						.getByRole("region", { name: "Quick access" })
+						.getByRole("link", { name: `Open ${label}, quick access` }),
+				).toHaveAttribute("href", href);
+			});
+		}
+	});
+
+	test.describe("Structure and navigation", () => {
+		test("has exactly one h1, 'Dashboard'", async ({ page }) => {
+			await page.goto("/");
+
+			await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+			await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+				"Dashboard",
+			);
+		});
+
+		test("Posts quick link navigates client-side without a full page load", async ({
+			page,
+		}) => {
+			await page.goto("/");
+			// A full document load would discard this marker.
+			await page.evaluate(() => {
+				(window as unknown as { __spaMarker: boolean }).__spaMarker = true;
+			});
+
+			await page
+				.getByRole("region", { name: "Quick access" })
+				.getByRole("link", { name: "Open Posts, quick access" })
+				.click();
+
+			await expect(page).toHaveURL(/\/posts/);
+			expect(
+				await page.evaluate(
+					() => (window as unknown as { __spaMarker?: boolean }).__spaMarker,
+				),
+			).toBe(true);
 		});
 	});
 
@@ -150,8 +196,7 @@ test.describe("Dashboard", () => {
 
 			// Widget silently disappears — dashboard page is still visible
 			await expect(page.getByText(/momentum/i)).not.toBeVisible();
-			const content = await page.textContent("body");
-			expect(content).toMatch(/good morning|good afternoon|good evening/i);
+			await expect(page.getByRole("heading", greetingHeading)).toBeVisible();
 		});
 
 		test("hides widget on transport failure", async ({ network, page }) => {

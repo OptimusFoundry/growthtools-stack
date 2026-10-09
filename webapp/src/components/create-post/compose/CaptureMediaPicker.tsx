@@ -1,10 +1,16 @@
+import {
+	Alert,
+	Button,
+	Checkbox,
+	Col,
+	Grid,
+	SectionHeader,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
 import { Film, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Checkbox } from "@/proto-design-system/components/forms/Checkbox/Checkbox";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import type { MediaItem } from "@/types/media";
 import { isVideoType } from "@/types/media";
 import styles from "./CaptureMediaPicker.module.scss";
@@ -94,26 +100,24 @@ export function CaptureMediaPicker({
 
 	const selected = captureMedia.filter((m) => selectedSet.has(m.id));
 	const warning = selectionWarning(selected);
+	const locked = disabled || regenerating;
 
 	return (
-		<section className={styles.picker} aria-labelledby="capture-media-heading">
+		<section className={styles.picker} aria-label="Captured media">
 			<Stack gap="sm">
 				<div className={styles.header}>
-					<Stack gap="0">
-						<Text size="md" weight="semibold" id="capture-media-heading">
-							Captured media
-						</Text>
-						<Text size="sm" color="secondary">
-							Ticked items publish with this post. Regenerate to rewrite the
-							post around them.
-						</Text>
-					</Stack>
+					<SectionHeader
+						size="sm"
+						as="h2"
+						title="Captured media"
+						description="Ticked items publish with this post. Regenerate to rewrite the post around them."
+					/>
 					<Button
 						variant="secondary"
 						size="sm"
-						leftIcon={<RefreshCw size={14} aria-hidden="true" />}
+						leftIcon={<AppIcon icon={RefreshCw} size="md" />}
 						onClick={onRegenerate}
-						isLoading={regenerating}
+						loading={regenerating}
 						disabled={disabled || regenerating || selected.length === 0}
 					>
 						Regenerate with {selected.length} selected
@@ -124,49 +128,53 @@ export function CaptureMediaPicker({
 
 				{groups.map(({ group, items }) => (
 					<Stack gap="xs" key={group}>
-						<Text size="sm" weight="medium" color="secondary">
+						<Text size="sm" weight="medium" color="muted">
 							{GROUP_LABELS[group]} · {items.length}
 						</Text>
-						<ul className={styles.grid}>
+						<Grid as="ul" minChildWidth={112} gap="xs" rowGap="xs">
 							{items.map((item) => {
 								const isSelected = selectedSet.has(item.id);
 								const label = captureLabel(item);
 								return (
-									<li
-										key={item.id}
-										className={styles.tile}
-										data-selected={isSelected || undefined}
-									>
-										<label className={styles.tileInner}>
+									<Col as="li" key={item.id}>
+										<div
+											className={styles.tile}
+											data-selected={isSelected || undefined}
+										>
 											<span className={styles.thumb}>
-												{isVideoType(item.contentType) ? (
-													<>
-														<video
+												<span
+													className={styles.mediaTarget}
+													onClick={() => {
+														if (!locked) onToggle(item, !isSelected);
+													}}
+												>
+													{isVideoType(item.contentType) ? (
+														<>
+															<video
+																src={item.url}
+																muted
+																preload="metadata"
+																className={styles.media}
+															/>
+															<span className={styles.videoBadge}>
+																<AppIcon icon={Film} size="md" />
+															</span>
+														</>
+													) : (
+														<img
 															src={item.url}
-															muted
-															preload="metadata"
+															alt=""
+															loading="lazy"
 															className={styles.media}
 														/>
-														<Film
-															size={16}
-															className={styles.videoBadge}
-															aria-hidden="true"
-														/>
-													</>
-												) : (
-													<img
-														src={item.url}
-														alt=""
-														loading="lazy"
-														className={styles.media}
-													/>
-												)}
+													)}
+												</span>
 												<span className={styles.check}>
 													<Checkbox
 														size="sm"
 														checked={isSelected}
-														disabled={disabled || regenerating}
-														onChange={(e) => onToggle(item, e.target.checked)}
+														disabled={locked}
+														onChange={(checked) => onToggle(item, checked)}
 														aria-label={`Use ${label}`}
 													/>
 												</span>
@@ -174,11 +182,11 @@ export function CaptureMediaPicker({
 											<span className={styles.caption} title={label}>
 												{label}
 											</span>
-										</label>
-									</li>
+										</div>
+									</Col>
 								);
 							})}
-						</ul>
+						</Grid>
 					</Stack>
 				))}
 			</Stack>

@@ -4,6 +4,9 @@ description: Accessibility checker dispatched by frontend-a11y-auditor to static
 tools: Read, Grep, Glob, LSP
 model: sonnet
 skills: [frontend-a11y-rules]
+color: purple
+maxTurns: 60
+omitClaudeMd: true
 ---
 
 ## Tool Loading
@@ -21,6 +24,9 @@ You audit **one page/route** for accessibility, statically, against this repo's 
 - [ ] A-5, A-10 — see `frontend-a11y-rules`.
 - [ ] A-4 — see `frontend-a11y-rules`.
 - [ ] A-1, A-3 — see `frontend-a11y-rules`.
+- [ ] A-2 — see `frontend-a11y-rules`.
+
+Do not flag a missing role or label that a quiet component sets internally; flag only app-owned markup.
 
 ## Output format
 

@@ -1,0 +1,130 @@
+// Accordion — disclosure rows under hairlines. BEM: .q-accordion, __item, __heading, __header,
+// __icon, __text, __title, __description, __toggle, __content (--with-icon).
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-accordion-border: var(--q-border);
+    --q-accordion-border-first: var(--q-fg);
+    --q-accordion-header-gap: var(--q-space-2);
+    --q-accordion-header-padding-y: var(--q-space-3);
+    --q-accordion-disabled-opacity: 0.4;
+    --q-accordion-icon-width: 20px; // icon column; aligns with the 36px content indent
+    --q-accordion-icon-padding-top: var(--q-space-0-25);
+    --q-accordion-icon-color: var(--q-fg-muted);
+    --q-accordion-text-gap: var(--q-space-0-5);
+    --q-accordion-title-font-size: var(--q-text-xl);
+    --q-accordion-title-weight: var(--q-weight-semibold);
+    --q-accordion-title-tracking: -0.015em; // between --q-tracking-tight and -h4; reference value
+    --q-accordion-title-leading: 1.3; // reference value, no tier-2 leading at 1.3
+    --q-accordion-title-color: var(--q-fg);
+    --q-accordion-title-color-hover: var(--q-accent);
+    --q-accordion-description-font-size: var(--q-text-md);
+    --q-accordion-description-leading: var(--q-leading-compact);
+    --q-accordion-description-color: var(--q-fg-muted);
+    --q-accordion-toggle-font-size: 20px; // the "+" glyph; no tier-2 size at 20
+    --q-accordion-toggle-leading: 1.2; // reference value
+    --q-accordion-toggle-color: var(--q-fg);
+    --q-accordion-content-indent: 36px; // icon width + header gap
+    --q-accordion-content-padding-bottom: var(--q-space-3);
+    --q-accordion-content-font-size: var(--q-text-md);
+    --q-accordion-content-leading: 1.6; // reference value
+    --q-accordion-content-color: var(--q-fg-body);
+    --q-accordion-content-max-width: 720px;
+  }
+}
+
+@layer q.components {
+  .q-accordion {
+    border-bottom: var(--q-hairline) solid var(--q-accordion-border);
+  }
+
+  .q-accordion__item {
+    border-top: var(--q-hairline) solid var(--q-accordion-border);
+
+    &:first-child {
+      border-top-color: var(--q-accordion-border-first);
+    }
+  }
+
+  .q-accordion__heading {
+    margin: 0;
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  .q-accordion__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--q-accordion-header-gap);
+    width: 100%;
+    padding: var(--q-accordion-header-padding-y) 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: var(--q-accordion-disabled-opacity);
+      cursor: not-allowed;
+    }
+
+    &:is(:hover, :focus-visible):not(:disabled) .q-accordion__title {
+      color: var(--q-accordion-title-color-hover);
+    }
+
+    &[aria-expanded="true"] .q-accordion__toggle {
+      transform: rotate(45deg);
+    }
+  }
+
+  .q-accordion__icon {
+    display: inline-flex;
+    justify-content: center;
+    width: var(--q-accordion-icon-width);
+    padding-top: var(--q-accordion-icon-padding-top);
+    color: var(--q-accordion-icon-color);
+  }
+
+  .q-accordion__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-accordion-text-gap);
+  }
+
+  .q-accordion__title {
+    color: var(--q-accordion-title-color);
+    font-size: var(--q-accordion-title-font-size);
+    font-weight: var(--q-accordion-title-weight);
+    letter-spacing: var(--q-accordion-title-tracking);
+    line-height: var(--q-accordion-title-leading);
+    transition: color var(--q-dur-hover) var(--q-ease-soft);
+  }
+
+  .q-accordion__description {
+    color: var(--q-accordion-description-color);
+    font-size: var(--q-accordion-description-font-size);
+    line-height: var(--q-accordion-description-leading);
+  }
+
+  .q-accordion__toggle {
+    color: var(--q-accordion-toggle-color);
+    font-size: var(--q-accordion-toggle-font-size);
+    line-height: var(--q-accordion-toggle-leading);
+    transform: none;
+    transition: transform var(--q-dur-expand) var(--q-ease-soft);
+  }
+
+  .q-accordion__content {
+    max-width: var(--q-accordion-content-max-width);
+    padding: 0 var(--q-accordion-content-indent) var(--q-accordion-content-padding-bottom) 0;
+    color: var(--q-accordion-content-color);
+    font-size: var(--q-accordion-content-font-size);
+    line-height: var(--q-accordion-content-leading);
+    text-wrap: pretty;
+
+    &--with-icon {
+      padding-left: var(--q-accordion-content-indent);
+    }
+  }
+}

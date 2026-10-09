@@ -4,6 +4,7 @@ description: Use PROACTIVELY when a ticket MODIFIES EXISTING frontend code rathe
 tools: Read, Write, Edit, Grep, Glob, LSP, Skill
 model: sonnet
 skills: [frontend-design-rules]
+color: cyan
 ---
 
 ## Tool Loading
@@ -18,7 +19,9 @@ You are a **surgical modify-existing-code specialist** for this React 19 + TypeS
 
 ## Procedure
 
-1. **Read the target in full first.** Read every file you will touch completely before editing — never Edit blind. Use LSP `findReferences` on any exported symbol you change (e.g. a shared util like `timeAgo`) to find EVERY caller across `webapp/src`, so your edit doesn't silently break another screen.
+If the edit lays out or reflows a screen, read `.claude/skills/quiet-app/SKILL.md` first.
+
+1. **Read the target in full first.** Read every file you will touch completely before editing — never Edit blind. Use LSP `findReferences` on any exported symbol you change (e.g. a shared util like `timeAgo`) to find EVERY caller across `webapp/src`, so your edit doesn't silently break another screen. For a quiet component's props, LSP `goToDefinition` on the `@optimusfoundry/quiet` import — its `.tsx` source is the authority; do not reintroduce pre-quiet design-system imports or `--space-N` style vars.
 2. **Make the minimal edit.** Change only what the contract requires; preserve surrounding style, naming, and composition patterns exactly.
 3. **Shared code = check all callers.** If you edit a shared util/hook/component, you own the blast radius: verify each caller still behaves. Report the full caller list.
 4. **Verify locally.** After editing, re-read the changed hunks / use LSP diagnostics to confirm it typechecks and imports resolve. The supervisor runs build/lint/Playwright; your output must be build-ready.

@@ -1,8 +1,8 @@
-import { ErrorComponentProps } from "@tanstack/react-router";
+import { Button, Text } from "@optimusfoundry/quiet";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
-import React from "react";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Icon } from "@/proto-design-system/components/primitives/Icon/Icon";
+import type React from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import styles from "./error.module.scss";
 
 interface ErrorStateProps {
@@ -12,19 +12,9 @@ interface ErrorStateProps {
 export const ErrorState: React.FC<ErrorStateProps> = (
 	props: ErrorStateProps,
 ) => {
-	return (
-		<div className={styles.errorState}>
-			<p>{props.message}</p>
-		</div>
-	);
+	return <Text>{props.message}</Text>;
 };
 
-/**
- * ErrorBoundary Component
- *
- * A full-height error boundary component for TanStack Router.
- * Displays error details and provides recovery actions.
- */
 export const ErrorBoundary: React.FC<ErrorComponentProps> = ({
 	error,
 	reset,
@@ -34,6 +24,7 @@ export const ErrorBoundary: React.FC<ErrorComponentProps> = ({
 		error instanceof Error ? error.message : "An unexpected error occurred";
 	const errorStack = error instanceof Error ? error.stack : undefined;
 
+	// Full reload on purpose: it resets the failed tree.
 	const handleGoHome = () => {
 		window.location.href = "/";
 	};
@@ -42,12 +33,16 @@ export const ErrorBoundary: React.FC<ErrorComponentProps> = ({
 		<div className={styles.root}>
 			<div className={styles.container}>
 				<div className={styles.iconWrapper}>
-					<Icon icon={AlertTriangle} size="2xl" className={styles.icon} />
+					<AppIcon icon={AlertTriangle} size="2xl" color="error" />
 				</div>
 
-				<h1 className={styles.title}>Something went wrong</h1>
+				<Text as="h1" heading={4}>
+					Something went wrong
+				</Text>
 
-				<p className={styles.message}>{errorMessage}</p>
+				<Text size="lg" color="muted">
+					{errorMessage}
+				</Text>
 
 				{isDev && errorStack && (
 					<details className={styles.details}>
@@ -58,14 +53,18 @@ export const ErrorBoundary: React.FC<ErrorComponentProps> = ({
 
 				<div className={styles.actions}>
 					{reset && (
-						<Button onClick={reset} leftIcon={<RefreshCw size={16} />}>
+						<Button
+							variant="primary"
+							onClick={reset}
+							leftIcon={<AppIcon icon={RefreshCw} />}
+						>
 							Try again
 						</Button>
 					)}
 					<Button
 						variant="secondary"
 						onClick={handleGoHome}
-						leftIcon={<Home size={16} />}
+						leftIcon={<AppIcon icon={Home} />}
 					>
 						Go to home
 					</Button>

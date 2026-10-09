@@ -1,58 +1,43 @@
 .container {
-	padding-top: 0;
+	padding-top: var(--q-space-block);
 }
 
 .loadingState {
-	min-height: var(--space-24);
-}
-
-// Body that hosts a vertical list of rows inside a spec Card.
-.rowsBody {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-4);
-}
-
-// Single platform row — icon · name+meta · action
-.platformRow {
-	align-items: center;
-	display: flex;
-	gap: var(--space-4);
+	min-height: var(--q-space-20);
 }
 
 .platformIcon {
 	align-items: center;
-	background: var(--color-base-200);
-	border-radius: var(--radius-md);
-	color: var(--color-base-content);
+	background: var(--q-bg-subtle);
+	border-radius: var(--q-radius-xs);
+	color: var(--q-fg);
 	display: flex;
 	flex-shrink: 0;
-	height: var(--space-9);
+	height: var(--q-space-5);
 	justify-content: center;
-	width: var(--space-9);
+	width: var(--q-space-5);
 }
 
-.platformBody {
-	display: flex;
-	flex: 1;
-	flex-direction: column;
-	gap: var(--space-1);
-	min-width: 0;
-}
-
-.platformNameLine {
+.nameLine {
 	align-items: center;
-	display: flex;
-	gap: var(--space-2);
+	display: inline-flex;
+	gap: var(--q-space-inline);
 }
 
-.scopeChips {
+.meta {
+	display: flex;
+	flex-direction: column;
+	gap: var(--q-space-inline);
+}
+
+.scopes {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--space-2);
-	margin-top: var(--space-2);
+	gap: var(--q-space-inline);
 }
 
-.platformAction {
-	flex-shrink: 0;
+.actions {
+	align-items: center;
+	display: inline-flex;
+	gap: var(--q-space-inline);
 }

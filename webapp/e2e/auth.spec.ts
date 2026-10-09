@@ -17,10 +17,13 @@ import { loginAs } from "./helpers/auth";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// Matches both "Sign in" and the in-flight "Signing in…" label.
+const SUBMIT_NAME = /sign(ing)? in/i;
+
 async function fillAndSubmitTestLogin(page: Parameters<typeof loginAs>[0]) {
-	await page.getByTestId("test-login-email").fill("user@example.com");
-	await page.getByTestId("test-login-password").fill("hunter2hunter2");
-	await page.getByTestId("test-login-submit").click();
+	await page.getByLabel("Email").fill("user@example.com");
+	await page.getByLabel("Password").fill("hunter2hunter2");
+	await page.getByRole("button", { name: SUBMIT_NAME }).click();
 }
 
 // ── Status-code tables ─────────────────────────────────────────────────────
@@ -66,9 +69,9 @@ test.describe("Test Login — golden paths", () => {
 
 	test("manual flow lands on dashboard after submit", async ({ page }) => {
 		await page.goto("/test-login");
-		await page.getByTestId("test-login-email").fill("user@example.com");
-		await page.getByTestId("test-login-password").fill("hunter2hunter2");
-		await page.getByTestId("test-login-submit").click();
+		await page.getByLabel("Email").fill("user@example.com");
+		await page.getByLabel("Password").fill("hunter2hunter2");
+		await page.getByRole("button", { name: SUBMIT_NAME }).click();
 		await page.waitForURL("/");
 
 		await expect(
@@ -91,12 +94,14 @@ test.describe("Test Login — golden paths", () => {
 		);
 
 		await page.goto("/test-login");
-		await page.getByTestId("test-login-email").fill("user@example.com");
-		await page.getByTestId("test-login-password").fill("hunter2hunter2");
-		await page.getByTestId("test-login-submit").click();
+		await page.getByLabel("Email").fill("user@example.com");
+		await page.getByLabel("Password").fill("hunter2hunter2");
+		await page.getByRole("button", { name: SUBMIT_NAME }).click();
 
-		await expect(page.getByTestId("test-login-submit")).toBeDisabled();
-		await expect(page.getByTestId("test-login-submit")).toHaveText(
+		await expect(
+			page.getByRole("button", { name: SUBMIT_NAME }),
+		).toBeDisabled();
+		await expect(page.getByRole("button", { name: SUBMIT_NAME })).toHaveText(
 			/signing in/i,
 		);
 	});
@@ -164,7 +169,7 @@ test.describe("POST /api/auth/test/login — status code coverage", () => {
 		await fillAndSubmitTestLogin(page);
 
 		await expect(page.getByRole("alert")).toBeVisible();
-		await expect(page.getByTestId("test-login-submit")).toBeEnabled();
+		await expect(page.getByRole("button", { name: SUBMIT_NAME })).toBeEnabled();
 	});
 });
 
@@ -253,9 +258,9 @@ test.describe("Auth scenario factories", () => {
 		network.use(scenarios.auth.testLoginFailed());
 
 		await page.goto("/test-login");
-		await page.getByTestId("test-login-email").fill("bad@example.com");
-		await page.getByTestId("test-login-password").fill("wrongpassword");
-		await page.getByTestId("test-login-submit").click();
+		await page.getByLabel("Email").fill("bad@example.com");
+		await page.getByLabel("Password").fill("wrongpassword");
+		await page.getByRole("button", { name: SUBMIT_NAME }).click();
 
 		await expect(page.getByRole("alert")).toHaveText(
 			/invalid email or password/i,
@@ -272,5 +277,35 @@ test.describe("Auth scenario factories", () => {
 		await page.goto("/");
 
 		await expect(page).toHaveURL(/\/signin|\/test-login/);
+	});
+});
+
+// ── Public routes — landmarks and headings ────────────────────────────────
+
+test.describe("/signin", () => {
+	test("renders one h1 'Welcome' and one main landmark", async ({ page }) => {
+		await page.goto("/signin");
+
+		await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+		await expect(page.getByRole("heading", { level: 1 })).toHaveText("Welcome");
+		await expect(page.getByRole("main")).toHaveCount(1);
+	});
+
+	test("offers a 'Sign in with Google' link to Google's consent screen", async ({
+		page,
+	}) => {
+		await page.goto("/signin");
+
+		const google = page.getByRole("link", { name: "Sign in with Google" });
+		await expect(google).toBeVisible();
+		await expect(google).toHaveAttribute("href", /accounts\.google\.com/);
+	});
+});
+
+test.describe("/oauth/signedin", () => {
+	test("renders exactly one main landmark", async ({ page }) => {
+		await page.goto("/oauth/signedin");
+
+		await expect(page.getByRole("main")).toHaveCount(1);
 	});
 });

@@ -1,0 +1,230 @@
+// FileUpload — dashed dropzone or pill button, with a file list. BEM: .q-file-upload, __label,
+// __input, __bar, __button, __zone, __zone-icon, __zone-text, __browse, __hint, __note, __list,
+// __row, __row-main, __file, __name, __meta(--error), __done, __remove, __progress,
+// __progress-fill; --disabled. Dragging reads data-dragging; --_progress (inline) is upload %.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-file-upload-gap: var(--q-space-1-5);
+    --q-file-upload-disabled-opacity: 0.4;
+    --q-file-upload-mono-font-family: var(--q-font-mono);
+    --q-file-upload-mono-font-size: var(--q-text-2xs);
+    --q-file-upload-mono-tracking: var(--q-tracking-mono);
+    --q-file-upload-fg: var(--q-fg);
+    --q-file-upload-muted-fg: var(--q-fg-muted);
+    --q-file-upload-error-fg: var(--q-accent);
+    --q-file-upload-border: var(--q-border);
+    --q-file-upload-font-size: var(--q-text-md);
+    --q-file-upload-bar-gap: var(--q-space-2);
+    --q-file-upload-button-gap: var(--q-space-1);
+    --q-file-upload-button-height: var(--q-control-md);
+    --q-file-upload-button-px: var(--q-space-3);
+    --q-file-upload-button-border: var(--q-fg);
+    --q-file-upload-button-bg-hover: var(--q-bg-subtle);
+    --q-file-upload-button-font-family: var(--q-font-sans);
+    --q-file-upload-button-weight: var(--q-weight-semibold);
+    --q-file-upload-zone-gap: var(--q-space-1-5);
+    --q-file-upload-zone-py: var(--q-space-5);
+    --q-file-upload-zone-px: var(--q-space-3);
+    --q-file-upload-zone-radius: var(--q-radius-lg);
+    --q-file-upload-zone-border: var(--q-fg-subtle);
+    --q-file-upload-zone-border-hover: var(--q-fg);
+    --q-file-upload-zone-bg: var(--q-bg);
+    --q-file-upload-zone-bg-drag: var(--q-bg-subtle);
+    --q-file-upload-zone-icon-size: var(--q-control-md);
+    --q-file-upload-zone-icon-font-size: var(--q-text-lg);
+    --q-file-upload-note-tracking: var(--q-tracking-wide);
+    --q-file-upload-row-gap: var(--q-space-1);
+    --q-file-upload-row-py: var(--q-space-1-5);
+    --q-file-upload-row-main-gap: var(--q-space-2);
+    --q-file-upload-file-gap: var(--q-space-0-25);
+    --q-file-upload-remove-font-size: 18px; // the × glyph sits optically with the 15px name
+    --q-file-upload-remove-pad: var(--q-space-0-5);
+    --q-file-upload-progress-height: var(--q-space-0-25);
+    --q-file-upload-progress-bg: var(--q-border);
+    --q-file-upload-progress-fill: var(--q-fg);
+    --q-file-upload-progress-dur: 0.3s; // matches the simulated upload tick
+  }
+}
+
+@layer q.components {
+  .q-file-upload {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-file-upload-gap);
+
+    &--disabled {
+      opacity: var(--q-file-upload-disabled-opacity);
+    }
+  }
+
+  .q-file-upload__label,
+  .q-file-upload__hint,
+  .q-file-upload__note,
+  .q-file-upload__meta {
+    font-family: var(--q-file-upload-mono-font-family);
+    font-size: var(--q-file-upload-mono-font-size);
+    letter-spacing: var(--q-file-upload-mono-tracking);
+    text-transform: uppercase;
+    color: var(--q-file-upload-muted-fg);
+  }
+
+  .q-file-upload__input {
+    display: none;
+  }
+
+  .q-file-upload__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--q-file-upload-bar-gap);
+  }
+
+  .q-file-upload__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--q-file-upload-button-gap);
+    height: var(--q-file-upload-button-height);
+    padding: 0 var(--q-file-upload-button-px);
+    border: var(--q-hairline) solid var(--q-file-upload-button-border);
+    border-radius: var(--q-radius-pill);
+    background: transparent;
+    font-family: var(--q-file-upload-button-font-family);
+    font-size: var(--q-file-upload-font-size);
+    font-weight: var(--q-file-upload-button-weight);
+    color: var(--q-file-upload-fg);
+    cursor: pointer;
+    transition: background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus):not(:disabled) {
+      background: var(--q-file-upload-button-bg-hover);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-file-upload__zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--q-file-upload-zone-gap);
+    padding: var(--q-file-upload-zone-py) var(--q-file-upload-zone-px);
+    border: var(--q-hairline) dashed var(--q-file-upload-zone-border);
+    border-radius: var(--q-file-upload-zone-radius);
+    outline: none;
+    background: var(--q-file-upload-zone-bg);
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color var(--q-dur-hover) var(--q-ease-soft),
+      background var(--q-dur-hover) var(--q-ease-soft);
+
+    &:is(:hover, :focus):not([aria-disabled="true"]),
+    &[data-dragging] {
+      border-color: var(--q-file-upload-zone-border-hover);
+    }
+
+    &[data-dragging] {
+      background: var(--q-file-upload-zone-bg-drag);
+    }
+
+    &[aria-disabled="true"] {
+      cursor: not-allowed;
+    }
+  }
+
+  .q-file-upload__zone-icon {
+    display: grid;
+    place-items: center;
+    width: var(--q-file-upload-zone-icon-size);
+    height: var(--q-file-upload-zone-icon-size);
+    border: var(--q-hairline) solid var(--q-file-upload-border);
+    border-radius: var(--q-radius-pill);
+    font-size: var(--q-file-upload-zone-icon-font-size);
+    color: var(--q-file-upload-fg);
+  }
+
+  .q-file-upload__zone-text {
+    font-size: var(--q-file-upload-font-size);
+    color: var(--q-file-upload-fg);
+  }
+
+  .q-file-upload__browse {
+    border-bottom: var(--q-hairline) solid var(--q-file-upload-fg);
+  }
+
+  .q-file-upload__note {
+    letter-spacing: var(--q-file-upload-note-tracking);
+    color: var(--q-file-upload-error-fg);
+  }
+
+  .q-file-upload__list {
+    display: flex;
+    flex-direction: column;
+    border-bottom: var(--q-hairline) solid var(--q-file-upload-border);
+  }
+
+  .q-file-upload__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-file-upload-row-gap);
+    padding: var(--q-file-upload-row-py) 0;
+    border-top: var(--q-hairline) solid var(--q-file-upload-border);
+  }
+
+  .q-file-upload__row-main {
+    display: flex;
+    align-items: center;
+    gap: var(--q-file-upload-row-main-gap);
+  }
+
+  .q-file-upload__file {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--q-file-upload-file-gap);
+    min-width: 0;
+  }
+
+  .q-file-upload__name {
+    overflow: hidden;
+    font-size: var(--q-file-upload-font-size);
+    color: var(--q-file-upload-fg);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .q-file-upload__meta--error {
+    color: var(--q-file-upload-error-fg);
+  }
+
+  .q-file-upload__done {
+    color: var(--q-file-upload-fg);
+  }
+
+  .q-file-upload__remove {
+    padding: var(--q-file-upload-remove-pad);
+    border: 0;
+    background: none;
+    font-size: var(--q-file-upload-remove-font-size);
+    line-height: 1;
+    color: var(--q-file-upload-muted-fg);
+    cursor: pointer;
+  }
+
+  .q-file-upload__progress {
+    position: relative;
+    height: var(--q-file-upload-progress-height);
+    background: var(--q-file-upload-progress-bg);
+  }
+
+  .q-file-upload__progress-fill {
+    position: absolute;
+    inset: 0;
+    width: var(--_progress);
+    background: var(--q-file-upload-progress-fill);
+    transition: width var(--q-file-upload-progress-dur) var(--q-ease-linear);
+  }
+}

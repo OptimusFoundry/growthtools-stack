@@ -1,0 +1,157 @@
+// ToolCall — a tool use or thinking pass inside a reply. BEM: .q-tool-call, __header, __state, __dot,
+// __name, __summary, __meta, __chevron, __detail, __block, __label, __code; --running, --done,
+// --error, --thinking. Folded by default; opens with the shared .q-collapse motion.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-tool-call-border: var(--q-border);
+    --q-tool-call-border-hover: var(--q-border-strong);
+    --q-tool-call-radius: var(--q-radius-md);
+    --q-tool-call-px: var(--q-space-1-5);
+    --q-tool-call-height: var(--q-control-md);
+    --q-tool-call-name-fg: var(--q-fg);
+    --q-tool-call-name-size: var(--q-text-sm);
+    --q-tool-call-name-weight: var(--q-weight-medium);
+    --q-tool-call-summary-fg: var(--q-fg-muted);
+    --q-tool-call-meta-fg: var(--q-fg-muted);
+    --q-tool-call-meta-font: var(--q-font-mono);
+    --q-tool-call-meta-size: var(--q-text-2xs);
+    --q-tool-call-dot-size: var(--q-space-0-75);
+    --q-tool-call-dot-done: var(--q-fg);
+    --q-tool-call-dot-error: var(--q-accent);
+    --q-tool-call-code-bg: var(--q-bg-subtle);
+    --q-tool-call-code-fg: var(--q-fg-body);
+    --q-tool-call-code-font: var(--q-font-mono);
+    --q-tool-call-code-size: var(--q-text-xs);
+    --q-tool-call-code-radius: var(--q-radius-sm);
+  }
+}
+
+@layer q.components {
+  .q-tool-call {
+    border: var(--q-hairline) solid var(--q-tool-call-border);
+    border-radius: var(--q-tool-call-radius);
+    font-family: var(--q-font-sans);
+  }
+
+  .q-tool-call__header {
+    display: flex;
+    align-items: center;
+    gap: var(--q-space-1);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--q-tool-call-height);
+    padding: 0 var(--q-tool-call-px);
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: default;
+    }
+  }
+
+  .q-tool-call:has(.q-tool-call__header:not(:disabled):is(:hover, :focus-visible)) {
+    border-color: var(--q-tool-call-border-hover);
+  }
+
+  .q-tool-call__state {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--q-space-1-5);
+  }
+
+  .q-tool-call__dot {
+    width: var(--q-tool-call-dot-size);
+    height: var(--q-tool-call-dot-size);
+    border-radius: var(--q-radius-pill);
+    background: var(--q-tool-call-dot-done);
+  }
+
+  .q-tool-call--error .q-tool-call__dot {
+    background: var(--q-tool-call-dot-error);
+  }
+
+  // Thinking reads as a hollow mark: something Claude did privately, not a tool it called.
+  .q-tool-call--thinking .q-tool-call__dot {
+    border: var(--q-hairline) solid var(--q-tool-call-dot-done);
+    background: transparent;
+  }
+
+  .q-tool-call__name {
+    flex: none;
+    color: var(--q-tool-call-name-fg);
+    font-size: var(--q-tool-call-name-size);
+    font-weight: var(--q-tool-call-name-weight);
+  }
+
+  .q-tool-call__summary {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--q-tool-call-summary-fg);
+    font-size: var(--q-tool-call-name-size);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .q-tool-call__meta {
+    margin-left: auto;
+    color: var(--q-tool-call-meta-fg);
+    font-family: var(--q-tool-call-meta-font);
+    font-size: var(--q-tool-call-meta-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-tool-call__chevron {
+    color: var(--q-tool-call-meta-fg);
+    transition: transform var(--q-dur-expand) var(--q-ease-soft);
+  }
+
+  .q-tool-call__header[aria-expanded="true"] .q-tool-call__chevron {
+    transform: rotate(90deg);
+  }
+
+  .q-tool-call__detail {
+    display: grid;
+    gap: var(--q-space-1-5);
+    padding: 0 var(--q-tool-call-px) var(--q-tool-call-px);
+  }
+
+  .q-tool-call__block {
+    display: grid;
+    gap: var(--q-space-0-5);
+  }
+
+  .q-tool-call__label {
+    color: var(--q-tool-call-meta-fg);
+    font-family: var(--q-tool-call-meta-font);
+    font-size: var(--q-tool-call-meta-size);
+    letter-spacing: var(--q-tracking-mono);
+    text-transform: uppercase;
+  }
+
+  .q-tool-call__code {
+    margin: 0;
+    padding: var(--q-space-1) var(--q-space-1-25);
+    border-radius: var(--q-tool-call-code-radius);
+    background: var(--q-tool-call-code-bg);
+    color: var(--q-tool-call-code-fg);
+    font-family: var(--q-tool-call-code-font);
+    font-size: var(--q-tool-call-code-size);
+    line-height: var(--q-leading-compact);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-tool-call__chevron {
+    transition: none;
+  }
+}

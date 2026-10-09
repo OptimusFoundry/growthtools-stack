@@ -1,20 +1,30 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, GitCommit, GitBranch as Github } from "lucide-react";
-import { motion } from "motion/react";
+import {
+	Badge,
+	type BadgeProps,
+	Button,
+	EmptyState,
+	Link,
+	PageHero,
+	Pagination,
+	Spinner,
+	Stack,
+	Table,
+	type TableProps,
+	Text,
+} from "@optimusfoundry/quiet";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { GitCommit, GitBranch as Github } from "lucide-react";
+import type { ReactNode } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import {
 	type GitHubCommitSummary,
 	useGitHubCommits,
 } from "@/hooks/useGitHubCommits";
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Pagination } from "@/proto-design-system/components/navigation/Pagination/Pagination";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import { timeAgo, truncate } from "@/utils/format";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 import styles from "./github.module.scss";
-import pageStyles from "./page.module.scss";
 
 export const Route = createFileRoute("/github")({
 	component: GitHubPage,
@@ -52,28 +62,19 @@ function commitState(commit: GitHubCommitSummary): CommitState {
 	return { kind: "processing" };
 }
 
-const STATUS_CLASS: Record<CommitState["kind"], string> = {
-	waiting: "statusWaiting",
-	processing: "statusProcessing",
-	skipped: "statusSkipped",
-	failed: "statusFailed",
-	captured: "statusCaptured",
-	post: "statusPosted",
-	post_deleted: "statusDeleted",
-	blog: "statusBlogged",
-	blog_deleted: "statusDeleted",
-};
-
-const STATUS_LABELS: Record<CommitState["kind"], string> = {
-	waiting: "Waiting",
-	processing: "Processing",
-	skipped: "Skipped",
-	failed: "Failed",
-	captured: "Captured",
-	post: "Generated",
-	post_deleted: "Post deleted",
-	blog: "Blogged",
-	blog_deleted: "Blog deleted",
+const STATUS_META: Record<
+	CommitState["kind"],
+	{ label: string; variant: NonNullable<BadgeProps["variant"]> }
+> = {
+	waiting: { label: "Waiting", variant: "secondary" },
+	processing: { label: "Processing", variant: "primary" },
+	skipped: { label: "Skipped", variant: "secondary" },
+	failed: { label: "Failed", variant: "error" },
+	captured: { label: "Captured", variant: "warning" },
+	post: { label: "Generated", variant: "success" },
+	post_deleted: { label: "Post deleted", variant: "outline" },
+	blog: { label: "Blogged", variant: "success" },
+	blog_deleted: { label: "Blog deleted", variant: "outline" },
 };
 
 function metaLine(commit: GitHubCommitSummary): string {
@@ -88,14 +89,67 @@ function metaLine(commit: GitHubCommitSummary): string {
 	return parts.join(" · ");
 }
 
+function commitColumns(
+	startIdx: number,
+): TableProps<GitHubCommitSummary>["columns"] {
+	return [
+		{
+			key: "index",
+			header: "№",
+			width: 64,
+			nowrap: true,
+			render: (_commit, index) => (
+				<Text as="span" size="xs" color="quiet" mono>
+					{String(startIdx + index + 1).padStart(2, "0")}
+				</Text>
+			),
+		},
+		{
+			key: "commit",
+			header: "Commit",
+			render: (commit) => {
+				const firstLine =
+					commit.message.split("\n")[0] ?? commit.sha.slice(0, 7);
+				return (
+					<div className={styles.commit}>
+						{/* The row click navigates too; stop it so one click is one navigation. */}
+						<Link
+							href={`/github/${commit.id}`}
+							onClick={(event) => event.stopPropagation()}
+						>
+							{truncate(firstLine, 80)}
+						</Link>
+						<Text as="span" size="xs" color="muted" truncate>
+							{metaLine(commit)}
+						</Text>
+					</div>
+				);
+			},
+		},
+		{
+			key: "status",
+			header: "Status",
+			nowrap: true,
+			render: (commit) => {
+				const meta = STATUS_META[commitState(commit).kind];
+				return (
+					<Badge variant={meta.variant} size="sm">
+						{meta.label}
+					</Badge>
+				);
+			},
+		},
+	];
+}
+
 function GitHubPage() {
+	const navigate = useNavigate();
 	const { connection, loading: connectionLoading } = useGitHubConnection();
 	const { commits, total, loading, refetch, page, setPage } = useGitHubCommits(
 		!!connection,
 		PAGE_SIZE,
 	);
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-	const startIdx = (page - 1) * PAGE_SIZE;
 
 	const topbar = (
 		<Topbar
@@ -110,123 +164,94 @@ function GitHubPage() {
 		/>
 	);
 
+	const renderSpinner = () => (
+		<div className={styles.loading}>
+			<Spinner size="lg" />
+		</div>
+	);
+
 	if (connectionLoading) {
 		return (
 			<>
 				{topbar}
-				<Stack gap="lg" className={styles.page} animate>
-					<div className={styles.loadingState}>
-						<Spinner size="lg" />
-					</div>
-				</Stack>
+				{renderSpinner()}
 			</>
 		);
 	}
 
-	return (
+	const renderShell = (body: ReactNode) => (
 		<>
 			{topbar}
-			<Stack gap="lg" className={styles.page} animate>
-				<header className={pageStyles.pageHero}>
-					<div className={pageStyles.pageHeroText}>
-						<div className={pageStyles.pageEyebrow}>
-							Activity · {String(total).padStart(2, "0")}{" "}
-							{total === 1 ? "commit" : "commits"} tracked
-						</div>
-						<h1 className={pageStyles.pageHeroTitle}>
-							Every push, captured in <em>context</em>.
-						</h1>
-						<p className={pageStyles.pageHeroSub}>
-							We watch your repos for shippable moments — captured artifacts,
-							drafted posts, and the misses worth knowing about.
-						</p>
-					</div>
-				</header>
-
-				<div className={styles.content}>
-					{!connection ? (
-						<EmptyState
-							icon={<Github size={48} />}
-							title="GitHub isn't connected"
-							description="Connect your GitHub account in Settings → Platforms to start watching for new commits."
-							action={
-								<Link to="/account" search={{ tab: "platforms" }}>
-									<Button variant="primary">Connect GitHub</Button>
-								</Link>
-							}
-						/>
-					) : loading && commits.length === 0 ? (
-						<div className={styles.loadingState}>
-							<Spinner size="lg" />
-						</div>
-					) : commits.length === 0 ? (
-						<EmptyState
-							icon={<GitCommit size={48} />}
-							title="No commits yet"
-							description="Push to a watched repository and it'll show up here within seconds."
-						/>
-					) : (
-						<motion.div
-							initial={{ opacity: 0, y: 8 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.2 }}
-							className={styles.postList}
-						>
-							{commits.map((commit, index) => {
-								const state = commitState(commit);
-								const firstLine =
-									commit.message.split("\n")[0] ?? commit.sha.slice(0, 7);
-								return (
-									<Link
-										key={commit.id}
-										to="/github/$id"
-										params={{ id: commit.id }}
-										className={styles.postLink}
-									>
-										<div className={styles.postRow}>
-											<div className={styles.titleRow}>
-												<span className={styles.idx}>
-													№ {String(startIdx + index + 1).padStart(2, "0")}
-												</span>
-												<div className={styles.postBody}>
-													<div className={styles.postTitleText}>
-														{truncate(firstLine, 80)}
-													</div>
-													<div className={styles.postMetaText}>
-														{metaLine(commit)}
-													</div>
-												</div>
-											</div>
-											<div className={styles.metaRow}>
-												<span
-													className={`${styles.statusBadge} ${styles[STATUS_CLASS[state.kind]]}`}
-												>
-													{STATUS_LABELS[state.kind]}
-												</span>
-												<span className={styles.chevronBtn} aria-hidden>
-													<ChevronRight size={16} />
-												</span>
-											</div>
-										</div>
-									</Link>
-								);
-							})}
-						</motion.div>
-					)}
-				</div>
-
-				{totalPages > 1 && (
-					<div className={styles.paginationRow}>
-						<Pagination
-							page={page}
-							totalPages={totalPages}
-							onPageChange={setPage}
-							size="sm"
-							disabled={loading}
-						/>
-					</div>
-				)}
+			<Stack gap="lg" animated>
+				<PageHero
+					size="md"
+					as="h2"
+					ruled={false}
+					className={styles.hero}
+					eyebrow={`Activity · ${String(total).padStart(2, "0")} ${
+						total === 1 ? "commit" : "commits"
+					} tracked`}
+					title="Every push, captured in"
+					accent="context"
+					description="We watch your repos for shippable moments — captured artifacts, drafted posts, and the misses worth knowing about."
+				/>
+				{body}
 			</Stack>
 		</>
+	);
+
+	if (!connection) {
+		return renderShell(
+			<EmptyState
+				icon={<AppIcon icon={Github} size="xl" />}
+				title={trimTrailingPeriod("GitHub isn't connected")}
+				description="Connect your GitHub account in Settings → Platforms to start watching for new commits."
+				actions={
+					<Button variant="primary" href="/account?tab=platforms">
+						Connect GitHub
+					</Button>
+				}
+			/>,
+		);
+	}
+
+	if (loading && commits.length === 0) {
+		return renderShell(renderSpinner());
+	}
+
+	if (commits.length === 0) {
+		return renderShell(
+			<EmptyState
+				icon={<AppIcon icon={GitCommit} size="xl" />}
+				title={trimTrailingPeriod("No commits yet")}
+				description="Push to a watched repository and it'll show up here within seconds."
+			/>,
+		);
+	}
+
+	return renderShell(
+		<>
+			<Table<GitHubCommitSummary>
+				label="Commits"
+				className={styles.table}
+				size="sm"
+				columns={commitColumns((page - 1) * PAGE_SIZE)}
+				data={commits}
+				onRowClick={(commit) =>
+					navigate({ to: "/github/$id", params: { id: commit.id } })
+				}
+			/>
+			{totalPages > 1 && (
+				<Stack align="center">
+					<Pagination
+						page={page}
+						total={totalPages}
+						onChange={setPage}
+						size="sm"
+						disabled={loading}
+					/>
+				</Stack>
+			)}
+		</>,
 	);
 }

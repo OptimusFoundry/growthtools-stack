@@ -1,0 +1,113 @@
+// Select — native select in field chrome. BEM: .q-select (--{size}, --invalid), __label, __control,
+// __input, __chevron. The hint is a FormHint.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-select-gap: var(--q-space-1);
+    --q-select-label-font-family: var(--q-font-mono);
+    --q-select-label-font-size: var(--q-text-2xs);
+    --q-select-label-tracking: var(--q-tracking-mono);
+    --q-select-label-fg: var(--q-fg-muted);
+    --q-select-font-family: var(--q-font-sans);
+    --q-select-sm-py: var(--q-space-1);
+    --q-select-sm-pl: var(--q-space-1-5);
+    --q-select-sm-pr: var(--q-space-4);
+    --q-select-sm-font-size: var(--q-text-md);
+    --q-select-md-py: var(--q-space-1-5);
+    --q-select-md-pl: var(--q-space-2);
+    --q-select-md-pr: var(--q-space-5);
+    --q-select-md-font-size: var(--q-text-lg);
+    --q-select-lg-py: var(--q-space-1-75);
+    --q-select-lg-pl: var(--q-space-2-5);
+    --q-select-lg-pr: var(--q-space-6);
+    --q-select-lg-font-size: var(--q-text-xl);
+    --q-select-fg: var(--q-fg);
+    --q-select-bg: var(--q-bg);
+    --q-select-radius: var(--q-radius-md);
+    --q-select-border: var(--q-border);
+    --q-select-border-focus: var(--q-fg);
+    --q-select-border-invalid: var(--q-accent);
+    --q-select-fg-placeholder: var(--q-fg-subtle);
+    --q-select-ring-focus: var(--q-ring-soft);
+    --q-select-chevron-inset: var(--q-space-2);
+    --q-select-chevron-fg: var(--q-fg-muted);
+  }
+}
+
+@layer q.components {
+  .q-select {
+    --_py: var(--q-select-md-py);
+    --_pl: var(--q-select-md-pl);
+    --_pr: var(--q-select-md-pr);
+    --_font-size: var(--q-select-md-font-size);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--q-select-gap);
+
+    &--sm {
+      --_py: var(--q-select-sm-py);
+      --_pl: var(--q-select-sm-pl);
+      --_pr: var(--q-select-sm-pr);
+      --_font-size: var(--q-select-sm-font-size);
+    }
+
+    &--lg {
+      --_py: var(--q-select-lg-py);
+      --_pl: var(--q-select-lg-pl);
+      --_pr: var(--q-select-lg-pr);
+      --_font-size: var(--q-select-lg-font-size);
+    }
+  }
+
+  .q-select__label {
+    font-family: var(--q-select-label-font-family);
+    font-size: var(--q-select-label-font-size);
+    letter-spacing: var(--q-select-label-tracking);
+    text-transform: uppercase;
+    color: var(--q-select-label-fg);
+  }
+
+  .q-select__control {
+    position: relative;
+    display: block;
+  }
+
+  .q-select__input {
+    width: 100%;
+    padding: var(--_py) var(--_pr) var(--_py) var(--_pl);
+    border: var(--q-hairline) solid var(--q-select-border);
+    border-radius: var(--q-select-radius);
+    outline: none;
+    background: var(--q-select-bg);
+    font-family: var(--q-select-font-family);
+    font-size: var(--_font-size);
+    color: var(--q-select-fg);
+    cursor: pointer;
+    appearance: none;
+
+    &:focus {
+      border-color: var(--q-select-border-focus);
+      box-shadow: var(--q-select-ring-focus);
+    }
+
+    // Muted while a disabled option (the placeholder) is the selection.
+    &:has(> option:checked:disabled) {
+      color: var(--q-select-fg-placeholder);
+    }
+
+    .q-select--invalid &,
+    .q-select--invalid &:focus {
+      border-color: var(--q-select-border-invalid);
+    }
+  }
+
+  .q-select__chevron {
+    position: absolute;
+    top: 50%;
+    right: var(--q-select-chevron-inset);
+    color: var(--q-select-chevron-fg);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+}

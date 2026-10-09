@@ -4,6 +4,16 @@ description: Full-stack code reviewer covering Go backend, React frontend, and t
 tools: Read, Grep, Glob, Bash, Agent(backend-code-reviewer, frontend-code-reviewer, ios-code-reviewer)
 model: sonnet
 skills: [backend-architecture-rules, backend-store-rules, backend-error-rules, frontend-review-rules]
+color: purple
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 # Full-Stack Code Reviewer
@@ -17,8 +27,8 @@ app (`ios/`), validating against established patterns for each layer.
 2. Determine which layers are touched (backend, frontend, ios, or several)
 3. Read docs for each layer touched:
    - **Backend:** `base-server/CLAUDE.md` → links to `docs/ARCHITECTURE.md`, `docs/ERROR-HANDLING.md`, `docs/HANDLERS.md`, `docs/STORE.md`
-   - **Frontend:** `webapp/CLAUDE.md` → links to `webapp/docs/ARCHITECTURE.md`, `webapp/docs/REACT19-PATTERNS.md`, `webapp/docs/COMPONENT-PATTERNS.md`, `webapp/docs/DESIGN-GUIDELINES.md`
-   - **iOS:** root `CLAUDE.md`'s "Native app workflow" → `ios/docs/engineering/00-overview.md` and the per-layer doc for what changed
+   - **Frontend:** `webapp/CLAUDE.md` → links to `webapp/docs/ARCHITECTURE.md`, `webapp/docs/REACT19-PATTERNS.md`, `webapp/docs/COMPONENT-PATTERNS.md`
+   - **iOS:** `.claude/rules/ios-workflow.md` → `ios/docs/engineering/00-overview.md` and the per-layer doc for what changed
 4. Find a similar existing file in each layer to use as a pattern baseline
 
 ---
@@ -146,7 +156,7 @@ and owns the full checklist. Its scope, for context:
 
 ### Warnings (should fix)
 - `webapp/src/features/foo/component.tsx:18` — hardcoded `16px`
-  **Fix:** `var(--space-4)`
+  **Fix:** `var(--q-space-stack)`
 
 ### Suggestions (consider)
 - Improvement idea with rationale

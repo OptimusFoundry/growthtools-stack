@@ -1,0 +1,51 @@
+// FormHint — mono helper / error / success line. BEM: .q-form-hint, __glyph; --{variant}.
+@layer q.tokens {
+  :root,
+  [data-theme] {
+    --q-form-hint-gap: var(--q-space-1);
+    --q-form-hint-font-family: var(--q-font-mono);
+    --q-form-hint-font-size: var(--q-text-2xs);
+    --q-form-hint-leading: 1.5; // unique to the hint line
+    --q-form-hint-tracking: var(--q-tracking-wide);
+    --q-form-hint-fg: var(--q-fg-muted);
+    --q-form-hint-error-fg: var(--q-accent);
+    --q-form-hint-success-fg: var(--q-fg);
+    --q-form-hint-glyph-size: 14px; // optical circle around the 9px glyph
+    --q-form-hint-glyph-font-size: 9px;
+    --q-form-hint-glyph-nudge: var(--q-space-0-25);
+  }
+}
+
+@layer q.components {
+  .q-form-hint {
+    display: flex;
+    align-items: baseline;
+    gap: var(--q-form-hint-gap);
+    font-family: var(--q-form-hint-font-family);
+    font-size: var(--q-form-hint-font-size);
+    line-height: var(--q-form-hint-leading);
+    letter-spacing: var(--q-form-hint-tracking);
+    color: var(--q-form-hint-fg);
+
+    &--error {
+      color: var(--q-form-hint-error-fg);
+    }
+
+    &--success {
+      color: var(--q-form-hint-success-fg);
+    }
+  }
+
+  .q-form-hint__glyph {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: var(--q-form-hint-glyph-size);
+    height: var(--q-form-hint-glyph-size);
+    border: var(--q-hairline) solid currentcolor;
+    border-radius: var(--q-radius-pill);
+    font-size: var(--q-form-hint-glyph-font-size);
+    line-height: 1;
+    transform: translateY(var(--q-form-hint-glyph-nudge));
+  }
+}

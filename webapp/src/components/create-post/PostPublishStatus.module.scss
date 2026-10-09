@@ -1,57 +1,31 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--q-space-0-5);
 }
 
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
+  gap: var(--q-space-inline);
+  padding: var(--q-space-1-5) 0;
 }
 
 .platform {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--q-space-inline);
 }
 
 .platformIcon {
   display: flex;
   align-items: center;
-  color: var(--color-muted);
+  color: var(--q-fg-muted);
 }
 
 .status {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-}
-
-.iconSuccess {
-  color: var(--color-success);
-  flex-shrink: 0;
-}
-
-.iconError {
-  color: var(--color-error);
-  flex-shrink: 0;
-}
-
-.iconSpinning {
-  color: var(--color-primary);
-  flex-shrink: 0;
-  animation: spin 1.5s linear infinite;
-}
-
-.iconMuted {
-  color: var(--color-muted);
-  flex-shrink: 0;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  gap: var(--q-space-inline);
 }

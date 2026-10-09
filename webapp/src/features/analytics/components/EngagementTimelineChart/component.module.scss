@@ -10,11 +10,11 @@
 	align-items: center;
 	justify-content: center;
 	text-align: center;
-	padding: 0 var(--space-4);
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xxs);
+	padding: 0 var(--q-space-2);
+	font-family: var(--q-font-mono);
+	font-size: var(--q-text-2xs);
 	text-transform: uppercase;
-	letter-spacing: var(--letter-spacing-wider);
-	color: var(--color-base-content-tertiary);
+	letter-spacing: var(--q-tracking-mono);
+	color: var(--q-fg-subtle);
 	pointer-events: none;
 }

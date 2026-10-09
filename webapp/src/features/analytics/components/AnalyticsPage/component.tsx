@@ -1,8 +1,18 @@
-/**
- * AnalyticsPage — enhanced with date-range tabs, trend chips, time-series
- * chart, and .tbl-style platform breakdown table.
- */
-
+import {
+	Alert,
+	Button,
+	Col,
+	EmptyState,
+	Grid,
+	PageHero,
+	SectionHeader,
+	Skeleton,
+	Stack,
+	StatCard,
+	Table,
+	type TableProps,
+	Text,
+} from "@optimusfoundry/quiet";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
 	BarChart2,
@@ -12,67 +22,24 @@ import {
 	RefreshCw,
 	Share2,
 } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, type ReactNode, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import type { RangeKey } from "@/hooks/useAnalytics";
-import { useAnalyticsComparison } from "@/hooks/useAnalyticsComparison";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { StatCard } from "@/proto-design-system/components/data/StatCard/StatCard";
-import { Card } from "@/proto-design-system/components/layout/Card/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Skeleton } from "@/proto-design-system/components/primitives/Skeleton/Skeleton";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
-import pageStyles from "@/routes/page.module.scss";
+import {
+	type AnalyticsDeltas,
+	useAnalyticsComparison,
+} from "@/hooks/useAnalyticsComparison";
+import type { AnalyticsOverview, PlatformBreakdown } from "@/types/analytics";
 import type { PlatformType } from "@/types/platform";
 import { PLATFORM_DISPLAY_NAMES } from "@/types/platform";
+import { formatDelta, formatNumber, trendOf } from "@/utils/format";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 import { DateRangeTabs } from "../DateRangeTabs/component";
 import { MetricSelector } from "../MetricSelector/component";
 import type { MetricKey } from "../TimeSeriesChart/component";
 import { TimeSeriesChart } from "../TimeSeriesChart/component";
 import styles from "./component.module.scss";
-
-function formatNumber(value: number): string {
-	if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-	return value.toLocaleString();
-}
-
-function getPlatformLabel(platform: string): string {
-	return PLATFORM_DISPLAY_NAMES[platform as PlatformType] ?? platform;
-}
-
-function TrendChip({ delta }: { delta: number | null }) {
-	if (delta === null) return null;
-	const dir = delta > 0 ? "up" : delta < 0 ? "down" : "neutral";
-	const label = delta > 0 ? `+${formatNumber(delta)}` : formatNumber(delta);
-	return (
-		<span
-			className={`${styles.trendChip} ${styles[`trendChip--${dir}`]}`}
-			aria-label={`Trend: ${label}`}
-		>
-			{label}
-		</span>
-	);
-}
-
-function StatGridSkeleton() {
-	return (
-		<div className={styles.statsGrid}>
-			{[0, 1, 2, 3].map((i) => (
-				<div key={i} className={styles.skCard}>
-					<Skeleton height={12} width="50%" />
-					<Skeleton height={32} width="70%" />
-					<Skeleton height={12} width="40%" />
-				</div>
-			))}
-		</div>
-	);
-}
-
-function ChartSkeleton() {
-	return <Skeleton height={280} />;
-}
 
 const VALID_RANGES: RangeKey[] = ["7d", "30d", "90d"];
 
@@ -82,34 +49,161 @@ const RANGE_LABEL: Record<RangeKey, string> = {
 	"90d": "Last 90 days",
 };
 
-function AnalyticsHero({
-	range,
-	platformCount,
-}: {
+interface KpiConfig {
+	key: MetricKey;
+	label: string;
+	icon: typeof Eye;
+	total: (overview: AnalyticsOverview) => number;
+}
+
+const KPIS: KpiConfig[] = [
+	{
+		key: "impressions",
+		label: "Impressions",
+		icon: Eye,
+		total: (o) => o.totalImpressions,
+	},
+	{ key: "likes", label: "Likes", icon: Heart, total: (o) => o.totalLikes },
+	{
+		key: "comments",
+		label: "Comments",
+		icon: MessageCircle,
+		total: (o) => o.totalComments,
+	},
+	{ key: "shares", label: "Shares", icon: Share2, total: (o) => o.totalShares },
+];
+
+function getPlatformLabel(platform: string): string {
+	return PLATFORM_DISPLAY_NAMES[platform as PlatformType] ?? platform;
+}
+
+function formatStat(value: number | string): string {
+	return formatNumber(Number(value));
+}
+
+function formatCount(value: number): string {
+	return value.toLocaleString();
+}
+
+const platformColumns: TableProps<PlatformBreakdown>["columns"] = [
+	{
+		key: "platform",
+		header: "Platform",
+		render: (row) => getPlatformLabel(row.platform),
+	},
+	{
+		key: "impressions",
+		header: "Impressions",
+		align: "right",
+		render: (row) => formatCount(row.impressions),
+	},
+	{
+		key: "likes",
+		header: "Likes",
+		align: "right",
+		render: (row) => formatCount(row.likes),
+	},
+	{
+		key: "comments",
+		header: "Comments",
+		align: "right",
+		render: (row) => formatCount(row.comments),
+	},
+	{
+		key: "shares",
+		header: "Shares",
+		align: "right",
+		render: (row) => formatCount(row.shares),
+	},
+	{
+		key: "clicks",
+		header: "Clicks",
+		align: "right",
+		render: (row) => formatCount(row.clicks),
+	},
+];
+
+function eyebrowFor(range: RangeKey, platformCount: number | null): string {
+	if (platformCount === null) return `PERFORMANCE · ${RANGE_LABEL[range]}`;
+	const noun = platformCount === 1 ? "platform" : "platforms";
+	return `PERFORMANCE · ${RANGE_LABEL[range]} · ${platformCount} ${noun}`;
+}
+
+interface AnalyticsShellProps {
 	range: RangeKey;
 	platformCount: number | null;
-}) {
-	const eyebrowRight =
-		platformCount === null
-			? RANGE_LABEL[range]
-			: `${RANGE_LABEL[range]} · ${platformCount} ${
-					platformCount === 1 ? "platform" : "platforms"
-				}`;
+	onRangeChange: (next: RangeKey) => void;
+	children: ReactNode;
+}
+
+function AnalyticsShell({
+	range,
+	platformCount,
+	onRangeChange,
+	children,
+}: AnalyticsShellProps) {
 	return (
-		<header className={pageStyles.pageHero}>
-			<div className={pageStyles.pageHeroText}>
-				<div className={pageStyles.pageEyebrow}>
-					PERFORMANCE · {eyebrowRight}
-				</div>
-				<h1 className={pageStyles.pageHeroTitle}>
-					The numbers, <em>without the noise</em>.
-				</h1>
-				<p className={pageStyles.pageHeroSub}>
-					Impressions, engagement, and reach across every connected platform —
-					at a glance.
-				</p>
-			</div>
-		</header>
+		<>
+			<Topbar title="Analytics" />
+			<Stack gap="lg" animated>
+				<PageHero
+					size="md"
+					as="h2"
+					ruled={false}
+					className={styles.hero}
+					eyebrow={eyebrowFor(range, platformCount)}
+					title="The numbers,"
+					accent="without the noise"
+					description="Impressions, engagement, and reach across every connected platform — at a glance."
+					actions={<DateRangeTabs value={range} onChange={onRangeChange} />}
+				/>
+				{children}
+			</Stack>
+		</>
+	);
+}
+
+function LoadingBody() {
+	return (
+		<>
+			<Grid columns={12} gap="md" rowGap="md">
+				{KPIS.map((kpi) => (
+					<Col key={kpi.key} span={3}>
+						<Skeleton variant="rounded" height={120} />
+					</Col>
+				))}
+			</Grid>
+			<Skeleton variant="rounded" height={280} />
+		</>
+	);
+}
+
+function KpiRow({
+	overview,
+	deltas,
+}: {
+	overview: AnalyticsOverview;
+	deltas: AnalyticsDeltas | null;
+}) {
+	return (
+		<Grid columns={12} gap="md" rowGap="md">
+			{KPIS.map((kpi) => {
+				const delta = deltas ? formatDelta(deltas[kpi.key]) : undefined;
+				return (
+					<Col key={kpi.key} span={3}>
+						<StatCard
+							label={kpi.label}
+							value={kpi.total(overview)}
+							format={formatStat}
+							icon={<AppIcon icon={kpi.icon} size="lg" />}
+							delta={delta}
+							trend={delta ? trendOf(delta) : undefined}
+							period={delta ? "vs prior period" : undefined}
+						/>
+					</Col>
+				);
+			})}
+		</Grid>
 	);
 }
 
@@ -135,52 +229,42 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 		});
 	}
 
-	const topbar = <Topbar title="Analytics" />;
-
-	// ── Loading state ──────────────────────────────────────────────────────────
-	if (loading) {
+	function renderShell(platformCount: number | null, body: ReactNode) {
 		return (
-			<>
-				{topbar}
-				<Stack gap="lg" className={styles.page} animate>
-					<AnalyticsHero range={range} platformCount={null} />
-					<DateRangeTabs value={range} onChange={handleRangeChange} />
-					<StatGridSkeleton />
-					<ChartSkeleton />
-				</Stack>
-			</>
+			<AnalyticsShell
+				range={range}
+				platformCount={platformCount}
+				onRangeChange={handleRangeChange}
+			>
+				{body}
+			</AnalyticsShell>
 		);
 	}
 
-	// ── Error state ────────────────────────────────────────────────────────────
+	if (loading) return renderShell(null, <LoadingBody />);
+
 	if (error) {
-		return (
-			<>
-				{topbar}
-				<Stack gap="lg" className={styles.page} animate>
-					<AnalyticsHero range={range} platformCount={null} />
-					<DateRangeTabs value={range} onChange={handleRangeChange} />
-					<Card variant="outlined" padding="lg">
-						<Stack gap="md" align="center">
-							<Text weight="semibold">Something went wrong</Text>
-							<Text color="muted" size="sm">
-								{error}
-							</Text>
-							<Button
-								variant="secondary"
-								leftIcon={<RefreshCw size={16} />}
-								onClick={refetch}
-							>
-								Retry
-							</Button>
-						</Stack>
-					</Card>
-				</Stack>
-			</>
+		return renderShell(
+			null,
+			<Alert
+				variant="error"
+				title="Something went wrong"
+				action={
+					<Button
+						variant="secondary"
+						size="sm"
+						icon={<AppIcon icon={RefreshCw} />}
+						onClick={refetch}
+					>
+						Retry
+					</Button>
+				}
+			>
+				{error}
+			</Alert>,
 		);
 	}
 
-	// ── Empty — no connected platforms ────────────────────────────────────────
 	const isNoPlatforms =
 		platformBreakdown.length === 0 &&
 		overview !== null &&
@@ -188,156 +272,76 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 		overview.totalLikes === 0;
 
 	if (!overview || isNoPlatforms) {
-		return (
-			<>
-				{topbar}
-				<Stack gap="lg" className={styles.page} animate>
-					<AnalyticsHero range={range} platformCount={0} />
-					<DateRangeTabs value={range} onChange={handleRangeChange} />
-					<EmptyState
-						icon={<BarChart2 size={48} />}
-						title="No platforms connected"
-						description="Connect your social platforms and start publishing to see analytics here."
-						action={
-							<Button
-								variant="primary"
-								onClick={() =>
-									navigate({ to: "/account", search: { tab: "platforms" } })
-								}
-							>
-								Connect platforms
-							</Button>
-						}
-					/>
-				</Stack>
-			</>
+		return renderShell(
+			0,
+			<EmptyState
+				icon={<AppIcon icon={BarChart2} size="xl" />}
+				title={trimTrailingPeriod("No platforms connected")}
+				description="Connect your social platforms and start publishing to see analytics here."
+				actions={
+					<Button variant="primary" href="/account?tab=platforms">
+						Connect platforms
+					</Button>
+				}
+			/>,
 		);
 	}
 
-	// ── Empty — connected but no data in range ────────────────────────────────
 	if (timeseries.length === 0 && platformBreakdown.length === 0) {
-		return (
-			<>
-				{topbar}
-				<Stack gap="lg" className={styles.page} animate>
-					<AnalyticsHero
-						range={range}
-						platformCount={platformBreakdown.length}
-					/>
-					<DateRangeTabs value={range} onChange={handleRangeChange} />
-					<EmptyState
-						icon={<BarChart2 size={48} />}
-						title="No data for this range"
-						description="There is no activity recorded in this time window."
-						action={
-							<Button variant="ghost" onClick={() => handleRangeChange("30d")}>
-								Switch to 30 days
-							</Button>
-						}
-					/>
-				</Stack>
-			</>
+		return renderShell(
+			platformBreakdown.length,
+			<EmptyState
+				icon={<AppIcon icon={BarChart2} size="xl" />}
+				title={trimTrailingPeriod("No data for this range")}
+				description="There is no activity recorded in this time window."
+				actions={
+					<Button variant="ghost" onClick={() => handleRangeChange("30d")}>
+						Switch to 30 days
+					</Button>
+				}
+			/>,
 		);
 	}
 
-	// ── Happy path ─────────────────────────────────────────────────────────────
-	return (
+	return renderShell(
+		platformBreakdown.length,
 		<>
-			{topbar}
-			<Stack gap="lg" className={styles.page} animate>
-				<AnalyticsHero range={range} platformCount={platformBreakdown.length} />
-				<DateRangeTabs value={range} onChange={handleRangeChange} />
+			<KpiRow overview={overview} deltas={deltas} />
 
-				<div className={styles.statsGrid}>
-					<StatCard
-						label="Impressions"
-						value={formatNumber(overview.totalImpressions)}
-						numericValue={overview.totalImpressions}
-						formatValue={formatNumber}
-						icon={<Eye size={18} />}
-						variant="outlined"
-						footer={<TrendChip delta={deltas?.impressions ?? null} />}
-					/>
-					<StatCard
-						label="Likes"
-						value={formatNumber(overview.totalLikes)}
-						numericValue={overview.totalLikes}
-						formatValue={formatNumber}
-						icon={<Heart size={18} />}
-						variant="outlined"
-						footer={<TrendChip delta={deltas?.likes ?? null} />}
-					/>
-					<StatCard
-						label="Comments"
-						value={formatNumber(overview.totalComments)}
-						numericValue={overview.totalComments}
-						formatValue={formatNumber}
-						icon={<MessageCircle size={18} />}
-						variant="outlined"
-						footer={<TrendChip delta={deltas?.comments ?? null} />}
-					/>
-					<StatCard
-						label="Shares"
-						value={formatNumber(overview.totalShares)}
-						numericValue={overview.totalShares}
-						formatValue={formatNumber}
-						icon={<Share2 size={18} />}
-						variant="outlined"
-						footer={<TrendChip delta={deltas?.shares ?? null} />}
-					/>
-				</div>
-
-				{timeseries.length > 0 && (
-					<Card variant="outlined" padding="md">
-						<Stack gap="md">
-							<Stack direction="row" justify="between" align="center">
-								<span className={styles.chartEyebrow}>
-									ENGAGEMENT OVER TIME
-								</span>
-								<MetricSelector value={metric} onChange={setMetric} />
-							</Stack>
-							<TimeSeriesChart data={timeseries} metric={metric} />
-						</Stack>
-					</Card>
-				)}
-
-				{platformBreakdown.length > 0 && (
-					<Card variant="outlined" padding="md">
-						<Stack gap="md">
+			{timeseries.length > 0 && (
+				<section className={styles.panel}>
+					<Stack gap="lg">
+						<Stack
+							direction="row"
+							justify="space-between"
+							align="center"
+							wrap
+							gap="sm"
+						>
 							<Text as="h3" size="lg" weight="semibold">
-								Platform Breakdown
+								Engagement over time
 							</Text>
-							<div className={styles.tableWrapper}>
-								<table className={styles.tbl}>
-									<thead>
-										<tr>
-											<th>Platform</th>
-											<th>Impressions</th>
-											<th>Likes</th>
-											<th>Comments</th>
-											<th>Shares</th>
-											<th>Clicks</th>
-										</tr>
-									</thead>
-									<tbody>
-										{platformBreakdown.map((row) => (
-											<tr key={row.platform}>
-												<td>{getPlatformLabel(row.platform)}</td>
-												<td>{row.impressions.toLocaleString()}</td>
-												<td>{row.likes.toLocaleString()}</td>
-												<td>{row.comments.toLocaleString()}</td>
-												<td>{row.shares.toLocaleString()}</td>
-												<td>{row.clicks.toLocaleString()}</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
+							<MetricSelector value={metric} onChange={setMetric} />
 						</Stack>
-					</Card>
-				)}
-			</Stack>
-		</>
+						<TimeSeriesChart data={timeseries} metric={metric} />
+					</Stack>
+				</section>
+			)}
+
+			{platformBreakdown.length > 0 && (
+				<Stack gap="md">
+					<SectionHeader size="sm" as="h2" title="Platform Breakdown" />
+					<Table
+						label="Platform breakdown"
+						className={styles.table}
+						size="sm"
+						rowKey="platform"
+						columns={platformColumns}
+						data={platformBreakdown}
+					/>
+				</Stack>
+			)}
+		</>,
 	);
 });
 
