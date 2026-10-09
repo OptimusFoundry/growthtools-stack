@@ -291,7 +291,7 @@ status flow: Backlog → Spec'd → Planned → In progress → Shipped.
 
 | ID | Change | Brief | Plan | Status |
 |----|--------|-------|------|--------|
-| CH-001 | Rewrite the product screens on quiet and remove Proto | [brief](briefs/2026-10-08-quiet-product-rewrite.md) | — | Spec'd |
+| CH-001 | Rewrite the product screens on quiet and remove Proto | [brief](briefs/2026-10-08-quiet-product-rewrite.md) | [plan](plans/2026-10-08-quiet-product-rewrite.md) | Planned |
 
 ---
 
