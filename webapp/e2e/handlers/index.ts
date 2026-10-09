@@ -36,6 +36,8 @@ import {
 	mediaScenarios,
 } from "./media.handlers";
 import {
+	githubEndpoints,
+	githubReposEndpoints,
 	platformsEndpoints,
 	platformsHandlers,
 	platformsScenarios,
@@ -94,6 +96,8 @@ export {
 	chatHandlers,
 	contentEndpoints,
 	contentHandlers,
+	githubEndpoints,
+	githubReposEndpoints,
 	mediaEndpoints,
 	mediaHandlers,
 	platformsEndpoints,
@@ -122,6 +126,8 @@ export const endpoints = {
 	blog: blogEndpoints,
 	chat: chatEndpoints,
 	content: contentEndpoints,
+	github: githubEndpoints,
+	githubRepos: githubReposEndpoints,
 	media: mediaEndpoints,
 	platforms: platformsEndpoints,
 	posts: postsEndpoints,

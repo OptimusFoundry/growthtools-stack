@@ -10,7 +10,7 @@ import {
 	useGitHubConnection,
 } from "@/hooks/useGitHubConnection";
 import { useInitGitHubOAuth } from "@/hooks/useInitGitHubOAuth";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
+import { useNotify } from "@/hooks/useNotify";
 
 // ============================================================================
 // Types
@@ -47,61 +47,52 @@ export function useGitHubConnectionFlow({
 	const { connection, loading, refetch } = useGitHubConnection();
 	const { initOAuth } = useInitGitHubOAuth();
 	const { disconnect } = useDisconnectGitHub();
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 
-	// One-shot banner after OAuth callback
 	useEffect(() => {
 		if (!callbackStatus) return;
 		if (callbackStatus === "connected") {
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: "GitHub connected",
 				description: "We'll watch your selected repos for new commits.",
-				dismissible: true,
 			});
 		} else {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "GitHub connection failed",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		}
 		onClearCallbackStatus?.();
-	}, [callbackStatus, addBanner, onClearCallbackStatus]);
+	}, [callbackStatus, notify, onClearCallbackStatus]);
 
 	const handleConnect = useCallback(async () => {
 		try {
 			const url = await initOAuth();
 			window.location.href = url;
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't start GitHub OAuth",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		}
-	}, [initOAuth, addBanner]);
+	}, [initOAuth, notify]);
 
 	const handleDisconnect = useCallback(async () => {
 		try {
 			await disconnect();
 			refetch();
-			addBanner({
-				type: "success",
-				title: "GitHub disconnected",
-				dismissible: true,
-			});
+			notify({ status: "success", title: "GitHub disconnected" });
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't disconnect GitHub",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		}
-	}, [disconnect, refetch, addBanner]);
+	}, [disconnect, refetch, notify]);
 
 	return {
 		state: {

@@ -1,18 +1,58 @@
+import {
+	Alert,
+	Button,
+	Col,
+	Grid,
+	PageHero,
+	Stack,
+	Table,
+	type TableProps,
+	TextField,
+} from "@optimusfoundry/quiet";
 import { Search } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import { fetcher } from "@/api/client";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import { useAuth } from "@/contexts/auth";
-import { useAdminUsers } from "@/hooks/useAdminUsers";
-import { Input } from "@/proto-design-system/components/forms/Input/Input";
-import { Card } from "@/proto-design-system/components/layout/Card/Card";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
-import pageStyles from "@/routes/page.module.scss";
+import { type AdminUser, useAdminUsers } from "@/hooks/useAdminUsers";
 import styles from "./AdminPage.module.scss";
-import { UserRow } from "./UserRow";
+import { LoginAsAction } from "./LoginAsAction";
+
+function formatDate(isoString: string): string {
+	try {
+		return new Date(isoString).toLocaleDateString(undefined, {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	} catch {
+		return isoString;
+	}
+}
+
+const columns: TableProps<AdminUser>["columns"] = [
+	{ key: "email", header: "Email", render: (row) => row.email },
+	{
+		key: "name",
+		header: "Name",
+		render: (row) => `${row.firstName} ${row.lastName}`.trim(),
+	},
+	{
+		key: "createdAt",
+		header: "Joined",
+		nowrap: true,
+		render: (row) => (
+			<time dateTime={row.createdAt}>{formatDate(row.createdAt)}</time>
+		),
+	},
+	{
+		key: "actions",
+		header: "Actions",
+		align: "right",
+		render: (row) => <LoginAsAction user={row} />,
+	},
+];
 
 /**
  * Admin page — user search and impersonation control.
@@ -50,74 +90,53 @@ export const AdminPage = memo(function AdminPage() {
 	return (
 		<>
 			<Topbar title="Admin" />
-			<div className={pageStyles.page}>
-				<Stack gap="lg">
-					{/* Stop impersonation button — shown when actively impersonating */}
-					{user?.isImpersonated && (
-						<div className={styles.stopBar} data-testid="admin-stop-bar">
-							<Text color="secondary" size="sm">
-								You are currently impersonating another user.
-							</Text>
+			<Stack gap="lg">
+				{user?.isImpersonated && (
+					<Alert
+						variant="warning"
+						action={
 							<Button
 								variant="destructive"
 								size="sm"
 								onClick={handleStopImpersonation}
-								isLoading={isStopping}
-								data-testid="admin-stop-button"
+								loading={isStopping}
 							>
 								Stop impersonating
 							</Button>
-						</div>
-					)}
+						}
+					>
+						You are currently impersonating another user.
+					</Alert>
+				)}
 
-					{/* User search */}
-					<Card>
-						<div className={styles.searchHeader}>
-							<Text as="h2" size="lg" weight="semibold">
-								Users
-							</Text>
-							<div className={styles.searchInput}>
-								<Input
-									placeholder="Search by email…"
-									value={searchValue}
-									onChange={handleSearchChange}
-									leftElement={<Search size={15} />}
-									aria-label="Search users by email"
-									data-testid="admin-search-input"
-								/>
-							</div>
-						</div>
+				<PageHero size="md" as="h2" title="Users" className={styles.hero} />
 
-						<div className={styles.results} data-testid="admin-user-list">
-							{isLoading && (
-								<div className={styles.loadingState}>
-									<Spinner size="md" />
-								</div>
-							)}
+				<Grid columns={12}>
+					<Col span={4} spanSm={12}>
+						<TextField
+							label="Search users by email"
+							hideLabel
+							placeholder="Search by email…"
+							leftIcon={<AppIcon icon={Search} />}
+							value={searchValue}
+							onChange={handleSearchChange}
+						/>
+					</Col>
+				</Grid>
 
-							{!isLoading && error && (
-								<div className={styles.emptyState}>
-									<Text color="secondary" size="sm">
-										{error}
-									</Text>
-								</div>
-							)}
-
-							{!isLoading && !error && users.length === 0 && (
-								<div className={styles.emptyState}>
-									<Text color="secondary" size="sm">
-										No users found.
-									</Text>
-								</div>
-							)}
-
-							{!isLoading &&
-								!error &&
-								users.map((u) => <UserRow key={u.id} user={u} />)}
-						</div>
-					</Card>
-				</Stack>
-			</div>
+				{error ? (
+					<Alert variant="error">{error}</Alert>
+				) : (
+					<Table<AdminUser>
+						label="Users"
+						rowKey="id"
+						columns={columns}
+						data={users}
+						loading={isLoading}
+						emptyText="No users found."
+					/>
+				)}
+			</Stack>
 		</>
 	);
 });

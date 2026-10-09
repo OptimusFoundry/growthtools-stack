@@ -3,22 +3,22 @@
  * Display repos and allow connecting/disconnecting them
  */
 
+import {
+	Badge,
+	EmptyState,
+	List,
+	Spinner,
+	Stack,
+	Switch,
+	Text,
+} from "@optimusfoundry/quiet";
 import { GitBranch } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { useConnectGitHubRepo } from "@/hooks/useConnectGitHubRepo";
 import { useGitHubRepos } from "@/hooks/useGitHubRepos";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
-import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
-import {
-	Card,
-	CardBody,
-} from "@/proto-design-system/components/layout/Card/Card";
-import { Divider } from "@/proto-design-system/components/layout/Divider/Divider";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+import { useNotify } from "@/hooks/useNotify";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 import styles from "./GitHubConnectionSection.module.scss";
 
 // ============================================================================
@@ -38,19 +38,18 @@ export const GitHubRepoSelector = memo(function GitHubRepoSelector({
 		disconnectRepo,
 		loading: mutating,
 	} = useConnectGitHubRepo();
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 	const [busyRepo, setBusyRepo] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (error) {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't load repositories",
 				description: error,
-				dismissible: true,
 			});
 		}
-	}, [error, addBanner]);
+	}, [error, notify]);
 
 	const handleToggle = useCallback(
 		async (owner: string, name: string, isConnected: boolean) => {
@@ -59,35 +58,29 @@ export const GitHubRepoSelector = memo(function GitHubRepoSelector({
 			try {
 				if (isConnected) {
 					await disconnectRepo(owner, name);
-					addBanner({
-						type: "success",
-						title: `Disconnected ${key}`,
-						dismissible: true,
-					});
+					notify({ status: "success", title: `Disconnected ${key}` });
 				} else {
 					await connectRepo(owner, name);
-					addBanner({
-						type: "success",
+					notify({
+						status: "success",
 						title: `Connected ${key}`,
 						description: "We'll watch this repo for new commits.",
-						dismissible: true,
 					});
 				}
 				refetch();
 			} catch {
-				addBanner({
-					type: "error",
+				notify({
+					status: "error",
 					title: isConnected
 						? `Couldn't disconnect ${key}`
 						: `Couldn't connect ${key}`,
 					description: "Please try again.",
-					dismissible: true,
 				});
 			} finally {
 				setBusyRepo(null);
 			}
 		},
-		[connectRepo, disconnectRepo, refetch, addBanner],
+		[connectRepo, disconnectRepo, refetch, notify],
 	);
 
 	if (loading && repos.length === 0) {
@@ -101,8 +94,8 @@ export const GitHubRepoSelector = memo(function GitHubRepoSelector({
 	if (repos.length === 0) {
 		return (
 			<EmptyState
-				icon={<GitBranch size={48} />}
-				title="No repositories found"
+				icon={<AppIcon icon={GitBranch} size="2xl" />}
+				title={trimTrailingPeriod("No repositories found")}
 				description="We couldn't find any repositories on your GitHub account."
 				size="sm"
 			/>
@@ -110,52 +103,39 @@ export const GitHubRepoSelector = memo(function GitHubRepoSelector({
 	}
 
 	return (
-		<Stack gap="sm">
-			<Card variant="outlined">
-				<CardBody>
-					<Stack gap="xs">
-						{repos.map((repo, index) => {
-							const key = `${repo.owner.login}/${repo.name}`;
-							const isBusy = mutating && busyRepo === key;
-							return (
-								<div key={repo.id}>
-									{index > 0 && <Divider />}
-									<div className={styles.repoRow}>
-										<Stack gap="xs" className={styles.repoInfo}>
-											<Stack direction="row" gap="xs" align="center">
-												<Text size="sm" weight="medium">
-													{repo.full_name}
-												</Text>
-												{repo.private && (
-													<Badge variant="secondary" size="sm">
-														private
-													</Badge>
-												)}
-											</Stack>
-											<Text size="xs" color="muted">
-												default branch: {repo.default_branch}
-											</Text>
-										</Stack>
-										<Switch
-											checked={repo.connected}
-											disabled={isBusy}
-											onChange={() =>
-												handleToggle(
-													repo.owner.login,
-													repo.name,
-													repo.connected,
-												)
-											}
-											aria-label={`${repo.connected ? "Disconnect" : "Connect"} ${key}`}
-										/>
-									</div>
-								</div>
-							);
-						})}
-					</Stack>
-				</CardBody>
-			</Card>
-		</Stack>
+		<List
+			divided
+			items={repos.map((repo) => {
+				const key = `${repo.owner.login}/${repo.name}`;
+				const isBusy = mutating && busyRepo === key;
+				return {
+					id: repo.id,
+					primary: (
+						<Stack direction="row" gap="xs" align="center">
+							<Text size="sm" weight="medium">
+								{repo.full_name}
+							</Text>
+							{repo.private && (
+								<Badge variant="secondary" size="sm">
+									private
+								</Badge>
+							)}
+						</Stack>
+					),
+					secondary: `default branch: ${repo.default_branch}`,
+					trailing: (
+						<Switch
+							checked={repo.connected}
+							disabled={isBusy}
+							onChange={() =>
+								handleToggle(repo.owner.login, repo.name, repo.connected)
+							}
+							aria-label={`${repo.connected ? "Disconnect" : "Connect"} ${key}`}
+						/>
+					),
+				};
+			})}
+		/>
 	);
 });
 

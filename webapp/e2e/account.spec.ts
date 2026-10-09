@@ -1,17 +1,18 @@
 /**
- * Account Settings — Site Publish Tab E2E Tests
+ * Account Settings — Site Publish and Voice Profile Tab E2E Tests
  *
- * New spec — no settings tab had Playwright coverage before this. Covers the
- * Site Publish tab at /account?tab=site-publish (F2).
+ * Covers /account?tab=site-publish (F2) and /account?tab=voice-profile (F7).
  *
  * Endpoints exercised:
+ *   GET/PUT /api/protected/settings/voice → 200, 400, 401, 403, 404, 409, 500, 503, transport
  *   GET /api/protected/settings/site-publish → 200, 404 (not configured), 500
  *   PUT /api/protected/settings/site-publish → 200, 400, 401, 403, 409, 500, transport
  */
 import { HttpResponse, http } from "msw";
 import { expect, test } from "./fixtures/test";
+import { settingsEndpoints } from "./handlers/settings.handlers";
 import { sitePublishEndpoints } from "./handlers/sitePublish.handlers";
-import { sitePublishTarget } from "./mocks/data";
+import { sitePublishTarget, voiceProfile } from "./mocks/data";
 
 const tabUrl = "/account?tab=site-publish";
 
@@ -77,9 +78,9 @@ test.describe("Account — Site Publish Tab", () => {
 		await page.getByRole("button", { name: /save/i }).click();
 		await page.waitForLoadState("networkidle");
 
-		const alert = page.getByRole("alert");
-		await expect(alert).toBeVisible();
-		await expect(alert).toContainText(/saved|success/i);
+		await expect(
+			page.getByRole("status").filter({ hasText: /saved|success/i }),
+		).toBeVisible();
 	});
 
 	// =========================================================================
@@ -191,5 +192,135 @@ test.describe("Account — Site Publish Tab", () => {
 
 		await expect(page.getByRole("alert")).toBeVisible();
 		await expect(page.getByLabel("Repository Owner")).not.toBeVisible();
+	});
+});
+
+const voiceUrl = "/account?tab=voice-profile";
+const voiceSaveError = "Failed to save voice profile. Please try again.";
+
+const voiceSaveStatuses = [
+	400,
+	401,
+	403,
+	404,
+	409,
+	500,
+	503,
+	"transport",
+] as const;
+
+test.describe("Account — Voice Profile Tab", () => {
+	test("load fills every field from the saved profile", async ({
+		network,
+		page,
+	}) => {
+		network.use(
+			http.get("*/api/protected/settings/voice", () =>
+				HttpResponse.json({
+					...voiceProfile,
+					custom_instructions: "Never use hashtags.",
+				}),
+			),
+		);
+
+		await page.goto(voiceUrl);
+
+		await expect(page.getByRole("combobox", { name: "Tone" })).toHaveValue(
+			voiceProfile.tone,
+		);
+		await expect(page.getByRole("combobox", { name: "Style" })).toHaveValue(
+			voiceProfile.style,
+		);
+		await expect(page.getByLabel("Industry")).toHaveValue(
+			voiceProfile.industry,
+		);
+		await expect(page.getByLabel("Target Audience")).toHaveValue(
+			voiceProfile.target_audience,
+		);
+		await expect(page.getByLabel("Example Posts")).toHaveValue(
+			voiceProfile.example_posts.join("\n"),
+		);
+		await expect(page.getByLabel("Custom Instructions")).toHaveValue(
+			"Never use hashtags.",
+		);
+	});
+
+	test("save (200) sends the edited fields and shows the saved status", async ({
+		network,
+		page,
+	}) => {
+		network.use(settingsEndpoints.getVoice[200]());
+		await page.goto(voiceUrl);
+		await expect(page.getByLabel("Industry")).toHaveValue(
+			voiceProfile.industry,
+		);
+
+		await page.getByRole("combobox", { name: "Tone" }).selectOption("Casual");
+		await page
+			.getByRole("combobox", { name: "Style" })
+			.selectOption("Detailed");
+		await page.getByLabel("Industry").fill("fintech");
+
+		const requestPromise = page.waitForRequest(
+			(r) =>
+				r.method() === "PUT" &&
+				r.url().includes("/api/protected/settings/voice"),
+		);
+		network.use(settingsEndpoints.updateVoice[200]());
+		await page.getByText(/save/i).last().click();
+
+		const body = (await requestPromise).postDataJSON();
+		expect(body).toMatchObject({
+			tone: "casual",
+			style: "detailed",
+			industry: "fintech",
+		});
+		await expect(
+			page.getByRole("status").filter({ hasText: /voice profile saved/i }),
+		).toBeVisible();
+	});
+
+	for (const status of voiceSaveStatuses) {
+		test(`save handles ${status}`, async ({ network, page }) => {
+			network.use(settingsEndpoints.getVoice[200]());
+			await page.goto(voiceUrl);
+			await expect(page.getByLabel("Industry")).toHaveValue(
+				voiceProfile.industry,
+			);
+
+			network.use(settingsEndpoints.updateVoice[status]());
+			await page.getByText(/save/i).last().click();
+
+			await expect(page.getByRole("alert")).toHaveText(voiceSaveError);
+		});
+	}
+
+	test("not configured (404) — empty form, no error alert", async ({
+		network,
+		page,
+	}) => {
+		network.use(settingsEndpoints.getVoice[404]());
+
+		await page.goto(voiceUrl);
+		await page.waitForLoadState("networkidle");
+
+		await expect(page.getByLabel("Industry")).toHaveValue("");
+		await expect(page.getByLabel("Target Audience")).toHaveValue("");
+		await expect(page.getByLabel("Example Posts")).toHaveValue("");
+		await expect(page.getByLabel("Custom Instructions")).toHaveValue("");
+		await expect(page.getByRole("alert")).not.toBeVisible();
+	});
+
+	test("GET error (500) shows full-tab error alert, not the form", async ({
+		network,
+		page,
+	}) => {
+		network.use(settingsEndpoints.getVoice[500]());
+
+		await page.goto(voiceUrl);
+		await page.waitForLoadState("networkidle");
+
+		await expect(page.getByRole("alert")).toBeVisible();
+		await expect(page.getByLabel("Industry")).not.toBeVisible();
 	});
 });

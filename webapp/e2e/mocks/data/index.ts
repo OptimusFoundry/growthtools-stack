@@ -21,6 +21,8 @@ import type { ApiSitePublishTarget } from "../../../src/api/types/sitePublishTar
 import type { ApiTierInfo, ApiTierName } from "../../../src/api/types/tier";
 import type { ApiUser } from "../../../src/api/types/user";
 import type { ApiVoiceProfile } from "../../../src/api/types/voiceProfile";
+import type { GitHubConnection } from "../../../src/hooks/useGitHubConnection";
+import type { GitHubAvailableRepo } from "../../../src/hooks/useGitHubRepos";
 
 // ============================================================================
 // Tier Configurations
@@ -177,6 +179,7 @@ export const posts: ApiPost[] = [
 		tags: ["announcement", "product"],
 		ai_generated: false,
 		source: "manual",
+		platforms: ["x", "linkedin"],
 		created_at: now,
 		updated_at: now,
 	},
@@ -192,6 +195,7 @@ export const posts: ApiPost[] = [
 		tags: ["tips", "development"],
 		ai_generated: true,
 		source: "ai_generated",
+		platforms: [],
 		created_at: now,
 		updated_at: now,
 	},
@@ -208,6 +212,7 @@ export const posts: ApiPost[] = [
 		tags: ["community", "weekly"],
 		ai_generated: false,
 		source: "manual",
+		platforms: ["bluesky"],
 		created_at: now,
 		updated_at: now,
 	},
@@ -289,6 +294,41 @@ export const platformConnections: ApiPlatformConnection[] = [
 		connected_at: "2025-05-01T00:00:00Z",
 		created_at: now,
 		updated_at: now,
+	},
+];
+
+// ============================================================================
+// GitHub Data
+// ============================================================================
+
+export const githubConnection: GitHubConnection = {
+	id: "ghc_1",
+	user_id: "user_123",
+	github_user_id: 4242,
+	github_username: "octo-tester",
+	scope: "repo,read:user",
+	created_at: now,
+	updated_at: now,
+};
+
+export const githubRepos: GitHubAvailableRepo[] = [
+	{
+		id: 1001,
+		name: "growth-app",
+		full_name: "octo-tester/growth-app",
+		owner: { login: "octo-tester" },
+		default_branch: "main",
+		private: false,
+		connected: false,
+	},
+	{
+		id: 1002,
+		name: "internal-tools",
+		full_name: "octo-tester/internal-tools",
+		owner: { login: "octo-tester" },
+		default_branch: "develop",
+		private: true,
+		connected: true,
 	},
 ];
 
