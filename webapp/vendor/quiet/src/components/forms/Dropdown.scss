@@ -10,9 +10,9 @@
     --q-dropdown-gap: var(--q-space-1);
     --q-dropdown-min-width: 220px;
     --q-dropdown-disabled-opacity: 0.4;
-    --q-dropdown-label-font-family: var(--q-font-mono);
-    --q-dropdown-label-font-size: var(--q-text-2xs);
-    --q-dropdown-label-tracking: var(--q-tracking-mono);
+    --q-dropdown-label-font-family: var(--q-font-label);
+    --q-dropdown-label-font-size: var(--q-text-label);
+    --q-dropdown-label-tracking: var(--q-tracking-label);
     --q-dropdown-label-fg: var(--q-fg-muted);
     --q-dropdown-sm-height: var(--q-field-sm);
     --q-dropdown-sm-px: var(--q-space-1-5);
@@ -56,9 +56,9 @@
     --q-dropdown-option-description-font-size: var(--q-text-sm);
     --q-dropdown-option-description-fg: var(--q-fg-muted);
     --q-dropdown-check-width: var(--q-space-1-5);
-    --q-dropdown-hint-font-family: var(--q-font-mono);
-    --q-dropdown-hint-font-size: var(--q-text-2xs);
-    --q-dropdown-hint-tracking: var(--q-tracking-wide);
+    --q-dropdown-hint-font-family: var(--q-font-hint);
+    --q-dropdown-hint-font-size: var(--q-text-hint);
+    --q-dropdown-hint-tracking: var(--q-tracking-hint);
     --q-dropdown-hint-fg: var(--q-fg-muted);
     --q-dropdown-hint-error-fg: var(--q-accent);
   }
@@ -100,8 +100,9 @@
   .q-dropdown__label {
     font-family: var(--q-dropdown-label-font-family);
     font-size: var(--q-dropdown-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-dropdown-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     color: var(--q-dropdown-label-fg);
   }
 

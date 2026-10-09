@@ -10,8 +10,8 @@
     --q-list-group-gap: var(--q-space-3);
     --q-list-border: var(--q-border);
     --q-list-radius: var(--q-radius-lg);
-    --q-list-label-font-size: var(--q-text-2xs);
-    --q-list-label-tracking: var(--q-tracking-mono);
+    --q-list-label-font-size: var(--q-text-label);
+    --q-list-label-tracking: var(--q-tracking-label);
     --q-list-label-color: var(--q-fg-muted);
     --q-list-label-border: var(--q-fg);
     --q-list-label-padding-bottom: var(--q-space-1);
@@ -102,10 +102,11 @@
     padding: 0 0 var(--q-list-label-padding-bottom);
     border-bottom: var(--q-hairline) solid var(--q-list-label-border);
     color: var(--q-list-label-color);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-list-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-list-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
 
     .q-list--bordered & {
       padding: var(--q-list-label-bordered-padding-top) var(--q-list-label-bordered-px) var(--q-list-label-padding-bottom);

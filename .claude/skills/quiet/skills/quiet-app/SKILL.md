@@ -8,7 +8,8 @@ description: Use when building, changing or reviewing UI in an app that uses the
 Guidelines ship in `node_modules/@optimusfoundry/quiet/docs/guidelines/`. Read `README.md` (the ten
 rules) first, then the guide for the decision at hand: `layouts.md`, `sections.md`, `grid.md`,
 `spacing.md`, `typography.md`, `components.md`, `foundations.md`, `content.md`, `accessibility.md`,
-`checklist.md`. Props: `dist/components/<group>/<Name>.d.ts`.
+`checklist.md`. Props and styles: `src/components/<group>/<Name>.tsx` and `.scss` (vendored), or
+`dist/components/<group>/<Name>.d.ts` (installed).
 
 ## Setup
 
@@ -65,6 +66,6 @@ If quiet lacks something, build it in the product on quiet tokens and BEM, and f
 1. `npx quiet-audit <url…> --width 1280,390 --theme <theme>,<dark pair>`. Fix every finding or
    justify it in the PR.
 2. Look at both themes at 1280 and 390 against `checklist.md`: hierarchy, one lead, sectioning, slop,
-   copy. For a whole screen, hand this to the `quiet-screen-reviewer` agent.
+   copy. For a whole screen, hand this to the `quiet:quiet-screen-reviewer` agent.
 3. `document.title` per route, focus after navigation, named landmarks, axe clean: the app's duties
    in `accessibility.md`, "What the app must do".

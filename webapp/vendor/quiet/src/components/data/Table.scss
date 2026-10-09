@@ -17,17 +17,17 @@
     --q-table-md-py: var(--q-space-1-75);
     --q-table-md-px: var(--q-space-2);
     --q-table-md-font-size: var(--q-text-md);
-    --q-table-md-head-font-size: var(--q-text-2xs);
+    --q-table-md-head-font-size: var(--q-text-label);
     --q-table-lg-py: var(--q-space-2-5);
     --q-table-lg-px: var(--q-space-2-5);
     --q-table-lg-font-size: var(--q-text-md);
-    --q-table-lg-head-font-size: var(--q-text-2xs);
+    --q-table-lg-head-font-size: var(--q-text-label);
 
     --q-table-caption-padding-bottom: var(--q-space-1-5);
-    --q-table-label-font-size: var(--q-text-2xs);
-    --q-table-label-tracking: var(--q-tracking-mono);
+    --q-table-label-font-size: var(--q-text-label);
+    --q-table-label-tracking: var(--q-tracking-label);
     --q-table-label-color: var(--q-fg-muted);
-    --q-table-head-weight: var(--q-weight-regular);
+    --q-table-head-weight: var(--q-weight-label);
     --q-table-head-border: var(--q-fg);
     --q-table-sort-gap: var(--q-space-0-75);
     --q-table-sort-color-active: var(--q-fg);
@@ -124,11 +124,11 @@
   .q-table__caption {
     padding: 0 0 var(--q-table-caption-padding-bottom);
     color: var(--q-table-label-color);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-table-label-font-size);
     letter-spacing: var(--q-table-label-tracking);
     text-align: left;
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     caption-side: top;
   }
 
@@ -157,11 +157,11 @@
   .q-table__head {
     border-bottom: var(--q-hairline) solid var(--q-table-head-border);
     color: var(--q-table-label-color);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--_head-font-size);
     font-weight: var(--q-table-head-weight);
     letter-spacing: var(--q-table-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     white-space: nowrap;
   }
 

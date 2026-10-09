@@ -34,26 +34,6 @@
             "statusMessage": "Checking for LSP-answerable lookup..."
           }
         ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/webapp/vendor/quiet/claude/hooks/quiet-guard.mjs\" pre webapp/vendor/quiet"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/webapp/vendor/quiet/claude/hooks/quiet-guard.mjs\" post webapp/vendor/quiet"
-          }
-        ]
       }
     ]
   }

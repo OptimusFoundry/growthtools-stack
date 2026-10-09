@@ -1,0 +1,7 @@
+{
+	"name": "quiet",
+	"description": "Build and review app screens on the quiet design system: the quiet-app skill, the quiet-screen-reviewer agent, and a guard that keeps the vendored copy read-only and lints changed stylesheets.",
+	"author": {
+		"name": "Optimus Foundry"
+	}
+}

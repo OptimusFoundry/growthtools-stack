@@ -5,8 +5,8 @@
   :root,
   [data-theme] {
     --q-eyebrow-gap: var(--q-space-2);
-    --q-eyebrow-font-size: var(--q-text-2xs);
-    --q-eyebrow-tracking: var(--q-tracking-mono);
+    --q-eyebrow-font-size: var(--q-text-label);
+    --q-eyebrow-tracking: var(--q-tracking-label);
     --q-eyebrow-fg: var(--q-fg-muted);
     --q-eyebrow-ink-fg: var(--q-fg);
     --q-eyebrow-index-fg: var(--q-fg);
@@ -19,10 +19,11 @@
     align-items: baseline;
     gap: var(--q-eyebrow-gap);
     color: var(--q-eyebrow-fg);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-eyebrow-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-eyebrow-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
 
     &--ink {
       color: var(--q-eyebrow-ink-fg);

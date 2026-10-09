@@ -17,11 +17,11 @@
     --q-headline-h2-leading: var(--q-leading-none);
     --q-headline-h2-tracking: var(--q-tracking-h2);
     --q-headline-h2-weight: var(--q-weight-bold);
-    --q-headline-h3-font-size: var(--q-text-3xl);
+    --q-headline-h3-font-size: var(--q-text-heading-3);
     --q-headline-h3-leading: var(--q-leading-tight);
     --q-headline-h3-tracking: var(--q-tracking-h3);
     --q-headline-h3-weight: var(--q-weight-semibold);
-    --q-headline-h4-font-size: var(--q-text-2xl);
+    --q-headline-h4-font-size: var(--q-text-heading-4);
     --q-headline-h4-leading: var(--q-leading-snug);
     --q-headline-h4-tracking: var(--q-tracking-h4);
     --q-headline-h4-weight: var(--q-weight-semibold);
@@ -55,6 +55,7 @@
   }
 
   .q-headline__period {
+    display: var(--q-period-display);
     color: var(--q-headline-period-fg);
   }
 }

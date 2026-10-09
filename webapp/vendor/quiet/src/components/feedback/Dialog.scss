@@ -109,10 +109,11 @@
 
   .q-dialog__eyebrow {
     color: var(--q-dialog-eyebrow-fg);
-    font-family: var(--q-font-mono);
-    font-size: var(--q-text-2xs);
-    letter-spacing: var(--q-tracking-mono);
-    text-transform: uppercase;
+    font-family: var(--q-font-label);
+    font-size: var(--q-text-label);
+    font-weight: var(--q-weight-label);
+    letter-spacing: var(--q-tracking-label);
+    text-transform: var(--q-case-label);
   }
 
   .q-dialog__title {

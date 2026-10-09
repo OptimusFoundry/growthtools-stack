@@ -99,12 +99,16 @@ export function Text({
 	if (lineClamp) vars["--_lines"] = lineClamp;
 	const cls = [
 		"q-text",
-		mono && !size
-			? "q-text--size-mono"
-			: numeric
-				? "q-text--size-custom"
-				: SIZES[sz] && `q-text--size-${sz}`,
-		WEIGHTS.includes(w) && `q-text--weight-${w}`,
+		hd && !size
+			? `q-text--size-heading-${heading}`
+			: mono && !size
+				? "q-text--size-mono"
+				: numeric
+					? "q-text--size-custom"
+					: SIZES[sz] && `q-text--size-${sz}`,
+		hd && !weight && hd.weight === "bold"
+			? "q-text--weight-heading"
+			: WEIGHTS.includes(w) && `q-text--weight-${w}`,
 		`q-text--color-${knownColor ? c : "custom"}`,
 		hd ? `q-text--h${heading}` : px! >= 24 && "q-text--large",
 		mono && "q-text--mono",

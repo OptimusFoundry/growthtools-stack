@@ -1,4 +1,4 @@
-// Text — typography primitive. BEM: .q-text; --size-{xs…5xl|mono|custom} (--_size), --weight-*,
+// Text — typography primitive. BEM: .q-text; --size-{xs…5xl|heading-1…4|mono|custom} (--_size), --weight-*,
 // --color-{name|custom} (--_color), --h1…--h4, --large (24px+), --mono, --italic, --underline, --strike,
 // --uppercase/--lowercase/--capitalize, --align-*, --truncate, --clamp (--_lines).
 @use "../../styles/layers";
@@ -49,6 +49,13 @@ $colors: default, heading, muted, quiet, primary, success, warning, error;
       }
     }
 
+    // Heading levels size through the type roles, so data-density="app" can shrink them.
+    @each $level in 1, 2, 3, 4 {
+      &--size-heading-#{$level} {
+        font-size: var(--q-text-heading-#{$level});
+      }
+    }
+
     &--size-mono {
       font-size: var(--q-text-mono-font-size);
     }
@@ -67,6 +74,10 @@ $colors: default, heading, muted, quiet, primary, success, warning, error;
       &--color-#{$color} {
         color: var(--q-text-#{$color}-fg);
       }
+    }
+
+    &--weight-heading {
+      font-weight: var(--q-weight-heading);
     }
 
     &--color-inherit {

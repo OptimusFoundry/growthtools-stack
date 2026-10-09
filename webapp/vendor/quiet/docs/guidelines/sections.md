@@ -79,7 +79,7 @@ hairline rows, never another box.
 
 | Type | Build | Spacing |
 |---|---|---|
-| Page header | `PageHero size="md"` (title, eyebrow, one-line intro, actions) | built in (48 top, 32 bottom); then `--q-space-block` |
+| Page header | `PageHero size="md"` (title, one-line intro, actions; no eyebrow) | built in (`--q-space-hero-top/bottom`: 16/16 at app density); then `--q-space-block` |
 | Page status | one `Alert` or `Banner` directly under the header | `--q-space-block` |
 | Toolbar / filter bar | a row: `FilterTabs`, search `TextField size="sm"`, then actions on the right | `--q-space-inline` within, `--q-space-stack` to the table |
 | Content block | bare section | `--q-space-block` between blocks |

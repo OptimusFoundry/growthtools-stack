@@ -1,0 +1,28 @@
+{
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Edit|Write|MultiEdit|NotebookEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node",
+						"args": ["${CLAUDE_PLUGIN_ROOT}/hooks/quiet-guard.mjs", "pre"]
+					}
+				]
+			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Edit|Write|MultiEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node",
+						"args": ["${CLAUDE_PLUGIN_ROOT}/hooks/quiet-guard.mjs", "post"]
+					}
+				]
+			}
+		]
+	}
+}

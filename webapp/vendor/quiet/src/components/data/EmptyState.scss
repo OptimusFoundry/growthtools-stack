@@ -27,8 +27,8 @@
     --q-empty-state-icon-border: var(--q-border);
     --q-empty-state-icon-color: var(--q-fg-muted);
     --q-empty-state-icon-scale: 0.38; // glyph size as a fraction of the ring
-    --q-empty-state-eyebrow-font-size: var(--q-text-2xs);
-    --q-empty-state-eyebrow-tracking: var(--q-tracking-mono);
+    --q-empty-state-eyebrow-font-size: var(--q-text-label);
+    --q-empty-state-eyebrow-tracking: var(--q-tracking-label);
     --q-empty-state-eyebrow-color: var(--q-fg-muted);
     --q-empty-state-title-weight: var(--q-weight-semibold);
     --q-empty-state-title-tracking: var(--q-tracking-h4);
@@ -99,10 +99,11 @@
 
   .q-empty-state__eyebrow {
     color: var(--q-empty-state-eyebrow-color);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-empty-state-eyebrow-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-empty-state-eyebrow-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
   }
 
   .q-empty-state__title {

@@ -6,9 +6,9 @@
   :root,
   [data-theme] {
     --q-select-gap: var(--q-space-1);
-    --q-select-label-font-family: var(--q-font-mono);
-    --q-select-label-font-size: var(--q-text-2xs);
-    --q-select-label-tracking: var(--q-tracking-mono);
+    --q-select-label-font-family: var(--q-font-label);
+    --q-select-label-font-size: var(--q-text-label);
+    --q-select-label-tracking: var(--q-tracking-label);
     --q-select-label-fg: var(--q-fg-muted);
     --q-select-font-family: var(--q-font-sans);
     --q-select-sm-py: var(--q-space-1);
@@ -65,8 +65,9 @@
   .q-select__label {
     font-family: var(--q-select-label-font-family);
     font-size: var(--q-select-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-select-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     color: var(--q-select-label-fg);
   }
 
