@@ -324,3 +324,39 @@ test.describe("Account — Voice Profile Tab", () => {
 		await expect(page.getByLabel("Industry")).not.toBeVisible();
 	});
 });
+
+test.describe("Account — page heading and tabs", () => {
+	test("renders the Settings h1 with Billing selected by default", async ({
+		page,
+	}) => {
+		await page.goto("/account");
+
+		await expect(
+			page.getByRole("heading", { level: 1, name: "Settings" }),
+		).toBeVisible();
+		await expect(page.getByRole("tab", { name: /billing/i })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+	});
+
+	test("?tab=site-publish selects the Site Publish tab", async ({ page }) => {
+		await page.goto("/account?tab=site-publish");
+
+		await expect(
+			page.getByRole("tab", { name: /site publish/i }),
+		).toHaveAttribute("aria-selected", "true");
+	});
+
+	test("clicking Voice Profile sets ?tab=voice-profile and selects it", async ({
+		page,
+	}) => {
+		await page.goto("/account");
+
+		const tab = page.getByRole("tab", { name: /voice profile/i });
+		await tab.click();
+
+		await expect(page).toHaveURL(/\/account\?tab=voice-profile$/);
+		await expect(tab).toHaveAttribute("aria-selected", "true");
+	});
+});
