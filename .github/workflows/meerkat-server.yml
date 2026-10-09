@@ -16,7 +16,7 @@ on:
 env:
   # Bootstrap only. Everything else (ECR repo, ECS cluster/service, S3 bucket,
   # CloudFront id) is read live from /${PRODUCT_SLUG}/manifest in SSM — written
-  # by the infra repo (SAVentures/base-infra) at terraform apply.
+  # by the infra repo (OptimusFoundry/base-infra) at terraform apply.
   PRODUCT_SLUG: meerkat
   AWS_REGION: us-east-1
   DEPLOY_ROLE: arn:aws:iam::339713122183:role/github-actions-admin-aws

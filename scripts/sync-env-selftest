@@ -36,7 +36,7 @@ sys.dont_write_bytecode = True
 
 
 def load_target():
-    """Import sync-dev-ports.py, whose hyphenated name `import` cannot reach."""
+    """Import sync-env.py, whose hyphenated name `import` cannot reach."""
     loader = importlib.machinery.SourceFileLoader("sync_env", str(TARGET))
     spec = importlib.util.spec_from_loader(loader.name, loader)
     mod = importlib.util.module_from_spec(spec)
@@ -126,24 +126,17 @@ class ResolutionOrder(unittest.TestCase):
         self.assertEqual(json.loads(text)["marker"], "legacy")
         self.assertIn("deprecated", err.getvalue())
 
-    def test_falls_back_to_gh_and_tries_the_legacy_repo_second(self):
-        # This is the test that proves the migration is safe: run BEFORE the
-        # rename, the new resolver still reaches the still-named dev-ports repo.
+    def test_falls_back_to_gh_against_the_registry_repo(self):
         calls = []
 
         def fake(cmd, **kwargs):
             calls.append(cmd[2])
-            if "env-registry" in cmd[2]:
-                return FakeResult(1, "")
-            return FakeResult(0, json.dumps({"schema_version": 1, "marker": "legacy-repo"}))
+            return FakeResult(0, json.dumps({"schema_version": 1, "marker": "gh"}))
 
         label, text = se.resolve_registry(root=str(self.lonely), runner=fake)
-        self.assertEqual(json.loads(text)["marker"], "legacy-repo")
-        self.assertEqual(calls, [
-            "repos/SAVentures/env-registry/contents/registry.json",
-            "repos/SAVentures/dev-ports/contents/registry.json",
-        ])
-        self.assertIn("dev-ports", label)
+        self.assertEqual(json.loads(text)["marker"], "gh")
+        self.assertEqual(calls, ["repos/OptimusFoundry/env-registry/contents/registry.json"])
+        self.assertEqual(label, "gh:OptimusFoundry/env-registry")
 
     def test_unresolvable_registry_names_all_three_fixes(self):
         def fake(cmd, **kwargs):

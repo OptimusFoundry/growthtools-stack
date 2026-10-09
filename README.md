@@ -3,7 +3,7 @@
 Tools for creators to plan, schedule, and auto-publish content across X, LinkedIn, Meta, Threads, TikTok, Pinterest.
 
 - **App / API**: https://protoapp.xyz
-- **Infra**: https://github.com/SAVentures/base-infra (product stack: `products/protoapp/`)
+- **Infra**: https://github.com/OptimusFoundry/base-infra (product stack: `products/protoapp/`)
 
 ## Layout
 
@@ -41,4 +41,4 @@ cd webapp && npm ci && npm run dev
 
 ## DB migrations (prod)
 
-Run `base-server/dbmigrator.dockerfile` against the shared RDS through an SSM port-forward. See [base-infra RUNBOOK](https://github.com/SAVentures/base-infra) for the exact sequence.
+Run `base-server/dbmigrator.dockerfile` against the shared RDS through an SSM port-forward. See [base-infra RUNBOOK](https://github.com/OptimusFoundry/base-infra) for the exact sequence.
