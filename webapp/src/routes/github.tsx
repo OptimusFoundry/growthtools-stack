@@ -233,7 +233,6 @@ function GitHubPage() {
 		<>
 			<Table<GitHubCommitSummary>
 				label="Commits"
-				className={styles.table}
 				size="sm"
 				columns={commitColumns((page - 1) * PAGE_SIZE)}
 				data={commits}
