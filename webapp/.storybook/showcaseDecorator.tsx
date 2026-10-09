@@ -1,6 +1,6 @@
 import type { Decorator } from "@storybook/react-vite";
-import { Watermark } from "@/proto-design-system/showcase/Watermark";
 import styles from "./showcaseDecorator.module.scss";
+import { Watermark } from "./Watermark";
 
 /**
  * Wraps every story in the branded showcase treatment used for automated
