@@ -90,11 +90,7 @@ export const UpgradePrompt = memo(function UpgradePrompt({
 				<h4 className={styles.title}>{displayTitle}</h4>
 				<p className={styles.description}>{displayDescription}</p>
 			</div>
-			<Button
-				variant="primary"
-				size={variant === "banner" ? "sm" : "md"}
-				onClick={handleUpgradeClick}
-			>
+			<Button variant="primary" size="sm" onClick={handleUpgradeClick}>
 				Upgrade to {requiredTierDisplayName}
 			</Button>
 			<span className={styles.currentTier}>

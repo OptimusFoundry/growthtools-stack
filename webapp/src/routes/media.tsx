@@ -58,6 +58,7 @@ function MediaPage() {
 				topbarAction={
 					<Button
 						variant="primary"
+						size="sm"
 						onClick={handleUploadClick}
 						loading={uploading}
 						leftIcon={<AppIcon icon={Upload} />}

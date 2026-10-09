@@ -14,11 +14,12 @@ export function ConfirmDeleteModal({ flow }: { flow: ConfirmableDeleteFlow }) {
 			size="sm"
 			actions={
 				<>
-					<Button variant="ghost" onClick={flow.cancel}>
+					<Button variant="ghost" size="sm" onClick={flow.cancel}>
 						Cancel
 					</Button>
 					<Button
 						variant="destructive"
+						size="sm"
 						onClick={flow.confirm}
 						loading={flow.isLoading}
 					>

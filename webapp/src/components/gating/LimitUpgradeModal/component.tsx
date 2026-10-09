@@ -79,10 +79,10 @@ export const LimitUpgradeModal = memo(function LimitUpgradeModal({
 			title={displayTitle}
 			actions={
 				<>
-					<Button variant="ghost" onClick={onClose}>
+					<Button variant="ghost" size="sm" onClick={onClose}>
 						Maybe Later
 					</Button>
-					<Button variant="primary" onClick={handleUpgrade}>
+					<Button variant="primary" size="sm" onClick={handleUpgrade}>
 						View Plans
 					</Button>
 				</>

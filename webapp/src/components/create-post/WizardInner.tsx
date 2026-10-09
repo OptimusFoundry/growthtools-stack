@@ -795,12 +795,14 @@ export function WizardInner({
 					<Stack direction="row" gap="xs" justify="flex-end">
 						<Button
 							variant="ghost"
+							size="sm"
 							onClick={() => scheduleDrawer.setScheduleOpen(false)}
 						>
 							Cancel
 						</Button>
 						<Button
 							variant="primary"
+							size="sm"
 							onClick={scheduleDrawer.handleConfirmSchedule}
 							loading={state.submitting}
 							disabled={!scheduleDrawer.scheduleDate}
@@ -815,12 +817,14 @@ export function WizardInner({
 						<Alert variant="error">{scheduleDrawer.scheduleError}</Alert>
 					)}
 					<DatePicker
+						size="sm"
 						label="Date"
 						value={scheduleDrawer.scheduleDate}
 						onChange={scheduleDrawer.setScheduleDate}
 						min={startOfToday()}
 					/>
 					<TextField
+						size="sm"
 						type="time"
 						label="Time"
 						value={scheduleDrawer.scheduleTime}

@@ -13,6 +13,7 @@ export function YourMessageSection({
 }: YourMessageSectionProps) {
 	return (
 		<TextArea
+			size="sm"
 			label="Idea or Instructions for post"
 			placeholder="What do you want to share? Describe your topic, achievement, or idea..."
 			rows={6}

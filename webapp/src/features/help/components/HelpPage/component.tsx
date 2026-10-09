@@ -65,6 +65,7 @@ export function HelpPage() {
 						<div>
 							<Button
 								variant="secondary"
+								size="sm"
 								href={MAILTO}
 								leftIcon={<AppIcon icon={Mail} size="md" />}
 							>

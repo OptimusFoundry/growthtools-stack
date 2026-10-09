@@ -31,7 +31,9 @@ export function BlogRow({ post, index, onDelete }: BlogRowProps) {
 					</div>
 				</Col>
 				<Col span={2} spanMd={2} spanSm={8}>
-					<Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+					<Badge variant={meta.badgeVariant} size="sm">
+						{meta.label}
+					</Badge>
 				</Col>
 				<Col span={2} spanMd={2} spanSm={4}>
 					<div className={styles.actions}>

@@ -64,6 +64,7 @@ export function PlatformPreviewTabs({
 
 	return (
 		<Tabs
+			size="sm"
 			tabs={selectedPlatforms.map((platform) => ({
 				value: platform,
 				label: PLATFORM_DISPLAY_NAMES[platform],

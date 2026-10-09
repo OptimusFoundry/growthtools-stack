@@ -31,6 +31,7 @@ export default function PlanToPay(props: Price) {
 				</Text>
 				<Button
 					variant="primary"
+					size="sm"
 					onClick={() => handlePay(props.priceId)}
 					fullWidth
 				>

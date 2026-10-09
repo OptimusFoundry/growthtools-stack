@@ -49,6 +49,7 @@ function TestLoginPage() {
 							Test login
 						</Text>
 						<TextField
+							size="sm"
 							label="Email"
 							type="email"
 							autoComplete="username"
@@ -58,6 +59,7 @@ function TestLoginPage() {
 							data-testid="test-login-email"
 						/>
 						<TextField
+							size="sm"
 							label="Password"
 							type="password"
 							autoComplete="current-password"
@@ -70,6 +72,7 @@ function TestLoginPage() {
 						<Button
 							type="submit"
 							variant="primary"
+							size="sm"
 							disabled={submitting}
 							data-testid="test-login-submit"
 						>

@@ -12,8 +12,6 @@ import type { TierName } from "@/types/tier";
 export interface TierBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 	/** Override the tier to display (defaults to current user's tier) */
 	tier?: TierName;
-	/** Size variant */
-	size?: "small" | "medium";
 	/** Additional CSS class */
 	className?: string;
 }
@@ -50,12 +48,11 @@ const TIER_VARIANTS: Record<TierName, "secondary" | "outline" | "primary"> = {
  * <TierBadge />
  *
  * // Shows specific tier
- * <TierBadge tier="pro" size="small" />
+ * <TierBadge tier="pro" />
  * ```
  */
 export const TierBadge = memo(function TierBadge({
 	tier: tierOverride,
-	size = "medium",
 	className,
 	...props
 }: TierBadgeProps) {
@@ -72,7 +69,7 @@ export const TierBadge = memo(function TierBadge({
 		<span className={className} {...props}>
 			<Badge
 				variant={TIER_VARIANTS[displayTier] ?? TIER_VARIANTS.free}
-				size={size === "small" ? "sm" : "md"}
+				size="sm"
 				leftIcon={<AppIcon icon={icon} size="sm" />}
 			>
 				{displayName}

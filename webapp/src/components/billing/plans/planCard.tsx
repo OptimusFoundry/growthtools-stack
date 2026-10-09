@@ -62,7 +62,9 @@ export default function PlanCard(props: PlanCardProps) {
 						</Text>
 					</Text>
 				</Stack>
-				<Badge variant="success">Active</Badge>
+				<Badge variant="success" size="sm">
+					Active
+				</Badge>
 			</Stack>
 		</Card>
 	);

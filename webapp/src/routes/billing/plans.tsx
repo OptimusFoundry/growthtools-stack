@@ -130,6 +130,7 @@ const BillingToggle = memo(function BillingToggle({
 				Monthly
 			</Text>
 			<Switch
+				size="sm"
 				aria-label="Annual billing"
 				checked={isYearly}
 				onChange={(next: boolean) => onChange(next)}
@@ -260,6 +261,7 @@ const PricingCard = memo(function PricingCard({
 				<Button
 					fullWidth
 					variant={ctaVariant(isCurrentPlan, plan.highlighted)}
+					size="sm"
 					onClick={() => onSelect(plan.id)}
 					disabled={isCurrentPlan || isLoading}
 				>

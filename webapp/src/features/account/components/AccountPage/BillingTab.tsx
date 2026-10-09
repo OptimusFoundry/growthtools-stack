@@ -147,6 +147,7 @@ const SubscriptionSummary = memo(function SubscriptionSummary({
 
 					<Button
 						variant="secondary"
+						size="sm"
 						onClick={onChangePlan}
 						rightIcon={<AppIcon icon={ArrowUpRight} />}
 					>

@@ -32,29 +32,3 @@
   flex-shrink: 0;
   font-style: normal;
 }
-
-.stopButton {
-  background-color: transparent;
-  border: 1px solid var(--q-status-error-border);
-  border-radius: var(--q-radius-pill);
-  color: var(--q-fg);
-  cursor: pointer;
-  flex-shrink: 0;
-  font-family: inherit;
-  font-size: var(--q-text-sm);
-  font-weight: var(--q-weight-semibold);
-  padding: var(--q-space-0-5) var(--q-space-1-5);
-  transition:
-    background-color var(--q-dur-hover) var(--q-ease-soft),
-    border-color var(--q-dur-hover) var(--q-ease-soft);
-  white-space: nowrap;
-
-  &:hover {
-    background-color: var(--q-status-error-bg);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--q-fg);
-    outline-offset: 2px;
-  }
-}

@@ -106,7 +106,9 @@ export function PlatformPostAnalyticsCard({
 			<Stack gap="sm">
 				<Stack direction="row" justify="space-between" align="center" wrap>
 					<Stack direction="row" gap="xs" align="center" wrap>
-						<Badge variant="default">{platformLabel}</Badge>
+						<Badge variant="default" size="sm">
+							{platformLabel}
+						</Badge>
 						{pp.publishedAt && (
 							<Text mono color="muted">
 								Published · {formatDate(pp.publishedAt)}
@@ -115,7 +117,7 @@ export function PlatformPostAnalyticsCard({
 					</Stack>
 					<Stack direction="row" gap="xs" align="center">
 						{pp.analyticsUnavailableAt && (
-							<Badge variant="warning" dot={false}>
+							<Badge variant="warning" size="sm" dot={false}>
 								Analytics unavailable
 							</Badge>
 						)}

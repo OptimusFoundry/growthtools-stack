@@ -114,6 +114,7 @@ export function ComposeStep({
 					>
 						<Button
 							variant="primary"
+							size="sm"
 							onClick={onGenerate}
 							disabled={!canGenerate || generating || uploading}
 							loading={generating}

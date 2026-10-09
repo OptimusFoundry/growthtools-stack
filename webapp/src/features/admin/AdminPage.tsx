@@ -114,6 +114,7 @@ export const AdminPage = memo(function AdminPage() {
 				<Grid columns={12}>
 					<Col span={4} spanSm={12}>
 						<TextField
+							size="sm"
 							label="Search users by email"
 							hideLabel
 							placeholder="Search by email…"
@@ -128,6 +129,7 @@ export const AdminPage = memo(function AdminPage() {
 					<Alert variant="error">{error}</Alert>
 				) : (
 					<Table<AdminUser>
+						size="sm"
 						label="Users"
 						rowKey="id"
 						columns={columns}

@@ -27,11 +27,17 @@ export function LoginAsAction({ user }: { user: AdminUser }) {
 				size="sm"
 				actions={
 					<>
-						<Button variant="ghost" onClick={close} disabled={isLoading}>
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={close}
+							disabled={isLoading}
+						>
 							Cancel
 						</Button>
 						<Button
 							variant="destructive"
+							size="sm"
 							onClick={() => start(user.id)}
 							loading={isLoading}
 						>

@@ -44,7 +44,7 @@ export function PostRow({ post, index, onDelete }: PostRowProps) {
 						))}
 					</span>
 				)}
-				<Badge variant={meta.badgeVariant} dot={meta.badgeDot}>
+				<Badge variant={meta.badgeVariant} size="sm" dot={meta.badgeDot}>
 					{meta.label}
 				</Badge>
 			</Link>
