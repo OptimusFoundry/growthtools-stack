@@ -1,6 +1,8 @@
 // LineageChip — a freshness chip on a number that unfolds into the value's lineage.
 // BEM: .q-lineage-chip, __trigger, __dot, __chevron, __panel, __chain, __step, __arrow, __node,
 // __node-dot, __node-label, __node-detail; --sm, --md. States: [data-stale], [aria-expanded].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

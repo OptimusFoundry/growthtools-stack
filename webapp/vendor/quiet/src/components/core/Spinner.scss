@@ -1,5 +1,7 @@
 // Spinner — hairline ring, linear 0.9s; the ring stays still under reduced motion.
 // BEM: .q-spinner, __ring, __label; --{size} (--_size), --thick, --{tone}, --custom-tone (--_tone).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

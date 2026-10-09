@@ -1,4 +1,6 @@
 // Wordmark — italic caps logotype with the molten period. BEM: .q-wordmark, __period; --nav, --footer, --custom.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

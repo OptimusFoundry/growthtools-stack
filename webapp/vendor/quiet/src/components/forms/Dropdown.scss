@@ -2,6 +2,8 @@
 // (--placeholder), __icon, __value, __chevron, __list(--end), __divider, __option, __option-icon,
 // __option-text, __option-description, __check, __hint(--error); --{size}, --filled, --full,
 // --invalid, --disabled. Open reads aria-expanded; the active option reads data-active.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

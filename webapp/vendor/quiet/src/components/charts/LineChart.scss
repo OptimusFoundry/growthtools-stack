@@ -1,6 +1,8 @@
 // LineChart — lines (optionally areas) over a shared x axis, with a crosshair + tooltip.
 // BEM: .q-line-chart, __title, __line, __area, __dot, __crosshair, __reference, __highlight, __mark.
 // Shared frame (grid, axes, legend, tooltip) lives in chart.scss as .q-chart__*.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

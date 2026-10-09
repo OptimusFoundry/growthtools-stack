@@ -1,5 +1,7 @@
 // Card — content surface; lifts on hover/focus when it is a link or button.
 // BEM: .q-card, __eyebrow, __title, __accent, __body, __footer, __meta; --interactive.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

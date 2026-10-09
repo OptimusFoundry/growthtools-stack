@@ -1,6 +1,8 @@
 // HonestButton — outline pill whose length is its expected wait; the press fills it.
 // BEM: .q-honest-button, __fill, __label, __eta, __dot; --{size}; [data-state="running"|"done"].
 // --_reach (0–1, log of the expected seconds) sets the length; --_p (0–1) is the fill.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

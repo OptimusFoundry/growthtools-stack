@@ -1,4 +1,6 @@
 // Label — mono caps field label. BEM: .q-label, __row, __text, __required, __sub; --{size}.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

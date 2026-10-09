@@ -1,5 +1,7 @@
 // DataGrid — Table with a title bar, row filter, selection count, empty state and pagination.
 // BEM: .q-data-grid, __toolbar, __title, __search, __label (--strong), __empty, __footer.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

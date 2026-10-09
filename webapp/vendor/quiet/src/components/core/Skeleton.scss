@@ -1,6 +1,8 @@
 // Skeleton — pulsing placeholder; still under reduced motion.
 // BEM: .q-skeleton (--text, --circular, --rectangular, --rounded, --still; --_width/--_height),
 // .q-skeleton-group (multi-line text; --_width/--_gap).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

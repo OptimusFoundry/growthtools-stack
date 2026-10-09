@@ -1,5 +1,7 @@
 // TextField — label, field chrome with optional icons, hint. BEM: .q-text-field, __field, __icon,
 // __input; --{size}, --filled, --invalid, --disabled. Focus reads :focus-within on the field.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

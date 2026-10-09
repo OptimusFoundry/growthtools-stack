@@ -1,4 +1,6 @@
 // PageHero — page-top title block. BEM: .q-page-hero, __description, __actions; --lg, --md, --ruled.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

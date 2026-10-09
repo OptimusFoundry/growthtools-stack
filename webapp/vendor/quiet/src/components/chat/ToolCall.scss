@@ -1,6 +1,8 @@
 // ToolCall — a tool use or thinking pass inside a reply. BEM: .q-tool-call, __header, __state, __dot,
 // __name, __summary, __meta, __chevron, __detail, __block, __label, __code; --running, --done,
 // --error, --thinking. Folded by default; opens with the shared .q-collapse motion.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

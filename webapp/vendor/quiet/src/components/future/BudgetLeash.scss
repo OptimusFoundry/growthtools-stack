@@ -1,6 +1,8 @@
 // BudgetLeash — agent spend against a cap, drawn as a leash that sags with slack and goes taut.
 // BEM: .q-budget-leash(--taut), __header, __who, __agent, __heading, __label, __speed, __amount,
 // __cap, __track, __rail, __fill, __line, __stake, __runner, __controls, __presets, __presets-label.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,5 +1,7 @@
 // Switch — ink-outlined pill with a sliding thumb. BEM: .q-switch, __track, __thumb, __text,
 // __description; --{size}, --described, --label-left, --disabled. On state reads aria-checked.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

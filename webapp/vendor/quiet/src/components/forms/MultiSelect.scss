@@ -3,6 +3,8 @@
 // __divider, __option, __box, __option-text, __option-description, __empty, __footer, __clear,
 // __hint(--error); --{size}, --filled, --full, --invalid, --disabled.
 // Open reads the combobox's aria-expanded; the active option reads data-active.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

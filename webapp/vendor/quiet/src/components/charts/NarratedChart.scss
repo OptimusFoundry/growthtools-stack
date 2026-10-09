@@ -1,5 +1,7 @@
 // NarratedChart — a LineChart plus its reading: numbered sentences that mark the chart.
 // BEM: .q-narrated-chart, __beats, __item, __beat[aria-pressed], __index, __text.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

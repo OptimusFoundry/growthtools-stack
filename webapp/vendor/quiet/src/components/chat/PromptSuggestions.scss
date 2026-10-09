@@ -1,5 +1,7 @@
 // PromptSuggestions — starters for an empty thread. BEM: .q-prompt-suggestions, __item, __label,
 // __description; --wrap (pills), --grid (two-up cards with a description line).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

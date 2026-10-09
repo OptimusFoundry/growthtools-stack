@@ -1,5 +1,7 @@
 // Input — labelled input / textarea. BEM: .q-input, __label, __field(--multiline, --invalid), __hint(--error).
 // Focus is :focus (any focus, as before).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -3,6 +3,8 @@
 // While the sliding indicator moves (FLIP between two selections) the tablist carries
 // [data-sliding]; the indicator's geometry comes in as --_left/--_top/--_width/--_height.
 // .q-tab-panel is the tabpanel Tabs renders when given `panels` (or TabPanel on its own).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

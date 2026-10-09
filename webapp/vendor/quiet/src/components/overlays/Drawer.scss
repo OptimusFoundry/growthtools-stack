@@ -1,6 +1,8 @@
 // Drawer — side sheet over a scrim. BEM: .q-drawer (scrim, --right|--left), __panel (--sm|md|lg; a
 // numeric size sets --_max-width), __header, __heading, __eyebrow, __title, __dot, __description,
 // __close, __body, __footer.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

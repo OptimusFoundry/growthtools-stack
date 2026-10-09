@@ -1,5 +1,7 @@
 // SectionHeader — ruled section top: heading on the left, description/actions on the right.
 // BEM: .q-section-header, __heading, __aside, __description, __actions; --md, --sm, --split.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

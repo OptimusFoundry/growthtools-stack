@@ -1,5 +1,7 @@
 // Dialog — modal over a scrim. BEM: .q-dialog (scrim), __panel (--sm|md|lg|xl), __header, __heading,
 // __icon (--hot), __eyebrow, __title, __dot, __close, __body, __actions. A `width` prop sets --_max-width.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

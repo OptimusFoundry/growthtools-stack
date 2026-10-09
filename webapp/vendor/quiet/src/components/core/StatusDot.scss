@@ -1,4 +1,6 @@
 // StatusDot — mono caps status with a leading dot. BEM: .q-status-dot, __dot; --live, --prototype.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

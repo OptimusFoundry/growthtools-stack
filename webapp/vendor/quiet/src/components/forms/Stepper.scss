@@ -1,5 +1,7 @@
 // Stepper — pill group of − / value / +. BEM: .q-stepper, __button, __field; --{size}, --disabled.
 // --_chars (set inline) is the value's length; the field grows 10px per character.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

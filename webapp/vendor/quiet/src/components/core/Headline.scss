@@ -1,5 +1,7 @@
 // Headline — display/h2/h3/h4 with an italic accent and the molten period.
 // BEM: .q-headline, __accent(--molten), __period; --display, --h2, --h3, --h4.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

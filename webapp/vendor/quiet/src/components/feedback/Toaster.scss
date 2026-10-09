@@ -1,6 +1,8 @@
 // Toaster — fixed, portalled stack of Toasts. BEM: .q-toaster (region), __list, __item;
 // --{top|bottom}-{left|center|right}. Only the toasts take pointer events, so the empty region
 // never blocks the page under it.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,5 +1,7 @@
 // ProcessStep — numbered step under a rule that heats up. BEM: .q-process-step, __bar, __numeral,
 // __title, __body; --hot.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,4 +1,6 @@
 // Eyebrow — mono caps kicker with an optional index. BEM: .q-eyebrow, __index; --ink.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,6 +1,8 @@
 // PageShell — page frame: header, then a column layout that stacks below 720px. BEM: .q-page-shell,
 // __body, __column; --{single|half|third|sidebar|sidebar-right}, --narrow, --animated.
 // A raw column gap arrives as --_gap.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

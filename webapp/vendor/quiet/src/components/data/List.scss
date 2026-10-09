@@ -2,6 +2,8 @@
 // BEM: .q-list (--sm/--md/--lg, --grouped, --bordered), __group, __label, __row, __item
 // (--divided, --interactive, --disabled, --animated), __leading, __text, __primary, __secondary,
 // __trailing (--text), __arrow.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

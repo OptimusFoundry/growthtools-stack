@@ -1,5 +1,7 @@
 // Alert — inline status message. BEM: .q-alert, __icon, __glyph, __content, __title, __body,
 // __actions, __dismiss, __collapse; --{info|success|warning|error}.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

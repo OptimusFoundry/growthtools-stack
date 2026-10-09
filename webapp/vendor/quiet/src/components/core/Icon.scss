@@ -1,4 +1,6 @@
 // Icon — a type glyph sized in em. BEM: .q-icon; --{size}, --custom-size (--_size), --{color}, --custom-color (--_color).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

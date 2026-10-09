@@ -1,5 +1,7 @@
 // Select — native select in field chrome. BEM: .q-select (--{size}, --invalid), __label, __control,
 // __input, __chevron. The hint is a FormHint.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

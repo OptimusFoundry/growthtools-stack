@@ -1,6 +1,8 @@
 // DoubtMarker — an inline mark on a claim the system isn't sure of; hover/focus explains why.
 // BEM: .q-doubt-marker, __claim, __tag, __bubble, __status, __was, __reason, __hint;
 // --doubt, --checking, --confirmed, --revised. Bubble state: [data-state="open|closed"].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -2,6 +2,8 @@
 // BEM: .q-checkpoints, __track, __rail, __fill, __list, __point(--agent, --person), __mark, __time,
 // __detail, __summary, __label, __meta, __now, __now-dot. States: [aria-selected], [data-past].
 // --_n (count) and --_progress (0 → 1, selected / last) come in from the component.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

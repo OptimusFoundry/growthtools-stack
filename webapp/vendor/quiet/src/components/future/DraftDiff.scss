@@ -1,6 +1,8 @@
 // DraftDiff — inline word-level suggestions, accepted or kept one hunk at a time.
 // BEM: .q-draft-diff, __header, __heading, __label, __note, __bulk, __text, __hunk, __before, __after,
 // __choices, __choice(--accept), __resolved(--accepted, --rejected), __footer, __summary.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,6 +1,8 @@
 // ScopeGrant — an agent's permissions as plain-word switches, one duration, and a "can't" footer.
 // BEM: .q-scope-grant, __header, __who, __agent, __heading, __title, __caption, __scopes,
 // __scope, __switch, __footer, __summary, __cant, __actions. A granted scope row reads data-on.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

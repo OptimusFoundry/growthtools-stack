@@ -1,6 +1,8 @@
 // Receipt — a slip of what an agent did: who, why, one line per effect, each undoable.
 // BEM: .q-receipt, __header, __title, __time, __ref, __reason, __lines, __line, __effect, __verb,
 // __mark, __undo, __footer. States: __line[data-undone].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

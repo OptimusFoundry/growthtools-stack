@@ -1,5 +1,7 @@
 // TextArea — labelled textarea with hint and counter. BEM: .q-text-area, __input(--invalid),
 // __footer, __count; --{size}, --disabled. --_resize (set inline) is the resize prop.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

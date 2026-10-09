@@ -2,6 +2,8 @@
 // a band over the spread. BEM: .q-consensus-slider, __header, __spread, __track, __others,
 // __other, __agent, __other-value, __stem, __rail, __band, __thumb, __footer, __you, __mean.
 // Set inline: --_t (0–1) your value, --_lo/--_hi (0–1) the spread, --_at (0–1) each marker.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

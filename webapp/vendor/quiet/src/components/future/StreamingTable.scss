@@ -2,6 +2,8 @@
 // ([data-paused]), __bar, __state, __dot, __toggle, __waiting, __arrow, __scroll.
 // Set inline: --_max-height on __scroll. Live is a solid ink dot, paused a hollow one; the
 // "N new" bar carries a molten arrow — punctuation, never a fill.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

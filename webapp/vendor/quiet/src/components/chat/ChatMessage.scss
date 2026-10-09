@@ -1,6 +1,8 @@
 // ChatMessage — one turn. BEM: .q-chat-message, __header, __mark(--sm, --md), __name, __time, __files,
 // __body, __caret, __error, __error-dot, __actions; --user, --assistant, --system, --streaming, --error.
 // User turns are a soft bubble on the right; Claude's are plain prose — the calm claude.ai shape.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

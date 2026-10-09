@@ -1,4 +1,6 @@
 // NavBar — site header. BEM: .q-nav-bar, __home, __links, __link. Current link: [aria-current="page"].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,5 +1,7 @@
 // Grid — CSS grid on the 8px scale. BEM: .q-grid, __item (animated child); --auto (auto-fit by
 // --_min), --template (raw --_template), --gap-{size}, --row-gap-{size}. Fixed counts use --_cols.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

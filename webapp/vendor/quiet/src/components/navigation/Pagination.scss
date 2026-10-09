@@ -1,5 +1,7 @@
 // Pagination — mono page pills. BEM: .q-pagination, __page, __ellipsis; --{variant} (default,
 // outline, ghost), --{size}. Current page: [aria-current="page"].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {
