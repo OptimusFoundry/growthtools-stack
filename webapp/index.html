@@ -2,6 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Fix quiet's cascade-layer order before any stylesheet loads. Vite splits
+         component CSS into chunks that load before the entry CSS, so without this
+         q.components is declared before q.base and base link colour beats buttons. -->
+    <style>@layer q.tokens, q.themes, q.base, q.components, q.utilities;</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ProtoApp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
