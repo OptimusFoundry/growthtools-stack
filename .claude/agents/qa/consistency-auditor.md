@@ -223,8 +223,9 @@ SKL = re.compile(r'^skills:\s*\[(.*?)\]\s*$', re.M)      # reused as direction 5
 for a in sorted(AG.rglob('*.md')):
     m = SKL.search(a.read_text())
     if m: pre[a.stem] = [s.strip() for s in m.group(1).split(',') if s.strip()]
-sizes = {s: (SK/s/'SKILL.md').stat().st_size for v in pre.values() for s in v
-         if (SK/s/'SKILL.md').exists()}
+PLUG = {p.parent.name: p for p in SK.glob('*/skills/*/SKILL.md')}   # skills of a plugin in .claude/skills/<plugin>/ (quiet's)
+sizes = {s: (SK/s/'SKILL.md' if (SK/s/'SKILL.md').exists() else PLUG[s]).stat().st_size
+         for v in pre.values() for s in v if (SK/s/'SKILL.md').exists() or s in PLUG}
 for s in sorted(sizes):
     if s not in EX and sizes[s] > 4096: out.append(f"BUDGET   skill {s} is {sizes[s]} B > 4096")
 for a in sorted(pre):
@@ -276,7 +277,7 @@ for label, exp, locs in PIN:
                        f"authoritative is {sorted(exp)}")
 
 # 5. skill names — every name cited in any shape resolves to a real .claude/skills/<name>/SKILL.md
-REAL = {p.parent.name for p in SK.glob('*/SKILL.md')}
+REAL = {p.parent.name for p in SK.glob('*/SKILL.md')} | {p.parent.name for p in SK.glob('*/skills/*/SKILL.md')}
 NM = r'[a-z][a-z0-9]*(?:-[a-z0-9]+)+'                    # digits required: frontend-a11y-rules
 CITE = [re.compile(r'`(' + NM + r')`\s+skills?\b'),      # (b) `<name>` skill
         re.compile(r'\bskill:\s*(' + NM + r')\b'),       # (c)+(e) skill:<name>, → skill: <name>

@@ -102,10 +102,10 @@
   .q-dropdown-menu__group-label,
   .q-dropdown-menu__caption {
     color: var(--q-dropdown-menu-mono-fg);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-dropdown-menu-mono-size);
-    letter-spacing: var(--q-tracking-mono);
-    text-transform: uppercase;
+    letter-spacing: var(--q-tracking-label);
+    text-transform: var(--q-case-label);
   }
 
   .q-dropdown-menu__group-label {

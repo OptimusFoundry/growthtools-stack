@@ -16,7 +16,7 @@ export default {
 		"scale-unlimited/declaration-strict-value": strictValue,
 		"custom-property-pattern": [
 			/^(q-[a-z0-9-]+|app-[a-z0-9-]+|_[a-z0-9-]+)$/,
-			{ message: (p) => `--${p}: the app's own custom properties are --app-*, locals --_*` },
+			{ message: (p) => `${p}: the app's own custom properties are --app-*, locals --_*` },
 		],
 	},
 };

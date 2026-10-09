@@ -55,9 +55,9 @@ quiet's own docs are the design-system source, and the repo keeps only what quie
 
 | Tier | Location | Role |
 |---|---|---|
-| Rules | `.claude/skills/frontend-*-rules/SKILL.md`, plus the `quiet-app` skill in `.claude/skills/quiet-app/` (quiet's own, copied unchanged) | the one-line rule + its `→` pointer or `quiet:` citation |
+| Rules | `.claude/skills/frontend-*-rules/SKILL.md`, plus the `quiet-app` skill in `.claude/skills/quiet/skills/quiet-app/` (quiet's plugin, placed by quiet sync) | the one-line rule + its `→` pointer or `quiet:` citation |
 | Template supplement | `webapp/docs/*.md` (committed) | template-only patterns: `AsyncList`, gating, `useNotify`, routes, the layout supplement in `TEMPLATE-PATTERNS.md` |
-| quiet's docs | `webapp/vendor/quiet/`: `DESIGN.md`, `docs/guidelines/*.md`, `claude/skills/quiet-app/SKILL.md` | components, tokens, type, spacing, layouts, accessibility baseline; vendored, present without an install |
+| quiet's docs | `webapp/vendor/quiet/`: `DESIGN.md`, `docs/guidelines/*.md` | components, tokens, type, spacing, layouts, accessibility baseline; vendored, present without an install |
 
 **Two citation forms.** A `→ path#anchor` pointer targets a committed repo file only
 (`webapp/docs/<FILE>.md#anchor` or a `.claude/skills/...` file). quiet's docs are cited as prose,

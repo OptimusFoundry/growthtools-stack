@@ -7,10 +7,10 @@
   [data-theme] {
     --q-breadcrumb-gap: var(--q-space-1-25);
     --q-breadcrumb-crumb-gap: var(--q-space-0-75);
-    --q-breadcrumb-font: var(--q-font-mono);
-    --q-breadcrumb-tracking: var(--q-tracking-mono);
+    --q-breadcrumb-font: var(--q-font-label);
+    --q-breadcrumb-tracking: var(--q-tracking-label);
     --q-breadcrumb-sm-font-size: var(--q-text-3xs);
-    --q-breadcrumb-md-font-size: var(--q-text-2xs);
+    --q-breadcrumb-md-font-size: var(--q-text-label);
     --q-breadcrumb-lg-font-size: var(--q-text-xs);
     --q-breadcrumb-separator-fg: var(--q-fg-subtle);
     --q-breadcrumb-crumb-fg: var(--q-fg-muted);
@@ -32,7 +32,7 @@
     font-family: var(--q-breadcrumb-font);
     font-size: var(--q-breadcrumb-md-font-size);
     letter-spacing: var(--q-breadcrumb-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
   }
 
   .q-breadcrumb--sm .q-breadcrumb__list {

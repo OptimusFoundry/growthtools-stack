@@ -10,8 +10,8 @@
     --q-rule-gap: var(--q-space-2);
     --q-rule-vertical-gap: var(--q-space-1);
     --q-rule-vertical-min-height: var(--q-space-2);
-    --q-rule-label-font-size: var(--q-text-2xs);
-    --q-rule-label-tracking: var(--q-tracking-mono);
+    --q-rule-label-font-size: var(--q-text-label);
+    --q-rule-label-tracking: var(--q-tracking-label);
     --q-rule-label-fg: var(--q-fg-muted);
   }
 }
@@ -75,10 +75,11 @@
 
   .q-rule__label {
     color: var(--q-rule-label-fg);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-rule-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-rule-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     white-space: nowrap;
   }
 }

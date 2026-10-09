@@ -7,11 +7,11 @@
     --q-label-gap: var(--q-space-0-5);
     --q-label-row-gap: var(--q-space-2);
     --q-label-text-gap: var(--q-space-1);
-    --q-label-font-family: var(--q-font-mono);
-    --q-label-tracking: var(--q-tracking-mono);
+    --q-label-font-family: var(--q-font-label);
+    --q-label-tracking: var(--q-tracking-label);
     --q-label-fg: var(--q-fg-muted);
     --q-label-sm-font-size: var(--q-text-3xs);
-    --q-label-md-font-size: var(--q-text-2xs);
+    --q-label-md-font-size: var(--q-text-label);
     --q-label-lg-font-size: var(--q-text-xs);
     --q-label-required-fg: var(--q-accent);
     --q-label-required-gap: var(--q-space-0-25);
@@ -56,8 +56,9 @@
     gap: var(--q-label-text-gap);
     font-family: var(--q-label-font-family);
     font-size: var(--_font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     color: var(--q-label-fg);
   }
 

@@ -7,29 +7,27 @@
 // sync copies quiet's source (no stories, tests or reference mirror) into the app, replacing what
 // was there, and writes a package.json whose exports point at that source, so the app depends on
 // it with "@optimusfoundry/quiet": "file:./vendor/quiet" and imports stay `@optimusfoundry/quiet`.
-// It also places quiet's app-facing Claude assets where Claude Code reads them (claude/skills/** →
-// .claude/skills/, claude/agents/** → .claude/agents/, sub-folders kept, e.g. agents/qa/) and
-// registers claude/hooks/quiet-guard.mjs in .claude/settings.json, which blocks edits to the copy and
-// lints changed CSS. In a monorepo (app in webapp/, .claude/ at the repo root) they go to the project
-// root: the nearest folder from the app up to the git root that has a .claude/ (else the git root),
-// or --claude-root <dir>. Only quiet's own
-// entries are added or replaced; files quiet no longer ships are removed on the next sync.
+// It also places quiet's Claude Code plugin (claude/: the quiet-app skill, the quiet-screen-reviewer
+// agent and the quiet-guard hooks) at .claude/skills/quiet/ in the project root, where Claude Code
+// loads it as a skills-directory plugin: no settings.json entry, and it loads in place, so a pull
+// takes effect at the next session. The project root is the nearest folder from the app up to the
+// git root that has a .claude/ (else the git root), or --claude-root <dir>; in a monorepo (app in
+// webapp/) that is the repo root.
 // The copy is read-only: fixes go to the quiet repo, then sync again. check fails when a vendored
 // or placed file was edited, added or removed since the last sync (quiet.manifest.json holds the
-// hashes), or when the hook is no longer registered.
+// hashes), or when settings.json still registers the quiet-guard hooks older syncs added.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
 	cpSync,
 	existsSync,
-	globSync,
-	mkdirSync,
+	readdirSync,
 	readFileSync,
 	rmSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MANIFEST = "quiet.manifest.json";
@@ -38,7 +36,6 @@ const COPY = [
 	"src",
 	"stylelint",
 	"docs/guidelines",
-	"claude",
 	"DESIGN.md",
 	"scripts/quiet.mjs",
 	"scripts/quiet-audit.mjs",
@@ -55,18 +52,16 @@ const flag = (name, fallback) => {
 const target = resolve(flag("--to", "vendor/quiet"));
 
 const sha = (file) => createHash("sha256").update(readFileSync(file)).digest("hex");
-// Claude assets placed in the app: <kind> under claude/ → .claude/<kind>/.
-const PLACED_KINDS = ["skills", "agents"];
+// quiet's Claude Code plugin, and where it goes in the project root.
+const PLUGIN = "claude";
+const PLUGIN_AT = ".claude/skills/quiet";
 const SETTINGS = ".claude/settings.json";
 const GUARD = "quiet-guard.mjs";
-const HOOKS = [
-	["PreToolUse", "Edit|Write|MultiEdit|NotebookEdit", "pre"],
-	["PostToolUse", "Edit|Write|MultiEdit", "post"],
-];
 
+// Every file below root, dotfiles included (the plugin's manifest is .claude-plugin/plugin.json).
 const files = (root) =>
-	globSync("**/*", { cwd: root })
-		.filter((f) => f !== MANIFEST && statSync(join(root, f)).isFile())
+	readdirSync(root, { recursive: true })
+		.filter((f) => f !== MANIFEST && !f.endsWith(".DS_Store") && statSync(join(root, f)).isFile())
 		.sort();
 
 function sync() {
@@ -90,7 +85,6 @@ function sync() {
 	const app = process.cwd();
 	const where = relative(app, target) || ".";
 	const root = projectRoot(app);
-	const fromRoot = relative(root, target);
 	const previous = existsSync(join(target, MANIFEST))
 		? JSON.parse(readFileSync(join(target, MANIFEST), "utf8"))
 		: null;
@@ -131,8 +125,7 @@ function sync() {
 			"\t",
 		)}\n`,
 	);
-	const placed = place(root, previous?.placed ?? {});
-	const hooks = registerHooks(root, fromRoot);
+	const placed = place(source, root, previous?.placed ?? {});
 	const manifest = {
 		version: pkg.version,
 		commit: git("rev-parse", "HEAD") || null,
@@ -147,12 +140,13 @@ function sync() {
 		`quiet ${pkg.version} (${manifest.commit?.slice(0, 7) ?? "no git"}) → ${where}: ${Object.keys(manifest.files).length} files`,
 	);
 	const claudeDir = relative(app, join(root, ".claude")) || ".claude";
-	console.log(`Claude (${claudeDir}): ${Object.keys(placed).join(", ")}`);
 	console.log(
-		hooks
-			? `Claude: ${relative(app, join(root, SETTINGS))} runs ${GUARD} (blocks edits to ${where}, lints changed CSS)`
-			: `Claude: couldn't parse ${SETTINGS}; add the ${GUARD} hooks by hand (see ${where}/claude/hooks/${GUARD})`,
+		`Claude: plugin quiet → ${relative(app, join(root, PLUGIN_AT))} (${Object.keys(placed).length} files)`,
 	);
+	if (staleHooks(root))
+		console.warn(
+			`warning: ${relative(app, join(root, SETTINGS))} still registers ${GUARD}; the plugin runs it now. Remove those hook entries (quiet check fails until you do).`,
+		);
 	if (dirty)
 		console.warn(
 			"warning: the quiet repo has uncommitted changes in the synced files; the manifest's commit doesn't fully describe this copy",
@@ -167,6 +161,7 @@ First sync only, in the app:
   biome/eslint    ignore ${where}/**
   CI              npx quiet check
   claude rules    if the project routes skills by path (.claude/rules/*.md), list quiet-app there for UI work
+  claude trust    the plugin loads once the workspace is trusted, in sessions started at the project root
 Commit the sync on its own: git add ${where} ${claudeDir} && git commit -m "chore: quiet ${pkg.version}"`);
 }
 
@@ -187,130 +182,32 @@ function projectRoot(app) {
 	}
 }
 
-/** Copies the vendored claude/<kind>/** into <root>/.claude/<kind>/, removing ones quiet dropped. */
-function place(app, before) {
-	const placed = {};
-	const from = join(target, "claude");
-	for (const f of existsSync(from) ? files(from) : []) {
-		const [kind, ...rest] = f.split("/");
-		if (!PLACED_KINDS.includes(kind)) continue;
-		const to = join(".claude", kind, ...rest);
-		mkdirSync(dirname(join(app, to)), { recursive: true });
-		cpSync(join(from, f), join(app, to));
-		placed[to] = sha(join(app, to));
+/** Places quiet's plugin at <root>/.claude/skills/quiet/, replacing it, and removes files an
+ * earlier sync placed that this one doesn't (older syncs put the skill and agent in .claude/ directly). */
+function place(source, root, before) {
+	const to = join(root, PLUGIN_AT);
+	rmSync(to, { recursive: true, force: true });
+	cpSync(join(source, PLUGIN), to, { recursive: true });
+	const placed = Object.fromEntries(files(to).map((f) => [join(PLUGIN_AT, f), sha(join(to, f))]));
+	for (const f of Object.keys(before)) {
+		if (f in placed) continue;
+		rmSync(join(root, f), { force: true });
+		// Drop the folders it leaves empty, below .claude/.
+		const claude = join(root, ".claude");
+		for (let dir = dirname(join(root, f)); dir.startsWith(claude + sep); dir = dirname(dir)) {
+			if (!existsSync(dir) || readdirSync(dir).length) break;
+			rmSync(dir, { recursive: true });
+		}
 	}
-	for (const f of Object.keys(before)) if (!(f in placed)) rmSync(join(app, f), { force: true });
 	return placed;
 }
 
-/** Adds (or replaces) quiet-guard's hook entries in .claude/settings.json, leaving the rest alone.
- * Only the "hooks" value is rewritten in place; every other byte of the file stays as written, and
- * nothing is written when quiet's entries are already current. */
-function registerHooks(app, where) {
-	const path = join(app, SETTINGS);
-	const text = existsSync(path) ? readFileSync(path, "utf8") : "";
-	let settings = {};
+/** Whether settings.json still registers quiet-guard, as syncs before the plugin did. */
+function staleHooks(root) {
 	try {
-		settings = text ? JSON.parse(text) : {};
-	} catch {
-		return false;
-	}
-	const before = settings.hooks ?? {};
-	const hooks = { ...before };
-	for (const [event, matcher, mode] of HOOKS) {
-		const kept = (hooks[event] ?? [])
-			.map((g) => ({
-				...g,
-				hooks: (g.hooks ?? []).filter((h) => !String(h.command).includes(GUARD)),
-			}))
-			.filter((g) => g.hooks.length);
-		const command = `node "$CLAUDE_PROJECT_DIR/${where}/claude/hooks/${GUARD}" ${mode} ${where}`;
-		hooks[event] = [...kept, { matcher, hooks: [{ type: "command", command }] }];
-	}
-	if (JSON.stringify(hooks) === JSON.stringify(before)) return true;
-
-	const next = { ...settings, hooks };
-	const unit = text.match(/^([ \t]+)"/m)?.[1] ?? "\t";
-	const value = JSON.stringify(hooks, null, unit).replace(/\n/g, `\n${unit}`);
-	const span = text ? topLevelValue(text, "hooks") : null;
-	let out;
-	if (span) out = text.slice(0, span[0]) + value + text.slice(span[1]);
-	else if (text.trim()) {
-		const close = text.lastIndexOf("}");
-		const body = text.slice(0, close).trimEnd();
-		const comma = body.endsWith("{") ? "" : ",";
-		out = `${body}${comma}\n${unit}"hooks": ${value}\n${text.slice(close)}`;
-	} else out = `${JSON.stringify(next, null, unit)}\n`;
-	// The splice must mean exactly what a full rewrite would; if not, leave the file alone.
-	try {
-		if (JSON.stringify(JSON.parse(out)) !== JSON.stringify(next)) return false;
-	} catch {
-		return false;
-	}
-	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(path, out);
-	return true;
-}
-
-/** [start, end) of a top-level key's value in JSON text, or null. Skips strings and nesting. */
-function topLevelValue(text, key) {
-	let depth = 0;
-	for (let i = 0; i < text.length; i++) {
-		const c = text[i];
-		if (c === '"') {
-			const end = stringEnd(text, i);
-			let j = end;
-			while (/\s/.test(text[j] ?? "")) j++;
-			if (depth === 1 && text[j] === ":") {
-				j++;
-				while (/\s/.test(text[j] ?? "")) j++;
-				if (JSON.parse(text.slice(i, end)) === key) return [j, valueEnd(text, j)];
-				i = valueEnd(text, j) - 1;
-			} else i = end - 1;
-		} else if (c === "{" || c === "[") depth++;
-		else if (c === "}" || c === "]") depth--;
-	}
-	return null;
-}
-
-function stringEnd(text, i) {
-	for (let j = i + 1; j < text.length; j++) {
-		if (text[j] === "\\") j++;
-		else if (text[j] === '"') return j + 1;
-	}
-	return text.length;
-}
-
-function valueEnd(text, i) {
-	if (text[i] === '"') return stringEnd(text, i);
-	if (text[i] !== "{" && text[i] !== "[") {
-		let j = i;
-		while (j < text.length && !/[,}\]\s]/.test(text[j])) j++;
-		return j;
-	}
-	let depth = 0;
-	for (let j = i; j < text.length; j++) {
-		const c = text[j];
-		if (c === '"') j = stringEnd(text, j) - 1;
-		else if (c === "{" || c === "[") depth++;
-		else if (c === "}" || c === "]") {
-			depth--;
-			if (depth === 0) return j + 1;
-		}
-	}
-	return text.length;
-}
-
-function hooksRegistered(app) {
-	const path = join(app, SETTINGS);
-	if (!existsSync(path)) return false;
-	try {
-		const hooks = JSON.parse(readFileSync(path, "utf8")).hooks ?? {};
-		return HOOKS.every(([event]) =>
-			(hooks[event] ?? []).some((g) =>
-				(g.hooks ?? []).some((h) => String(h.command).includes(GUARD)),
-			),
-		);
+		return JSON.stringify(
+			JSON.parse(readFileSync(join(root, SETTINGS), "utf8")).hooks ?? {},
+		).includes(GUARD);
 	} catch {
 		return false;
 	}
@@ -339,9 +236,11 @@ function check() {
 					? [`edited   ${shown}`]
 					: [];
 		}),
-		...(hooksRegistered(root)
-			? []
-			: [`missing  ${GUARD} hooks in ${relative(process.cwd(), join(root, SETTINGS))}`]),
+		...(staleHooks(root)
+			? [
+					`stale    ${GUARD} hooks in ${relative(process.cwd(), join(root, SETTINGS))} (the plugin runs them)`,
+				]
+			: []),
 	];
 	if (problems.length) {
 		console.error(problems.join("\n"));
@@ -350,7 +249,7 @@ function check() {
 		);
 	}
 	console.log(
-		`quiet ${manifest.version} (${manifest.commit?.slice(0, 7) ?? "no git"}): ${now.length} vendored and ${Object.keys(manifest.placed ?? {}).length} placed files untouched, hooks registered`,
+		`quiet ${manifest.version} (${manifest.commit?.slice(0, 7) ?? "no git"}): ${now.length} vendored and ${Object.keys(manifest.placed ?? {}).length} placed files untouched`,
 	);
 }
 

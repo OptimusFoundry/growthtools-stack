@@ -20,7 +20,7 @@ npm run build-storybook   # Static Storybook build
 - **TanStack Router** — file-based routing in `src/routes/`
 - **SCSS Modules** — scoped styles with design tokens
 - **quiet** — `@optimusfoundry/quiet`, vendored in `webapp/vendor/quiet` (`"file:./vendor/quiet"`; the version and commit are in `vendor/quiet/quiet.manifest.json`). It is a read-only copy: `npm run quiet:check` (in CI) fails on any edit, and the `quiet-guard` hook blocks edits. A quiet bug is fixed in the quiet repo, then re-synced with `node <quiet>/scripts/quiet.mjs sync` from `webapp/`. One entry point: `import { Button, Stack } from "@optimusfoundry/quiet"`. Themes `foundry` / `foundry-dark` with a light/dark toggle in the Topbar (no theme picker); styles load once in `main.tsx`. Start at `vendor/quiet/DESIGN.md` and `vendor/quiet/docs/guidelines/README.md`.
-- **`quiet-app` skill** ([`.claude/skills/quiet-app/SKILL.md`](../.claude/skills/quiet-app/SKILL.md)) — the entry point for UI work. Its last step is the audit: `npx quiet-audit <url> --width 1280,390 --theme foundry,foundry-dark`.
+- **`quiet-app` skill** ([`.claude/skills/quiet/skills/quiet-app/SKILL.md`](../.claude/skills/quiet/skills/quiet-app/SKILL.md)) — the entry point for UI work. Its last step is the audit: `npx quiet-audit <url> --width 1280,390 --theme foundry,foundry-dark`.
 - **Biome** (code) + **Stylelint** (SCSS)
 - **Playwright** + **MSW** for testing
 

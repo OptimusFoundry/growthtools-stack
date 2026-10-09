@@ -16,16 +16,16 @@
     --q-stat-card-border-hover: var(--q-border-strong);
     --q-stat-card-plain-border-top: var(--q-fg);
     --q-stat-card-head-gap: var(--q-space-2);
-    --q-stat-card-label-font-size: var(--q-text-2xs);
-    --q-stat-card-label-tracking: var(--q-tracking-mono);
+    --q-stat-card-label-font-size: var(--q-text-label);
+    --q-stat-card-label-tracking: var(--q-tracking-label);
     --q-stat-card-label-color: var(--q-fg-muted);
     --q-stat-card-icon-size: var(--q-control-sm);
     --q-stat-card-icon-radius: var(--q-radius-pill);
     --q-stat-card-icon-border: var(--q-border);
     --q-stat-card-icon-color: var(--q-fg);
     --q-stat-card-icon-font-size: var(--q-text-md);
-    --q-stat-card-value-font-size: var(--q-text-4xl);
-    --q-stat-card-value-weight: var(--q-weight-bold);
+    --q-stat-card-value-font-size: var(--q-text-metric);
+    --q-stat-card-value-weight: var(--q-weight-heading);
     --q-stat-card-value-tracking: var(--q-tracking-h2);
     --q-stat-card-value-leading: var(--q-leading-none);
     --q-stat-card-value-color: var(--q-fg);
@@ -92,10 +92,11 @@
 
   .q-stat-card__label {
     color: var(--q-stat-card-label-color);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-stat-card-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-stat-card-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
   }
 
   .q-stat-card__icon {

@@ -9,11 +9,11 @@
     --q-page-hero-lg-pb: var(--q-space-8);
     --q-page-hero-lg-description-font-size: var(--q-text-xl);
     --q-page-hero-md-gap: var(--q-space-2);
-    --q-page-hero-md-pt: var(--q-space-6);
-    --q-page-hero-md-pb: var(--q-space-4);
-    --q-page-hero-md-description-font-size: var(--q-text-lg);
-    --q-page-hero-md-title-size: var(--q-text-4xl);
-    --q-page-hero-md-title-weight: var(--q-weight-bold);
+    --q-page-hero-md-pt: var(--q-space-hero-top);
+    --q-page-hero-md-pb: var(--q-space-hero-bottom);
+    --q-page-hero-md-description-font-size: var(--q-text-intro);
+    --q-page-hero-md-title-size: var(--q-text-heading-2);
+    --q-page-hero-md-title-weight: var(--q-weight-heading);
     --q-page-hero-md-title-tracking: var(--q-tracking-h2);
     --q-page-hero-md-title-leading: var(--q-leading-none);
     --q-page-hero-rule: var(--q-border);

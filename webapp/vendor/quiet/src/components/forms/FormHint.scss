@@ -5,10 +5,10 @@
   :root,
   [data-theme] {
     --q-form-hint-gap: var(--q-space-1);
-    --q-form-hint-font-family: var(--q-font-mono);
-    --q-form-hint-font-size: var(--q-text-2xs);
-    --q-form-hint-leading: 1.5; // unique to the hint line
-    --q-form-hint-tracking: var(--q-tracking-wide);
+    --q-form-hint-font-family: var(--q-font-hint);
+    --q-form-hint-font-size: var(--q-text-hint);
+    --q-form-hint-leading: var(--q-hint-leading);
+    --q-form-hint-tracking: var(--q-tracking-hint);
     --q-form-hint-fg: var(--q-fg-muted);
     --q-form-hint-error-fg: var(--q-accent);
     --q-form-hint-success-fg: var(--q-fg);

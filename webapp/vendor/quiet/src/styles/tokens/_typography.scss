@@ -38,8 +38,59 @@
   --q-tracking-wide: 0.04em;
   --q-tracking-none: 0;
   --q-tracking-tight: -0.01em;
+  --q-tracking-display: -0.045em;
+}
+
+// Type roles. The defaults are the reference's editorial scale; data-density="app" and "compact"
+// retune them for product screens: smaller headings, no molten period, sans sentence-case labels and hints.
+:root,
+[data-density="marketing"] {
+  --q-text-heading-1: var(--q-text-5xl);
+  --q-text-heading-2: var(--q-text-4xl);
+  --q-text-heading-3: var(--q-text-3xl);
+  --q-text-heading-4: var(--q-text-2xl);
+  --q-text-metric: var(--q-text-4xl);
+  --q-text-intro: var(--q-text-lg);
+  --q-weight-heading: var(--q-weight-bold);
   --q-tracking-h4: -0.02em;
   --q-tracking-h3: -0.025em;
   --q-tracking-h2: -0.04em;
-  --q-tracking-display: -0.045em;
+  --q-period-display: inline;
+
+  --q-font-label: var(--q-font-mono);
+  --q-text-label: var(--q-text-2xs);
+  --q-weight-label: var(--q-weight-regular);
+  --q-tracking-label: var(--q-tracking-mono);
+  --q-case-label: uppercase;
+
+  --q-font-hint: var(--q-font-mono);
+  --q-text-hint: var(--q-text-2xs);
+  --q-tracking-hint: var(--q-tracking-wide);
+  --q-hint-leading: 1.5; // the reference's hint line; not a --q-leading-* step
+}
+
+[data-density="app"],
+[data-density="compact"] {
+  --q-text-heading-1: var(--q-text-2xl);
+  --q-text-heading-2: var(--q-text-xl);
+  --q-text-heading-3: var(--q-text-lg);
+  --q-text-heading-4: var(--q-text-md);
+  --q-text-metric: var(--q-text-2xl);
+  --q-text-intro: var(--q-text-md);
+  --q-weight-heading: var(--q-weight-semibold);
+  --q-tracking-h4: var(--q-tracking-tight);
+  --q-tracking-h3: var(--q-tracking-tight);
+  --q-tracking-h2: var(--q-tracking-tight);
+  --q-period-display: none;
+
+  --q-font-label: var(--q-font-sans);
+  --q-text-label: var(--q-text-xs);
+  --q-weight-label: var(--q-weight-medium);
+  --q-tracking-label: var(--q-tracking-none);
+  --q-case-label: none;
+
+  --q-font-hint: var(--q-font-sans);
+  --q-text-hint: var(--q-text-xs);
+  --q-tracking-hint: var(--q-tracking-none);
+  --q-hint-leading: var(--q-leading-body);
 }

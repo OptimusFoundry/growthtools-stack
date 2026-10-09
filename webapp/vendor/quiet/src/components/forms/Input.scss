@@ -6,9 +6,9 @@
   :root,
   [data-theme] {
     --q-input-gap: var(--q-space-1);
-    --q-input-label-font-family: var(--q-font-mono);
-    --q-input-label-font-size: var(--q-text-2xs);
-    --q-input-label-tracking: var(--q-tracking-mono);
+    --q-input-label-font-family: var(--q-font-label);
+    --q-input-label-font-size: var(--q-text-label);
+    --q-input-label-tracking: var(--q-tracking-label);
     --q-input-label-fg: var(--q-fg-muted);
     --q-input-font-family: var(--q-font-sans);
     --q-input-font-size: var(--q-text-lg);
@@ -22,9 +22,9 @@
     --q-input-border-invalid: var(--q-accent);
     --q-input-ring-focus: var(--q-ring-soft);
     --q-input-multiline-min-height: 120px;
-    --q-input-hint-font-family: var(--q-font-mono);
-    --q-input-hint-font-size: var(--q-text-2xs);
-    --q-input-hint-tracking: var(--q-tracking-wide);
+    --q-input-hint-font-family: var(--q-font-hint);
+    --q-input-hint-font-size: var(--q-text-hint);
+    --q-input-hint-tracking: var(--q-tracking-hint);
     --q-input-hint-fg: var(--q-fg-muted);
     --q-input-hint-error-fg: var(--q-accent);
   }
@@ -40,8 +40,9 @@
   .q-input__label {
     font-family: var(--q-input-label-font-family);
     font-size: var(--q-input-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-input-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     color: var(--q-input-label-fg);
   }
 

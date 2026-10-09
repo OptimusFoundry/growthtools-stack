@@ -8,8 +8,8 @@
 @layer q.tokens {
   :root,
   [data-theme] {
-    --q-tabs-font: var(--q-font-mono);
-    --q-tabs-tracking: var(--q-tracking-mono);
+    --q-tabs-font: var(--q-font-label);
+    --q-tabs-tracking: var(--q-tracking-label);
     --q-tabs-tab-gap: var(--q-space-1);
     --q-tabs-disabled-opacity: 0.4;
     --q-tabs-count-fg: var(--q-fg-subtle);
@@ -19,7 +19,7 @@
     --q-tabs-sm-icon-size: var(--q-text-sm);
     --q-tabs-sm-height: 28px; // segment height inside the 4px enclosed/pill track
     --q-tabs-sm-px: var(--q-space-1-5);
-    --q-tabs-md-font-size: var(--q-text-2xs);
+    --q-tabs-md-font-size: var(--q-text-label);
     --q-tabs-md-icon-size: 14px; // label size + 3px; no text step at 14
     --q-tabs-md-height: var(--q-field-sm);
     --q-tabs-md-px: var(--q-space-2);
@@ -119,7 +119,7 @@
     font-family: var(--q-tabs-font);
     font-size: var(--_font-size);
     letter-spacing: var(--q-tabs-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
     white-space: nowrap;
     cursor: pointer;
     transition:

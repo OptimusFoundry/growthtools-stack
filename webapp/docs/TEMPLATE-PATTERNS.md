@@ -4,7 +4,7 @@
 > template's `/webhooks` and `/api-keys` screens, which growth-tools doesn't have. The patterns apply unchanged
 > to `/posts`, `/blog`, `/media`, `/analytics` and `/admin`.
 
-quiet's docs cover components, layouts, spacing and type: `vendor/quiet/DESIGN.md`, [`docs/guidelines/`](../vendor/quiet/docs/guidelines/README.md), and the [`quiet-app` skill](../../.claude/skills/quiet-app/SKILL.md). This file covers only what the template adds.
+quiet's docs cover components, layouts, spacing and type: `vendor/quiet/DESIGN.md`, [`docs/guidelines/`](../vendor/quiet/docs/guidelines/README.md), and the [`quiet-app` skill](../../.claude/skills/quiet/skills/quiet-app/SKILL.md). This file covers only what the template adds.
 
 ## Page shell
 

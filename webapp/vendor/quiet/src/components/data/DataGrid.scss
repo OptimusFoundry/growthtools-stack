@@ -18,8 +18,8 @@
     --q-data-grid-search-radius: var(--q-radius-pill);
     --q-data-grid-search-font-size: var(--q-text-md);
     --q-data-grid-search-color: var(--q-fg);
-    --q-data-grid-label-font-size: var(--q-text-2xs);
-    --q-data-grid-label-tracking: var(--q-tracking-mono);
+    --q-data-grid-label-font-size: var(--q-text-label);
+    --q-data-grid-label-tracking: var(--q-tracking-label);
     --q-data-grid-label-color: var(--q-fg-muted);
     --q-data-grid-label-strong-color: var(--q-fg);
     --q-data-grid-empty-border: var(--q-fg);
@@ -63,10 +63,11 @@
 
   .q-data-grid__label {
     color: var(--q-data-grid-label-color);
-    font-family: var(--q-font-mono);
+    font-family: var(--q-font-label);
     font-size: var(--q-data-grid-label-font-size);
+    font-weight: var(--q-weight-label);
     letter-spacing: var(--q-data-grid-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
 
     &--strong {
       color: var(--q-data-grid-label-strong-color);

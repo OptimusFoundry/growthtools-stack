@@ -29,9 +29,9 @@
 
     --q-sidebar-dividers-gap: var(--q-space-2);
     --q-sidebar-list-gap: var(--q-space-0-25);
-    --q-sidebar-label-font: var(--q-font-mono);
+    --q-sidebar-label-font: var(--q-font-label);
     --q-sidebar-label-font-size: var(--q-text-3xs);
-    --q-sidebar-label-tracking: var(--q-tracking-mono);
+    --q-sidebar-label-tracking: var(--q-tracking-label);
     --q-sidebar-label-fg: var(--q-fg-subtle);
     --q-sidebar-label-pb: var(--q-space-1);
 
@@ -160,7 +160,7 @@
     font-family: var(--q-sidebar-label-font);
     font-size: var(--q-sidebar-label-font-size);
     letter-spacing: var(--q-sidebar-label-tracking);
-    text-transform: uppercase;
+    text-transform: var(--q-case-label);
 
     // Collapsible groups: the label is a disclosure button.
     &:is(button) {
