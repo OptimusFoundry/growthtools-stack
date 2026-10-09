@@ -23,27 +23,37 @@ const png = {
 	buffer: Buffer.from("fake-image"),
 };
 
-// The hook surfaces the raw response body as the row's error, so the text is
-// the serialized canned body from setupEndpoint. Transport failures surface the
-// browser's own fetch error.
+// useUploadMedia maps the response status to a fixed user-facing message (the
+// raw response body is never shown), so each status asserts its own exact copy.
+// A transport failure (no response) gets the connectivity message. 413 is not
+// covered because the shared endpoint helper has no 413 case.
 const errorCases = [
 	{
 		status: 400,
-		text: '{"error":"invalid input","code":"INVALID_INPUT"}',
-	},
-	{ status: 401, text: '{"error":"Unauthorized","code":"UNAUTHORIZED"}' },
-	{ status: 403, text: '{"error":"Forbidden","code":"FORBIDDEN"}' },
-	{ status: 404, text: '{"error":"not found","code":"NOT_FOUND"}' },
-	{ status: 409, text: '{"error":"conflict","code":"CONFLICT"}' },
-	{
-		status: 500,
-		text: '{"error":"An internal error occurred. Please try again later.","code":"INTERNAL_ERROR"}',
+		text: "This file couldn't be uploaded. Check its type and size.",
 	},
 	{
-		status: 503,
-		text: '{"error":"service unavailable","code":"SERVICE_UNAVAILABLE"}',
+		status: 401,
+		text: "Your session expired. Sign in again to upload.",
 	},
-	{ status: "transport", text: "Failed to fetch" },
+	{
+		status: 403,
+		text: "You don't have permission to upload media.",
+	},
+	{
+		status: 404,
+		text: "Upload isn't available right now. Try again later.",
+	},
+	{
+		status: 409,
+		text: "This file has already been uploaded.",
+	},
+	{ status: 500, text: "Upload failed. Try again." },
+	{ status: 503, text: "Upload failed. Try again." },
+	{
+		status: "transport",
+		text: "Couldn't reach the server. Check your connection and try again.",
+	},
 ] as const;
 
 for (const route of routes) {
