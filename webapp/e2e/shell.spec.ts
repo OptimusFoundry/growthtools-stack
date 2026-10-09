@@ -173,7 +173,7 @@ const routes = [
 	{ path: "/blog" },
 	{ path: "/blog/new" },
 	{ path: `/blog/${fullBlogPost.id}` },
-	{ path: "/analytics", persona: "marketing" },
+	{ path: "/analytics" },
 	{ path: "/github" },
 	{ path: `/github/${githubCommit.id}` },
 	{ path: "/admin" },
@@ -190,9 +190,6 @@ test.describe("Every route renders in both themes", () => {
 	for (const route of routes) {
 		for (const theme of themes) {
 			test(`${route.path} renders in ${theme}`, async ({ page, network }) => {
-				if ("persona" in route) {
-					network.use(scenarios.auth.withPersona(route.persona));
-				}
 				if ("draftDetails" in route) {
 					network.use(
 						http.get("*/api/protected/posts/:id/details", () =>
@@ -303,22 +300,11 @@ test.describe("Sidebar", () => {
 		await expect(themeToggle(page)).not.toHaveAttribute("aria-current");
 	});
 
-	test("Analytics and GitHub are persona-gated: absent for content_creator, present for marketing", async ({
+	test("Analytics and GitHub are visible for the default persona (content_creator)", async ({
 		page,
-		network,
 	}) => {
 		await page.setViewportSize(DESKTOP);
 		await page.goto("/");
-		await page.waitForLoadState("networkidle");
-		await expect(
-			sidebarNav(page).getByRole("link", { name: "Posts", exact: true }),
-		).toBeVisible();
-		await expect(
-			sidebarNav(page).getByRole("link", { name: "Analytics", exact: true }),
-		).toHaveCount(0);
-
-		network.use(scenarios.auth.withPersona("marketing"));
-		await page.reload();
 		await page.waitForLoadState("networkidle");
 		await expect(
 			sidebarNav(page).getByRole("link", { name: "Analytics", exact: true }),
@@ -327,6 +313,24 @@ test.describe("Sidebar", () => {
 			sidebarNav(page).getByRole("link", { name: "GitHub", exact: true }),
 		).toBeVisible();
 	});
+
+	for (const persona of ["marketing", "admin"] as const) {
+		test(`Analytics and GitHub are visible for the ${persona} persona`, async ({
+			page,
+			network,
+		}) => {
+			network.use(scenarios.auth.withPersona(persona));
+			await page.setViewportSize(DESKTOP);
+			await page.goto("/");
+			await page.waitForLoadState("networkidle");
+			await expect(
+				sidebarNav(page).getByRole("link", { name: "Analytics", exact: true }),
+			).toBeVisible();
+			await expect(
+				sidebarNav(page).getByRole("link", { name: "GitHub", exact: true }),
+			).toBeVisible();
+		});
+	}
 
 	test("link click routes without a full page load and the current item follows the route", async ({
 		page,
