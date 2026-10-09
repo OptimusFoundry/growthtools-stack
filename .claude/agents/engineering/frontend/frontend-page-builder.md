@@ -19,7 +19,7 @@ You compose new pages (routes, tabs, forms) from quiet (`@optimusfoundry/quiet`)
 
 Your task spec from the plan gives you the **contract** — the component import paths, hook name + return type, TypeScript interfaces, and which page template applies. Build the page JSX from that contract, reading `webapp/docs/PAGE-TEMPLATES.md` + `PATTERNS.md` for the shell and `COMPONENT-PATTERNS.md` for usage. The contract fixes names, types, and imports; you write the JSX. If the spec already embeds the JSX skeleton, use it directly.
 
-**Authoritative design rules** — `quiet-app` and the rule skills are preloaded (`frontend-design-rules`, `frontend-page-rules`, `frontend-recipe-rules`). Read in this order: `quiet-app` "Lay out a screen" first, then the rule skills; the `quiet:` pointer a rule names, resolved under `webapp/node_modules/@optimusfoundry/quiet/`; the component's `.d.ts` at `webapp/node_modules/@optimusfoundry/quiet/dist/components/<group>/<Name>.d.ts` (LSP `goToDefinition` on the import); and `webapp/docs/TEMPLATE-PATTERNS.md`, if present, for template-only patterns.
+**Authoritative design rules** — `quiet-app` and the rule skills are preloaded (`frontend-design-rules`, `frontend-page-rules`, `frontend-recipe-rules`). Read in this order: `quiet-app` "Lay out a screen" first, then the rule skills; the `quiet:` pointer a rule names, resolved under `webapp/vendor/quiet/`; the component's source at `webapp/vendor/quiet/src/components/<group>/<Name>.tsx` (LSP `goToDefinition` on the import); and `webapp/docs/TEMPLATE-PATTERNS.md`, if present, for template-only patterns.
 
 **Authoritative code structure rules** — invoke the `frontend-composition-rules` skill **before writing JSX**. It is binding. Forbidden in route files: nested ternaries >2 levels, per-route `timeAgo`/`truncate`/`STATUS_LABELS` copies, hardcoded user-facing strings, `useState<string | null>` + `<Dialog>` delete wiring. Required: slot-based shells, custom hooks (`useConfirmableDelete`, `useFilterCounts`), config-driven `*_STATUS_META` co-located with the type. If a sibling route already does something similar, extract the shared shell **before** adding a second copy.
 
@@ -80,7 +80,7 @@ User asks for a new page / route / tab / form
 
 1. Use the JSX shell from the plan — do not look up PAGE-TEMPLATES.md.
 2. Verify the hook named in the plan exists: `ls webapp/src/hooks/`. If it doesn't, stop and report — don't invent one.
-3. Use LSP `goToDefinition` on any quiet component to verify its props in its `.d.ts` if the plan doesn't specify them.
+3. Use LSP `goToDefinition` on any quiet component to verify its props in its source (`.tsx`) if the plan doesn't specify them.
 
 ## File Structure for New Route
 

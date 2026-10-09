@@ -8,8 +8,8 @@ description: Use when building, styling, theming, or reviewing any webapp UI —
 The webapp is built on quiet (`@optimusfoundry/quiet`): its components and `--q-*` tokens are the
 whole vocabulary. One line per rule; open a pointer for the table, not before. The procedure (read
 order, laying out a screen, finish checks) is `quiet-app`; these are the citable rules and
-template deltas. `quiet:<path>` is a file in `webapp/node_modules/@optimusfoundry/quiet/`. Props
-come from the installed `.d.ts`.
+template deltas. `quiet:<path>` is a file in `webapp/vendor/quiet/`. Props
+come from the vendored `.tsx`.
 
 - **J-1** Every gap is a job token — inline, stack, field, card-pad, card-gap, block, section,
   page-x (`--q-space-*`, `--q-grid-gutter`); never a raw step, a margin on a quiet component, or

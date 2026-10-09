@@ -5,11 +5,11 @@
 > to `/posts`, `/blog`, `/media`, `/analytics` and `/admin`. Until CH-001
 > (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) lands, those product screens are still on Proto.
 
-quiet's docs cover components, layouts, spacing and type: `node_modules/@optimusfoundry/quiet/README.md`, `DESIGN.md`, [`docs/guidelines/`](../node_modules/@optimusfoundry/quiet/docs/guidelines/README.md), and the [`quiet-app` skill](../../.claude/skills/quiet-app/SKILL.md). This file covers only what the template adds.
+quiet's docs cover components, layouts, spacing and type: `vendor/quiet/DESIGN.md`, [`docs/guidelines/`](../vendor/quiet/docs/guidelines/README.md), and the [`quiet-app` skill](../../.claude/skills/quiet-app/SKILL.md). This file covers only what the template adds.
 
 ## Page shell
 
-Dimensions and rules for each layout: [`layouts.md`](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md).
+Dimensions and rules for each layout: [`layouts.md`](../vendor/quiet/docs/guidelines/layouts.md).
 
 | Route | Layout |
 |---|---|

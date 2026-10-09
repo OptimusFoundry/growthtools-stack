@@ -21,8 +21,8 @@ Your task spec from the plan gives you the **contract** — the component name, 
 
 ## Before Creating Any Component
 
-1. **Rules are preloaded** (`quiet-app`, `frontend-design-rules`, `frontend-style-rules`); follow the `quiet:` pointer a rule names, resolved under `webapp/node_modules/@optimusfoundry/quiet/`. **Read the `.d.ts` of each quiet component you compose** — `webapp/node_modules/@optimusfoundry/quiet/dist/components/<group>/<Name>.d.ts` — and `webapp/docs/TEMPLATE-PATTERNS.md`, if present, for template-only patterns.
-2. **Verify no duplicate** — `ls webapp/node_modules/@optimusfoundry/quiet/dist/components/*/` and `ls webapp/src/components/` to confirm the component doesn't already exist (the plan should have checked, but verify)
+1. **Rules are preloaded** (`quiet-app`, `frontend-design-rules`, `frontend-style-rules`); follow the `quiet:` pointer a rule names, resolved under `webapp/vendor/quiet/`. **Read the component source of each quiet component you compose** — `webapp/vendor/quiet/src/components/<group>/<Name>.tsx` — and `webapp/docs/TEMPLATE-PATTERNS.md`, if present, for template-only patterns.
+2. **Verify no duplicate** — `ls webapp/vendor/quiet/src/components/*/` and `ls webapp/src/components/` to confirm the component doesn't already exist (the plan should have checked, but verify)
 3. Use LSP `goToDefinition` on any existing component you compose from to inspect its props — do not read those files in full
 4. **Stop and report** if the ask is a route, page, tab, or form (not a reusable primitive) — out of scope; the coordinator routes it to `frontend-page-builder` (you can't spawn it)
 5. **Invoke `frontend-composition-rules` skill** for any component that renders lists, branches on async state, or wraps a mutation + confirmation flow. Prefer slot/children props over config blobs; prefer custom hooks over HOCs; never hardcode resource-specific strings inside a generic component.

@@ -25,7 +25,7 @@ The template ships no product theme — only quiet's `foundry` and `foundry-dark
 
 ## The token contract
 
-From `quiet:DESIGN.md#product-themes` (a file in `webapp/node_modules/@optimusfoundry/quiet/`). Each theme of the pair sets:
+From `quiet:DESIGN.md#product-themes` (a file in `webapp/vendor/quiet/`). Each theme of the pair sets:
 
 | | Tokens |
 |---|---|

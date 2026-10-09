@@ -1,6 +1,6 @@
 ---
 name: shared-docs-oracle
-description: Look up the authoritative source behind a house rule, in either doc tree. Use when you hold a qualified rule ID (`<skill-name>:<RULE-ID>`, e.g. `backend-store-rules:S-3`, `frontend-page-rules:S-3`) and need the reasoning, the exception, the exact constant or the worked example the one-line rule had to drop — or when you have a conventions question ("what weight for a card title?", "does a list endpoint return `[]` or `null`?") and need the answer from `webapp/docs/`, quiet's docs (`webapp/node_modules/@optimusfoundry/quiet/`) or `base-server/docs/` rather than from memory. Answers from source, reconciled against the one-line rule, and names any text it supersedes. Read-only — it returns an answer, never an edit.
+description: Look up the authoritative source behind a house rule, in either doc tree. Use when you hold a qualified rule ID (`<skill-name>:<RULE-ID>`, e.g. `backend-store-rules:S-3`, `frontend-page-rules:S-3`) and need the reasoning, the exception, the exact constant or the worked example the one-line rule had to drop — or when you have a conventions question ("what weight for a card title?", "does a list endpoint return `[]` or `null`?") and need the answer from `webapp/docs/`, quiet's docs (`webapp/vendor/quiet/`) or `base-server/docs/` rather than from memory. Answers from source, reconciled against the one-line rule, and names any text it supersedes. Read-only — it returns an answer, never an edit.
 context: fork
 agent: code-explorer
 ---
@@ -57,7 +57,7 @@ quiet's own docs are the design-system source, and the repo keeps only what quie
 |---|---|---|
 | Rules | `.claude/skills/frontend-*-rules/SKILL.md`, plus the `quiet-app` skill in `.claude/skills/quiet-app/` (quiet's own, copied unchanged) | the one-line rule + its `→` pointer or `quiet:` citation |
 | Template supplement | `webapp/docs/*.md` (committed) | template-only patterns: `AsyncList`, gating, `useNotify`, routes, the layout supplement in `TEMPLATE-PATTERNS.md` |
-| quiet's docs | `webapp/node_modules/@optimusfoundry/quiet/`: `README.md`, `DESIGN.md`, `docs/guidelines/*.md`, `skills/quiet-app/SKILL.md` | components, tokens, type, spacing, layouts, accessibility baseline; present only after `npm install` |
+| quiet's docs | `webapp/vendor/quiet/`: `DESIGN.md`, `docs/guidelines/*.md`, `claude/skills/quiet-app/SKILL.md` | components, tokens, type, spacing, layouts, accessibility baseline; vendored, present without an install |
 
 **Two citation forms.** A `→ path#anchor` pointer targets a committed repo file only
 (`webapp/docs/<FILE>.md#anchor` or a `.claude/skills/...` file). quiet's docs are cited as prose,
@@ -65,7 +65,7 @@ quiet's own docs are the design-system source, and the repo keeps only what quie
 `quiet:docs/guidelines/spacing.md#job-tokens`, `quiet:DESIGN.md#<anchor>`. Resolve a `quiet:` path
 in this order:
 
-1. `webapp/node_modules/@optimusfoundry/quiet/<path>` (after `npm install` in `webapp/`).
+1. `webapp/vendor/quiet/<path>` (vendored; present without an install).
 2. The sibling checkout `~/Workspaces/quiet/<path>`, when present. Say you used it: its working tree
    can be ahead of the pinned version.
 
@@ -111,7 +111,7 @@ forwarding one.
 
 | Question is about | Winner | Over |
 |---|---|---|
-| **The design system** — components, tokens, type, spacing, layouts, the accessibility baseline | quiet's docs (`README.md`, `DESIGN.md`, `docs/guidelines/*.md`, the `quiet-app` skill) | the one-line rule, and any `webapp/docs/` text that restates them |
+| **The design system** — components, tokens, type, spacing, layouts, the accessibility baseline | quiet's docs (`DESIGN.md`, `docs/guidelines/*.md`, the `quiet-app` skill) | the one-line rule, and any `webapp/docs/` text that restates them |
 | **Template-only patterns** — `AsyncList`, gating, `useNotify`, routes, the layout supplement in `TEMPLATE-PATTERNS.md` | `webapp/docs/` | the one-line rule |
 
 Where a skill one-liner disagrees with either, the doc wins and the answer names the stale rule as a

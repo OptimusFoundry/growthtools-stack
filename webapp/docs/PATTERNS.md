@@ -6,8 +6,8 @@
 > (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) lands, those product screens are still on Proto.
 
 How pages in this app compose quiet components. Components, layouts, spacing and type are specified in quiet's
-[guidelines](../node_modules/@optimusfoundry/quiet/docs/guidelines/README.md); props are authoritative in the `.d.ts`
-files under `node_modules/@optimusfoundry/quiet/dist/components/`. What the template adds on top (`AsyncList`, gating,
+[guidelines](../vendor/quiet/docs/guidelines/README.md); props are authoritative in the component source (`.tsx`)
+files under `vendor/quiet/src/components/`. What the template adds on top (`AsyncList`, gating,
 `useNotify`, `AppIcon`, dropped attributes) is in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md). Whole-page skeletons are in
 [PAGE-TEMPLATES.md](PAGE-TEMPLATES.md).
 
@@ -48,8 +48,8 @@ Screens inside `Layout` render a fragment: `<Topbar>` and a root `Stack`. Public
 ```
 
 Layout choice, pane widths and the width cap are quiet's:
-[layouts.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md). Mixed-width rows use
-`Grid columns={12}` with `Col span`; see [grid.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/grid.md). No
+[layouts.md](../vendor/quiet/docs/guidelines/layouts.md). Mixed-width rows use
+`Grid columns={12}` with `Col span`; see [grid.md](../vendor/quiet/docs/guidelines/grid.md). No
 custom `grid-template-columns` (stylelint bans `display: grid`).
 
 ---
@@ -91,7 +91,7 @@ import { SectionHeader } from "@optimusfoundry/quiet";
 ```
 
 Props: `eyebrow`, `title`, `description?`, `size?`, `as?` and more; check
-`dist/components/.../SectionHeader.d.ts`. A section title is plain text; the component appends the period.
+`src/components/.../SectionHeader.tsx`. A section title is plain text; the component appends the period.
 
 ---
 
@@ -118,7 +118,7 @@ In-page tabs take a `tabs` array and a `panels` map:
 ```
 
 Tab content is rendered bare, no `Card` wrapper. Use tabs for at most four short groups
-([layouts.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md)).
+([layouts.md](../vendor/quiet/docs/guidelines/layouts.md)).
 
 ---
 
@@ -128,8 +128,8 @@ Tab content is rendered bare, no `Card` wrapper. Use tabs for at most four short
   with a `SectionHeader` and its fields. No `Divider` between sections and no outer `Card`.
 - **Labels.** Fields carry their own `label`, `helperText` and `error` props (`TextField`, `TextArea`, `Checkbox`).
 - **Measure.** Cap the field stack at the form width in the module class; the value comes from
-  [grid.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/grid.md) and
-  [layouts.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md), not a literal.
+  [grid.md](../vendor/quiet/docs/guidelines/grid.md) and
+  [layouts.md](../vendor/quiet/docs/guidelines/layouts.md), not a literal.
 - **Save row.** Bottom, not sticky: `Stack direction="row" justify="flex-end" gap="sm"` with Cancel (`ghost`) then Save
   (`primary`).
 
@@ -177,10 +177,10 @@ content instead. Details in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).
 ## Spacing and width
 
 Every gap is a job token or a `Stack` size per
-[spacing.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/spacing.md). Stack and Grid `gap` names are quiet's;
-do not translate from memory, check the `.d.ts`. Widths and fixed panes: see
-[grid.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/grid.md) and
-[layouts.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md). Breakpoint mixins for SCSS are in
+[spacing.md](../vendor/quiet/docs/guidelines/spacing.md). Stack and Grid `gap` names are quiet's;
+do not translate from memory, check the component source. Widths and fixed panes: see
+[grid.md](../vendor/quiet/docs/guidelines/grid.md) and
+[layouts.md](../vendor/quiet/docs/guidelines/layouts.md). Breakpoint mixins for SCSS are in
 [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).
 
 ---

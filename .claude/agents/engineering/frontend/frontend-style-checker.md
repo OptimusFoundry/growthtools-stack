@@ -26,7 +26,7 @@ You validate SCSS files against project design token standards.
 
 ## Required First Steps
 
-Your design and style rules are preloaded (`frontend-design-rules`, `frontend-style-rules`). Token names come from `quiet:DESIGN.md` and `webapp/node_modules/@optimusfoundry/quiet/dist/quiet.css` (grep for `--q-`), resolved under `webapp/node_modules/@optimusfoundry/quiet/`; follow a rule's `quiet:` pointer only when you need its table.
+Your design and style rules are preloaded (`frontend-design-rules`, `frontend-style-rules`). Token names come from `quiet:DESIGN.md` and `webapp/vendor/quiet/dist/quiet.css` (grep for `--q-`), resolved under `webapp/vendor/quiet/`; follow a rule's `quiet:` pointer only when you need its table.
 
 ## Check Process
 

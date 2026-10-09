@@ -21,9 +21,9 @@ Shared app-level components (not tied to one feature) live in `src/components/{C
 
 ## Using quiet
 
-- **Check quiet first.** Before building anything, look for it in quiet: `node_modules/@optimusfoundry/quiet/README.md`, `DESIGN.md`, and `docs/guidelines/*.md` (`components.md` says when to compose which).
+- **Check quiet first.** Before building anything, look for it in quiet: `vendor/quiet/DESIGN.md`, and `docs/guidelines/*.md` (`components.md` says when to compose which).
 - **Import from the package root** — `import { Button, Stack } from "@optimusfoundry/quiet"`. No deep imports from `dist/`.
-- **Props are authoritative in the `.d.ts`** — `node_modules/@optimusfoundry/quiet/dist/components/<group>/<Name>.d.ts`. Do not guess props from memory or copy lists of them into docs.
+- **Props are authoritative in the component source (`.tsx`)** — `vendor/quiet/src/components/<group>/<Name>.tsx`. Do not guess props from memory or copy lists of them into docs.
 - **A missing primitive** is built here on `--q-*` tokens and flagged for quiet; do not restyle a quiet component from outside.
 
 ---
@@ -197,7 +197,7 @@ export function DataDisplay(props: { dataPromise: Promise<Data> }) {
 
 ```scss
 // component.module.scss — quiet tokens only (--q-*); never hardcode values.
-// Token tiers: node_modules/@optimusfoundry/quiet/DESIGN.md
+// Token tiers: vendor/quiet/DESIGN.md
 
 .root {
   padding: var(--q-space-2);
@@ -216,7 +216,7 @@ export function DataDisplay(props: { dataPromise: Promise<Data> }) {
 }
 ```
 
-Gaps between elements are quiet `Stack` / `Grid` props, not margins; `display: grid` is banned by stylelint (use `Grid` with `Col span`). Spacing, type and layout rules: `node_modules/@optimusfoundry/quiet/docs/guidelines/` (`spacing.md`, `typography.md`, `layouts.md`).
+Gaps between elements are quiet `Stack` / `Grid` props, not margins; `display: grid` is banned by stylelint (use `Grid` with `Col span`). Spacing, type and layout rules: `vendor/quiet/docs/guidelines/` (`spacing.md`, `typography.md`, `layouts.md`).
 
 ---
 
@@ -297,7 +297,7 @@ const items = createItems<Item>([...]);
 ## Checklist Before Completing
 
 - [ ] Searched quiet (and `src/components`) for an existing component before creating
-- [ ] Imported quiet from `@optimusfoundry/quiet` only; props checked against the `.d.ts`
+- [ ] Imported quiet from `@optimusfoundry/quiet` only; props checked against the component source (`.tsx`)
 - [ ] Used `ref` as prop (no `forwardRef`)
 - [ ] Used `--q-*` tokens (no hardcoded values, no inline styles)
 - [ ] TypeScript strict, no `any`

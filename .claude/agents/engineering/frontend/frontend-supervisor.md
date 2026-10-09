@@ -53,7 +53,7 @@ Plans are **contract-level**: tickets give names, types, signatures, endpoint ta
 | Fetch hook | `webapp/src/hooks/useGetAPIKeys.ts` |
 | MSW handler set | `webapp/e2e/handlers/apikey.handlers.ts` |
 | Playwright spec | `webapp/e2e/api-keys.spec.ts` |
-| quiet tokens and props | `webapp/node_modules/@optimusfoundry/quiet/DESIGN.md` and `dist/components/<group>/<Name>.d.ts` |
+| quiet tokens and props | `webapp/vendor/quiet/DESIGN.md` and `src/components/<group>/<Name>.tsx` |
 
 (LSP is a deferred tool — load it once with `ToolSearch(query: "select:LSP", max_results: 1)`.)
 
@@ -147,7 +147,7 @@ webapp/src/features/{feature}/components/{Name}/component.tsx  + component.modul
 webapp/src/features/{feature}/lib/{helper}.ts                 ← pure helpers / formatters
 webapp/src/hooks/use{Verb}{Noun}.ts                           ← fetch + state hooks
 webapp/src/types/api.types.ts                                 ← shared API response types
-@optimusfoundry/quiet → webapp/node_modules/@optimusfoundry/quiet/  ← dist/components/<group>/<Name>.d.ts is the props authority; read-only here
+@optimusfoundry/quiet → webapp/vendor/quiet/  ← src/components/<group>/<Name>.tsx is the props authority; read-only here
 webapp/src/hooks/useNotify.ts                                 ← toasts (never the retired banner-center hook)
 webapp/e2e/handlers/{domain}.handlers.ts                      ← MSW per-endpoint handlers
 webapp/e2e/{feature}.spec.ts                                  ← Playwright E2E specs

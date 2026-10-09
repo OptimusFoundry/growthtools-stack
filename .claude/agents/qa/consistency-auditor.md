@@ -30,7 +30,7 @@ Fan out `audit-checker` — **one per rule-group below, single parallel batch (5
 **Frontend (`webapp/src`):**
 - Product routes render inside the app shell, whose `<main>` supplies the page padding, and do not
   wrap in `<PageShell>` (it would double the gutter); only the public routes outside the shell
-  (`/signin`, `/auth/email/callback`, `/invites/$token`, `/oauth/signedin`) wrap in a narrow
+  (`/signin`, `/test-login`, `/oauth/signedin`) wrap in a narrow
   `<PageShell as="main">`. Exactly one `<main>` per route. A `PageShell` import in a product route or
   its page component is a finding; a public route without one is a finding.
 - Lists render `<EmptyState>` for the zero-data case.

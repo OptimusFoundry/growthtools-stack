@@ -6,9 +6,9 @@
 > (`docs/briefs/2026-10-08-quiet-product-rewrite.md`) lands, those product screens are still on Proto.
 
 The four layouts the screens use. Layout names, dimensions and rules live in quiet's
-[layouts.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md) (with
-[sections.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/sections.md) and
-[grid.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/grid.md)); nothing is restated here. Template-only
+[layouts.md](../vendor/quiet/docs/guidelines/layouts.md) (with
+[sections.md](../vendor/quiet/docs/guidelines/sections.md) and
+[grid.md](../vendor/quiet/docs/guidelines/grid.md)); nothing is restated here. Template-only
 helpers are in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md). Page-level conventions are in [PATTERNS.md](PATTERNS.md).
 
 | Layout | Real route to copy from |
@@ -30,7 +30,7 @@ The route renders `<Topbar>` first: its `title` (or `breadcrumbs`) is the route'
 }
 ```
 
-Only public pages outside the shell (sign-in, invite, callback) use a narrow `PageShell as="main"`.
+Only public pages outside the shell (sign-in, test login, OAuth return) use a narrow `PageShell as="main"`.
 
 List pages use `AsyncList` (`@/components/patterns/AsyncList/AsyncList`) for the loading / empty / filtered-empty / items
 states; see [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md). Do not hand-roll those branches or a delete `useState`; invoke
@@ -142,7 +142,7 @@ const PANELS = { billing: <BillingTab />, team: <TeamTab /> };
 
 Without tabs, stack `<section aria-label>` blocks, each a `SectionHeader size="sm" as="h2"` over a bordered `List`
 (`src/routes/integrations/index.tsx`). Order: status, lead block, supporting, destructive last
-([sections.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/sections.md)).
+([sections.md](../vendor/quiet/docs/guidelines/sections.md)).
 
 - Tab content is rendered bare, with no `Card` wrapper.
 - A team members block is a `Table` inside its panel.
@@ -191,7 +191,7 @@ import { Alert, Button, PageHero, SectionHeader, Stack, TextField } from "@optim
 - Breadcrumbs go through `Topbar`; routes do not compose `Breadcrumb` themselves.
 - Labels come from the field's own `label` prop (`TextField`, `TextArea`, `Checkbox`).
 - Cap the field stack at the form width in the module class, per
-  [layouts.md](../node_modules/@optimusfoundry/quiet/docs/guidelines/layouts.md#form-page).
+  [layouts.md](../vendor/quiet/docs/guidelines/layouts.md#form-page).
 - Cancel is `ghost`, Save is the one `primary`.
 - `/webhooks/$webhookId` is this form plus a deliveries table below it.
 - `/billing/pay` renders `CustomCheckout` in the same column; its error and missing-plan branches use `ErrorState` and `Alert`.

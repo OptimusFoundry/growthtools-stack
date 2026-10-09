@@ -128,5 +128,5 @@ when the duplication is structural rather than incidental.
   in strict mode if `X` matches more than one element. Treat that error as
   evidence of an a11y bug, not a test bug.
 
-See also: [quiet accessibility guidelines](../node_modules/@optimusfoundry/quiet/docs/guidelines/accessibility.md)
+See also: [quiet accessibility guidelines](../vendor/quiet/docs/guidelines/accessibility.md)
 for what quiet guarantees.

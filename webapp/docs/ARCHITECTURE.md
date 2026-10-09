@@ -21,7 +21,7 @@ src/
 └── types/                # Shared TypeScript types
 ```
 
-The UI kit is the `@optimusfoundry/quiet` package, not a folder in `src/`. Its docs ship in `node_modules/@optimusfoundry/quiet/` (`README.md`, `DESIGN.md`, `docs/guidelines/*.md`). Template-only patterns are in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).
+The UI kit is the `@optimusfoundry/quiet` package, not a folder in `src/`. Its docs ship in `vendor/quiet/` (`DESIGN.md`, `docs/guidelines/*.md`). Template-only patterns are in [TEMPLATE-PATTERNS.md](TEMPLATE-PATTERNS.md).
 
 ---
 
@@ -249,7 +249,7 @@ The Layout component reads this config via PersonaProvider and renders the sideb
 ## Styling Pattern
 
 - **Always** use CSS Modules: `component.module.scss`
-- **Always** use quiet tokens: `var(--q-space-2)`, `var(--q-bg)`, etc. Tiers and names are in `node_modules/@optimusfoundry/quiet/DESIGN.md`.
+- **Always** use quiet tokens: `var(--q-space-2)`, `var(--q-bg)`, etc. Tiers and names are in `vendor/quiet/DESIGN.md`.
 - **Never** hardcode colors, spacing, or font sizes
 - **Never** use inline styles for layout
 - **Never** write `display: grid` (stylelint bans it); use quiet `Grid` with `Col span`
@@ -293,7 +293,7 @@ Multi-column layouts compose in JSX:
 </Grid>
 ```
 
-Layouts, grid and spacing rules: `node_modules/@optimusfoundry/quiet/docs/guidelines/` (`layouts.md`, `grid.md`, `spacing.md`).
+Layouts, grid and spacing rules: `vendor/quiet/docs/guidelines/` (`layouts.md`, `grid.md`, `spacing.md`).
 
 ---
 
@@ -309,7 +309,7 @@ if (error) return <Alert variant="error" title="Something went wrong" />;
 return <DataDisplay data={data} />;
 ```
 
-Check `Spinner`, `Alert` and `EmptyState` props in `node_modules/@optimusfoundry/quiet/dist/components/<group>/<Name>.d.ts`.
+Check `Spinner`, `Alert` and `EmptyState` props in `vendor/quiet/src/components/<group>/<Name>.tsx`.
 
 ---
 

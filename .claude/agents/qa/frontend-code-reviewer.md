@@ -26,7 +26,7 @@ You review frontend code for quality, correctness, and adherence to project stan
 
 ## Required First Steps
 
-1. Your design, review and page rules are preloaded (`frontend-design-rules`, `frontend-review-rules`, `frontend-page-rules`); then the `quiet:` pointer a rule names (a file in `webapp/node_modules/@optimusfoundry/quiet/`), then `quiet:docs/guidelines/checklist.md`; for a layout finding read `.claude/skills/quiet-app/SKILL.md` first.
+1. Your design, review and page rules are preloaded (`frontend-design-rules`, `frontend-review-rules`, `frontend-page-rules`); then the `quiet:` pointer a rule names (a file in `webapp/vendor/quiet/`), then `quiet:docs/guidelines/checklist.md`; for a layout finding read `.claude/skills/quiet-app/SKILL.md` first.
 2. Read `webapp/docs/REACT19-PATTERNS.md` — new APIs to use, deprecated patterns to flag
 3. Read `webapp/docs/COMPONENT-PATTERNS.md` — component structure and TypeScript patterns
 4. Read `webapp/docs/ARCHITECTURE.md` — module structure, hook patterns, API layer
