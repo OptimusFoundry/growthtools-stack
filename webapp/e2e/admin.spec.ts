@@ -20,9 +20,9 @@ import { expect, test } from "./fixtures/test";
 import { endpoints, scenarios } from "./handlers";
 import { loginAs } from "./helpers/auth";
 
-// quiet Alert renders role="status" for non-error variants; the banner is a warning Alert.
+// ImpersonationBanner is a product-local strip with role="alert" (not a quiet Alert).
 const impersonationBanner = (page: Page) =>
-	page.getByRole("status").filter({
+	page.getByRole("alert").filter({
 		has: page.getByRole("button", { name: /stop impersonating/i }),
 	});
 
