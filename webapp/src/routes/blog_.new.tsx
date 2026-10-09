@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { BlogEditor } from "@/components/blog/BlogEditor";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/blog_/new")({
 	component: NewBlogPostPage,
 });
 
 function NewBlogPostPage() {
+	useDocumentTitle("New Blog Post");
 	return (
 		<motion.div
 			initial={{ opacity: 0 }}

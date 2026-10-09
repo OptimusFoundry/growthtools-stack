@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AccountPage } from "@/features/account/components/AccountPage/component";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 type AccountSearch = {
 	tab?: string;
@@ -18,5 +19,6 @@ export const Route = createFileRoute("/account")({
 });
 
 function RouteComponent() {
+	useDocumentTitle("Settings");
 	return <AccountPage />;
 }

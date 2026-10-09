@@ -16,6 +16,7 @@ import {
 import { PostsHero } from "@/features/posts/components/PostsHero/PostsHero";
 import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeletePost } from "@/hooks/useDeletePost";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { toFilterTabItems, useFilterCounts } from "@/hooks/useFilterCounts";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import type { PostStatus } from "@/types/post";
@@ -36,6 +37,7 @@ const FILTER_KEYS = [
 }[];
 
 function PostsPage() {
+	useDocumentTitle("Posts");
 	const [statusFilter, setStatusFilter] = useState<string>("");
 
 	const filters = useMemo(

@@ -163,25 +163,28 @@ test.describe("Proto theme migration", () => {
 
 // /billing/pay is skipped: Stripe.js is loaded from the network.
 const routes = [
-	{ path: "/" },
-	{ path: "/calendar" },
-	{ path: "/posts" },
-	{ path: "/posts/new" },
-	{ path: "/posts/post_2", draftDetails: true },
-	{ path: "/posts/post_1/analytics" },
-	{ path: "/media" },
-	{ path: "/blog" },
-	{ path: "/blog/new" },
-	{ path: `/blog/${fullBlogPost.id}` },
-	{ path: "/analytics", persona: "marketing" },
-	{ path: "/github" },
-	{ path: `/github/${githubCommit.id}` },
-	{ path: "/admin" },
-	{ path: "/account" },
-	{ path: "/billing" },
-	{ path: "/billing/plans" },
-	{ path: "/billing/payment_attempt?session_id=cs_test" },
-	{ path: "/help" },
+	{ path: "/", title: "Growth Tools" },
+	{ path: "/calendar", title: "Calendar · Growth Tools" },
+	{ path: "/posts", title: "Posts · Growth Tools" },
+	{ path: "/posts/new", title: "New Post · Growth Tools" },
+	{ path: "/posts/post_2", title: "Post · Growth Tools", draftDetails: true },
+	{ path: "/posts/post_1/analytics", title: "Post Analytics · Growth Tools" },
+	{ path: "/media", title: "Media · Growth Tools" },
+	{ path: "/blog", title: "Blog · Growth Tools" },
+	{ path: "/blog/new", title: "New Blog Post · Growth Tools" },
+	{ path: `/blog/${fullBlogPost.id}`, title: "Blog Post · Growth Tools" },
+	{ path: "/analytics", title: "Analytics · Growth Tools" },
+	{ path: "/github", title: "GitHub · Growth Tools" },
+	{ path: `/github/${githubCommit.id}`, title: "Commit · Growth Tools" },
+	{ path: "/admin", title: "Admin · Growth Tools" },
+	{ path: "/account", title: "Settings · Growth Tools" },
+	{ path: "/billing", title: "Billing · Growth Tools" },
+	{ path: "/billing/plans", title: "Plans · Growth Tools" },
+	{
+		path: "/billing/payment_attempt?session_id=cs_test",
+		title: "Payment · Growth Tools",
+	},
+	{ path: "/help", title: "Help · Growth Tools" },
 ] as const;
 
 const themes = ["foundry", "foundry-dark"] as const;
@@ -190,9 +193,6 @@ test.describe("Every route renders in both themes", () => {
 	for (const route of routes) {
 		for (const theme of themes) {
 			test(`${route.path} renders in ${theme}`, async ({ page, network }) => {
-				if ("persona" in route) {
-					network.use(scenarios.auth.withPersona(route.persona));
-				}
 				if ("draftDetails" in route) {
 					network.use(
 						http.get("*/api/protected/posts/:id/details", () =>
@@ -217,6 +217,7 @@ test.describe("Every route renders in both themes", () => {
 				).toHaveAttribute("data-theme", theme);
 				await expect(page.getByRole("main")).toHaveCount(1);
 				await expect(page.getByRole("main")).toBeVisible();
+				await expect(page).toHaveTitle(route.title);
 				expect(pageErrors).toEqual([]);
 			});
 		}
@@ -303,22 +304,11 @@ test.describe("Sidebar", () => {
 		await expect(themeToggle(page)).not.toHaveAttribute("aria-current");
 	});
 
-	test("Analytics and GitHub are persona-gated: absent for content_creator, present for marketing", async ({
+	test("Analytics and GitHub are visible for the default persona (content_creator)", async ({
 		page,
-		network,
 	}) => {
 		await page.setViewportSize(DESKTOP);
 		await page.goto("/");
-		await page.waitForLoadState("networkidle");
-		await expect(
-			sidebarNav(page).getByRole("link", { name: "Posts", exact: true }),
-		).toBeVisible();
-		await expect(
-			sidebarNav(page).getByRole("link", { name: "Analytics", exact: true }),
-		).toHaveCount(0);
-
-		network.use(scenarios.auth.withPersona("marketing"));
-		await page.reload();
 		await page.waitForLoadState("networkidle");
 		await expect(
 			sidebarNav(page).getByRole("link", { name: "Analytics", exact: true }),
@@ -327,6 +317,24 @@ test.describe("Sidebar", () => {
 			sidebarNav(page).getByRole("link", { name: "GitHub", exact: true }),
 		).toBeVisible();
 	});
+
+	for (const persona of ["marketing", "admin"] as const) {
+		test(`Analytics and GitHub are visible for the ${persona} persona`, async ({
+			page,
+			network,
+		}) => {
+			network.use(scenarios.auth.withPersona(persona));
+			await page.setViewportSize(DESKTOP);
+			await page.goto("/");
+			await page.waitForLoadState("networkidle");
+			await expect(
+				sidebarNav(page).getByRole("link", { name: "Analytics", exact: true }),
+			).toBeVisible();
+			await expect(
+				sidebarNav(page).getByRole("link", { name: "GitHub", exact: true }),
+			).toBeVisible();
+		});
+	}
 
 	test("link click routes without a full page load and the current item follows the route", async ({
 		page,

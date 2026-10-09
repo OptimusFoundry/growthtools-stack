@@ -3,6 +3,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import CustomCheckout from "@/components/billing/checkout/CustomCheckout";
 import { ErrorState } from "@/components/error/error";
 import { useCreateCheckoutSession } from "@/hooks/useCreateCheckoutSession";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/billing/pay")({
 	component: RouteComponent,
@@ -37,6 +38,7 @@ function PaymentPage(props: Props) {
 }
 
 function RouteComponent() {
+	useDocumentTitle("Payment");
 	const search: { plan: string } = useSearch({ from: "/billing/pay" });
 	if (!search || !search.plan) {
 		return <ErrorState message="Missing plan parameter in URL" />;

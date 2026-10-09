@@ -1,8 +1,10 @@
 // /oauth/signedin page at root for TanStack Router
 import { PageHero, PageShell } from "@optimusfoundry/quiet";
 import { createFileRoute } from "@tanstack/react-router";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 function OAuthSignedInPage() {
+	useDocumentTitle("Signed in");
 	return (
 		<PageShell
 			narrow

@@ -37,13 +37,13 @@ export const navigationConfig: NavGroup[] = [
 	},
 	{
 		label: "Insights",
-		allowedPersonas: ["admin", "marketing"],
+		allowedPersonas: ["admin", "marketing", "content_creator"],
 		items: [
 			{
 				label: "Analytics",
 				href: "/analytics",
 				iconClass: "bar-chart-line",
-				allowedPersonas: ["admin", "marketing"],
+				allowedPersonas: ["admin", "marketing", "content_creator"],
 			},
 			{
 				label: "GitHub",

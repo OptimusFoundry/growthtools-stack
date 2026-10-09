@@ -291,7 +291,8 @@ status flow: Backlog → Spec'd → Planned → In progress → Shipped.
 
 | ID | Change | Brief | Plan | Status |
 |----|--------|-------|------|--------|
-| CH-001 | Rewrite the product screens on quiet and remove Proto | [brief](briefs/2026-10-08-quiet-product-rewrite.md) | [plan](plans/2026-10-08-quiet-product-rewrite.md) | Planned |
+| CH-001 | Rewrite the product screens on quiet and remove Proto | [brief](briefs/2026-10-08-quiet-product-rewrite.md) | [plan](plans/2026-10-08-quiet-product-rewrite.md) | Shipped (#87, #89, #90) |
+| CH-002 | Fix capture-worker's Storybook zoom under quiet (selector hits QuietRoot, zoom never applies) | [brief](briefs/2026-10-09-capture-worker-storybook-zoom.md) | — | Backlog |
 
 ---
 

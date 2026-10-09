@@ -22,6 +22,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
 import { statusLine } from "@/features/posts/components/PostRow/PostRow";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useGetCalendarMonth } from "@/hooks/useGetCalendarMonth";
 import { useGetPosts } from "@/hooks/useGetPosts";
 import {
@@ -204,6 +205,7 @@ function DayPosts({
 }
 
 function CalendarPage() {
+	useDocumentTitle("Calendar");
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<CalendarViewMode>("status");

@@ -17,6 +17,7 @@ import { GitCommit, GitBranch as Github } from "lucide-react";
 import type { ReactNode } from "react";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { Topbar } from "@/components/Layout/Topbar";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
 	type GitHubCommitSummary,
 	useGitHubCommits,
@@ -143,6 +144,7 @@ function commitColumns(
 }
 
 function GitHubPage() {
+	useDocumentTitle("GitHub");
 	const navigate = useNavigate();
 	const { connection, loading: connectionLoading } = useGitHubConnection();
 	const { commits, total, loading, refetch, page, setPage } = useGitHubCommits(
