@@ -46,7 +46,7 @@ function TestLoginPage() {
 				<form onSubmit={handleSubmit} aria-label="Test login">
 					<Stack gap="lg">
 						<Text as="h1" heading={4}>
-							Test Login
+							Test login
 						</Text>
 						<TextField
 							label="Email"

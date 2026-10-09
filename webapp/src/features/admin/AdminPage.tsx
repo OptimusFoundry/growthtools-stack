@@ -129,6 +129,7 @@ export const AdminPage = memo(function AdminPage() {
 				) : (
 					<Table<AdminUser>
 						label="Users"
+						className={styles.table}
 						rowKey="id"
 						columns={columns}
 						data={users}

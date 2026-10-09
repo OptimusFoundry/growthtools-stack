@@ -697,7 +697,8 @@ export const sitePublishTarget: ApiSitePublishTarget = {
 	updated_at: now,
 };
 
-export const voiceProfile: ApiVoiceProfile = {
+export const voiceProfile: ApiVoiceProfile &
+	Required<Pick<ApiVoiceProfile, "industry" | "target_audience">> = {
 	id: "voice_1",
 	account_id: "acc_123",
 	tone: "professional",

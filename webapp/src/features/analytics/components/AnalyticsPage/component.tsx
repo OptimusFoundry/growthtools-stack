@@ -333,6 +333,7 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 					<SectionHeader size="sm" as="h2" title="Platform Breakdown" />
 					<Table
 						label="Platform breakdown"
+						className={styles.table}
 						size="sm"
 						rowKey="platform"
 						columns={platformColumns}

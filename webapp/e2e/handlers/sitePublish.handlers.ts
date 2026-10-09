@@ -6,7 +6,6 @@
  * "configured" state). `sitePublishScenarios` exposes the `notConfigured`
  * variant — a 404 on GET, which is a normal (not error) first-load state.
  */
-import { HttpResponse, http } from "msw";
 import { setupEndpoint } from "../helpers/endpoint";
 import { sitePublishTarget } from "../mocks/data";
 

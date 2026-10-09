@@ -117,14 +117,13 @@ for (const route of routes) {
 		}
 
 		test("a file of the wrong type shows 'Type not accepted' and makes no request", async ({
-			network,
 			page,
 		}) => {
 			let requests = 0;
-			network.events.on("request:start", ({ request }) => {
+			page.on("request", (request) => {
 				if (
-					request.method === "POST" &&
-					new URL(request.url).pathname === "/api/protected/media"
+					request.method() === "POST" &&
+					new URL(request.url()).pathname === "/api/protected/media"
 				) {
 					requests += 1;
 				}

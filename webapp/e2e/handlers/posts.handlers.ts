@@ -217,7 +217,9 @@ function sseFrame(event: string, data: unknown): Uint8Array {
 
 export const GENERATED_X_CONTENT = "Shipping the new composer today.";
 
-function contentStreamResponse(frames: Uint8Array[]): HttpResponse {
+function contentStreamResponse(
+	frames: Uint8Array[],
+): HttpResponse<ReadableStream> {
 	const stream = new ReadableStream({
 		start(controller) {
 			for (const frame of frames) controller.enqueue(frame);
