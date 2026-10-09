@@ -17,7 +17,6 @@
 		"quiet:check": "quiet check"
 	},
 	"dependencies": {
-		"@optimusfoundry/proto-design-system": "git+https://github.com/OptimusFoundry/proto-design-system.git#v1.1.0",
 		"@optimusfoundry/quiet": "file:./vendor/quiet",
 		"@stripe/react-stripe-js": "^6.8.0",
 		"@stripe/stripe-js": "^9.12.0",
@@ -27,10 +26,8 @@
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
 		"react-markdown": "^10.1.0",
-		"recharts": "^3.10.1",
 		"rehype-highlight": "^7.0.2",
-		"remark-gfm": "^4.0.1",
-		"remixicon": "^4.9.1"
+		"remark-gfm": "^4.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.5",

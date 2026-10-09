@@ -8,7 +8,7 @@ export interface NavItem {
 	label: string;
 	/** Route path */
 	href: string;
-	/** RemixIcon class name (without 'ri-' prefix) */
+	/** Key into Layout's icon map, which resolves it to a lucide icon (e.g. "calendar-line") */
 	iconClass: string;
 	/** Personas that can access this nav item */
 	allowedPersonas: UserPersona[];

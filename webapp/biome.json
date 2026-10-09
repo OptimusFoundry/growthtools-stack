@@ -5,6 +5,7 @@
 		"includes": [
 			"**",
 			"!!**/dist",
+			"!!**/storybook-static",
 			"!!**/routeTree.gen.ts",
 			"!!.claude/**",
 			"!!**/vendor/quiet"
@@ -14,10 +15,35 @@
 	"linter": {
 		"enabled": true,
 		"rules": { "preset": "none" },
-		"includes": ["**", "!dist"]
+		"includes": ["**", "!dist", "!storybook-static"]
 	},
 	"javascript": { "formatter": { "quoteStyle": "double" } },
 	"overrides": [
+		{
+			"includes": ["**/*.{ts,tsx}"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": [
+											"@/proto-*",
+											"@/proto-*/**",
+											"@optimusfoundry/proto-*",
+											"@optimusfoundry/proto-*/**"
+										],
+										"message": "Proto is removed; import from @optimusfoundry/quiet."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
 		{
 			"includes": ["**/*.{ts,tsx}"],
 			"linter": {

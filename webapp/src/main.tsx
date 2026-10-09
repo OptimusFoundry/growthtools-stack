@@ -1,10 +1,8 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import "./styles/layers.css";
 import "@optimusfoundry/quiet/style.css";
 import "@optimusfoundry/quiet/fonts.css";
-import "./styles/proto-legacy.scss";
 import "./index.css";
 
 import { AuthProvider, loadAuth } from "@/contexts/auth";

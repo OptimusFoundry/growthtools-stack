@@ -1,7 +1,5 @@
-import "../src/styles/layers.css";
 import "@optimusfoundry/quiet/style.css";
 import "@optimusfoundry/quiet/fonts.css";
-import "../src/styles/proto-legacy.scss";
 import "../src/index.css";
 import {
 	SidebarProvider,
