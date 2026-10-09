@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button, FilterTabs } from "@optimusfoundry/quiet";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
 import { ResourceListPage } from "@/components/patterns/ResourceListPage/ResourceListPage";
 import {
@@ -12,9 +14,7 @@ import { BlogRow } from "@/features/blog/components/BlogRow/BlogRow";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeleteBlog } from "@/hooks/useDeleteBlog";
-import { useFilterCounts } from "@/hooks/useFilterCounts";
-import { FilterTabs } from "@/proto-design-system/components/data/FilterTabs/FilterTabs";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { toFilterTabItems, useFilterCounts } from "@/hooks/useFilterCounts";
 import type { BlogStatus, DeleteBlogResult } from "@/types/blog";
 
 export const Route = createFileRoute("/blog")({
@@ -68,19 +68,22 @@ function BlogPage() {
 		<ResourceListPage
 			title="Blog"
 			topbarAction={
-				<Link to="/blog/new">
-					<Button variant="primary">
-						<Plus size={16} /> New Post
-					</Button>
-				</Link>
+				<Button
+					variant="primary"
+					href="/blog/new"
+					leftIcon={<AppIcon icon={Plus} size="md" />}
+				>
+					New Post
+				</Button>
 			}
 			hero={<BlogHero count={allPosts.length} />}
 			filters={
 				<FilterTabs
+					size="sm"
+					label="Filter blog posts by status"
+					items={toFilterTabItems(filterItems)}
 					value={statusFilter}
 					onChange={setStatusFilter}
-					items={filterItems}
-					aria-label="Filter blog posts by status"
 				/>
 			}
 			loading={loading}

@@ -18,6 +18,9 @@ import { expect, test } from "./fixtures/test";
 import {
 	githubEndpoints,
 	githubReposEndpoints,
+	githubScenarios,
+} from "./handlers/github.handlers";
+import {
 	platformsEndpoints,
 	platformsScenarios,
 } from "./handlers/platforms.handlers";
@@ -332,7 +335,7 @@ test.describe("Account — GitHub connection", () => {
 			network,
 			page,
 		}) => {
-			network.use(...platformsScenarios.githubReposStateful());
+			network.use(...githubScenarios.reposStateful());
 			await page.goto(tabUrl);
 
 			await expect(sw(page, `Connect ${off}`)).not.toBeChecked();
@@ -351,7 +354,7 @@ test.describe("Account — GitHub connection", () => {
 			}) => {
 				network.use(
 					githubReposEndpoints.connect[status](),
-					...platformsScenarios.githubReposStateful(),
+					...githubScenarios.reposStateful(),
 				);
 				await page.goto(tabUrl);
 
@@ -368,7 +371,7 @@ test.describe("Account — GitHub connection", () => {
 			network,
 			page,
 		}) => {
-			network.use(...platformsScenarios.githubReposStateful());
+			network.use(...githubScenarios.reposStateful());
 			await page.goto(tabUrl);
 
 			await expect(sw(page, `Disconnect ${on}`)).toBeChecked();
@@ -387,7 +390,7 @@ test.describe("Account — GitHub connection", () => {
 			}) => {
 				network.use(
 					githubReposEndpoints.disconnect[status](),
-					...platformsScenarios.githubReposStateful(),
+					...githubScenarios.reposStateful(),
 				);
 				await page.goto(tabUrl);
 

@@ -1,20 +1,22 @@
-import { Link } from "@tanstack/react-router";
+import { Button, EmptyState } from "@optimusfoundry/quiet";
 import { FileText, Plus, SearchX } from "lucide-react";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 
 export function BlogEmpty() {
 	return (
 		<EmptyState
-			title="No blog posts yet"
+			title={trimTrailingPeriod("No blog posts yet")}
 			description="Create your first blog post to share long-form content."
-			icon={<FileText size={48} />}
-			action={
-				<Link to="/blog/new">
-					<Button variant="primary">
-						<Plus size={16} /> New Post
-					</Button>
-				</Link>
+			icon={<AppIcon icon={FileText} size="xl" />}
+			actions={
+				<Button
+					variant="primary"
+					href="/blog/new"
+					leftIcon={<AppIcon icon={Plus} size="md" />}
+				>
+					New Post
+				</Button>
 			}
 		/>
 	);
@@ -23,10 +25,10 @@ export function BlogEmpty() {
 export function BlogEmptyFiltered({ onClear }: { onClear: () => void }) {
 	return (
 		<EmptyState
-			title="No matching posts"
+			title={trimTrailingPeriod("No matching posts")}
 			description="Try adjusting your filters to find what you're looking for."
-			icon={<SearchX size={48} />}
-			action={
+			icon={<AppIcon icon={SearchX} size="xl" />}
+			actions={
 				<Button variant="secondary" onClick={onClear}>
 					Clear filters
 				</Button>

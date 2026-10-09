@@ -40,8 +40,22 @@ test.describe("Media — Page Load", () => {
 	test("shows upload button in the topbar", async ({ page }) => {
 		await gotoMedia(page);
 		await expect(
-			page.getByRole("button", { name: /upload/i }).first(),
+			page.getByRole("button", { name: "Upload", exact: true }),
 		).toBeVisible();
+		await expect(page.getByLabel("Upload media file")).toHaveAttribute(
+			"accept",
+			"image/*,video/*",
+		);
+	});
+
+	test("topbar Upload button does not collide with the empty-state action", async ({
+		page,
+	}) => {
+		await gotoMedia(page);
+		await expect(page.getByText(/upload media/i)).toHaveCount(0);
+		await expect(
+			page.getByRole("button", { name: /upload media/i }),
+		).toHaveCount(0);
 	});
 
 	test("renders media items with filenames", async ({ page }) => {
@@ -53,13 +67,15 @@ test.describe("Media — Page Load", () => {
 	test("shows file-type badge derived from content_type", async ({ page }) => {
 		await gotoMedia(page);
 		// mediaItems[0] is image/png → badge text "PNG"
-		await expect(page.getByText("PNG").first()).toBeVisible();
+		await expect(page.getByText("PNG", { exact: true }).first()).toBeVisible();
 	});
 
 	test("shows item count in the eyebrow", async ({ page }) => {
 		await gotoMedia(page);
-		// e.g. "Library · 03 items"
-		await expect(page.getByText(/library/i)).toBeVisible();
+		await expect(page.getByText(/library/i)).toHaveCount(1);
+		await expect(page.getByText(/library/i)).toContainText(
+			String(mediaItems.length).padStart(2, "0"),
+		);
 	});
 });
 
@@ -139,32 +155,14 @@ test.describe("GET /api/protected/media — status code coverage", () => {
 // ============================================================================
 
 test.describe("POST /api/protected/media — status code coverage", () => {
-	/**
-	 * Triggers a file upload by injecting a synthetic File object into the
-	 * hidden <input type="file"> via page.evaluate + DataTransfer, then
-	 * dispatching a change event. Falls back to direct property assignment
-	 * for environments where DataTransfer is not available.
-	 */
+	// The native file input is visually hidden but labelled; setInputFiles works
+	// on it without un-hiding.
 	async function triggerUpload(
 		page: Page,
 		filename = "test-image.png",
 		type = "image/png",
 	) {
-		// Make the hidden input temporarily visible so Playwright can interact.
-		await page.evaluate(() => {
-			const input =
-				document.querySelector<HTMLInputElement>('input[type="file"]');
-			if (input) {
-				input.style.display = "block";
-				input.style.opacity = "1";
-				input.style.position = "fixed";
-				input.style.top = "0";
-				input.style.left = "0";
-				input.style.zIndex = "9999";
-			}
-		});
-
-		const fileInput = page.locator('input[type="file"]');
+		const fileInput = page.getByLabel("Upload media file");
 		// setInputFiles expects a file path or buffer — provide a tiny PNG buffer.
 		await fileInput.setInputFiles({
 			name: filename,

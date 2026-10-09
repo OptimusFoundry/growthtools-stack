@@ -1,134 +1,73 @@
-// ─── Section header ──────────────────────────────────────────────────────────
-
-.sectionHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--space-3);
-}
-
-.sectionTitle {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-2);
-	color: var(--color-base-content);
-}
-
-// ─── Images grid ─────────────────────────────────────────────────────────────
-
 .imageCard {
+	background: var(--q-bg-subtle);
+	border: var(--q-hairline) solid var(--q-border);
+	border-radius: var(--q-radius-md);
+	color: inherit;
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-1);
-	border-radius: var(--radius-md);
+	gap: var(--q-space-1);
 	overflow: hidden;
-	background: var(--color-base-100);
-	border: 1px solid var(--color-border);
 	text-decoration: none;
-	color: inherit;
 	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color var(--q-dur-hover) var(--q-ease-soft),
+		box-shadow var(--q-dur-hover) var(--q-ease-soft);
 
 	img {
-		display: block;
-		width: 100%;
 		aspect-ratio: 16 / 10;
+		display: block;
 		object-fit: cover;
+		width: 100%;
 	}
 
 	&:hover {
-		border-color: var(
-			--color-border-hover,
-			oklch(from var(--color-border) calc(l - 0.1) c h)
-		);
-		box-shadow: var(--shadow-sm);
+		border-color: var(--q-border-strong);
+		box-shadow: var(--q-shadow-1);
 	}
 }
 
 .imageCaption {
-	padding: var(--space-1) var(--space-2);
-	font-size: var(--font-size-xs);
-	color: var(--color-muted);
+	color: var(--q-fg-muted);
+	font-size: var(--q-text-xs);
 	overflow: hidden;
+	padding: var(--q-space-1) var(--q-space-2);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-// ─── Video ───────────────────────────────────────────────────────────────────
-
-.videoCard {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-2);
-}
-
 .videoPlayer {
+	aspect-ratio: 16 / 9;
+	background: var(--q-bg-inverse);
+	max-width: var(--q-w-content);
 	width: 100%;
-	max-height: var(--space-160, 40rem);
-	background: var(--color-base-900, #000);
-	border-radius: var(--radius-md);
-	border: 1px solid var(--color-border);
 }
-
-.videoMeta {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--space-3);
-}
-
-.downloadLink {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-1);
-	font-size: var(--font-size-xs);
-	color: var(--color-muted);
-	text-decoration: none;
-	transition: color 0.15s ease;
-
-	&:hover {
-		color: var(--color-base-content);
-	}
-}
-
-// ─── Metadata list ───────────────────────────────────────────────────────────
 
 .metadataRow {
-	display: flex;
 	align-items: center;
-	gap: var(--space-2);
-	padding: var(--space-2) var(--space-3);
-	background: var(--color-base-100);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	font-size: var(--font-size-sm);
-	color: var(--color-base-content);
+	background: var(--q-bg-subtle);
+	border: var(--q-hairline) solid var(--q-border);
+	border-radius: var(--q-radius-md);
+	color: var(--q-fg);
+	display: flex;
+	font-size: var(--q-text-sm);
+	gap: var(--q-space-inline);
+	padding: var(--q-space-1) var(--q-space-1-5);
 	text-decoration: none;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease;
+		background var(--q-dur-hover) var(--q-ease-soft),
+		border-color var(--q-dur-hover) var(--q-ease-soft);
 
 	&:hover {
-		background: var(--color-surface);
-		border-color: var(
-			--color-border-hover,
-			oklch(from var(--color-border) calc(l - 0.1) c h)
-		);
+		background: var(--q-bg);
+		border-color: var(--q-border-strong);
 	}
 }
 
 .metadataName {
 	flex: 1;
+	font-family: var(--q-font-mono);
+	font-size: var(--q-text-xs);
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-family: var(--font-family-mono);
-	font-size: var(--font-size-xs);
-}
-
-.metadataIcon {
-	color: var(--color-muted);
-	flex-shrink: 0;
 }

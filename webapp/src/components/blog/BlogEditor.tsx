@@ -1,7 +1,6 @@
+import { Alert, Spinner } from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
 import { useGetBlogPost } from "@/hooks/useGetBlogPost";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import type { BlogPost } from "@/types/blog";
 import type { MediaItem } from "@/types/media";
 import { BlogSitePublishStatus } from "./BlogSitePublishStatus";

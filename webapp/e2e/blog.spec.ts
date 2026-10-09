@@ -53,7 +53,7 @@ test.describe("Blog", () => {
 			await page.goto("/blog");
 			await page.waitForLoadState("networkidle");
 
-			const newPostBtn = page.getByRole("button", {
+			const newPostBtn = page.getByRole("link", {
 				name: /new post/i,
 			});
 			expect(await newPostBtn.isVisible()).toBe(true);
@@ -84,6 +84,27 @@ test.describe("Blog", () => {
 
 			const content = await page.textContent("body");
 			expect(content).toMatch(/blog/i);
+		});
+
+		test("selecting the Draft filter requests status=draft", async ({
+			page,
+		}) => {
+			await page.goto("/blog");
+			await page.waitForLoadState("networkidle");
+
+			const draftTab = page
+				.getByRole("radiogroup", { name: "Filter blog posts by status" })
+				.getByRole("radio", { name: /^draft/i });
+			const request = page.waitForRequest(
+				(req) =>
+					req.method() === "GET" &&
+					new URL(req.url()).pathname === "/api/protected/blogs" &&
+					new URL(req.url()).searchParams.get("status") === "draft",
+			);
+			await draftTab.click();
+			await request;
+
+			await expect(draftTab).toHaveAttribute("aria-checked", "true");
 		});
 	});
 
@@ -173,7 +194,7 @@ test.describe("Blog", () => {
 				await page.waitForLoadState("networkidle");
 
 				// Trigger create flow if the button is visible
-				const newPostBtn = page.getByRole("button", { name: /new post/i });
+				const newPostBtn = page.getByRole("link", { name: /new post/i });
 				const isVisible = await newPostBtn.isVisible().catch(() => false);
 				if (isVisible) {
 					await newPostBtn.click();
@@ -202,7 +223,7 @@ test.describe("Blog", () => {
 			await page.goto("/blog");
 			await page.waitForLoadState("networkidle");
 
-			const newPostBtn = page.getByRole("button", { name: /new post/i });
+			const newPostBtn = page.getByRole("link", { name: /new post/i });
 			const isVisible = await newPostBtn.isVisible().catch(() => false);
 			if (isVisible) {
 				await newPostBtn.click();

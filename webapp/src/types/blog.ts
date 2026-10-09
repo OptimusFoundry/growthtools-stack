@@ -1,17 +1,14 @@
+import type { BadgeProps } from "@optimusfoundry/quiet";
+
 export type BlogStatus = "draft" | "published" | "archived";
 
-/**
- * Display metadata for each BlogStatus. `className` is the key into the
- * owning route's CSS module (blog.module.scss declares `statusDraft`,
- * `statusPublished`, `statusArchived`). Keep these in sync with that module.
- */
 export const BLOG_STATUS_META: Record<
 	BlogStatus,
-	{ label: string; className: string }
+	{ label: string; badgeVariant: NonNullable<BadgeProps["variant"]> }
 > = {
-	draft: { label: "Draft", className: "statusDraft" },
-	published: { label: "Published", className: "statusPublished" },
-	archived: { label: "Archived", className: "statusArchived" },
+	draft: { label: "Draft", badgeVariant: "outline" },
+	published: { label: "Published", badgeVariant: "success" },
+	archived: { label: "Archived", badgeVariant: "secondary" },
 };
 
 export interface BlogPost {

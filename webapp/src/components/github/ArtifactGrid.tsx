@@ -1,16 +1,16 @@
-import { Download, FileText, Film, Image as ImageIcon } from "lucide-react";
+import {
+	Badge,
+	Grid,
+	Link,
+	SectionHeader,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
+import { Download, FileText } from "lucide-react";
 import { memo, useMemo } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import type { GitHubCaptureUploaded } from "@/hooks/useGitHubCommits";
-import { Card } from "@/proto-design-system/components/layout/Card/Card";
-import { Grid } from "@/proto-design-system/components/layout/Grid/Grid";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import styles from "./artifacts.module.scss";
-
-// ============================================================================
-// Helpers
-// ============================================================================
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
 const VIDEO_RE = /\.(mp4|webm|mov|m4v)$/i;
@@ -45,10 +45,6 @@ function bucketUploads(uploads: GitHubCaptureUploaded[]): BucketedUploads {
 	return { images, videos, metadata };
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
 interface ArtifactGridProps {
 	uploads: GitHubCaptureUploaded[];
 }
@@ -59,7 +55,7 @@ export const ArtifactGrid = memo(function ArtifactGrid({
 	const buckets = useMemo(() => bucketUploads(uploads), [uploads]);
 
 	return (
-		<Stack gap="md">
+		<Stack gap="xl">
 			{buckets.images.length > 0 && <ImagesSection images={buckets.images} />}
 			{buckets.videos.length > 0 && <VideoSection videos={buckets.videos} />}
 			{buckets.metadata.length > 0 && (
@@ -71,10 +67,6 @@ export const ArtifactGrid = memo(function ArtifactGrid({
 
 ArtifactGrid.displayName = "ArtifactGrid";
 
-// ============================================================================
-// Sections
-// ============================================================================
-
 interface ImagesSectionProps {
 	images: GitHubCaptureUploaded[];
 }
@@ -83,29 +75,28 @@ const ImagesSection = memo(function ImagesSection({
 	images,
 }: ImagesSectionProps) {
 	return (
-		<Card padding="md">
-			<Stack gap="md">
-				<SectionHeader
-					icon={<ImageIcon size={16} />}
-					title="Images"
-					count={images.length}
-				/>
-				<Grid columns="auto" gap="sm">
-					{images.map((img) => (
-						<a
-							key={img.key}
-							href={img.url ?? undefined}
-							target="_blank"
-							rel="noreferrer"
-							className={styles.imageCard}
-						>
-							<img src={img.url ?? ""} alt={basename(img.key)} loading="lazy" />
-							<div className={styles.imageCaption}>{basename(img.key)}</div>
-						</a>
-					))}
-				</Grid>
-			</Stack>
-		</Card>
+		<Stack gap="lg">
+			<SectionHeader
+				size="sm"
+				as="h2"
+				title="Images"
+				actions={<CountBadge count={images.length} />}
+			/>
+			<Grid minChildWidth={256} gap="xs" rowGap="xs">
+				{images.map((img) => (
+					<a
+						key={img.key}
+						href={img.url ?? undefined}
+						target="_blank"
+						rel="noreferrer"
+						className={styles.imageCard}
+					>
+						<img src={img.url ?? ""} alt={basename(img.key)} loading="lazy" />
+						<span className={styles.imageCaption}>{basename(img.key)}</span>
+					</a>
+				))}
+			</Grid>
+		</Stack>
 	);
 });
 
@@ -117,45 +108,38 @@ interface VideoSectionProps {
 
 const VideoSection = memo(function VideoSection({ videos }: VideoSectionProps) {
 	return (
-		<Card padding="md">
-			<Stack gap="md">
-				<SectionHeader
-					icon={<Film size={16} />}
-					title="Video"
-					count={videos.length}
-				/>
-				<Stack gap="md">
-					{videos.map((video) => (
-						<div key={video.key} className={styles.videoCard}>
-							<video
-								className={styles.videoPlayer}
-								src={video.url ?? undefined}
-								controls
-								preload="metadata"
-							>
-								<source src={video.url ?? ""} type={videoMime(video.key)} />
-							</video>
-							<div className={styles.videoMeta}>
-								<Text size="sm" color="muted">
-									{basename(video.key)}
-								</Text>
-								{video.url && (
-									<a
-										href={video.url}
-										target="_blank"
-										rel="noreferrer"
-										className={styles.downloadLink}
-									>
-										<Download size={12} />
-										Download
-									</a>
-								)}
-							</div>
-						</div>
-					))}
-				</Stack>
+		<Stack gap="lg">
+			<SectionHeader
+				size="sm"
+				as="h2"
+				title="Video"
+				actions={<CountBadge count={videos.length} />}
+			/>
+			<Stack gap="lg">
+				{videos.map((video) => (
+					<Stack key={video.key} gap="xs">
+						<video
+							className={styles.videoPlayer}
+							src={video.url ?? undefined}
+							controls
+							preload="metadata"
+						>
+							<source src={video.url ?? ""} type={videoMime(video.key)} />
+						</video>
+						<Stack direction="row" align="center" justify="space-between">
+							<Text size="sm" color="muted">
+								{basename(video.key)}
+							</Text>
+							{video.url && (
+								<Link href={video.url} external variant="muted" size="sm">
+									Download
+								</Link>
+							)}
+						</Stack>
+					</Stack>
+				))}
 			</Stack>
-		</Card>
+		</Stack>
 	);
 });
 
@@ -169,57 +153,38 @@ const MetadataSection = memo(function MetadataSection({
 	files,
 }: MetadataSectionProps) {
 	return (
-		<Card padding="md">
-			<Stack gap="md">
-				<SectionHeader
-					icon={<FileText size={16} />}
-					title="Metadata"
-					count={files.length}
-				/>
-				<Stack gap="xs">
-					{files.map((file) => (
-						<a
-							key={file.key}
-							href={file.url ?? undefined}
-							target="_blank"
-							rel="noreferrer"
-							className={styles.metadataRow}
-						>
-							<FileText size={14} />
-							<span className={styles.metadataName}>{basename(file.key)}</span>
-							<Download size={14} className={styles.metadataIcon} />
-						</a>
-					))}
-				</Stack>
+		<Stack gap="lg">
+			<SectionHeader
+				size="sm"
+				as="h2"
+				title="Metadata"
+				actions={<CountBadge count={files.length} />}
+			/>
+			<Stack gap="xs">
+				{files.map((file) => (
+					<a
+						key={file.key}
+						href={file.url ?? undefined}
+						target="_blank"
+						rel="noreferrer"
+						className={styles.metadataRow}
+					>
+						<AppIcon icon={FileText} size="md" />
+						<span className={styles.metadataName}>{basename(file.key)}</span>
+						<AppIcon icon={Download} size="md" color="muted" />
+					</a>
+				))}
 			</Stack>
-		</Card>
+		</Stack>
 	);
 });
 
 MetadataSection.displayName = "MetadataSection";
 
-// ============================================================================
-// Bits
-// ============================================================================
-
-interface SectionHeaderProps {
-	icon: React.ReactNode;
-	title: string;
-	count: number;
-}
-
-function SectionHeader({ icon, title, count }: SectionHeaderProps) {
+function CountBadge({ count }: { count: number }) {
 	return (
-		<div className={styles.sectionHeader}>
-			<span className={styles.sectionTitle}>
-				{icon}
-				<Text size="sm" weight="semibold">
-					{title}
-				</Text>
-			</span>
-			<Badge variant="secondary" size="sm">
-				{count}
-			</Badge>
-		</div>
+		<Badge variant="secondary" size="sm">
+			{count}
+		</Badge>
 	);
 }

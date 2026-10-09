@@ -1,0 +1,69 @@
+.card {
+	border: var(--q-hairline) solid var(--q-border);
+	border-radius: var(--q-radius-lg);
+	overflow: hidden;
+	background: var(--q-bg);
+	transition: box-shadow var(--q-dur-hover) var(--q-ease-soft);
+
+	&:hover {
+		box-shadow: var(--q-shadow-2);
+	}
+}
+
+.thumbnail {
+	width: 100%;
+	aspect-ratio: 1;
+	background: var(--q-bg-subtle);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.thumbnailMedia {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.filePlaceholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--q-fg-muted);
+}
+
+.info {
+	padding: var(--q-space-1-5);
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: var(--q-space-inline);
+}
+
+.details {
+	display: flex;
+	flex-direction: column;
+	gap: var(--q-space-1);
+	min-width: 0;
+}
+
+.filename {
+	font-size: var(--q-text-sm);
+	font-weight: var(--q-weight-medium);
+	color: var(--q-fg);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.meta {
+	display: flex;
+	align-items: center;
+	gap: var(--q-space-1);
+}
+
+.fileSize {
+	font-size: var(--q-text-xs);
+	color: var(--q-fg-muted);
+}

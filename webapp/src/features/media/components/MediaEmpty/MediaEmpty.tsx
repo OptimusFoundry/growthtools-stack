@@ -1,16 +1,21 @@
+import { Button, EmptyState } from "@optimusfoundry/quiet";
 import { ImageIcon, Upload } from "lucide-react";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 
 export function MediaEmpty({ onUpload }: { onUpload: () => void }) {
 	return (
 		<EmptyState
-			title="No media yet"
+			title={trimTrailingPeriod("No media yet")}
 			description="Upload images and videos to use in your posts."
-			icon={<ImageIcon size={48} />}
-			action={
-				<Button variant="primary" onClick={onUpload}>
-					<Upload size={16} /> Upload Media
+			icon={<AppIcon icon={ImageIcon} size="xl" />}
+			actions={
+				<Button
+					variant="primary"
+					leftIcon={<AppIcon icon={Upload} />}
+					onClick={onUpload}
+				>
+					Upload Media
 				</Button>
 			}
 		/>

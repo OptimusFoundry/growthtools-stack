@@ -1,9 +1,8 @@
-import { ExternalLink, GitBranch as Github } from "lucide-react";
+import { Badge, Link, Stack, Text } from "@optimusfoundry/quiet";
+import { GitBranch as Github } from "lucide-react";
 import { memo } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import type { GitHubCommit } from "@/hooks/useGitHubCommits";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import styles from "./capture-meta.module.scss";
 
 interface CaptureMetaCardProps {
@@ -25,7 +24,7 @@ export const CaptureMetaCard = memo(function CaptureMetaCard({
 	return (
 		<Stack gap="sm">
 			<Stack direction="row" align="center" gap="sm" wrap>
-				<Text as="h1" size="2xl" weight="bold">
+				<Text as="h1" size="2xl" weight="semibold" color="heading">
 					{firstLine}
 				</Text>
 				{isSkipped && (
@@ -53,7 +52,7 @@ export const CaptureMetaCard = memo(function CaptureMetaCard({
 			<div className={styles.meta}>
 				{repoLabel && (
 					<span className={styles.metaItem}>
-						<Github size={14} />
+						<AppIcon icon={Github} size="md" />
 						{repoLabel}
 					</span>
 				)}
@@ -62,22 +61,14 @@ export const CaptureMetaCard = memo(function CaptureMetaCard({
 						{commit.branch}
 					</Badge>
 				)}
-				<span className={styles.metaItem}>
-					<code className={styles.sha}>{commit.sha.slice(0, 7)}</code>
-				</span>
+				<code className={styles.sha}>{commit.sha.slice(0, 7)}</code>
 				{commit.author_name && (
 					<span className={styles.metaItem}>by {commit.author_name}</span>
 				)}
 				{commit.commit_url && (
-					<a
-						href={commit.commit_url}
-						target="_blank"
-						rel="noreferrer"
-						className={styles.metaLink}
-					>
+					<Link href={commit.commit_url} external variant="muted" size="sm">
 						View on GitHub
-						<ExternalLink size={12} />
-					</a>
+					</Link>
 				)}
 			</div>
 
