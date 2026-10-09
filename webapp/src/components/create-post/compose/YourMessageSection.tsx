@@ -1,6 +1,4 @@
-import { TextArea } from "@/proto-design-system/components/forms/TextArea/TextArea";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+import { TextArea } from "@optimusfoundry/quiet";
 
 interface YourMessageSectionProps {
 	blurb: string;
@@ -14,19 +12,14 @@ export function YourMessageSection({
 	readOnly,
 }: YourMessageSectionProps) {
 	return (
-		<Stack gap="sm">
-			<Text size="md" weight="semibold">
-				Idea or Instructions for post
-			</Text>
-			<TextArea
-				placeholder="What do you want to share? Describe your topic, achievement, or idea..."
-				rows={6}
-				value={blurb}
-				onChange={(e) => onBlurbChange(e.target.value)}
-				fullWidth
-				required
-				disabled={readOnly}
-			/>
-		</Stack>
+		<TextArea
+			label="Idea or Instructions for post"
+			placeholder="What do you want to share? Describe your topic, achievement, or idea..."
+			rows={6}
+			value={blurb}
+			onChange={(e) => onBlurbChange(e.target.value)}
+			required
+			disabled={readOnly}
+		/>
 	);
 }

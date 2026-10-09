@@ -1,7 +1,5 @@
+import { SectionHeader, Stack, Switch, Text } from "@optimusfoundry/quiet";
 import { usePlatformConnections } from "@/hooks/usePlatformConnections";
-import { Switch } from "@/proto-design-system/components/forms/Switch/Switch";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 
 interface PlatformSelectionSectionProps {
@@ -20,11 +18,9 @@ export function PlatformSelectionSection({
 
 	return (
 		<Stack gap="sm">
-			<Text size="md" weight="semibold">
-				Platforms
-			</Text>
+			<SectionHeader size="sm" as="h2" title="Platforms" />
 			{activeConnections.length > 0 ? (
-				<Stack direction="row" gap="md" wrap>
+				<Stack direction="row" wrap gap="sm">
 					{activeConnections.map((conn) => (
 						<Switch
 							key={conn.id}
@@ -37,7 +33,7 @@ export function PlatformSelectionSection({
 					))}
 				</Stack>
 			) : (
-				<Text size="sm" color="secondary">
+				<Text size="sm" color="muted">
 					No connected platforms. Connect platforms in Settings.
 				</Text>
 			)}

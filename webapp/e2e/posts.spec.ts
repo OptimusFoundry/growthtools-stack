@@ -248,8 +248,10 @@ test.describe("Posts", () => {
 			const deleteBtn = page.getByRole("button", { name: /delete/i }).first();
 			await deleteBtn.click();
 
-			// Confirm in the modal
-			const confirmBtn = page.getByRole("button", { name: /^delete$/i }).last();
+			// Confirm in the dialog (scoped: row buttons also contain "delete")
+			const confirmBtn = page
+				.getByRole("dialog", { name: /delete post/i })
+				.getByRole("button", { name: /^delete$/i });
 			await confirmBtn.click();
 
 			// Wait for the async delete to settle
@@ -596,10 +598,8 @@ test.describe("Posts", () => {
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// Before the fix there were three <header> elements: Layout's standalone
-			// header bar, Topbar's <header>, and the page editorial header inside
-			// WizardInner. After the fix the Layout header is removed, leaving exactly
-			// two (Topbar + WizardInner editorial header).
+			// Exactly two: the Topbar <header> and the composer's PageHero <header>.
+			// A third would mean Layout's standalone header bar is back.
 			const visibleHeaders = page.locator("header:visible");
 			await expect(visibleHeaders).toHaveCount(2);
 		});
@@ -654,8 +654,8 @@ test.describe("Posts", () => {
 			await page.waitForLoadState("networkidle");
 
 			// The topbar actions wrapper has display:none below lg (1024px).
-			// Scope to the topbar <header> so we don't also match the MobileActionBar.
-			const topbar = page.locator("header").first();
+			// Scope to the topbar banner so we don't also match the MobileActionBar.
+			const topbar = page.getByRole("banner");
 			await expect(
 				topbar.getByRole("button", { name: /^save draft$/i }),
 			).not.toBeVisible();
@@ -762,9 +762,9 @@ test.describe("Posts", () => {
 			await page.goto("/posts/post_2");
 			await page.waitForLoadState("networkidle");
 
-			// SidebarMobileTrigger returns null when !isMobile, so no button
-			// with aria-label "Open menu" should exist in the DOM.
-			const hamburger = page.getByRole("button", { name: /open menu/i });
+			// The sidebar trigger is only rendered on mobile, so no "Open
+			// navigation" button should exist in the DOM on desktop.
+			const hamburger = page.getByRole("button", { name: "Open navigation" });
 			await expect(hamburger).toHaveCount(0);
 		});
 	});

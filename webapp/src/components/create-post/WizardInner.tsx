@@ -1,12 +1,25 @@
+import {
+	Alert,
+	Button,
+	DatePicker,
+	Drawer,
+	PageHero,
+	Stack,
+	TextField,
+} from "@optimusfoundry/quiet";
 import { useNavigate } from "@tanstack/react-router";
 import { CalendarClock, Save, Send, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { fetcher } from "@/api/client";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { MobileActionBar } from "@/components/Layout/MobileActionBar";
 import { Topbar } from "@/components/Layout/Topbar";
+import { ConfirmDeleteModal } from "@/components/patterns/ConfirmDeleteModal/ConfirmDeleteModal";
+import { useConfirmableDelete } from "@/hooks/useConfirmableDelete";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useManagedMediaUpload } from "@/hooks/useManagedMediaUpload";
+import { type UseNotifyResult, useNotify } from "@/hooks/useNotify";
 import { usePublishPost } from "@/hooks/usePublishPost";
 import { useRegenerateDraft } from "@/hooks/useRegenerateDraft";
 import { useSaveDraft } from "@/hooks/useSaveDraft";
@@ -14,15 +27,6 @@ import { useSchedulePost } from "@/hooks/useSchedulePost";
 import { useSSEContentGenerate } from "@/hooks/useSSEContentGenerate";
 import { useUnlinkMedia } from "@/hooks/useUnlinkMedia";
 import { useUpdateDraft } from "@/hooks/useUpdateDraft";
-import { DatePicker } from "@/proto-design-system/components/composite/DatePicker/DatePicker";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { useBannerCenter } from "@/proto-design-system/components/feedback/BannerCenter/BannerCenter";
-import { TextField } from "@/proto-design-system/components/forms/TextField/TextField";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Drawer } from "@/proto-design-system/components/overlays/Drawer/Drawer";
-import { Modal } from "@/proto-design-system/components/overlays/Modal/Modal";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { MediaItem } from "@/types/media";
 import type { PlatformContentInput, PlatformPost } from "@/types/post";
 import styles from "./CreatePostWizard.module.scss";
@@ -64,13 +68,14 @@ function useScheduleDrawer(
 	initialScheduledAt: string,
 	setScheduledAt: (iso: string) => void,
 	handleSchedule: (whenOverride?: string) => Promise<void>,
-	addBanner: ReturnType<typeof useBannerCenter>["addBanner"],
 ) {
-	const [scheduleOpen, setScheduleOpen] = useState(false);
-	const [scheduleDate, setScheduleDate] = useState<Date | null>(() =>
+	const [scheduleOpen, setScheduleOpenState] = useState(false);
+	// Inline, not a toast: the open Drawer makes the Toaster inert.
+	const [scheduleError, setScheduleError] = useState<string | null>(null);
+	const [scheduleDate, setScheduleDateState] = useState<Date | null>(() =>
 		initialScheduledAt ? new Date(initialScheduledAt) : null,
 	);
-	const [scheduleTime, setScheduleTime] = useState<string>(() => {
+	const [scheduleTime, setScheduleTimeState] = useState<string>(() => {
 		if (initialScheduledAt) {
 			const d = new Date(initialScheduledAt);
 			return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -86,24 +91,31 @@ function useScheduleDrawer(
 			})} at ${scheduleTime}`
 		: "Pick a date and time below.";
 
+	const setScheduleOpen = (open: boolean) => {
+		setScheduleError(null);
+		setScheduleOpenState(open);
+	};
+
+	const setScheduleDate = (date: Date | null) => {
+		setScheduleError(null);
+		setScheduleDateState(date);
+	};
+
+	const setScheduleTime = (time: string) => {
+		setScheduleError(null);
+		setScheduleTimeState(time);
+	};
+
 	const handleConfirmSchedule = async () => {
 		if (!scheduleDate) {
-			addBanner({
-				type: "error",
-				title: "Please pick a date",
-				dismissible: true,
-			});
+			setScheduleError("Please pick a date");
 			return;
 		}
 		const [h, m] = scheduleTime.split(":").map(Number);
 		const combined = new Date(scheduleDate);
 		combined.setHours(h ?? 9, m ?? 0, 0, 0);
 		if (combined.getTime() <= Date.now()) {
-			addBanner({
-				type: "error",
-				title: "Pick a time in the future",
-				dismissible: true,
-			});
+			setScheduleError("Pick a time in the future");
 			return;
 		}
 		const iso = combined.toISOString();
@@ -120,6 +132,7 @@ function useScheduleDrawer(
 		scheduleTime,
 		setScheduleTime,
 		scheduledLabel,
+		scheduleError,
 		handleConfirmSchedule,
 	};
 }
@@ -144,7 +157,7 @@ interface UseWizardActionsParams {
 	publishPost: ReturnType<typeof usePublishPost>["publishPost"];
 	schedulePost: ReturnType<typeof useSchedulePost>["schedulePost"];
 	unlinkMedia: ReturnType<typeof useUnlinkMedia>["unlinkMedia"];
-	addBanner: ReturnType<typeof useBannerCenter>["addBanner"];
+	notify: UseNotifyResult["notify"];
 	navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -160,7 +173,7 @@ function useWizardActions({
 	publishPost,
 	schedulePost,
 	unlinkMedia,
-	addBanner,
+	notify,
 	navigate,
 }: UseWizardActionsParams) {
 	const [retrying, setRetrying] = useState(false);
@@ -256,19 +269,17 @@ function useWizardActions({
 		try {
 			const postId = await persistDraft();
 			await publishPost(postId, [...state.selectedPlatforms]);
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: "Post published",
 				description: "We're pushing it out to your selected platforms.",
-				dismissible: true,
 			});
 			navigate({ to: "/posts" });
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't publish post",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		} finally {
 			wizard.setSubmitting(false);
@@ -278,11 +289,7 @@ function useWizardActions({
 	const handleSchedule = async (whenOverride?: string) => {
 		const when = whenOverride ?? state.scheduledAt;
 		if (!when) {
-			addBanner({
-				type: "error",
-				title: "Please pick a date and time",
-				dismissible: true,
-			});
+			notify({ status: "error", title: "Please pick a date and time" });
 			return;
 		}
 
@@ -292,19 +299,17 @@ function useWizardActions({
 		try {
 			const postId = await persistDraft();
 			await schedulePost(postId, when);
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: "Post scheduled",
 				description: `It'll go out on ${new Date(when).toLocaleString()}.`,
-				dismissible: true,
 			});
 			navigate({ to: "/posts" });
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't schedule post",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		} finally {
 			wizard.setSubmitting(false);
@@ -317,18 +322,16 @@ function useWizardActions({
 
 		try {
 			await persistDraft();
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: isEditMode ? "Draft updated" : "Draft saved",
-				dismissible: true,
 			});
 			navigate({ to: "/posts" });
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't save draft",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		} finally {
 			wizard.setSubmitting(false);
@@ -343,18 +346,13 @@ function useWizardActions({
 				`${import.meta.env.VITE_API_URL}/api/protected/posts/${editPostId}/retry`,
 				{ method: "POST" },
 			);
-			addBanner({
-				type: "success",
-				title: "Retrying failed platforms",
-				dismissible: true,
-			});
+			notify({ status: "success", title: "Retrying failed platforms" });
 			navigate({ to: "/posts" });
 		} catch {
-			addBanner({
-				type: "error",
+			notify({
+				status: "error",
 				title: "Couldn't retry post",
 				description: "Please try again.",
-				dismissible: true,
 			});
 		} finally {
 			setRetrying(false);
@@ -370,6 +368,72 @@ function useWizardActions({
 		handleRetry,
 		retrying,
 	};
+}
+
+interface HeroCopy {
+	title: ReactNode;
+	accent: ReactNode;
+	after: ReactNode;
+}
+
+// Headline puts a space before `after` only when an accent exists, so each
+// state reads as one sentence; `title` is required, hence null for the
+// accent-led states.
+function getHeroCopy(
+	isEditMode: boolean,
+	postStatus: string | undefined,
+): HeroCopy {
+	if (!isEditMode) {
+		return {
+			title: "A new",
+			accent: "thought,",
+			after: "five platforms",
+		};
+	}
+	if (postStatus === "draft") {
+		return {
+			title: "Sharpen the",
+			accent: "draft",
+			after: "before it ships",
+		};
+	}
+	if (postStatus === "scheduled") {
+		return {
+			title: null,
+			accent: "Scheduled.",
+			after: "Queued for liftoff",
+		};
+	}
+	return {
+		title: null,
+		accent: "Shipped.",
+		after: "Here's how it landed",
+	};
+}
+
+function getSubLine(
+	isEditMode: boolean,
+	postStatus: string | undefined,
+	formattedScheduledAt: string | null,
+): ReactNode {
+	if (!isEditMode) {
+		return "Write the idea once — AI adapts it for each platform and keeps the voice consistent.";
+	}
+	if (postStatus === "draft") {
+		return "Update your post content and platform adaptations. Changes save automatically as you type.";
+	}
+	if (postStatus !== "scheduled") {
+		return "View your published post and see how each platform rendered it.";
+	}
+	if (!formattedScheduledAt) {
+		return "Review the post and platform adaptations before it goes live at the scheduled time.";
+	}
+	return (
+		<>
+			Going live on <strong>{formattedScheduledAt}</strong>. Review or
+			reschedule before it ships.
+		</>
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -407,12 +471,11 @@ export function WizardInner({
 	const sse = useSSEContentGenerate();
 	const { publishPost } = usePublishPost();
 	const { deletePost, loading: deleting } = useDeletePost();
-	const [deleteOpen, setDeleteOpen] = useState(false);
 	const { saveDraft, loading: savingDraft } = useSaveDraft();
 	const { updateDraft, loading: updatingDraft } = useUpdateDraft();
 	const { schedulePost } = useSchedulePost();
 	const { unlinkMedia } = useUnlinkMedia();
-	const { addBanner } = useBannerCenter();
+	const { notify } = useNotify();
 	const { regenerateDraft, loading: regenerating } = useRegenerateDraft();
 	// Media already attached server-side when the editor opened. Unticking one
 	// of these must unlink it; anything ticked since is local until saved.
@@ -451,7 +514,7 @@ export function WizardInner({
 		publishPost,
 		schedulePost,
 		unlinkMedia,
-		addBanner,
+		notify,
 		navigate,
 	});
 
@@ -478,10 +541,9 @@ export function WizardInner({
 		if (!editPostId || selectedCaptureIds.length === 0) return;
 		try {
 			await regenerateDraft(editPostId, selectedCaptureIds);
-			addBanner({
-				type: "success",
+			notify({
+				status: "success",
 				title: "Post regenerated with your selected media",
-				dismissible: true,
 			});
 			onRegenerated?.();
 		} catch (err) {
@@ -495,7 +557,6 @@ export function WizardInner({
 		state.scheduledAt,
 		wizard.setScheduledAt,
 		actions.handleSchedule,
-		addBanner,
 	);
 
 	const hasFailed =
@@ -507,23 +568,7 @@ export function WizardInner({
 			? "Composer · edit draft"
 			: `Composer · ${postStatus}`;
 
-	const titleFragment: ReactNode = !isEditMode ? (
-		<>
-			A new <em>thought</em>, five platforms.
-		</>
-	) : postStatus === "draft" ? (
-		<>
-			Sharpen the <em>draft</em> before it ships.
-		</>
-	) : postStatus === "scheduled" ? (
-		<>
-			<em>Scheduled.</em> Queued for liftoff.
-		</>
-	) : (
-		<>
-			<em>Shipped.</em> Here's how it landed.
-		</>
-	);
+	const heroCopy = getHeroCopy(isEditMode, postStatus);
 
 	const isScheduled = postStatus === "scheduled";
 	const formattedScheduledAt =
@@ -537,23 +582,7 @@ export function WizardInner({
 				})
 			: null;
 
-	const subLine: ReactNode = !isEditMode ? (
-		"Write the idea once — AI adapts it for each platform and keeps the voice consistent."
-	) : postStatus === "draft" ? (
-		"Update your post content and platform adaptations. Changes save automatically as you type."
-	) : isScheduled ? (
-		formattedScheduledAt ? (
-			<>
-				Going live on{" "}
-				<strong className={styles.subEmphasis}>{formattedScheduledAt}</strong>.
-				Review or reschedule before it ships.
-			</>
-		) : (
-			"Review the post and platform adaptations before it goes live at the scheduled time."
-		)
-	) : (
-		"View your published post and see how each platform rendered it."
-	);
+	const subLine = getSubLine(isEditMode, postStatus, formattedScheduledAt);
 
 	const busy = state.submitting || savingDraft || updatingDraft;
 	const canAct = state.generated && !readOnly;
@@ -562,25 +591,20 @@ export function WizardInner({
 		!!editPostId &&
 		(postStatus === "draft" || postStatus === "scheduled");
 
-	const handleConfirmDelete = async () => {
-		if (!editPostId) return;
-		try {
-			await deletePost(editPostId);
-			setDeleteOpen(false);
-			addBanner({
-				type: "success",
-				title: "Post deleted",
-				dismissible: true,
-			});
-			navigate({ to: "/posts" });
-		} catch {
-			addBanner({
-				type: "error",
-				title: "Couldn't delete post",
-				description: "Please try again.",
-				dismissible: true,
-			});
-		}
+	const deleteFlow = useConfirmableDelete({
+		mutate: deletePost,
+		mutating: deleting,
+		onSuccess: () => navigate({ to: "/posts" }),
+		copy: {
+			resource: "post",
+			modalTitle: "Delete post",
+			confirmBody:
+				"Are you sure you want to delete this post? This action cannot be undone.",
+		},
+	});
+
+	const requestDelete = () => {
+		if (editPostId) deleteFlow.request(editPostId);
 	};
 
 	const breadcrumbs = [
@@ -589,23 +613,24 @@ export function WizardInner({
 	];
 
 	const topbarActions = readOnly ? undefined : (
-		<Stack direction="row" gap="sm" align="center">
+		<Stack direction="row" gap="xs" align="center">
 			{canDelete && (
 				<Button
 					variant="ghost"
 					size="sm"
-					onClick={() => setDeleteOpen(true)}
+					leftIcon={<AppIcon icon={Trash2} size="md" />}
+					onClick={requestDelete}
 					disabled={busy || deleting}
 					aria-label="Delete post"
 				>
-					<Trash2 size={14} /> Delete
+					Delete
 				</Button>
 			)}
 			<Button
 				variant="ghost"
 				size="sm"
 				onClick={actions.handleSaveDraft}
-				isLoading={savingDraft || updatingDraft}
+				loading={savingDraft || updatingDraft}
 				disabled={busy}
 			>
 				Save draft
@@ -613,19 +638,21 @@ export function WizardInner({
 			<Button
 				variant="secondary"
 				size="sm"
+				leftIcon={<AppIcon icon={CalendarClock} size="md" />}
 				onClick={() => scheduleDrawer.setScheduleOpen(true)}
 				disabled={busy || !canAct}
 			>
-				<CalendarClock size={14} /> {isScheduled ? "Reschedule" : "Schedule"}
+				{isScheduled ? "Reschedule" : "Schedule"}
 			</Button>
 			<Button
 				variant="primary"
 				size="sm"
+				leftIcon={<AppIcon icon={Send} size="md" />}
 				onClick={actions.handlePublish}
-				isLoading={state.submitting}
+				loading={state.submitting}
 				disabled={busy || !canAct}
 			>
-				<Send size={14} /> Publish
+				Publish
 			</Button>
 		</Stack>
 	);
@@ -645,23 +672,21 @@ export function WizardInner({
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={() => setDeleteOpen(true)}
+									icon={<AppIcon icon={Trash2} size="lg" />}
+									onClick={requestDelete}
 									disabled={busy || deleting}
 									aria-label="Delete post"
-								>
-									<Trash2 size={18} aria-hidden="true" />
-								</Button>
+								/>
 							)}
 							<Button
 								variant="ghost"
 								size="sm"
+								icon={<AppIcon icon={Save} size="lg" />}
 								onClick={actions.handleSaveDraft}
-								isLoading={savingDraft || updatingDraft}
+								loading={savingDraft || updatingDraft}
 								disabled={busy}
 								aria-label="Save draft"
-							>
-								<Save size={18} aria-hidden="true" />
-							</Button>
+							/>
 						</>
 					}
 					end={
@@ -669,41 +694,40 @@ export function WizardInner({
 							<Button
 								variant="secondary"
 								size="sm"
+								icon={<AppIcon icon={CalendarClock} size="lg" />}
 								onClick={() => scheduleDrawer.setScheduleOpen(true)}
 								disabled={busy || !canAct}
 								aria-label={isScheduled ? "Reschedule post" : "Schedule post"}
-							>
-								<CalendarClock size={18} aria-hidden="true" />
-							</Button>
+							/>
 							<Button
 								variant="primary"
 								size="sm"
+								icon={<AppIcon icon={Send} size="lg" />}
 								onClick={actions.handlePublish}
-								isLoading={state.submitting}
+								loading={state.submitting}
 								disabled={busy || !canAct}
 								aria-label="Publish post"
-							>
-								<Send size={18} aria-hidden="true" />
-							</Button>
+							/>
 						</>
 					}
 				/>
 			)}
 			<div className={styles.page}>
-				<header className={styles.header}>
-					<div className={styles.headerInner}>
-						<Stack direction="column" gap="0">
-							<div className={styles.eyebrow}>{eyebrowLabel}</div>
-							<h1 className={styles.title}>{titleFragment}</h1>
-							<p className={styles.sub}>{subLine}</p>
-						</Stack>
-					</div>
-				</header>
+				<PageHero
+					size="md"
+					ruled={false}
+					className={styles.hero}
+					eyebrow={eyebrowLabel}
+					title={heroCopy.title}
+					accent={heroCopy.accent}
+					after={heroCopy.after}
+					description={subLine}
+				/>
 
 				{state.error && <Alert variant="error">{state.error}</Alert>}
 
 				<div className={styles.twoColumn}>
-					<Stack gap="lg">
+					<Stack gap="lg" className={styles.composeColumn}>
 						<ComposeStep
 							blurb={state.blurb}
 							contentType={state.contentType}
@@ -762,13 +786,13 @@ export function WizardInner({
 			</div>
 
 			<Drawer
-				isOpen={scheduleDrawer.scheduleOpen}
+				open={scheduleDrawer.scheduleOpen}
 				onClose={() => scheduleDrawer.setScheduleOpen(false)}
 				title={isScheduled ? "Reschedule post" : "Schedule post"}
 				description={scheduleDrawer.scheduledLabel}
 				size="md"
 				footer={
-					<Stack direction="row" gap="sm" justify="end">
+					<Stack direction="row" gap="xs" justify="flex-end">
 						<Button
 							variant="ghost"
 							onClick={() => scheduleDrawer.setScheduleOpen(false)}
@@ -778,7 +802,7 @@ export function WizardInner({
 						<Button
 							variant="primary"
 							onClick={scheduleDrawer.handleConfirmSchedule}
-							isLoading={state.submitting}
+							loading={state.submitting}
 							disabled={!scheduleDrawer.scheduleDate}
 						>
 							{isScheduled ? "Reschedule" : "Schedule"}
@@ -786,50 +810,27 @@ export function WizardInner({
 					</Stack>
 				}
 			>
-				<Stack gap="md">
+				<Stack gap="sm">
+					{scheduleDrawer.scheduleError && (
+						<Alert variant="error">{scheduleDrawer.scheduleError}</Alert>
+					)}
 					<DatePicker
+						label="Date"
 						value={scheduleDrawer.scheduleDate}
 						onChange={scheduleDrawer.setScheduleDate}
-						minDate={startOfToday()}
-						inline
+						min={startOfToday()}
 					/>
-					<Stack gap="xs">
-						<Text size="sm">Time</Text>
-						<TextField
-							type="time"
-							value={scheduleDrawer.scheduleTime}
-							onChange={(e) => scheduleDrawer.setScheduleTime(e.target.value)}
-							min={timeMinForDate(scheduleDrawer.scheduleDate)}
-						/>
-					</Stack>
+					<TextField
+						type="time"
+						label="Time"
+						value={scheduleDrawer.scheduleTime}
+						onChange={(e) => scheduleDrawer.setScheduleTime(e.target.value)}
+						min={timeMinForDate(scheduleDrawer.scheduleDate)}
+					/>
 				</Stack>
 			</Drawer>
 
-			<Modal
-				isOpen={deleteOpen}
-				onClose={() => setDeleteOpen(false)}
-				title="Delete post"
-				size="sm"
-				footer={
-					<Stack direction="row" gap="sm" justify="end">
-						<Button variant="ghost" onClick={() => setDeleteOpen(false)}>
-							Cancel
-						</Button>
-						<Button
-							variant="destructive"
-							onClick={handleConfirmDelete}
-							isLoading={deleting}
-						>
-							Delete
-						</Button>
-					</Stack>
-				}
-			>
-				<Text color="secondary">
-					Are you sure you want to delete this post? This action cannot be
-					undone.
-				</Text>
-			</Modal>
+			<ConfirmDeleteModal flow={deleteFlow} />
 		</>
 	);
 }

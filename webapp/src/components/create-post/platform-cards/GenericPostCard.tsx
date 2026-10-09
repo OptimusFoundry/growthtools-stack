@@ -1,4 +1,4 @@
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
+import { Badge } from "@optimusfoundry/quiet";
 import type { MediaItem } from "@/types/media";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 import styles from "../PlatformPostCard.module.scss";
@@ -43,7 +43,7 @@ export function GenericPostCard({
 			</div>
 			{media && media.length > 0 && <MediaGrid media={media} />}
 			<div className={styles.genericFooter}>
-				<Badge variant={isOver ? "error" : "default"} size="sm">
+				<Badge variant={isOver ? "error" : "default"} size="sm" dot={false}>
 					{content.length} / {charLimit}
 				</Badge>
 			</div>

@@ -15,6 +15,7 @@ import { HttpResponse, http } from "msw";
 import type { ApiMediaItem } from "../src/api/types/media";
 import { expect, test } from "./fixtures/test";
 import { postsEndpoints } from "./handlers/posts.handlers";
+import { toastLocator } from "./helpers/toast";
 import { posts } from "./mocks/data";
 
 const draft = posts[1];
@@ -186,7 +187,7 @@ test.describe("Captured media picker", () => {
 			});
 		await detailsReload;
 		await expect(
-			page.getByText("Post regenerated with your selected media"),
+			toastLocator(page, "status", "Post regenerated with your selected media"),
 		).toBeVisible();
 	});
 

@@ -1,6 +1,5 @@
+import { Alert, Spinner } from "@optimusfoundry/quiet";
 import { useGetPostDetails } from "@/hooks/useGetPostDetails";
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
 import type { MediaItem } from "@/types/media";
 import type { PlatformType } from "@/types/platform";
 import type { PlatformPost } from "@/types/post";
@@ -19,7 +18,7 @@ export function EditPostWizard({ editPostId }: EditPostWizardProps) {
 	const { post, platformPosts, media, captureMedia, loading, error, refetch } =
 		useGetPostDetails(editPostId);
 
-	if (loading) return <Spinner />;
+	if (loading) return <Spinner aria-label="Loading post" />;
 	if (error) return <Alert variant="error">{error}</Alert>;
 	if (!post) return <Alert variant="error">Post not found</Alert>;
 

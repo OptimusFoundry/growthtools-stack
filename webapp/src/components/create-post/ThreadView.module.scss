@@ -1,73 +1,31 @@
-@use "@/proto-design-system/mixins" as *;
-
 .thread {
 	display: flex;
 	flex-direction: column;
 }
 
-// Toggle button
-.toggle {
-	appearance: none;
-	background: none;
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	gap: var(--space-2);
-	padding: var(--space-2) var(--space-3);
-	margin: var(--space-2) 0 var(--space-2) var(--space-5);
-	font-size: var(--font-size-sm);
-	color: var(--color-base-content-secondary);
-	width: fit-content;
-
-	@include transition-colors;
-
-	&:hover {
-		color: var(--color-base-content);
-		border-color: var(--color-border-hover);
-	}
+.toggleRow {
+	margin: var(--q-space-1) 0 var(--q-space-1) var(--q-space-3);
 }
 
 .chevron {
-	width: 16px;
-	height: 16px;
-	flex-shrink: 0;
-
-	@include transition-transform;
+	transition: transform var(--q-dur-hover) var(--q-ease-soft);
 }
 
 .chevronExpanded {
 	transform: rotate(180deg);
 }
 
-// Collapsible panel (CSS Grid 0fr → 1fr)
-.collapsible {
-	display: grid;
-	grid-template-rows: 0fr;
-
-	@include transition(grid-template-rows, var(--duration-normal));
-}
-
-.collapsibleExpanded {
-	grid-template-rows: 1fr;
-}
-
-.collapsibleInner {
-	overflow: hidden;
-}
-
 // Thread segments with connector line
 .segments {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-3);
-	padding: var(--space-2) 0;
+	gap: var(--q-space-1-5);
+	padding: var(--q-space-1) 0;
 }
 
 .segment {
 	position: relative;
-	padding-left: var(--space-5);
+	padding-left: var(--q-space-3);
 
 	// Vertical connector line
 	&::before {
@@ -76,23 +34,12 @@
 		left: 3px;
 		top: 0;
 		bottom: 0;
-		width: var(--border-width-md);
-		background: var(--platform-accent, var(--color-border));
-		border-radius: var(--radius-full);
+		width: calc(var(--q-hairline) * 2);
+		background: var(--q-border-strong);
+		border-radius: var(--q-radius-pill);
 	}
 
 	&:last-child::before {
 		bottom: 50%;
 	}
-
-	// Platform-specific connector line colors via data-attribute (avoids inline style)
-	&[data-platform="x"]         { --platform-accent: var(--color-platform-x); }
-	&[data-platform="bluesky"]   { --platform-accent: var(--color-platform-bluesky); }
-	&[data-platform="threads"]   { --platform-accent: var(--color-platform-threads); }
-	&[data-platform="linkedin"]  { --platform-accent: var(--color-platform-linkedin); }
-	&[data-platform="facebook"]  { --platform-accent: var(--color-platform-facebook); }
-	&[data-platform="instagram"] { --platform-accent: var(--color-platform-instagram); }
-	&[data-platform="tiktok"]    { --platform-accent: var(--color-platform-tiktok); }
-	&[data-platform="pinterest"] { --platform-accent: var(--color-platform-pinterest); }
 }
-

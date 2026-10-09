@@ -1,11 +1,5 @@
+import { Tabs } from "@optimusfoundry/quiet";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
-import {
-	Tab,
-	TabList,
-	TabPanel,
-	TabPanels,
-	Tabs,
-} from "@/proto-design-system/components/navigation/Tabs/Tabs";
 import type { MediaItem } from "@/types/media";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
 import styles from "./CreatePostWizard.module.scss";
@@ -46,39 +40,37 @@ export function PlatformPreviewTabs({
 }: PlatformPreviewTabsProps) {
 	const isThread = contentType === "thread";
 
+	const renderPanel = (value: string) => {
+		const platform = value as PlatformType;
+		return (
+			<div className={styles.tabPanelContent}>
+				<div className={compact ? styles.previewScale : undefined}>
+					<PlatformPreviewCard
+						platform={platform}
+						content={platformContent[platform] ?? ""}
+						threadSegments={threadContent[platform]}
+						isThread={isThread}
+						uploadedMedia={uploadedMedia}
+						readOnly={readOnly}
+						onContentChange={(content) => onUpdateContent?.(platform, content)}
+						onThreadSegmentChange={(index, content) =>
+							onUpdateThreadSegment?.(platform, index, content)
+						}
+					/>
+				</div>
+			</div>
+		);
+	};
+
 	return (
-		<Tabs defaultTab={selectedPlatforms[0]}>
-			<TabList aria-label="Platform previews">
-				{selectedPlatforms.map((platform) => (
-					<Tab key={platform} id={platform}>
-						{PLATFORM_DISPLAY_NAMES[platform]}
-					</Tab>
-				))}
-			</TabList>
-			<TabPanels>
-				{selectedPlatforms.map((platform) => (
-					<TabPanel key={platform} id={platform}>
-						<div className={styles.tabPanelContent}>
-							<div className={compact ? styles.previewScale : undefined}>
-								<PlatformPreviewCard
-									platform={platform}
-									content={platformContent[platform] ?? ""}
-									threadSegments={threadContent[platform]}
-									isThread={isThread}
-									uploadedMedia={uploadedMedia}
-									readOnly={readOnly}
-									onContentChange={(content) =>
-										onUpdateContent?.(platform, content)
-									}
-									onThreadSegmentChange={(index, content) =>
-										onUpdateThreadSegment?.(platform, index, content)
-									}
-								/>
-							</div>
-						</div>
-					</TabPanel>
-				))}
-			</TabPanels>
-		</Tabs>
+		<Tabs
+			tabs={selectedPlatforms.map((platform) => ({
+				value: platform,
+				label: PLATFORM_DISPLAY_NAMES[platform],
+			}))}
+			defaultValue={selectedPlatforms[0]}
+			label="Platform previews"
+			panels={renderPanel}
+		/>
 	);
 }

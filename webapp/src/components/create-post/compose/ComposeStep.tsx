@@ -1,7 +1,4 @@
-import { Alert } from "@/proto-design-system/components/feedback/Alert/Alert";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Button } from "@/proto-design-system/components/primitives/Button/Button";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
+import { Alert, Button, Stack } from "@optimusfoundry/quiet";
 import type { MediaItem } from "@/types/media";
 import type { PendingUpload } from "@/types/mediaUpload";
 import type { PlatformType } from "@/types/platform";
@@ -111,15 +108,15 @@ export function ComposeStep({
 
 					<Stack
 						direction="row"
-						gap="sm"
-						justify="end"
+						gap="xs"
+						justify="flex-end"
 						className={styles.actions}
 					>
 						<Button
 							variant="primary"
 							onClick={onGenerate}
 							disabled={!canGenerate || generating || uploading}
-							isLoading={generating}
+							loading={generating}
 						>
 							{generated ? "Regenerate" : "Generate Content"}
 						</Button>
@@ -135,9 +132,5 @@ export function ComposeStep({
 }
 
 function RegenerateWarning({ message }: { message: string }) {
-	return (
-		<Alert variant="warning">
-			<Text size="sm">{message}</Text>
-		</Alert>
-	);
+	return <Alert variant="warning">{message}</Alert>;
 }

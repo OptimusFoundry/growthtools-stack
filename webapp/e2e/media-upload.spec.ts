@@ -156,9 +156,11 @@ test.describe("Media upload — Generate Content gating on /posts/new", () => {
 
 		await page.goto("/posts/new");
 		await page
-			.getByPlaceholder(/what do you want to share/i)
+			.getByLabel("Idea or Instructions for post")
 			.fill("Shipping the new upload flow");
-		await page.getByLabel("X (Twitter)").check();
+		const xSwitch = page.getByRole("switch", { name: "X (Twitter)" });
+		await xSwitch.click();
+		await expect(xSwitch).toBeChecked();
 
 		const generate = page.getByRole("button", { name: "Generate Content" });
 		await expect(generate).toBeEnabled();

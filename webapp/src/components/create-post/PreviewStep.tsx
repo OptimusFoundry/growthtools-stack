@@ -1,15 +1,20 @@
+import {
+	Accordion,
+	Badge,
+	EmptyState,
+	PageTransition,
+	SectionHeader,
+	Spinner,
+	Stack,
+	Text,
+} from "@optimusfoundry/quiet";
 import { CheckCircle, Loader } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AppIcon } from "@/components/AppIcon/AppIcon";
 import type { ThreadSegment } from "@/hooks/useSSEContentGenerate";
-import { Accordion } from "@/proto-design-system/components/composite/Accordion/Accordion";
-import { EmptyState } from "@/proto-design-system/components/data/EmptyState/EmptyState";
-import { PageTransition } from "@/proto-design-system/components/layout/PageTransition/PageTransition";
-import { Stack } from "@/proto-design-system/components/layout/Stack/Stack";
-import { Badge } from "@/proto-design-system/components/primitives/Badge/Badge";
-import { Spinner } from "@/proto-design-system/components/primitives/Spinner/Spinner";
-import { Text } from "@/proto-design-system/components/primitives/Text/Text";
 import type { MediaItem } from "@/types/media";
 import { PLATFORM_DISPLAY_NAMES, type PlatformType } from "@/types/platform";
+import { trimTrailingPeriod } from "@/utils/trimTrailingPeriod";
 import styles from "./CreatePostWizard.module.scss";
 import { PlatformPreviewTabs } from "./PlatformPreviewTabs";
 /* PlatformPreviewTabs owns the tab + card rendering; PreviewStep stays focused
@@ -80,7 +85,7 @@ function BaseAccordion({
 	content: string;
 	isStreaming: boolean;
 }) {
-	const [expanded, setExpanded] = useState<string[]>(
+	const [expanded, setExpanded] = useState<Array<string | number>>(
 		isStreaming ? ["base"] : [],
 	);
 
@@ -97,9 +102,9 @@ function BaseAccordion({
 					id: "base",
 					title: isStreaming ? "Generating base content..." : "Base content",
 					icon: isStreaming ? (
-						<Loader size={16} className={styles.statusGenerating} />
+						<AppIcon icon={Loader} className={styles.statusGenerating} />
 					) : (
-						<CheckCircle size={16} className={styles.statusDone} />
+						<AppIcon icon={CheckCircle} className={styles.statusDone} />
 					),
 					content: (
 						<BaseContentBody content={content} isStreaming={isStreaming} />
@@ -107,7 +112,8 @@ function BaseAccordion({
 				},
 			]}
 			expanded={expanded}
-			onExpandedChange={setExpanded}
+			onChange={setExpanded}
+			headingLevel={4}
 		/>
 	);
 }
@@ -120,10 +126,10 @@ function AdaptingProgress({
 	generationProgress: Partial<Record<PlatformType, GenerationStatus>>;
 }) {
 	return (
-		<Stack gap="sm">
-			<Stack gap="xs" direction="row" align="center">
+		<Stack gap="xs">
+			<Stack gap={4} direction="row" align="center">
 				<Spinner size="sm" />
-				<Text size="sm" weight="medium" color="secondary">
+				<Text size="sm" weight="medium" color="muted">
 					Adapting content for {selectedPlatforms.length} platform
 					{selectedPlatforms.length !== 1 ? "s" : ""}...
 				</Text>
@@ -134,7 +140,7 @@ function AdaptingProgress({
 					return (
 						<div key={platform} className={styles.progressRow}>
 							{status === "done" ? (
-								<CheckCircle size={16} className={styles.statusDone} />
+								<AppIcon icon={CheckCircle} className={styles.statusDone} />
 							) : (
 								<Spinner size="xs" />
 							)}
@@ -144,6 +150,7 @@ function AdaptingProgress({
 							<Badge
 								variant={status === "done" ? "success" : "default"}
 								size="sm"
+								dot={false}
 							>
 								{status === "done" ? "Done" : "Adapting"}
 							</Badge>
@@ -180,7 +187,7 @@ export function PreviewStep({
 		return (
 			<div className={styles.previewPanel}>
 				<EmptyState
-					title="Preview"
+					title={trimTrailingPeriod("Preview")}
 					description="Generate content to see platform-adapted previews here"
 				/>
 			</div>
@@ -190,11 +197,11 @@ export function PreviewStep({
 	// States 2 & 3: Base accordion stays persistent, content below animates
 	return (
 		<div className={styles.previewPanel}>
-			<Stack gap="md">
+			<Stack gap="sm">
 				{ssePhase === "describing" && (
-					<Stack gap="xs" direction="row" align="center">
+					<Stack gap={4} direction="row" align="center">
 						<Spinner size="sm" />
-						<Text size="sm" weight="medium" color="secondary">
+						<Text size="sm" weight="medium" color="muted">
 							Analyzing images...
 						</Text>
 					</Stack>
@@ -211,13 +218,17 @@ export function PreviewStep({
 				{/* Loading state before content starts streaming */}
 				{generating && !baseContent && ssePhase !== "describing" && (
 					<EmptyState
-						title="Generating content"
+						title={trimTrailingPeriod("Generating content")}
 						description="Your AI-adapted content will appear here shortly"
 						icon={<Spinner size="lg" />}
 					/>
 				)}
 
-				<PageTransition pageKey={belowKey} type="slideUp" duration={0.25}>
+				<PageTransition
+					transitionKey={belowKey}
+					variant="slideUp"
+					duration={250}
+				>
 					{/* Adapting progress */}
 					{generating && ssePhase === "adapting" && (
 						<AdaptingProgress
@@ -228,10 +239,8 @@ export function PreviewStep({
 
 					{/* Review content (preview only) */}
 					{generated && (
-						<Stack gap="md">
-							<Text as="h3" size="lg" weight="medium">
-								Review Content
-							</Text>
+						<Stack gap="sm">
+							<SectionHeader size="sm" as="h3" title="Review Content" />
 
 							{baseContent && (
 								<BaseAccordion
