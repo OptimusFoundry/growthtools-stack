@@ -1,6 +1,8 @@
 // BorderProgress — the wrapped container's edge draws clockwise as progress.
 // BEM: .q-border-progress, __edge, __stroke; --indeterminate; [data-state="idle|running|done"].
 // --_progress (0 → 1) comes in from the component. Match --q-border-progress-radius to the child.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

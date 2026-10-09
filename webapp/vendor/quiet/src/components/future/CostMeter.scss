@@ -1,6 +1,8 @@
 // CostMeter — live agent spend split by kind of work, each against its own cap.
 // BEM: .q-cost-meter, __header, __total-wrap, __label, __total, __budget(--warn), __items,
 // __item(--warn), __row, __name, __value.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,6 +1,8 @@
 // GhostFuture — real rows, then dashed ghost rows of what's likely next, then a caption.
 // BEM: .q-ghost-future, __rows, __ghosts, __slot, __ghost, __row, __avatar, __label, __hint, __caption.
 // A slot folds away with [data-state="gone"]; --_distance (0, 1, 2…) fades ghosts further out.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

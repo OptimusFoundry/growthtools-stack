@@ -1,5 +1,7 @@
 // ChatThread — the scrolling conversation. BEM: .q-chat-thread, __scroller, __content, __empty,
 // __jump, __divider, __divider-label. Give it a height (or let a flex/grid parent size it).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

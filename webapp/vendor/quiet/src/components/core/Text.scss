@@ -1,6 +1,8 @@
 // Text — typography primitive. BEM: .q-text; --size-{xs…5xl|mono|custom} (--_size), --weight-*,
 // --color-{name|custom} (--_color), --h1…--h4, --large (24px+), --mono, --italic, --underline, --strike,
 // --uppercase/--lowercase/--capitalize, --align-*, --truncate, --clamp (--_lines).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

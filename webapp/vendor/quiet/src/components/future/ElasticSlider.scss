@@ -3,6 +3,8 @@
 // __override, __lock; [data-over] while the value is past the line.
 // Set inline: --_t (0–1) value, --_safe (0–1) the line, --_stretch (0–1) how hard the pointer pulls.
 // Past the line is molten — a thin line and a ring, never a fill.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

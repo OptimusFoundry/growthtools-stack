@@ -1,6 +1,8 @@
 // GridOverlay — dev overlay: column grid + 8px rhythm lines, toggled with Ctrl/⌘+G. BEM:
 // .q-grid-overlay, __columns, __column; --rhythm. Props arrive as --_cols/--_max/--_gutter/--_pad/--_offset.
 // Debug tints derive from the theme's accent and foreground, so they follow light and dark.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

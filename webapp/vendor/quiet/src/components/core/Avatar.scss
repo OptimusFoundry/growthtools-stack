@@ -1,5 +1,7 @@
 // Avatar — image, mono initials or fallback in a circle or soft square.
 // BEM: .q-avatar, __img([data-loaded]), __empty; --{size} (--_size), --square.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

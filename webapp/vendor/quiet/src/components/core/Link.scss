@@ -1,4 +1,6 @@
 // Link — inline text link. BEM: .q-link; --primary, --muted; --sm, --md, --lg; --underline-hover, --underline-always.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

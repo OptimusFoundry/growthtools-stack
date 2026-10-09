@@ -1,5 +1,7 @@
 // CodeBlock — code inside a reply. BEM: .q-code-block, __header, __language, __copy, __pre, __code;
 // --wrap. Height caps at --_max-height (the `maxHeight` prop) and scrolls.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

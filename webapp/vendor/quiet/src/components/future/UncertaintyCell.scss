@@ -1,6 +1,8 @@
 // UncertaintyCell — a table number that carries its error. BEM: .q-uncertainty-cell
 // (--uncertain, --measured), __track, __band, __point, __value, __range.
 // Set inline: --_lo, --_hi, --_v (0–1) — the range and the value on the column's shared scale.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

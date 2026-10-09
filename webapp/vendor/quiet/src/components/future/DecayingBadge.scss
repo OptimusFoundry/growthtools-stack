@@ -1,6 +1,8 @@
 // DecayingBadge — a status pill that fades toward grey as its fact ages, then strikes through.
 // BEM: .q-decaying-badge, __dot, __label, __age; --{sm|md|lg}, --action.
 // --_fresh (1 → 0) comes in from the component; [data-stale], [data-checking] are states.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

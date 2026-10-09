@@ -1,5 +1,7 @@
 // ButtonGroup — spaced or attached run of buttons. BEM: .q-button-group;
 // --sm/--md/--lg (or --_gap), --vertical, --attached, --full.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

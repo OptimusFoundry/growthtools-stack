@@ -1,5 +1,7 @@
 // Checkbox — ink square with a check / dash. BEM: .q-checkbox, __box, __mark, __text, __description,
 // __error; --{size}, --labelled, --disabled. Checked/mixed and invalid read from ARIA.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

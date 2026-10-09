@@ -3,6 +3,8 @@
 // ([data-mark="anomaly"|"selected"|"near"]).
 // Set inline: --_x (0–1) per mark, --_h (0–1) per bar. Anomalies are molten — rings and thin
 // marks, never a fill.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

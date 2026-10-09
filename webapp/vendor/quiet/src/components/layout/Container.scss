@@ -1,5 +1,7 @@
 // Container — centred max-width wrapper with the page gutter. BEM: .q-container; --{sm|md|lg|xl|full},
 // --flush (no gutter), --start (not centred). A raw size arrives as --_max.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

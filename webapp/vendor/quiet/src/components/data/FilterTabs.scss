@@ -1,4 +1,6 @@
 // FilterTabs — pill radio group for filtering. BEM: .q-filter-tabs, __tab (--sm), __icon, __count.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

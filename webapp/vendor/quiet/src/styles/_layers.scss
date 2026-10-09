@@ -1,0 +1,6 @@
+// quiet's cascade-layer order: later layers win regardless of selector specificity, so a component
+// never has to out-specify base styles. Layers rank by first appearance, and an app that splits
+// its CSS can load any quiet stylesheet first (Vite links component chunks ahead of the entry
+// CSS), so index.scss and every component stylesheet `@use` this first. Repeating the statement
+// never reorders: a later one only names layers that already exist.
+@layer q.tokens, q.themes, q.base, q.components, q.utilities;

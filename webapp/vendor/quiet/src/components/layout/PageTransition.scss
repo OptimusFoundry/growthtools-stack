@@ -1,5 +1,7 @@
 // PageTransition — the entering view animates in; the leaving one uses .q-anim-fade (closing).
 // BEM: .q-page-transition; --{fade|slide|slide-up|scale}. A custom duration arrives as --_dur.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

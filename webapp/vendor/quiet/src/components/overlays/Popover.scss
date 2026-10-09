@@ -1,6 +1,8 @@
 // Popover — anchored non-modal panel. BEM: .q-popover (anchor), __trigger, __panel (--closable), __title, __close.
 // The panel takes [data-placement="top|bottom|left|right"] and [data-align="start|center|end"];
 // the `width` prop arrives as --_width.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

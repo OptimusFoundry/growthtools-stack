@@ -1,5 +1,7 @@
 // Banner — full-width notice strip. BEM: .q-banner, __inner, __glyph, __text, __title, __body,
 // __dismiss, __collapse; --{paper|ink|outline} (any other variant: plain ground), --{info|success|warning|error}.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

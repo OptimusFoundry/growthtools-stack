@@ -1,6 +1,8 @@
 // IntentBar — free text in; the reading comes back as editable chips before anything runs.
 // BEM: .q-intent-bar, __field, __mark, __input, __chips, __chip-item, __chip(--fixed),
 // __chip-key, __chip-value, __chip-caret, __footer, __summary, __actions, __suggestions, __suggestion.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,4 +1,6 @@
 // ArrowLink — sans link with a trailing arrow and a hairline underline. BEM: .q-arrow-link.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

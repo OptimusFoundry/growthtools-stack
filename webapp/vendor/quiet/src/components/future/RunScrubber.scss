@@ -1,6 +1,8 @@
 // RunScrubber — a slider over a finished run's steps, with the state at the current step below.
 // BEM: .q-run-scrubber, __track, __rail, __fill, __tick, __thumb, __steps, __step, __panel,
 // __agent, __body, __caption, __detail, __actions. --_pct (inline) is the current step's position.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

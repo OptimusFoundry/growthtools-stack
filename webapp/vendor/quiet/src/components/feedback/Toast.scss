@@ -1,5 +1,7 @@
 // Toast — transient notification card. BEM: .q-toast, __mark, __dot, __glyph, __content, __title,
 // __description, __meta, __action, __close; --{default|neutral|success|warning|error}.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

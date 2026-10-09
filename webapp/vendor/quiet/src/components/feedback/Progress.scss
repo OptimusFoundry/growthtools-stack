@@ -1,5 +1,7 @@
 // Progress — thin bar. BEM: .q-progress, __meta, __value, __track, __fill (--indeterminate);
 // --{sm|md|lg}, --{success|warning|error|heat}. The fill width comes in as --_progress.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,5 +1,7 @@
 // Stack — flex row/column on the 8px grid. BEM: .q-stack, __item (animated child);
 // --{direction}, --gap-{size}, --wrap. Arbitrary gap/align/justify arrive as --_gap/--_align/--_justify.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

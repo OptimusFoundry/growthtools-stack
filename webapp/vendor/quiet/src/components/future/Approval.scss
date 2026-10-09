@@ -1,6 +1,8 @@
 // Approval — before → after, blast radius, undo window, hold to commit.
 // BEM: .q-approval, __header, __title, __description, __changes, __change, __change-label,
 // __transition, __arrow, __change-meta, __footer, __consequences, __consequence, __glyph, __actions.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

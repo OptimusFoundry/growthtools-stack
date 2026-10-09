@@ -1,4 +1,6 @@
 // FormField — label + control + hint stack. BEM: .q-form-field.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

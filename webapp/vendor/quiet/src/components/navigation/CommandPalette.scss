@@ -1,6 +1,8 @@
 // CommandPalette — ⌘K dialog. BEM: .q-command-palette (scrim), __dialog, __search, __slash, __input,
 // __hint, __list, __empty, __group-label, __option, __option-icon, __option-text, __option-label,
 // __option-description, __option-enter, __footer. Active option: [aria-selected="true"].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

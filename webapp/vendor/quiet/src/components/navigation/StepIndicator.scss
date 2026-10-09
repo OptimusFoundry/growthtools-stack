@@ -1,6 +1,8 @@
 // StepIndicator — numbered progress. BEM: .q-step-indicator, __step, __track, __marker, __line,
 // __text, __label, __description; --vertical, --{size}; __step--{complete|current|upcoming|error};
 // __line--done. Current step: [aria-current="step"].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

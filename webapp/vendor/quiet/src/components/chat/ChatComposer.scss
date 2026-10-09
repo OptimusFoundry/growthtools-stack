@@ -1,6 +1,8 @@
 // ChatComposer — the message box. BEM: .q-chat-composer, __files, __file, __input, __toolbar,
 // __attach, __plus, __picker, __slot, __spacer, __hint, __send, __stop, __drop; --dragging, --disabled.
 // Max text height comes from --_rows (maxRows) × the line height.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,5 +1,7 @@
 // Button — pill action. BEM: .q-button, __icon, __arrow; --{variant}, --{size}, --full, --icon-only.
 // Tier-3 tokens (override hooks) first, then the block.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

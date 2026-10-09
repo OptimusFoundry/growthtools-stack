@@ -1,5 +1,7 @@
 // HoldButton — hold-to-confirm wrapper around Button. BEM: .q-hold-button, __button, __hint, __heat;
 // --confirmed. The heat hairline grows with --_hold (0–1); nothing moves at rest.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

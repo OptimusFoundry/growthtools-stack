@@ -2,6 +2,8 @@
 // __group-label, __group-toggle, __chevron, __list, __item, __icon, __label, __badge, __footer;
 // --collapsed, --compact, --dividers, --drawer; __icon--initials. Current item: [aria-current="page"].
 // Mobile drawer: .q-sidebar-drawer, __scrim, __panel. External opener: .q-sidebar-trigger.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

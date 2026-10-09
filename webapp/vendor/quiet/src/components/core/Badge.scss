@@ -1,5 +1,7 @@
 // Badge — sans pill for counts and statuses; status reads through the dot.
 // BEM: .q-badge, __dot(--solid-ink, --hollow, --molten, --paper); --{variant}, --{size}, --count.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

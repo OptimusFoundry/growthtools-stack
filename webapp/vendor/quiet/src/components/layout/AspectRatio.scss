@@ -1,6 +1,8 @@
 // AspectRatio — fixed-ratio frame; an empty one is a labelled placeholder. BEM: .q-aspect-ratio,
 // __media (img/video children cover it), __label; --{square|video|portrait|wide|photo}, --empty.
 // A raw ratio arrives as --_ratio.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

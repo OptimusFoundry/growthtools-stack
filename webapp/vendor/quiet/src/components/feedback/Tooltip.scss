@@ -1,5 +1,7 @@
 // Tooltip — ink bubble, mono caps. BEM: .q-tooltip (trigger wrapper), __bubble with
 // [data-placement="top|bottom|left|right"] and [data-state="open|closed"] (the delay/grace timer is JS).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

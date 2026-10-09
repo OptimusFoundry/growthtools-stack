@@ -1,8 +1,7 @@
 @use "sass:meta";
-
-// quiet stylesheet entry. Cascade layers make the order explicit: later layers win regardless
-// of selector specificity, so a component never has to out-specify base styles.
-@layer q.tokens, q.themes, q.base, q.components, q.utilities;
+// quiet stylesheet entry. The layer order comes from _layers.scss, shared with every component
+// stylesheet.
+@use "layers";
 
 @layer q.tokens {
   @include meta.load-css("tokens/typography");

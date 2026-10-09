@@ -1,5 +1,7 @@
 // Sparkline — a word-sized trend line; the last point is a dot.
 // BEM: .q-sparkline, __line, __area, __dot; --accent (default), --ink.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

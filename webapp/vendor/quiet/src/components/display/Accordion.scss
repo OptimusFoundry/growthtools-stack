@@ -1,5 +1,7 @@
 // Accordion — disclosure rows under hairlines. BEM: .q-accordion, __item, __heading, __header,
 // __icon, __text, __title, __description, __toggle, __content (--with-icon).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

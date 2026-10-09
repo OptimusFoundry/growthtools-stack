@@ -1,6 +1,8 @@
 // Tag — mono caps pill; removable and selectable. BEM: .q-tag, __icon, __remove;
 // --sm, --ink, --{info|success|warning|error}, --selectable, --with-avatar, --disabled;
 // selected = [aria-pressed="true"].
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

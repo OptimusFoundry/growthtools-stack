@@ -1,5 +1,7 @@
 // Attachment — a file in a conversation. BEM: .q-attachment, __main, __thumb, __tile, __text, __name,
 // __meta, __dot, __progress, __remove; --chip, --card, --image, --uploading, --error.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

@@ -1,4 +1,6 @@
 // FormHint — mono helper / error / success line. BEM: .q-form-hint, __glyph; --{variant}.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

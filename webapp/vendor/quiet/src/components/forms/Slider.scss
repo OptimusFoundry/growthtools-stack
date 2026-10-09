@@ -1,5 +1,7 @@
 // Slider — hairline track with an ink thumb. BEM: .q-slider, __header, __value, __track, __rail,
 // __fill, __thumb; --{size}. --_pct (set inline) is the value's position along the track.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

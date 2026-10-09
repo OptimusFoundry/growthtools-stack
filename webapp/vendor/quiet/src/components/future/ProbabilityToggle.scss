@@ -2,6 +2,8 @@
 // from off to always; the position reads back as a policy. BEM: .q-probability-toggle, __track,
 // __fill, __tick, __thumb, __text, __heading, __label, __level, __description.
 // --_t (0–1, set inline) is the position; --_at (0–1) places each quarter tick.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

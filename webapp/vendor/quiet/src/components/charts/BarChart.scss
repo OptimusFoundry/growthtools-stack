@@ -1,6 +1,8 @@
 // BarChart — bars by category, grouped or stacked, vertical or horizontal.
 // BEM: .q-bar-chart, __title, __bar[data-active], __hit, __fill, __value.
 // Shared frame (grid, axes, legend, tooltip) lives in chart.scss as .q-chart__*.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

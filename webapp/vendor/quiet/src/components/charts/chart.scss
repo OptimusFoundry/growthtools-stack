@@ -4,6 +4,8 @@
 // Charts are the one place molten carries data: series 1 is the accent, comparisons are ink then
 // greys (series 4–5 also dash, so identity never rests on grey lightness alone). Text never wears
 // a series colour — values and labels stay ink/muted; the swatch beside them carries identity.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

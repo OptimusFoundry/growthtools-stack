@@ -2,6 +2,8 @@
 // __table, __caption, __head, __sort, __row (--clickable, --stripe), __cell (--first, --control),
 // __check, __expand, __detail, __skeleton-cell, __skeleton (--first), __empty,
 // __foot (--control, --nowrap, --numeric).
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

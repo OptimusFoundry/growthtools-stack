@@ -1,5 +1,7 @@
 // Rule — hairline divider, horizontal or vertical, optionally labelled.
 // BEM: .q-rule, __line, __label; --vertical, --labelled, --ink, --dashed, --dotted.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {

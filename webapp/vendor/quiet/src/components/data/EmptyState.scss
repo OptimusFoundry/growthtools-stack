@@ -1,6 +1,8 @@
 // EmptyState — ring glyph, title with an accent full stop, description, actions.
 // BEM: .q-empty-state, __icon, __eyebrow, __title, __dot, __description, __actions;
 // --sm/--md/--lg, --bordered, --start.
+@use "../../styles/layers";
+
 @layer q.tokens {
   :root,
   [data-theme] {
