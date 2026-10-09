@@ -96,6 +96,7 @@
 }
 
 .previewScale {
+	// stylelint-disable-next-line scale-unlimited/declaration-strict-value -- cancels the scale(0.9) gap; tied to the transform, not a spacing value
 	margin-bottom: calc((1 - 0.9) * -100%);
 	transform: scale(0.9);
 	transform-origin: top left;
