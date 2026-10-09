@@ -6,6 +6,7 @@
   @include breakpoint-down("lg") {
     align-items: center;
     backdrop-filter: blur(var(--q-space-1-25));
+    // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- translucent bar over scrolling content; quiet has no translucent surface token
     background-color: color-mix(in srgb, var(--q-bg) 85%, transparent);
     border-top: 1px solid var(--q-border);
     bottom: 0;
@@ -15,6 +16,7 @@
     padding: var(--q-space-1-5) var(--q-space-2);
 
     // Keeps actions clear of the home indicator on notched phones.
+    // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- env() safe-area inset is a platform value, not a design value
     padding-bottom: max(var(--q-space-1-5), env(safe-area-inset-bottom));
     position: fixed;
     right: 0;

@@ -3,7 +3,7 @@
 // =============================================================================
 
 .card {
-	--platform-accent: var(--q-fg);
+	--_platform-accent: var(--q-fg);
 
 	border: var(--q-hairline) solid var(--q-border);
 	border-radius: var(--q-radius-lg);
@@ -169,7 +169,7 @@
 		background-color var(--q-dur-hover) var(--q-ease-soft);
 
 	&:hover {
-		color: var(--platform-accent);
+		color: var(--_platform-accent);
 		background: var(--q-bg-subtle);
 	}
 }
@@ -194,7 +194,7 @@
 	width: var(--q-space-1);
 	height: var(--q-space-1);
 	border-radius: var(--q-radius-pill);
-	background: var(--platform-accent);
+	background: var(--_platform-accent);
 	flex-shrink: 0;
 }
 
