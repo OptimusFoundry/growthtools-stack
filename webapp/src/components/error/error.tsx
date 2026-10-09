@@ -55,6 +55,7 @@ export const ErrorBoundary: React.FC<ErrorComponentProps> = ({
 					{reset && (
 						<Button
 							variant="primary"
+							size="sm"
 							onClick={reset}
 							leftIcon={<AppIcon icon={RefreshCw} />}
 						>
@@ -63,6 +64,7 @@ export const ErrorBoundary: React.FC<ErrorComponentProps> = ({
 					)}
 					<Button
 						variant="secondary"
+						size="sm"
 						onClick={handleGoHome}
 						leftIcon={<AppIcon icon={Home} />}
 					>

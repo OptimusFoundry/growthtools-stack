@@ -72,11 +72,11 @@ function Index() {
 								<Button
 									key={link.href}
 									variant="outline"
-									size="lg"
+									size="sm"
 									fullWidth
 									href={link.href}
 									aria-label={`Open ${link.label}, quick access`}
-									leftIcon={<AppIcon icon={link.icon} size="lg" />}
+									leftIcon={<AppIcon icon={link.icon} size="md" />}
 								>
 									{link.label}
 								</Button>

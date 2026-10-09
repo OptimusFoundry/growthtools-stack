@@ -443,6 +443,7 @@ export function BlogWizard({
 							<Stack gap="md">
 								<SectionHeader size="sm" as="h2" title="Idea or instructions" />
 								<TextArea
+									size="sm"
 									label="Instructions"
 									hideLabel
 									placeholder="What should this blog post be about? Give the AI a topic or detailed instructions..."
@@ -451,6 +452,7 @@ export function BlogWizard({
 									onChange={(e) => setInstruction(e.target.value)}
 								/>
 								<TextField
+									size="sm"
 									label="Keywords"
 									placeholder="Comma-separated keywords"
 									value={keywords}
@@ -460,6 +462,7 @@ export function BlogWizard({
 								<Stack direction="row" gap="sm" justify="flex-end">
 									<Button
 										variant={content ? "secondary" : "primary"}
+										size="sm"
 										onClick={handleRegenerate}
 										loading={generating}
 										disabled={busy}
@@ -482,6 +485,7 @@ export function BlogWizard({
 							<Stack gap="md">
 								<SectionHeader size="sm" as="h2" title="Details" />
 								<TextField
+									size="sm"
 									label="Title"
 									placeholder="Blog post title"
 									value={title}
@@ -490,6 +494,7 @@ export function BlogWizard({
 									required
 								/>
 								<TextField
+									size="sm"
 									label="Slug"
 									placeholder="url-friendly-slug"
 									value={slug}
@@ -497,6 +502,7 @@ export function BlogWizard({
 									helperText="URL path for this post"
 								/>
 								<TextArea
+									size="sm"
 									label="Excerpt"
 									placeholder="Brief summary of the post..."
 									rows={3}
@@ -504,6 +510,7 @@ export function BlogWizard({
 									onChange={(e) => setExcerpt(e.target.value)}
 								/>
 								<TextField
+									size="sm"
 									label="Published date"
 									type="date"
 									value={publishedAt}
@@ -515,12 +522,14 @@ export function BlogWizard({
 							<Stack gap="md">
 								<SectionHeader size="sm" as="h2" title="SEO" />
 								<TextField
+									size="sm"
 									label="SEO title"
 									placeholder="SEO title"
 									value={seoTitle}
 									onChange={(e) => setSeoTitle(e.target.value)}
 								/>
 								<TextArea
+									size="sm"
 									label="Meta description"
 									placeholder="Meta description for search engines..."
 									rows={3}
@@ -528,12 +537,14 @@ export function BlogWizard({
 									onChange={(e) => setMetaDescription(e.target.value)}
 								/>
 								<TextField
+									size="sm"
 									label="OG title"
 									placeholder="Open Graph title"
 									value={ogTitle}
 									onChange={(e) => setOgTitle(e.target.value)}
 								/>
 								<TextArea
+									size="sm"
 									label="OG description"
 									placeholder="Open Graph description..."
 									rows={3}
@@ -557,6 +568,7 @@ export function BlogWizard({
 
 							{hasPreview && (
 								<Tabs
+									size="sm"
 									tabs={PREVIEW_TABS}
 									defaultValue="preview"
 									label="Blog post view"
@@ -576,6 +588,7 @@ export function BlogWizard({
 										),
 										markdown: (
 											<TextArea
+												size="sm"
 												label="Markdown content"
 												hideLabel
 												placeholder="Blog post content will appear here after generation, or type directly..."

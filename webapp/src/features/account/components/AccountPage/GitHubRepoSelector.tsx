@@ -104,6 +104,7 @@ export const GitHubRepoSelector = memo(function GitHubRepoSelector({
 
 	return (
 		<List
+			size="sm"
 			divided
 			items={repos.map((repo) => {
 				const key = `${repo.owner.login}/${repo.name}`;
@@ -125,6 +126,7 @@ export const GitHubRepoSelector = memo(function GitHubRepoSelector({
 					secondary: `default branch: ${repo.default_branch}`,
 					trailing: (
 						<Switch
+							size="sm"
 							checked={repo.connected}
 							disabled={isBusy}
 							onChange={() =>

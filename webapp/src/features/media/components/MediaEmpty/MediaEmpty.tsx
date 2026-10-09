@@ -12,6 +12,7 @@ export function MediaEmpty({ onUpload }: { onUpload: () => void }) {
 			actions={
 				<Button
 					variant="primary"
+					size="sm"
 					leftIcon={<AppIcon icon={Upload} />}
 					onClick={onUpload}
 				>

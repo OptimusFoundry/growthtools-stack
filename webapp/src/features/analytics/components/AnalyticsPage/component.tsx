@@ -279,7 +279,7 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 				title={trimTrailingPeriod("No platforms connected")}
 				description="Connect your social platforms and start publishing to see analytics here."
 				actions={
-					<Button variant="primary" href="/account?tab=platforms">
+					<Button variant="primary" size="sm" href="/account?tab=platforms">
 						Connect platforms
 					</Button>
 				}
@@ -295,7 +295,11 @@ export const AnalyticsPage = memo(function AnalyticsPage() {
 				title={trimTrailingPeriod("No data for this range")}
 				description="There is no activity recorded in this time window."
 				actions={
-					<Button variant="ghost" onClick={() => handleRangeChange("30d")}>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => handleRangeChange("30d")}
+					>
 						Switch to 30 days
 					</Button>
 				}

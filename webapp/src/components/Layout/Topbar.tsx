@@ -66,7 +66,11 @@ export function Topbar({
 			</Link>
 		)
 	) : (
-		<Breadcrumb items={breadcrumbs ?? []} className={styles.breadcrumb} />
+		<Breadcrumb
+			size="sm"
+			items={breadcrumbs ?? []}
+			className={styles.breadcrumb}
+		/>
 	);
 
 	const header = (

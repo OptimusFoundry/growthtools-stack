@@ -57,6 +57,7 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 	if (!state.connection) {
 		return (
 			<List
+				size="sm"
 				divided
 				items={[
 					{
@@ -83,6 +84,7 @@ export const GitHubConnectionSection = memo(function GitHubConnectionSection({
 	return (
 		<Stack gap="md">
 			<List
+				size="sm"
 				divided
 				items={[
 					{

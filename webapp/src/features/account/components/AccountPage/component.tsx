@@ -67,6 +67,7 @@ export const AccountPage = memo(function AccountPage() {
 			<Topbar title="Settings" />
 			<Tabs
 				variant="line"
+				size="sm"
 				value={activeTab}
 				onChange={handleTabChange}
 				label="Settings tabs"

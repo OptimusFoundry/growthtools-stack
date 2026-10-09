@@ -122,7 +122,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
 						{subscription.planName || "Unknown Plan"}
 					</Text>
 					<div>
-						<Badge variant={statusVariant} size="md">
+						<Badge variant={statusVariant} size="sm">
 							{subscription.status}
 						</Badge>
 					</div>
@@ -167,7 +167,7 @@ const BillingActions = memo(function BillingActions({
 			<SectionHeader size="sm" as="h2" title="Manage Billing" />
 			<List
 				bordered
-				size="md"
+				size="sm"
 				items={[
 					{
 						id: "portal",
@@ -177,6 +177,7 @@ const BillingActions = memo(function BillingActions({
 						trailing: (
 							<Button
 								variant="secondary"
+								size="sm"
 								leftIcon={<AppIcon icon={ExternalLink} size="md" />}
 								onClick={onManage}
 								disabled={portalLoading || !portalUrl}
@@ -190,7 +191,7 @@ const BillingActions = memo(function BillingActions({
 						primary: "Change Plan",
 						secondary: "Upgrade or downgrade your subscription",
 						trailing: (
-							<Button variant="secondary" onClick={onChangePlan}>
+							<Button variant="secondary" size="sm" onClick={onChangePlan}>
 								{status === "canceled" ? "Resubscribe" : "Change Plan"}
 							</Button>
 						),
@@ -243,7 +244,7 @@ export const BillingPage = memo(function BillingPage() {
 				title="No subscription found"
 				description="You don't have an active subscription."
 				actions={
-					<Button variant="primary" onClick={handleChangePlan}>
+					<Button variant="primary" size="sm" onClick={handleChangePlan}>
 						View Plans
 					</Button>
 				}

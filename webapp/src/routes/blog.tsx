@@ -72,6 +72,7 @@ function BlogPage() {
 			topbarAction={
 				<Button
 					variant="primary"
+					size="sm"
 					href="/blog/new"
 					leftIcon={<AppIcon icon={Plus} size="md" />}
 				>

@@ -61,7 +61,7 @@ export function PostConfigSection({
 						onChange={onMaxThreadPartsChange}
 						min={3}
 						max={25}
-						size="md"
+						size="sm"
 						disabled={readOnly || contentType !== "thread"}
 						label="Thread length"
 					/>

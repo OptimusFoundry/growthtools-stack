@@ -12,6 +12,7 @@ export default function GoogleSignIn() {
 	return (
 		<Button
 			variant="outline"
+			size="sm"
 			fullWidth
 			leftIcon={
 				<svg

@@ -19,11 +19,12 @@ export function CreateShowcasePostModal({
 			size="sm"
 			actions={
 				<>
-					<Button variant="ghost" onClick={flow.cancel}>
+					<Button variant="ghost" size="sm" onClick={flow.cancel}>
 						{SHOWCASE_POST_COPY.cancelLabel}
 					</Button>
 					<Button
 						variant="primary"
+						size="sm"
 						onClick={flow.submit}
 						loading={flow.isLoading}
 						disabled={flow.brief.trim() === ""}
@@ -34,6 +35,7 @@ export function CreateShowcasePostModal({
 			}
 		>
 			<TextArea
+				size="sm"
 				label={SHOWCASE_POST_COPY.briefLabel}
 				value={flow.brief}
 				onChange={(e) => flow.setBrief(e.target.value)}

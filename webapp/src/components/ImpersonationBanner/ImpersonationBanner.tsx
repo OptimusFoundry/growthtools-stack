@@ -7,6 +7,7 @@
  * impersonating real user accounts. See design spec 2026-04-19-admin-impersonation-design.md.
  */
 
+import { Button } from "@optimusfoundry/quiet";
 import { useCallback } from "react";
 import { fetcher } from "@/api/client";
 import { useAuth } from "@/contexts/auth";
@@ -49,9 +50,9 @@ export function ImpersonationBanner() {
 				Impersonating <strong>{targetName}</strong> (logged in as {adminName}) —
 				actions affect their account.
 			</span>
-			<button type="button" className={styles.stopButton} onClick={handleStop}>
+			<Button variant="outline" size="sm" onClick={handleStop}>
 				Stop impersonating
-			</button>
+			</Button>
 		</div>
 	);
 }

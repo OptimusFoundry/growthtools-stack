@@ -105,7 +105,7 @@ export const GatedEmptyState = memo(function GatedEmptyState({
 				title={trimTrailingPeriod(title)}
 				description={fullDescription}
 				actions={
-					<Button variant="primary" href="/billing/plans">
+					<Button variant="primary" size="sm" href="/billing/plans">
 						Upgrade to {requiredTierDisplayName}
 					</Button>
 				}

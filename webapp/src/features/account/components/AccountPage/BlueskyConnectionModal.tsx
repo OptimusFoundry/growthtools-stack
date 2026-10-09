@@ -57,11 +57,17 @@ export const BlueskyConnectionModal = memo(function BlueskyConnectionModal({
 			size="sm"
 			actions={
 				<>
-					<Button variant="ghost" onClick={handleClose} disabled={loading}>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={handleClose}
+						disabled={loading}
+					>
 						Cancel
 					</Button>
 					<Button
 						variant="primary"
+						size="sm"
 						onClick={handleSubmit}
 						loading={loading}
 						disabled={!handle.trim() || !appPassword.trim()}
@@ -77,12 +83,14 @@ export const BlueskyConnectionModal = memo(function BlueskyConnectionModal({
 					Enter your BlueSky handle and app password to connect your account.
 				</Text>
 				<TextField
+					size="sm"
 					label="Handle"
 					value={handle}
 					onChange={(e) => setHandle(e.target.value)}
 					placeholder="yourname.bsky.social"
 				/>
 				<TextField
+					size="sm"
 					label="App Password"
 					type="password"
 					value={appPassword}

@@ -143,7 +143,7 @@ function toListItems(posts: PostListItem[]): NonNullable<ListProps["items"]> {
 							))}
 						</span>
 					)}
-					<Badge variant={meta.badgeVariant} dot={meta.badgeDot}>
+					<Badge variant={meta.badgeVariant} size="sm" dot={meta.badgeDot}>
 						{meta.label}
 					</Badge>
 				</span>
@@ -201,7 +201,7 @@ function DayPosts({
 			/>
 		);
 	}
-	return <List bordered divided items={toListItems(posts)} />;
+	return <List size="sm" bordered divided items={toListItems(posts)} />;
 }
 
 function CalendarPage() {
@@ -320,6 +320,7 @@ function CalendarPage() {
 						<Stack direction="row" align="center" gap="sm">
 							<Button
 								variant="ghost"
+								size="sm"
 								icon={<AppIcon icon={ChevronLeft} size="lg" />}
 								aria-label="Prev month, calendar nav"
 								onClick={() => navigateMonth(-1)}
@@ -333,6 +334,7 @@ function CalendarPage() {
 							</Button>
 							<Button
 								variant="ghost"
+								size="sm"
 								icon={<AppIcon icon={ChevronRight} size="lg" />}
 								aria-label="Next month, calendar nav"
 								onClick={() => navigateMonth(1)}

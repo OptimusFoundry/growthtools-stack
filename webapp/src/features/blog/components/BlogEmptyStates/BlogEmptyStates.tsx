@@ -12,6 +12,7 @@ export function BlogEmpty() {
 			actions={
 				<Button
 					variant="primary"
+					size="sm"
 					href="/blog/new"
 					leftIcon={<AppIcon icon={Plus} size="md" />}
 				>
@@ -29,7 +30,7 @@ export function BlogEmptyFiltered({ onClear }: { onClear: () => void }) {
 			description="Try adjusting your filters to find what you're looking for."
 			icon={<AppIcon icon={SearchX} size="xl" />}
 			actions={
-				<Button variant="secondary" onClick={onClear}>
+				<Button variant="secondary" size="sm" onClick={onClear}>
 					Clear filters
 				</Button>
 			}

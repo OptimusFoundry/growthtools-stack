@@ -253,7 +253,7 @@ export const PlatformConnectionsTab = memo(function PlatformConnectionsTab() {
 							eyebrow={`${connectedCount} of ${ENABLED_PLATFORMS.length} CONNECTED`}
 							title="Platforms"
 						/>
-						<List divided items={items} />
+						<List size="sm" divided items={items} />
 					</Stack>
 				</section>
 

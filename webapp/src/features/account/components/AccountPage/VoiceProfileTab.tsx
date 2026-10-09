@@ -215,6 +215,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 								description="Set the overall voice for AI-generated content"
 							/>
 							<Select
+								size="sm"
 								label="Tone"
 								options={toneOptions}
 								placeholder="Select a tone"
@@ -222,6 +223,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 								onChange={(e) => setTone(e.target.value)}
 							/>
 							<Select
+								size="sm"
 								label="Style"
 								options={styleOptions}
 								placeholder="Select a style"
@@ -240,12 +242,14 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 								description="Help AI tailor content to your industry and audience"
 							/>
 							<TextField
+								size="sm"
 								label="Industry"
 								value={industry}
 								onChange={(e) => setIndustry(e.target.value)}
 								placeholder="e.g. SaaS, E-commerce, FinTech"
 							/>
 							<TextField
+								size="sm"
 								label="Target Audience"
 								value={targetAudience}
 								onChange={(e) => setTargetAudience(e.target.value)}
@@ -263,6 +267,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 								description="Provide reference posts and custom guidance for the AI"
 							/>
 							<TextArea
+								size="sm"
 								label="Example Posts"
 								value={examplePosts}
 								onChange={(e) => setExamplePosts(e.target.value)}
@@ -271,6 +276,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 								helperText="Add example posts that reflect your writing voice, one per line"
 							/>
 							<TextArea
+								size="sm"
 								label="Custom Instructions"
 								value={customInstructions}
 								onChange={(e) => setCustomInstructions(e.target.value)}
@@ -284,6 +290,7 @@ export const VoiceProfileTab = memo(function VoiceProfileTab() {
 						<Button
 							type="submit"
 							variant="primary"
+							size="sm"
 							loading={saving}
 							leftIcon={<AppIcon icon={Check} />}
 						>

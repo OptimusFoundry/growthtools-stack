@@ -172,12 +172,14 @@ export const SitePublishTab = memo(function SitePublishTab() {
 								description="The GitHub repository that receives published blog posts"
 							/>
 							<TextField
+								size="sm"
 								label="Repository Owner"
 								value={repoOwner}
 								onChange={(e) => setRepoOwner(e.target.value)}
 								placeholder="e.g. shubhanshu-dev"
 							/>
 							<TextField
+								size="sm"
 								label="Repository Name"
 								value={repoName}
 								onChange={(e) => setRepoName(e.target.value)}
@@ -195,12 +197,14 @@ export const SitePublishTab = memo(function SitePublishTab() {
 								description="Where in the repository new posts are committed"
 							/>
 							<TextField
+								size="sm"
 								label="Base Branch"
 								value={baseBranch}
 								onChange={(e) => setBaseBranch(e.target.value)}
 								placeholder="e.g. main"
 							/>
 							<TextField
+								size="sm"
 								label="Content Path"
 								value={contentPath}
 								onChange={(e) => setContentPath(e.target.value)}
@@ -213,6 +217,7 @@ export const SitePublishTab = memo(function SitePublishTab() {
 						<Button
 							type="submit"
 							variant="primary"
+							size="sm"
 							loading={saving}
 							leftIcon={<AppIcon icon={Check} />}
 						>

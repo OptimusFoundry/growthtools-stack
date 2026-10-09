@@ -209,7 +209,7 @@ function GitHubPage() {
 				title={trimTrailingPeriod("GitHub isn't connected")}
 				description="Connect your GitHub account in Settings → Platforms to start watching for new commits."
 				actions={
-					<Button variant="primary" href="/account?tab=platforms">
+					<Button variant="primary" size="sm" href="/account?tab=platforms">
 						Connect GitHub
 					</Button>
 				}
