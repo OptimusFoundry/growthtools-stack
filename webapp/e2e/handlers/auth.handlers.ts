@@ -7,6 +7,7 @@
  */
 import { HttpResponse, http } from "msw";
 import type { ApiTierName } from "../../src/api/types/tier";
+import type { ApiUserPersona } from "../../src/api/types/user";
 import { setupEndpoint } from "../helpers/endpoint";
 import { users } from "../mocks/data";
 
@@ -38,6 +39,12 @@ export const authScenarios = {
 	proTier: () => createUserHandler("pro"),
 	/** Team tier user */
 	teamTier: () => createUserHandler("team"),
+
+	/** Pro tier user with a specific persona (drives persona-gated navigation) */
+	withPersona: (persona: ApiUserPersona) =>
+		http.get("*/api/protected/user", () =>
+			HttpResponse.json({ ...users.pro, persona }),
+		),
 
 	/** Unauthenticated — generic 401 on /user */
 	unauthenticated: () =>
