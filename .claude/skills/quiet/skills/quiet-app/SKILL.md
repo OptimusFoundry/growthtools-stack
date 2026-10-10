@@ -34,6 +34,10 @@ import { QuietRoot, ThemeProvider, Toaster } from "@optimusfoundry/quiet";
 - Product identity is a theme (`defineThemes` plus `[data-theme="acme"]` in `@layer q.themes`), see
   `DESIGN.md#product-themes`. Never fork a component for identity.
 - Pass `theme` to QuietRoot only to pin a subtree to one theme.
+- Box sizing: your own classed elements are `border-box`; quiet's components keep the reference's
+  `content-box`, even with your `className` on them. A class that sizes a quiet component (`width`,
+  `height`, `max-width`, `100%` …) and gives it padding or a border, or sits on one that has them
+  (Card, Input, Alert …), also sets `box-sizing: border-box`.
 
 ## Lay out a screen
 

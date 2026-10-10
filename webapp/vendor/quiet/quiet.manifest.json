@@ -1,7 +1,7 @@
 {
-	"version": "0.7.0",
-	"ref": "v0.7.0",
-	"commit": "44acc0b4c775eec9a3f4ee71adc53a3792fdd067",
+	"version": "0.7.1",
+	"ref": "v0.7.1",
+	"commit": "2097890a861643c6e12a2d391ea6114f8e8cd0c4",
 	"files": {
 		"DESIGN.md": "084c725f93b0028f331f560903b63a67e567d2d5b366fa3a52cadde262e2f79f",
 		"docs/guidelines/README.md": "fdf457b7076eea7ce1ae476d0fbffec9f682037a57805faaf4cfbcf435e4d74c",
@@ -15,7 +15,7 @@
 		"docs/guidelines/sections.md": "8d5058a6c798b9cb1a7308033e6602b45e4df50ba72d274ed8f8b9ec0d67ddbf",
 		"docs/guidelines/spacing.md": "7bfa50c80fccf7237849281afdff17e0ebad0e97ebf9b8fe5c3dcf39030c94f2",
 		"docs/guidelines/typography.md": "a91c1c55ed1fa68592cac23508294accb9adc2bebe309e18f215ba88748fc2cc",
-		"package.json": "bca9f5214f4df08d0f72a1a87e8a819eca91894717218d4aaec0cf794305b665",
+		"package.json": "d53856671c26566014efdc01dc37fe0b03407d371c94b10796f2c6d93ee24139",
 		"scripts/quiet-audit-core.d.mts": "36aa2e0a36675c84bbb1258426f4e9715abf3cfd2c743f4e872a4bac8e882ea6",
 		"scripts/quiet-audit-core.mjs": "4da2d399c4898ebf97b0335cb1dd0c779c18e0d7ae83a951ff4a5bd974878717",
 		"scripts/quiet-audit.mjs": "17b44435e3090bb0b55c6ff12f0234a55d0080fdd33a37f8f472ac45a0849922",
@@ -274,6 +274,6 @@
 		".claude/skills/quiet/agents/quiet-screen-reviewer.md": "edd8152c802007e05b9fb6e4dff8f2c4f34138415ed91b15d5324fa8fc9d5f1f",
 		".claude/skills/quiet/hooks/hooks.json": "107f17ee770f940983861050235406b0852626578604d40f5ff625fd6a75b1da",
 		".claude/skills/quiet/hooks/quiet-guard.mjs": "ffb673503a1564ad9b9fb3b94d6d99f4d84cc9bb4ece27413aecb7dae5117b97",
-		".claude/skills/quiet/skills/quiet-app/SKILL.md": "865a77c581d03d970a3f8cd23f00d204eed92ad566827008c38860d0b8c89c95"
+		".claude/skills/quiet/skills/quiet-app/SKILL.md": "7b3b5e2769f5554e5c786a43c42833b636741d1daba2bcb099511ee941c3bc99"
 	}
 }
