@@ -1,7 +1,7 @@
 {
-	"version": "0.6.0",
-	"commit": "fcbf32d1d9ce48d4dc16caf1e5bc68af7531300a",
-	"dirty": false,
+	"version": "0.7.0",
+	"ref": "v0.7.0",
+	"commit": "44acc0b4c775eec9a3f4ee71adc53a3792fdd067",
 	"files": {
 		"DESIGN.md": "084c725f93b0028f331f560903b63a67e567d2d5b366fa3a52cadde262e2f79f",
 		"docs/guidelines/README.md": "fdf457b7076eea7ce1ae476d0fbffec9f682037a57805faaf4cfbcf435e4d74c",
@@ -15,11 +15,11 @@
 		"docs/guidelines/sections.md": "8d5058a6c798b9cb1a7308033e6602b45e4df50ba72d274ed8f8b9ec0d67ddbf",
 		"docs/guidelines/spacing.md": "7bfa50c80fccf7237849281afdff17e0ebad0e97ebf9b8fe5c3dcf39030c94f2",
 		"docs/guidelines/typography.md": "a91c1c55ed1fa68592cac23508294accb9adc2bebe309e18f215ba88748fc2cc",
-		"package.json": "ffbf8d49c2bc640814c20440512418fc00ee3f6d4d3f9516631b9eb1a82e3195",
+		"package.json": "bca9f5214f4df08d0f72a1a87e8a819eca91894717218d4aaec0cf794305b665",
 		"scripts/quiet-audit-core.d.mts": "36aa2e0a36675c84bbb1258426f4e9715abf3cfd2c743f4e872a4bac8e882ea6",
 		"scripts/quiet-audit-core.mjs": "4da2d399c4898ebf97b0335cb1dd0c779c18e0d7ae83a951ff4a5bd974878717",
 		"scripts/quiet-audit.mjs": "17b44435e3090bb0b55c6ff12f0234a55d0080fdd33a37f8f472ac45a0849922",
-		"scripts/quiet.mjs": "5b00a41be5d9afc7170d9bd2c287e5c2e79330dda6038b0ad094be32212d855e",
+		"scripts/quiet.mjs": "bb425d7016295a14a1c8f97465495c2a506cb8ed11c60ec6b0eb847b699ce945",
 		"src/QuietRoot.tsx": "777c158824963b3436e0d49751dfe6217c765521692ffd7fa0eb9dd84dcd503b",
 		"src/a11y/form.tsx": "270d8115079fb68eb452a5683831d6341d178482774b760596f7163035bfcbe0",
 		"src/a11y/hooks.ts": "13f3b6178f0a0b30be2138a83ebf933dc46784e918ae675329f4cdf20c4efccc",
@@ -244,8 +244,9 @@
 		"src/lib/link.tsx": "ec8fd3997533529401d23f3ef727bf4bd5765abfc9383b6b87f10b803510f084",
 		"src/styles/_layers.scss": "38ddb6d9634c25ef3d77b856b10875374b33c4642667faae01db740d63816d39",
 		"src/styles/base/_base.scss": "d6dc572845655224828d8d47604358edf642ac4cbd33892cec368750629f9adb",
+		"src/styles/base/_reset.scss": "90d034f2627f16903ed96590743b377ebdc428bbb147356f78f298202b072599",
 		"src/styles/fonts.css": "823ea0757a287d63a843eabb19956348f9f264bf65ec1d9d612279029535ef36",
-		"src/styles/index.scss": "b0f16518031cd69dd666d6239e39f279482336ac26416c0d634da7cf3d337688",
+		"src/styles/index.scss": "d212e868a6bce73fac892d11876f6df3cfe17517c015af34a3395980123a8743",
 		"src/styles/themes/ThemeProvider.tsx": "3f7fe000ec5bbb005b41b5dc48990d85e3caedb7aa58032a7b0ce57b46bbfd07",
 		"src/styles/themes/_foundry-dark.scss": "c15879951dada27df223ddde9a0e90fb2eaa0230664d124136813cefa05d4f41",
 		"src/styles/themes/_foundry-status.scss": "2df86580150bdb3b51c4f672c435735945449350bf37b40bf484d5a1ddda0414",
@@ -273,6 +274,6 @@
 		".claude/skills/quiet/agents/quiet-screen-reviewer.md": "edd8152c802007e05b9fb6e4dff8f2c4f34138415ed91b15d5324fa8fc9d5f1f",
 		".claude/skills/quiet/hooks/hooks.json": "107f17ee770f940983861050235406b0852626578604d40f5ff625fd6a75b1da",
 		".claude/skills/quiet/hooks/quiet-guard.mjs": "ffb673503a1564ad9b9fb3b94d6d99f4d84cc9bb4ece27413aecb7dae5117b97",
-		".claude/skills/quiet/skills/quiet-app/SKILL.md": "6130b896ffd515199c3e9e78d8d99edca6fb59044b043ca627194d04cb0710a2"
+		".claude/skills/quiet/skills/quiet-app/SKILL.md": "865a77c581d03d970a3f8cd23f00d204eed92ad566827008c38860d0b8c89c95"
 	}
 }
