@@ -1,0 +1,102 @@
+// A modern reset, scoped to what quiet owns: a QuietRoot subtree, or the whole document once
+// ThemeProvider/applyTheme marks <html data-quiet>. Every rule is :where(), so any component or app
+// class wins. It holds the catalog pixel-identical to the reference (tests/parity.spec.ts), which is
+// why two rules reach only the app's own classed elements, not quiet's (anything with a q-* class,
+// whose internals are drawn in the reference's content-box and UA control type):
+//   - border-box: on quiet's components it shrinks icons, inputs, skeletons and table cells;
+//   - font and colour inheritance on form controls.
+// An app class passed to a quiet component (className) sits beside a q-* class, so the component
+// keeps its own box and type.
+
+// The app's own elements size by their border box.
+:where([data-quiet]) :where([class]:not([class^="q-"], [class*=" q-"])),
+:where([data-quiet]) :where([class]:not([class^="q-"], [class*=" q-"]))::before,
+:where([data-quiet]) :where([class]:not([class^="q-"], [class*=" q-"]))::after {
+  box-sizing: border-box;
+}
+
+// No default margins: spacing comes from Stack, sections and the job tokens.
+:where([data-quiet]) :where(*) {
+  margin: 0;
+}
+
+:where([data-quiet]) :where(ul, ol) {
+  padding: 0;
+  list-style: none;
+}
+
+// Media fits its column, keeps its aspect and sits on its own line (no inline descender gap).
+:where([data-quiet]) :where(img, picture, video, canvas, svg) {
+  display: block;
+  max-width: 100%;
+}
+
+:where([data-quiet]) :where(img, video) {
+  height: auto;
+}
+
+// The app's own form controls take the surrounding type and colour.
+:where([data-quiet])
+  :where(input, button, textarea, select):where([class]:not([class^="q-"], [class*=" q-"])) {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+:where([data-quiet]) :where(textarea:not([rows])) {
+  min-block-size: 10em;
+}
+
+// Text: long words break instead of overflowing; headings balance, paragraphs avoid orphans.
+:where([data-quiet]) :where(p, h1, h2, h3, h4, h5, h6, li, dd, figcaption) {
+  overflow-wrap: break-word;
+}
+
+:where([data-quiet]) :where(p, li, dd, figcaption) {
+  text-wrap: pretty;
+}
+
+:where([data-quiet]) :where(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+}
+
+:where([data-quiet]) :where(table) {
+  border-collapse: collapse;
+}
+
+:where([data-quiet]) :where(dialog) {
+  padding: 0;
+  border: 0;
+}
+
+:where([data-quiet])
+  :where(
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    summary,
+    label[for],
+    select
+  ) {
+  cursor: pointer;
+}
+
+// A heading jumped to by #anchor isn't hidden under a sticky top bar.
+:where([data-quiet]) :where(:target) {
+  scroll-margin-block: 5ex;
+}
+
+// The whole document, once quiet owns <html>: no font inflation on rotated phones.
+:where(html[data-quiet]) {
+  text-size-adjust: none;
+}
+
+// Lets height: auto (and other keywords) animate; only where motion is welcome.
+@media (prefers-reduced-motion: no-preference) {
+  :where(html[data-quiet]) {
+    interpolate-size: allow-keywords;
+  }
+}
+
+:where(html[data-quiet] > body) {
+  min-block-size: 100dvh;
+}

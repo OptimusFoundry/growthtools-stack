@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 // Vendors quiet into an app, and checks the vendored copy is untouched.
 //
-//   node <path-to-quiet>/scripts/quiet.mjs sync [--to vendor/quiet]   (run in the app)
-//   npx quiet check [--to vendor/quiet]                                 (in the app, e.g. in CI)
+//   node <path-to-quiet>/scripts/quiet.mjs sync [--ref v0.7.0] [--to vendor/quiet]   (in the app)
+//   npx quiet check [--to vendor/quiet]                                               (in CI)
 //
-// sync copies quiet's source (no stories, tests or reference mirror) into the app, replacing what
-// was there, and writes a package.json whose exports point at that source, so the app depends on
-// it with "@optimusfoundry/quiet": "file:./vendor/quiet" and imports stay `@optimusfoundry/quiet`.
+// sync reads quiet as committed at --ref (a tag, branch or commit; default HEAD) with git archive,
+// never the working tree, so the manifest's commit is exactly what the app got; it warns when that
+// commit isn't on origin/main. It copies quiet's source (no stories, tests or reference mirror)
+// into the app, replacing what was there, and writes a package.json whose exports point at that
+// source, so the app depends on it with "@optimusfoundry/quiet": "file:./vendor/quiet" and imports
+// stay `@optimusfoundry/quiet`.
 // It also places quiet's Claude Code plugin (claude/: the quiet-app skill, the quiet-screen-reviewer
 // agent and the quiet-guard hooks) at .claude/skills/quiet/ in the project root, where Claude Code
 // loads it as a skills-directory plugin: no settings.json entry, and it loads in place, so a pull
@@ -21,12 +24,14 @@ import { createHash } from "node:crypto";
 import {
 	cpSync,
 	existsSync,
+	mkdtempSync,
 	readdirSync,
 	readFileSync,
 	rmSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -73,15 +78,39 @@ function sync() {
 	}
 	if (resolve(source) === resolve(process.cwd()))
 		fail("run sync in the app, not in the quiet repo");
-	const pkg = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
-	const git = (...a) => {
-		try {
-			return execFileSync("git", ["-C", source, ...a], { encoding: "utf8" }).trim();
-		} catch {
-			return "";
-		}
-	};
-	const dirty = git("status", "--porcelain", "--", ...COPY) !== "";
+	const git = (...a) =>
+		execFileSync("git", ["-C", source, ...a], {
+			encoding: "utf8",
+			maxBuffer: 1 << 30,
+			stdio: ["ignore", "pipe", "pipe"],
+		}).trim();
+	const ref = flag("--ref", "HEAD");
+	let commit;
+	try {
+		commit = git("rev-parse", "--verify", `${ref}^{commit}`);
+	} catch {
+		fail(`--ref ${ref} is not a commit in ${source}`);
+	}
+	// The snapshot: quiet's files at that commit, extracted to a scratch folder.
+	const tree = mkdtempSync(join(tmpdir(), "quiet-sync-"));
+	const tar = execFileSync("git", ["-C", source, "archive", commit, "--", ...COPY, PLUGIN], {
+		maxBuffer: 1 << 30,
+	});
+	execFileSync("tar", ["-x", "-C", tree], { input: tar });
+	if (!existsSync(join(tree, PLUGIN, ".claude-plugin/plugin.json"))) {
+		rmSync(tree, { recursive: true, force: true });
+		fail(
+			`${ref} predates quiet's Claude plugin (0.6.0); sync it with its own script: git -C ${source} show ${commit}:scripts/quiet.mjs`,
+		);
+	}
+	const pkg = JSON.parse(git("show", `${commit}:package.json`));
+	let onMain = null;
+	try {
+		git("merge-base", "--is-ancestor", commit, "origin/main");
+		onMain = true;
+	} catch (e) {
+		if (e.status === 1) onMain = false;
+	}
 	const app = process.cwd();
 	const where = relative(app, target) || ".";
 	const root = projectRoot(app);
@@ -91,9 +120,9 @@ function sync() {
 
 	rmSync(target, { recursive: true, force: true });
 	for (const path of COPY) {
-		cpSync(join(source, path), join(target, path), {
+		cpSync(join(tree, path), join(target, path), {
 			recursive: true,
-			filter: (from) => !SKIP.some((s) => from.startsWith(join(source, s))),
+			filter: (from) => !SKIP.some((s) => from.startsWith(join(tree, s))),
 		});
 	}
 	writeFileSync(
@@ -125,11 +154,12 @@ function sync() {
 			"\t",
 		)}\n`,
 	);
-	const placed = place(source, root, previous?.placed ?? {});
+	const placed = place(tree, root, previous?.placed ?? {});
+	rmSync(tree, { recursive: true, force: true });
 	const manifest = {
 		version: pkg.version,
-		commit: git("rev-parse", "HEAD") || null,
-		dirty,
+		ref,
+		commit,
 		files: Object.fromEntries(files(target).map((f) => [f, sha(join(target, f))])),
 		claudeRoot: relative(app, root) || ".",
 		placed,
@@ -137,7 +167,7 @@ function sync() {
 	writeFileSync(join(target, MANIFEST), `${JSON.stringify(manifest, null, "\t")}\n`);
 
 	console.log(
-		`quiet ${pkg.version} (${manifest.commit?.slice(0, 7) ?? "no git"}) → ${where}: ${Object.keys(manifest.files).length} files`,
+		`quiet ${pkg.version} (${commit.startsWith(ref) ? "" : `${ref} `}${commit.slice(0, 7)}) → ${where}: ${Object.keys(manifest.files).length} files`,
 	);
 	const claudeDir = relative(app, join(root, ".claude")) || ".claude";
 	console.log(
@@ -147,9 +177,9 @@ function sync() {
 		console.warn(
 			`warning: ${relative(app, join(root, SETTINGS))} still registers ${GUARD}; the plugin runs it now. Remove those hook entries (quiet check fails until you do).`,
 		);
-	if (dirty)
+	if (onMain === false)
 		console.warn(
-			"warning: the quiet repo has uncommitted changes in the synced files; the manifest's commit doesn't fully describe this copy",
+			`warning: ${commit.slice(0, 7)} is not on quiet's origin/main (fetch first if it should be); the app would carry unmerged quiet code`,
 		);
 	console.log(`
 First sync only, in the app:
@@ -260,4 +290,7 @@ function fail(message) {
 
 if (command === "sync") sync();
 else if (command === "check") check();
-else fail("usage: quiet sync [--to vendor/quiet] | quiet check [--to vendor/quiet]");
+else
+	fail(
+		"usage: quiet sync [--ref <tag|commit>] [--to vendor/quiet] | quiet check [--to vendor/quiet]",
+	);
