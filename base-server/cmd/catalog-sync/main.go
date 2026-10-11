@@ -114,13 +114,13 @@ func run(file, env string, dryRun, stripeOnly, dbOnly bool) error {
 	ids := &stripeIDs{productByKey: map[string]string{}, priceByKey: map[string]string{}}
 
 	if !dbOnly {
-		key := os.Getenv("STRIPE_SECRET_KEY")
+		key := os.Getenv("PAYMENTS_STRIPE_SECRET_KEY")
 		if key == "" {
-			return errors.New("STRIPE_SECRET_KEY not set")
+			return errors.New("PAYMENTS_STRIPE_SECRET_KEY not set")
 		}
-		productName := os.Getenv("PRODUCT_NAME")
+		productName := os.Getenv("APP_PRODUCT_NAME")
 		if productName == "" {
-			return errors.New("PRODUCT_NAME not set")
+			return errors.New("APP_PRODUCT_NAME not set")
 		}
 		stripe.Key = key
 		if err := syncStripe(ctx, cat, ids, dryRun, productName); err != nil {
@@ -326,13 +326,21 @@ func upsertStripePrice(ctx context.Context, stripeProductID string, p Price, dry
 
 func openDB() (*sqlx.DB, error) {
 	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USERNAME")
 	pass := os.Getenv("DB_PASSWORD")
 	name := os.Getenv("DB_NAME")
 	if host == "" || user == "" || pass == "" || name == "" {
 		return nil, errors.New("DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME must all be set")
 	}
-	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, pass, host, name)
+	if port == "" {
+		port = "5432"
+	}
+	sslmode := os.Getenv("DB_SSLMODE")
+	if sslmode == "" {
+		sslmode = "disable"
+	}
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, name, sslmode)
 	return sqlx.Connect("postgres", dsn)
 }
 
