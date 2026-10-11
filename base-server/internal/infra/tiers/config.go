@@ -13,11 +13,11 @@ const (
 
 // PriceDescriptionToTier maps price descriptions to tier names
 var PriceDescriptionToTier = map[string]TierName{
-	"free":            TierFree,
-	"lc_pro_monthly":  TierPro,
-	"lc_pro_annual":   TierPro,
-	"lc_team_monthly": TierTeam,
-	"lc_team_annual":  TierTeam,
+	"gt_free":         TierFree,
+	"gt_pro_monthly":  TierPro,
+	"gt_pro_annual":   TierPro,
+	"gt_team_monthly": TierTeam,
+	"gt_team_annual":  TierTeam,
 }
 
 // TierDisplayNames maps tier names to display strings
