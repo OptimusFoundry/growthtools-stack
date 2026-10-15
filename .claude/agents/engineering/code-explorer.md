@@ -1,8 +1,18 @@
 ---
 name: code-explorer
-description: Read-only codebase exploration worker. Given a question or scope, finds/traces/maps code — symbols, call chains, subsystem wiring, blast radius — and returns a structured report. Shared across departments: dispatched by feature-manager, plan-writer, prod-debug, codemod-supervisor, and reviewers when they need to understand the code before acting. Never edits; it reports. Not dispatched directly by a human.
+description: "Read-only codebase exploration worker. Given a question or scope, finds/traces/maps code — symbols, call chains, subsystem wiring, blast radius — and returns a structured report. Shared across departments: dispatched by feature-manager, plan-writer, prod-debug, codemod-supervisor, and reviewers when they need to understand the code before acting. Never edits; it reports. Not dispatched directly by a human."
 tools: Read, Grep, Glob, LSP, Bash
 model: sonnet
+color: green
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading

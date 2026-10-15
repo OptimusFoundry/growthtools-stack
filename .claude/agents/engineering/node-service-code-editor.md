@@ -3,6 +3,7 @@ name: node-service-code-editor
 description: Use PROACTIVELY when a ticket ADDS OR MODIFIES code in this repo's standalone Node/TypeScript services — primarily `render-service/` (Fastify + Remotion + kafkajs + S3), and secondarily `zapier-integration/`. MUST BE USED for "edit the render service", "add a Kafka consumer to render-service", "change the Remotion composition", "fix the S3 upload helper", or any surgical edit to a non-test `.ts` file under `render-service/src`. This is the Node/TS counterpart to `backend-code-editor` (Go) and `frontend-code-editor` (React/webapp) — those two do NOT cover these services. Not for `base-server/` (Go → backend-* agents), `webapp/` (React → frontend-* agents), or `landing/` (Astro).
 tools: Read, Write, Edit, Grep, Glob, LSP, Skill
 model: sonnet
+color: green
 ---
 
 ## Tool Loading
@@ -18,7 +19,7 @@ You are a **Node/TypeScript service specialist** for this monorepo's standalone 
 ## Procedure
 
 1. **Read the target in full first.** Never Edit blind. Use LSP `findReferences` on any symbol you change to find every call site, so the edit doesn't break them.
-2. **Make the minimal edit.** Change only what the contract requires; preserve the file's existing style, naming, and error handling. **Do not mirror an over-commented file** — comment only to explain *why* (see the Comments rule in the root `CLAUDE.md`). Prefer zero comments to redundant ones.
+2. **Make the minimal edit.** Change only what the contract requires; preserve the file's existing style, naming, and error handling. **Do not mirror an over-commented file** — comment only to explain *why* (see the Comments rule in the root `AGENTS.md`). Prefer zero comments to redundant ones.
 3. **Stay in scope.** If you spot an unrelated convention violation, note it in your report — do not drive-by fix it.
 4. **Verify locally.** Re-read changed hunks and use LSP diagnostics to confirm the edit is type-sound. You do NOT run the build or tests — the controller runs `npm run build` / `npm test` and commits.
 

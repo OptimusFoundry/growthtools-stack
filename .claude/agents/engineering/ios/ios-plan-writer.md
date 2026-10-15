@@ -1,10 +1,11 @@
 ---
 name: ios-plan-writer
-description: Architect a contract-level implementation plan for an AITravel iOS change — every decision resolved and every interface specified (file paths, type/command/Endpoint signatures, field tables, tokens/components by name, accessibility identifiers, the named mockup, exemplars to mirror, acceptance criteria, test scenarios, and the phase ordering with the foundation barrier) — but NOT the code bodies. Reads ios/docs/engineering/ + the named v2/mockups/ target then writes the plan, filing it as tickets under the feature's TRACKER epic. Executors write the code from the contracts.
+description: Architect a contract-level implementation plan for an AITravel iOS change — every decision resolved and every interface specified (file paths, type/command/Endpoint signatures, field tables, tokens/components by name, accessibility identifiers, the named mockup, exemplars to mirror, acceptance criteria, test scenarios, and the phase ordering with the foundation barrier) — but NOT the code bodies. Reads ios/docs/engineering/ + the named v2/mockups/ target then writes the plan, creating its tickets in Aijira under the feature's epic. Executors write the code from the contracts.
 tools: LSP, Read, Write, Glob, Grep, Bash, ToolSearch, Agent(ios-code-explorer)
 model: opus
 effort: high
 skills: [ios-architecture-rules, ios-models-networking-rules, ios-design-system-rules, ios-screens-rules, ios-testing-rules]
+color: orange
 ---
 
 # iOS Plan Writer
@@ -32,8 +33,7 @@ State the T-shirt size in the plan header and route accordingly:
 - `ios/docs/engineering/00-overview.md` (the pipeline, non-negotiables, the quality gates), then the
   per-layer docs your change touches: `01-architecture` · `02-models` · `03-store` · `04-networking` ·
   `05-design-system` · `06-screens` · `07-testing`.
-- Root `CLAUDE.md`'s "five non-negotiable rules" (always — there is no separate design-docs corpus for
-  v2, the old J-rule-numbered one was retired); for screens, the **named mockup** in
+- The visual non-negotiables in `ios/design-docs/00-overview.md` (J-0 in `06-judgment.md`) (always); for screens, the **named mockup** in
   `v2/mockups/screens/` it ports.
 - The live source — only to fill gaps the docs don't cover. For a quick single-symbol lookup, navigate
   yourself with **SwiftLSP** (`documentSymbol` to enter a file, then
@@ -68,32 +68,37 @@ A task list where **each task is a self-contained contract** for one scaffolder 
 
 ## Register with the ticket system
 
-Your input is a PRD (`docs/prds/<feature>.md`) or a change-brief (`docs/briefs/<slug>.md`) with an epic
-row already in `docs/TRACKER.md` at **Spec'd** — written by the `ios-writing-prds` skill before you run.
-(XS/S fast-mode plans may skip straight here from a bare feature ask with no PRD — see Phase 1; file the
-epic row yourself in that case, status **Planned**, `Plan` cell pointing at your output path.)
+Your input is a PRD (`docs/prds/<feature>.md`) or a change-brief (`docs/briefs/<slug>.md`) whose
+epic key is already in the header (`**Epic:** <KEY>`) — created by the `ios-writing-prds` skill
+before you run. (XS/S fast-mode plans may skip straight here from a bare feature ask with no PRD —
+see Phase 1; create the epic yourself in that case with
+`scripts/tickets create epic "<name>" --doc-path docs/prds/<file>.md`, which prints the bare key.)
 
-Emit the plan's task list as the canonical ticket table so `scripts/tickets sync` indexes it, exactly
-like a backend plan:
+Write the plan as fragments, exactly like a backend plan (`plan-writer.md` § "Plan Output Format"):
+the head — title, `**Epic:** <KEY>` header, the canonical skeleton table, shared contract — to
+`docs/plans/.fragments/<slug>/_head.md`, and one `## <ID> — <title>` section per ticket (a
+`**Rules:**` line, then `### <Section>` blocks) to `docs/plans/.fragments/<slug>/_writer.md`:
 
 ```
 | Ticket | Epic | Layer | Depends-on | AC refs | Status |
 ```
 
 - **Layer** is one of the `ios-*` heads in `routing.yml` (`ios-model`, `ios-networking`,
-  `ios-design-system`, `ios-screen`, `ios-test`, `ios-snapshot`, `ios-uitest`) — verify each with
-  `./scripts/tickets show <full-ID>` before handing the plan off; a bare or unrouted layer prints
-  `UNKNOWN` and is a plan bug, not a routing gap.
+  `ios-design-system`, `ios-screen`, `ios-test`, `ios-snapshot`, `ios-uitest`); a bare or unrouted
+  layer prints `UNKNOWN` in `./scripts/tickets show <KEY>` and is a plan bug, not a routing gap.
 - Every ticket carries a `**Rules:**` line naming the `<skill-name>:<RULE-ID>`s it must satisfy (from
   the `ios-*-rules` skills) — mirrors the backend convention, gives `ios-supervisor` and
   `ios-code-reviewer` a mechanical check.
-- **Flip the epic to Planned** in `docs/TRACKER.md` once the plan is written.
-- **One plan file per epic** — the ticket system errors if two files carry rows for the same epic ID.
-  A feature that spans both tracks (e.g. Apple Billing, EP-012) gets **two separate epics** — the
-  backend half and the iOS half each register and plan independently; cross-link them in each epic's
-  Feature-name prose, never by putting two plan links in one `Plan` cell (that cell must be a single
-  bare `docs/plans/...` path or `scripts/tickets` can't resolve it — confirmed against the EP-012 row,
-  which predates this convention and is left as-is rather than retrofitted).
+- `scripts/plan-assemble <slug> --dry-run`, then `scripts/plan-assemble <slug>`: it creates every
+  ticket in **Ready** with one batch call and writes `docs/plans/<date>-<slug>.md` ending in the
+  `## Tickets` key list. Then `scripts/plan-lint <plan>` must exit 0, and
+  `./scripts/tickets show <KEY>` on each key confirms its layer resolves.
+- **Record the plan path on the epic:** `scripts/tickets show <EPIC>` prints `version: N`, then
+  `scripts/tickets edit <EPIC> --version N --plan-path <plan path>` (exit 7 → re-run `show`, retry
+  once). The epic reads `planned` by itself once it has tickets.
+- **One plan file per epic** — the epic records a single plan path. A feature that spans both tracks
+  gets **two separate epics** — the backend half and the iOS half each register and plan
+  independently; cross-link them in each epic's title, never by giving one epic two plans.
 
 ## The phase ordering is mandatory
 
@@ -117,8 +122,8 @@ serializes it.
 
 ## Output
 
-Write the plan to **`docs/plans/<date>-<topic>.md`** — the same directory backend plans use, so
-`scripts/tickets sync` indexes it without any special-casing. (`docs/superpowers/plans/` remains the
+`plan-assemble` writes the plan to **`docs/plans/<date>-<topic>.md`** — the same directory backend
+plans use; the tickets themselves live in Aijira from the moment the batch succeeds. (`docs/superpowers/plans/` remains the
 historical archive for plans written before the ticket system covered iOS; don't add to it.) It is
 executed by **`ios-supervisor`**, dispatched directly on the plan — never invent a runtime; assume the
 supervisor dispatches your tasks. Read code to fill gaps; **never write code bodies** — if you sketch
@@ -126,8 +131,8 @@ one, label it a sketch the executor must reconcile against live source.
 
 ## Report
 
-The plan path; the epic ID and its `docs/TRACKER.md` status; the T-shirt size and critic routing (fast
-mode or `ios-plan-critic`); the phase ordering (with the foundation barrier marked); the ticket table
+The plan path; the epic key and its computed status (`scripts/tickets show <EPIC>`); the T-shirt size and critic routing (fast
+mode or `ios-plan-critic`); the phase ordering (with the foundation barrier marked); the ticket keys
 (agent · files · disjoint-or-serial); and any open decision you could not resolve from the docs/source
 (so `ios-supervisor` can settle it before execution).
 

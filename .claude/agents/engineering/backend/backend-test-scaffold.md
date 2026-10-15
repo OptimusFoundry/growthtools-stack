@@ -3,6 +3,7 @@ name: backend-test-scaffold
 description: Use PROACTIVELY after implementing new functionality to generate tests. MUST BE USED when user asks to "add tests", "write tests", "create test coverage", or after completing feature implementation. This agent generates tests at all levels (unit, store, integration) following established patterns.
 tools: Read, Write, Edit, Grep, Glob, Bash, LSP
 model: sonnet
+color: blue
 ---
 
 ## Tool Loading

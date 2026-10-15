@@ -4,6 +4,9 @@ description: Reviews ONE file against a checklist provided in its task, and retu
 tools: Read, Grep, Glob, LSP
 model: sonnet
 skills: [backend-architecture-rules, frontend-review-rules]
+color: purple
+maxTurns: 60
+omitClaudeMd: true
 ---
 
 ## Tool Loading

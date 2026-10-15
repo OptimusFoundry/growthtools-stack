@@ -4,6 +4,7 @@ description: Executes a repo-wide mechanical change end-to-end — scopes the tr
 tools: Read, Write, Edit, Grep, Glob, Bash, LSP, Agent(codemod-worker, code-explorer)
 model: sonnet
 skills: [shared-repo-tooling]
+color: green
 ---
 
 ## Tool Loading

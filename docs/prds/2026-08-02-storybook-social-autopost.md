@@ -1,6 +1,6 @@
 # Storybook Capture → Social Post — PRD
 
-**Epic:** EP-001   **Status:** Spec'd   **Date:** 2026-08-02   **Size:** M
+**Epic:** MEER-1   **Status:** Spec'd   **Date:** 2026-08-02   **Size:** M
 
 ## Problem / why
 

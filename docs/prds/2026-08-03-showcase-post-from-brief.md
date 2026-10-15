@@ -1,6 +1,6 @@
 # Showcase Post from Brief — PRD
 
-**Epic:** EP-005   **Status:** Spec'd   **Date:** 2026-08-03   **Size:** M
+**Epic:** MEER-26   **Status:** Spec'd   **Date:** 2026-08-03   **Size:** M
 
 ## Problem / why
 

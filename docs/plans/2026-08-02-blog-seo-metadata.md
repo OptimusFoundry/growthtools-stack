@@ -1,6 +1,6 @@
 # Blog SEO Metadata Wiring — Tech Plan
 
-**Epic:** EP-003   **PRD:** docs/prds/2026-08-02-blog-seo-metadata.md   **Scope:** full-stack (growth-tools only)
+**Epic:** MEER-3   **PRD:** docs/prds/2026-08-02-blog-seo-metadata.md   **Scope:** full-stack (growth-tools only)
 
 ## Scope note
 
@@ -35,15 +35,6 @@ sends it).
 | AC8 | Astro emits `article:published_time`/`article:modified_time` meta | Out of scope — astro-site repo |
 
 Growth-tools-scoped ACs (AC1, AC4, AC5) each map to ≥1 ticket below.
-
-## Tickets
-
-| Ticket | Epic | Layer | Depends-on | AC refs | Status |
-|--------|------|-------|-----------|---------|--------|
-| B1 | EP-003 | api | —  | AC1,AC5 | Todo |
-| F1 | EP-003 | fe  | —  | AC4 | Todo |
-| F2 | EP-003 | fe  | F1 | AC4 | Todo |
-| F3 | EP-003 | fe  | F2 | AC4 | Todo |
 
 ## Shared contract
 
@@ -109,194 +100,6 @@ failure.
 
 ---
 
-## B1 — `buildBlogMarkdown`: SEO frontmatter + featured-image resolution
-
-**Files:** `base-server/internal/github/processor/site_publish.go` (edit
-`buildBlogMarkdown`), `base-server/internal/github/processor/site_publish_test.go`
-(extend `TestBuildBlogMarkdown`)
-
-**Placement:** Inside `buildBlogMarkdown` (`site_publish.go:98-136`):
-- Insert the three new conditional frontmatter writes (`seoTitle`, `ogTitle`,
-  `ogDescription`) immediately after the existing `description` line
-  (`fmt.Fprintf(&b, "description: %q\n", description)`, line 129) and
-  before the `tags` line.
-- Insert the conditional `ogImage` write immediately after the `tags` line
-  (line 130) and before the `readingTime` line — reusing the same
-  `%s/public/media/file/%s` URL shape already built for in-body media
-  rewriting at line 121 (`fmt.Sprintf("%s/public/media/file/%s", publicURLBase, m.S3Key)`).
-
-**Signature:** unchanged — `buildBlogMarkdown(post store.BlogPost, media []store.Media, publicURLBase string) []byte`.
-
-**Behavior (extends the function's existing behavior, doesn't replace it):**
-- WHEN `post.SEOTitle` is non-nil SHALL write `seoTitle: %q` with its
-  dereferenced value; WHEN nil SHALL omit the line entirely (not an empty
-  string — the frontmatter key itself must not appear).
-- WHEN `post.OGTitle` is non-nil SHALL write `ogTitle: %q`; WHEN nil SHALL
-  omit the line.
-- WHEN `post.OGDescription` is non-nil SHALL write `ogDescription: %q`;
-  WHEN nil SHALL omit the line.
-- WHEN `post.FeaturedImageID` is non-nil AND some `m` in `media` has
-  `m.ID == *post.FeaturedImageID` SHALL write `ogImage: %q` with value
-  `fmt.Sprintf("%s/public/media/file/%s", publicURLBase, m.S3Key)`.
-- WHEN `post.FeaturedImageID` is nil, OR non-nil but no `m` in `media` has a
-  matching `ID`, SHALL omit the `ogImage` line — never an error, never an
-  empty-string line.
-
-**Test additions to `TestBuildBlogMarkdown`** (table-driven, same shape as
-the existing cases in `site_publish_test.go:344-443`):
-- `SEOTitle`/`OGTitle`/`OGDescription` all set → all three lines present
-  with correct quoted values.
-- all three nil (today's default zero-value post) → none of the three keys
-  appear anywhere in the output (`assert.NotContains`).
-- `FeaturedImageID` set, matching `store.Media` present in `media` →
-  `ogImage: "<publicURLBase>/public/media/file/<s3Key>"` present.
-- `FeaturedImageID` set, but no matching `store.Media` in `media` (stale
-  reference) → no `ogImage` key in the output, no panic.
-- `FeaturedImageID` nil → no `ogImage` key in the output.
-
-**Rules:** backend-architecture-rules:A-4, backend-testing-rules:TS-1, backend-testing-rules:TS-2
-
----
-
-## F1 — `FileUpload`: featured-image toggle affordance
-
-**Files:** `webapp/src/proto-design-system/components/composite/FileUpload/FileUpload.tsx`
-(edit), `webapp/src/proto-design-system/components/composite/FileUpload/FileUpload.module.scss`
-(edit — new classes)
-
-**Placement:** `FileUploadProps` (`FileUpload.tsx:45-71`) — add two new
-**optional** props next to the existing `onRemoveExisting`. Render logic —
-inside the `existingFiles.map(...)` loop (`FileUpload.tsx:270-311`), extend
-the per-tile block (`existingTile` → `existingThumb`) that already renders
-the remove-X button, adding a sibling toggle button gated on
-`isImage && onSetFeatured`. Because both new props are optional and the
-toggle only renders when `onSetFeatured` is passed, no other `FileUpload`
-consumer (e.g. `create-post`'s `MediaUploadSection` usage) is affected —
-this is additive, not a behavior change to the shared component's default
-shape.
-
-**Contract (props added to `FileUploadProps`):**
-```
-featuredId?: string;                    // id of the existing file currently marked featured
-onSetFeatured?: (id: string) => void;   // called with the clicked tile's id (toggle semantics owned by the caller)
-```
-
-**Behavior:**
-- WHEN `onSetFeatured` is provided AND a tile's `existing.contentType`
-  starts with `image/` SHALL render a toggle button in that tile (alongside
-  the existing remove-X), calling `onSetFeatured(existing.id)` on click.
-- WHEN `onSetFeatured` is provided AND a tile's `existing.contentType` does
-  NOT start with `image/` (e.g. video) SHALL NOT render the toggle.
-- WHEN `onSetFeatured` is undefined SHALL render no toggle on any tile —
-  today's shape, unchanged (back-compat for other `FileUpload` consumers).
-- WHEN `existing.id === featuredId` the tile SHALL carry a distinct
-  "featured" visual state (new `existingTileFeatured` class) and the toggle
-  button's accessible name SHALL read `"{existing.name} is the featured
-  image"`; otherwise the accessible name SHALL read `"Set {existing.name}
-  as featured image"` — the file name discriminates the name across
-  multiple tiles (mirrors the existing `Remove ${existing.name}` pattern on
-  the same tile, `FileUpload.tsx:303`).
-- Toggle semantics (unset) are the caller's responsibility: `FileUpload`
-  itself is stateless here — it always calls `onSetFeatured(existing.id)`
-  on click, even for the currently-featured tile. F2 turns a click on the
-  already-featured tile into "unset" by comparing ids in `BlogWizard`.
-
-**Rules:** frontend-style-rules:I-1, frontend-a11y-rules:A-4
-
----
-
-## F2 — `MediaUploadSection` + `BlogWizard`: featured-image state wiring
-
-**Files:** `webapp/src/components/create-post/compose/MediaUploadSection.tsx`
-(edit — pass-through props), `webapp/src/components/blog/BlogWizard.tsx`
-(edit — state + `buildRequest`)
-**Depends-on:** F1
-
-**Placement:** `MediaUploadSectionProps` (`MediaUploadSection.tsx:9-14`) —
-add `featuredImageId`/`onSetFeatured` next to `existingMedia`/
-`onRemoveExisting`; pass through to the existing `<FileUpload>` call
-(`MediaUploadSection.tsx:27-38`) as `featuredId`/`onSetFeatured`. In
-`BlogWizard.tsx` — new `useState` next to the existing `existingMedia`
-state (`BlogWizard.tsx:93-95`); the inline `onRemoveExisting` arrow
-currently passed to `<MediaUploadSection>` (`BlogWizard.tsx:462-464`)
-becomes a named `useCallback` handler so it can also clear
-`featuredImageId`; wiring into the `<MediaUploadSection>` call
-(`BlogWizard.tsx:458-465`) and into `buildRequest()` (`BlogWizard.tsx:189-223`).
-
-**Contract:**
-```
-// MediaUploadSectionProps additions
-featuredImageId?: string;
-onSetFeatured?: (id: string) => void;
-
-// BlogWizard.tsx additions
-featuredImageId: string | undefined   // new component state; initial value = initialBlogPost?.featuredImageId
-handleRemoveMedia(id: string): void   // replaces the inline onRemoveExisting arrow currently passed to MediaUploadSection
-handleSetFeatured(id: string): void
-```
-
-**Behavior:**
-- `handleRemoveMedia(id)` SHALL filter `id` out of `existingMedia` (today's
-  behavior, unchanged) AND, WHEN `id === featuredImageId`, SHALL also clear
-  `featuredImageId` to `undefined` — decision 5 above.
-- `handleSetFeatured(id)` SHALL set `featuredImageId` to `undefined` WHEN
-  `id === featuredImageId` (toggle-off, clicking the already-featured
-  tile), otherwise SHALL set `featuredImageId` to `id`.
-- `<MediaUploadSection>` SHALL receive `featuredImageId={featuredImageId}`
-  and `onSetFeatured={handleSetFeatured}` in addition to its existing props.
-- `buildRequest()` SHALL include `featured_image_id: featuredImageId ||
-  undefined` in its returned object (same `|| undefined` convention already
-  used for `excerpt`/`seo_title`/etc. in the same function), and
-  `featuredImageId` SHALL be added to its `useCallback` dependency array.
-- No change to the SSE-generate `useEffect` (`BlogWizard.tsx:124-135`) —
-  `featuredImageId` is never part of the generated-post payload, matching
-  how `existingMedia`/media metadata already isn't round-tripped there.
-
-**Rules:** frontend-composition-rules
-
----
-
-## F3 — E2E: MSW handler + Playwright coverage for the featured-image toggle
-
-**Files:** `webapp/e2e/handlers/blog.handlers.ts` (extend — `featured_image_id`
-in create/update scenario bodies), `webapp/e2e/blog.spec.ts` (extend)
-**Depends-on:** F2
-
-**Endpoint × handler table:**
-| Endpoint | Handler change |
-|---|---|
-| `POST /api/protected/blog` | request-body assertion scenario: `featured_image_id` present when a toggle was clicked, absent when it wasn't |
-| `PUT /api/protected/blog/:id` | same — request-body assertion scenario for `featured_image_id` |
-
-**Playwright coverage (table headings only, per `frontend-e2e-rules` —
-golden path + every interaction this ticket introduces):**
-- `blog.spec.ts`, editor with ≥2 attached images: clicking a tile's "Set as
-  featured" toggle marks that tile featured (accessible name flips to "is
-  the featured image") and un-marks any previously-featured tile (single-
-  select).
-- Clicking the already-featured tile's toggle un-marks it (toggle-off).
-- Removing the currently-featured attachment (existing remove-X) clears the
-  featured state — no tile shows as featured afterward.
-- Save draft / Publish with a featured image selected → outgoing request
-  body includes `featured_image_id` matching the selected tile's id.
-- Save draft / Publish with no featured image selected → outgoing request
-  body's `featured_image_id` is `undefined`/absent (regression check — this
-  is the "nothing sends it today" gap this plan closes).
-- Editing an existing post whose `featuredImageId` is already set → that
-  tile renders as featured on load (state hydrates from `initialBlogPost`).
-- Non-image attachments (e.g. video, if present in fixtures) never render
-  the toggle.
-
-**Selector contract** (house convention is role/label-based, not
-`data-testid`, per `webapp/docs/TESTING-PATTERNS.md`):
-- Featured toggle (unfeatured tile): `getByRole('button', { name: \`Set ${fileName} as featured image\` })`
-- Featured toggle (featured tile): `getByRole('button', { name: \`${fileName} is the featured image\` })`
-- Existing remove button (unchanged): `getByRole('button', { name: \`Remove ${fileName}\` })`
-
-**Rules:** frontend-e2e-rules
-
----
-
 ## Notes for human confirmation
 
 - **F1 modifies a shared design-system component** (`FileUpload`, also used
@@ -311,3 +114,10 @@ golden path + every interaction this ticket introduces):**
 - The astro-site changes (AC2, AC3, AC6, AC7, AC8) are **not tracked as
   tickets in this plan** per the task's explicit scope instruction — they
   ship directly in the astro-site repo, matching EP-002's precedent.
+
+## Tickets
+
+1. MEER-4 — `buildBlogMarkdown`: SEO frontmatter + featured-image resolution
+2. MEER-5 — `FileUpload`: featured-image toggle affordance
+3. MEER-6 — `MediaUploadSection` + `BlogWizard`: featured-image state wiring
+4. MEER-7 — E2E: MSW handler + Playwright coverage for the featured-image toggle

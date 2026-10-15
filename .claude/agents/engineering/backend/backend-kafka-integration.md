@@ -4,6 +4,7 @@ description: Use PROACTIVELY when adding event-driven functionality. MUST BE USE
 tools: Read, Write, Edit, Grep, Glob, LSP, Skill
 model: sonnet
 skills: [backend-kafka-rules, backend-architecture-rules]
+color: blue
 ---
 
 ## Tool Loading

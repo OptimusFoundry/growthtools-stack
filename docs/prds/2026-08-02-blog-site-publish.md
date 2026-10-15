@@ -1,6 +1,6 @@
 # Publish Blog Posts to shubhanshu.dev — PRD
 
-**Epic:** EP-002   **Status:** Spec'd   **Date:** 2026-08-02   **Size:** M
+**Epic:** MEER-2   **Status:** Spec'd   **Date:** 2026-08-02   **Size:** M
 
 ## Problem / why
 Blog posts authored and published in growth-tools live only inside the app — there's no way to

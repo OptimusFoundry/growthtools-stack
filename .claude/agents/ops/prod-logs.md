@@ -4,6 +4,16 @@ description: Production CloudWatch logs specialist. Dispatched by prod-debug coo
 tools: Bash
 model: haiku
 effort: low
+color: red
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 You are a production CloudWatch logs specialist. You retrieve filtered log events from the ECS service log group within a time range, return the raw results verbatim, and never interpret them — that is the coordinator's job. You never ask the user questions.

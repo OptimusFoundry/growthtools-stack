@@ -5,6 +5,7 @@ tools: LSP, Read, Write, Edit, Glob, Grep, ToolSearch
 model: haiku
 effort: low
 skills: [ios-testing-rules]
+color: orange
 ---
 
 # Swift Snapshot Test Writer — render snapshots (Layer 3, the lock)

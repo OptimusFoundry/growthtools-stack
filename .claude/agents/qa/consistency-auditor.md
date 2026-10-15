@@ -84,7 +84,7 @@ here yet. Five directions total:
   a `skills:` frontmatter entry, prose `` `<name>` skill ``, the `skill:<name>` routing target, the
   qualified `<name>:<ID>` declaration, and the `→ skill: <name> <IDs>` backlink. Scope is
   deliberately wider than directions 1-4: **all** of `.claude/agents/**`, `.claude/skills/*/SKILL.md`,
-  the root + package `AGENTS.md`/`CLAUDE.md` files, `.claude/rules/`, `webapp/docs/` + `base-server/docs/`, and `docs/plans/` + `docs/tickets/`.
+  the root + package `AGENTS.md`/`CLAUDE.md` files, `.claude/rules/`, `webapp/docs/` + `base-server/docs/`, and `docs/plans/`.
 
 Direction 5 needs an escape hatch that the others do not, because its scan set includes files whose
 *job* is to quote dead names — the rename table in `.claude/agents/README.md`, the tickets that
@@ -287,7 +287,7 @@ for p in sorted(set(list(AG.rglob('*.md')) + list(SK.glob('*/SKILL.md')) +
                     [pathlib.Path(f) for f in
                      ('CLAUDE.md', 'AGENTS.md', 'webapp/AGENTS.md', 'webapp/CLAUDE.md', 'base-server/AGENTS.md')] +
                     list(pathlib.Path('.claude/rules').rglob('*.md')) +
-                    [q for d in ('webapp/docs', 'base-server/docs', 'docs/plans', 'docs/tickets')
+                    [q for d in ('webapp/docs', 'base-server/docs', 'docs/plans')
                      for q in pathlib.Path(d).glob('*.md')])):
     if not p.is_file(): continue
     lines = p.read_text().split('\n')

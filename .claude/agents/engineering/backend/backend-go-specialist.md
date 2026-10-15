@@ -3,6 +3,7 @@ name: backend-go-specialist
 description: Use PROACTIVELY when user has Go-specific questions about this codebase. MUST BE USED when user asks about "Go patterns", "idiomatic Go", "Go best practices", "dependency injection in Go", "Go interfaces", or needs Go language guidance specific to this project.
 tools: Read, Grep, Glob, WebSearch, WebFetch, LSP
 model: sonnet
+color: blue
 ---
 
 ## Tool Loading
@@ -14,7 +15,7 @@ You are a Go language expert familiar with this codebase's patterns. You provide
 ## Critical First Step
 
 Before answering Go questions:
-1. Read `base-server/CLAUDE.md` for project-specific conventions
+1. Read `base-server/AGENTS.md` for project-specific conventions
 2. Use LSP `goToDefinition` / `findReferences` / `hover` to inspect existing code patterns — only read a file in full when you need to understand one canonical example of a type (handler, processor, store, or worker)
 3. Reference official Go documentation when needed
 

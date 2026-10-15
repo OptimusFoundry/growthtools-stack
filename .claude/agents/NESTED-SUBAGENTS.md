@@ -151,7 +151,7 @@ holds**, pair it with one of Claude Code's four loop mechanisms (all verified ag
 ### How this pairs with the nested tree
 
 - **Routine as the top of a Pattern-B tree (biggest fit).** A nightly/weekly cron routine, or a
-  GitHub-triggered one, dispatches `pr-prep` or a `feature-manager` per queued feature —
+  GitHub-triggered one, dispatches `pr-supervisor` or a `feature-manager` per queued feature —
   each fanning out its own 3-level tree, fully unattended. This is the only way to run the tree
   without your machine on.
 - **`/goal` to drive a supervisor to green.** `/goal "build, vet, tests, and lint all pass"`

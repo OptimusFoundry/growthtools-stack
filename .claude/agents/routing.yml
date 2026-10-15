@@ -122,7 +122,7 @@ qualified:
 # DECISION 2 — `processor`, `handler`, `migration`, `node`, `worker` and `e2e` are live at
 # level 2 AND present here as heads. They never occur as bare layer values in any plan table,
 # so adding them changes zero existing rows (verified against the live corpus). They are here
-# because a human hand-filing a ticket types the bare word: `tickets file "x" --layer processor`
+# because a human hand-filing a ticket types the bare word: `tickets create chore "x" --layer processor`
 # must resolve rather than report "needs routing".
 #
 # DELIBERATELY ABSENT: `pipeline`, `providers`, `bootstrap` (1 row each). They have no correct

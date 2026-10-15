@@ -3,6 +3,16 @@ name: ios-code-explorer
 description: Read-only Swift codebase exploration worker for the AITravel iOS app. Given a question or scope, finds/traces/maps Swift code — symbols, call chains, chrome/component wiring, blast radius — via SwiftLSP, and returns a structured report. The ios/ counterpart to the shared `code-explorer` (that one is Go/TS-oriented and doesn't carry the sourcekit-lsp warm-index caveat). Dispatched by ios-plan-writer, ios-plan-critic, ios-code-reviewer, ios-supervisor, or a human/brainstorming session investigating ios/ before acting. Never edits; it reports.
 tools: LSP, Read, Glob, Grep, Bash, ToolSearch
 model: sonnet
+color: orange
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading

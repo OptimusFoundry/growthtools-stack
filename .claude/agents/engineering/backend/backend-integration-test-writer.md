@@ -4,6 +4,7 @@ description: Writes and audits real-HTTP + real-DB integration tests for the Go 
 tools: Read, Write, Edit, Grep, Glob, Bash, LSP, Skill
 model: sonnet
 skills: [backend-testing-rules]
+color: blue
 ---
 
 ## Tool Loading
@@ -15,7 +16,7 @@ You are an integration test specialist for this Go backend. All test patterns ar
 ## Required First Steps
 
 1. Read `base-server/docs/TESTING.md` — Level 3 section covers the in-process server boot (`testenv.Start` wraps the real Gin router in an `httptest.Server`), test structure, seeding via store, JWT minting, status code coverage requirements, and the full example
-2. Read `base-server/CLAUDE.md` — Testing Requirements section
+2. Read `base-server/AGENTS.md` — Testing Requirements section
 3. Read one existing file in `base-server/tests/` in full — canonical integration test example; use LSP `findReferences` for any other style questions rather than reading more test files
 4. Use LSP `goToDefinition` on each handler method being tested to identify its status codes and error branches — do not read the handler file in full
 
