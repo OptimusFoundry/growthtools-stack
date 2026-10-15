@@ -1,6 +1,6 @@
 ---
 name: shared-writing-prds
-description: Interactive PRD (product-requirements) authoring for the Launchpad SaaS template. Use this whenever the user wants to spec a new feature, write a PRD, capture product requirements, turn a rough feature idea into a proper spec, or is about to plan/build any net-new feature in this repo — even if they just describe an idea without saying the word "PRD". It runs a short discovery interview (one question at a time), then writes docs/prds/<feature>.md and registers the feature as an epic in docs/TRACKER.md, ready for plan-writer to turn into a tech plan. Do NOT use for bug fixes, refactors, infra/re-architecture work, or requests to simply switch on a capability the template already ships (auth, billing, teams, API keys, webhooks, email, Kafka) — those skip the PRD and take the change-brief door instead (`docs/briefs/<slug>.md` + a TRACKER row → `plan-writer`), which this skill hands off to rather than dead-ending. Note "already ships" means enabling the existing capability, NOT re-architecting onto it — "move rendering onto Kafka" is a change brief, not an exclusion.
+description: Interactive PRD (product-requirements) authoring for the Aijira SaaS template. Use this whenever the user wants to spec a new feature, write a PRD, capture product requirements, turn a rough feature idea into a proper spec, or is about to plan/build any net-new feature in this repo — even if they just describe an idea without saying the word "PRD". It runs a short discovery interview (one question at a time), then writes docs/prds/<feature>.md and creates the feature's epic in Aijira (key in the PRD header), ready for plan-writer to turn into a tech plan. Do NOT use for bug fixes, refactors, infra/re-architecture work, or requests to simply switch on a capability the template already ships (auth, billing, teams, API keys, webhooks, email, Kafka) — those skip the PRD and take the change-brief door instead (`docs/briefs/<slug>.md` + an epic in Aijira → `plan-writer`), which this skill hands off to rather than dead-ending. Note "already ships" means enabling the existing capability, NOT re-architecting onto it — "move rendering onto Kafka" is a change brief, not an exclusion.
 ---
 
 # Writing PRDs
@@ -12,9 +12,9 @@ head; your job is to interview it into a precise, testable PRD that a downstream
 This is the **one human-in-the-loop gate** in the pipeline:
 
 ```
-shared-writing-prds (you, interactive)  →  docs/prds/<feature>.md  +  epic row in docs/TRACKER.md
+shared-writing-prds (you, interactive)  →  docs/prds/<feature>.md  +  epic in Aijira (`tickets create epic`)
       ↓
-plan-writer (autonomous)         →  docs/plans/<feature>.md  (tickets under the epic)
+plan-writer (autonomous)         →  docs/plans/<feature>.md  +  Ready tickets under the epic
       ↓
 supervisor tree (autonomous)     →  builds it
 ```
@@ -22,22 +22,24 @@ supervisor tree (autonomous)     →  builds it
 Because everything downstream runs without asking the user anything, the PRD is where all the
 product decisions get made. A vague PRD produces a confidently-wrong plan. Spend the questions.
 
-## The two-tier model (why the tracker matters)
+## The two-tier model (why the epic matters)
 
-Think Jira. The PRD **is an epic**; the tech plan `plan-writer` produces later holds the
-**tickets** under it. `docs/TRACKER.md` is the epic board — the single place to see every feature
-and where it is in the pipeline. Your output creates the epic row at status **Spec'd**; later
-stages advance it (`Planned` → `In progress` → `Shipped`). You own tier 1 only — never invent
-tickets or tech tasks, that's `plan-writer`'s job.
+Think Jira. The PRD **is an epic**; `plan-writer` later creates the **tickets** under it in
+Aijira, the board where every feature and its place in the pipeline shows. You create the epic
+and nothing else; its status is computed from its tickets (open → planned → in progress →
+shipped), so nobody edits it by hand. You own tier 1 only — never invent tickets or tech tasks,
+that's `plan-writer`'s job.
 
 ## Step 1 — Load context before asking anything
 
 Two reasons: don't re-spec something the template already does, and ask sharper questions because
 you know the terrain.
 
-1. Read `docs/TRACKER.md` if it exists — the existing epics. If the request overlaps one that's
-   already `Shipped`, say so and confirm the user wants a change/extension rather than a new epic.
-2. Keep in mind what Launchpad **already ships**, so you never propose building it from scratch —
+1. Look at the existing epics: `scripts/tickets next` (ready tickets in the product, by epic) and
+   the product's epic list (`GET /api/public/products/<slug>/items?kind=epic` on Aijira, or its
+   board). If the request overlaps an epic that is already `shipped`, say so and confirm the user
+   wants a change/extension rather than a new epic.
+2. Keep in mind what Aijira **already ships**, so you never propose building it from scratch —
    only extending it: **auth** (JWT + Google OAuth + magic-link), **billing** (Stripe: products,
    subscriptions, checkout, webhooks), **team accounts**, **API keys**, **outgoing webhooks**,
    **Zapier integration**, **transactional email** (Resend), a **Kafka event backbone**, and a
@@ -50,7 +52,9 @@ there, but the work still belongs in the harness. Say which door it takes, then 
 
 1. Write a **change brief** to `docs/briefs/<slug>.md` — problem, scope (in/out), constraints,
    acceptance checks. Short: no interview, no personas, no user stories. A dozen lines is normal.
-2. Register it in `docs/TRACKER.md` as a `Change` row, same status flow as an epic.
+2. Create its epic: `scripts/tickets create epic "<title>" --doc-path docs/briefs/<slug>.md`
+   prints the bare key (`AIJ-12`); write `**Epic:** <KEY>` into the brief's header. A non-zero
+   exit stops here — report the exit code, never fall back to a file.
 3. Hand the brief path to `plan-writer`, then execute per CLAUDE.md Step 2 (route by blast radius).
 
 **Never** let a decline end with the user (or you) falling through to a generic, roster-unaware
@@ -92,16 +96,15 @@ caught in review; a hidden one ships as a bug.
 
 ## Step 3 — Write the PRD
 
-Get today's date with `date +%Y-%m-%d`. Derive the next epic ID by scanning `docs/TRACKER.md`
-for the highest `EP-0NN` and adding one (start at `EP-001` if the file/rows don't exist yet).
-Slugify the feature name for the filename.
+Get today's date with `date +%Y-%m-%d`. Slugify the feature name for the filename. The epic key
+comes from Aijira in Step 4; write the PRD with `**Epic:** <KEY>` filled in once you have it.
 
 Write to `docs/prds/YYYY-MM-DD-<feature-slug>.md` using **exactly** this structure:
 
 ```markdown
 # <Feature Name> — PRD
 
-**Epic:** EP-0NN   **Status:** Spec'd   **Date:** YYYY-MM-DD   **Size:** XS|S|M|L
+**Epic:** <KEY>   **Date:** YYYY-MM-DD   **Size:** XS|S|M|L
 
 ## Problem / why
 <The pain today and why it's worth solving. 2–4 sentences.>
@@ -130,7 +133,7 @@ Write to `docs/prds/YYYY-MM-DD-<feature-slug>.md` using **exactly** this structu
 <Key screens/flows/states. Reference existing design-system patterns where relevant; no pixel specs.>
 
 ## Dependencies
-<Existing subsystems reused (auth/billing/teams/api-keys/webhooks/email/kafka) + any external integration.>
+<Existing capabilities reused (auth/billing/teams/api-keys/webhooks/email/kafka) + prior epics + any external integration — as capabilities, never code paths.>
 
 ## Open questions & assumptions
 <Anything unresolved, and the assumption you're proceeding on. Empty is fine if nothing's open.>
@@ -139,6 +142,13 @@ Write to `docs/prds/YYYY-MM-DD-<feature-slug>.md` using **exactly** this structu
 Keep it tight and decision-dense. A PRD is a decision record, not an essay — every line should
 remove ambiguity for the person planning the build.
 
+**A PRD never cites code.** No file paths, packages, function or type names, sibling-repo files,
+libraries, test locations or test harnesses — not in Dependencies, not in ACs, not anywhere.
+Name template capabilities as capabilities ("the template's outbound webhooks", "team roles"),
+entities and endpoints as rough shape, and user-facing config keys where they are product
+surface. How the build reuses template code and where tests go is `plan-writer`'s job, through
+the plan's `**Mirrors:**`/`**Tests:**` lines and `plan-critic`. A PRD that pre-decides code placement bypasses that gate and goes stale.
+
 **Size — infer it, don't ask.** Set the header's `Size:` from the shape of the feature; confirm it
 in your Step 5 summary rather than adding an interview question. It routes the whole pipeline:
 - **XS** — the diff is describable in one sentence; 1–2 files, single layer.
@@ -146,35 +156,21 @@ in your Step 5 summary rather than adding an interview question. It routes the w
 - **M** — standard full-stack feature (new entity + endpoints + page).
 - **L** — 3+ domains, novel architecture, or heavy trade-offs (plan-writer runs on opus).
 
-## Step 4 — Register the epic in the tracker
+## Step 4 — Create the epic in Aijira
 
-Update `docs/TRACKER.md` so the epic board reflects the new feature. Create the file with this
-header if it doesn't exist yet:
-
-```markdown
-# Product Tracker (Epics)
-
-Each row is a feature epic. Status flows: Backlog → Spec'd → Planned → In progress → Shipped.
-Tickets live in the linked tech plan (created by plan-writer).
-
-| Epic | Feature | PRD | Plan | Status |
-|------|---------|-----|------|--------|
+```bash
+scripts/tickets create epic "<Feature Name>" --doc-path docs/prds/YYYY-MM-DD-<slug>.md
 ```
 
-Append (or update) the row for this feature at status **Spec'd**, linking the PRD path and
-leaving Plan as `—`:
+It prints the bare key (`AIJ-12`) on stdout. Put it in the PRD header as `**Epic:** <KEY>`. When
+the command exits non-zero, stop and report the exit code to the user; never fall back to a file.
 
-```markdown
-| EP-0NN | <Feature Name> | docs/prds/YYYY-MM-DD-<slug>.md | — | Spec'd |
-```
-
-If you're revising a feature that already has an epic row, update that row instead of adding a
-duplicate.
+If you're revising a feature that already has an epic, keep its key and skip this step.
 
 ## Step 5 — Report
 
 Tell the user, briefly:
-- PRD path and epic ID, and the inferred **Size** (one line of reasoning so they can override it)
+- PRD path and epic key, and the inferred **Size** (one line of reasoning so they can override it)
 - Any **Open questions** that still need their input before the build is safe
 - The next step, by size:
   - XS/S single-layer: **"Run `plan-writer` on this PRD (fast mode) → then `backend-supervisor`/`frontend-supervisor` directly."**

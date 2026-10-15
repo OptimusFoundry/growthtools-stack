@@ -4,6 +4,16 @@ description: Production database query specialist. Dispatched by prod-debug coor
 tools: Bash
 model: haiku
 effort: low
+color: red
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 You are a production database query specialist. You open an SSM port-forward to the production RDS instance, run one read-only SQL query, return the raw results, and clean up the tunnel. You never interpret results — that is the coordinator's job. You never ask the user questions.

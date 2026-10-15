@@ -1,6 +1,6 @@
 ---
 name: ios-writing-prds
-description: Interactive PRD (product-requirements) authoring for the AITravel native iOS app. Use this whenever the user wants to spec a new iOS feature, write a PRD for a screen/flow, capture product requirements for the app, or is about to plan/build any net-new iOS feature — even if they just describe an idea without saying the word "PRD". It runs a short discovery interview (one question at a time), then writes docs/prds/<feature>.md and registers the feature as an epic in docs/TRACKER.md, ready for ios-plan-writer to turn into a contract-level plan. Do NOT use for a bug fix, a small visual tweak, or a single-screen/single-layer change that's describable in one sentence — those are XS/S and go straight to ios-plan-writer in fast mode, no PRD. This is the iOS-track counterpart to shared-writing-prds (backend); use that skill instead for base-server/ features.
+description: Interactive PRD (product-requirements) authoring for the AITravel native iOS app. Use this whenever the user wants to spec a new iOS feature, write a PRD for a screen/flow, capture product requirements for the app, or is about to plan/build any net-new iOS feature — even if they just describe an idea without saying the word "PRD". It runs a short discovery interview (one question at a time), then writes docs/prds/<feature>.md and creates the feature's epic in Aijira (key in the PRD header), ready for ios-plan-writer to turn into a contract-level plan. Do NOT use for a bug fix, a small visual tweak, or a single-screen/single-layer change that's describable in one sentence — those are XS/S and go straight to ios-plan-writer in fast mode, no PRD. This is the iOS-track counterpart to shared-writing-prds (backend); use that skill instead for base-server/ features.
 ---
 
 # Writing PRDs — iOS
@@ -12,9 +12,9 @@ into a contract-level plan without guessing at intent.
 This is the **one human-in-the-loop gate** in the iOS pipeline:
 
 ```
-ios-writing-prds (you, interactive)  →  docs/prds/<feature>.md  +  epic row in docs/TRACKER.md
+ios-writing-prds (you, interactive)  →  docs/prds/<feature>.md  +  epic in Aijira (`tickets create epic`)
       ↓
-ios-plan-writer (autonomous)   →  docs/plans/<feature>.md  (a ticket table under the epic)
+ios-plan-writer (autonomous)   →  docs/plans/<feature>.md  +  Ready tickets under the epic
       ↓
 ios-plan-critic (M/L only)     →  GO / NEEDS-WORK, ≤2 revision rounds
       ↓
@@ -24,29 +24,29 @@ ios-supervisor (autonomous)    →  dispatches ios-*, runs the gates, commits
 Because everything downstream runs without asking the user anything, the PRD is where all the product
 and visual decisions get made. A vague PRD produces a confidently-wrong plan. Spend the questions.
 
-## The two-tier model (why the tracker matters)
+## The two-tier model (why the epic matters)
 
-Think Jira. The PRD **is an epic**; the plan `ios-plan-writer` produces later holds the **tickets**
-under it, indexed by `scripts/tickets sync` exactly like a backend plan. `docs/TRACKER.md` is the epic
-board shared by both tracks — the single place to see every feature, backend or iOS, and where it is in
-the pipeline. Your output creates the epic row at status **Spec'd**; later stages advance it
-(`Planned` → `In progress` → `Shipped`). You own tier 1 only — never invent tickets or tasks, that's
-`ios-plan-writer`'s job.
+Think Jira. The PRD **is an epic**; `ios-plan-writer` later creates the **tickets** under it in
+Aijira, exactly like a backend plan. Aijira is the board shared by both tracks — the single place to
+see every feature, backend or iOS, and where it is in the pipeline. You create the epic and nothing
+else; its status is computed from its tickets (open → planned → in progress → shipped). You own
+tier 1 only — never invent tickets or tasks, that's `ios-plan-writer`'s job.
 
 **A feature spanning both tracks gets two epics, not one.** If the ask needs both a `base-server/`
 change and an iOS change (e.g. wiring a new endpoint into a new screen), register the iOS half as its
-own epic and note the companion backend epic in its Feature-name prose (`"<Feature> (iOS half of
-EP-0NN)"`). One epic, one plan file, one `Plan` cell — the ticket system can't resolve an epic split
-across two files.
+own epic and note the companion backend epic in its title (`"<Feature> (iOS half of AIJ-12)"`).
+One epic, one plan file, one plan path — an epic split across two plans has nowhere to record both.
 
 ## Step 1 — Load context before asking anything
 
 Two reasons: don't re-spec a screen/flow that already exists, and ask sharper questions because you
 know the terrain.
 
-1. Read `docs/TRACKER.md` if it exists — the existing epics. If the request overlaps one that's already
-   `Shipped`, say so and confirm the user wants a change/extension rather than a new epic.
-2. Read root `CLAUDE.md`'s "five non-negotiable rules" and skim `v2/mockups/screens/` so you know what
+1. Look at the existing epics: `scripts/tickets next` (ready tickets in the product, by epic) and
+   the product's epic list (`GET /api/public/products/<slug>/items?kind=epic` on Aijira, or its
+   board). If the request overlaps an epic that is already `shipped`, say so and confirm the user
+   wants a change/extension rather than a new epic.
+2. Read the visual non-negotiables in `ios/design-docs/00-overview.md` and skim `v2/mockups/screens/` so you know what
    screens and patterns already exist — new features almost always *compose* existing components and
    archetypes rather than inventing new ones.
 3. Keep in mind the app's shape: four screens today (Home, Day, Place, Map) plus the fuzzy-stop
@@ -61,8 +61,8 @@ sentence touching 1–2 files — **do not stop, hand off.** A PRD adds nothing 
 1. Say so, and send them straight to `ios-plan-writer` (it runs XS/S fast mode itself — no PRD, no
    critic, resolves placement with LSP).
 2. If the change is genuinely epic-worthy but not product-shaped (a cross-cutting refactor, e.g. a
-   navigation-architecture change), it still deserves a TRACKER row — file it as a `Change` row
-   pointing straight at `ios-plan-writer`'s output, same status flow as an epic, no PRD required.
+   navigation-architecture change), it still deserves an epic — create it with
+   `scripts/tickets create epic "<title>"` and hand its key to `ios-plan-writer`, no PRD required.
 
 **Never** let a decline end with the user (or you) falling through to an unsupervised ad hoc build.
 "Not a PRD" means "different door", not "no harness."
@@ -100,16 +100,16 @@ silently guessing.
 
 ## Step 3 — Write the PRD
 
-Get today's date with `date +%Y-%m-%d`. Derive the next epic ID by scanning `docs/TRACKER.md` for the
-highest `EP-0NN` across **both** tracks and adding one — epic numbering is shared, not per-track.
-Slugify the feature name for the filename.
+Get today's date with `date +%Y-%m-%d`. Slugify the feature name for the filename. The epic key
+comes from Aijira in Step 4 (keys are per product, shared by both tracks); write the PRD with
+`**Epic:** <KEY>` filled in once you have it.
 
 Write to `docs/prds/YYYY-MM-DD-<feature-slug>.md` using **exactly** this structure:
 
 ```markdown
 # <Feature Name> — PRD
 
-**Epic:** EP-0NN   **Status:** Spec'd   **Date:** YYYY-MM-DD   **Size:** XS|S|M|L
+**Epic:** <KEY>   **Date:** YYYY-MM-DD   **Size:** XS|S|M|L
 
 ## Problem / why
 <The traveler pain today and why it's worth solving. 2–4 sentences.>
@@ -157,23 +157,21 @@ question. It routes the whole pipeline exactly as in `ios-plan-writer`'s own siz
 - **L** — cross-cutting refactor, novel architecture, 3+ layers (`ios-plan-writer` runs on opus, and
   the plan-critic gate is non-negotiable).
 
-## Step 4 — Register the epic in the tracker
+## Step 4 — Create the epic in Aijira
 
-Update `docs/TRACKER.md` so the epic board reflects the new feature — it's the same table backend
-epics use. Append (or update) the row for this feature at status **Spec'd**, linking the PRD path and
-leaving Plan as `—`:
-
-```markdown
-| EP-0NN | <Feature Name> | docs/prds/YYYY-MM-DD-<slug>.md | — | Spec'd |
+```bash
+scripts/tickets create epic "<Feature Name>" --doc-path docs/prds/YYYY-MM-DD-<slug>.md
 ```
 
-If you're revising a feature that already has an epic row, update that row instead of adding a
-duplicate.
+It prints the bare key (`AIJ-12`) on stdout. Put it in the PRD header as `**Epic:** <KEY>`. When
+the command exits non-zero, stop and report the exit code to the user; never fall back to a file.
+
+If you're revising a feature that already has an epic, keep its key and skip this step.
 
 ## Step 5 — Report
 
 Tell the user, briefly:
-- PRD path and epic ID, and the inferred **Size** (one line of reasoning so they can override it)
+- PRD path and epic key, and the inferred **Size** (one line of reasoning so they can override it)
 - Which register it touches (fuzzy / definitive / neither) and which existing screens it composes
 - Any **Open questions** that still need their input before the build is safe
 - The next step: **"Create/reuse a worktree, then run `ios-plan-writer` on this PRD."**

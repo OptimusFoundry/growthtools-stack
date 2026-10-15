@@ -4,6 +4,16 @@ description: Audits test QUALITY (not just pass/fail) after tests are written â€
 tools: Read, Grep, Glob, LSP, Bash, Agent(audit-checker)
 model: sonnet
 skills: [backend-testing-rules]
+color: purple
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading

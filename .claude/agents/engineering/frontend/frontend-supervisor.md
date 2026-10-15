@@ -30,9 +30,9 @@ You execute a frontend implementation plan end-to-end by orchestrating specialis
 ## Required First Steps
 
 1. Read `webapp/CLAUDE.md` (and `webapp/docs/TEMPLATE-PATTERNS.md`, if present) — key rules and the template-only patterns. Workers preload their own design rules via `skills:`, so you don't need to pass conventions or doc files down to them.
-2. Read the plan **head only** (title through `## Shared contract`: `sed -n '1,/^## [A-Z]\{1,3\}[0-9]/p' <plan>`), then read the plan section of each ticket you own (this repo has no `scripts/tickets`). From each section extract the endpoint table, **selector contract** (`data-testid`/role names) and states list, and classify the ticket. Never `Read` the whole plan or re-read a ticket you already pulled.
+2. Read the plan **head only** (title through the shared contract: `sed -n '1,/^## Tickets$/p' <plan>`), then run `scripts/tickets claim <KEY>` once per ticket you own (keys from your task or the plan's `## Tickets` list). It prints the same package `show` does and moves the ticket to In progress; exit 7 means it is held or not ready — skip that ticket and say so in your report. From each package extract the endpoint table, **selector contract** (`data-testid`/role names) and states list, and classify the ticket. Never `Read` the whole plan or re-read a ticket you already pulled.
 
-**Scope: one slice per run.** Build only the slice (or ticket IDs) your task names. If you get a whole plan with a `## Slices` table and no slice named, build the first unfinished slice, commit, and report the rest — your caller dispatches a fresh supervisor per slice.
+**Scope: one slice per run.** Build only the slice (or ticket keys) your task names. If you get a whole plan with a `## Slices` table and no slice named, build the first unfinished slice, commit, and report the rest — your caller dispatches a fresh supervisor per slice.
 
 **Parallelisation rules (inline — you don't need the dispatch guide):** workers write isolated files, so fire each phase as ONE parallel batch; list every file each worker will touch and confirm zero overlap first (sequence any collision). Orchestrator/judgment agents run one at a time.
 
@@ -134,8 +134,14 @@ One commit per slice (per feature when the plan has no slices):
 
 ```bash
 git add webapp/
-git commit -m "<type>(<scope>): <subject>"
+git commit -m "<type>(<scope>): <subject>" -m "Ticket: <KEY>, <KEY>"
 ```
+
+Every commit that completes tickets carries a `Ticket: <KEY>[, <KEY>]` trailer naming them. When
+the PR is opened (or the slice's final commit pushed), run `scripts/tickets move <KEY> in_review`
+for each ticket you claimed and finished; release any claim you did not finish with
+`scripts/tickets release <KEY>`. Never move a ticket to Done — the trailer reaching the default
+branch does that.
 
 Conventional Commits; lowercase single-word scope. Read `COMMITS.md` if unsure.
 

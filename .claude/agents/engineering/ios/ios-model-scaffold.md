@@ -5,6 +5,7 @@ tools: LSP, Read, Write, Edit, Glob, Grep, ToolSearch
 model: haiku
 effort: low
 skills: [ios-architecture-rules, ios-models-networking-rules]
+color: orange
 ---
 
 # Swift Model Scaffold

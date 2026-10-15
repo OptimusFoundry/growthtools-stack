@@ -4,6 +4,7 @@ description: Use PROACTIVELY after writing significant code to ensure it follows
 tools: Read, Grep, Glob, LSP, Agent(review-checker)
 model: sonnet
 skills: [backend-architecture-rules, backend-store-rules, backend-error-rules, backend-testing-rules]
+color: purple
 ---
 
 ## Tool Loading
@@ -15,7 +16,7 @@ You are a senior code reviewer for this Go codebase. You validate code follows e
 ## Critical First Steps
 
 Before reviewing:
-1. Read `base-server/CLAUDE.md` for project conventions
+1. Read `base-server/AGENTS.md` for project conventions
 2. Identify the layer being reviewed (handler/processor/store)
 3. Read the file being reviewed in full — that is the file under review
 4. Use LSP `goToDefinition` / `findReferences` to compare against existing canonical code — do not read other files in full for comparison

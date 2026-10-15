@@ -1,45 +1,57 @@
 ---
 name: ios-screens-rules
-description: Use when writing, editing, or reviewing any ios/AITravel/Screens/ Swift code — the View/Presenter/Route split, composition-primitive usage, accessibility identifiers, or mockup port fidelity. Covers the 8 non-negotiable screen-construction rules — View/Presenter/Route separation, logic-out-of-views, DesignSystem-only composition (no hand-wired chrome), route payloads as ID-only, centralized navigationDestination registration, the seeded #Preview convention, dot-namespaced accessibility identifiers, and named-mockup + catalog registration.
+description: Use when writing, editing, or reviewing any ios/ Screens/ Swift code — a screen View, its Presenter, its Route, its catalog entry, its previews, or its accessibility identifiers — or when checking a screen against its named mockup. Covers the 12 non-negotiable screen-construction rules — View composition, ScreenScaffold-only layout (no hand-wired chrome), logic-out-of-views, stateless presenters, ID-only routes pushed through AppStore, tab-root destination registration, AppStore.preview(_:) seeded previews, dot-namespaced accessibility identifiers, chrome intent + thumb-zone ActionBar, the sheet/push/cover decision rule, catalog registration, and fidelity to the named mockup.
 ---
 
-# Screen Rules (AITravel iOS)
+# Screen Rules (iOS)
 
-Eight rules, one line each. Each carries a depth pointer — follow it when you need the worked
+Twelve rules, one line each. Each carries a depth pointer — follow it when you need the worked
 example, not before. The code lives in the doc; this file is the checklist.
 
-- **SC-1** Every screen is a `struct …View: View`; large `body`s decompose into private
-  `@ViewBuilder` section properties, not one giant body.
-  → `ios/docs/engineering/06-screens.md#view-composition`
-- **SC-2** Screens consume tokens, modifiers, and components only from the DesignSystem layer —
-  never redeclare spacing/color literals inline, never hand-wire chrome.
-  → `ios/docs/engineering/06-screens.md#view-composition`
-- **SC-3** Domain logic never lives inline in a view body: stateless derivation beyond a few lines
-  extracts into a co-located Presenter that returns data/view-models and never builds a `View`;
-  domain mutation goes through model methods or store commands.
-  → `ios/docs/engineering/06-screens.md#screen-logic--presenters`
-- **SC-4** Presenters are stateless and constructed fresh in `body` from `(store, …)` — never
-  cached as `@State` — so SwiftUI's dependency tracking through `store` stays intact.
-  → `ios/docs/engineering/06-screens.md#screen-logic--presenters`
-- **SC-5** Routes are thin, `Hashable` structs carrying only lookup IDs (never full objects); the
-  destination screen resolves the model itself via `AppStore`.
-  → `ios/docs/engineering/06-screens.md#route-types`
-- **SC-6** `.navigationDestination(for:)` registrations live at the bottom of the root screen's
-  `body`, not scattered across child views.
-  → `ios/docs/engineering/06-screens.md#destination-registration`
-- **SC-7** Every screen ships at least one `#Preview`, wrapped in `NavigationStack` when it expects
-  navigation context, seeded via `AppStore.shared`; multiple interesting states get multiple
-  labeled previews.
-  → `ios/docs/engineering/06-screens.md#previews`
-- **SC-8** Accessibility identifiers use dot-separated `scope.component.element` lowercase keys
-  applied to the outermost or state-bearing view, parameterised by ID when a specific row/element
-  must be addressed.
-  → `ios/docs/engineering/06-screens.md#accessibility-identifiers-for-testing`
-- **SC-9** Floating chrome (`FloatingTabBar`, `GlassCircleButton`, a bottom-pinned `CTABar`) hides —
-  never dims — while a `BottomSheet` is presented, driven by `AppStore.isSheetPresented` through
-  `\.floatingChromeSuppressed`; and a screen picks exactly one of TopBar-action / floating-circle /
-  bottom-bar per the selection table.
-  → `ios/docs/engineering/06-screens.md#chrome-selection-and-sheet-coordination`
+- **SC-1** Every screen is a `struct …View: View` whose `body` is layout + wiring only; large bodies
+  split into private `@ViewBuilder` properties or `private struct` subviews in the same file,
+  promoted to `DesignSystem/Components/` only once a second screen needs them.
+  → `ios/docs/engineering/06-screens.md#1-view-composition`
+- **SC-2** Every screen composes `ScreenScaffold` + `ScreenSection` / `RhythmSpacer` — never raw
+  `.toolbar` / `.navigationTitle` / `.navigationBarHidden`, or `.padding` / `VStack(spacing:)` /
+  `ScrollView` for structure; inner spacing uses semantic tokens, never primitives or literals.
+  → `ios/docs/engineering/06-screens.md#26-the-rule-that-prevents-drift`
+- **SC-3** No logic in views: domain mutation is a model method, a networked write is an `await`ed
+  `AppStore` command, derivation is a presenter; `@State` holds ephemeral UI state only; a view never
+  constructs an `AppStore` or references a concrete provider.
+  → `ios/docs/engineering/01-architecture.md#8-screens--logic-out-of-views`
+- **SC-4** A `<Screen>Presenter` is a stateless value type in `Screens/`, built fresh in `body` from
+  `(store, …ids)` (never cached), returns data/view-models never `View`s, and stays cheap; add one
+  the moment derivation appears in `body`.
+  → `ios/docs/engineering/06-screens.md#3-screen-logic--presenters`
+- **SC-5** Routes are `Hashable` structs, one per file in `Screens/Routes/<Name>Route.swift`,
+  carrying only lookup IDs; views push via `store.push(…)` onto the `AppStore`-owned per-tab path,
+  never a view-local `@State` path.
+  → `ios/docs/engineering/06-screens.md#5-navigation`
+- **SC-6** `.navigationDestination(for:)` is registered once at the tab root, not in child screens.
+  → `ios/docs/engineering/06-screens.md#5-navigation`
+- **SC-7** Every screen ships one labeled `#Preview` per interesting state, each seeded through
+  `AppStore.preview(_:)` with a `SampleData` factory (never `.shared`, never the network), wrapped
+  in `NavigationStack` when it expects nav context.
+  → `ios/docs/engineering/06-screens.md#8-previews--how-a-screen-gets-its-mock-data`
+- **SC-8** State-bearing and test-addressed elements carry a lowercase dot-namespaced
+  `component.slot[.id]` identifier on the element's outermost view, parameterised by id for repeated
+  rows; the view owns placement.
+  → `ios/docs/engineering/06-screens.md#10-accessibility-identifiers-for-testing`
+- **SC-10** A screen declares its chrome intent (`.root` / `.detail` / `.immersive` / `.custom`);
+  the top bar carries title + back only (at most one secondary control), primary CTAs go in the
+  `ScreenScaffold(actions:)` `ActionBar`, and the tab bar hides only on `.immersive` / `.custom`.
+  → `ios/docs/engineering/06-screens.md#21-screenscaffold--the-one-chrome--layout-primitive`
+- **SC-11** Child of the current view → push; self-contained detour → `.sheet` on ephemeral
+  `@State`; focused takeover → `.fullScreenCover` (usually `.immersive`). Errors surface as the
+  store's `writeError` banner, never a toast or alert.
+  → `ios/docs/engineering/06-screens.md#25-sheet-vs-push-vs-cover--the-decision-rule`
+- **SC-12** Every new screen registers a seeded entry in `Screens/Catalog/CatalogSection+<X>.swift`;
+  only a brand-new section edits `ScreenCatalogView.swift`.
+  → `ios/docs/engineering/06-screens.md#7-the-catalog-screencatalogview`
+- **SC-13** Every screen names the `mockups/screens/<name>.html` it ports in its acceptance criteria,
+  is fidelity-reviewed against it before acceptance, then locked by a render snapshot.
+  → `ios/docs/engineering/06-screens.md#9-fidelity-to-the-mockup--the-authoring-time-gate`
 
-Cite the rule ID when you flag a violation — `SC-5: PlaceRoute carrying a full Stop instead of
-stopID` is reviewable; "route issue" is not.
+Cite the rule ID when you flag a violation — `SC-5: BookDetailRoute carrying a full Book instead of
+its id` is reviewable; "route issue" is not.

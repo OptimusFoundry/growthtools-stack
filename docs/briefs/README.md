@@ -13,7 +13,8 @@ exists to give `plan-writer` a scope boundary and acceptance checks — nothing 
 ## Flow
 
 ```
-change brief (docs/briefs/<slug>.md)  +  TRACKER.md row
+change brief (docs/briefs/<slug>.md)
+        → scripts/tickets create epic "<title>" --doc-path docs/briefs/<slug>.md  (prints the key)
         → plan-writer  →  docs/plans/<slug>.md
         → route by blast radius (CLAUDE.md Step 2)
         → backend-supervisor / frontend-supervisor / feature-manager
@@ -28,6 +29,7 @@ silent failures live.
 ```markdown
 # <Title>
 
+**Epic:** <KEY>
 Date: YYYY-MM-DD
 Type: refactor | infra | migration | bugfix | re-architecture
 Services: base-server | webapp | render-service | …
@@ -45,6 +47,9 @@ Existing contracts that must not break; patterns to follow; migrations already t
 ## Acceptance checks
 - [ ] Verifiable statements. What proves this is done?
 ```
+
+The epic key goes in the header once `tickets create epic` prints it. A non-zero exit stops the
+door there; there is no file to fall back to.
 
 ## Naming
 

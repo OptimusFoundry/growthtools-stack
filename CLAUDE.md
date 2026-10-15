@@ -18,6 +18,7 @@ growth-tools/
 - **React frontend conventions:** [webapp/CLAUDE.md](webapp/CLAUDE.md)
 - **UI design language & component reference (authoritative for any frontend change):** quiet (`@optimusfoundry/quiet`) ships its own docs at `webapp/vendor/quiet/DESIGN.md` and `docs/guidelines/` (present after `npm install` in `webapp/`); the `quiet-app` skill is the procedure for laying out a screen. The app ships quiet's built-in `foundry` / `foundry-dark` themes with a light/dark toggle — no theme picker, no product theme. Template-only patterns (app shell, `AsyncList`, gating, `useNotify`, `AppIcon`, `RouterLink`) are in [webapp/docs/TEMPLATE-PATTERNS.md](webapp/docs/TEMPLATE-PATTERNS.md).
 - **Commit message convention:** [COMMITS.md](COMMITS.md) — Conventional Commits, enforced by the `.githooks/commit-msg` hook. Run `./.githooks/install.sh` once per clone to activate.
+- **Tickets:** Tickets live in Aijira, addressed by key (`MEER-12`), and are driven only through `scripts/tickets`. A commit closes them with a `Ticket: <KEY>` trailer. Never create tracker, roadmap or ticket files.
 
 ## Plugins & Skills
 
@@ -44,7 +45,7 @@ When in doubt, run `ToolSearch` to discover available tools for a task before do
 >
 > **Step 0 — Isolate:** Use the `superpowers:using-git-worktrees` skill to create an isolated git worktree before ANY work begins — features, bugfixes, refactors, migrations, or config changes. Never work directly on `main`.
 >
-> **Step 1 — Architect:** Capture the feature as a PRD with the `shared-writing-prds` skill (interactive; writes `docs/prds/<feature>.md` + an epic row in `docs/TRACKER.md`). Then dispatch `plan-writer` on that PRD path — it orchestrates parallel `plan-researcher` subagents (db/api/fe) to resolve each layer's contract and synthesizes a **code-free** tech plan (contracts + signatures, no code bodies) with a ticket table.
+> **Step 1 — Architect:** Capture the feature as a PRD with the `shared-writing-prds` skill (interactive; writes `docs/prds/<feature>.md` and creates the epic in Aijira (key in the PRD header)). Then dispatch `plan-writer` on that PRD path — it orchestrates parallel `plan-researcher` subagents (db/api/fe) to resolve each layer's contract and synthesizes a **code-free** tech plan (contracts + signatures, no code bodies) with a ticket table.
 >
 > **Step 2 — Execute:** Choose the right executor for the plan:
 > - Full-stack feature (both layers), from a PRD → dispatch `feature-manager` agent (PRD → tech spec → build); for many features at once → `epic-supervisor`

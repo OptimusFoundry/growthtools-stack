@@ -1,42 +1,48 @@
 ---
 name: ios-design-system-rules
-description: Use when writing, editing, or reviewing any ios/AITravel/DesignSystem/ Swift code or any screen/component consuming design tokens. Covers the 9 non-negotiable rules — token-tier authoring boundaries, no-hardcode/semantic-tokens-only, glass-on-floating-chrome-only, AI mark edges-only (never a fill), accent/persimmon-for-state-only, one time-conditional hint per screen, the five-signal fuzzy register, and Dynamic Type layout requirements.
+description: Use when writing, editing, or reviewing any ios/AppTemplate/DesignSystem/ Swift code (Tokens/, Modifiers/, Components/, Composition/) or any screen/component consuming design tokens. Covers the 10 non-negotiable rules — the three-tier token boundary, semantic-tokens-only, composing from modifiers/components/composition primitives, glass on floating chrome only, Dynamic Type always, one accent used sparingly, restrained motion, a point of view plus the slop scan, token parity with foundations.css, and the foundation barrier.
 ---
 
-# Design System Rules (AITravel iOS)
+# Design System Rules (iOS)
 
-Nine rules, one line each. Each carries a depth pointer — follow it when you need the worked
+Ten rules, one line each. Each carries a depth pointer — follow it when you need the worked
 example, not before. The code lives in the doc; this file is the checklist.
 
-- **DS-1** Author raw values only in `DesignSystem/Tokens/` — the sole permitted deviation is
-  `OKLCH.color` inside `Color+Tokens.swift` itself.
-  → `ios/docs/engineering/05-design-system.md#6-no-hardcode-rule`
-- **DS-2** No literal colors/spacing/radii/motion/sizes in screens or components — always the
-  named `Color`/`Space`/`Radius`/`Motion`/`Sizing` token or a modifier, never a raw value.
-  → `ios/docs/engineering/05-design-system.md#6-no-hardcode-rule`
-- **DS-3** Compose from `Modifiers/` (semantic behaviors) and `Components/` (composed structs) —
-  never hand-wire glass, dashed borders, AI marks, or state surfaces inline in a screen view.
-  → `ios/docs/engineering/05-design-system.md#4-components-subtree`
-- **DS-4** Glass only on chrome that floats — top bar, tab bar, sheet handle, map overlay chips;
-  never on cards, list rows, modals at rest, or anything with primary input.
-  → `CLAUDE.md#the-five-non-negotiable-rules`
-- **DS-5** The AI mark is edges/marks only — a border stroke, a small dot, or the thinking strip;
-  never a fill on a card or button body.
-  → `CLAUDE.md#the-five-non-negotiable-rules`
-- **DS-6** The state accent (persimmon) is for state, not chrome — saved fill, now-dot/halo, the
-  time-conditional hint chip background; never a button or an error color.
-  → `CLAUDE.md#the-five-non-negotiable-rules`
-- **DS-7** One time-conditional hint per screen — the pulse fires once on appear and never
-  repeats; capped at the screen level, not the component.
-  → `CLAUDE.md#the-five-non-negotiable-rules`
-- **DS-8** The fuzzy register is five signals together (dashed border, italic display name,
-  monochrome glyph thumb, leading AI dot, tilde time range) — drop one and it reads as broken.
-  → `CLAUDE.md#the-five-non-negotiable-rules`
-- **DS-9** Every type size maps to a named iOS text style, and no layout assumes a fixed line
-  count or fixed row height — both so a future Dynamic Type pass is mechanical, not a redesign.
-  Dynamic Type itself isn't yet documented in `ios/docs/engineering/` — this rule is ahead of the doc,
-  not behind it; update this pointer once it lands there.
-  → `ios/docs/engineering/05-design-system.md#22-typography-tokens--fonttokensswift`
+- **DS-1** Raw values live only in the primitive tier (`DesignSystem/Tokens/Primitive.swift`); the
+  semantic tier (`ColorRole`, `Spacing`, `Radius`, `Shadow`, `Motion`, `Typography`) names intent by
+  role, and component tokens are local and sparing.
+  → `ios/docs/engineering/05-design-system.md#1-the-three-tier-token-architecture-the-core-fix`
+- **DS-2** Screens, components, and modifiers reference semantic tokens only — never a raw primitive,
+  never a literal color/size/spacing; either is a review failure.
+  → `ios/design-docs/00-overview.md#the-visual-non-negotiables`
+- **DS-3** Compose from `Modifiers/`, `Components/` (data in as arguments, no `AppStore`), and
+  `Composition/` (`ScreenScaffold`/`ScreenSection`/`RhythmSpacer`/`ActionBar`) — never hand-wire
+  chrome, glass, or spacing inline in a screen.
+  → `ios/docs/engineering/05-design-system.md#9-composition-primitives-the-shell`
+- **DS-4** Glass (system Liquid Glass via `.glassChrome()`) only on floating chrome — tab/top/action
+  bars, sheet handle, overlay chips; never on cards, rows, sheets-at-rest, or primary input; never
+  glass-on-glass.
+  → `ios/design-docs/00-overview.md#the-visual-non-negotiables`
+- **DS-9** Dynamic Type always — every type role maps to a scaling text style, one-off metrics use
+  `@ScaledMetric`, no fixed-pt fonts and no fixed frames on text; holds to AX5.
+  → `ios/docs/engineering/05-design-system.md#4-typography--dynamic-type-first`
+- **DS-10** One accent, used sparingly — marks the one thing that matters (primary action,
+  selected/now state), at most twice per screen; never a decorative card fill, never chrome.
+  → `ios/design-docs/06-judgment.md#j-2-color-roles--pick-by-role-never-by-value`
+- **DS-11** Restrained motion — `Motion.*` tokens with one critically-damped ease-out, tap response
+  ≤100ms, at most one continuous motion on screen, no springs outside one scoped reward, Reduce Motion
+  degrades.
+  → `ios/design-docs/06-judgment.md#j-9-motion--considered-never-bouncy`
+- **DS-12** Have a point of view — one deliberate signature (type pairing, color, or motion), not
+  system defaults — then run the slop scan; every flagged choice must be earned.
+  → `ios/design-docs/06-judgment.md#j-13-craft--soul--the-anti-slop-rules`
+- **DS-13** Token parity — each primitive is hand-transcribed 1:1 from `mockups/foundations/foundations.css`
+  citing its source line, checked by the token-parity test; a value change updates primitive and
+  assertion in the same commit.
+  → `ios/docs/engineering/05-design-system.md#2-token-parity--drift-free-primitives`
+- **DS-14** Foundation barrier — new design-system surface is reviewed (`ios-code-reviewer`) and
+  snapshot-green before any dependent screen is scaffolded against it.
+  → `ios/docs/engineering/05-design-system.md#10-the-foundation-barrier--build-it-right-then-lock`
 
 Cite the rule ID when you flag a violation — `DS-4: glass on a card at rest` is reviewable;
 "glass looks off" is not.

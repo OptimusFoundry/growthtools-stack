@@ -1,0 +1,1583 @@
+#!/usr/bin/env python3
+"""Ticket CLI — a thin client for Aijira's agent API.
+
+Python 3 stdlib only. Aijira indexes the corpus; this script allocates IDs, asks what is ready,
+and fetches dispatch packages. There is no local fallback: when Aijira cannot be reached the
+verb fails (exit 5) rather than guessing an ID or a status from the working tree.
+
+  tickets [--json] id <KIND> [--parent <ID>]
+  tickets [--json] file --type task|feature|bug|chore|spike "<title>" [--layer <layer>]
+                        [--parent <ID>] [--depends-on <ID,ID>] [--note <text>]
+  tickets [--json] next [<parent>]
+  tickets [--json] show <ID> [--plan <path>]
+  tickets [--json] claim <ID>
+  tickets [--json] renew <ID>
+  tickets [--json] release <ID>
+  tickets [--json] handoff <ID> "<note>"      (note "-" reads stdin)
+  tickets [--json] cost <ID>|--held --agent-seconds N --input-tokens N --output-tokens N
+                        --cache-read-tokens N --cache-write-tokens N --cost-usd X [--session-id S]
+  tickets [--json] template <type>
+  tickets [--json] check <file>
+
+Items mode (`items_mode` true for the product) replaces `id`/`file` with `create` and adds
+`edit`, `move`, `link`, `unlink`, `reorder`, `cancel`; `next`, `show`, `claim`,
+`renew`, `release`, `handoff`, `cost`, `template` and `check` keep their names (see `--help`).
+`import <product> --dry-run | --confirm <plan_hash>` and `activate [PRODUCT]` work in either mode.
+
+Environment: AIJIRA_URL (default https://aijira.protoapp.xyz), AIJIRA_PRODUCT, AIJIRA_AGENT,
+CLAUDE_SESSION_URL (sent as X-Aijira-Session when it is an https:// URL).
+
+Exit codes:
+  0  ok, warnings included
+  1  usage error, including server 400s
+  2  local invariant: target ticket file exists, plan unreadable, front matter not re-readable
+  3  unknown ID, product or repo (404)
+  4  `show` or `claim` printed a package with unresolved rule IDs (advisory; the package is complete)
+  5  Aijira unreachable; names the URL tried, nothing was allocated or written
+  6  refused: 403, or 400 AGENT_NAME_REQUIRED
+  7  conflict (409): NOT_INDEXED, CLAIM_HELD, NOT_READY, NOT_CLAIM_HOLDER, VERSION_CONFLICT, ...;
+     message printed verbatim
+  8  other server error (5xx, unparsable body)
+  9  `check` found at least one violation of severity `error` (warnings alone exit 0); in items
+     mode also a 400 RULES_FAILED, or `--rules` naming an ID the local registry cannot resolve
+"""
+
+# Stock macOS ships Python 3.9 (`/usr/bin/python3`); deferring annotations keeps the shebang's
+# `python3` honest on any interpreter from 3.9 up.
+from __future__ import annotations
+
+import importlib.machinery
+import importlib.util
+import json
+import re
+import sys
+import urllib.parse
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+
+def _load(name):
+    loader = importlib.machinery.SourceFileLoader(name, str(HERE / f"{name}.py"))
+    spec = importlib.util.spec_from_loader(name, loader)
+    module = importlib.util.module_from_spec(spec)
+    # dataclasses resolve field types through sys.modules[cls.__module__] at class creation.
+    sys.modules[name] = module
+    loader.exec_module(module)
+    return module
+
+
+corpus = _load("ticket_corpus")
+client = _load("aijira_client")
+
+DEFAULT_URL = client.DEFAULT_URL
+TIMEOUT_SECONDS = client.TIMEOUT_SECONDS
+AGENT_HEADER = client.AGENT_HEADER
+AGENT_NAME_MAX = client.AGENT_NAME_MAX
+USER_AGENT = client.USER_AGENT
+UsageError = client.UsageError
+ApiError = client.ApiError
+base_url = client.base_url
+git_output = client.git_output
+git_toplevel = client.git_toplevel
+agent_name = client.agent_name
+request = client.request
+error_for = client.error_for
+normalize_remote = client.normalize_remote
+discover_product = client.discover_product
+
+ID_KINDS = ("IN", "EP", "CH", "FEAT", "BUG", "CHORE", "SPIKE", "task")
+FILE_KINDS = {"task": "task", "bug": "BUG", "chore": "CHORE", "spike": "SPIKE", "feature": "FEAT"}
+NOTE_MAX = 4000
+BODY_TBD = "_TBD_"
+NO_NOTE = "Filed with `scripts/tickets file`; no note supplied."
+RULES_DIVIDER = "--- rules ---"
+NO_VALUE = "—"
+
+USAGE = """usage: tickets [--json] <command> [args]
+
+  id <KIND> [--parent <ID>]      allocate an ID (EP CH IN FEAT BUG CHORE SPIKE, or task with --parent)
+  file --type task|feature|bug|chore|spike "<title>" [--layer <layer>] [--parent <ID>]
+                                 [--depends-on <ID,ID>] [--note <text>]
+                                 allocate an ID, write docs/tickets/<ID>.md from the served
+                                 template, print the bare ID (--kind is an alias of --type)
+  next [PARENT]                  list dependency-ready tickets and their executors
+  show <ID> [--plan <path>]      print a self-contained dispatch package
+  claim <ID>                     take the claim and print the dispatch package
+  renew <ID>                     extend your claim
+  release <ID>                   give the claim up
+  handoff <ID> "<note>"          leave a handoff note ("-" reads stdin, 1-4000 characters)
+  cost <ID>|--held --agent-seconds N --input-tokens N --output-tokens N --cache-read-tokens N
+       --cache-write-tokens N --cost-usd X [--session-id S]
+                                 report what a run cost; --held picks the ticket you hold
+  template <type>                print the ticket template for a type
+  check <file>                   check a ticket file against its format; exit 9 on an error
+
+items mode (KEY is CODE-N; an old ID works only with show):
+  create <kind> "<title>" [--layer L] [--parent KEY] [--depends-on KEY,KEY] [--goal T]
+         [--doc-path P] [--plan-path P] [--rules ID,ID] [--ac AC1,AC2] [--status backlog|ready]
+         [--after KEY] [--body-file PATH|-]   create an item, print the bare key
+  edit KEY --version N [--title T] [--body-file PATH|-] [--goal T] [--doc-path P] [--plan-path P]
+       [--layer L] [--rules ID,ID] [--ac AC1,AC2] [--parent KEY | --no-parent]
+  move KEY STATUS [--version N]  backlog ready in_progress in_review done canceled
+  link KEY DEP [--version N] / unlink KEY DEP
+  reorder KEY (--after KEY | --first) [--version N]
+  cancel KEY [--version N]
+  next [CODE|EPIC-KEY]           ready tickets in scope (default: the product code)
+  show KEY|ALIAS                 package, version and history (epics: detail, version, history)
+  check [--key KEY] [--kind K] [--title T] [--layer L] [--parent KEY] [--rules ID,ID]
+        [--ac AC1,AC2] [--body-file PATH|-]   validate fields; exit 9 on an error
+  claim, renew, release, handoff, cost, template   as above, addressed by KEY
+
+either mode:
+  activate [PRODUCT]             switch a content-free product to items mode
+  import <product> --dry-run [--out FILE]   print the import report and the confirm command
+  import <product> --confirm <plan_hash>    run the import the dry run described"""
+ID_USAGE = "usage: tickets id <KIND> [--parent <ID>]"
+NEXT_USAGE = "usage: tickets next [PARENT]"
+SHOW_USAGE = "usage: tickets show <ID> [--plan <path>]"
+FILE_USAGE = (
+    'usage: tickets file --type task|feature|bug|chore|spike "<title>" [--layer <layer>] '
+    "[--parent <ID>] [--depends-on <ID,ID>] [--note <text>]"
+)
+CLAIM_USAGE = "usage: tickets claim <ID>"
+RENEW_USAGE = "usage: tickets renew <ID>"
+RELEASE_USAGE = "usage: tickets release <ID>"
+HANDOFF_USAGE = 'usage: tickets handoff <ID> "<note>"   (note "-" reads stdin)'
+COST_USAGE = (
+    "usage: tickets cost <ID>|--held --agent-seconds N --input-tokens N --output-tokens N "
+    "--cache-read-tokens N --cache-write-tokens N --cost-usd X [--session-id S]"
+)
+CLAIM_LOG = Path(".claude") / "logs" / "claims.jsonl"
+CLAIM_LOG_MAX_AGE = timedelta(hours=24)
+COST_INT_FLAGS = {
+    "--agent-seconds": "agent_seconds",
+    "--input-tokens": "input_tokens",
+    "--output-tokens": "output_tokens",
+    "--cache-read-tokens": "cache_read_tokens",
+    "--cache-write-tokens": "cache_write_tokens",
+}
+TEMPLATE_USAGE = "usage: tickets template <type>"
+CHECK_USAGE = "usage: tickets check <file>"
+
+
+class LocalInvariantError(Exception):
+    """A local fact the command relies on is false. Exit 2."""
+
+
+def say(text):
+    print(text, file=sys.stderr)
+
+
+def agent_path(product, tail):
+    return f"/api/agent/products/{urllib.parse.quote(product)}{tail}"
+
+
+def emit_json(value):
+    print(json.dumps(value, indent=2, ensure_ascii=False))
+
+
+def allocate(kind, parent):
+    product = discover_product()
+    body = {"kind": kind}
+    if parent:
+        body["parent"] = parent
+    _, created = request("POST", agent_path(product, "/ids"), body, agent=True)
+    if not isinstance(created, dict) or not created.get("id"):
+        raise ApiError(8, "ids response has no id")
+    return created
+
+
+def parse_parent(value):
+    parent = (value or "").strip().upper()
+    if parent and not corpus.PARENT_ID_RE.match(parent):
+        raise UsageError(f"--parent {parent!r} is not an EP-### or CH-### id")
+    return parent or None
+
+
+def parse_id_args(argv):
+    kind, parent, i = None, None, 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--parent":
+            if i + 1 >= len(argv):
+                raise UsageError(f"--parent needs a value\n{ID_USAGE}")
+            parent = parse_parent(argv[i + 1])
+            i += 2
+        elif arg.startswith("--"):
+            raise UsageError(f"unknown option {arg}\n{ID_USAGE}")
+        elif kind is None:
+            kind = arg
+            i += 1
+        else:
+            raise UsageError(f"unexpected argument {arg!r}\n{ID_USAGE}")
+    if kind is None:
+        raise UsageError(ID_USAGE)
+    kind = "task" if kind.lower() == "task" else kind.upper()
+    if kind not in ID_KINDS:
+        raise UsageError(f"kind {kind!r} is not one of {' '.join(ID_KINDS)}")
+    return kind, parent
+
+
+def cmd_id(argv, as_json):
+    kind, parent = parse_id_args(argv)
+    created = allocate(kind, parent)
+    if as_json:
+        emit_json({"id": created["id"], "qualified_id": created.get("qualified_id")})
+    else:
+        print(created["id"])
+    return 0
+
+
+def front_scalar(value):
+    """Front matter has no quoting for values, so a title carrying `: ` or opening with a YAML
+    indicator has no representation in the subset. Reword it rather than refuse: an unparseable
+    ticket file is worse than a reworded title."""
+    text = " ".join(str(value).split()).rstrip(":")
+    text = re.sub(r":(?=\s)", " -", text)
+    while text and (text[0] in corpus._NON_SCALAR_LEAD or re.match(r"[-?:]\s", text)):
+        text = text[1:].lstrip()
+    return " ".join(text.split())
+
+
+def parse_file_args(argv):
+    options = {
+        "--layer": "layer",
+        "--type": "type",
+        "--kind": "type",
+        "--parent": "parent",
+        "--depends-on": "depends",
+        "--note": "note",
+    }
+    title, opts, i = None, {}, 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--blocking":
+            say("note: --blocking is ignored; Aijira derives blocking from dependencies")
+            i += 1
+            continue
+        if arg in options:
+            name = options[arg]
+            if name in opts:
+                if arg == "--layer":
+                    raise UsageError(
+                        "two --layer values. A ticket spanning 2+ layers is a change brief, not a "
+                        "ticket: write docs/briefs/<slug>.md, add a docs/TRACKER.md row, and run it "
+                        "through plan-writer"
+                    )
+                raise UsageError(f"{arg} given twice\n{FILE_USAGE}")
+            if i + 1 >= len(argv):
+                raise UsageError(f"{arg} needs a value\n{FILE_USAGE}")
+            opts[name] = argv[i + 1]
+            i += 2
+            continue
+        if arg.startswith("--"):
+            raise UsageError(f"unknown option {arg}\n{FILE_USAGE}")
+        if title is not None:
+            raise UsageError(f"unexpected argument {arg!r}; quote the title as one argument\n{FILE_USAGE}")
+        title = arg
+        i += 1
+
+    if not (title or "").strip():
+        raise UsageError(f"a title is required\n{FILE_USAGE}")
+    kind = (opts.get("type") or "bug").strip().lower()
+    if kind not in FILE_KINDS:
+        raise UsageError(f"--type {kind!r} is not one of {'/'.join(FILE_KINDS)}")
+    parent = parse_parent(opts.get("parent"))
+    if kind == "task" and not parent:
+        raise UsageError(f"--type task requires --parent <EP-###|CH-###>\n{FILE_USAGE}")
+    depends = [d.strip().upper() for d in (opts.get("depends") or "").split(",") if d.strip()]
+    return {
+        "title": title.strip(),
+        "layer": (opts.get("layer") or "").strip(),
+        "kind": kind,
+        "parent": parent,
+        "depends": depends,
+        "note": opts.get("note"),
+    }
+
+
+def ticket_body(note):
+    context = (note or "").strip() or NO_NOTE
+    sections = [("Context", context)] + [(name, BODY_TBD) for name in ("What to do", "Acceptance", "Files")]
+    return "\n\n".join(f"## {name}\n\n{text}" for name, text in sections)
+
+
+def template_body(template, note):
+    """The served template minus its front-matter skeleton, with `note` as the first paragraph under
+    the first `##` section. None when nothing usable is left."""
+    text = template.replace("\r\n", "\n")
+    if text.startswith("---\n"):
+        end = text.find("\n---\n", 3)
+        text = text[end + len("\n---\n"):] if end != -1 else ""
+    text = text.strip("\n")
+    if not text:
+        return None
+    note = (note or "").strip()
+    if note:
+        match = re.search(r"^## .*\n\n?", text, re.MULTILINE)
+        if match:
+            text = text[: match.end()] + note + "\n\n" + text[match.end():]
+        else:
+            text = note + "\n\n" + text
+    return text
+
+
+def fetch_template(kind):
+    """The served markdown for a ticket type, or None (with a stderr warning) when unavailable."""
+    try:
+        _, markdown = request("GET", f"/api/public/templates/{urllib.parse.quote(kind)}", text=True)
+    except ApiError as exc:
+        say(f"warning: template {kind!r} not fetched ({exc.message}); using the built-in body")
+        return None
+    return markdown
+
+
+def check_content(content, path):
+    _, result = request("POST", "/api/public/check", {"content": content, "path": path})
+    if not isinstance(result, dict):
+        raise ApiError(8, "check response is not an object")
+    return result
+
+
+def ticket_path_label(path):
+    try:
+        return path.resolve().relative_to(git_toplevel().resolve()).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def cmd_file(argv, as_json):
+    args = parse_file_args(argv)
+    title = front_scalar(args["title"])
+    if not title:
+        raise UsageError(f"title {args['title']!r} is empty once reduced to a front-matter scalar")
+    created = allocate(FILE_KINDS[args["kind"]], args["parent"])
+    ticket_id = created["id"]
+
+    root = git_toplevel()
+    path = root / "docs" / "tickets" / f"{ticket_id}.md"
+    if path.exists():
+        raise LocalInvariantError(
+            f"{path} already exists; not overwriting. {ticket_id} was allocated by Aijira and is now unused"
+        )
+    front = {
+        "id": ticket_id,
+        "type": args["kind"],
+        "title": title,
+        "created": date.today().isoformat(),
+        "layer": front_scalar(args["layer"]) if args["layer"] else "",
+        "parent": args["parent"],
+        "depends-on": ", ".join(args["depends"]),
+    }
+    template = fetch_template(args["kind"])
+    body = template_body(template, args["note"]) if template else None
+    if template and body is None:
+        say(f"warning: template {args['kind']!r} is empty; using the built-in body")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        corpus.write_ticket_file(path, front, body or ticket_body(args["note"]))
+    except corpus.SubsetError as exc:
+        raise LocalInvariantError(f"front matter for {ticket_id} is not re-readable: {exc}") from exc
+
+    if as_json:
+        emit_json({"id": ticket_id, "qualified_id": created.get("qualified_id"), "path": str(path)})
+    else:
+        print(ticket_id)
+    try:
+        shown = path.relative_to(root).as_posix()
+    except ValueError:
+        shown = str(path)
+    say(f"filed {ticket_id}  {shown}")
+    if title != args["title"].strip():
+        say(f"note: title stored as {title!r} — the front-matter subset has no quoting for values")
+    say(
+        f"when the work is done, put `Ticket: {ticket_id}` on the commit that completes it "
+        "(the trailer closes the ticket), not on the commit that files it"
+    )
+    report_needs_spec(path, shown)
+    return 0
+
+
+def report_needs_spec(path, shown):
+    try:
+        result = check_content(path.read_text(encoding="utf-8"), shown)
+    except (ApiError, OSError, UnicodeDecodeError) as exc:
+        say(f"note: could not check {shown} ({getattr(exc, 'message', exc)})")
+        return
+    failing = len(result.get("violations") or [])
+    if failing:
+        say(f"needs spec: {failing} rule{'s' if failing != 1 else ''} fail; see `tickets check {shown}`")
+
+
+def render_next_line(item):
+    kind = item.get("type") or NO_VALUE
+    layer = item.get("layer") or NO_VALUE
+    agent = item.get("agent") or NO_VALUE
+    return f"{item.get('id')}  {kind}  {layer} -> {agent}  {item.get('title', '')}"
+
+
+def cmd_next(argv, as_json):
+    if len(argv) > 1 or any(a.startswith("-") for a in argv):
+        raise UsageError(NEXT_USAGE)
+    parent = argv[0].strip().upper() if argv else ""
+    product = discover_product()
+    tail = "/next"
+    if parent:
+        tail += "?" + urllib.parse.urlencode({"parent": parent})
+    _, items = request("GET", agent_path(product, tail), agent=True)
+    if not isinstance(items, list):
+        raise ApiError(8, "next response is not a list")
+    if as_json:
+        emit_json(items)
+        return 0
+    if not items:
+        print("ready: none")
+    for item in items:
+        print(render_next_line(item))
+    return 0
+
+
+def rules_for(markdown, agent):
+    registry = corpus.load_rule_registry(git_toplevel())
+    found, unknown = corpus.resolve_rules(corpus.parse_rule_decl(markdown), registry)
+    block = corpus.render_rules_block(found, unknown, corpus.executor_namespaces(agent, git_toplevel()))
+    return block, unknown
+
+
+def parse_show_args(argv):
+    ticket, plan, i = None, None, 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--plan":
+            if i + 1 >= len(argv):
+                raise UsageError(f"--plan needs a path\n{SHOW_USAGE}")
+            plan = argv[i + 1]
+            i += 2
+        elif arg.startswith("-"):
+            raise UsageError(f"unknown option {arg}\n{SHOW_USAGE}")
+        elif ticket is None:
+            ticket = arg.strip().upper()
+            i += 1
+        else:
+            raise UsageError(f"unexpected argument {arg!r}\n{SHOW_USAGE}")
+    if not ticket:
+        raise UsageError(SHOW_USAGE)
+    return ticket, plan
+
+
+def offline_package(ticket_id, plan):
+    path = Path(plan)
+    try:
+        path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise LocalInvariantError(f"cannot read plan {plan}: {exc.strerror or exc}") from exc
+    match = re.match(rf"^{corpus.PARENT_PAT}-({corpus.LOCAL_PAT})$", ticket_id)
+    section = corpus.plan_section_for(path, match.group(1) if match else ticket_id)
+    if section is None:
+        raise ApiError(3, f"{ticket_id} has no section in {plan}")
+    return f"STATUS: unknown (offline --plan)\n\n{section}"
+
+
+def cmd_show(argv, as_json):
+    ticket_id, plan = parse_show_args(argv)
+    if plan:
+        markdown, ticket = offline_package(ticket_id, plan), None
+    else:
+        product = discover_product()
+        _, package = request(
+            "GET", agent_path(product, f"/tickets/{urllib.parse.quote(ticket_id)}/package"), agent=True
+        )
+        if not isinstance(package, dict) or "markdown" not in package:
+            raise ApiError(8, "package response has no markdown")
+        markdown, ticket = str(package["markdown"]), package.get("ticket")
+    return print_package(markdown, ticket, as_json)
+
+
+def print_package(markdown, ticket, as_json, extra=None):
+    agent = ticket.get("agent") if isinstance(ticket, dict) else None
+    block, unknown = rules_for(markdown, agent)
+    if as_json:
+        shape = {"markdown": markdown, "ticket": ticket, "rules_markdown": block, "unknown_rules": list(unknown)}
+        shape.update(extra or {})
+        emit_json(shape)
+    else:
+        print(markdown.rstrip("\n"))
+        print()
+        print(RULES_DIVIDER)
+        print(block)
+    return 4 if unknown else 0
+
+
+def ticket_arg(argv, usage):
+    if len(argv) != 1 or argv[0].startswith("-"):
+        raise UsageError(usage)
+    return argv[0].strip().upper()
+
+
+def claim_call(verb, argv, usage):
+    ticket = ticket_arg(argv, usage)
+    product = discover_product()
+    _, response = request(
+        "POST", agent_path(product, f"/tickets/{urllib.parse.quote(ticket)}/{verb}"), agent=True
+    )
+    return product, ticket, response
+
+
+def claim_expiry(response):
+    claim = response.get("claim") if isinstance(response, dict) else None
+    expires = claim.get("expires_at") if isinstance(claim, dict) else None
+    if not expires:
+        raise ApiError(8, "claim response has no expires_at")
+    return claim, expires
+
+
+def record_claim(product, ticket, expires):
+    """Remembered so `cost --held` still finds the ticket after the worker released it."""
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "agent": agent_name(),
+        "product": product,
+        "ticket": ticket,
+        "expires_at": expires,
+    }
+    try:
+        path = git_toplevel() / CLAIM_LOG
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry) + "\n")
+    except OSError:
+        pass
+
+
+def recent_claims(product):
+    """Tickets this agent claimed in the last 24 h, newest first, without duplicates."""
+    try:
+        lines = (git_toplevel() / CLAIM_LOG).read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return []
+    cutoff = datetime.now(timezone.utc) - CLAIM_LOG_MAX_AGE
+    me, found = agent_name(), []
+    for line in reversed(lines):
+        try:
+            entry = json.loads(line)
+            stamp = datetime.fromisoformat(str(entry["ts"]))
+        except (ValueError, KeyError, TypeError):
+            continue
+        if entry.get("agent") == me and entry.get("product") == product and stamp >= cutoff:
+            if entry.get("ticket") and entry["ticket"] not in found:
+                found.append(entry["ticket"])
+    return found
+
+
+def cmd_claim(argv, as_json):
+    product, ticket, response = claim_call("claim", argv, CLAIM_USAGE)
+    claim, expires = claim_expiry(response)
+    record_claim(product, ticket, expires)
+    package = response.get("package")
+    if not isinstance(package, dict) or "markdown" not in package:
+        raise ApiError(8, "claim response has no package markdown")
+    code = print_package(str(package["markdown"]), package.get("ticket"), as_json, {"claim": claim})
+    say(f"claimed until {expires}")
+    return code
+
+
+def cmd_renew(argv, as_json):
+    _, _, response = claim_call("renew", argv, RENEW_USAGE)
+    claim, expires = claim_expiry(response)
+    if as_json:
+        emit_json({"claim": claim})
+    say(f"claimed until {expires}")
+    return 0
+
+
+def cmd_release(argv, as_json):
+    claim_call("release", argv, RELEASE_USAGE)
+    if as_json:
+        emit_json({"released": True})
+    return 0
+
+
+def cmd_handoff(argv, as_json):
+    if len(argv) != 2 or argv[0].startswith("-"):
+        raise UsageError(HANDOFF_USAGE)
+    ticket = argv[0].strip().upper()
+    note = (sys.stdin.read() if argv[1] == "-" else argv[1]).strip()
+    if not note:
+        raise UsageError(f"the note is empty\n{HANDOFF_USAGE}")
+    if len(note) > NOTE_MAX:
+        raise UsageError(f"the note is {len(note)} characters; the limit is {NOTE_MAX}")
+    product = discover_product()
+    _, created = request(
+        "POST",
+        agent_path(product, f"/tickets/{urllib.parse.quote(ticket)}/handoffs"),
+        {"note": note},
+        agent=True,
+    )
+    if as_json:
+        emit_json(created)
+    return 0
+
+
+def parse_cost_args(argv):
+    ticket, held, session, values, i = None, False, None, {}, 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--held":
+            held = True
+            i += 1
+        elif arg in COST_INT_FLAGS or arg in ("--cost-usd", "--session-id"):
+            if i + 1 >= len(argv):
+                raise UsageError(f"{arg} needs a value\n{COST_USAGE}")
+            raw = argv[i + 1]
+            if arg == "--session-id":
+                session = raw.strip() or None
+            else:
+                try:
+                    number = float(raw) if arg == "--cost-usd" else int(raw)
+                except ValueError:
+                    raise UsageError(f"{arg} {raw!r} is not a number\n{COST_USAGE}") from None
+                if number < 0 or number != number or number == float("inf"):
+                    raise UsageError(f"{arg} must be a non-negative number\n{COST_USAGE}")
+                values[COST_INT_FLAGS.get(arg, "cost_usd")] = number
+            i += 2
+        elif arg.startswith("-"):
+            raise UsageError(f"unknown option {arg}\n{COST_USAGE}")
+        elif ticket is None:
+            ticket = arg.strip().upper()
+            i += 1
+        else:
+            raise UsageError(f"unexpected argument {arg!r}\n{COST_USAGE}")
+    if bool(ticket) == held:
+        raise UsageError(f"give a ticket ID or --held, not both or neither\n{COST_USAGE}")
+    missing = [f for f in (*COST_INT_FLAGS, "--cost-usd") if COST_INT_FLAGS.get(f, "cost_usd") not in values]
+    if missing:
+        raise UsageError(f"missing {', '.join(missing)}\n{COST_USAGE}")
+    if session:
+        values["session_id"] = session
+    return ticket, values
+
+
+def held_ticket(product):
+    _, live = request(
+        "GET", agent_path(product, "/claims?" + urllib.parse.urlencode({"agent": agent_name()})), agent=True
+    )
+    if not isinstance(live, list):
+        raise ApiError(8, "claims response is not a list")
+    candidates = [str(c.get("ticket")) for c in live if isinstance(c, dict) and c.get("ticket")]
+    if not candidates:
+        candidates = recent_claims(product)
+    if len(candidates) > 1:
+        raise UsageError(f"{len(candidates)} candidate tickets ({', '.join(candidates)}); name one instead of --held")
+    return candidates[0] if candidates else None
+
+
+def cmd_cost(argv, as_json):
+    ticket, body = parse_cost_args(argv)
+    product = discover_product()
+    if not ticket:
+        ticket = held_ticket(product)
+        if not ticket:
+            say("no held or recently claimed ticket; cost not reported")
+            return 0
+    request("POST", agent_path(product, f"/tickets/{urllib.parse.quote(ticket)}/costs"), body, agent=True)
+    if as_json:
+        emit_json({"recorded": True, "ticket": ticket})
+    say("recorded")
+    return 0
+
+
+def cmd_template(argv, as_json):
+    if len(argv) != 1 or argv[0].startswith("-"):
+        raise UsageError(TEMPLATE_USAGE)
+    kind = argv[0].strip().lower()
+    _, markdown = request("GET", f"/api/public/templates/{urllib.parse.quote(kind)}", text=True)
+    if as_json:
+        emit_json({"type": kind, "markdown": markdown})
+    else:
+        sys.stdout.write(markdown)
+    return 0
+
+
+def cmd_check(argv, as_json):
+    if len(argv) != 1 or argv[0].startswith("-"):
+        raise UsageError(CHECK_USAGE)
+    path = Path(argv[0])
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise LocalInvariantError(f"cannot read {argv[0]}: {getattr(exc, 'strerror', None) or exc}") from exc
+    result = check_content(content, ticket_path_label(path))
+    violations = [v for v in (result.get("violations") or []) if isinstance(v, dict)]
+    if as_json:
+        emit_json(result)
+    else:
+        for v in violations:
+            print(f"{v.get('severity')} {v.get('rule')} {v.get('section')}: {v.get('message')}")
+        say(f"needs spec: {'yes' if result.get('needs_spec') else 'no'}")
+    return 9 if any(v.get("severity") == "error" for v in violations) else 0
+
+
+
+
+# ---------------------------------------------------------------------------------------
+# Items mode
+# ---------------------------------------------------------------------------------------
+
+ITEM_KINDS = ("initiative", "epic", "task", "feature", "bug", "chore", "spike")
+TICKET_KINDS = ("task", "feature", "bug", "chore", "spike")
+CREATE_STATUSES = ("backlog", "ready")
+MOVE_STATUSES = ("backlog", "ready", "in_progress", "in_review", "done", "canceled")
+SCOPE_CODE_RE = re.compile(r"^[A-Z]{2,5}$")
+HISTORY_DIVIDER = "--- history ---"
+PLAN_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+
+CREATE_USAGE = (
+    'usage: tickets create <kind> "<title>" [--layer L] [--parent KEY] [--depends-on KEY,KEY] [--goal T] '
+    "[--doc-path P] [--plan-path P] [--rules ID,ID] [--ac AC1,AC2] [--status backlog|ready] [--after KEY] "
+    "[--body-file PATH|-]"
+)
+EDIT_USAGE = (
+    "usage: tickets edit KEY --version N [--title T] [--body-file PATH|-] [--goal T] [--doc-path P] "
+    "[--plan-path P] [--layer L] [--rules ID,ID] [--ac AC1,AC2] [--parent KEY | --no-parent]"
+)
+MOVE_USAGE = "usage: tickets move KEY STATUS [--version N]"
+LINK_USAGE = "usage: tickets link KEY DEP [--version N]"
+UNLINK_USAGE = "usage: tickets unlink KEY DEP"
+REORDER_USAGE = "usage: tickets reorder KEY (--after KEY | --first) [--version N]"
+CANCEL_USAGE = "usage: tickets cancel KEY [--version N]"
+ACTIVATE_USAGE = "usage: tickets activate [PRODUCT]"
+ITEMS_CHECK_USAGE = (
+    "usage: tickets check [--key KEY] [--kind K] [--title T] [--layer L] [--parent KEY] [--rules ID,ID] "
+    "[--ac AC1,AC2] [--body-file PATH|-]"
+)
+IMPORT_USAGE = "usage: tickets import <product> --dry-run [--out FILE] | tickets import <product> --confirm <plan_hash>"
+
+
+class RulesUnknown(Exception):
+    """`--rules` names IDs the local registry cannot resolve. Exit 9."""
+
+    def __init__(self, unknown):
+        super().__init__("unresolved rule IDs")
+        self.unknown = unknown
+
+
+class Prepared:
+    """What a verb's pre-probe validation produced: the argv a v1 handler re-reads, plus the parsed
+    items-mode arguments."""
+
+    def __init__(self, argv, data=None):
+        self.argv = argv
+        self.data = data
+
+
+def parse_flags(argv, valued, switches, usage):
+    positional, opts, i = [], {}, 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg in switches:
+            opts[arg] = True
+            i += 1
+        elif arg in valued:
+            if arg in opts:
+                raise UsageError(f"{arg} given twice\n{usage}")
+            if i + 1 >= len(argv):
+                raise UsageError(f"{arg} needs a value\n{usage}")
+            opts[arg] = argv[i + 1]
+            i += 2
+        elif arg.startswith("-") and arg != "-":
+            raise UsageError(f"unknown option {arg}\n{usage}")
+        else:
+            positional.append(arg)
+            i += 1
+    return positional, opts
+
+
+def item_key(value):
+    key = (value or "").strip().upper()
+    if not corpus.ITEM_KEY_RE.match(key):
+        raise UsageError(
+            f"{value!r} is not an item key (CODE-N or CODE-N.M); look an old ID up with `tickets show <alias>`"
+        )
+    return key
+
+
+def key_list(value):
+    return [item_key(k) for k in (value or "").split(",") if k.strip()]
+
+
+def plain_list(value):
+    return [v.strip() for v in (value or "").split(",") if v.strip()]
+
+
+def parse_version(value, usage):
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        raise UsageError(f"--version {value!r} is not a whole number\n{usage}") from None
+    if number < 1:
+        raise UsageError(f"--version must be at least 1\n{usage}")
+    return number
+
+
+def read_body(path):
+    if path == "-":
+        return sys.stdin.read()
+    try:
+        return Path(path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise LocalInvariantError(f"cannot read {path}: {getattr(exc, 'strerror', None) or exc}") from exc
+
+
+def resolve_rule_ids(value):
+    ids = plain_list(value)
+    registry = corpus.load_rule_registry(git_toplevel())
+    _, unknown = corpus.resolve_rules(ids, registry)
+    if unknown:
+        raise RulesUnknown(unknown)
+    return ids
+
+
+def item_fields(opts):
+    """The CreateItem / PATCH fields shared by create, edit and check, from parsed flags."""
+    fields = {}
+    for flag, name in (("--title", "title"), ("--goal", "goal"), ("--doc-path", "doc_path"),
+                       ("--plan-path", "plan_path"), ("--layer", "layer")):
+        if flag in opts:
+            fields[name] = opts[flag]
+    if "--parent" in opts:
+        fields["parent"] = item_key(opts["--parent"])
+    if "--rules" in opts:
+        fields["rules"] = resolve_rule_ids(opts["--rules"])
+    if "--ac" in opts:
+        fields["ac_refs"] = plain_list(opts["--ac"])
+    if "--body-file" in opts:
+        fields["body"] = read_body(opts["--body-file"])
+    return fields
+
+
+def items_path(key, tail=""):
+    return f"/api/agent/items/{urllib.parse.quote(key)}{tail}"
+
+
+def violation_line(v):
+    return f"{v.get('severity')} {v.get('rule')} {v.get('section')}: {v.get('message')}"
+
+
+def say_warnings(response):
+    for v in (response.get("warnings") or []) if isinstance(response, dict) else []:
+        if isinstance(v, dict):
+            say(violation_line(v))
+
+
+def written_item(response):
+    item = response.get("item") if isinstance(response, dict) else None
+    if not isinstance(item, dict) or not item.get("key"):
+        raise ApiError(8, "response has no item key")
+    return item
+
+
+def finish_write(response, as_json):
+    item = written_item(response)
+    if as_json:
+        emit_json(response)
+    say(f"{item['key']} v{item.get('version')}")
+    say_warnings(response)
+    return 0
+
+
+def prepare_create(argv):
+    valued = ("--layer", "--parent", "--depends-on", "--goal", "--doc-path", "--plan-path", "--rules", "--ac",
+              "--status", "--after", "--body-file")
+    positional, opts = parse_flags(argv, valued, (), CREATE_USAGE)
+    if len(positional) != 2:
+        raise UsageError(f'give a kind and one quoted title\n{CREATE_USAGE}')
+    kind, title = positional[0].strip().lower(), positional[1].strip()
+    if kind not in ITEM_KINDS:
+        raise UsageError(f"kind {kind!r} is not one of {' '.join(ITEM_KINDS)}")
+    if not title:
+        raise UsageError(f"a title is required\n{CREATE_USAGE}")
+    body = {"kind": kind, "title": title}
+    body.update(item_fields(opts))
+    if "--depends-on" in opts:
+        body["depends_on"] = key_list(opts["--depends-on"])
+    if "--status" in opts:
+        status = opts["--status"].strip().lower()
+        if status not in CREATE_STATUSES:
+            raise UsageError(f"--status {status!r} is not one of {'/'.join(CREATE_STATUSES)}")
+        body["status"] = status
+    if "--after" in opts:
+        body["after"] = item_key(opts["--after"])
+    return Prepared(argv, body)
+
+
+def items_create(prepared, info, as_json):
+    _, response = request("POST", agent_path(info["product"], "/items"), prepared.data, agent=True)
+    item = written_item(response)
+    if as_json:
+        emit_json(response)
+    else:
+        print(item["key"])
+    say(f"created {item['key']}")
+    say_warnings(response)
+    return 0
+
+
+def prepare_edit(argv):
+    valued = ("--version", "--title", "--body-file", "--goal", "--doc-path", "--plan-path", "--layer", "--rules",
+              "--ac", "--parent")
+    positional, opts = parse_flags(argv, valued, ("--no-parent",), EDIT_USAGE)
+    if len(positional) != 1:
+        raise UsageError(EDIT_USAGE)
+    key = item_key(positional[0])
+    if "--version" not in opts:
+        raise UsageError(f"--version is required (the version you last read)\n{EDIT_USAGE}")
+    version = parse_version(opts["--version"], EDIT_USAGE)
+    if "--parent" in opts and "--no-parent" in opts:
+        raise UsageError(f"--parent and --no-parent together\n{EDIT_USAGE}")
+    fields = item_fields(opts)
+    if "--no-parent" in opts:
+        fields["parent"] = ""
+    if not fields:
+        raise UsageError(f"nothing to change: give at least one field flag\n{EDIT_USAGE}")
+    return Prepared(argv, (key, dict(fields, version=version)))
+
+
+def items_edit(prepared, info, as_json):
+    key, body = prepared.data
+    _, response = request("PATCH", items_path(key), body, agent=True)
+    return finish_write(response, as_json)
+
+
+def optional_version(opts, usage):
+    return {"version": parse_version(opts["--version"], usage)} if "--version" in opts else {}
+
+
+def prepare_move(argv):
+    positional, opts = parse_flags(argv, ("--version",), (), MOVE_USAGE)
+    if len(positional) != 2:
+        raise UsageError(MOVE_USAGE)
+    key, status = item_key(positional[0]), positional[1].strip().lower()
+    if status not in MOVE_STATUSES:
+        raise UsageError(f"status {status!r} is not one of {' '.join(MOVE_STATUSES)}")
+    return Prepared(argv, (key, dict(optional_version(opts, MOVE_USAGE), status=status)))
+
+
+def items_move(prepared, info, as_json):
+    key, body = prepared.data
+    _, response = request("POST", items_path(key, "/move"), body, agent=True)
+    return finish_write(response, as_json)
+
+
+def prepare_link(argv):
+    positional, opts = parse_flags(argv, ("--version",), (), LINK_USAGE)
+    if len(positional) != 2:
+        raise UsageError(LINK_USAGE)
+    key, dep = item_key(positional[0]), item_key(positional[1])
+    return Prepared(argv, (key, dict(optional_version(opts, LINK_USAGE), key=dep)))
+
+
+def items_link(prepared, info, as_json):
+    key, body = prepared.data
+    _, response = request("POST", items_path(key, "/dependencies"), body, agent=True)
+    return finish_write(response, as_json)
+
+
+def prepare_unlink(argv):
+    positional, _ = parse_flags(argv, (), (), UNLINK_USAGE)
+    if len(positional) != 2:
+        raise UsageError(UNLINK_USAGE)
+    return Prepared(argv, (item_key(positional[0]), item_key(positional[1])))
+
+
+def items_unlink(prepared, info, as_json):
+    key, dep = prepared.data
+    _, response = request("DELETE", items_path(key, f"/dependencies/{urllib.parse.quote(dep)}"), agent=True)
+    return finish_write(response, as_json)
+
+
+def prepare_reorder(argv):
+    positional, opts = parse_flags(argv, ("--after", "--version"), ("--first",), REORDER_USAGE)
+    if len(positional) != 1 or ("--after" in opts) == ("--first" in opts):
+        raise UsageError(f"give KEY and exactly one of --after KEY or --first\n{REORDER_USAGE}")
+    after = item_key(opts["--after"]) if "--after" in opts else None
+    return Prepared(argv, (item_key(positional[0]), dict(optional_version(opts, REORDER_USAGE), after=after)))
+
+
+def items_reorder(prepared, info, as_json):
+    key, body = prepared.data
+    _, response = request("POST", items_path(key, "/reorder"), body, agent=True)
+    return finish_write(response, as_json)
+
+
+def prepare_cancel(argv):
+    positional, opts = parse_flags(argv, ("--version",), (), CANCEL_USAGE)
+    if len(positional) != 1:
+        raise UsageError(CANCEL_USAGE)
+    return Prepared(argv, (item_key(positional[0]), optional_version(opts, CANCEL_USAGE)))
+
+
+def items_cancel(prepared, info, as_json):
+    key, body = prepared.data
+    _, response = request("POST", items_path(key, "/cancel"), body, agent=True)
+    return finish_write(response, as_json)
+
+
+def prepare_activate(argv):
+    positional, _ = parse_flags(argv, (), (), ACTIVATE_USAGE)
+    if len(positional) > 1:
+        raise UsageError(ACTIVATE_USAGE)
+    return Prepared(argv, positional[0].strip() if positional else "")
+
+
+def cmd_activate(prepared, as_json):
+    product = prepared.data or discover_product()
+    _, response = request("POST", agent_path(product, "/activate"), agent=True)
+    if not isinstance(response, dict):
+        raise ApiError(8, "activate response is not an object")
+    if as_json:
+        emit_json(response)
+    say(f"activated {response.get('product') or product} ({response.get('code') or NO_VALUE})")
+    return 0
+
+
+def items_next(prepared, info, as_json):
+    raw = prepared.argv[0].strip().upper() if prepared.argv else info["code"]
+    if not raw:
+        raise ApiError(8, f"product {info['product']} has no code; name the scope")
+    if not (SCOPE_CODE_RE.match(raw) or corpus.ITEM_KEY_RE.match(raw)):
+        raise UsageError(f"scope {raw!r} is neither a product code nor an epic key\n{NEXT_USAGE}")
+    _, items = request("GET", "/api/agent/next?" + urllib.parse.urlencode({"scope": raw}), agent=True)
+    if not isinstance(items, list):
+        raise ApiError(8, "next response is not a list")
+    if as_json:
+        emit_json(items)
+        return 0
+    if not items:
+        print("ready: none")
+    for item in items:
+        kind = item.get("kind") or NO_VALUE
+        layer = item.get("layer") or NO_VALUE
+        agent = item.get("agent") or NO_VALUE
+        print(f"{item.get('key')}  {kind}  {layer} -> {agent}  {item.get('title', '')}")
+    return 0
+
+
+def history_value(value):
+    if value is None or value == "":
+        return NO_VALUE
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def history_block(item):
+    lines = [HISTORY_DIVIDER, f"version: {item.get('version')}"]
+    for entry in item.get("history") or []:
+        if not isinstance(entry, dict):
+            continue
+        parts = [str(entry.get("created_at") or NO_VALUE), str(entry.get("action") or NO_VALUE),
+                 str(entry.get("agent_name") or NO_VALUE)]
+        changes = ", ".join(
+            f"{c.get('field')}: {history_value(c.get('old'))} -> {history_value(c.get('new'))}"
+            for c in entry.get("changes") or [] if isinstance(c, dict)
+        )
+        if changes:
+            parts.append(changes)
+        if entry.get("session_url"):
+            parts.append(f"session={entry['session_url']}")
+        if entry.get("commit_sha"):
+            parts.append(f"commit={str(entry['commit_sha'])[:7]}")
+        lines.append("  ".join(parts))
+    return "\n".join(lines)
+
+
+def item_rules(item):
+    registry = corpus.load_rule_registry(git_toplevel())
+    found, unknown = corpus.resolve_rules(list(item.get("rules") or []), registry)
+    block = corpus.render_rules_block(found, unknown, corpus.executor_namespaces(item.get("agent"), git_toplevel()))
+    return block, unknown
+
+
+def print_item_package(markdown, item, as_json, extra=None, history=True):
+    item = item if isinstance(item, dict) else {}
+    block, unknown = item_rules(item)
+    if as_json:
+        shape = {"markdown": markdown, "item": item, "rules_markdown": block, "unknown_rules": list(unknown)}
+        shape.update(extra or {})
+        emit_json(shape)
+    else:
+        print(markdown.rstrip("\n"))
+        print()
+        if history:
+            print(history_block(item))
+            print()
+        print(RULES_DIVIDER)
+        print(block)
+    return 4 if unknown else 0
+
+
+def print_container(detail, as_json):
+    """An epic or initiative has no dispatch package; show what the detail holds."""
+    if as_json:
+        emit_json({"item": detail})
+        return 0
+    print(f"# {detail.get('key')} — {detail.get('title', '')}")
+    if detail.get("goal"):
+        print()
+        print(f"Goal: {detail['goal']}")
+    if (detail.get("body") or "").strip():
+        print()
+        print(str(detail["body"]).rstrip("\n"))
+    print()
+    print(history_block(detail))
+    return 0
+
+
+def resolve_alias(ref, info):
+    """One key for an alias (an old ID, optionally `slug/OLD-ID`), or a usage/404 error."""
+    slug, sep, rest = ref.rpartition("/")
+    alias = f"{slug.lower()}{sep}{rest.upper()}"
+    path = "/api/public/resolve/" + urllib.parse.quote(alias, safe="/")
+    _, found = request("GET", path + "?" + urllib.parse.urlencode({"product": info["product"]}))
+    matches = [m for m in (found or {}).get("matches") or [] if isinstance(m, dict)] if isinstance(found, dict) else []
+    if not matches:
+        raise ApiError(3, f"{ref} resolves to no item")
+    if len(matches) > 1:
+        listed = "\n".join(f"  {m.get('key')}  {m.get('product')}  {m.get('kind')}  {m.get('title', '')}" for m in matches)
+        raise UsageError(f"{ref} matches {len(matches)} items; name one by key:\n{listed}")
+    return str(matches[0].get("key"))
+
+
+def items_show(prepared, info, as_json):
+    _, plan = parse_show_args(prepared.argv)
+    if plan:
+        raise UsageError("--plan reads a v1 plan; items-mode products show from Aijira only")
+    ref = next(a for a in prepared.argv if not a.startswith("-")).strip()
+    upper = ref.upper()
+    match = corpus.ITEM_KEY_RE.match(upper)
+    key = upper if match and (not info["code"] or match.group(1) == info["code"]) else resolve_alias(ref, info)
+    _, detail = request("GET", f"/api/public/items/{urllib.parse.quote(key)}")
+    if not isinstance(detail, dict):
+        raise ApiError(8, "item response is not an object")
+    if detail.get("kind") not in TICKET_KINDS:
+        return print_container(detail, as_json)
+    _, package = request("GET", items_path(key, "/package"), agent=True)
+    if not isinstance(package, dict) or "markdown" not in package:
+        raise ApiError(8, "package response has no markdown")
+    return print_item_package(str(package["markdown"]), detail, as_json)
+
+
+def items_claim_call(verb, prepared):
+    key = item_key(prepared.argv[0])
+    _, response = request("POST", items_path(key, f"/{verb}"), agent=True)
+    return key, response
+
+
+def items_claim(prepared, info, as_json):
+    key, response = items_claim_call("claim", prepared)
+    claim, expires = claim_expiry(response)
+    record_claim(info["product"], key, expires)
+    package = response.get("package")
+    if not isinstance(package, dict) or "markdown" not in package:
+        raise ApiError(8, "claim response has no package markdown")
+    item = package.get("item") if isinstance(package.get("item"), dict) else {}
+    code = print_item_package(str(package["markdown"]), item, as_json, {"claim": claim}, history="history" in item)
+    say(f"claimed until {expires}")
+    return code
+
+
+def items_renew(prepared, info, as_json):
+    _, response = items_claim_call("renew", prepared)
+    claim, expires = claim_expiry(response)
+    if as_json:
+        emit_json({"claim": claim})
+    say(f"claimed until {expires}")
+    return 0
+
+
+def items_release(prepared, info, as_json):
+    items_claim_call("release", prepared)
+    if as_json:
+        emit_json({"released": True})
+    return 0
+
+
+def prepare_handoff(argv):
+    if len(argv) != 2 or argv[0].startswith("-"):
+        raise UsageError(HANDOFF_USAGE)
+    note = (sys.stdin.read() if argv[1] == "-" else argv[1]).strip()
+    if not note:
+        raise UsageError(f"the note is empty\n{HANDOFF_USAGE}")
+    if len(note) > NOTE_MAX:
+        raise UsageError(f"the note is {len(note)} characters; the limit is {NOTE_MAX}")
+    return Prepared([argv[0], note], note)
+
+
+def items_handoff(prepared, info, as_json):
+    key = item_key(prepared.argv[0])
+    _, created = request("POST", items_path(key, "/handoffs"), {"note": prepared.data}, agent=True)
+    if as_json:
+        emit_json(created)
+    return 0
+
+
+def items_held(product):
+    try:
+        _, live = request(
+            "GET", agent_path(product, "/claims?" + urllib.parse.urlencode({"agent": agent_name()})), agent=True
+        )
+    except ApiError as exc:
+        if exc.code != 3:
+            raise
+        live = []
+    if not isinstance(live, list):
+        raise ApiError(8, "claims response is not a list")
+    candidates = [str(c.get("ticket") or c.get("key")) for c in live
+                  if isinstance(c, dict) and (c.get("ticket") or c.get("key"))]
+    if not candidates:
+        candidates = recent_claims(product)
+    if len(candidates) > 1:
+        raise UsageError(f"{len(candidates)} candidate tickets ({', '.join(candidates)}); name one instead of --held")
+    return candidates[0] if candidates else None
+
+
+def items_cost(prepared, info, as_json):
+    ticket, body = parse_cost_args(prepared.argv)
+    if ticket:
+        key = item_key(ticket)
+    else:
+        key = items_held(info["product"])
+        if not key:
+            say("no held or recently claimed ticket; cost not reported")
+            return 0
+    request("POST", items_path(key, "/costs"), body, agent=True)
+    if as_json:
+        emit_json({"recorded": True, "ticket": key})
+    say("recorded")
+    return 0
+
+
+def prepare_template(argv):
+    if len(argv) != 1 or argv[0].startswith("-"):
+        raise UsageError(TEMPLATE_USAGE)
+    kind = argv[0].strip().lower()
+    if kind not in ITEM_KINDS:
+        raise UsageError(f"type {kind!r} is not one of {' '.join(ITEM_KINDS)}")
+    return Prepared(argv, kind)
+
+
+def items_template(prepared, info, as_json):
+    kind = prepared.data
+    _, markdown = request("GET", f"/api/public/templates/{urllib.parse.quote(kind)}?format=body", text=True)
+    if as_json:
+        emit_json({"type": kind, "markdown": markdown})
+    else:
+        sys.stdout.write(markdown)
+    return 0
+
+
+def prepare_check(argv):
+    if not any(a.startswith("--") for a in argv):
+        if len(argv) == 1:
+            try:
+                Path(argv[0]).read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError) as exc:
+                raise LocalInvariantError(
+                    f"cannot read {argv[0]}: {getattr(exc, 'strerror', None) or exc}"
+                ) from exc
+        return Prepared(argv, None)
+    valued = ("--key", "--kind", "--title", "--layer", "--parent", "--rules", "--ac", "--body-file")
+    positional, opts = parse_flags(argv, valued, (), ITEMS_CHECK_USAGE)
+    if positional:
+        raise UsageError(f"unexpected argument {positional[0]!r}\n{ITEMS_CHECK_USAGE}")
+    key = item_key(opts["--key"]) if "--key" in opts else None
+    if not key and not ("--kind" in opts and "--title" in opts):
+        raise UsageError(f"--kind and --title are required unless --key names the item\n{ITEMS_CHECK_USAGE}")
+    fields = item_fields(opts)
+    if "--kind" in opts:
+        kind = opts["--kind"].strip().lower()
+        if kind not in ITEM_KINDS:
+            raise UsageError(f"kind {kind!r} is not one of {' '.join(ITEM_KINDS)}")
+        fields["kind"] = kind
+    return Prepared(argv, (key, fields))
+
+
+VALIDATE_FROM_DETAIL = ("kind", "title", "body", "goal", "doc_path", "plan_path", "layer", "rules", "ac_refs", "parent")
+
+
+def items_check(prepared, info, as_json):
+    if prepared.data is None:
+        raise UsageError(f"items mode checks fields, not a file\n{ITEMS_CHECK_USAGE}")
+    key, fields = prepared.data
+    body = {}
+    if key:
+        _, detail = request("GET", f"/api/public/items/{urllib.parse.quote(key)}")
+        if not isinstance(detail, dict):
+            raise ApiError(8, "item response is not an object")
+        body = {f: detail[f] for f in VALIDATE_FROM_DETAIL if detail.get(f) is not None}
+        body["key"] = key
+    body.update(fields)
+    _, result = request("POST", agent_path(info["product"], "/items/validate"), body, agent=True)
+    if not isinstance(result, dict):
+        raise ApiError(8, "validate response is not an object")
+    found = [v for v in (result.get("violations") or []) + (result.get("warnings") or []) if isinstance(v, dict)]
+    if as_json:
+        emit_json(result)
+    else:
+        for v in found:
+            print(violation_line(v))
+    return 9 if any(v.get("severity") == "error" for v in found) else 0
+
+
+# ---------------------------------------------------------------------------------------
+# Import (mode-independent: it runs while the product is still in git mode)
+# ---------------------------------------------------------------------------------------
+
+
+def prepare_import(argv):
+    positional, opts = parse_flags(argv, ("--confirm", "--out"), ("--dry-run",), IMPORT_USAGE)
+    if len(positional) != 1 or not positional[0].strip():
+        raise UsageError(IMPORT_USAGE)
+    dry, confirm = "--dry-run" in opts, opts.get("--confirm")
+    if dry == (confirm is not None):
+        raise UsageError(f"give exactly one of --dry-run or --confirm <plan_hash>\n{IMPORT_USAGE}")
+    if confirm is not None and not PLAN_HASH_RE.match(confirm):
+        raise UsageError(f"--confirm takes the dry run's plan_hash (64 lowercase hex characters)\n{IMPORT_USAGE}")
+    if "--out" in opts and not dry:
+        raise UsageError(f"--out goes with --dry-run\n{IMPORT_USAGE}")
+    return Prepared(argv, {"product": positional[0].strip(), "confirm": confirm, "out": opts.get("--out")})
+
+
+def table_cell(value):
+    return " ".join(str(value if value is not None else "").split()).replace("|", "\\|")
+
+
+def render_import_report(report, product):
+    items = [i for i in report.get("items") or [] if isinstance(i, dict)]
+    failing = [i for i in items if i.get("needs_spec")]
+    notes = [n for n in report.get("notes") or [] if n]
+    plan_hash = report.get("plan_hash") or ""
+    lines = [
+        f"# Import dry run — {product} ({report.get('code') or NO_VALUE})",
+        "",
+        f"items: {len(items)}  needs spec: {len(failing)}  plan_hash: {plan_hash}",
+        "",
+        "## Old ID to key",
+        "",
+        "| Old ID | Key | Kind | Status | Title |",
+        "|---|---|---|---|---|",
+    ]
+    for i in items:
+        cells = [i.get("old_id"), i.get("key"), i.get("kind"), i.get("status"), i.get("title")]
+        lines.append("| " + " | ".join(table_cell(c) for c in cells) + " |")
+    lines += ["", "## Needs spec", ""]
+    if not failing:
+        lines.append("none")
+    for i in failing:
+        lines.append(f"- {i.get('key')} ({i.get('old_id')}) {i.get('title', '')}")
+        for v in i.get("violations") or []:
+            if isinstance(v, dict):
+                lines.append(f"  {v.get('rule')} {v.get('section')}: {v.get('message')}")
+    lines += ["", "## Notes", ""]
+    lines += [f"- {n}" for n in notes] or ["none"]
+    lines += ["", f"confirm: tickets import {product} --confirm {plan_hash}"]
+    return "\n".join(lines) + "\n"
+
+
+def cmd_import(prepared, as_json):
+    args = prepared.data
+    product = args["product"]
+    body = {"dry_run": True} if args["confirm"] is None else {"dry_run": False, "confirm": args["confirm"]}
+    try:
+        _, report = request("POST", agent_path(product, "/import"), body, agent=True)
+    except ApiError as exc:
+        if exc.api_code == "IMPORT_CHANGED":
+            exc.message += f"\nthe source changed since the dry run; re-run `tickets import {product} --dry-run`"
+        raise
+    if not isinstance(report, dict):
+        raise ApiError(8, "import response is not an object")
+    if args["confirm"] is not None:
+        if as_json:
+            emit_json(report)
+        else:
+            print(f"imported {product}: {len(report.get('items') or [])} items")
+        return 0
+    text = json.dumps(report, indent=2, ensure_ascii=False) + "\n" if as_json else render_import_report(report, product)
+    if args["out"]:
+        try:
+            Path(args["out"]).write_text(text, encoding="utf-8")
+        except OSError as exc:
+            sys.stdout.write(text)
+            raise LocalInvariantError(f"cannot write {args['out']}: {exc.strerror or exc}; report printed instead") from exc
+        say(f"wrote {args['out']}")
+        return 0
+    sys.stdout.write(text)
+    return 0
+
+
+# ---------------------------------------------------------------------------------------
+# Dispatch
+# ---------------------------------------------------------------------------------------
+
+
+def argv_only(check):
+    def prepare(argv):
+        check(argv)
+        return Prepared(argv)
+    return prepare
+
+
+def git(handler):
+    return lambda prepared, as_json: handler(prepared.argv, as_json)
+
+
+def prepare_next(argv):
+    if len(argv) > 1 or any(a.startswith("-") for a in argv):
+        raise UsageError(NEXT_USAGE)
+    return Prepared(argv)
+
+
+GIT_COMMANDS = {
+    "id": git(cmd_id),
+    "file": git(cmd_file),
+    "next": git(cmd_next),
+    "show": git(cmd_show),
+    "claim": git(cmd_claim),
+    "renew": git(cmd_renew),
+    "release": git(cmd_release),
+    "handoff": git(cmd_handoff),
+    "cost": git(cmd_cost),
+    "template": git(cmd_template),
+    "check": git(cmd_check),
+}
+
+ITEMS_COMMANDS = {
+    "create": items_create,
+    "edit": items_edit,
+    "move": items_move,
+    "link": items_link,
+    "unlink": items_unlink,
+    "reorder": items_reorder,
+    "cancel": items_cancel,
+    "next": items_next,
+    "show": items_show,
+    "claim": items_claim,
+    "renew": items_renew,
+    "release": items_release,
+    "handoff": items_handoff,
+    "cost": items_cost,
+    "template": items_template,
+    "check": items_check,
+}
+
+# Every verb validates its arguments here, before the mode probe, so a usage error sends nothing.
+PREPARE = {
+    "id": argv_only(parse_id_args),
+    "file": argv_only(lambda argv: parse_file_args([a for a in argv if a != "--blocking"])),
+    "next": prepare_next,
+    "show": argv_only(parse_show_args),
+    "claim": argv_only(lambda argv: ticket_arg(argv, CLAIM_USAGE)),
+    "renew": argv_only(lambda argv: ticket_arg(argv, RENEW_USAGE)),
+    "release": argv_only(lambda argv: ticket_arg(argv, RELEASE_USAGE)),
+    "handoff": prepare_handoff,
+    "cost": argv_only(parse_cost_args),
+    "template": prepare_template,
+    "check": prepare_check,
+    "create": prepare_create,
+    "edit": prepare_edit,
+    "move": prepare_move,
+    "link": prepare_link,
+    "unlink": prepare_unlink,
+    "reorder": prepare_reorder,
+    "cancel": prepare_cancel,
+    "activate": prepare_activate,
+    "import": prepare_import,
+}
+
+MODE_INDEPENDENT = {"import": cmd_import, "activate": cmd_activate}
+
+
+def dispatch(verb, prepared, as_json):
+    if verb in MODE_INDEPENDENT:
+        return MODE_INDEPENDENT[verb](prepared, as_json)
+    try:
+        info = client.product_info()
+    except ApiError as exc:
+        # Unreachable: a v1 verb still runs, because its own first request fails the same way
+        # (exit 5, naming its URL) and `show --plan` needs no server at all.
+        if exc.code != 5 or verb not in GIT_COMMANDS:
+            raise
+        return GIT_COMMANDS[verb](prepared, as_json)
+    if info["items_mode"]:
+        handler = ITEMS_COMMANDS.get(verb)
+        if handler is None:
+            raise UsageError(
+                f"{info['product']} is in items mode; `tickets {verb}` is gone — "
+                'use `tickets create <kind> "<title>"`'
+            )
+        return handler(prepared, info, as_json)
+    handler = GIT_COMMANDS.get(verb)
+    if handler is None:
+        raise UsageError(
+            f"{info['product']} is in git mode; `tickets {verb}` needs items mode — "
+            f"migrate it first with `tickets import {info['product']} --dry-run`"
+        )
+    return handler(prepared, as_json)
+
+
+def api_error_lines(exc):
+    """(exit code, stderr lines) for a server error, with the items-mode details the message omits."""
+    lines = [exc.message]
+    details = exc.details or {}
+    if exc.api_code == "RULES_FAILED":
+        lines += [violation_line(v) for v in details.get("violations") or [] if isinstance(v, dict)]
+        return 9, lines
+    if exc.code == 7:
+        item = details.get("item") if isinstance(details.get("item"), dict) else None
+        if exc.api_code == "VERSION_CONFLICT" and item and item.get("version") is not None:
+            lines.append(f"current version {item['version']}")
+        keys = details.get("keys")
+        if isinstance(keys, list) and keys:
+            lines.append("keys: " + ", ".join(str(k) for k in keys))
+    return exc.code, lines
+
+
+def main(argv):
+    as_json = "--json" in argv
+    argv = [a for a in argv if a != "--json"]
+    if argv and argv[0] in ("-h", "--help", "help"):
+        print(USAGE)
+        return 0
+    if not argv:
+        print(USAGE, file=sys.stderr)
+        return 1
+    verb = argv[0]
+    prepare = PREPARE.get(verb)
+    if prepare is None:
+        print(f"tickets: unknown command {verb!r}", file=sys.stderr)
+        print(USAGE, file=sys.stderr)
+        return 1
+    try:
+        return dispatch(verb, prepare(argv[1:]), as_json)
+    except UsageError as exc:
+        print(f"tickets {verb}: {exc}", file=sys.stderr)
+        return 1
+    except LocalInvariantError as exc:
+        print(f"tickets {verb}: {exc}", file=sys.stderr)
+        return 2
+    except RulesUnknown as exc:
+        for entry in exc.unknown:
+            print(f"UNKNOWN {entry}", file=sys.stderr)
+        return 9
+    except ApiError as exc:
+        code, lines = api_error_lines(exc)
+        print(f"tickets {verb}: {lines[0]}", file=sys.stderr)
+        for line in lines[1:]:
+            print(line, file=sys.stderr)
+        return code
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -3,6 +3,18 @@ name: audit-checker
 description: Generic checker dispatched by an auditor or critic to evaluate ONE scope (a single file, one rule, or one dimension) against criteria provided in its task, returning structured findings. Reused by plan-critic, test-auditor, and consistency-auditor. Not dispatched directly.
 tools: Read, Grep, Glob, LSP, Bash
 model: sonnet
+color: purple
+maxTurns: 60
+omitClaudeMd: true
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 ## Tool Loading
@@ -20,7 +32,7 @@ You are a focused audit subagent dispatched by an auditor or critic. You evaluat
 
 ## What to do
 
-1. Read / grep / LSP only what the scope requires — **read-only, never edit**.
+1. Read / grep / LSP only what the scope requires — **read-only, never edit**. When your scope is part of a large file (a plan, a large design doc), use the slice command your task gives (`scripts/tickets show`, a `sed -n` range), or `grep -n` and then `Read` with `offset`/`limit`. Never read the whole file.
 2. Apply each criterion. For each violation, capture the location (`file:line`), the problem, and a concrete fix (or the evidence that proves the violation).
 3. Return findings — nothing else.
 

@@ -5,6 +5,7 @@ tools: Read, Write, Edit, Grep, Glob, LSP, Skill
 model: haiku
 effort: low
 skills: [backend-store-rules]
+color: blue
 ---
 
 ## Tool Loading

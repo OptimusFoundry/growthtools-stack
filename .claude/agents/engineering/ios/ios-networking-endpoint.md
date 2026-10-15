@@ -1,10 +1,11 @@
 ---
 name: ios-networking-endpoint
-description: Add one API call to AITravel — a single APIRequest file carrying path/method/queryItems/body/mockLatency + mockResponse(from: seed). Reads ios/docs/engineering/04-networking.md then executes. Mechanical; safe to batch on disjoint files.
+description: "Add one API call to AITravel — a single APIRequest file carrying path/method/queryItems/body/mockLatency + mockResponse(from: seed). Reads ios/docs/engineering/04-networking.md then executes. Mechanical; safe to batch on disjoint files."
 tools: LSP, Read, Write, Edit, Glob, Grep, ToolSearch
 model: haiku
 effort: low
 skills: [ios-architecture-rules, ios-models-networking-rules]
+color: orange
 ---
 
 # Swift Networking Endpoint

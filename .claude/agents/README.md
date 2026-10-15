@@ -126,7 +126,7 @@ These agents coordinate other agents or need broad codebase understanding, so pa
 | `feature-manager` | Engineering manager: PRD → tech spec (`plan-writer` + `plan-critic`) → build (`backend-supervisor` then `frontend-supervisor`). Owns one feature end-to-end |
 | `backend-supervisor` | Execute a backend plan end-to-end, tests-first: scaffold stubs → failing tests from contracts → implement to green (haiku tier + escalation) → gates → pre-commit → commit |
 | `frontend-supervisor` | Execute a frontend plan end-to-end, tests-first: MSW handlers + specs from contracts → implement against them → build + lint + lint:scss once → commit (Playwright is the user's manual step); for a UI change the measured check is the `quiet-app` skill's "Before you finish": `npx quiet-audit <url> --width 1280,390 --theme foundry,foundry-dark` per migrated route |
-| `plan-writer` | Orchestrate a **code-free** tech plan from a PRD path: decide the shared contract, fan out `plan-researcher` ×3, synthesize + flip the epic to Planned (opus for large features) |
+| `plan-writer` | Orchestrate a **code-free** tech plan from a PRD path: decide the shared contract + ticket skeleton, fan out `plan-researcher` ×3 to write sections in parallel, `scripts/plan-assemble` (creates the tickets in Aijira) + `scripts/plan-lint`, record the plan path on the epic (sonnet; opus only for size L) |
 | `code-reviewer` | Full-stack code review across Go backend and React frontend |
 | `backend-code-reviewer` | Go backend pattern validation |
 | `frontend-code-reviewer` | React 19 / TypeScript review of components on quiet (rule skills + `quiet:docs/guidelines/checklist.md`; the `quiet-app` skill for layout findings) |
@@ -170,12 +170,12 @@ The grouping below is preserved as-is from the source template rather than folde
 
 | Agent | Model | Task |
 |-------|-------|------|
-| `ios-plan-writer` | opus | Architect a **contract-level** plan from the docs — interfaces, signatures, tokens/components by name, the named mockup, a11y ids, acceptance criteria, a ticket table under the feature's TRACKER epic, the phase ordering. Not code bodies. Dispatches `ios-code-explorer` to resolve existing wiring/call chains before committing to a contract. |
+| `ios-plan-writer` | opus | Architect a **contract-level** plan from the docs — interfaces, signatures, tokens/components by name, the named mockup, a11y ids, acceptance criteria, tickets created in Aijira under the feature's epic, the phase ordering. Not code bodies. Dispatches `ios-code-explorer` to resolve existing wiring/call chains before committing to a contract. |
 | `ios-plan-critic` | sonnet | Adversarially review an `ios-plan-writer` plan before dispatch → GO/NEEDS-WORK (coverage & contract + edges & placement checklists; up to 2 revision rounds, matching the backend `plan-critic` — residual advisory findings ride as known-risks). M/L plans only; XS/S fast-mode plans skip it. Dispatches `ios-code-explorer` to verify a plan's claims against the actual code rather than trusting the plan's prose. |
 | `ios-supervisor` | sonnet | Executes the plan end-to-end — dispatches the scaffolders below in phase order (Phase 0 foundation barrier → stubs → red tests → green → screens → UI tests), runs the build + `ios-test-coverage-check` gate, commits. The iOS-track counterpart to `backend-supervisor`/`frontend-supervisor`. |
 | `ios-code-explorer` | sonnet | Read-only Swift exploration → structured findings (symbols, call chains, chrome/component wiring, blast radius) via SwiftLSP. The `ios/` counterpart to the shared `code-explorer` — use this instead of the generic `Explore` agent or `code-explorer` for any `ios/AITravel/` investigation; it carries the sourcekit-lsp warm-index caveat the shared one doesn't need. Dispatched by `ios-plan-writer`/`ios-plan-critic`/`ios-code-reviewer`/`ios-supervisor`, or directly for ad-hoc research. |
 
-Feature capture ahead of `ios-plan-writer` is the `ios-writing-prds` **skill**, not an agent (the iOS-track counterpart to `shared-writing-prds`) — it writes the PRD and the epic row in `docs/TRACKER.md`, shared with the backend epic board.
+Feature capture ahead of `ios-plan-writer` is the `ios-writing-prds` **skill**, not an agent (the iOS-track counterpart to `shared-writing-prds`) — it writes the PRD and creates the epic in Aijira (key in the PRD header), on the same board as the backend epics.
 
 ### Mechanical scaffolders (haiku) — batch freely on DISJOINT files
 

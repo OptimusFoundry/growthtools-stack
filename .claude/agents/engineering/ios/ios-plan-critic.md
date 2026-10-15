@@ -5,6 +5,16 @@ tools: LSP, Read, Glob, Grep, Bash, ToolSearch, Agent(ios-code-explorer)
 model: sonnet
 effort: high
 skills: [ios-architecture-rules, ios-models-networking-rules, ios-design-system-rules, ios-screens-rules, ios-testing-rules]
+color: orange
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 # iOS Plan Critic
@@ -30,10 +40,9 @@ Run both checklists, then render a verdict.
 - Every functional-logic task carries **behavior lines + the specific error sentinel** each sad path
   throws — precise enough for `ios-test-writer` to write red tests against stubs.
 - Every cited exemplar (`path → symbol`) exists — verify with `workspaceSymbol`/`Glob`, don't assume.
-- The ticket table is present and byte-identical to the canonical header
-  `| Ticket | Epic | Layer | Depends-on | AC refs | Status |`; every `Layer` cell is one of the `ios-*`
-  heads in `routing.yml` and resolves via `./scripts/tickets show <full-ID>` (no `UNKNOWN` line); every
-  ticket carries a `**Rules:**` line; the epic has exactly one plan file (this one) registered against it.
+- The plan ends with a `## Tickets` key list (`scripts/plan-lint` passes); every ticket's `layer` is
+  one of the `ios-*` heads in `routing.yml` and `./scripts/tickets show <KEY>` resolves it (no
+  `UNKNOWN` line); every ticket carries rules; the epic's plan path is this plan.
 
 ## Checklist B — edges & placement
 

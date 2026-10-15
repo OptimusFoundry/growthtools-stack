@@ -4,6 +4,7 @@ description: Applies one described mechanical transformation to an assigned set 
 tools: Read, Write, Edit, Grep, Glob, LSP, Bash, Skill
 model: haiku
 effort: low
+color: green
 ---
 
 ## Tool Loading

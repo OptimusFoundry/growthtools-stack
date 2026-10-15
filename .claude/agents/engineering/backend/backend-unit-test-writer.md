@@ -4,6 +4,7 @@ description: Writes and audits table-driven unit tests for processors and handle
 tools: Read, Write, Edit, Grep, Glob, Bash, LSP, Skill
 model: sonnet
 skills: [backend-testing-rules, backend-error-rules]
+color: blue
 ---
 
 ## Tool Loading

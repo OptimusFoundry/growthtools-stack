@@ -3,6 +3,16 @@ name: pr-supervisor
 description: Runs the full pre-PR quality gate as a fan-out — dispatches code-reviewer, test-auditor, consistency-auditor, and frontend-a11y-auditor in parallel over the branch diff, then synthesises a single GO / NO-GO verdict with ranked blocking issues. Covers backend, frontend, and iOS (code-reviewer fans out to ios-code-reviewer when ios/ changed — this is an independent second review alongside ios-supervisor's own internal gate). Use before opening a PR. Replaces a single-threaded pre-PR pass with parallel, independent checks.
 tools: Read, Grep, Glob, Bash, Agent(code-reviewer, test-auditor, consistency-auditor, frontend-a11y-auditor, security-auditor)
 model: sonnet
+color: purple
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: >-
+            sh -c 'r=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}");
+            f="$r/.claude/hooks/bash-write-guard.py"; [ -r "$f" ] || exit 0; python3 "$f" || exit 0'
+          timeout: 10
 ---
 
 # PR Supervisor

@@ -1,6 +1,6 @@
 # Blog SEO Metadata Wiring — PRD
 
-**Epic:** EP-003   **Status:** Spec'd   **Date:** 2026-08-02   **Size:** M
+**Epic:** MEER-3   **Status:** Spec'd   **Date:** 2026-08-02   **Size:** M
 
 ## Problem / why
 The blog editor already captures SEO title, OG title, OG description, and (via

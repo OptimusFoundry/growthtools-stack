@@ -37,8 +37,7 @@ DEFAULT_REF = "main"
 
 # Paths owned by the harness rather than by a specific product instance. Each is
 # diffed as a whole subtree (or single file); product-instance data that happens
-# to live nearby (docs/TICKETS.md, docs/tickets/, docs/prds/, docs/plans/,
-# docs/briefs/, docs/TRACKER.md) is deliberately excluded — that's each repo's
+# to live nearby (docs/prds/, docs/plans/, docs/briefs/) is deliberately excluded — that's each repo's
 # own tracked backlog, not harness content. Only paths growth-tools carries are listed;
 # template-only tooling (scripts/gate, scripts/tickets, plan-lint, …) is not ported here.
 TRACKED_PATHS = [

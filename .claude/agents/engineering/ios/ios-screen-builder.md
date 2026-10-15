@@ -5,12 +5,12 @@ tools: LSP, Read, Write, Edit, Glob, Grep, ToolSearch
 model: haiku
 effort: low
 skills: [ios-architecture-rules, ios-screens-rules, ios-design-system-rules]
+color: orange
 ---
 
 # Swift Screen Builder
 
-Read `ios/docs/engineering/06-screens.md` and root `CLAUDE.md`'s "five non-negotiable rules" (there is
-no separate design-docs corpus for v2 — the old J-rule-numbered one was retired), then build the screen.
+Read `ios/docs/engineering/06-screens.md` and the visual non-negotiables in `ios/design-docs/00-overview.md` (J-0 in `06-judgment.md`), then build the screen.
 
 **You get a contract, not code.** The plan gives you the interface — the screen name, the **named
 mockup** it ports (`v2/mockups/screens/<feature>/<name>.html` — the fidelity target; no committed
@@ -22,7 +22,7 @@ to place, the `Route` payload, the accessibility identifiers, the **exemplar to 
 1. **Read the named mockup + the exemplar screen's span first** (LSP `goToDefinition` to the exemplar;
    `Read` the mockup). Mirror the exemplar's structure; match the mockup's layout.
 2. **Don't invent.** If a cited component, token, route, or mockup doesn't exist, stop and report it —
-   never guess. Appearance defers to the named mockup + root `CLAUDE.md`'s non-negotiables.
+   never guess. Appearance defers to the named mockup + the visual non-negotiables.
 3. **Verify the Done-when acceptance criteria** (incl. that the screen names its mockup) before done.
 
 ## What you produce
@@ -69,8 +69,7 @@ to place, the `Route` payload, the accessibility identifiers, the **exemplar to 
 
 Glass on floating chrome only; semantic tokens only (no literals); Dynamic Type always; one accent;
 restrained motion; **logic out of views**; the screen **names its mockup** (the fidelity gate, `06 §9`).
-Hold root `CLAUDE.md`'s five non-negotiable rules in your head as you build — there is no separate
-J-rule/slop-catalog doc for v2.
+Hold the visual non-negotiables in `ios/design-docs/00-overview.md` (J-0 in `06-judgment.md`) in your head as you build.
 
 ## Rules
 
@@ -79,7 +78,7 @@ J-rule/slop-catalog doc for v2.
   composition-primitive signature; `findReferences` to see how a sibling screen consumes the same command.
   If `LSP` is deferred in your session, load it via `ToolSearch` (`select:LSP`) before falling back —
   don't substitute `Grep`/`Read` silently; if `LSP` is genuinely unavailable, say so in your report.
-- Appearance/structure defers to the named mockup + root `CLAUDE.md`'s non-negotiables; this agent owns wiring + the
+- Appearance/structure defers to the named mockup + the visual non-negotiables; this agent owns wiring + the
   presenter's derivation only.
 - **Don't build.** `ios-supervisor` runs the gate after you report. Write to compile against live source;
   flag anything you couldn't confirm.

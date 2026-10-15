@@ -1,6 +1,6 @@
 # Delete Blog Posts (including live site removal) — PRD
 
-**Epic:** EP-004   **Status:** Spec'd   **Date:** 2026-08-03   **Size:** M
+**Epic:** MEER-25   **Status:** Spec'd   **Date:** 2026-08-03   **Size:** M
 
 ## Problem / why
 Delete already exists in growth-tools, but only for `draft` posts — the

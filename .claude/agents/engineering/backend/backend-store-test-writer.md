@@ -4,6 +4,7 @@ description: Writes and audits table-driven store tests for the Go backend. Use 
 tools: Read, Write, Edit, Grep, Glob, Bash, LSP, Skill
 model: sonnet
 skills: [backend-testing-rules]
+color: blue
 ---
 
 ## Tool Loading

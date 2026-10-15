@@ -4,6 +4,7 @@ description: Use PROACTIVELY when adding a new feature module to the codebase. M
 tools: Read, Write, Edit, Grep, Glob, Bash, LSP, Skill
 model: sonnet
 skills: [backend-architecture-rules, backend-store-rules, backend-error-rules]
+color: blue
 ---
 
 ## Tool Loading

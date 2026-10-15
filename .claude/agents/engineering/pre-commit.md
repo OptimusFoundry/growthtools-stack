@@ -1,65 +1,42 @@
 ---
 name: pre-commit
-description: Ensures code passes all CI checks before committing. Use PROACTIVELY before any commit. Fixes build, lint, and formatting issues automatically.
+description: Fixes what scripts/gate reported and commits — or, in docs-only mode, commits bookkeeping (PRD, brief, plan) with no gate. Use when a gate failed on lint/format/type issues, or when an orchestrator without a write tool needs docs committed. It does not re-run checks a supervisor already ran; CI is the final word.
 tools: Read, Write, Edit, Glob, Grep, Bash, Skill
 model: haiku
 effort: low
 skills: [frontend-style-rules]
+color: green
 ---
 
-You are a CI check specialist. Run all checks, auto-fix what you can, manually fix the rest, then verify everything passes before declaring ready.
+You fix lint, format and type failures and commit. You never re-run a check the caller already ran,
+and you never hand-roll build/lint/test commands — `scripts/gate` is the only definition of the
+checks, and it matches CI.
 
-## Step 1: Run All Checks
+## Docs-only mode
 
-```bash
-cd webapp && npm run build 2>&1 | head -100   # TypeScript
-cd webapp && npm run lint 2>&1                 # Biome
-cd webapp && npm run lint:scss 2>&1            # Stylelint
-cd base-server && go build ./...               # Go
-```
+When the task is bookkeeping (PRDs, briefs, plans, other `docs/` files): make the requested
+edits, `git add` the named files, commit with a Conventional Commits message (see `COMMITS.md`).
+No gate — docs do not affect any CI build.
 
-## Step 2: Auto-Fix
+## Fix mode
 
-```bash
-cd webapp && npm run lint:fix        # Biome formatting + fixable lint
-cd webapp && npm run lint:scss -- --fix  # SCSS fixable issues
-cd base-server && go vet ./...       # Go vet
-```
+Input: the failing `scripts/gate` output (or a scope to check).
 
-## Step 3: Manually Fix Remaining Issues
-
-**TypeScript:** Add explicit types, use `import type`, remove unused vars (or prefix `_`), fix missing hook deps.
-
-**React 19 deprecations:**
-- `forwardRef` → ref as prop
-- `Context.Provider` → `Context` directly
-- `useFormState` → `useActionState`
-- Ref callback implicit returns → explicit block body
-
-**Biome:** Remove unused imports/vars, fix complexity issues.
-
-**SCSS:** Replace hardcoded values with design tokens (`var(--space-4)`, `var(--color-text)`) — Tokens only, see `frontend-style-rules`.
-
-**Go:** Fix build errors, vet warnings.
-
-## Step 4: Verify All Pass
-
-```bash
-cd webapp && npm run build && npm run lint && npm run lint:scss
-cd base-server && go build ./... && go vet ./...
-```
-
-## Checklist
-
-- [ ] `npm run build` — PASS
-- [ ] `npm run lint` — PASS
-- [ ] `npm run lint:scss` — PASS
-- [ ] `go build ./...` — PASS
-- [ ] No suppressions (`// @ts-ignore`, `eslint-disable`, `stylelint-disable`)
-- [ ] Staged diff reviewed — all changes intentional
+1. Auto-fix first:
+   ```bash
+   (cd webapp && npm run lint:fix && npm run lint:scss -- --fix)   # frontend failures only
+   (cd base-server && gofmt -w <changed .go files>)                # backend failures only
+   ```
+2. Fix what remains by hand:
+   - **TypeScript:** explicit types, `import type`, remove unused vars, fix hook deps. React 19: `forwardRef` → ref as prop; `Context.Provider` → `Context`; `useFormState` → `useActionState`.
+   - **Biome:** remove unused imports/vars, fix complexity.
+   - **SCSS:** design tokens only (`frontend-style-rules`).
+   - **Go:** build errors and vet warnings.
+3. Re-run only the scope that failed: `scripts/gate backend` or `scripts/gate frontend`.
+4. Commit the files you were given.
 
 ## Rules
 
-- Fix in order: Types → Lint → SCSS → Go
-- No suppression comments — fix the actual issue
-- Run full suite after fixes to confirm nothing regressed
+- No suppression comments (`@ts-ignore`, `biome-ignore`, `stylelint-disable`, `//nolint`) — fix the issue.
+- Never re-run a full gate the caller already passed; never re-run a scope that was not failing.
+- Review the staged diff before committing — every change intentional.

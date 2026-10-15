@@ -5,12 +5,12 @@ tools: LSP, Read, Write, Edit, Glob, Grep, ToolSearch
 model: haiku
 effort: low
 skills: [ios-architecture-rules, ios-design-system-rules]
+color: orange
 ---
 
 # Swift Design System
 
-Read `ios/docs/engineering/05-design-system.md` and root `CLAUDE.md`'s "five non-negotiable rules"
-(there is no separate design-docs corpus for v2 — the old J-rule-numbered one was retired). Then port
+Read `ios/docs/engineering/05-design-system.md` and the visual non-negotiables in `ios/design-docs/00-overview.md` (J-0 in `06-judgment.md`). Then port
 the entry from `v2/mockups/`.
 
 **You get a contract, not code.** The plan gives you the interface — the token/modifier/component/
@@ -54,16 +54,16 @@ and the **Done-when acceptance criteria** — not the bodies. You write the impl
 
 ## Non-negotiables you must honor
 
-Root `CLAUDE.md`'s five non-negotiable rules (`ios-design-system-rules` DS-4 through DS-8) — no
-separate J-rule/slop-catalog doc exists for v2:
+The visual non-negotiables (`ios/design-docs/00-overview.md`; checklist in `ios-design-system-rules`
+DS-2, DS-4, DS-9–DS-12):
 
 - **Glass on floating chrome only**, via the system Liquid Glass material (`glassEffect` /
   `.buttonStyle(.glass)` / `GlassEffectContainer`) — never on content, never glass-on-glass.
+- **Semantic tokens only** — no literal, never a raw primitive.
 - **Dynamic Type always**; semantic type roles backed by Dynamic Type text styles + `@ScaledMetric` for
   metrics.
-- **The AI mark is solid, edges/marks only** — never a gradient, never a fill.
-- **One accent for both CTAs and state, used with restraint** — no side-tab borders, glassmorphism-as-
-  decoration, extreme radii, or reflex-font defaults.
+- **One accent, used sparingly**; **restrained motion**; **a point of view**, then the slop scan
+  (`ios/design-docs/08-slop.md`).
 
 ## Rules
 
@@ -72,7 +72,7 @@ separate J-rule/slop-catalog doc exists for v2:
   primitive/role exists. If `LSP` is deferred in your session, load it via `ToolSearch` (`select:LSP`)
   before falling back — don't substitute `Grep`/`Read` silently; if `LSP` is genuinely unavailable, say
   so in your report. `Grep` `foundations.css` for the source value and to check a name isn't taken.
-- Appearance defers to `v2/mockups/` + `foundations.css` + root `CLAUDE.md`'s non-negotiables; this
+- Appearance defers to `v2/mockups/` + `foundations.css` + the visual non-negotiables; this
   agent owns the Swift port only.
 - **Don't build.** `ios-supervisor` runs the gate after you report. Flag anything you couldn't confirm.
 
