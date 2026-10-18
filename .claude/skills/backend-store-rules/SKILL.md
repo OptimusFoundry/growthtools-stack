@@ -23,7 +23,8 @@ example, not before. The code lives in the doc; this file is the checklist.
 - **S-6** Pointer receivers on all Store methods; parameterized queries only (`$1`, `$2`, …).
   → `base-server/docs/STORE.md#store-method-structure`
 - **S-7** Migrations: `V{version}__{description}.sql`; `uuid-ossp`; every table gets
-  `id`/`account_id`/`created_at`/`updated_at`/`deleted_at`.
+  `id`/`account_id`/`created_at`/`updated_at`/`deleted_at`. Applied migrations are
+  append-only: never edit an existing `V` file; add the next one.
   → `base-server/docs/STORE.md#migration-format`
 
 Cite the rule ID when you flag a violation — `S-2: missing account_id in WHERE` is reviewable;

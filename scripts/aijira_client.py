@@ -1,5 +1,5 @@
 """HTTP client for Aijira's public and agent APIs, shared by `scripts/tickets`, `scripts/plan-assemble`,
-`scripts/plan-lint` and `scripts/aijira-cutover`.
+and `scripts/plan-lint`.
 
 Python 3 stdlib only. Load it with `importlib.machinery.SourceFileLoader`, as `scripts/tickets` does.
 """
@@ -173,7 +173,7 @@ def normalize_remote(url):
 
 
 def _repo_lookup(owner, name):
-    """Cached per process, so the mode probe and the verb share one repo lookup."""
+    """Cached per process, so product discovery and `product_info` share one repo lookup."""
     key = (owner, name)
     if key not in _REPO_LOOKUPS:
         _, found = request("GET", f"/api/public/repos/{urllib.parse.quote(owner)}/{urllib.parse.quote(name)}")
@@ -206,7 +206,7 @@ def discover_product():
 
 
 def product_info():
-    """{product, code, items_mode} for the discovered product, cached per process."""
+    """{product, code} for the discovered product, cached per process."""
     if _PRODUCT_INFO:
         return dict(_PRODUCT_INFO)
     product = discover_product()
@@ -220,7 +220,5 @@ def product_info():
             raise ApiError(3, f"product {product!r} is not registered with Aijira")
     else:
         entry = next((v for v in _REPO_LOOKUPS.values() if isinstance(v, dict)), None) or {}
-    _PRODUCT_INFO.update(
-        product=product, code=str(entry.get("code") or ""), items_mode=entry.get("items_mode") is True
-    )
+    _PRODUCT_INFO.update(product=product, code=str(entry.get("code") or ""))
     return dict(_PRODUCT_INFO)

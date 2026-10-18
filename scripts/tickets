@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
 """Ticket CLI — a thin client for Aijira's agent API.
 
-Python 3 stdlib only. Aijira indexes the corpus; this script allocates IDs, asks what is ready,
-and fetches dispatch packages. There is no local fallback: when Aijira cannot be reached the
-verb fails (exit 5) rather than guessing an ID or a status from the working tree.
+Python 3 stdlib only. Aijira owns the items; this script creates and moves them, asks what is
+ready, and fetches dispatch packages. There is no local fallback: when Aijira cannot be reached
+the verb fails (exit 5) rather than guessing a key or a status from the working tree.
 
-  tickets [--json] id <KIND> [--parent <ID>]
-  tickets [--json] file --type task|feature|bug|chore|spike "<title>" [--layer <layer>]
-                        [--parent <ID>] [--depends-on <ID,ID>] [--note <text>]
-  tickets [--json] next [<parent>]
-  tickets [--json] show <ID> [--plan <path>]
-  tickets [--json] claim <ID>
-  tickets [--json] renew <ID>
-  tickets [--json] release <ID>
-  tickets [--json] handoff <ID> "<note>"      (note "-" reads stdin)
-  tickets [--json] cost <ID>|--held --agent-seconds N --input-tokens N --output-tokens N
+  tickets [--json] create <kind> "<title>" [--layer L] [--parent KEY] [--depends-on KEY,KEY] ...
+  tickets [--json] edit KEY --version N [--title T] ...
+  tickets [--json] move KEY STATUS [--version N]
+  tickets [--json] link KEY DEP / unlink KEY DEP
+  tickets [--json] reorder KEY (--after KEY | --first)
+  tickets [--json] cancel KEY
+  tickets [--json] activate [PRODUCT]
+  tickets [--json] next [<scope>]
+  tickets [--json] show <KEY|ALIAS>
+  tickets [--json] claim <KEY>
+  tickets [--json] renew <KEY>
+  tickets [--json] release <KEY>
+  tickets [--json] handoff <KEY> "<note>"      (note "-" reads stdin)
+  tickets [--json] cost <KEY>|--held --agent-seconds N --input-tokens N --output-tokens N
                         --cache-read-tokens N --cache-write-tokens N --cost-usd X [--session-id S]
   tickets [--json] template <type>
-  tickets [--json] check <file>
-
-Items mode (`items_mode` true for the product) replaces `id`/`file` with `create` and adds
-`edit`, `move`, `link`, `unlink`, `reorder`, `cancel`; `next`, `show`, `claim`,
-`renew`, `release`, `handoff`, `cost`, `template` and `check` keep their names (see `--help`).
-`import <product> --dry-run | --confirm <plan_hash>` and `activate [PRODUCT]` work in either mode.
+  tickets [--json] check [--key KEY] [--kind K] [--title T] ...
 
 Environment: AIJIRA_URL (default https://aijira.protoapp.xyz), AIJIRA_PRODUCT, AIJIRA_AGENT,
 CLAUDE_SESSION_URL (sent as X-Aijira-Session when it is an https:// URL).
@@ -30,16 +29,16 @@ CLAUDE_SESSION_URL (sent as X-Aijira-Session when it is an https:// URL).
 Exit codes:
   0  ok, warnings included
   1  usage error, including server 400s
-  2  local invariant: target ticket file exists, plan unreadable, front matter not re-readable
-  3  unknown ID, product or repo (404)
+  2  local invariant: a --body-file or file argument is unreadable
+  3  unknown key, product or repo (404)
   4  `show` or `claim` printed a package with unresolved rule IDs (advisory; the package is complete)
-  5  Aijira unreachable; names the URL tried, nothing was allocated or written
+  5  Aijira unreachable; names the URL tried, nothing was written
   6  refused: 403, or 400 AGENT_NAME_REQUIRED
-  7  conflict (409): NOT_INDEXED, CLAIM_HELD, NOT_READY, NOT_CLAIM_HOLDER, VERSION_CONFLICT, ...;
+  7  conflict (409): CLAIM_HELD, NOT_READY, NOT_CLAIM_HOLDER, VERSION_CONFLICT, PRODUCT_NOT_MIGRATED, ...;
      message printed verbatim
   8  other server error (5xx, unparsable body)
-  9  `check` found at least one violation of severity `error` (warnings alone exit 0); in items
-     mode also a 400 RULES_FAILED, or `--rules` naming an ID the local registry cannot resolve
+  9  `check` found at least one violation of severity `error` (warnings alone exit 0); also a 400
+     RULES_FAILED, or `--rules` naming an ID the local registry cannot resolve
 """
 
 # Stock macOS ships Python 3.9 (`/usr/bin/python3`); deferring annotations keeps the shebang's
@@ -52,7 +51,7 @@ import json
 import re
 import sys
 import urllib.parse
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -87,34 +86,12 @@ error_for = client.error_for
 normalize_remote = client.normalize_remote
 discover_product = client.discover_product
 
-ID_KINDS = ("IN", "EP", "CH", "FEAT", "BUG", "CHORE", "SPIKE", "task")
-FILE_KINDS = {"task": "task", "bug": "BUG", "chore": "CHORE", "spike": "SPIKE", "feature": "FEAT"}
 NOTE_MAX = 4000
-BODY_TBD = "_TBD_"
-NO_NOTE = "Filed with `scripts/tickets file`; no note supplied."
 RULES_DIVIDER = "--- rules ---"
 NO_VALUE = "—"
 
 USAGE = """usage: tickets [--json] <command> [args]
 
-  id <KIND> [--parent <ID>]      allocate an ID (EP CH IN FEAT BUG CHORE SPIKE, or task with --parent)
-  file --type task|feature|bug|chore|spike "<title>" [--layer <layer>] [--parent <ID>]
-                                 [--depends-on <ID,ID>] [--note <text>]
-                                 allocate an ID, write docs/tickets/<ID>.md from the served
-                                 template, print the bare ID (--kind is an alias of --type)
-  next [PARENT]                  list dependency-ready tickets and their executors
-  show <ID> [--plan <path>]      print a self-contained dispatch package
-  claim <ID>                     take the claim and print the dispatch package
-  renew <ID>                     extend your claim
-  release <ID>                   give the claim up
-  handoff <ID> "<note>"          leave a handoff note ("-" reads stdin, 1-4000 characters)
-  cost <ID>|--held --agent-seconds N --input-tokens N --output-tokens N --cache-read-tokens N
-       --cache-write-tokens N --cost-usd X [--session-id S]
-                                 report what a run cost; --held picks the ticket you hold
-  template <type>                print the ticket template for a type
-  check <file>                   check a ticket file against its format; exit 9 on an error
-
-items mode (KEY is CODE-N; an old ID works only with show):
   create <kind> "<title>" [--layer L] [--parent KEY] [--depends-on KEY,KEY] [--goal T]
          [--doc-path P] [--plan-path P] [--rules ID,ID] [--ac AC1,AC2] [--status backlog|ready]
          [--after KEY] [--body-file PATH|-]   create an item, print the bare key
@@ -124,23 +101,21 @@ items mode (KEY is CODE-N; an old ID works only with show):
   link KEY DEP [--version N] / unlink KEY DEP
   reorder KEY (--after KEY | --first) [--version N]
   cancel KEY [--version N]
+  activate [PRODUCT]             switch a content-free product to items
   next [CODE|EPIC-KEY]           ready tickets in scope (default: the product code)
   show KEY|ALIAS                 package, version and history (epics: detail, version, history)
+  claim KEY                      take the claim and print the dispatch package
+  renew KEY                      extend your claim
+  release KEY                    give the claim up
+  handoff KEY "<note>"           leave a handoff note ("-" reads stdin, 1-4000 characters)
+  cost KEY|--held --agent-seconds N --input-tokens N --output-tokens N --cache-read-tokens N
+       --cache-write-tokens N --cost-usd X [--session-id S]
+                                 report what a run cost; --held picks the ticket you hold
+  template <type>                print the body template for a kind
   check [--key KEY] [--kind K] [--title T] [--layer L] [--parent KEY] [--rules ID,ID]
-        [--ac AC1,AC2] [--body-file PATH|-]   validate fields; exit 9 on an error
-  claim, renew, release, handoff, cost, template   as above, addressed by KEY
-
-either mode:
-  activate [PRODUCT]             switch a content-free product to items mode
-  import <product> --dry-run [--out FILE]   print the import report and the confirm command
-  import <product> --confirm <plan_hash>    run the import the dry run described"""
-ID_USAGE = "usage: tickets id <KIND> [--parent <ID>]"
+        [--ac AC1,AC2] [--body-file PATH|-]   validate fields; exit 9 on an error"""
 NEXT_USAGE = "usage: tickets next [PARENT]"
-SHOW_USAGE = "usage: tickets show <ID> [--plan <path>]"
-FILE_USAGE = (
-    'usage: tickets file --type task|feature|bug|chore|spike "<title>" [--layer <layer>] '
-    "[--parent <ID>] [--depends-on <ID,ID>] [--note <text>]"
-)
+SHOW_USAGE = "usage: tickets show <KEY|ALIAS>"
 CLAIM_USAGE = "usage: tickets claim <ID>"
 RENEW_USAGE = "usage: tickets renew <ID>"
 RELEASE_USAGE = "usage: tickets release <ID>"
@@ -159,7 +134,6 @@ COST_INT_FLAGS = {
     "--cache-write-tokens": "cache_write_tokens",
 }
 TEMPLATE_USAGE = "usage: tickets template <type>"
-CHECK_USAGE = "usage: tickets check <file>"
 
 
 class LocalInvariantError(Exception):
@@ -178,351 +152,16 @@ def emit_json(value):
     print(json.dumps(value, indent=2, ensure_ascii=False))
 
 
-def allocate(kind, parent):
-    product = discover_product()
-    body = {"kind": kind}
-    if parent:
-        body["parent"] = parent
-    _, created = request("POST", agent_path(product, "/ids"), body, agent=True)
-    if not isinstance(created, dict) or not created.get("id"):
-        raise ApiError(8, "ids response has no id")
-    return created
-
-
-def parse_parent(value):
-    parent = (value or "").strip().upper()
-    if parent and not corpus.PARENT_ID_RE.match(parent):
-        raise UsageError(f"--parent {parent!r} is not an EP-### or CH-### id")
-    return parent or None
-
-
-def parse_id_args(argv):
-    kind, parent, i = None, None, 0
-    while i < len(argv):
-        arg = argv[i]
-        if arg == "--parent":
-            if i + 1 >= len(argv):
-                raise UsageError(f"--parent needs a value\n{ID_USAGE}")
-            parent = parse_parent(argv[i + 1])
-            i += 2
-        elif arg.startswith("--"):
-            raise UsageError(f"unknown option {arg}\n{ID_USAGE}")
-        elif kind is None:
-            kind = arg
-            i += 1
-        else:
-            raise UsageError(f"unexpected argument {arg!r}\n{ID_USAGE}")
-    if kind is None:
-        raise UsageError(ID_USAGE)
-    kind = "task" if kind.lower() == "task" else kind.upper()
-    if kind not in ID_KINDS:
-        raise UsageError(f"kind {kind!r} is not one of {' '.join(ID_KINDS)}")
-    return kind, parent
-
-
-def cmd_id(argv, as_json):
-    kind, parent = parse_id_args(argv)
-    created = allocate(kind, parent)
-    if as_json:
-        emit_json({"id": created["id"], "qualified_id": created.get("qualified_id")})
-    else:
-        print(created["id"])
-    return 0
-
-
-def front_scalar(value):
-    """Front matter has no quoting for values, so a title carrying `: ` or opening with a YAML
-    indicator has no representation in the subset. Reword it rather than refuse: an unparseable
-    ticket file is worse than a reworded title."""
-    text = " ".join(str(value).split()).rstrip(":")
-    text = re.sub(r":(?=\s)", " -", text)
-    while text and (text[0] in corpus._NON_SCALAR_LEAD or re.match(r"[-?:]\s", text)):
-        text = text[1:].lstrip()
-    return " ".join(text.split())
-
-
-def parse_file_args(argv):
-    options = {
-        "--layer": "layer",
-        "--type": "type",
-        "--kind": "type",
-        "--parent": "parent",
-        "--depends-on": "depends",
-        "--note": "note",
-    }
-    title, opts, i = None, {}, 0
-    while i < len(argv):
-        arg = argv[i]
-        if arg == "--blocking":
-            say("note: --blocking is ignored; Aijira derives blocking from dependencies")
-            i += 1
-            continue
-        if arg in options:
-            name = options[arg]
-            if name in opts:
-                if arg == "--layer":
-                    raise UsageError(
-                        "two --layer values. A ticket spanning 2+ layers is a change brief, not a "
-                        "ticket: write docs/briefs/<slug>.md, add a docs/TRACKER.md row, and run it "
-                        "through plan-writer"
-                    )
-                raise UsageError(f"{arg} given twice\n{FILE_USAGE}")
-            if i + 1 >= len(argv):
-                raise UsageError(f"{arg} needs a value\n{FILE_USAGE}")
-            opts[name] = argv[i + 1]
-            i += 2
-            continue
-        if arg.startswith("--"):
-            raise UsageError(f"unknown option {arg}\n{FILE_USAGE}")
-        if title is not None:
-            raise UsageError(f"unexpected argument {arg!r}; quote the title as one argument\n{FILE_USAGE}")
-        title = arg
-        i += 1
-
-    if not (title or "").strip():
-        raise UsageError(f"a title is required\n{FILE_USAGE}")
-    kind = (opts.get("type") or "bug").strip().lower()
-    if kind not in FILE_KINDS:
-        raise UsageError(f"--type {kind!r} is not one of {'/'.join(FILE_KINDS)}")
-    parent = parse_parent(opts.get("parent"))
-    if kind == "task" and not parent:
-        raise UsageError(f"--type task requires --parent <EP-###|CH-###>\n{FILE_USAGE}")
-    depends = [d.strip().upper() for d in (opts.get("depends") or "").split(",") if d.strip()]
-    return {
-        "title": title.strip(),
-        "layer": (opts.get("layer") or "").strip(),
-        "kind": kind,
-        "parent": parent,
-        "depends": depends,
-        "note": opts.get("note"),
-    }
-
-
-def ticket_body(note):
-    context = (note or "").strip() or NO_NOTE
-    sections = [("Context", context)] + [(name, BODY_TBD) for name in ("What to do", "Acceptance", "Files")]
-    return "\n\n".join(f"## {name}\n\n{text}" for name, text in sections)
-
-
-def template_body(template, note):
-    """The served template minus its front-matter skeleton, with `note` as the first paragraph under
-    the first `##` section. None when nothing usable is left."""
-    text = template.replace("\r\n", "\n")
-    if text.startswith("---\n"):
-        end = text.find("\n---\n", 3)
-        text = text[end + len("\n---\n"):] if end != -1 else ""
-    text = text.strip("\n")
-    if not text:
-        return None
-    note = (note or "").strip()
-    if note:
-        match = re.search(r"^## .*\n\n?", text, re.MULTILINE)
-        if match:
-            text = text[: match.end()] + note + "\n\n" + text[match.end():]
-        else:
-            text = note + "\n\n" + text
-    return text
-
-
-def fetch_template(kind):
-    """The served markdown for a ticket type, or None (with a stderr warning) when unavailable."""
-    try:
-        _, markdown = request("GET", f"/api/public/templates/{urllib.parse.quote(kind)}", text=True)
-    except ApiError as exc:
-        say(f"warning: template {kind!r} not fetched ({exc.message}); using the built-in body")
-        return None
-    return markdown
-
-
-def check_content(content, path):
-    _, result = request("POST", "/api/public/check", {"content": content, "path": path})
-    if not isinstance(result, dict):
-        raise ApiError(8, "check response is not an object")
-    return result
-
-
-def ticket_path_label(path):
-    try:
-        return path.resolve().relative_to(git_toplevel().resolve()).as_posix()
-    except ValueError:
-        return str(path)
-
-
-def cmd_file(argv, as_json):
-    args = parse_file_args(argv)
-    title = front_scalar(args["title"])
-    if not title:
-        raise UsageError(f"title {args['title']!r} is empty once reduced to a front-matter scalar")
-    created = allocate(FILE_KINDS[args["kind"]], args["parent"])
-    ticket_id = created["id"]
-
-    root = git_toplevel()
-    path = root / "docs" / "tickets" / f"{ticket_id}.md"
-    if path.exists():
-        raise LocalInvariantError(
-            f"{path} already exists; not overwriting. {ticket_id} was allocated by Aijira and is now unused"
-        )
-    front = {
-        "id": ticket_id,
-        "type": args["kind"],
-        "title": title,
-        "created": date.today().isoformat(),
-        "layer": front_scalar(args["layer"]) if args["layer"] else "",
-        "parent": args["parent"],
-        "depends-on": ", ".join(args["depends"]),
-    }
-    template = fetch_template(args["kind"])
-    body = template_body(template, args["note"]) if template else None
-    if template and body is None:
-        say(f"warning: template {args['kind']!r} is empty; using the built-in body")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        corpus.write_ticket_file(path, front, body or ticket_body(args["note"]))
-    except corpus.SubsetError as exc:
-        raise LocalInvariantError(f"front matter for {ticket_id} is not re-readable: {exc}") from exc
-
-    if as_json:
-        emit_json({"id": ticket_id, "qualified_id": created.get("qualified_id"), "path": str(path)})
-    else:
-        print(ticket_id)
-    try:
-        shown = path.relative_to(root).as_posix()
-    except ValueError:
-        shown = str(path)
-    say(f"filed {ticket_id}  {shown}")
-    if title != args["title"].strip():
-        say(f"note: title stored as {title!r} — the front-matter subset has no quoting for values")
-    say(
-        f"when the work is done, put `Ticket: {ticket_id}` on the commit that completes it "
-        "(the trailer closes the ticket), not on the commit that files it"
-    )
-    report_needs_spec(path, shown)
-    return 0
-
-
-def report_needs_spec(path, shown):
-    try:
-        result = check_content(path.read_text(encoding="utf-8"), shown)
-    except (ApiError, OSError, UnicodeDecodeError) as exc:
-        say(f"note: could not check {shown} ({getattr(exc, 'message', exc)})")
-        return
-    failing = len(result.get("violations") or [])
-    if failing:
-        say(f"needs spec: {failing} rule{'s' if failing != 1 else ''} fail; see `tickets check {shown}`")
-
-
-def render_next_line(item):
-    kind = item.get("type") or NO_VALUE
-    layer = item.get("layer") or NO_VALUE
-    agent = item.get("agent") or NO_VALUE
-    return f"{item.get('id')}  {kind}  {layer} -> {agent}  {item.get('title', '')}"
-
-
-def cmd_next(argv, as_json):
-    if len(argv) > 1 or any(a.startswith("-") for a in argv):
-        raise UsageError(NEXT_USAGE)
-    parent = argv[0].strip().upper() if argv else ""
-    product = discover_product()
-    tail = "/next"
-    if parent:
-        tail += "?" + urllib.parse.urlencode({"parent": parent})
-    _, items = request("GET", agent_path(product, tail), agent=True)
-    if not isinstance(items, list):
-        raise ApiError(8, "next response is not a list")
-    if as_json:
-        emit_json(items)
-        return 0
-    if not items:
-        print("ready: none")
-    for item in items:
-        print(render_next_line(item))
-    return 0
-
-
-def rules_for(markdown, agent):
-    registry = corpus.load_rule_registry(git_toplevel())
-    found, unknown = corpus.resolve_rules(corpus.parse_rule_decl(markdown), registry)
-    block = corpus.render_rules_block(found, unknown, corpus.executor_namespaces(agent, git_toplevel()))
-    return block, unknown
-
-
 def parse_show_args(argv):
-    ticket, plan, i = None, None, 0
-    while i < len(argv):
-        arg = argv[i]
-        if arg == "--plan":
-            if i + 1 >= len(argv):
-                raise UsageError(f"--plan needs a path\n{SHOW_USAGE}")
-            plan = argv[i + 1]
-            i += 2
-        elif arg.startswith("-"):
-            raise UsageError(f"unknown option {arg}\n{SHOW_USAGE}")
-        elif ticket is None:
-            ticket = arg.strip().upper()
-            i += 1
-        else:
-            raise UsageError(f"unexpected argument {arg!r}\n{SHOW_USAGE}")
-    if not ticket:
+    if len(argv) != 1 or argv[0].startswith("-"):
         raise UsageError(SHOW_USAGE)
-    return ticket, plan
-
-
-def offline_package(ticket_id, plan):
-    path = Path(plan)
-    try:
-        path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise LocalInvariantError(f"cannot read plan {plan}: {exc.strerror or exc}") from exc
-    match = re.match(rf"^{corpus.PARENT_PAT}-({corpus.LOCAL_PAT})$", ticket_id)
-    section = corpus.plan_section_for(path, match.group(1) if match else ticket_id)
-    if section is None:
-        raise ApiError(3, f"{ticket_id} has no section in {plan}")
-    return f"STATUS: unknown (offline --plan)\n\n{section}"
-
-
-def cmd_show(argv, as_json):
-    ticket_id, plan = parse_show_args(argv)
-    if plan:
-        markdown, ticket = offline_package(ticket_id, plan), None
-    else:
-        product = discover_product()
-        _, package = request(
-            "GET", agent_path(product, f"/tickets/{urllib.parse.quote(ticket_id)}/package"), agent=True
-        )
-        if not isinstance(package, dict) or "markdown" not in package:
-            raise ApiError(8, "package response has no markdown")
-        markdown, ticket = str(package["markdown"]), package.get("ticket")
-    return print_package(markdown, ticket, as_json)
-
-
-def print_package(markdown, ticket, as_json, extra=None):
-    agent = ticket.get("agent") if isinstance(ticket, dict) else None
-    block, unknown = rules_for(markdown, agent)
-    if as_json:
-        shape = {"markdown": markdown, "ticket": ticket, "rules_markdown": block, "unknown_rules": list(unknown)}
-        shape.update(extra or {})
-        emit_json(shape)
-    else:
-        print(markdown.rstrip("\n"))
-        print()
-        print(RULES_DIVIDER)
-        print(block)
-    return 4 if unknown else 0
+    return argv[0].strip().upper()
 
 
 def ticket_arg(argv, usage):
     if len(argv) != 1 or argv[0].startswith("-"):
         raise UsageError(usage)
     return argv[0].strip().upper()
-
-
-def claim_call(verb, argv, usage):
-    ticket = ticket_arg(argv, usage)
-    product = discover_product()
-    _, response = request(
-        "POST", agent_path(product, f"/tickets/{urllib.parse.quote(ticket)}/{verb}"), agent=True
-    )
-    return product, ticket, response
 
 
 def claim_expiry(response):
@@ -571,55 +210,6 @@ def recent_claims(product):
     return found
 
 
-def cmd_claim(argv, as_json):
-    product, ticket, response = claim_call("claim", argv, CLAIM_USAGE)
-    claim, expires = claim_expiry(response)
-    record_claim(product, ticket, expires)
-    package = response.get("package")
-    if not isinstance(package, dict) or "markdown" not in package:
-        raise ApiError(8, "claim response has no package markdown")
-    code = print_package(str(package["markdown"]), package.get("ticket"), as_json, {"claim": claim})
-    say(f"claimed until {expires}")
-    return code
-
-
-def cmd_renew(argv, as_json):
-    _, _, response = claim_call("renew", argv, RENEW_USAGE)
-    claim, expires = claim_expiry(response)
-    if as_json:
-        emit_json({"claim": claim})
-    say(f"claimed until {expires}")
-    return 0
-
-
-def cmd_release(argv, as_json):
-    claim_call("release", argv, RELEASE_USAGE)
-    if as_json:
-        emit_json({"released": True})
-    return 0
-
-
-def cmd_handoff(argv, as_json):
-    if len(argv) != 2 or argv[0].startswith("-"):
-        raise UsageError(HANDOFF_USAGE)
-    ticket = argv[0].strip().upper()
-    note = (sys.stdin.read() if argv[1] == "-" else argv[1]).strip()
-    if not note:
-        raise UsageError(f"the note is empty\n{HANDOFF_USAGE}")
-    if len(note) > NOTE_MAX:
-        raise UsageError(f"the note is {len(note)} characters; the limit is {NOTE_MAX}")
-    product = discover_product()
-    _, created = request(
-        "POST",
-        agent_path(product, f"/tickets/{urllib.parse.quote(ticket)}/handoffs"),
-        {"note": note},
-        agent=True,
-    )
-    if as_json:
-        emit_json(created)
-    return 0
-
-
 def parse_cost_args(argv):
     ticket, held, session, values, i = None, False, None, {}, 0
     while i < len(argv):
@@ -659,79 +249,12 @@ def parse_cost_args(argv):
     return ticket, values
 
 
-def held_ticket(product):
-    _, live = request(
-        "GET", agent_path(product, "/claims?" + urllib.parse.urlencode({"agent": agent_name()})), agent=True
-    )
-    if not isinstance(live, list):
-        raise ApiError(8, "claims response is not a list")
-    candidates = [str(c.get("ticket")) for c in live if isinstance(c, dict) and c.get("ticket")]
-    if not candidates:
-        candidates = recent_claims(product)
-    if len(candidates) > 1:
-        raise UsageError(f"{len(candidates)} candidate tickets ({', '.join(candidates)}); name one instead of --held")
-    return candidates[0] if candidates else None
-
-
-def cmd_cost(argv, as_json):
-    ticket, body = parse_cost_args(argv)
-    product = discover_product()
-    if not ticket:
-        ticket = held_ticket(product)
-        if not ticket:
-            say("no held or recently claimed ticket; cost not reported")
-            return 0
-    request("POST", agent_path(product, f"/tickets/{urllib.parse.quote(ticket)}/costs"), body, agent=True)
-    if as_json:
-        emit_json({"recorded": True, "ticket": ticket})
-    say("recorded")
-    return 0
-
-
-def cmd_template(argv, as_json):
-    if len(argv) != 1 or argv[0].startswith("-"):
-        raise UsageError(TEMPLATE_USAGE)
-    kind = argv[0].strip().lower()
-    _, markdown = request("GET", f"/api/public/templates/{urllib.parse.quote(kind)}", text=True)
-    if as_json:
-        emit_json({"type": kind, "markdown": markdown})
-    else:
-        sys.stdout.write(markdown)
-    return 0
-
-
-def cmd_check(argv, as_json):
-    if len(argv) != 1 or argv[0].startswith("-"):
-        raise UsageError(CHECK_USAGE)
-    path = Path(argv[0])
-    try:
-        content = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as exc:
-        raise LocalInvariantError(f"cannot read {argv[0]}: {getattr(exc, 'strerror', None) or exc}") from exc
-    result = check_content(content, ticket_path_label(path))
-    violations = [v for v in (result.get("violations") or []) if isinstance(v, dict)]
-    if as_json:
-        emit_json(result)
-    else:
-        for v in violations:
-            print(f"{v.get('severity')} {v.get('rule')} {v.get('section')}: {v.get('message')}")
-        say(f"needs spec: {'yes' if result.get('needs_spec') else 'no'}")
-    return 9 if any(v.get("severity") == "error" for v in violations) else 0
-
-
-
-
-# ---------------------------------------------------------------------------------------
-# Items mode
-# ---------------------------------------------------------------------------------------
-
 ITEM_KINDS = ("initiative", "epic", "task", "feature", "bug", "chore", "spike")
 TICKET_KINDS = ("task", "feature", "bug", "chore", "spike")
 CREATE_STATUSES = ("backlog", "ready")
 MOVE_STATUSES = ("backlog", "ready", "in_progress", "in_review", "done", "canceled")
 SCOPE_CODE_RE = re.compile(r"^[A-Z]{2,5}$")
 HISTORY_DIVIDER = "--- history ---"
-PLAN_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 
 CREATE_USAGE = (
     'usage: tickets create <kind> "<title>" [--layer L] [--parent KEY] [--depends-on KEY,KEY] [--goal T] '
@@ -752,7 +275,6 @@ ITEMS_CHECK_USAGE = (
     "usage: tickets check [--key KEY] [--kind K] [--title T] [--layer L] [--parent KEY] [--rules ID,ID] "
     "[--ac AC1,AC2] [--body-file PATH|-]"
 )
-IMPORT_USAGE = "usage: tickets import <product> --dry-run [--out FILE] | tickets import <product> --confirm <plan_hash>"
 
 
 class RulesUnknown(Exception):
@@ -764,8 +286,7 @@ class RulesUnknown(Exception):
 
 
 class Prepared:
-    """What a verb's pre-probe validation produced: the argv a v1 handler re-reads, plus the parsed
-    items-mode arguments."""
+    """What a verb's pre-request validation produced: the argv, plus the parsed arguments."""
 
     def __init__(self, argv, data=None):
         self.argv = argv
@@ -1151,10 +672,7 @@ def resolve_alias(ref, info):
 
 
 def items_show(prepared, info, as_json):
-    _, plan = parse_show_args(prepared.argv)
-    if plan:
-        raise UsageError("--plan reads a v1 plan; items-mode products show from Aijira only")
-    ref = next(a for a in prepared.argv if not a.startswith("-")).strip()
+    ref = prepared.argv[0].strip()
     upper = ref.upper()
     match = corpus.ITEM_KEY_RE.match(upper)
     key = upper if match and (not info["code"] or match.group(1) == info["code"]) else resolve_alias(ref, info)
@@ -1309,7 +827,7 @@ VALIDATE_FROM_DETAIL = ("kind", "title", "body", "goal", "doc_path", "plan_path"
 
 def items_check(prepared, info, as_json):
     if prepared.data is None:
-        raise UsageError(f"items mode checks fields, not a file\n{ITEMS_CHECK_USAGE}")
+        raise UsageError(f"check validates fields, not a file\n{ITEMS_CHECK_USAGE}")
     key, fields = prepared.data
     body = {}
     if key:
@@ -1332,92 +850,6 @@ def items_check(prepared, info, as_json):
 
 
 # ---------------------------------------------------------------------------------------
-# Import (mode-independent: it runs while the product is still in git mode)
-# ---------------------------------------------------------------------------------------
-
-
-def prepare_import(argv):
-    positional, opts = parse_flags(argv, ("--confirm", "--out"), ("--dry-run",), IMPORT_USAGE)
-    if len(positional) != 1 or not positional[0].strip():
-        raise UsageError(IMPORT_USAGE)
-    dry, confirm = "--dry-run" in opts, opts.get("--confirm")
-    if dry == (confirm is not None):
-        raise UsageError(f"give exactly one of --dry-run or --confirm <plan_hash>\n{IMPORT_USAGE}")
-    if confirm is not None and not PLAN_HASH_RE.match(confirm):
-        raise UsageError(f"--confirm takes the dry run's plan_hash (64 lowercase hex characters)\n{IMPORT_USAGE}")
-    if "--out" in opts and not dry:
-        raise UsageError(f"--out goes with --dry-run\n{IMPORT_USAGE}")
-    return Prepared(argv, {"product": positional[0].strip(), "confirm": confirm, "out": opts.get("--out")})
-
-
-def table_cell(value):
-    return " ".join(str(value if value is not None else "").split()).replace("|", "\\|")
-
-
-def render_import_report(report, product):
-    items = [i for i in report.get("items") or [] if isinstance(i, dict)]
-    failing = [i for i in items if i.get("needs_spec")]
-    notes = [n for n in report.get("notes") or [] if n]
-    plan_hash = report.get("plan_hash") or ""
-    lines = [
-        f"# Import dry run — {product} ({report.get('code') or NO_VALUE})",
-        "",
-        f"items: {len(items)}  needs spec: {len(failing)}  plan_hash: {plan_hash}",
-        "",
-        "## Old ID to key",
-        "",
-        "| Old ID | Key | Kind | Status | Title |",
-        "|---|---|---|---|---|",
-    ]
-    for i in items:
-        cells = [i.get("old_id"), i.get("key"), i.get("kind"), i.get("status"), i.get("title")]
-        lines.append("| " + " | ".join(table_cell(c) for c in cells) + " |")
-    lines += ["", "## Needs spec", ""]
-    if not failing:
-        lines.append("none")
-    for i in failing:
-        lines.append(f"- {i.get('key')} ({i.get('old_id')}) {i.get('title', '')}")
-        for v in i.get("violations") or []:
-            if isinstance(v, dict):
-                lines.append(f"  {v.get('rule')} {v.get('section')}: {v.get('message')}")
-    lines += ["", "## Notes", ""]
-    lines += [f"- {n}" for n in notes] or ["none"]
-    lines += ["", f"confirm: tickets import {product} --confirm {plan_hash}"]
-    return "\n".join(lines) + "\n"
-
-
-def cmd_import(prepared, as_json):
-    args = prepared.data
-    product = args["product"]
-    body = {"dry_run": True} if args["confirm"] is None else {"dry_run": False, "confirm": args["confirm"]}
-    try:
-        _, report = request("POST", agent_path(product, "/import"), body, agent=True)
-    except ApiError as exc:
-        if exc.api_code == "IMPORT_CHANGED":
-            exc.message += f"\nthe source changed since the dry run; re-run `tickets import {product} --dry-run`"
-        raise
-    if not isinstance(report, dict):
-        raise ApiError(8, "import response is not an object")
-    if args["confirm"] is not None:
-        if as_json:
-            emit_json(report)
-        else:
-            print(f"imported {product}: {len(report.get('items') or [])} items")
-        return 0
-    text = json.dumps(report, indent=2, ensure_ascii=False) + "\n" if as_json else render_import_report(report, product)
-    if args["out"]:
-        try:
-            Path(args["out"]).write_text(text, encoding="utf-8")
-        except OSError as exc:
-            sys.stdout.write(text)
-            raise LocalInvariantError(f"cannot write {args['out']}: {exc.strerror or exc}; report printed instead") from exc
-        say(f"wrote {args['out']}")
-        return 0
-    sys.stdout.write(text)
-    return 0
-
-
-# ---------------------------------------------------------------------------------------
 # Dispatch
 # ---------------------------------------------------------------------------------------
 
@@ -1429,31 +861,13 @@ def argv_only(check):
     return prepare
 
 
-def git(handler):
-    return lambda prepared, as_json: handler(prepared.argv, as_json)
-
-
 def prepare_next(argv):
     if len(argv) > 1 or any(a.startswith("-") for a in argv):
         raise UsageError(NEXT_USAGE)
     return Prepared(argv)
 
 
-GIT_COMMANDS = {
-    "id": git(cmd_id),
-    "file": git(cmd_file),
-    "next": git(cmd_next),
-    "show": git(cmd_show),
-    "claim": git(cmd_claim),
-    "renew": git(cmd_renew),
-    "release": git(cmd_release),
-    "handoff": git(cmd_handoff),
-    "cost": git(cmd_cost),
-    "template": git(cmd_template),
-    "check": git(cmd_check),
-}
-
-ITEMS_COMMANDS = {
+COMMANDS = {
     "create": items_create,
     "edit": items_edit,
     "move": items_move,
@@ -1472,10 +886,8 @@ ITEMS_COMMANDS = {
     "check": items_check,
 }
 
-# Every verb validates its arguments here, before the mode probe, so a usage error sends nothing.
+# Every verb validates its arguments here, before any request, so a usage error sends nothing.
 PREPARE = {
-    "id": argv_only(parse_id_args),
-    "file": argv_only(lambda argv: parse_file_args([a for a in argv if a != "--blocking"])),
     "next": prepare_next,
     "show": argv_only(parse_show_args),
     "claim": argv_only(lambda argv: ticket_arg(argv, CLAIM_USAGE)),
@@ -1493,42 +905,17 @@ PREPARE = {
     "reorder": prepare_reorder,
     "cancel": prepare_cancel,
     "activate": prepare_activate,
-    "import": prepare_import,
 }
-
-MODE_INDEPENDENT = {"import": cmd_import, "activate": cmd_activate}
 
 
 def dispatch(verb, prepared, as_json):
-    if verb in MODE_INDEPENDENT:
-        return MODE_INDEPENDENT[verb](prepared, as_json)
-    try:
-        info = client.product_info()
-    except ApiError as exc:
-        # Unreachable: a v1 verb still runs, because its own first request fails the same way
-        # (exit 5, naming its URL) and `show --plan` needs no server at all.
-        if exc.code != 5 or verb not in GIT_COMMANDS:
-            raise
-        return GIT_COMMANDS[verb](prepared, as_json)
-    if info["items_mode"]:
-        handler = ITEMS_COMMANDS.get(verb)
-        if handler is None:
-            raise UsageError(
-                f"{info['product']} is in items mode; `tickets {verb}` is gone — "
-                'use `tickets create <kind> "<title>"`'
-            )
-        return handler(prepared, info, as_json)
-    handler = GIT_COMMANDS.get(verb)
-    if handler is None:
-        raise UsageError(
-            f"{info['product']} is in git mode; `tickets {verb}` needs items mode — "
-            f"migrate it first with `tickets import {info['product']} --dry-run`"
-        )
-    return handler(prepared, as_json)
+    if verb == "activate":
+        return cmd_activate(prepared, as_json)
+    return COMMANDS[verb](prepared, client.product_info(), as_json)
 
 
 def api_error_lines(exc):
-    """(exit code, stderr lines) for a server error, with the items-mode details the message omits."""
+    """(exit code, stderr lines) for a server error, with the details the message omits."""
     lines = [exc.message]
     details = exc.details or {}
     if exc.api_code == "RULES_FAILED":

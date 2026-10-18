@@ -35,4 +35,5 @@ For each endpoint being tested, write a table-driven test in `base-server/tests/
 
 - The app boots **in-process** — `testenv.Start` wraps the real Gin router in an `httptest.Server` against real Postgres from the test stack. `make test-up` brings up that stack (Postgres + Kafka, migrated by Flyway); no separately-run server process is needed.
 - TS-7 — see `backend-testing-rules`.
+- TS-10 naming in every line you write or touch: fixtures end in `Fixture`, results are named for what they hold, helpers have no abbreviation prefixes. Don't rename untouched code; a separate sweep does that.
 - Verify: `go test -tags=integration ./tests/...` (requires the test stack — `make test-up`)

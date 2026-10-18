@@ -1,11 +1,11 @@
 ---
 name: backend-testing-rules
-description: Use when writing, editing, or reviewing any Go test in base-server — store tests under internal/infra/store/, processor/handler unit tests under internal/*/processor/ and internal/*/handler/, or integration tests under tests/. Covers the nine non-negotiable testing rules — table-driven always, t.Parallel() everywhere, require vs assert, scenario sub-test names, real-Postgres store coverage, gomock-only mocks, the in-process integration server, the third-party exclusion, and the before-done checklist.
+description: Use when writing, editing, or reviewing any Go test in base-server — store tests under internal/infra/store/, processor/handler unit tests under internal/*/processor/ and internal/*/handler/, or integration tests under tests/. Covers the ten non-negotiable testing rules — table-driven always, t.Parallel() everywhere, require vs assert, scenario sub-test names, real-Postgres store coverage, gomock-only mocks, the in-process integration server, the third-party exclusion, the before-done checklist, and naming that says what the thing is.
 ---
 
 # Testing Rules (base-server)
 
-Nine rules, one line each. Each carries a depth pointer — follow it when you need the worked
+Ten rules, one line each. Each carries a depth pointer — follow it when you need the worked
 example, not before. The code lives in the doc; this file is the checklist.
 
 - **TS-1** Every test function is table-driven — even a single case uses a one-element table.
@@ -37,6 +37,12 @@ example, not before. The code lives in the doc; this file is the checklist.
   providers, social platforms) except via the mock `httptest.Server`s — those paths stay covered by
   processor/handler unit tests with gomock.
   → `base-server/docs/TESTING.md#level-3-integration-tests-in-process-server`
+- **TS-10** Names say what the thing is. Fixtures always end in `Fixture` (`billingFixture :=
+  newBillingFixture(t)`, `webhookFixture`), never `f`, `w`, `e`, `g` or `h`. Results are named for
+  what they hold (`apiKey`, `subscription`), not `res`, `out`, `raw` or `first`/`second`. Helpers
+  spell out their domain (`createWebhookEndpoint`), with no per-file abbreviation prefixes (`wh`,
+  `bil`). `err`, `tt`, `ctx`, `t` and loop indexes stay short.
+  → `base-server/docs/TESTING.md#universal-rules-apply-to-all-test-levels`
 
 Cite the rule ID when you flag a violation — `TS-2: missing t.Parallel() in sub-test` is reviewable;
 "parallelism issue" is not.

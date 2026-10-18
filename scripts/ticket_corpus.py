@@ -1,8 +1,7 @@
-"""Ticket corpus parsing shared by scripts/tickets and scripts/plan-lint.
+"""Plan and rule parsing shared by scripts/tickets, scripts/plan-lint and scripts/plan-assemble.
 
-Python 3.9-safe, stdlib only. Holds what a plan, a ticket file, or a rule declaration means; the
-index, status derivation and TICKETS.md rendering live in Aijira's indexer now. Imports nothing
-from scripts/tickets.
+Python 3.9-safe, stdlib only. Holds what a plan or a rule declaration means; items, status and
+indexing live in Aijira. Imports nothing from scripts/tickets.
 """
 
 from __future__ import annotations
@@ -228,16 +227,10 @@ def parse_subset(text, path, offset=0):
 
 TABLE_HEADER = "| Ticket | Epic | Layer | Depends-on | AC refs | Status |"
 TABLE_COLUMNS = 6
-TRACKER_COLUMNS = 5
-TRACKER_TAIL = ("Plan", "Status")
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|$")
 
-PARENT_PAT = r"(?:EP|CH)-\d{3}"
 LOCAL_PAT = r"[A-Z]{1,3}\d{1,3}"
-PARENT_ID_RE = re.compile(rf"^{PARENT_PAT}$")
-LOCAL_ID_RE = re.compile(rf"^{LOCAL_PAT}$")
 ITEM_KEY_RE = re.compile(r"^([A-Z]{2,5})-([1-9][0-9]*)(?:\.([1-9][0-9]*))?$")
-FULL_DEP_RE = re.compile(rf"\b(?:{PARENT_PAT}(?:-{LOCAL_PAT})?|(?:FEAT|BUG|CHORE|SPIKE)-\d{{3}})\b")
 DEP_RANGE_RE = re.compile(r"([A-Z]{1,3})(\d{1,3})\s*[–—-]\s*\1?(\d{1,3})")
 DEP_TOKEN_RE = re.compile(rf"\b{LOCAL_PAT}\b")
 DEP_PROSE_RE = re.compile(r"\([^)]*\)")
@@ -273,6 +266,30 @@ def _rel(path, root=None):
         return str(path)
 
 
+def split_row_cells(line):
+    """Cells of one table row; `\\|` is a literal pipe inside a cell, not a separator."""
+    text = line.strip()
+    cells, cur, i = [], [], 0
+    if text.startswith("|"):
+        i = 1
+    while i < len(text):
+        ch = text[i]
+        if ch == "\\" and text[i + 1 : i + 2] == "|":
+            cur.append("|")
+            i += 2
+            continue
+        if ch == "|":
+            cells.append("".join(cur).strip())
+            cur = []
+        else:
+            cur.append(ch)
+        i += 1
+    tail = "".join(cur).strip()
+    if tail or not text.endswith("|") or text.endswith("\\|"):
+        cells.append(tail)
+    return cells
+
+
 def parse_plan_tables(plan_path, root=None):
     """Rows from every canonical table in one plan file, plus warnings. Never raises."""
     path = Path(plan_path)
@@ -293,7 +310,7 @@ def parse_plan_tables(plan_path, root=None):
         if i < len(lines) and SEPARATOR_RE.match(lines[i].strip()):
             i += 1
         while i < len(lines) and lines[i].startswith("|"):
-            cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+            cells = split_row_cells(lines[i])
             if len(cells) != TABLE_COLUMNS:
                 warnings.append(
                     Warn("malformed row", f"{rel}:{i + 1}", f"{len(cells)} cells, expected {TABLE_COLUMNS}")
@@ -307,44 +324,6 @@ def parse_plan_tables(plan_path, root=None):
     return rows, warnings
 
 
-def parse_deps(cell, epic):
-    """Full IDs, then ranges, then bare tokens, then a leftover check.
-
-    Local tokens come back qualified with `epic`; a full ID (`EP-007-H2`, `BUG-014`, `EP-007`) comes
-    back verbatim. A full ID naming `epic` itself is the same ID a local token would produce."""
-    deps, warnings = [], []
-
-    def add_id(global_id):
-        if global_id not in deps:
-            deps.append(global_id)
-
-    def add(local):
-        add_id(f"{epic}-{local}")
-
-    def take_full(match):
-        add_id(match.group(0))
-        return " "
-
-    def expand(match):
-        prefix, start, end = match.group(1), int(match.group(2)), int(match.group(3))
-        step = 1 if end >= start else -1
-        for number in range(start, end + step, step):
-            add(f"{prefix}{number}")
-        return " "
-
-    def take(match):
-        add(match.group(0))
-        return " "
-
-    # Full IDs go first so `EP-007-H2` never leaves a stray `H2` for the local-token pass.
-    text = DEP_TOKEN_RE.sub(take, DEP_RANGE_RE.sub(expand, FULL_DEP_RE.sub(take_full, cell or "")))
-    leftover = DEP_FILLER_RE.sub("", DEP_PROSE_RE.sub("", text)).strip()
-    if leftover:
-        warnings.append(Warn("unparsed dependency", epic, f"{cell!r} left {leftover!r} unaccounted for"))
-    return deps, warnings
-
-
-
 V1_EPIC_RE = re.compile(r"^(?:EP|CH)-\d{3}$")
 HEADER_EPIC_RE = re.compile(r"\*\*Epic:\*\*\s*`?([^\s`]+)`?")
 ITEM_KEY_PAT = r"[A-Z]{2,5}-[1-9][0-9]*(?:\.[1-9][0-9]*)?"
@@ -355,22 +334,19 @@ FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
 
 def plan_header_epic(text):
-    """("v1" | "v2", epic) from the head's `**Epic:**` value. Anything that is not an item key is v1,
-    so a v1 plan with a malformed header still reaches v1's own error for it."""
+    """The head's `**Epic:**` value verbatim, or None. Callers decide whether it is an item key:
+    `EP-NNN`/`CH-NNN` match ITEM_KEY_RE too, so test V1_EPIC_RE first."""
     head = []
     for line in (text or "").splitlines():
         if line.startswith("## "):
             break
         head.append(line)
     match = HEADER_EPIC_RE.search("\n".join(head))
-    epic = match.group(1) if match else None
-    if epic and not V1_EPIC_RE.match(epic) and ITEM_KEY_RE.match(epic):
-        return "v2", epic
-    return "v1", epic
+    return match.group(1) if match else None
 
 
 def parse_deps_v2(cell):
-    """(local tokens, item keys, warnings): keys verbatim, then ranges and local tokens as v1 does."""
+    """(local tokens, item keys, warnings): keys verbatim, then ranges and bare local tokens."""
     locals_, keys, warnings = [], [], []
 
     def take_key(match):
@@ -428,8 +404,8 @@ def plan_ticket_keys(text):
 
 
 def labels_from_body(body):
-    """A v2 body with each `## <Label>` block folded into one `**<Label>:** …` line, the shape the
-    v1 section checks (Mirrors, placeholders, migrations) were written against."""
+    """A body with each `## <Label>` block folded into one `**<Label>:** …` line, the shape the
+    Mirrors, placeholder and migration checks read."""
     out, label, block, fenced = [], None, [], False
 
     def flush():
@@ -590,18 +566,6 @@ def resolve_rules(ids, registry):
     return tuple(found), tuple(unknown)
 
 
-def write_ticket_file(path, front, body):
-    """Write `---` front matter plus body. Empty values are omitted, never written as blanks."""
-    entries = [f"{key}: {value}" for key, value in front.items() if value not in (None, "")]
-    # Parse what is about to be written with the same reader that will read it back: a ticket
-    # file this tool cannot re-read is corpus corruption, and it should be loud here, not on the
-    # next `sync`.
-    parse_subset("\n".join(entries), path, offset=1)
-    text = "\n".join(["---", *entries, "---", "", body.strip("\n"), ""])
-    Path(path).write_text(text, encoding="utf-8")
-
-
-
 RULE_DECL_RE = re.compile(r"^\*\*Rules:\*\*\s*(.+)$", re.MULTILINE)
 # `**Rules:**` predates this channel as a free-prose label in older plans, so *shape* decides whether
 # a line declares anything: an identifier starting with a letter, ending in a letter/digit/`*`, and
@@ -717,20 +681,3 @@ def render_rules_block(found, unknown, namespaces):
 
 
 SECTION_END_RE = re.compile(r"^#{1,2}\s")
-
-
-def plan_section_for(plan_path, local):
-    """The `## <LOCAL> — <title>` block from a plan file, verbatim. None when the plan is
-    unreadable or has no such section."""
-    try:
-        lines = Path(plan_path).read_text(encoding="utf-8").splitlines()
-    except OSError:
-        return None
-    header = re.compile(rf"^##\s+{re.escape(local)}\b")
-    for start, line in enumerate(lines):
-        if header.match(line):
-            end = start + 1
-            while end < len(lines) and not SECTION_END_RE.match(lines[end]):
-                end += 1
-            return "\n".join(lines[start:end]).strip("\n")
-    return None
