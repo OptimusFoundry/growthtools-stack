@@ -20,6 +20,7 @@ example, not before. The code lives in the doc; this file is the checklist.
   `UPPER_SNAKE_CASE` error codes, `snake_case.go` files.
   → `base-server/docs/ARCHITECTURE.md#naming-conventions`
 - **A-5** Pass `ctx` down every call; enrich with `observability.WithFields` before logging.
+  Log field keys are `snake_case` (`account_id`).
   → `base-server/docs/ARCHITECTURE.md#context-usage`
 - **A-6** Register routes in `api.go`'s `RegisterRoutes()` under the right group — public
   `apiGroup`, JWT-protected `protectedGroup`/`v1Group`.

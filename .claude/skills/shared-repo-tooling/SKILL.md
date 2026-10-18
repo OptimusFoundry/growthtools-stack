@@ -18,7 +18,7 @@ legibility beat cleverness.
 | `scripts/` | Developer-facing CLIs (`scripts/tickets`, with its parsing module `scripts/ticket_corpus.py`) |
 | `.claude/hooks/` | Claude Code lifecycle hooks (PreToolUse etc.), wired in `.claude/settings.json` |
 | `.githooks/` | Git hooks (`commit-msg`), installed via `./.githooks/install.sh` |
-| `.claude/agents/routing.yml` | `layer → agent` map. **Single source of truth** — the routing guard, the ticket CLI, and `.claude/agents/README.md` all derive from it. Never hardcode an agent list anywhere else. |
+| `.claude/agents/routing.yml` | `layer → agent` map. **Single source of truth** — Aijira's indexer, the routing guard, and `.claude/agents/README.md` all derive from it. Never hardcode an agent list anywhere else. |
 
 ## Hard constraints
 
@@ -54,70 +54,80 @@ merely what was refused.
 
 ## Ticket CLI (`scripts/tickets`)
 
-A thin HTTP client for Aijira's agent API. Aijira owns the index, status and routing; the script
-allocates IDs, lists what is ready and fetches dispatch packages. There is **no local fallback**:
-when Aijira cannot be reached the verb exits `5` and allocates and writes nothing. Config comes
-from `AIJIRA_URL` (default `https://aijira.protoapp.xyz`), `AIJIRA_PRODUCT` (else resolved from the
-`origin` remote via `GET /api/public/repos/:owner/:name`) and `AIJIRA_AGENT` (else
-`CLAUDE_CODE_SESSION_ID`, else `<hostname>:<worktree dir>`), sent as `X-Aijira-Agent`.
+A thin HTTP client for Aijira's agent API. Aijira owns the items, their status and their routing;
+the script creates and moves items, lists what is ready and fetches dispatch packages. Every item
+is addressed by its Aijira key (`AIJ-12`, or `AIJ-12.3` for a task). `show` also accepts an old ID
+as an alias and resolves it to a key. There is **no local fallback**: when Aijira cannot be reached
+the verb exits `5` and writes nothing. Config comes from `AIJIRA_URL` (default
+`https://aijira.protoapp.xyz`), `AIJIRA_PRODUCT` (else resolved from the `origin` remote via
+`GET /api/public/repos/:owner/:name`) and `AIJIRA_AGENT` (else `CLAUDE_CODE_SESSION_ID`, else
+`<hostname>:<worktree dir>`), sent as `X-Aijira-Agent`. `CLAUDE_SESSION_URL`, when it is an
+`https://` URL, goes as `X-Aijira-Session`.
+
+`scripts/tickets --help` is the authoritative verb list. Every verb validates its arguments before
+it sends a request, so a usage error sends nothing.
 
 | Command | Does |
 |---|---|
-| `id <KIND> [--parent <ID>]` | Allocates an ID (EP CH IN FEAT BUG CHORE SPIKE, or `task` with a parent), prints it bare |
-| `file --type task\|feature\|bug\|chore\|spike "<title>" [--layer <layer>] [--parent <ID>] [--depends-on <ID,ID>] [--note <text>]` | Allocates an ID, fetches the served template, writes `docs/tickets/<ID>.md` at the repo toplevel (`--note` goes under the first `##`), prints the bare ID, then reports on stderr how many format rules fail (exit stays 0). `task` requires `--parent`; `--kind` is an alias of `--type`; the default type is `bug`. A template that cannot be fetched falls back to a built-in body with a warning |
-| `next [PARENT]` | Lists dependency-ready tickets and their executors (optionally scoped to one parent) |
-| `show <ID> [--plan <path>]` | Prints the server's dispatch package plus a local `--- rules ---` block; `--plan` is the explicit offline mode for plans not yet on the default branch |
-| `claim <ID>` | Takes the claim and prints the package exactly as `show` does (exit `4` rule unchanged); `claimed until <expires_at>` goes to stderr. A held or not-ready ticket exits `7` and prints no package |
-| `renew <ID>` / `release <ID>` | Extends / gives up your claim (`renew` prints the new expiry to stderr; `release` prints nothing). Not the holder: exit `7` |
-| `handoff <ID> "<note>"` | Leaves a handoff note (1–4000 characters; `-` reads stdin). Empty or too long exits `1` before any request |
-| `cost <ID>\|--held --agent-seconds N --input-tokens N --output-tokens N --cache-read-tokens N --cache-write-tokens N --cost-usd X [--session-id S]` | Reports what a run cost (`POST …/tickets/:ticket/costs`; `recorded` to stderr). A missing or negative number exits `1` before any request; 404 exits `3`. `--held` asks `GET …/claims?agent=<name>` and, if nothing is live, falls back to the newest ticket this agent claimed in the last 24 h (`claim` appends to `.claude/logs/claims.jsonl`). No candidate exits `0` with a note; several exit `1`. `event-ledger.py` calls it on `SessionEnd`/`SubagentStop` with the transcript's totals, priced from `.claude/hooks/model-prices.json` (per-million-token rates by model-id prefix, longest prefix wins; an unlisted model sends `0` and the ledger line carries `unpriced: true`). `AIJIRA_REPORT_COST=0` keeps the ledger but skips the report; `.claude/logs/cost-reported.jsonl` makes a repeat fire once |
-| `template <type>` | Prints the served ticket template for `task\|feature\|bug\|chore\|spike` unchanged; unknown type exits `3` |
-| `check <file>` | Posts the file to the format check; one `<severity> <rule> <section>: <message>` line per violation on stdout, `needs spec: yes\|no` on stderr. Exit `9` only when a violation has severity `error`; warnings alone exit `0` |
+| `create <kind> "<title>" [--layer L] [--parent KEY] [--depends-on KEY,KEY] [--goal T] [--doc-path P] [--plan-path P] [--rules ID,ID] [--ac AC1,AC2] [--status backlog\|ready] [--after KEY] [--body-file PATH\|-]` | Creates an item (`initiative epic task feature bug chore spike`) and prints the bare key. `created <KEY>` and any rule warnings go to stderr |
+| `edit KEY --version N [field flags] [--parent KEY \| --no-parent]` | Changes fields; `--version` is the version you last read. A stale version exits `7` with `current version N` |
+| `move KEY STATUS [--version N]` | Sets the status: `backlog ready in_progress in_review done canceled` |
+| `link KEY DEP [--version N]` / `unlink KEY DEP` | Adds / removes a dependency |
+| `reorder KEY (--after KEY \| --first) [--version N]` | Moves the item in the backlog order |
+| `cancel KEY [--version N]` | Cancels the item |
+| `activate [PRODUCT]` | Switches a content-free product to items mode |
+| `next [CODE\|EPIC-KEY]` | Lists ready tickets and their executors, scoped to the product code by default or to one epic |
+| `show KEY\|ALIAS` | Prints the dispatch package, a `--- history ---` block and a local `--- rules ---` block. For an epic or initiative it prints the detail and history |
+| `claim KEY` | Takes the claim and prints the package as `show` does; `claimed until <expires_at>` goes to stderr. A held or not-ready ticket exits `7` and prints no package |
+| `renew KEY` / `release KEY` | Extends / gives up your claim (`renew` prints the new expiry to stderr; `release` prints nothing). Not the holder: exit `7` |
+| `handoff KEY "<note>"` | Leaves a handoff note (1–4000 characters; `-` reads stdin). Empty or too long exits `1` before any request |
+| `cost KEY\|--held --agent-seconds N --input-tokens N --output-tokens N --cache-read-tokens N --cache-write-tokens N --cost-usd X [--session-id S]` | Reports what a run cost (`POST …/items/:key/costs`; `recorded` to stderr). A missing or negative number exits `1` before any request; 404 exits `3`. `--held` asks `GET …/claims?agent=<name>` and, if nothing is live, falls back to the newest ticket this agent claimed in the last 24 h (`claim` appends to `.claude/logs/claims.jsonl`). No candidate exits `0` with a note; several exit `1`. `event-ledger.py` calls it on `SessionEnd`/`SubagentStop` with the transcript's totals, priced from `.claude/hooks/model-prices.json` (per-million-token rates by model-id prefix, longest prefix wins; an unlisted model sends `0` and the ledger line carries `unpriced: true`). `AIJIRA_REPORT_COST=0` keeps the ledger but skips the report; `.claude/logs/cost-reported.jsonl` makes a repeat fire once |
+| `template <kind>` | Prints the served body template for a kind unchanged |
+| `check [--key KEY] [--kind K] [--title T] [--layer L] [--parent KEY] [--rules ID,ID] [--ac AC1,AC2] [--body-file PATH\|-]` | Validates item fields without writing; one `<severity> <rule> <section>: <message>` line per finding on stdout. `--kind` and `--title` are required unless `--key` names an existing item. Exit `9` only when a finding has severity `error` |
 
 `--json` replaces stdout with the machine shape. `scripts/ticket_corpus.py` holds the shared parsing
-(plan tables, `parse_deps`, the rules channel, the front-matter subset reader); `scripts/plan-lint`
-imports it too, so the two never disagree about what a plan says.
+(plan tables, dependency cells, the rules channel, the routing subset reader); `scripts/plan-lint`
+and `scripts/plan-assemble` import it too, so the three never disagree about what a plan says.
 
 **Unlike the hooks, this CLI fails loud.** Hooks fail open because a crash there blocks the user;
-a CLI that guesses corrupts the corpus instead.
+a CLI that guesses corrupts the item store instead.
 
 | Exit | Means |
 |---|---|
 | `0` | Success — warnings included |
 | `1` | Usage error, including server 400s |
-| `2` | Local invariant: target ticket file exists, plan unreadable, front matter not re-readable |
-| `3` | Unknown ID, product or repo (404) |
+| `2` | Local invariant: a `--body-file` or file argument is unreadable |
+| `3` | Unknown key, product or repo (404) |
 | `4` | `show` or `claim` printed a package with unresolved rule IDs (advisory; the package is complete) |
-| `5` | Aijira unreachable — names the URL tried; nothing allocated or written |
+| `5` | Aijira unreachable — names the URL tried; nothing written |
 | `6` | Refused: 403 (message names the seen IP) or 400 `AGENT_NAME_REQUIRED` |
-| `7` | Conflict (409): `NOT_INDEXED`, `CLAIM_HELD`, `NOT_READY`, `NOT_CLAIM_HOLDER` — the server message is printed verbatim |
+| `7` | Conflict (409): `CLAIM_HELD`, `NOT_READY`, `NOT_CLAIM_HOLDER`, `VERSION_CONFLICT`, `PRODUCT_NOT_MIGRATED`, … — the server message is printed verbatim |
 | `8` | Other server error (5xx, unparsable body) |
-| `9` | `check` found at least one violation of severity `error` (warnings alone exit `0`) |
+| `9` | `check` found a violation of severity `error`; also a 400 `RULES_FAILED`, or `--rules` naming an ID the local registry cannot resolve |
 
-### The bare-ID-on-stdout contract
+### The bare-key-on-stdout contract
 
-`id` and `file` print **the ID and nothing else** to stdout. Every human-readable line — `filed …`,
-warnings, the trailer hint — goes to **stderr**. This is load-bearing, not
-cosmetic: it is what makes the capture valve scriptable.
+`create` prints **the key and nothing else** to stdout. Every human-readable line — `created …` and
+rule warnings — goes to **stderr**. This is load-bearing, not cosmetic: it is what makes the capture
+valve scriptable.
 
 ```bash
-ID=$(scripts/tickets file "flaky webhook retry" --layer api)
-# stdout (all that $ID captures):  BUG-001
-# stderr:  filed BUG-001  docs/tickets/BUG-001.md
-#          when the work is done, put `Ticket: BUG-001` on the commit that completes it ...
+KEY=$(scripts/tickets create bug "flaky webhook retry" --layer api)
+# stdout (all that $KEY captures):  AIJ-118
+# stderr:  created AIJ-118
 ```
 
-The `Ticket:` trailer **closes** a ticket, so the hint says it belongs on the commit that completes
-the work, never on the commit that files the ticket.
+A `Ticket: <KEY>` trailer **closes** a ticket, so it belongs on the commit that completes the work,
+never on the commit that follows the `create`.
 
-Never add a decorative line to stdout in `file`, and never "helpfully" print the path there.
+Never add a decorative line to stdout in `create`, and never "helpfully" print a URL there.
 
 ### Who carries this skill
 
 `feature-manager`, `backend-supervisor`, `frontend-supervisor`, `epic-supervisor` and
 `codemod-supervisor` declare `skills: [shared-repo-tooling]` in their frontmatter. Those five are the
 agents that (a) discover sidequests mid-run and (b) hold `Bash`, so they can actually *run* the
-capture valve — `scripts/tickets file …` — instead of merely noticing the gap. Workers have no
+capture valve — `scripts/tickets create …` — instead of merely noticing the gap. Workers have no
 `Bash` and are excluded deliberately: a worker that finds a sidequest reports it upward.
 
 Agent definitions load at startup, so adding or removing a `skills:` entry takes effect only after a
@@ -125,20 +135,15 @@ session restart.
 
 ### The parsing subset
 
-`.claude/agents/routing.yml` and `docs/tickets/_intent.yml` are read by a hand-rolled reader, because
-stdlib-only means no pyyaml. Both files are therefore restricted to a syntactic subset chosen so the
-hand-rolled reader and a real YAML parser read them **identically** — each file documents its own
-subset in its header. Anything outside it is a hard error with file + line, never a guess: a
-construct the two readers disagree about is precisely the drift this design prevents. The CLI
-surfaces it and exits `2`; a hook catches it, degrades, and allows.
+`.claude/agents/routing.yml` is read by a hand-rolled reader, because stdlib-only means no pyyaml.
+The file is therefore restricted to a syntactic subset chosen so the hand-rolled reader and a real
+YAML parser read it **identically**; the file documents the subset in its header. Anything outside
+it is a hard error with file + line, never a guess: a construct the two readers disagree about is
+precisely the drift this design prevents. `ticket_corpus.read_subset_yaml` raises it; the routing
+guard catches it, degrades, and allows.
 
-When extending either file, stay inside the subset. If you genuinely need a construct it forbids,
-widen the subset *and* both readers deliberately — do not sneak it in.
-
-### No generated ticket index
-
-`docs/TICKETS.md` and `tickets sync` are gone. The same views are Aijira's public JSON API,
-`GET /api/md/<product>.md` and its UI; pushing a plan to the default branch indexes it.
+When extending the file, stay inside the subset. If you genuinely need a construct it forbids,
+widen the subset *and* the reader deliberately — do not sneak it in.
 
 ## Testing — pipe-test, always
 
@@ -159,9 +164,9 @@ the real CLI as a subprocess against a stdlib `http.server` stub on `127.0.0.1`,
 the network. Additionally prove:
 
 - **Both interpreters** — `/usr/bin/python3 scripts/tickets-selftest` *and* `python3 scripts/tickets-selftest`.
-- **The stdout contract** — capture with `ID=$(…)` and echo the variable, rather than eyeballing the
+- **The stdout contract** — capture with `KEY=$(…)` and echo the variable, rather than eyeballing the
   terminal, which shows stdout and stderr interleaved and hides a violation.
-- **No local fallback** — a closed port exits `5`, prints no ID and writes no file.
+- **No local fallback** — a closed port exits `5`, prints no key and writes nothing.
 
 ## Dispatching this skill
 

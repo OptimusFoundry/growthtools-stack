@@ -33,6 +33,10 @@ from pathlib import Path
 from typing import NamedTuple
 
 ESCAPE_HATCH = "ROUTING-OK"
+# `claude` is the catch-all type with every tool, so it gets the same treatment as
+# general-purpose. `fork` is deliberately NOT guarded: a fork inherits the parent's context,
+# CLAUDE.md and this repo's rules, so it is not the contract-less agent this guard exists for.
+GUARDED_TYPES = ("general-purpose", "claude")
 ROUTING_PATH = Path(__file__).resolve().parent.parent / "agents" / "routing.yml"
 
 FALLBACK_OWNED = re.compile(r"\bbase-server\b|\bwebapp\b", re.IGNORECASE)
@@ -213,7 +217,10 @@ def load_routing(path):
 def build_owned_re(owned):
     if not owned:
         return re.compile(r"(?!x)x")
-    return re.compile("|".join(rf"\b{re.escape(token)}\b" for token in owned), re.IGNORECASE)
+    # Longest token first: alternation takes the first alternative that matches at a position,
+    # so a nested token (`base-server/internal/x`) must be tried before its parent (`base-server`).
+    ordered = sorted(owned, key=len, reverse=True)
+    return re.compile("|".join(rf"\b{re.escape(token)}\b" for token in ordered), re.IGNORECASE)
 
 
 def matched_owners(text, routing):
@@ -236,8 +243,8 @@ def _heads_digest(heads, limit=14):
 
 def build_reason(matches, routing):
     lines = [
-        "Blocked: `general-purpose` cannot be dispatched for work this repo assigns to a",
-        "specialized agent.",
+        "Blocked: `general-purpose` (or the catch-all `claude`) cannot be dispatched for work",
+        "this repo assigns to a specialized agent.",
         "",
         "Named in this prompt, with its owner from .claude/agents/routing.yml:",
         "",
@@ -294,7 +301,7 @@ def main() -> int:
 
         # An omitted subagent_type defaults to general-purpose.
         subagent = tool_input.get("subagent_type") or "general-purpose"
-        if not isinstance(subagent, str) or subagent.strip() != "general-purpose":
+        if not isinstance(subagent, str) or subagent.strip() not in GUARDED_TYPES:
             return 0
 
         text = f"{tool_input.get('prompt', '')}\n{tool_input.get('description', '')}"
