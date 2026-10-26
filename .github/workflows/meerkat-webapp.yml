@@ -108,7 +108,7 @@ jobs:
             echo "CLOUDFRONT_DISTRIBUTION_ID=$(jq -r .aws.cloudfrontDistributionId /tmp/manifest.json)"
             echo "DOMAIN=$(jq -r .domains.app /tmp/manifest.json)"
             echo "VITE_GOOGLE_CLIENT_ID=$(aws ssm get-parameter --name "${SSM_PRODUCT_PREFIX}/auth/google_oauth_client_id" --query Parameter.Value --output text)"
-            echo "VITE_STRIPE_PUBLISHABLE_KEY=$(aws ssm get-parameter --name "${SSM_PLATFORM_PREFIX}/payments/stripe_publishable_key" --query Parameter.Value --output text)"
+            echo "VITE_STRIPE_PUBLISHABLE_KEY=$(aws ssm get-parameter --name "${SSM_PRODUCT_PREFIX}/payments/stripe_publishable_key" --query Parameter.Value --output text)"
             echo "VITE_TURNSTILE_SITE_KEY=$(aws ssm get-parameter --name "${SSM_PLATFORM_PREFIX}/auth/turnstile_site_key" --query Parameter.Value --output text)"
           } >> "$GITHUB_ENV"
 
